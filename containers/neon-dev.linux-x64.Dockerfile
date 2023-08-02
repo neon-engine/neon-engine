@@ -1,6 +1,8 @@
 FROM --platform=linux/amd64 ubuntu:20.04
 
 ENV DEBIAN_FRONTEND=noninteractive
+ENV CC=/usr/bin/clang
+ENV CXX=/usr/bin/clang++
 
 RUN apt-get update && apt-get -y install tzdata
 
@@ -28,6 +30,8 @@ RUN apt update \
     && cd .. \
     && rm -r gl3w \
     && pipx install conan \
-    && echo 'export PATH=/root/.local/bin:$PATH' >> ~/.bashrc
+    && echo 'export PATH=/root/.local/bin:$PATH' >> ~/.bashrc \
+    && source ~/.bashrc \
+    && conan profile detect --force
 
 ENTRYPOINT [ "/bin/bash" ]

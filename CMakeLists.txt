@@ -26,6 +26,8 @@ find_package(Vulkan REQUIRED)
 # List of targets to generate build files
 set(APP_TARGETS TestApp)
 
+find_package(ZLIB REQUIRED)
+
 file(GLOB APP_SUBDIRS "app/*")
 
 foreach(subdir ${APP_SUBDIRS})

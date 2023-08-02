@@ -2,7 +2,7 @@
 
 conan install ./conan \
   -of build \
-  --profile conan/profiles/default.jinja \
-  --profile conan/profiles/compiler-linux-clang.jinja \
+  --profile:build=conan/profiles/default.jinja \
+  --profile:build=conan/profiles/compiler-linux-clang.jinja \
   --build=missing \
   -s build_type=Release
