@@ -5,8 +5,8 @@ echo "Building containers"
 # Make sure that containers are built with default settings
 export CONTAINERS_CONF=/usr/share/containers/containers.conf
 
-timestamp=$(date +%Y%m%d%H%M%S)
+version=1.0
 
 podman build \
-  -t "neon-dev.linux-x64:${timestamp}" \
+  -t "neon-dev.linux-x64:${version}" \
   -f neon-dev.linux-x64.Dockerfile
