@@ -26,21 +26,29 @@ find_package(Vulkan REQUIRED)
 # List of targets to generate build files
 set(APP_TARGETS TestApp)
 
-foreach (X IN LISTS APP_TARGETS)
-    message("generating ${X}")
-    add_executable(${X} app/${X}/main.cpp)
-    target_link_libraries(${X} PRIVATE Vulkan::Vulkan glfw)
+file(GLOB APP_SUBDIRS "app/*")
 
-    set(X_BUILD_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}/${X}")
+foreach(subdir ${APP_SUBDIRS})
+    if(IS_DIRECTORY ${subdir})
+        add_subdirectory(${subdir})
+    endif()
+endforeach()
 
-    # Each executable will be in its own folder
-    set_target_properties(
-            ${X}
-            PROPERTIES
-            ARCHIVE_OUTPUT_DIRECTORY "${X_BUILD_DIRECTORY}/lib"
-            LIBRARY_OUTPUT_DIRECTORY "${X_BUILD_DIRECTORY}/lib"
-            RUNTIME_OUTPUT_DIRECTORY "${X_BUILD_DIRECTORY}"
-    )
+#foreach (X IN LISTS APP_TARGETS)
+#    message("generating ${X}")
+#    add_executable(${X} app/${X}/main.cpp)
+#    target_link_libraries(${X} PRIVATE Vulkan::Vulkan glfw)
+#
+#    set(X_BUILD_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}/${X}")
+#
+#    # Each executable will be in its own folder
+#    set_target_properties(
+#            ${X}
+#            PROPERTIES
+#            ARCHIVE_OUTPUT_DIRECTORY "${X_BUILD_DIRECTORY}/lib"
+#            LIBRARY_OUTPUT_DIRECTORY "${X_BUILD_DIRECTORY}/lib"
+#            RUNTIME_OUTPUT_DIRECTORY "${X_BUILD_DIRECTORY}"
+#    )
 
 #    # Create shader folder
 #    set(SHADER_OUTPUT_DIR ${X_BUILD_DIRECTORY}/shaders)
@@ -67,4 +75,4 @@ foreach (X IN LISTS APP_TARGETS)
 #                BYPRODUCTS ${SHADER_OUTPUT_DIR}/${SHADER}.spv
 #        )
 #    endforeach ()
-endforeach ()
+#endforeach ()
