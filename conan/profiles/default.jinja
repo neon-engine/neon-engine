@@ -1,0 +1,12 @@
+{#
+  We get platform's system and machine architecture
+#}
+
+{% set current_build_platform = platform.system() %}
+{% set current_build_arch = platform.machine() %}
+{% set supported_build_platform = ['Windows', 'Linux', 'Macos'] %}
+{% set supported_build_arch = ["x86_64"] %}
+
+[settings]
+os={{ current_build_platform if current_build_platform in supported_build_platform else 'unsupported_os' }}
+arch={{ current_build_arch if current_build_arch in supported_build_arch else 'unsupported_arch' }}
