@@ -31,7 +31,6 @@ RUN apt update \
     && rm -r gl3w \
     && pipx install conan \
     && echo 'export PATH=/root/.local/bin:$PATH' >> ~/.bashrc \
-    && source ~/.bashrc \
-    && conan profile detect --force
+    && /root/.local/bin/conan profile detect --force
 
 ENTRYPOINT [ "/bin/bash" ]
