@@ -3,6 +3,7 @@ FROM --platform=linux/amd64 ubuntu:20.04
 ENV DEBIAN_FRONTEND=noninteractive
 ENV CC=/usr/bin/clang
 ENV CXX=/usr/bin/clang++
+ENV CONAN_HOME=/conan
 
 RUN apt-get update && apt-get -y install tzdata
 
@@ -29,7 +30,6 @@ RUN apt update \
     && python3 gl3w_gen.py --root /usr/local \
     && cd .. \
     && rm -r gl3w \
-    && pipx install conan \
-    && /root/.local/bin/conan profile detect --force
+    && pipx install conan
 
 ENTRYPOINT [ "/bin/bash" ]

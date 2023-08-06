@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 
-~/.local/bin/conan install ./conan \
+~/.local/bin/conan profile detect --force
+
+~/.local/bin/conan install . \
   -of build/conan \
-  --profile:build=conan/profiles/default.jinja \
-  --profile:build=conan/profiles/compiler-linux-clang.jinja \
   --build=missing \
-  -s build_type=Release
+  -s build_type=Release \
+  -s compiler.cppstd=gnu20
