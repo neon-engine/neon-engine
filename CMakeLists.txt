@@ -42,6 +42,8 @@ set(APP_TARGETS TestApp)
 #    endif()
 #endforeach()
 
+message("${ZLIB}")
+
 foreach (X IN LISTS APP_TARGETS)
     message("generating ${X}")
     add_executable(${X} app/${X}/main.cpp)
