@@ -22,8 +22,6 @@ message("runtime output directory: ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
 
 # Find locally installed packages
 find_package(Vulkan REQUIRED)
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/build/conan")
-find_package(ZLIB REQUIRED)
 
 # List of targets to generate build files
 set(APP_TARGETS TestApp)
@@ -47,7 +45,6 @@ message("${ZLIB}")
 foreach (X IN LISTS APP_TARGETS)
     message("generating ${X}")
     add_executable(${X} app/${X}/main.cpp)
-    target_link_libraries(${X} ZLIB::ZLIB)
 #    target_link_libraries(${X} PRIVATE Vulkan::Vulkan glfw)
 
     set(X_BUILD_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}/${X}")
