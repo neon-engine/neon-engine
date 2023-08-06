@@ -18,7 +18,7 @@ message("architecture: ${CMAKE_SYSTEM_PROCESSOR}")
 # Set output directories for anyone not using CLion
 set(TARGET_DIR_FOR_CMAKE_FILES cmake-build-${CMAKE_BUILD_TYPE})
 string(TOLOWER ${TARGET_DIR_FOR_CMAKE_FILES} TARGET_DIR_FOR_CMAKE_FILES)
-set(CMAKE_BINARY_DIR ${CMAKE_SOURCE_DIR}/bin/${TARGET_DIR_FOR_CMAKE_FILES})
+#set(CMAKE_BINARY_DIR ${CMAKE_SOURCE_DIR}/bin/${TARGET_DIR_FOR_CMAKE_FILES})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE})
 
 message("cmake binary directory: ${CMAKE_BINARY_DIR}")
@@ -26,7 +26,7 @@ message("runtime output directory: ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
 
 # Find locally installed packages
 find_package(Vulkan REQUIRED)
-find_package(ZLIB REQUIRED)
+
 
 # List of targets to generate build files
 set(APP_TARGETS TestApp)
@@ -45,13 +45,10 @@ set(APP_TARGETS TestApp)
 #    endif()
 #endforeach()
 
-message("${ZLIB}")
-
 foreach (X IN LISTS APP_TARGETS)
-    message("generating ${X}")
-    add_executable(${X} app/${X}/main.cpp)
-    target_link_libraries(${X} PRIVATE ZLIB::ZLIB)
-#    target_link_libraries(${X} PRIVATE Vulkan::Vulkan glfw)
+    message("generating build target ${X}")
+
+    add_subdirectory(app/${X})
 
     set(X_BUILD_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}/${X}")
 
