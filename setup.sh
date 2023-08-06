@@ -2,9 +2,6 @@
 
 echo "Setting up ProjectNeon"
 
-echo "Removing the old conan directory"
-rm -r build/conan
-
 (
   echo "building containers"
   # shellcheck disable=SC2164
@@ -13,11 +10,15 @@ rm -r build/conan
 )
 
 project_vol=$(pwd):/CLionProjects/ProjectNeon:z
-conan_vol=$(pwd)/conan/cache:/conan:z
 
 # shellcheck disable=SC2046
-podman run -i --rm -v "${project_vol}" -v "${conan_vol}" neon-dev.linux-x64:latest << EOF
-  cd /CLionProjects/ProjectNeon
+podman run -i --rm -v "${project_vol}" neon-dev.linux-x64:latest << EOF
+  cd /CLionProjects/ProjectNeon/vcpkg
 
-  scripts/restore-conan-deps.sh
+  ./bootstrap-vcpkg.sh -disableMetrics
+
+  ./vcpkg x-update-baseline
+
+  ./vcpkg install
+
 EOF
