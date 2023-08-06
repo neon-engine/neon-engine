@@ -1,9 +1,6 @@
 FROM --platform=linux/amd64 ubuntu:20.04
 
 ENV DEBIAN_FRONTEND=noninteractive
-ENV CC=/usr/bin/clang
-ENV CXX=/usr/bin/clang++
-ENV CONAN_HOME=/conan
 
 RUN apt-get update && apt-get -y install tzdata
 
@@ -22,14 +19,21 @@ RUN apt update \
           libvulkan-dev \
           vulkan-validationlayers-dev \
           spirv-tools \
-          python3.8-venv \
-          pipx \
+          build-essential \
+          tar \
+          curl \
+          zip \
+          unzip \
+          libxinerama-dev \
+          libxcursor-dev \
+          xorg-dev \
+          libglu1-mesa-dev \
+          pkg-config \
     && apt clean \
     && git clone https://github.com/skaslev/gl3w \
     && cd gl3w \
     && python3 gl3w_gen.py --root /usr/local \
     && cd .. \
-    && rm -r gl3w \
-    && pipx install conan
+    && rm -r gl3w
 
 ENTRYPOINT [ "/bin/bash" ]
