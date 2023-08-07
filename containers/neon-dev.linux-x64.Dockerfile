@@ -29,11 +29,6 @@ RUN apt update \
           xorg-dev \
           libglu1-mesa-dev \
           pkg-config \
-    && apt clean \
-    && git clone https://github.com/skaslev/gl3w \
-    && cd gl3w \
-    && python3 gl3w_gen.py --root /usr/local \
-    && cd .. \
-    && rm -r gl3w
+    && apt clean
 
 ENTRYPOINT [ "/bin/bash" ]
