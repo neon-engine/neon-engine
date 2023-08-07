@@ -19,8 +19,6 @@ podman run -i --rm -v "${project_vol}" neon-dev.linux-x64:latest << EOF
     ./bootstrap-vcpkg.sh -disableMetrics
 
     ./vcpkg x-update-baseline --add-initial-baseline
-
-    ./vcpkg install
   )
 
   if [[ ! -d /CLionProjects/ProjectNeon/external/gl3w ]]; then
