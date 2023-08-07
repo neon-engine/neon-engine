@@ -1,8 +1,8 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 
-set(CMAKE_TOOLCHAIN_FILE
-        "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake"
-        CACHE STRING "Vcpkg toolchain file")
+#set(CMAKE_TOOLCHAIN_FILE
+#        "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake"
+#        CACHE STRING "Vcpkg toolchain file")
 
 # General build settings
 project(ProjectNeon)
@@ -25,25 +25,15 @@ message("cmake binary directory: ${CMAKE_BINARY_DIR}")
 message("runtime output directory: ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
 
 # Find locally installed packages
-find_package(Vulkan REQUIRED)
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
+find_package(Vulkan REQUIRED)
+find_package(glfw3 CONFIG REQUIRED)
+find_package(glm CONFIG REQUIRED)
+find_package(gl3w REQUIRED)
 
 # List of targets to generate build files
 set(APP_TARGETS TestApp)
-#
-#list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/build/${CMAKE_BUILD_TYPE}")
-#find_package(ZLIB REQUIRED)
-#
-#add_executable(${PROJECT_NAME} app/TestConanApp/main.cpp)
-#target_link_libraries(${PROJECT_NAME} ZLIB::ZLIB)
-
-#file(GLOB APP_SUBDIRS "app/*")
-#
-#foreach(subdir ${APP_SUBDIRS})
-#    if(IS_DIRECTORY ${subdir})
-#        add_subdirectory(${subdir})
-#    endif()
-#endforeach()
 
 foreach (X IN LISTS APP_TARGETS)
     message("generating build target ${X}")

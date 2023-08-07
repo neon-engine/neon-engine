@@ -1,4 +1,7 @@
-find_package(ZLIB REQUIRED)
-
 add_executable(TestApp main.cpp)
-target_link_libraries(TestApp PRIVATE ZLIB::ZLIB)
+
+find_package(glfw3 CONFIG REQUIRED)
+find_package(glm CONFIG REQUIRED)
+find_package(gl3w REQUIRED)
+
+target_link_libraries(TestApp glm glfw3 gl3w)
