@@ -2,6 +2,8 @@
 
 echo "Setting up ProjectNeon"
 
+git pull --recurse-submodules
+
 (
   echo "building containers"
   # shellcheck disable=SC2164
