@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-echo "Setting up ProjectNeon"
+echo "Setting up ProjectNeon development with containerization"
 
 # Get the absolute path of the script
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -27,8 +27,10 @@ container_dir=/CLionProjects/ProjectNeon
 project_vol=${current_dir}:${container_dir}:z
 
 # shellcheck disable=SC2046
-podman run -i --rm -v "${project_vol}" -w ${container_dir} neon-dev.linux-x64:latest << EOF
+podman run -i --rm -v "${project_vol}" -w ${container_dir} neon-dev.linux-x64:latest -e << EOF
   (
+    cd vcpkg
+
     ./bootstrap-vcpkg.sh -disableMetrics
 
     ./vcpkg x-update-baseline --add-initial-baseline
