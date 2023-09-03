@@ -26,8 +26,10 @@ podman run -i --rm -v "${project_vol}" neon-dev.linux-x64:latest << EOF
   if [[ ! -d /CLionProjects/ProjectNeon/external/gl3w ]]; then
     git clone https://github.com/skaslev/gl3w
     cd gl3w
-    python3 gl3w_gen.py --root /CLionProjects/ProjectNeon/external/gl3w
+    python3 gl3w_gen.py --root /CLionProjects/ProjectNeon/external/gl3w --ext
     cd ..
     rm -r gl3w
+  else
+    echo "external/gl3w already exists, delete and rerun the script to regenerate"
   fi
 EOF
