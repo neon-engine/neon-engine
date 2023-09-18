@@ -32,18 +32,18 @@ find_package(glm CONFIG REQUIRED)
 find_package(gl3w REQUIRED)
 
 # List of targets to generate build files
-set(APP_TARGETS TestApp)
+set(APP_TARGETS TestApp LearnOpenGL)
 
-foreach (X IN LISTS APP_TARGETS)
-    message("generating build target ${X}")
+foreach (APP IN LISTS APP_TARGETS)
+    message("generating build target ${APP}")
 
-    add_subdirectory(app/${X})
+    add_subdirectory(app/${APP})
 
-    set(X_BUILD_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}/${X}")
+    set(X_BUILD_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}/${APP}")
 
     # Each executable will be in its own folder
     set_target_properties(
-            ${X}
+            ${APP}
             PROPERTIES
             ARCHIVE_OUTPUT_DIRECTORY "${X_BUILD_DIRECTORY}/lib"
             LIBRARY_OUTPUT_DIRECTORY "${X_BUILD_DIRECTORY}/lib"
@@ -56,7 +56,7 @@ foreach (X IN LISTS APP_TARGETS)
 #    file(MAKE_DIRECTORY ${SHADER_OUTPUT_DIR})
 #
 #    add_custom_command(
-#            TARGET ${X}
+#            TARGET ${APP}
 #            PRE_BUILD
 #            COMMAND ${CMAKE_COMMAND} -E cmake_echo_color --cyan "Compiling shaders..."
 #    )
@@ -65,12 +65,12 @@ foreach (X IN LISTS APP_TARGETS)
 #    foreach (SHADER_PATH IN LISTS CORE_SHADERS)
 #        get_filename_component(SHADER ${SHADER_PATH} NAME)
 #        add_custom_command(
-#                TARGET ${X}
+#                TARGET ${APP}
 #                COMMAND ${CMAKE_COMMAND} -E cmake_echo_color --cyan "Compiling ${SHADER} to ${SHADER}.spv"
 #        )
 #
 #        add_custom_command(
-#                TARGET ${X}
+#                TARGET ${APP}
 #                COMMAND glslc ${SHADER_PATH} -o ${SHADER_OUTPUT_DIR}/${SHADER}.spv
 #                BYPRODUCTS ${SHADER_OUTPUT_DIR}/${SHADER}.spv
 #        )
