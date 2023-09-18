@@ -39,19 +39,20 @@ foreach (APP IN LISTS APP_TARGETS)
 
     add_subdirectory(app/${APP})
 
-    set(X_BUILD_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}/${APP}")
+    set(BASE_APP_BIN_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}")
+    set(APP_BIN_DIRECTORY "${BASE_APP_BIN_DIRECTORY}/${APP}")
 
     # Each executable will be in its own folder
     set_target_properties(
             ${APP}
             PROPERTIES
-            ARCHIVE_OUTPUT_DIRECTORY "${X_BUILD_DIRECTORY}/lib"
-            LIBRARY_OUTPUT_DIRECTORY "${X_BUILD_DIRECTORY}/lib"
-            RUNTIME_OUTPUT_DIRECTORY "${X_BUILD_DIRECTORY}"
+            ARCHIVE_OUTPUT_DIRECTORY "${APP_BIN_DIRECTORY}/lib"
+            LIBRARY_OUTPUT_DIRECTORY "${APP_BIN_DIRECTORY}/lib"
+            RUNTIME_OUTPUT_DIRECTORY "${APP_BIN_DIRECTORY}"
     )
 
 #    # Create shader folder
-#    set(SHADER_OUTPUT_DIR ${X_BUILD_DIRECTORY}/shaders)
+#    set(SHADER_OUTPUT_DIR ${APP_BIN_DIRECTORY}/shaders)
 #    message("shaders will be compiled and output to ${SHADER_OUTPUT_DIR}")
 #    file(MAKE_DIRECTORY ${SHADER_OUTPUT_DIR})
 #
