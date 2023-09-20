@@ -1,8 +1,8 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <GL/gl3w.h>
-#include "shader.h"
+#include "GL/gl3w.h"
+#include "shader.hpp"
 
 Shader::Shader(const char *vertex_path, const char *fragment_path) {
   // 1. retrieve the vertex/fragment source code from filePath
@@ -10,9 +10,11 @@ Shader::Shader(const char *vertex_path, const char *fragment_path) {
   std::string fragment_code;
   std::ifstream vert_shader_file;
   std::ifstream frag_shader_file;
+
   // ensure ifstream objects can throw exceptions:
   vert_shader_file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
   frag_shader_file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+
   try {
     // open files
     vert_shader_file.open(vertex_path);
@@ -63,14 +65,14 @@ Shader::Shader(const char *vertex_path, const char *fragment_path) {
   }
 
   // shader Program
-  program_id_ = glCreateProgram();
-  glAttachShader(program_id_, vertex);
-  glAttachShader(program_id_, fragment);
-  glLinkProgram(program_id_);
+  _program_id = glCreateProgram();
+  glAttachShader(_program_id, vertex);
+  glAttachShader(_program_id, fragment);
+  glLinkProgram(_program_id);
   // print linking errors if any
-  glGetProgramiv(program_id_, GL_LINK_STATUS, &success);
+  glGetProgramiv(_program_id, GL_LINK_STATUS, &success);
   if (!success) {
-    glGetProgramInfoLog(program_id_, kBufSize, nullptr, info_log);
+    glGetProgramInfoLog(_program_id, kBufSize, nullptr, info_log);
     std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << info_log << std::endl;
   }
 
@@ -80,17 +82,20 @@ Shader::Shader(const char *vertex_path, const char *fragment_path) {
 }
 
 void Shader::Use() const {
-  glUseProgram(program_id_);
+  glUseProgram(_program_id);
 }
 
 void Shader::SetBool(const std::string &name, bool value) const {
-  glUniform1i(glGetUniformLocation(program_id_, name.c_str()), (int) value);
+  glUniform1i(glGetUniformLocation(_program_id, name.c_str()), (int) value);
 }
 
 void Shader::SetInt(const std::string &name, int value) const {
-  glUniform1i(glGetUniformLocation(program_id_, name.c_str()), value);
+  glUniform1i(glGetUniformLocation(_program_id, name.c_str()), value);
 }
 
 void Shader::SetFloat(const std::string &name, float value) const {
-  glUniform1f(glGetUniformLocation(program_id_, name.c_str()), value);
+  glUniform1f(glGetUniformLocation(_program_id, name.c_str()), value);
+}
+Shader::~Shader() {
+  glDeleteProgram(_program_id);
 }

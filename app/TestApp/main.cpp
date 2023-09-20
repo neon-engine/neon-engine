@@ -29,7 +29,7 @@ const char *fragmentShaderSource = R"(
     }
 )";
 
-// Cube vertices
+// Cube _vertices
 float vertices[] = {
         // Front face
         -0.5f, -0.5f, 0.5f,
