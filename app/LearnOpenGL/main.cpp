@@ -1,7 +1,7 @@
 #include <GL/gl3w.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
-#include "graphics/shader.h"
+#include "graphics/shaders/shader.hpp"
 
 void ProcessInput(GLFWwindow *window) {
   if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
@@ -48,6 +48,10 @@ int main() {
     glfwTerminate();
     return -1;
   }
+
+  int num_vertex_attributes_supported;
+  glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &num_vertex_attributes_supported);
+  std::cout << "Maximum number of vertex attributes supported: " << num_vertex_attributes_supported << std::endl;
 
   glViewport(0, 0, width, height);
 
