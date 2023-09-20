@@ -4,7 +4,7 @@
 #include <vector>
 
 class IShape {
- private:
+ protected:
   std::vector<float> _vertices;
   std::vector<int> _indices;
   std::vector<float> _texture_coords;
