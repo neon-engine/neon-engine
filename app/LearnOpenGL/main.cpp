@@ -2,6 +2,7 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include "graphics/shaders/shader.hpp"
+#include "graphics/geometry/triangle.hpp"
 
 void ProcessInput(GLFWwindow *window) {
   if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
@@ -54,6 +55,8 @@ int main() {
   std::cout << "Maximum number of vertex attributes supported: " << num_vertex_attributes_supported << std::endl;
 
   glViewport(0, 0, width, height);
+
+  Triangle triangle;
 
   // triangle
   float vertices[] = {
