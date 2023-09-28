@@ -2,7 +2,8 @@ set(TARGET LearnOpenGL)
 
 add_executable(${TARGET} main.cpp
         graphics/shaders/shader.cpp
-        graphics/geometry/triangle.cpp
+        graphics/triangle.cpp
+        graphics/plane.cpp
 )
 
 target_link_libraries(${TARGET} PRIVATE glm glfw gl3w)
