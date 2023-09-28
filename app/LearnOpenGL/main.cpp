@@ -59,32 +59,32 @@ int main() {
   Triangle triangle;
 
   // triangle
-  float vertices[] = {
-      0.5f, 0.5f, 0.0f,  // top right
-      0.5f, -0.5f, 0.0f,  // bottom right
-      -0.5f, -0.5f, 0.0f,  // bottom left
-      -0.5f, 0.5f, 0.0f   // top left
-  };
-  unsigned int indices[] = {  // note that we start from 0!
-      0, 1, 3,   // first triangle
-      1, 2, 3    // second triangle
-  };
+//  float vertices[] = {
+//      0.5f, 0.5f, 0.0f,  // top right
+//      0.5f, -0.5f, 0.0f,  // bottom right
+//      -0.5f, -0.5f, 0.0f,  // bottom left
+//      -0.5f, 0.5f, 0.0f   // top left
+//  };
+//  unsigned int indices[] = {  // note that we start from 0!
+//      0, 1, 3,   // first triangle
+//      1, 2, 3    // second triangle
+//  };
 
   Shader base_shader("shaders/base-shader.vert", "shaders/base-shader.frag");
 
-  unsigned int vao, vbo, ebo;
-  glGenVertexArrays(1, &vao);
-  glGenBuffers(1, &vbo);
-  glGenBuffers(1, &ebo);
-  glBindVertexArray(vao);
-  glBindBuffer(GL_ARRAY_BUFFER, vbo);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *) nullptr);
-  glEnableVertexAttribArray(0);
+//  unsigned int vao, vbo, ebo;
+//  glGenVertexArrays(1, &vao);
+//  glGenBuffers(1, &vbo);
+//  glGenBuffers(1, &ebo);
+//  glBindVertexArray(vao);
+//  glBindBuffer(GL_ARRAY_BUFFER, vbo);
+//  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+//
+//  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+//  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+//
+//  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *) nullptr);
+//  glEnableVertexAttribArray(0);
 
   while (!glfwWindowShouldClose(window)) {
     // input
@@ -102,8 +102,9 @@ int main() {
     glClear(GL_COLOR_BUFFER_BIT);
 
     base_shader.Use();
-    glBindVertexArray(vao);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+    triangle.Draw();
+//    glBindVertexArray(vao);
+//    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 
     // check and call events and swap the buffers
     glfwSwapBuffers(window);
