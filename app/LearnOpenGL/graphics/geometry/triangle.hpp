@@ -1,13 +1,13 @@
 #ifndef TRIANGLE_HPP
 #define TRIANGLE_HPP
 
-class Triangle {
- private:
-  float _vertices[9] = {
-      -0.5f, -0.5f, 0.0f,
-      0.5f, -0.5f, 0.0f,
-      0.0f, 0.5f, 0.0f
-  };
+#include "shape.hpp"
+
+class Triangle : public Shape {
+ public:
+  Triangle();
+  ~Triangle();
+  void Draw() const override;
 };
 
 #endif //TRIANGLE_HPP
