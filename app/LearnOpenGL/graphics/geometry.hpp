@@ -13,8 +13,10 @@ class Geometry {
   unsigned int _vao = 0;
   unsigned int _vbo = 0;
   unsigned int _ebo = 0;
+
   std::vector<float> _vertices;
   std::vector<int> _indices;
+
   void Init() {
     // Create array object and buffers. Remember to delete your buffers when the object is destroyed!
     glGenVertexArrays(1, &_vao);
@@ -33,13 +35,36 @@ class Geometry {
     glBufferData(GL_ARRAY_BUFFER, _vertices.size() * sizeof(float), &_vertices[0], GL_STATIC_DRAW);
     // Enable the usage of layout location 0 (check the vertex shader to see what this is)
     glEnableVertexAttribArray(0);
-    int vertex_size = 3 * sizeof(float);
+    int stride = 8 * sizeof(float);
+
+    // vertices
     glVertexAttribPointer(0,// This first parameter x should be the same as the number passed into the line "layout (location = x)" in the vertex shader. In this case, it's 0. Valid values are 0 to GL_MAX_UNIFORM_LOCATIONS.
                           3, // This second line tells us how any components there are per vertex. In this case, it's 3 (we have an x, y, and z component)
                           GL_FLOAT, // What type these components are
                           GL_FALSE, // GL_TRUE means the values should be normalized. GL_FALSE means they shouldn't
-                          vertex_size, // Offset between consecutive indices. Since each of our vertices have 3 floats, they should have the size of 3 floats in between
+                          stride, // Offset between consecutive indices. Since each of our vertices have 3 floats, they should have the size of 3 floats in between
                           (void *) 0); // Offset of the first vertex's component. In our case it's 0 since we don't pad the vertices array with anything.
+    glEnableVertexAttribArray(0);
+
+    // colors
+    glVertexAttribPointer(
+        1,
+        2,
+        GL_FLOAT,
+        GL_FALSE,
+        stride,
+        (void *) (3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+
+    // texture coordinates
+    glVertexAttribPointer(
+        2,
+        2,
+        GL_FLOAT,
+        GL_FALSE,
+        stride,
+        (void *) (6 * sizeof(float)));
+    glEnableVertexAttribArray(2);
 
     // We've sent the vertex data over to OpenGL, but there's still something missing.
     // In what order should it draw those vertices? That's why we'll need a GL_ELEMENT_ARRAY_BUFFER for this.
