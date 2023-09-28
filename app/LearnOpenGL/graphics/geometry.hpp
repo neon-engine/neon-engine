@@ -1,4 +1,5 @@
 #pragma clang diagnostic push
+#pragma ide diagnostic ignored "modernize-use-nullptr"
 #pragma ide diagnostic ignored "cppcoreguidelines-narrowing-conversions"
 
 #ifndef SHAPE_HPP
@@ -7,7 +8,7 @@
 #include <vector>
 #include "GL/gl3w.h"
 
-class Shape {
+class Geometry {
  protected:
   unsigned int _vao = 0;
   unsigned int _vbo = 0;
@@ -38,7 +39,7 @@ class Shape {
                           GL_FLOAT, // What type these components are
                           GL_FALSE, // GL_TRUE means the values should be normalized. GL_FALSE means they shouldn't
                           vertex_size, // Offset between consecutive indices. Since each of our vertices have 3 floats, they should have the size of 3 floats in between
-                          (void *) nullptr); // Offset of the first vertex's component. In our case it's 0 since we don't pad the vertices array with anything.
+                          (void *) 0); // Offset of the first vertex's component. In our case it's 0 since we don't pad the vertices array with anything.
 
     // We've sent the vertex data over to OpenGL, but there's still something missing.
     // In what order should it draw those vertices? That's why we'll need a GL_ELEMENT_ARRAY_BUFFER for this.

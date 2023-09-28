@@ -1,9 +1,9 @@
 #ifndef TRIANGLE_HPP
 #define TRIANGLE_HPP
 
-#include "shape.hpp"
+#include "geometry.hpp"
 
-class Triangle : public Shape {
+class Triangle : public Geometry {
  public:
   Triangle();
   ~Triangle();
