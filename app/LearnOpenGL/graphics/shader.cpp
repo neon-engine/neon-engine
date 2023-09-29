@@ -82,7 +82,9 @@ Shader::Shader(const char *vertex_path, const char *fragment_path) {
 }
 
 void Shader::Use() const {
-  glUseProgram(_program_id);
+  if (_program_id) {
+    glUseProgram(_program_id);
+  }
 }
 
 void Shader::SetBool(const std::string &name, bool value) const {
