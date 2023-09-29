@@ -1,13 +1,13 @@
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "OCUnusedMacroInspection"
 
+#define STB_IMAGE_IMPLEMENTATION
+
 #include <GL/gl3w.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
-#define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 #include "graphics/shader.hpp"
-#include "graphics/triangle.hpp"
 #include "graphics/plane.hpp"
 
 void ProcessInput(GLFWwindow *window) {
