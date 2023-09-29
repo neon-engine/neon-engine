@@ -1,14 +1,15 @@
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "OCUnusedMacroInspection"
 
-#define STB_IMAGE_IMPLEMENTATION
+
 
 #include <GL/gl3w.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
-#include <stb_image.h>
+
 #include "graphics/shader.hpp"
 #include "graphics/plane.hpp"
+#include "graphics/texture.hpp"
 
 void ProcessInput(GLFWwindow *window) {
   if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
@@ -63,49 +64,14 @@ int main() {
   glViewport(0, 0, width, height);
 
   Shader base_shader(
-      "shaders/base-shader.vert",
-      "shaders/base-shader.frag");
+      "assets/shaders/base-shader.vert",
+      "assets/shaders/base-shader.frag");
 
   Shader textured_shader(
-      "shaders/textured-shader.vert",
-      "shaders/textured-shader.frag");
+      "assets/shaders/textured-shader.vert",
+      "assets/shaders/textured-shader.frag");
 
-  int tex_width, tex_height, nr_channels;
-  stbi_set_flip_vertically_on_load(true);
-  unsigned char *data = stbi_load(
-      "assets/textures/concrete.png",
-      &tex_width,
-      &tex_height,
-      &nr_channels,
-      STBI_rgb);
-
-  unsigned int texture;
-  glGenTextures(1, &texture);
-  glBindTexture(GL_TEXTURE_2D, texture);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-  if (data) {
-    glTexImage2D(GL_TEXTURE_2D,
-                 0,
-                 GL_RGB,
-                 tex_width,
-                 tex_height,
-                 0,
-                 GL_RGB,
-                 GL_UNSIGNED_BYTE,
-                 data);
-    glGenerateMipmap(GL_TEXTURE_2D);
-  } else {
-    std::cout << "Failed to load texture" << std::endl;
-  }
-
-  // free the memory after we are done creating texture
-  stbi_image_free(data);
-
-  glBindTexture(GL_TEXTURE_2D, 0);
+  Texture texture("assets/textures/concrete.png");
 
   Plane plane;
 
@@ -125,7 +91,7 @@ int main() {
     glClear(GL_COLOR_BUFFER_BIT);
 
     textured_shader.Use();
-    glBindTexture(GL_TEXTURE_2D, texture);
+    texture.Use();
     plane.Draw();
 //    triangle.Draw();
 
