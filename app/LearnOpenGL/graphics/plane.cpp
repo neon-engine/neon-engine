@@ -2,12 +2,12 @@
 
 Plane::Plane() {
   _vertices = std::vector({
-                              // positions      // colors         // texture coords
-                              // (x, y, z)      // (r, g, b)      // (s, t)
-                              0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,   // top right
-                              0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,   // bottom right
-                              -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,   // bottom left
-                              -0.5f, 0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f    // top left
+                              // positions         // colors            // texture coords
+                              // (x, y, z)         // (r, g, b)         // (s, t)
+                              00.5f, 00.5f, 00.0f, 01.0f, 00.0f, 00.0f, 01.0f, 01.0f,   // top right
+                              00.5f, -0.5f, 00.0f, 00.0f, 01.0f, 00.0f, 01.0f, 00.0f,   // bottom right
+                              -0.5f, -0.5f, 00.0f, 00.0f, 00.0f, 01.0f, 00.0f, 00.0f,   // bottom left
+                              -0.5f, 00.5f, 00.0f, 01.0f, 01.0f, 00.0f, 00.0f, 01.0f    // top left
                           });
   _indices = std::vector({
                              0, 1, 3,
