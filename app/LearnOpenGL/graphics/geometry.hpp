@@ -49,7 +49,7 @@ class Geometry {
     // colors
     glVertexAttribPointer(
         1,
-        2,
+        3,
         GL_FLOAT,
         GL_FALSE,
         stride,
