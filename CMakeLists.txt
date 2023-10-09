@@ -33,17 +33,15 @@ find_package(gl3w REQUIRED)
 find_package(Stb REQUIRED)
 
 # List of targets to generate build files
-set(APP_TARGETS
-        LearnOpenGL
-)
+set(APP_TARGETS LearnOpenGL)
 
 foreach (APP IN LISTS APP_TARGETS)
     message("generating build target ${APP}")
 
-    add_subdirectory(app/${APP})
-
     set(BASE_APP_BIN_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}")
     set(APP_BIN_DIRECTORY "${BASE_APP_BIN_DIRECTORY}/${APP}")
+
+    add_subdirectory(app/${APP})
 
     # Each executable will be in its own folder
     set_target_properties(
