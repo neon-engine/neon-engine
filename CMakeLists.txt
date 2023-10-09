@@ -33,7 +33,9 @@ find_package(gl3w REQUIRED)
 find_package(Stb REQUIRED)
 
 # List of targets to generate build files
-set(APP_TARGETS TestApp LearnOpenGL)
+set(APP_TARGETS
+        LearnOpenGL
+)
 
 foreach (APP IN LISTS APP_TARGETS)
     message("generating build target ${APP}")
@@ -51,30 +53,4 @@ foreach (APP IN LISTS APP_TARGETS)
             LIBRARY_OUTPUT_DIRECTORY "${APP_BIN_DIRECTORY}/lib"
             RUNTIME_OUTPUT_DIRECTORY "${APP_BIN_DIRECTORY}"
     )
-
-#    # Create shader folder
-#    set(SHADER_OUTPUT_DIR ${APP_BIN_DIRECTORY}/shaders)
-#    message("shaders will be compiled and output to ${SHADER_OUTPUT_DIR}")
-#    file(MAKE_DIRECTORY ${SHADER_OUTPUT_DIR})
-#
-#    add_custom_command(
-#            TARGET ${APP}
-#            PRE_BUILD
-#            COMMAND ${CMAKE_COMMAND} -E cmake_echo_color --cyan "Compiling shaders..."
-#    )
-#
-#    file(GLOB CORE_SHADERS ${PROJECT_SOURCE_DIR}/src/core/shaders/*)
-#    foreach (SHADER_PATH IN LISTS CORE_SHADERS)
-#        get_filename_component(SHADER ${SHADER_PATH} NAME)
-#        add_custom_command(
-#                TARGET ${APP}
-#                COMMAND ${CMAKE_COMMAND} -E cmake_echo_color --cyan "Compiling ${SHADER} to ${SHADER}.spv"
-#        )
-#
-#        add_custom_command(
-#                TARGET ${APP}
-#                COMMAND glslc ${SHADER_PATH} -o ${SHADER_OUTPUT_DIR}/${SHADER}.spv
-#                BYPRODUCTS ${SHADER_OUTPUT_DIR}/${SHADER}.spv
-#        )
-#    endforeach ()
 endforeach ()
