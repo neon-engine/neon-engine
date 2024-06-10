@@ -2,8 +2,7 @@
 <project version="4">
   <component name="CMakeSharedSettings">
     <configurations>
-      <configuration PROFILE_NAME="Debug" ENABLED="false" GENERATION_DIR="build/Debug" CONFIG_NAME="Debug" GENERATION_OPTIONS="-G Ninja" />
-      <configuration PROFILE_NAME="Debug (Native)" ENABLED="true" GENERATION_DIR="build/Debug-Native" CONFIG_NAME="Debug" TOOLCHAIN_NAME="Native" GENERATION_OPTIONS="-G Ninja" />
+      <configuration PROFILE_NAME="Debug" ENABLED="true" GENERATION_DIR="build/Debug" CONFIG_NAME="Debug" GENERATION_OPTIONS="-G Ninja" />
     </configurations>
   </component>
 </project>
