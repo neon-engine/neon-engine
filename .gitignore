@@ -3,5 +3,5 @@ cmake-build-*
 bin/
 build/
 
-# vcpkg
-vcpkg_installed/
+tools/sdk/*
+!tools/sdk/.gitkeep
