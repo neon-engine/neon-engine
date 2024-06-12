@@ -3,6 +3,6 @@ cmake-build-*
 bin/
 build/
 
-tools/sdk/*
 tools/build.log
+tools/sdk/*
 !tools/sdk/.gitkeep
