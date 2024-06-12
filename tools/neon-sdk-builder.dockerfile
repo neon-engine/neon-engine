@@ -2,8 +2,6 @@ ARG ARCH=amd64
 ARG OS_VERSION=8.10
 FROM $ARCH/almalinux:8.10
 
-RUN mkdir /sdk
-
 RUN dnf update -y &&  \
     dnf install -y 'dnf-command(config-manager)' && \
     dnf group install -y "Development Tools" && \
@@ -15,4 +13,7 @@ RUN dnf update -y &&  \
         mpfr-devel \
         libmpc-devel \
     && \
+    dnf clean all && \
     echo $OS_VERSION > /etc/version_id
+
+ENTRYPOINT [ "/bin/bash", "-l", "-c" ]
