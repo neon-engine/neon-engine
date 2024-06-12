@@ -14,6 +14,7 @@ RUN dnf update -y &&  \
         mpfr-devel \
         libmpc-devel \
         texinfo \
+        rsync \
     && \
     dnf clean all && \
     echo ${OS_VERSION} > /etc/version_id && \

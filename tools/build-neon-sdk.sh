@@ -15,9 +15,10 @@ BUILD_TARGET=linux
 
 trap 'echo "build interrupted"; exit' SIGINT
 
-OPTIONS=$(getopt -o : --long help,arch: -n "$0" -- "$@")
+OPTIONS=$(getopt -o "" --long "help,arch:,force" -n "$0" -- "$@")
 # shellcheck disable=SC2181
 if [ $? -ne 0 ]; then
+  echo "error setting OPTIONS"
   exit 1
 fi
 
@@ -32,6 +33,7 @@ function help() {
   options:
     --help ) Displays this dialog
     --arch ) The architecture to build the SDK for, supported values are: x86_64
+    --force ) Forces the script to remove SDK if it exists and rebuild it
 EOF
 }
 
@@ -50,7 +52,9 @@ if [[ ! -d ./sdk ]]; then
 fi
 
 ERROR=
+FORCE_REBUILD=
 while true; do
+  echo "arg: $1"
   case "$1" in
     --help)
       help
@@ -63,6 +67,10 @@ while true; do
         ERROR=true
       fi
       shift 2
+      ;;
+    --force)
+      FORCE_REBUILD=1
+      shift 1
       ;;
     --)
       shift
@@ -88,6 +96,11 @@ DOWNLOAD_REPO="./sdk/download"
 if [[ -d "${TARGET_SDK_LOCATION}" ]]; then
   for (( i = 0; i <= 3; i++ ))
   do
+    if [[ "${FORCE_REBUILD}" = "1" ]]; then
+      echo "forcing removal of ${TARGET_SDK_LOCATION}, and rebuilding it"
+      rm -rf "${TARGET_SDK_LOCATION}"
+      break
+    fi
     if [[ "$i" = 3 ]]; then
       echo "could not get a response from the user"
       exit 4
@@ -97,7 +110,7 @@ if [[ -d "${TARGET_SDK_LOCATION}" ]]; then
       echo "Exiting script, not rebuilding ${TARGET_SDK_LOCATION}"
       exit 0
     elif [[ "${response}" = "yes" ]]; then
-      rm "${TARGET_SDK_LOCATION}"
+      rm -rf "${TARGET_SDK_LOCATION}"
       break
     else
       echo "please answer [yY]es or [nN]o"
@@ -180,6 +193,7 @@ podman run -i --rm -v "${TARGET_SDK_LOCATION}:/sdk:z" -v "${DOWNLOAD_REPO}:/down
     --target=${BUILD_ARCH}-${BUILD_TARGET} \
     --with-headers=/sdk/${BUILD_ARCH}-${BUILD_TARGET}/include \
     --disable-multilib \
+    --disable-werror \
     libc_cv_forced_unwind=yes
   make install-bootstrap-headers=yes install-headers
   make -j$(nproc)
