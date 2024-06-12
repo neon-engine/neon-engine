@@ -54,7 +54,6 @@ fi
 ERROR=
 FORCE_REBUILD=
 while true; do
-  echo "arg: $1"
   case "$1" in
     --help)
       help
@@ -196,7 +195,7 @@ podman run -i --rm -v "${TARGET_SDK_LOCATION}:/sdk:z" -v "${DOWNLOAD_REPO}:/down
     --disable-werror \
     libc_cv_forced_unwind=yes
   make install-bootstrap-headers=yes install-headers
-  make -j$(nproc)
+  make -j$(nproc) csu/subdir_lib
   install csu/crt1.o csu/crti.o csu/crtn.o /sdk/${BUILD_ARCH}-${BUILD_TARGET}/lib
   ${BUILD_ARCH}-${BUILD_TARGET}-gcc -nostdlib -nostartfiles -shared -x c /dev/null -o /sdk/${BUILD_ARCH}-${BUILD_TARGET}/lib/libc.so
   touch /sdk/${BUILD_ARCH}-${BUILD_TARGET}/include/gnu/stubs.h
