@@ -24,9 +24,9 @@ RUN dnf update -y \
         perl-ExtUtils-MakeMaker \
         perl-IPC-Cmd \
     && dnf clean all \
-    && echo ${OS_VERSION} > /etc/version_id \
-    && mkdir /sdk
+    && echo ${OS_VERSION} > /etc/version_id
 
 ENV PATH="/sdk/bin:${PATH}"
+ENV MENUCONFIG_COLOR=blackbg
 
 ENTRYPOINT [ "/bin/bash" ]
