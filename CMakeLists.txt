@@ -26,12 +26,12 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 #find_package(glfw3 CONFIG REQUIRED)
 #find_package(glm CONFIG REQUIRED)
 find_package(gl3w REQUIRED)
-#find_package(Stb REQUIRED)
+find_package(Stb REQUIRED)
 
 # List of targets to generate build files
 set(APP_TARGETS
         HelloWorld
-        # LearnOpenGL
+        LearnOpenGL
 )
 
 foreach (APP IN LISTS APP_TARGETS)
