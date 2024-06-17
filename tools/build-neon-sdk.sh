@@ -33,7 +33,7 @@ EOF
 
 function ask_yes_or_no() {
     read -rp "$1 [Yn]: "
-    case $(echo "$REPLY" | tr '[A-Z]' '[a-z]') in
+    case $(echo "$REPLY" | tr "[:upper:]" "[:lower:]") in
         y|yes) echo "yes" ;;
         n|no)  echo "no"  ;;
         *)     echo "yes"   ;;
