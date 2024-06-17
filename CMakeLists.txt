@@ -27,7 +27,6 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 #find_package(glm CONFIG REQUIRED)
 find_package(gl3w REQUIRED)
 
-set(GLFW_BUILD_WAYLAND OFF)
 add_subdirectory(external/glfw)
 add_subdirectory(external/glm)
 
