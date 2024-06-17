@@ -1,14 +1,16 @@
 #ifndef TEXTURE_HPP
 #define TEXTURE_HPP
 
-class Texture {
- private:
-  unsigned int _texture_id;
- public:
-  explicit Texture(const char *texture_path);
-  ~Texture();
+class Texture
+{
+private:
+    unsigned int _texture_id;
 
-  void Use() const;
+public:
+    explicit Texture(const char* texture_path);
+    ~Texture();
+
+    void Use() const;
 };
 
 #endif //TEXTURE_HPP

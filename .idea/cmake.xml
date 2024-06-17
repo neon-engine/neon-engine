@@ -2,7 +2,7 @@
 <project version="4">
   <component name="CMakeSharedSettings">
     <configurations>
-      <configuration PROFILE_NAME="Debug" ENABLED="true" GENERATION_DIR="build/Debug" CONFIG_NAME="Debug" GENERATION_OPTIONS="-G Ninja" />
+      <configuration PROFILE_NAME="Debug-x86_64-linux" ENABLED="true" GENERATION_DIR="build/Debug" CONFIG_NAME="Debug" GENERATION_OPTIONS="-G Ninja -DCMAKE_TOOLCHAIN_FILE=tools/sdk/neon-sdk.x86_64-linux/share/buildroot/toolchainfile.cmake" />
     </configurations>
   </component>
 </project>
