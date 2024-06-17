@@ -27,6 +27,7 @@ RUN dnf update -y \
         perl-IPC-Cmd \
     && dnf clean all \
     && mkdir -p /build /sdk \
+    && chmod 777 /build \
     && echo ${OS_VERSION} > /etc/version_id
 
 ENTRYPOINT [ "/bin/bash" ]

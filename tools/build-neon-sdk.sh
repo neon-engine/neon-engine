@@ -118,12 +118,13 @@ if [[ "${BUILD_TARGET}" == "linux" ]]; then
     -v "${TARGET_SDK_LOCATION}:/sdk:z" \
     -e FORCE_UNSAFE_CONFIGURE=1 \
     -e HOME=/home \
+    --userns=keep-id \
     neon-sdk-builder:latest -c "
       git clone -b ${TOOLCHAIN_BRANCH} ${TOOLCHAIN_REPO} /build;
       cd /build;
       cp neon-${BUILD_ARCH}.config .config;
       make syncconfig;
       make sdk;
-      tar xzf \"/build/output/images/${BUILD_ARCH}-neon-linux-gnu_sdk-buildroot.tar.gz\" -C /sdk;
+      tar xzf \"/build/output/images/${BUILD_ARCH}-neon-linux-gnu_sdk-buildroot.tar.gz\" --strip-components=1 -C /sdk;
     "
 fi
