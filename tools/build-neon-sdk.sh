@@ -2,16 +2,10 @@
 
 set -euo pipefail
 
-BINUTILS_VERSION=2.42
-GCC_VERSION=13.3.0
-GLIBC_VERSION=2.28
-KERNEL_MAJOR=5
-KERNEL_MINOR=15
-KERNEL_PATCH=160
-GDB_VERSION=14.1
-
 BUILD_ARCH=x86_64
 BUILD_TARGET=linux
+TOOLCHAIN_REPO=https://github.com/neon-engine/buildroot
+TOOLCHAIN_BRANCH=2024.02.x
 
 trap 'echo "build interrupted"; exit' SIGINT
 
@@ -38,11 +32,11 @@ EOF
 }
 
 function ask_yes_or_no() {
-    read -p "$1 ([yY]es or [nN]o): "
-    case $(echo $REPLY | tr '[A-Z]' '[a-z]') in
+    read -rp "$1 [Yn]: "
+    case $(echo "$REPLY" | tr '[A-Z]' '[a-z]') in
         y|yes) echo "yes" ;;
         n|no)  echo "no"  ;;
-        *)     echo "?"   ;;
+        *)     echo "yes"   ;;
     esac
 }
 
@@ -85,41 +79,51 @@ if [[ -n "${ERROR}" ]]; then
   exit 3
 fi
 
-podman build -t neon-sdk-builder -f neon-sdk-builder.dockerfile
-
 TARGET_SDK_LOCATION="./sdk/neon-sdk.${BUILD_ARCH}-${BUILD_TARGET}"
-DOWNLOAD_REPO="./sdk/download"
 
+echo "Building SDK for:"
+echo "Platform: ${BUILD_TARGET}"
+echo "Arch: ${BUILD_ARCH}"
+echo "SDK will be deployed to: ${TARGET_SDK_LOCATION}"
+echo ""
 
+if [[ -z "${FORCE_REBUILD}" ]]; then
+  response=$(ask_yes_or_no "Would you like to proceed?")
+  if [[ "${response}" = "no" ]]; then
+    echo "Exiting script, not rebuilding ${TARGET_SDK_LOCATION}"
+    exit 4
+  fi
+fi
+
+if [[ -d "${TARGET_SDK_LOCATION}" ]] && [[ -n "${FORCE_REBUILD}" ]]; then
+  echo "forcing removal of ${TARGET_SDK_LOCATION}, and rebuilding it"
+  rm -rf "${TARGET_SDK_LOCATION}"
+fi
 
 if [[ -d "${TARGET_SDK_LOCATION}" ]]; then
-  for (( i = 0; i <= 3; i++ ))
-  do
-    if [[ "${FORCE_REBUILD}" = "1" ]]; then
-      echo "forcing removal of ${TARGET_SDK_LOCATION}, and rebuilding it"
-      rm -rf "${TARGET_SDK_LOCATION}"
-      break
-    fi
-    if [[ "$i" = 3 ]]; then
-      echo "could not get a response from the user"
-      exit 4
-    fi
-    response=$(ask_yes_or_no "Found ${TARGET_SDK_LOCATION}, would you like to rebuild it? ")
-    if [[ "${response}" = "no" ]]; then
-      echo "Exiting script, not rebuilding ${TARGET_SDK_LOCATION}"
-      exit 0
-    elif [[ "${response}" = "yes" ]]; then
-      rm -rf "${TARGET_SDK_LOCATION}"
-      break
-    else
-      echo "please answer [yY]es or [nN]o"
-    fi
-  done
+  response=$(ask_yes_or_no "Found ${TARGET_SDK_LOCATION}, would you like to rebuild it?")
+  if [[ "${response}" = "no" ]]; then
+    echo "Exiting script, not rebuilding ${TARGET_SDK_LOCATION}"
+    exit 5
+  else
+    rm -rf "${TARGET_SDK_LOCATION}"
+  fi
 fi
+
 mkdir -p "${TARGET_SDK_LOCATION}"
-mkdir -p "${DOWNLOAD_REPO}"
 
-podman run -i --rm -v "${TARGET_SDK_LOCATION}:/sdk:z" -v "${DOWNLOAD_REPO}:/download:z" neon-sdk-builder:latest << EOF
-  trap 'exit 0' SIGINT
-
-EOF
+if [[ "${BUILD_TARGET}" == "linux" ]]; then
+  podman build -t neon-sdk-builder -f neon-sdk-builder.dockerfile
+  podman run -i --rm \
+    -v "${TARGET_SDK_LOCATION}:/sdk:z" \
+    -e FORCE_UNSAFE_CONFIGURE=1 \
+    -e HOME=/home \
+    neon-sdk-builder:latest -c "
+      git clone -b ${TOOLCHAIN_BRANCH} ${TOOLCHAIN_REPO} /build;
+      cd /build;
+      cp neon-${BUILD_ARCH}.config .config;
+      make syncconfig;
+      make sdk;
+      tar xzf \"/build/output/images/${BUILD_ARCH}-neon-linux-gnu_sdk-buildroot.tar.gz\" -C /sdk;
+    "
+fi
