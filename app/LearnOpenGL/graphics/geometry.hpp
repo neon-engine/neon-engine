@@ -32,7 +32,7 @@ protected:
         glBindBuffer(GL_ARRAY_BUFFER, _vbo);
         // glBufferData populates the most recently bound buffer with data starting at the 3rd argument and ending after
         // the 2nd argument number of indices. How does OpenGL know how long an index spans? Go to glVertexAttribPointer.
-        glBufferData(GL_ARRAY_BUFFER, _vertices.size() * sizeof(float), &_vertices[0], GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(_vertices.size() * sizeof(float)), &_vertices[0], GL_STATIC_DRAW);
         // Enable the usage of layout location 0 (check the vertex shader to see what this is)
         glEnableVertexAttribArray(0);
         constexpr int stride = 8 * sizeof(float);
@@ -74,7 +74,7 @@ protected:
         // We've sent the vertex data over to OpenGL, but there's still something missing.
         // In what order should it draw those vertices? That's why we'll need a GL_ELEMENT_ARRAY_BUFFER for this.
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ebo);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, _indices.size() * sizeof(int), &_indices[0], GL_STATIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLsizeiptr>(_indices.size() * sizeof(int)), &_indices[0], GL_STATIC_DRAW);
 
         // Unbind the currently bound buffer so that we don't accidentally make unwanted changes to it.
         glBindBuffer(GL_ARRAY_BUFFER, 0);
