@@ -13,7 +13,7 @@ Texture::Texture(const char* texture_path, const GLenum format)
         glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &Texture::MaxTextureUnits);
     }
 
-    int tex_width, tex_height;
+    GLint tex_width, tex_height;
     int nr_channels;
     stbi_set_flip_vertically_on_load(true);
     if (unsigned char* data = stbi_load(
@@ -21,7 +21,7 @@ Texture::Texture(const char* texture_path, const GLenum format)
         &tex_width,
         &tex_height,
         &nr_channels,
-        STBI_rgb))
+        STBI_default))
     {
         glGenTextures(1, &_texture_id);
         glBindTexture(GL_TEXTURE_2D, _texture_id);
@@ -61,7 +61,7 @@ Texture::~Texture()
 }
 
 // ReSharper disable once CppParameterNamesMismatch
-void Texture::Use(const int value) const
+void Texture::Use(const GLint value) const
 {
     if (const GLint unit = value; unit >= 0 && unit < MaxTextureUnits) {
         const GLenum textureUnit = GL_TEXTURE0 + unit;
@@ -70,5 +70,4 @@ void Texture::Use(const int value) const
     } else {
         std::cerr << "Error: Texture unit " << unit << " is out of range. Supported range: 0 to " << (MaxTextureUnits - 1) << std::endl;
     }
-
 }
