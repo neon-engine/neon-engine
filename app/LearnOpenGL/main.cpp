@@ -74,9 +74,10 @@ int main()
         "assets/shaders/mix-textured-shader.vert",
         "assets/shaders/mix-textured-shader.frag");
 
-    const Texture texture1("assets/textures/concrete.png");
+    const Texture texture1("assets/textures/container.jpg");
     const Texture texture2("assets/textures/awesomeface.png", GL_RGBA);
 
+    mix_textured_shader.Use();
     mix_textured_shader.SetInt("texture1", 0);
     mix_textured_shader.SetInt("texture2", 1);
 

@@ -13,7 +13,7 @@ Texture::Texture(const char* texture_path, const GLenum format)
         glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &Texture::MaxTextureUnits);
     }
 
-    GLint tex_width, tex_height;
+    int tex_width, tex_height;
     int nr_channels;
     stbi_set_flip_vertically_on_load(true);
     if (unsigned char* data = stbi_load(
@@ -31,7 +31,7 @@ Texture::Texture(const char* texture_path, const GLenum format)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexImage2D(GL_TEXTURE_2D,
                      0,
-                     GL_RGB,
+                     format,
                      tex_width,
                      tex_height,
                      0,
