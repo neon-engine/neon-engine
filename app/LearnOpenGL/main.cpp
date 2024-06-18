@@ -28,8 +28,8 @@ int main()
     // prevent window from resizing
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
-    int width = 800;
-    int height = 600;
+    constexpr int width = 800;
+    constexpr int height = 600;
 
     // Create the window
     GLFWwindow* window = glfwCreateWindow(
