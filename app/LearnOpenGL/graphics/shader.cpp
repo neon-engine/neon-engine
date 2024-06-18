@@ -41,7 +41,7 @@ Shader::Shader(const char* vertex_path, const char* fragment_path)
 
     // 2. compile shaders
     unsigned int vertex, fragment;
-    const int kBufSize = 512;
+    constexpr int kBufSize = 512;
     int success;
     char info_log[kBufSize];
 

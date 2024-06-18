@@ -62,20 +62,22 @@ int main()
 
     glViewport(0, 0, width, height);
 
-    Shader base_shader(
+    const Shader base_shader(
         "assets/shaders/base-shader.vert",
         "assets/shaders/base-shader.frag");
 
-    Shader textured_shader(
+    const Shader textured_shader(
         "assets/shaders/textured-shader.vert",
         "assets/shaders/textured-shader.frag");
 
-    Texture texture("assets/textures/concrete.png");
+    const Texture texture("assets/textures/concrete.png");
 
-    Plane plane;
+
 
     while (!glfwWindowShouldClose(window))
     {
+        Plane plane;
+
         // input
         ProcessInput(window);
 

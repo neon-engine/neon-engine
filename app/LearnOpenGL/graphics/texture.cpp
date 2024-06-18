@@ -12,13 +12,12 @@ Texture::Texture(const char* texture_path)
 {
     int tex_width, tex_height, nr_channels;
     stbi_set_flip_vertically_on_load(true);
-    unsigned char* data = stbi_load(
+    if (unsigned char* data = stbi_load(
         texture_path,
         &tex_width,
         &tex_height,
         &nr_channels,
-        STBI_rgb);
-    if (data)
+        STBI_rgb))
     {
         glGenTextures(1, &_texture_id);
         glBindTexture(GL_TEXTURE_2D, _texture_id);
