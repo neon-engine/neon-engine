@@ -32,7 +32,7 @@ Shader::Shader(const char* vertex_path, const char* fragment_path)
         vertex_code = vert_shader_stream.str();
         fragment_code = frag_shader_stream.str();
     }
-    catch (const std::ifstream::failure& e)
+    catch (const std::ifstream::failure&)
     {
         std::cout << "ERROR::SHADER::FILE_NOT_SUCCESSFULLY_READ" << std::endl;
     }
@@ -95,17 +95,17 @@ void Shader::Use() const
     }
 }
 
-void Shader::SetBool(const std::string& name, bool value) const
+void Shader::SetBool(const std::string& name, const bool value) const
 {
-    glUniform1i(glGetUniformLocation(_program_id, name.c_str()), (int)value);
+    glUniform1i(glGetUniformLocation(_program_id, name.c_str()), static_cast<int>(value));
 }
 
-void Shader::SetInt(const std::string& name, int value) const
+void Shader::SetInt(const std::string& name, const int value) const
 {
     glUniform1i(glGetUniformLocation(_program_id, name.c_str()), value);
 }
 
-void Shader::SetFloat(const std::string& name, float value) const
+void Shader::SetFloat(const std::string& name, const float value) const
 {
     glUniform1f(glGetUniformLocation(_program_id, name.c_str()), value);
 }

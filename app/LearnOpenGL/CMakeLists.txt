@@ -7,9 +7,6 @@ add_executable(${TARGET} main.cpp)
 target_link_libraries(${TARGET} PRIVATE glm glfw gl3w)
 target_link_libraries(${TARGET} PRIVATE graphics)
 
-message("app bin dir: ${APP_BIN_DIRECTORY}")
-message("base app bin dir: ${BASE_APP_BIN_DIRECTORY}")
-
 add_custom_command(
         TARGET LearnOpenGL POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory

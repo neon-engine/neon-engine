@@ -10,7 +10,7 @@ public:
     explicit Texture(const char* texture_path);
     ~Texture();
 
-    void Use() const;
+    void Use(int unit = 0) const;
 };
 
 #endif //TEXTURE_HPP
