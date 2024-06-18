@@ -9,12 +9,12 @@ class Geometry
 {
 protected:
     ~Geometry() = default;
-    unsigned int _vao = 0;
-    unsigned int _vbo = 0;
-    unsigned int _ebo = 0;
+    GLuint _vao = 0;
+    GLuint _vbo = 0;
+    GLuint _ebo = 0;
 
-    std::vector<float> _vertices;
-    std::vector<int> _indices;
+    std::vector<GLfloat> _vertices;
+    std::vector<GLint> _indices;
 
     void Init()
     {
@@ -35,7 +35,7 @@ protected:
         glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(_vertices.size() * sizeof(float)), &_vertices[0], GL_STATIC_DRAW);
         // Enable the usage of layout location 0 (check the vertex shader to see what this is)
         glEnableVertexAttribArray(0);
-        constexpr int stride = 8 * sizeof(float);
+        constexpr GLint stride = 8 * sizeof(float);
 
         // vertices
         glVertexAttribPointer(

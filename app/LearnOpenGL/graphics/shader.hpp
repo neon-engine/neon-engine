@@ -6,7 +6,7 @@
 class Shader
 {
 private:
-    unsigned int _program_id;
+    GLuint _program_id;
 
 public:
     // constructor reads and builds the shader
