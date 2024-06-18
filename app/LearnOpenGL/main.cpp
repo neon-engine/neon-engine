@@ -70,7 +70,15 @@ int main()
         "assets/shaders/textured-shader.vert",
         "assets/shaders/textured-shader.frag");
 
-    const Texture texture("assets/textures/concrete.png");
+    const Shader mix_textured_shader(
+        "assets/shaders/mix-textured-shader.vert",
+        "assets/shaders/mix-textured-shader.frag");
+
+    const Texture texture1("assets/textures/concrete.png");
+    const Texture texture2("assets/textures/awesomeface.png", GL_RGBA);
+
+    mix_textured_shader.SetInt("texture1", 0);
+    mix_textured_shader.SetInt("texture2", 1);
 
 
 
@@ -92,8 +100,12 @@ int main()
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        textured_shader.Use();
-        texture.Use();
+
+
+
+        texture1.Use(0);
+        texture2.Use(1);
+        mix_textured_shader.Use();
         plane.Draw();
         //    triangle.Draw();
 
