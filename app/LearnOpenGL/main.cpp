@@ -62,14 +62,6 @@ int main()
 
     glViewport(0, 0, width, height);
 
-    const Shader base_shader(
-        "assets/shaders/base-shader.vert",
-        "assets/shaders/base-shader.frag");
-
-    const Shader textured_shader(
-        "assets/shaders/textured-shader.vert",
-        "assets/shaders/textured-shader.frag");
-
     const Shader mix_textured_shader(
         "assets/shaders/mix-textured-shader.vert",
         "assets/shaders/mix-textured-shader.frag");
@@ -100,10 +92,7 @@ int main()
         // rendering commands
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
-
-
-
-
+        
         texture1.Use(0);
         texture2.Use(1);
         mix_textured_shader.Use();
