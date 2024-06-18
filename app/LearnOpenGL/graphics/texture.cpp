@@ -8,6 +8,7 @@
 #include "texture.hpp"
 #include "stb_image.h"
 
+
 Texture::Texture(const char* texture_path)
 {
     int tex_width, tex_height, nr_channels;
@@ -56,9 +57,18 @@ Texture::~Texture()
     }
 }
 
-void Texture::Use() const
+void Texture::Use(const int unit) const
 {
-    glActiveTexture(GL_TEXTURE0);
+    int maxTextureUnits;
+    glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &maxTextureUnits);
+
+    if (unit >= 0 && unit < maxTextureUnits) {
+        const GLenum textureUnit = GL_TEXTURE0 + unit;
+        glActiveTexture(textureUnit);
+        std::cout << "Activated texture unit: " << unit << std::endl;
+    } else {
+        std::cerr << "Error: Texture unit " << unit << " is out of range. Supported range: 0 to " << (maxTextureUnits - 1) << std::endl;
+    }
     glBindTexture(GL_TEXTURE_2D, _texture_id);
 }
 
