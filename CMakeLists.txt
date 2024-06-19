@@ -36,7 +36,6 @@ add_subdirectory(external/glm)
 
 # List of targets to generate build files
 set(APP_TARGETS
-        HelloWorld
         LearnOpenGL
 )
 
