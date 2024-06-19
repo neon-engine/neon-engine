@@ -34,7 +34,7 @@ Shader::Shader(const char *vertex_path, const char *fragment_path)
   } catch (const std::ifstream::failure &)
   {
     std::cout << "ERROR::SHADER::FILE_NOT_SUCCESSFULLY_READ" << std::endl;
-    // todo add exception throwing here
+    // TODO add exception throwing here
   }
   const char *vert_shader_code = vertex_code.c_str();
   const char *frag_shader_code = fragment_code.c_str();
