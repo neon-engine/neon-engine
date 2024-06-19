@@ -13,14 +13,14 @@ bool keydown = false;
 auto camera_move_direction = glm::vec3(0.0f, 0.0f, 0.0f);
 constexpr float kSpeed = 2.5f;
 constexpr float kMouseSensitivity = 0.1f;
-constexpr int kWidth = 800;
-constexpr int kHeight = 600;
+int width = 800;
+int height = 600;
 float fov = 45.0f;
 auto camera_pos = glm::vec3(0.0f, 0.0f, 3.0f);
 auto camera_front = glm::vec3(0.0f, 0.0f, -1.0f);
 auto camera_up = glm::vec3(0.0f, 1.0f, 0.0f);
-float last_x = static_cast<float>(kWidth) / 2;
-float last_y = static_cast<float>(kHeight) / 2;
+float last_x = static_cast<float>(width) / 2;
+float last_y = static_cast<float>(height) / 2;
 float yaw = -90.0f;
 float pitch = 0.0f;
 float x_offset = 0.0f;
@@ -72,9 +72,9 @@ static void mounse_callback(GLFWwindow *window, const double x_pos, const double
 {
   if (first_mouse)
   {
+    first_mouse = false;
     last_x = static_cast<float>(x_pos);
     last_y = static_cast<float>(y_pos);
-    first_mouse = false;
   }
 
   x_offset = static_cast<float>(x_pos) - last_x;
@@ -105,6 +105,8 @@ void scroll_callback(GLFWwindow *window, const double scroll_x_offset, const dou
 
 int main()
 {
+  glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
+
   if (!glfwInit())
   {
     std::cerr << "Failed to initialize GLFW" << std::endl;
@@ -115,15 +117,22 @@ int main()
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+  glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
+
 
   // prevent window from resizing
   glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
+  // GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+  // const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+  // width = mode->width;
+  // height = mode->height;
+
 
   // Create the window
   GLFWwindow *window = glfwCreateWindow(
-    kWidth,
-    kHeight,
+    width,
+    height,
     "LearnOpenGL",
     nullptr,
     nullptr);
@@ -141,6 +150,9 @@ int main()
   glfwSetCursorPosCallback(window, mounse_callback);
   glfwSetScrollCallback(window, scroll_callback);
 
+  glfwFocusWindow(window);
+
+  glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_CAPTURED);
   glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
   if (gl3wInit())
@@ -156,7 +168,7 @@ int main()
   glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &num_vertex_attributes_supported);
   std::cout << "Maximum number of vertex attributes supported: " << num_vertex_attributes_supported << std::endl;
 
-  glViewport(0, 0, kWidth, kHeight);
+  glViewport(0, 0, width, height);
 
   const Shader mix_textured_shader(
     "assets/shaders/mix-textured-shader.vert",
@@ -214,7 +226,7 @@ int main()
     glm::mat4 projection(1.0f);
     projection = glm::perspective(
       glm::radians(fov),
-      static_cast<float>(kWidth) / static_cast<float>(kHeight),
+      static_cast<float>(width) / static_cast<float>(height),
       0.1f,
       100.0f);
 
