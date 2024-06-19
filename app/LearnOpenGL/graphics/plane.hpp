@@ -5,7 +5,7 @@
 
 class Plane final : public Geometry
 {
-  public:
+public:
     Plane();
 
     ~Plane();

@@ -5,9 +5,9 @@
 
 class Shader
 {
-  GLuint _program_id;
+    GLuint _program_id;
 
-  public:
+public:
     // constructor reads and builds the shader
     Shader(const char *vertex_path, const char *fragment_path);
 
@@ -15,7 +15,6 @@ class Shader
 
     void Use() const;
 
-    // utility uniform functions
     void SetBool(const std::string &name, bool value) const;
 
     void SetInt(const std::string &name, int value) const;
