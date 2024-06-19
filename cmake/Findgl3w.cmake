@@ -9,7 +9,7 @@ if (NOT TARGET gl3w)
     target_include_directories(gl3w PUBLIC
             ${_gl3w_SourceDir}/include
     )
-endif()
+endif ()
 
 include(${CMAKE_ROOT}/Modules/FindPackageHandleStandardArgs.cmake)
 
