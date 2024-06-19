@@ -41,9 +41,9 @@ Shader::Shader(const char *vertex_path, const char *fragment_path)
 
   // 2. compile shaders
   GLuint vertex, fragment;
-  constexpr GLsizei kBufSize = 512;
+  constexpr GLsizei buf_size = 512;
   GLint success;
-  char info_log[kBufSize];
+  char info_log[buf_size];
 
   // vertex Shader
   vertex = glCreateShader(GL_VERTEX_SHADER);
@@ -53,7 +53,7 @@ Shader::Shader(const char *vertex_path, const char *fragment_path)
   glGetShaderiv(vertex, GL_COMPILE_STATUS, &success);
   if (!success)
   {
-    glGetShaderInfoLog(vertex, kBufSize, nullptr, info_log);
+    glGetShaderInfoLog(vertex, buf_size, nullptr, info_log);
     std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << info_log << std::endl;
   }
 
@@ -65,7 +65,7 @@ Shader::Shader(const char *vertex_path, const char *fragment_path)
   glGetShaderiv(fragment, GL_COMPILE_STATUS, &success);
   if (!success)
   {
-    glGetShaderInfoLog(fragment, kBufSize, nullptr, info_log);
+    glGetShaderInfoLog(fragment, buf_size, nullptr, info_log);
     std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << info_log << std::endl;
   }
 
@@ -78,7 +78,7 @@ Shader::Shader(const char *vertex_path, const char *fragment_path)
   glGetProgramiv(_program_id, GL_LINK_STATUS, &success);
   if (!success)
   {
-    glGetProgramInfoLog(_program_id, kBufSize, nullptr, info_log);
+    glGetProgramInfoLog(_program_id, buf_size, nullptr, info_log);
     std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << info_log << std::endl;
   }
 
