@@ -5,12 +5,12 @@
 #include "texture.hpp"
 #include "stb_image.h"
 
-GLint Texture::MaxTextureUnits = 0;
+GLint Texture::_max_texture_units = 0;
 
 Texture::Texture(const char* texture_path, const GLenum format)
 {
-    if (!MaxTextureUnits) {
-        glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &Texture::MaxTextureUnits);
+    if (!_max_texture_units) {
+        glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &Texture::_max_texture_units);
     }
 
     GLint tex_width, tex_height;
@@ -63,11 +63,11 @@ Texture::~Texture()
 // ReSharper disable once CppParameterNamesMismatch
 void Texture::Use(const GLint value) const
 {
-    if (const GLint unit = value; unit >= 0 && unit < MaxTextureUnits) {
+    if (const GLint unit = value; unit >= 0 && unit < _max_texture_units) {
         const GLenum textureUnit = GL_TEXTURE0 + unit;
         glActiveTexture(textureUnit);
         glBindTexture(GL_TEXTURE_2D, _texture_id);
     } else {
-        std::cerr << "Error: Texture unit " << unit << " is out of range. Supported range: 0 to " << (MaxTextureUnits - 1) << std::endl;
+        std::cerr << "Error: Texture unit " << unit << " is out of range. Supported range: 0 to " << (_max_texture_units - 1) << std::endl;
     }
 }

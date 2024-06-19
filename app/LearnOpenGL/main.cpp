@@ -6,10 +6,16 @@
 #include "graphics/plane.hpp"
 #include "graphics/texture.hpp"
 
-void ProcessInput(GLFWwindow* window)
+bool wireframe = false;
+
+void process_input(GLFWwindow* window)
 {
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, true);
+    }
+    if (glfwGetKey(window, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS) {
+        wireframe = true;
+    }
 }
 
 int main()
@@ -79,20 +85,17 @@ int main()
     {
         Plane plane;
 
-        // input
-        ProcessInput(window);
+        process_input(window);
 
-        // If we ever cared to render in wireframe the following code would enable us to toggle it on and off
-        // if (wireframe) {
-        //   glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        // } else {
-        //   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        // }
+        if (wireframe) {
+          glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        } else {
+          glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        }
 
-        // rendering commands
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
-        
+
         texture1.Use(0);
         texture2.Use(1);
         mix_textured_shader.Use();
