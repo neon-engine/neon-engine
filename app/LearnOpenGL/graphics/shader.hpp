@@ -15,6 +15,8 @@ public:
 
     void Use() const;
 
+    [[nodiscard]] GLuint GetId() const { return _program_id; }
+
     void SetBool(const std::string &name, bool value) const;
 
     void SetInt(const std::string &name, int value) const;

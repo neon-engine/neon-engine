@@ -1,34 +1,32 @@
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include <sstream>
-#include "GL/gl3w.h"
+#include <GL/gl3w.h>
+
 #include "shader.hpp"
 
 Shader::Shader(const char *vertex_path, const char *fragment_path)
 {
-    // 1. retrieve the vertex/fragment source code from filePath
     std::string vertex_code;
     std::string fragment_code;
     std::ifstream vert_shader_file;
     std::ifstream frag_shader_file;
 
-    // ensure ifstream objects can throw exceptions:
     vert_shader_file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
     frag_shader_file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
 
     try
     {
-        // open files
         vert_shader_file.open(vertex_path);
         frag_shader_file.open(fragment_path);
         std::stringstream vert_shader_stream, frag_shader_stream;
-        // read file's buffer contents into streams
+
         vert_shader_stream << vert_shader_file.rdbuf();
         frag_shader_stream << frag_shader_file.rdbuf();
-        // close file handlers
+
         vert_shader_file.close();
         frag_shader_file.close();
-        // convert stream into string
+
         vertex_code = vert_shader_stream.str();
         fragment_code = frag_shader_stream.str();
     } catch (const std::ifstream::failure &)
