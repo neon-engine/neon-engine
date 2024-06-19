@@ -33,6 +33,19 @@ find_package(gl3w REQUIRED)
 add_subdirectory(external/glfw)
 add_subdirectory(external/glm)
 
+function(add_subdirectory_if_cmake dir)
+    if (EXISTS "${dir}/CMakeLists.txt")
+        add_subdirectory(${dir})
+    endif ()
+endfunction()
+
+file(GLOB LIB_DIRS "${CMAKE_SOURCE_DIR}/lib/*")
+foreach (lib_dir ${LIB_DIRS})
+    if (IS_DIRECTORY ${lib_dir})
+        add_subdirectory_if_cmake(${lib_dir})
+    endif ()
+endforeach ()
+
 # List of targets to generate build files
 set(APP_TARGETS
         LearnOpenGL
