@@ -3,22 +3,33 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include "graphics/plane.hpp"
 #include "graphics/shader.hpp"
 #include "graphics/texture.hpp"
 
 bool wireframe = false;
+bool keydown = false;
 
-void process_input(GLFWwindow *window)
+static void process_input(GLFWwindow *window)
 {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
     {
         glfwSetWindowShouldClose(window, true);
     }
-    if (glfwGetKey(window, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS)
+}
+
+static void process_input_callback(GLFWwindow* window,
+    const int key,
+    const int scancode,
+    const int action,
+    const int mods)
+{
+    if (key == GLFW_KEY_RIGHT_ALT && action == GLFW_PRESS)
     {
         wireframe = !wireframe;
+        std::cout << "toggling wireframe: " << wireframe << std::endl;
     }
 }
 
@@ -56,8 +67,9 @@ int main()
         return -1;
     }
 
-    // Make the window's context current
     glfwMakeContextCurrent(window);
+
+    glfwSetKeyCallback(window, process_input_callback);
 
     if (gl3wInit())
     {
@@ -83,12 +95,6 @@ int main()
     mix_textured_shader.SetInt("texture1", 0);
     mix_textured_shader.SetInt("texture2", 1);
 
-    glm::mat4 trans(1.0f);
-    trans = glm::rotate(trans, glm::radians(90.0f), glm::vec3(0.0, 0.0, 1.0));
-    trans = glm::scale(trans, glm::vec3(0.5, 0.5, 0.5));
-
-    auto transform_loc = glGetUniformLocation(mix_textured_shader.)
-
 
     while (!glfwWindowShouldClose(window))
     {
@@ -106,6 +112,13 @@ int main()
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
+
+        glm::mat4 trans(1.0f);
+        trans = translate(trans, glm::vec3(0.5, -0.5f, 0.0f));
+        trans = rotate(trans, static_cast<float>(glfwGetTime()), glm::vec3(0.0, 0.0, 1.0));
+
+        const auto transform_loc = glGetUniformLocation(mix_textured_shader.GetId(), "transform");
+        glUniformMatrix4fv(transform_loc, 1, GL_FALSE, value_ptr(trans));
 
         texture1.Use(0);
         texture2.Use(1);
