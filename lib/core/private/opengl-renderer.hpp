@@ -3,9 +3,8 @@
 
 namespace core
 {
-  class GL_Renderer
+  class OpenGl_Renderer
   {
-    void Print();
   };
 } // core
 
