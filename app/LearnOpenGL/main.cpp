@@ -5,20 +5,39 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "graphics/cube.hpp"
-#include "graphics/plane.hpp"
-#include "graphics/shader.hpp"
-#include "graphics/texture.hpp"
-#include "graphics/triangle.hpp"
+#include "graphics/graphics.hpp"
 
 bool wireframe = false;
 bool keydown = false;
+auto camera_move_direction = glm::vec3(0.0f, 0.0f, 0.0f);
+constexpr float kSpeed = 2.5f;
+auto camera_pos   = glm::vec3(0.0f, 0.0f,  3.0f);
+auto camera_front = glm::vec3(0.0f, 0.0f, -1.0f);
+auto camera_up    = glm::vec3(0.0f, 1.0f,  0.0f);
 
 static void process_input(GLFWwindow *window)
 {
+    camera_move_direction = glm::vec3(0.0f, 0.0f, 0.0f);
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
     {
         glfwSetWindowShouldClose(window, true);
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+    {
+        camera_move_direction = camera_front * kSpeed;
+    }
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+    {
+        camera_move_direction = camera_front * -kSpeed;
+    }
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+    {
+        camera_move_direction = glm::normalize(glm::cross(camera_front, camera_up)) * -kSpeed;
+    }
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+    {
+        camera_move_direction = glm::normalize(glm::cross(camera_front, camera_up)) * kSpeed;
     }
 }
 
@@ -101,6 +120,7 @@ int main()
 
     // ReSharper disable once CppTooWideScope
     const Cube cube;
+    Camera camera;
 
     constexpr glm::vec3 cube_positions[] = {
         glm::vec3(0.0f, 0.0f, 0.0f),
@@ -115,9 +135,16 @@ int main()
         glm::vec3(-1.3f, 1.0f, -1.5f)
     };
 
+    float last_frame = 0.0f;
+
     while (!glfwWindowShouldClose(window))
     {
+        const auto current_frame = static_cast<float>(glfwGetTime());
+        const float delta_time = current_frame - last_frame;
+        last_frame = current_frame;
+
         process_input(window);
+        camera.Update(delta_time, camera_move_direction);
 
         if (wireframe)
         {
@@ -131,7 +158,7 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glm::mat4 view(1.0f);
-        view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+        view = camera.GetView();
 
         glm::mat4 projection(1.0f);
         projection = glm::perspective(
