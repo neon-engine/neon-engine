@@ -14,6 +14,4 @@ add_library(graphics STATIC
         graphics.hpp
 )
 
-target_include_directories(graphics PRIVATE ${Stb_INCLUDE_DIR})
-
-target_link_libraries(graphics PRIVATE gl3w glm)
+target_link_libraries(graphics PRIVATE gl3w glm stb)
