@@ -6,10 +6,19 @@ namespace core
   class WindowManager
   {
   protected:
-    WindowManager() = default;
+    Window_Info _window_info;
+
+    explicit WindowManager(const Window_Info &window_info)
+    {
+      _window_info = window_info;
+    }
+
     ~WindowManager() = default;
+
   public:
-    virtual void Init() = 0;
+    virtual void RenderLoop() = 0;
+    virtual void HideCursor() = 0;
+    virtual void ShowCursor() = 0;
   };
 } // core
 
