@@ -5,9 +5,11 @@
 
 class Triangle final : public Geometry
 {
-public:
+  public:
     Triangle();
+
     ~Triangle();
+
     void Draw() const override;
 };
 
