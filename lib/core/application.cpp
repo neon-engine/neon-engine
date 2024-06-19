@@ -1,3 +1,6 @@
 #include "application.hpp"
 
-namespace core {} // core
+namespace core
+{
+  void Application::Run() {}
+} // core

@@ -1,11 +1,14 @@
 add_library(core STATIC
         application.cpp
-        window-manager.cpp
-        window-manager.hpp
-        input-manager.cpp
-        input-manager.hpp
-        renderer.cpp
-        renderer.hpp
+#        application.hpp
+#        window-manager.hpp
+#        input-manager.hpp
+#        renderer.hpp
+#        impl/glfw-window-manager.cpp
+        impl/gl-renderer.cpp
 )
 
-target_include_directories(core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
+target_include_directories(core
+        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..
+        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../impl
+)
