@@ -27,8 +27,6 @@ message("runtime output directory: ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
 #find_package(Vulkan REQUIRED)
-#find_package(glfw3 CONFIG REQUIRED)
-#find_package(glm CONFIG REQUIRED)
 find_package(gl3w REQUIRED)
 
 add_subdirectory(external/glfw)
@@ -37,6 +35,7 @@ add_subdirectory(external/glm)
 # List of targets to generate build files
 set(APP_TARGETS
         LearnOpenGL
+        NeonFPS
 )
 
 
