@@ -1,4 +1,4 @@
-#include "application.hpp"
+#include "public/application.hpp"
 
 namespace core
 {
