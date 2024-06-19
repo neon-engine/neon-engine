@@ -1,7 +1,6 @@
 #ifndef SHAPE_HPP
 #define SHAPE_HPP
 
-
 #include <vector>
 #include "GL/gl3w.h"
 

@@ -113,5 +113,3 @@ int main()
   glfwTerminate();
   return 0;
 }
-
-#pragma clang diagnostic pop

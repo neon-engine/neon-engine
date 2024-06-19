@@ -1,7 +1,8 @@
 #define STB_IMAGE_IMPLEMENTATION
 
-#include <GL/gl3w.h>
 #include <iostream>
+#include <GL/gl3w.h>
+
 #include "texture.hpp"
 #include "stb_image.h"
 
