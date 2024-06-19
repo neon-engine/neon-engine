@@ -3,10 +3,10 @@
 
 class Texture
 {
-  GLuint _texture_id;
-  static GLint _max_texture_units;
+    GLuint _texture_id;
+    static GLint _max_texture_units;
 
-  public:
+public:
     explicit Texture(const char *texture_path, GLenum format = GL_RGB);
 
     ~Texture();
