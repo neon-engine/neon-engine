@@ -1,6 +1,6 @@
 #include "plane.hpp"
 
-Plane::Plane()
+Plane::Plane(): Geometry("Plane")
 {
     _vertices = std::vector({
         // positions         // colors            // texture coords

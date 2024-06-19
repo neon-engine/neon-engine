@@ -1,25 +1,34 @@
 #ifndef SHAPE_HPP
 #define SHAPE_HPP
 
+#include <iostream>
 #include <vector>
 #include "GL/gl3w.h"
 
 class Geometry
 {
 protected:
-    ~Geometry() = default;
-
+    std::string _id;
     GLuint _vao = 0;
     GLuint _vbo = 0;
     GLuint _ebo = 0;
+    GLint _stride;
 
     std::vector<GLfloat> _vertices;
     std::vector<GLint> _indices;
 
+    explicit Geometry(const std::string &id, const GLint &stride = 8 * sizeof(GLfloat))
+    {
+        _id = id;
+        _stride = stride;
+    }
+
+    ~Geometry() = default;
+
+
     void Init()
     {
-        // Offset between consecutive indices, we have 8 floats (3 for position, 3 for color, 2 for text coords)
-        constexpr GLint stride = 8 * sizeof(GLfloat);
+        std::cout << "Initializing mesh: " << _id << std::endl;
 
         glGenVertexArrays(1, &_vao);
         glGenBuffers(1, &_vbo);
@@ -49,7 +58,7 @@ protected:
             // What type these components are
             GL_FALSE,
             // GL_TRUE means the values should be normalized. GL_FALSE means they shouldn't
-            stride,
+            _stride,
             static_cast<void *>(nullptr));
         glEnableVertexAttribArray(0);
 
@@ -59,7 +68,7 @@ protected:
             3,
             GL_FLOAT,
             GL_FALSE,
-            stride,
+            _stride,
             reinterpret_cast<void *>(3 * sizeof(float)));
         glEnableVertexAttribArray(1);
 
@@ -69,7 +78,7 @@ protected:
             2,
             GL_FLOAT,
             GL_FALSE,
-            stride,
+            _stride,
             reinterpret_cast<void *>(6 * sizeof(float)));
         glEnableVertexAttribArray(2);
 
@@ -87,6 +96,7 @@ protected:
 
     void CleanUp() const
     {
+        std::cout << "cleaning up mesh: " << _id << std::endl;
         // Delete previously generated buffers. Note that forgetting to do this can waste GPU memory in a
         // large project! This could crash the graphics driver due to memory leaks, or slow down application performance!
         glDeleteVertexArrays(1, &_vao);

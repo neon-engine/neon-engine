@@ -1,6 +1,6 @@
 #include "triangle.hpp"
 
-Triangle::Triangle()
+Triangle::Triangle(): Geometry("Triangle")
 {
     _vertices = std::vector({
         -0.5f, -0.5f, 0.0f,

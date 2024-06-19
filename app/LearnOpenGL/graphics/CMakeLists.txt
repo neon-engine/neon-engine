@@ -3,6 +3,8 @@ add_library(graphics STATIC
         texture.cpp
         triangle.cpp
         plane.cpp
+        cube.cpp
+        cube.hpp
 )
 
 target_include_directories(graphics PRIVATE ${Stb_INCLUDE_DIR})
