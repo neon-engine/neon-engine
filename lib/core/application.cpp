@@ -1,4 +1,3 @@
 #include "application.hpp"
 
-namespace core {
-} // core
+namespace core {} // core

@@ -6,11 +6,11 @@
 class Triangle final : public Geometry
 {
 public:
-    Triangle();
+  Triangle();
 
-    ~Triangle();
+  ~Triangle();
 
-    void Draw() const override;
+  void Draw() const override;
 };
 
 #endif //TRIANGLE_HPP
