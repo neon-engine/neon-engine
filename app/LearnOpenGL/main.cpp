@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <iostream>
 #include <GL/gl3w.h>
 #include <GLFW/glfw3.h>
@@ -11,9 +12,21 @@ bool wireframe = false;
 bool keydown = false;
 auto camera_move_direction = glm::vec3(0.0f, 0.0f, 0.0f);
 constexpr float kSpeed = 2.5f;
-auto camera_pos   = glm::vec3(0.0f, 0.0f,  3.0f);
+constexpr float kMouseSensitivity = 0.1f;
+constexpr int kWidth = 800;
+constexpr int kHeight = 600;
+float fov = 45.0f;
+auto camera_pos = glm::vec3(0.0f, 0.0f, 3.0f);
 auto camera_front = glm::vec3(0.0f, 0.0f, -1.0f);
-auto camera_up    = glm::vec3(0.0f, 1.0f,  0.0f);
+auto camera_up = glm::vec3(0.0f, 1.0f, 0.0f);
+float last_x = static_cast<float>(kWidth) / 2;
+float last_y = static_cast<float>(kHeight) / 2;
+float yaw = -90.0f;
+float pitch = 0.0f;
+float x_offset = 0.0f;
+float y_offset = 0.0f;
+bool first_mouse = false;
+auto look_direction = glm::vec3(0.0f, 0.0f, -1.0f);
 
 static void process_input(GLFWwindow *window)
 {
@@ -25,23 +38,24 @@ static void process_input(GLFWwindow *window)
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
     {
-        camera_move_direction = camera_front * kSpeed;
+        camera_move_direction = look_direction * kSpeed;
     }
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
     {
-        camera_move_direction = camera_front * -kSpeed;
+        camera_move_direction = look_direction * -kSpeed;
     }
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
     {
-        camera_move_direction = glm::normalize(glm::cross(camera_front, camera_up)) * -kSpeed;
+        camera_move_direction = normalize(cross(look_direction, camera_up)) * -kSpeed;
     }
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
     {
-        camera_move_direction = glm::normalize(glm::cross(camera_front, camera_up)) * kSpeed;
+        camera_move_direction = normalize(cross(look_direction, camera_up)) * kSpeed;
     }
 }
 
-static void process_input_callback(GLFWwindow* window,
+static void process_input_callback(
+    GLFWwindow *window,
     const int key,
     const int scancode,
     const int action,
@@ -52,6 +66,41 @@ static void process_input_callback(GLFWwindow* window,
         wireframe = !wireframe;
         std::cout << "toggling wireframe: " << wireframe << std::endl;
     }
+}
+
+static void mounse_callback(GLFWwindow *window, const double x_pos, const double y_pos)
+{
+    if (first_mouse)
+    {
+        last_x = static_cast<float>(x_pos);
+        last_y = static_cast<float>(y_pos);
+        first_mouse = false;
+    }
+
+    x_offset = static_cast<float>(x_pos) - last_x;
+    y_offset = last_y - static_cast<float>(y_pos);
+    last_x = static_cast<float>(x_pos);
+    last_y = static_cast<float>(y_pos);
+
+    x_offset *= kMouseSensitivity;
+    y_offset *= kMouseSensitivity;
+
+    yaw += x_offset;
+    pitch += y_offset;
+
+    pitch = std::clamp(pitch, -89.0f, 89.0f);
+
+    glm::vec3 direction;
+    direction.x = glm::cos(glm::radians(yaw)) * glm::cos(glm::radians(pitch));
+    direction.y = glm::sin(glm::radians(pitch));
+    direction.z = glm::sin(glm::radians(yaw)) * glm::cos(glm::radians(pitch));
+    look_direction = normalize(direction);
+}
+
+void scroll_callback(GLFWwindow* window, const double scroll_x_offset, const double scroll_y_offset)
+{
+    fov -= static_cast<float>(scroll_y_offset);
+    fov = std::clamp(fov, 1.0f, 90.0f);
 }
 
 int main()
@@ -70,13 +119,11 @@ int main()
     // prevent window from resizing
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
-    constexpr int width = 800;
-    constexpr int height = 600;
 
     // Create the window
     GLFWwindow *window = glfwCreateWindow(
-        width,
-        height,
+        kWidth,
+        kHeight,
         "LearnOpenGL",
         nullptr,
         nullptr);
@@ -91,6 +138,10 @@ int main()
     glfwMakeContextCurrent(window);
 
     glfwSetKeyCallback(window, process_input_callback);
+    glfwSetCursorPosCallback(window, mounse_callback);
+    glfwSetScrollCallback(window, scroll_callback);
+
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     if (gl3wInit())
     {
@@ -105,7 +156,7 @@ int main()
     glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &num_vertex_attributes_supported);
     std::cout << "Maximum number of vertex attributes supported: " << num_vertex_attributes_supported << std::endl;
 
-    glViewport(0, 0, width, height);
+    glViewport(0, 0, kWidth, kHeight);
 
     const Shader mix_textured_shader(
         "assets/shaders/mix-textured-shader.vert",
@@ -144,7 +195,7 @@ int main()
         last_frame = current_frame;
 
         process_input(window);
-        camera.Update(delta_time, camera_move_direction);
+        camera.Update(delta_time, camera_move_direction, look_direction);
 
         if (wireframe)
         {
@@ -162,8 +213,8 @@ int main()
 
         glm::mat4 projection(1.0f);
         projection = glm::perspective(
-            glm::radians(45.0f),
-            static_cast<float>(width)/static_cast<float>(height),
+            glm::radians(fov),
+            static_cast<float>(kWidth) / static_cast<float>(kHeight),
             0.1f,
             100.0f);
 
@@ -182,8 +233,8 @@ int main()
             model = translate(model, cube_positions[i]);
             const float angle = 20.0f * static_cast<float>(i);
             model = rotate(model,
-                glm::radians(angle),
-                glm::vec3(0.5f, 1.0f, 0.0f));
+                           glm::radians(angle),
+                           glm::vec3(0.5f, 1.0f, 0.0f));
             glUniformMatrix4fv(model_loc, 1, GL_FALSE, value_ptr(model));
             glUniformMatrix4fv(view_loc, 1, GL_FALSE, value_ptr(view));
             glUniformMatrix4fv(projection_loc, 1, GL_FALSE, value_ptr(projection));
