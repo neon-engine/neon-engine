@@ -5,7 +5,11 @@ namespace core
 {
   class WindowManager
   {
-    void Init();
+  protected:
+    WindowManager() = default;
+    ~WindowManager() = default;
+  public:
+    virtual void Init() = 0;
   };
 } // core
 

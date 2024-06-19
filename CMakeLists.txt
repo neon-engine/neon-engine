@@ -41,6 +41,7 @@ endfunction()
 
 file(GLOB LIB_DIRS "${CMAKE_SOURCE_DIR}/lib/*")
 foreach (lib_dir ${LIB_DIRS})
+    message("found ${lib_dir}")
     if (IS_DIRECTORY ${lib_dir})
         add_subdirectory_if_cmake(${lib_dir})
     endif ()
