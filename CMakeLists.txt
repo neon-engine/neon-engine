@@ -23,12 +23,9 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin/${LOWER_CMAKE_BUILD_T
 message("cmake binary directory: ${CMAKE_BINARY_DIR}")
 message("runtime output directory: ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
 
-# Find locally installed packages
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
-
 #find_package(Vulkan REQUIRED)
-find_package(gl3w REQUIRED)
 
+add_subdirectory(external/gl3w)
 add_subdirectory(external/glfw)
 add_subdirectory(external/glm)
 
