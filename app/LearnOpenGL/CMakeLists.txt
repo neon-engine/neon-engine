@@ -2,8 +2,7 @@ set(TARGET LearnOpenGL)
 
 add_subdirectory(graphics)
 
-add_executable(${TARGET} main.cpp
-        ../NeonFPS/main.cpp)
+add_executable(${TARGET} main.cpp)
 
 target_link_libraries(${TARGET} PRIVATE glm glfw gl3w)
 target_link_libraries(${TARGET} PRIVATE graphics)
