@@ -3,13 +3,15 @@
 #include "geometry.hpp"
 
 
-class Cube final : public Geometry {
+class Cube final : public Geometry
+{
 public:
-    Cube();
-    ~Cube();
-    void Draw() const override;
-};
+  Cube();
 
+  ~Cube();
+
+  void Draw() const override;
+};
 
 
 #endif //CUBE_HPP

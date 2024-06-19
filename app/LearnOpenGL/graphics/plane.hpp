@@ -6,11 +6,11 @@
 class Plane final : public Geometry
 {
 public:
-    Plane();
+  Plane();
 
-    ~Plane();
+  ~Plane();
 
-    void Draw() const override;
+  void Draw() const override;
 };
 
 #endif //PLANE_HPP
