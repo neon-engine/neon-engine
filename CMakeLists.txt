@@ -4,54 +4,49 @@ cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 project(ProjectNeon)
 set(CMAKE_CXX_STANDARD 20)
 
-string(TOLOWER ${CMAKE_SYSTEM_NAME} LOWER_CMAKE_SYSTEM_NAME)
-
 # Echo system/build information
 message("system name: ${CMAKE_SYSTEM_NAME}")
-message("source directory: ${CMAKE_SOURCE_DIR}")
-message("binary directory: ${CMAKE_BINARY_DIR}")
-message("build type: ${CMAKE_BUILD_TYPE}")
 message("architecture: ${CMAKE_SYSTEM_PROCESSOR}")
+message("build type: ${CMAKE_BUILD_TYPE}")
+message("source directory: ${CMAKE_SOURCE_DIR}")
 
 # Set output directories for anyone not using CLion
-set(TARGET_DIR_FOR_CMAKE_FILES cmake-build-${CMAKE_BUILD_TYPE})
-string(TOLOWER ${TARGET_DIR_FOR_CMAKE_FILES} TARGET_DIR_FOR_CMAKE_FILES)
 
-string(TOLOWER ${CMAKE_BUILD_TYPE} LOWER_CMAKE_BUILD_TYPE)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin/${LOWER_CMAKE_BUILD_TYPE})
+# Set the build directory
+set(CMAKE_BINARY_DIR build/${CMAKE_BUILD_TYPE})
+string(TOLOWER ${CMAKE_BINARY_DIR} CMAKE_BINARY_DIR)
+set(CMAKE_BINARY_DIR ${CMAKE_SOURCE_DIR}/${CMAKE_BINARY_DIR})
+
+# Set the bin directory
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY bin/${CMAKE_BUILD_TYPE})
+string(TOLOWER ${CMAKE_RUNTIME_OUTPUT_DIRECTORY} CMAKE_RUNTIME_OUTPUT_DIRECTORY)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 
 message("cmake binary directory: ${CMAKE_BINARY_DIR}")
 message("runtime output directory: ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
 
-# Find locally installed packages
+# Add cmake folder where we place our own custom Find*.cmake files
+# And locate custom packages within our file structure
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
-find_package(stb REQUIRED)
-find_package(gl3w REQUIRED)
+# Find packages installed on the toolchain/sysroot
 #find_package(Vulkan REQUIRED)
+find_package(gl3w REQUIRED)
+find_package(stb REQUIRED)
 
+# Add external subdirectories
 add_subdirectory(external/glfw)
 add_subdirectory(external/glm)
 
-function(add_subdirectory_if_cmake dir)
-    if (EXISTS "${dir}/CMakeLists.txt")
-        add_subdirectory(${dir})
-    endif ()
-endfunction()
+# Additional libraries
+add_subdirectory(lib/core)
 
-file(GLOB LIB_DIRS "${CMAKE_SOURCE_DIR}/lib/*")
-foreach (lib_dir ${LIB_DIRS})
-    if (IS_DIRECTORY ${lib_dir})
-        add_subdirectory_if_cmake(${lib_dir})
-    endif ()
-endforeach ()
-
-# List of targets to generate build files
 set(APP_TARGETS
         LearnOpenGL
         NeonFPS
 )
 
+string(TOLOWER ${CMAKE_SYSTEM_NAME} LOWER_CMAKE_SYSTEM_NAME)
 
 foreach (APP IN LISTS APP_TARGETS)
     message("generating build target ${APP}")
