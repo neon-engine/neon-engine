@@ -8,14 +8,24 @@ namespace core
 {
   class Application
   {
+    bool _destroyed = false;
   protected:
+    WindowSystem _window_system;
+    InputSystem _input_system;
+    RenderSystem _render_system;
+
     Application(
+      const SettingsConfig &settings_config,
       WindowSystem &window_system,
       InputSystem &input_system,
       RenderSystem &render_system);
 
+    void Initialize();
+
+    void CleanUp();
+
   public:
-    virtual ~Application() = default;
+    virtual ~Application();
 
     virtual void Run();
   };

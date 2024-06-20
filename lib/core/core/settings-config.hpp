@@ -7,7 +7,7 @@ enum class RenderingApi
   OpenGl = 0
 };
 
-struct Window_Info
+struct SettingsConfig
 {
   int width;
   int height;
