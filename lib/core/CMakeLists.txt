@@ -11,6 +11,8 @@ add_library(${TARGET} STATIC
         private/glfw-window-manager.cpp
         private/glfw-window-manager.hpp
         core/window-info.hpp
+        private/glfw-input-manager.cpp
+        private/glfw-input-manager.hpp
 )
 
 target_include_directories(${TARGET}
@@ -18,4 +20,4 @@ target_include_directories(${TARGET}
         PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/private
 )
 
-target_link_libraries(${TARGET} glfw)
+target_link_libraries(${TARGET} glfw glm gl3w)
