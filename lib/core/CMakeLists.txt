@@ -1,16 +1,8 @@
 set(TARGET core)
 
 add_library(${TARGET} STATIC
+        core/application.cpp
         core/application.hpp
-        core/glfw-window-manager.cpp
-        core/glfw-window-manager.hpp
-        core/input-manager.hpp
-        core/renderer.hpp
-        core/window-info.hpp
-        core/window-manager.hpp
-        private/glfw-input-manager.cpp
-        private/glfw-input-manager.hpp
-        private/opengl-renderer.hpp
 )
 
 target_include_directories(${TARGET}
