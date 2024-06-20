@@ -4,8 +4,10 @@
 
 namespace core
 {
-  class InputManager {
-
+  class InputManager
+  {
+  protected:
+    ~InputManager() = default;
   };
 }
 

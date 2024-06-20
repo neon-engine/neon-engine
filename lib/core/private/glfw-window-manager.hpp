@@ -8,18 +8,29 @@ namespace core
 {
   class Glfw_WindowManager final : public WindowManager
   {
-    static void ConfigureForOpenGl();
+    void ConfigureWindowForRenderer() const;
 
     GLFWwindow *_window = nullptr;
 
   public:
     explicit Glfw_WindowManager(const Window_Info &window_info);
 
+    ~Glfw_WindowManager();
+
+    void Initialize() override;
+
+    void CleanUp() override;
+
     void RenderLoop() override;
 
     void HideCursor() override;
 
     void ShowCursor() override;
+
+    void InitializeInputManager() override;
+
+
+    void InitializeRenderer() override;
   };
 } // core
 

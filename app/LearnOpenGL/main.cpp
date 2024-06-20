@@ -68,7 +68,7 @@ static void process_input_callback(
   }
 }
 
-static void mounse_callback(GLFWwindow *window, const double x_pos, const double y_pos)
+static void mouse_callback(GLFWwindow *window, const double x_pos, const double y_pos)
 {
   if (first_mouse)
   {
@@ -117,8 +117,6 @@ int main()
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-  glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
-
 
   // prevent window from resizing
   glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
@@ -147,10 +145,8 @@ int main()
   glfwMakeContextCurrent(window);
 
   glfwSetKeyCallback(window, process_input_callback);
-  glfwSetCursorPosCallback(window, mounse_callback);
+  glfwSetCursorPosCallback(window, mouse_callback);
   glfwSetScrollCallback(window, scroll_callback);
-
-  glfwFocusWindow(window);
 
   glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_CAPTURED);
   glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
