@@ -1,20 +1,24 @@
 #ifndef RENDERER_HPP
 #define RENDERER_HPP
+#include <stdexcept>
+
+#include "opengl-renderer.hpp"
+#include "window-info.hpp"
 
 namespace core
 {
-  class Renderer
+  class Renderer final
   {
-  protected:
     Window_Info _window_info;
+  public:
     explicit Renderer(const Window_Info &window_info)
     {
       _window_info = window_info;
     }
-    ~Renderer() = default;
 
-  public:
-    virtual void Initialize() = 0;
+    void Initialize();
+
+    void CleanUp();
   };
 } // core
 

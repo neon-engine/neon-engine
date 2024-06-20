@@ -1,7 +1,7 @@
 #ifndef WINDOW_MANAGER_HPP
 #define WINDOW_MANAGER_HPP
-#include "input-manager.hpp"
-#include "renderer.hpp"
+
+#include "window-info.hpp"
 
 namespace core
 {
@@ -10,12 +10,8 @@ namespace core
   protected:
     Window_Info _window_info;
     bool _created_window = false;
-
-    InputManager *_input_manager = nullptr;
     bool _created_input_manager = false;
-
-    Renderer *_renderer = nullptr;
-    bool _created_renderer;
+    bool _created_renderer = false;
 
     explicit WindowManager(const Window_Info &window_info)
     {
@@ -38,6 +34,10 @@ namespace core
     virtual void InitializeInputManager() = 0;
 
     virtual void InitializeRenderer() = 0;
+
+    virtual InputManager GetInputManager();
+
+    virtual Renderer GetRenderer();
   };
 } // core
 

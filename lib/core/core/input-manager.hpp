@@ -6,7 +6,8 @@ namespace core
 {
   class InputManager
   {
-  protected:
+  public:
+    virtual void CleanUp();
     ~InputManager() = default;
   };
 }
