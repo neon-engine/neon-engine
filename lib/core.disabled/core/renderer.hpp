@@ -2,7 +2,6 @@
 #define RENDERER_HPP
 #include <stdexcept>
 
-#include "opengl-renderer.hpp"
 #include "window-info.hpp"
 
 namespace core

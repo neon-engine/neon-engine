@@ -1,0 +1,21 @@
+set(TARGET core)
+
+add_library(${TARGET} STATIC
+        core/application.hpp
+        core/glfw-window-manager.cpp
+        core/glfw-window-manager.hpp
+        core/input-manager.hpp
+        core/renderer.hpp
+        core/window-info.hpp
+        core/window-manager.hpp
+        private/glfw-input-manager.cpp
+        private/glfw-input-manager.hpp
+        private/opengl-renderer.hpp
+)
+
+target_include_directories(${TARGET}
+        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
+        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/private
+)
+
+target_link_libraries(${TARGET} glfw glm gl3w)
