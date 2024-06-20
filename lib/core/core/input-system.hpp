@@ -5,9 +5,11 @@
 namespace core
 {
   class InputSystem final {
+    SettingsConfig _settings_config;
   public:
-    InputSystem(const SettingsConfig &settings_config);
+    explicit InputSystem(const SettingsConfig &settings_config);
     void Initialize();
+    void ProcessInput();
     void CleanUp();
   };
 } // core

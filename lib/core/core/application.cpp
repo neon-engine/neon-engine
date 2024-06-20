@@ -14,6 +14,11 @@ namespace core
 
   void Application::Initialize()
   {
+    // order here matters
+    // the input system and rendering backend are usually dependent on
+    // the OS windowing system. Initializing the window first will make it possible
+    // to set up both the input systems and render systems
+
     _window_system.Initialize();
     _input_system.Initialize();
     _render_system.Initialize();
@@ -34,6 +39,9 @@ namespace core
   {
     Initialize();
 
-    // while(_window_system.IsRunning()) {}
+    while(_window_system.IsRunning())
+    {
+      _input_system.ProcessInput();
+    }
   }
 } // core

@@ -5,7 +5,7 @@
 
 int main()
 {
-  auto settings_config = SettingsConfig{
+  const auto settings_config = SettingsConfig{
     .width = 800, .height = 600, .selected_api = RenderingApi::OpenGl
   };
   core::WindowSystem window_system(settings_config);
@@ -16,8 +16,7 @@ int main()
 
   try
   {
-    // app.Run();
-    std::cout << "Hello World!" << std::endl;
+    app.Run();
   } catch (const std::exception &e)
   {
     std::cerr << e.what() << std::endl;

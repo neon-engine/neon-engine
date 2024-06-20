@@ -10,6 +10,12 @@ add_library(${TARGET} STATIC
         core/settings-config.hpp
         core/window-system.cpp
         core/window-system.hpp
+        private/glfw-window-system.cpp
+        private/glfw-window-system.hpp
+        private/glfw-input-system.cpp
+        private/glfw-input-system.hpp
+        private/opengl-render-system.cpp
+        private/opengl-render-system.hpp
 )
 
 target_include_directories(${TARGET}
