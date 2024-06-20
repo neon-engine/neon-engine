@@ -1,16 +1,22 @@
 #ifndef GLFW_WINDOW_MANAGER_HPP
 #define GLFW_WINDOW_MANAGER_HPP
-#include <core/window-info.hpp>
-#include <core/window-manager.hpp>
-#include <GLFW/glfw3.h>
+
+#include <private/glfw-input-manager.hpp>
+#include "renderer.hpp"
+#include "window-info.hpp"
+#include "window-manager.hpp"
+#include "GLFW/glfw3.h"
+
 
 namespace core
 {
   class Glfw_WindowManager final : public WindowManager
   {
-    void ConfigureWindowForRenderer() const;
-
     GLFWwindow *_window = nullptr;
+    Renderer _renderer;
+    Glfw_InputManager _input_manager;
+
+    void ConfigureWindowForRenderer() const;
 
   public:
     explicit Glfw_WindowManager(const Window_Info &window_info);
@@ -29,8 +35,11 @@ namespace core
 
     void InitializeInputManager() override;
 
-
     void InitializeRenderer() override;
+
+    InputManager GetInputManager() override;
+
+    Renderer GetRenderer() override;
   };
 } // core
 

@@ -29,6 +29,8 @@ namespace core
       GLFWwindow *window,
       const double scroll_x_offset,
       const double scroll_y_offset);
+
+    void CleanUp() override;
   };
 } // core
 

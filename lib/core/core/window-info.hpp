@@ -2,7 +2,7 @@
 #define WINDOW_INFO_HPP
 #include <string>
 
-enum class SupportedApi
+enum class RenderingApi
 {
   OpenGl = 0
 };
@@ -12,7 +12,7 @@ struct Window_Info
   int width;
   int height;
   std::string title;
-  SupportedApi supported_api;
+  RenderingApi selected_api;
 };
 
 #endif //WINDOW_INFO_HPP
