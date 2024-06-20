@@ -6,7 +6,7 @@ add_library(${TARGET} STATIC
         core/glfw-window-manager.hpp
         core/input-manager.hpp
         core/renderer.hpp
-        core/window-info.hpp
+        core/settings-config.hpp
         core/window-manager.hpp
         private/glfw-input-manager.cpp
         private/glfw-input-manager.hpp

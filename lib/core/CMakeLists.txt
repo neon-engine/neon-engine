@@ -7,7 +7,7 @@ add_library(${TARGET} STATIC
         core/render-system.hpp
         core/input-system.cpp
         core/input-system.hpp
-        core/window-info.hpp
+        core/settings-config.hpp
         core/window-system.cpp
         core/window-system.hpp
 )
