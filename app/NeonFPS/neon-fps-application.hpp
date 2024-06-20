@@ -3,7 +3,12 @@
 #include <core/application.hpp>
 
 
-class NeonFpsApplication final : public core::Application {};
+class NeonFpsApplication final : public core::Application {
+public:
+  NeonFpsApplication(core::WindowSystem &window_system,
+    core::InputSystem &input_system,
+    core::RenderSystem &render_system);
+};
 
 
 
