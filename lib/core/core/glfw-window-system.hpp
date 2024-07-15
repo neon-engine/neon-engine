@@ -3,13 +3,20 @@
 
 #include <GLFW/glfw3.h>
 
-#include "core/settings-config.hpp"
+#include "settings-config.hpp"
+#include "window-system.hpp"
 
 namespace core
 {
-  class Glfw_WindowSystem
+  class Glfw_WindowSystem final : public WindowSystem
   {
+  public:
+    explicit Glfw_WindowSystem(const SettingsConfig &settings_config)
+      : WindowSystem(settings_config) {}
+
+  private:
     void ConfigureWindowForRenderer(const SettingsConfig &settings_config);
+
   public:
     GLFWwindow *window = nullptr;
     const GLFWwindow *GetWindow();
@@ -17,6 +24,12 @@ namespace core
     bool IsRunning();
     void HideCursor(GLFWwindow *window);
     void ShowCursor(GLFWwindow *window);
+
+    void Initialize() override;
+
+    [[nodiscard]] bool IsRunning() const override;
+
+    void CleanUp() override;
   };
 } // core
 
