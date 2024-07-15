@@ -1,16 +1,29 @@
 #include "glfw-window-system.hpp"
 
+#include <iostream>
 #include <stdexcept>
 
 namespace core
 {
-  void Glfw_WindowSystem::ConfigureWindowForRenderer(const SettingsConfig &settings_config)
+  void Glfw_WindowSystem::ConfigureWindowForRenderer(const SettingsConfig &settings_config) const
   {
-    _settings_config = settings_config;
+    switch (_settings_config.selected_api)
+    {
+      case RenderingApi::OpenGl:
+      {
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+        break;
+      }
+      default:
+        throw std::runtime_error("Unsupported rendering API configured");
+    }
   }
 
   void Glfw_WindowSystem::Initialize()
   {
+    std::cout << "Initializing GLFW window system" << std::endl;
     if (!glfwInit())
     {
       throw std::runtime_error("Failed to initialize GLFW");
@@ -35,16 +48,24 @@ namespace core
 
     glfwMakeContextCurrent(_window);
 
-    HideCursor();
+    // HideCursor();
   }
+
   bool Glfw_WindowSystem::IsRunning() const
   {
     return !glfwWindowShouldClose(_window);
   }
 
-  const GLFWwindow *Glfw_WindowSystem::GetWindow() const
+  GLFWwindow *Glfw_WindowSystem::GetWindow() const
   {
     return _window;
+  }
+
+  void Glfw_WindowSystem::Update()
+  {
+    // check and call events and swap the buffers
+    glfwSwapBuffers(_window);
+    glfwPollEvents();
   }
 
   void Glfw_WindowSystem::HideCursor()
@@ -59,6 +80,7 @@ namespace core
 
   void Glfw_WindowSystem::CleanUp()
   {
+    std::cout << "Cleaning up GLFW window system" << std::endl;
     glfwDestroyWindow(_window);
     glfwTerminate();
   }

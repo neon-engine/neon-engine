@@ -13,7 +13,7 @@ int main()
   };
 
   core::Glfw_WindowSystem window_system(settings_config);
-  core::Glfw_InputSystem input_system(settings_config);
+  core::Glfw_InputSystem input_system(settings_config, window_system.GetWindow());
   core::OpenGl_RenderSystem render_system(settings_config);
 
   NeonFpsApplication app(settings_config, window_system, input_system, render_system);

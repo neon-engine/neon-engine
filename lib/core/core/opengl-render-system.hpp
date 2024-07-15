@@ -4,7 +4,8 @@
 
 namespace core
 {
-  class OpenGl_RenderSystem final : public RenderSystem {
+  class OpenGl_RenderSystem final : public RenderSystem
+  {
   public:
     explicit OpenGl_RenderSystem(const SettingsConfig &settings_config)
       : RenderSystem(settings_config) {}
@@ -12,6 +13,8 @@ namespace core
     void Initialize() override;
 
     void CleanUp() override;
+
+    void RenderFrame() override;
   };
 } // core
 

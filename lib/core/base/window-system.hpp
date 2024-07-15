@@ -27,6 +27,8 @@ namespace core
     virtual void HideCursor() = 0;
 
     virtual void ShowCursor() = 0;
+
+    virtual void Update() = 0;
   };
 } // core
 
