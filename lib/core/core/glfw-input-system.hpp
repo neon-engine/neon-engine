@@ -1,15 +1,23 @@
 #ifndef GLFW_INPUT_SYSTEM_HPP
 #define GLFW_INPUT_SYSTEM_HPP
 
+#include <GLFW/glfw3.h>
 #include "input-system.hpp"
 
 namespace core
 {
   class Glfw_InputSystem final : public InputSystem
   {
+    GLFWwindow *_window = nullptr;
+
   public:
-    explicit Glfw_InputSystem(const SettingsConfig &settings_config)
-      : InputSystem(settings_config) {}
+    explicit Glfw_InputSystem(
+      const SettingsConfig &settings_config,
+      GLFWwindow *window)
+      : InputSystem(settings_config)
+    {
+      _window = window;
+    }
 
     void Initialize() override;
 

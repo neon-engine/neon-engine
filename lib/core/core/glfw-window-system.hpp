@@ -17,7 +17,7 @@ namespace core
   private:
     GLFWwindow *_window = nullptr;
 
-    void ConfigureWindowForRenderer(const SettingsConfig &settings_config);
+    void ConfigureWindowForRenderer(const SettingsConfig &settings_config) const;
 
   public:
     void Initialize() override;
@@ -30,7 +30,9 @@ namespace core
 
     void ShowCursor() override;
 
-    [[nodiscard]] const GLFWwindow *GetWindow() const;
+    [[nodiscard]] GLFWwindow *GetWindow() const;
+
+    void Update() override;
   };
 } // core
 

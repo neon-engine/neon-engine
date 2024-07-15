@@ -21,6 +21,8 @@ namespace core
     virtual void Initialize() = 0;
 
     virtual void CleanUp() = 0;
+
+    virtual void RenderFrame() = 0;
   };
 } // core
 

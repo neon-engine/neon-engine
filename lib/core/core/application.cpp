@@ -47,6 +47,8 @@ namespace core
     while (_window_system->IsRunning())
     {
       _input_system->ProcessInput();
+      _render_system->RenderFrame();
+      _window_system->Update();
     }
   }
 } // core
