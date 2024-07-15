@@ -6,6 +6,13 @@ namespace core
 {
   void Glfw_WindowSystem::ConfigureWindowForRenderer(const SettingsConfig &settings_config) {}
 
+  void Glfw_WindowSystem::Initialize() {}
+  bool Glfw_WindowSystem::IsRunning() const
+  {
+    return false;
+  }
+  void Glfw_WindowSystem::CleanUp() {}
+
   const GLFWwindow *Glfw_WindowSystem::GetWindow()
   {
     return window;
@@ -54,4 +61,6 @@ namespace core
   {
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_CAPTURED);
   }
+
+
 } // core

@@ -1,11 +1,16 @@
 #ifndef GLFW_INPUT_SYSTEM_HPP
 #define GLFW_INPUT_SYSTEM_HPP
 
+#include "input-system.hpp"
+
 namespace core
 {
-  class Glfw_InputSystem
+  class Glfw_InputSystem final : public InputSystem
   {
   public:
+    explicit Glfw_InputSystem(const SettingsConfig &settings_config)
+      : InputSystem(settings_config) {}
+
     static void ProcessInputWrapper();
 
     void ProcessInputCallback(
@@ -21,6 +26,12 @@ namespace core
     void ScrollCallback(
       const double scroll_x_offset,
       const double scroll_y_offset);
+
+    void Initialize() override;
+
+    void ProcessInput() override;
+
+    void CleanUp() override;
   };
 } // core
 
