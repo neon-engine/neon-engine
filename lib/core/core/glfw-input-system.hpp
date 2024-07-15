@@ -11,6 +11,12 @@ namespace core
     explicit Glfw_InputSystem(const SettingsConfig &settings_config)
       : InputSystem(settings_config) {}
 
+    void Initialize() override;
+
+    void ProcessInput() override;
+
+    void CleanUp() override;
+
     static void ProcessInputWrapper();
 
     void ProcessInputCallback(
@@ -26,12 +32,6 @@ namespace core
     void ScrollCallback(
       const double scroll_x_offset,
       const double scroll_y_offset);
-
-    void Initialize() override;
-
-    void ProcessInput() override;
-
-    void CleanUp() override;
   };
 } // core
 

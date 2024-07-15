@@ -23,6 +23,10 @@ namespace core
     [[nodiscard]] virtual bool IsRunning() const = 0;
 
     virtual void CleanUp() = 0;
+
+    virtual void HideCursor() = 0;
+
+    virtual void ShowCursor() = 0;
   };
 } // core
 
