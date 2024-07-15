@@ -29,6 +29,10 @@ namespace core
   {
     if (_destroyed) { return; }
     _destroyed = true;
+
+    _render_system->CleanUp();
+    _input_system->CleanUp();
+    _window_system->CleanUp();
   }
 
   Application::~Application()

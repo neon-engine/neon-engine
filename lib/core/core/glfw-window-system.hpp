@@ -15,21 +15,22 @@ namespace core
       : WindowSystem(settings_config) {}
 
   private:
+    GLFWwindow *_window = nullptr;
+
     void ConfigureWindowForRenderer(const SettingsConfig &settings_config);
 
   public:
-    GLFWwindow *window = nullptr;
-    const GLFWwindow *GetWindow();
-    void InitializeWindow(const SettingsConfig &settings_config);
-    bool IsRunning();
-    void HideCursor(GLFWwindow *window);
-    void ShowCursor(GLFWwindow *window);
-
     void Initialize() override;
 
     [[nodiscard]] bool IsRunning() const override;
 
     void CleanUp() override;
+
+    void HideCursor() override;
+
+    void ShowCursor() override;
+
+    [[nodiscard]] const GLFWwindow *GetWindow() const;
   };
 } // core
 

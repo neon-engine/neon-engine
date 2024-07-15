@@ -4,63 +4,62 @@
 
 namespace core
 {
-  void Glfw_WindowSystem::ConfigureWindowForRenderer(const SettingsConfig &settings_config) {}
-
-  void Glfw_WindowSystem::Initialize() {}
-  bool Glfw_WindowSystem::IsRunning() const
+  void Glfw_WindowSystem::ConfigureWindowForRenderer(const SettingsConfig &settings_config)
   {
-    return false;
-  }
-  void Glfw_WindowSystem::CleanUp() {}
-
-  const GLFWwindow *Glfw_WindowSystem::GetWindow()
-  {
-    return window;
+    _settings_config = settings_config;
   }
 
-  void Glfw_WindowSystem::InitializeWindow(const SettingsConfig &settings_config)
+  void Glfw_WindowSystem::Initialize()
   {
     if (!glfwInit())
     {
       throw std::runtime_error("Failed to initialize GLFW");
     }
 
-    ConfigureWindowForRenderer(settings_config);
+    ConfigureWindowForRenderer(_settings_config);
 
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
-    window = glfwCreateWindow(
-      settings_config.width,
-      settings_config.height,
-      settings_config.title.c_str(),
+    _window = glfwCreateWindow(
+      _settings_config.width,
+      _settings_config.height,
+      _settings_config.title.c_str(),
       nullptr,
       nullptr);
 
-    if (window == nullptr)
+    if (_window == nullptr)
     {
       glfwTerminate();
       throw std::runtime_error("Failed to create GLFW window");
     }
 
-    glfwMakeContextCurrent(window);
+    glfwMakeContextCurrent(_window);
 
-    HideCursor(window);
+    HideCursor();
   }
-
-  bool Glfw_WindowSystem::IsRunning()
+  bool Glfw_WindowSystem::IsRunning() const
   {
-    return !glfwWindowShouldClose(window);
+    return !glfwWindowShouldClose(_window);
   }
 
-  void Glfw_WindowSystem::HideCursor(GLFWwindow *window)
+  const GLFWwindow *Glfw_WindowSystem::GetWindow() const
   {
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    return _window;
   }
 
-  void Glfw_WindowSystem::ShowCursor(GLFWwindow *window)
+  void Glfw_WindowSystem::HideCursor()
   {
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_CAPTURED);
+    glfwSetInputMode(_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
   }
 
+  void Glfw_WindowSystem::ShowCursor()
+  {
+    glfwSetInputMode(_window, GLFW_CURSOR, GLFW_CURSOR_CAPTURED);
+  }
 
+  void Glfw_WindowSystem::CleanUp()
+  {
+    glfwDestroyWindow(_window);
+    glfwTerminate();
+  }
 } // core
