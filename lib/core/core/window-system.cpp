@@ -1,5 +1,7 @@
 #include "window-system.hpp"
 
+#include <iostream>
+
 #include "glfw-window-system.hpp"
 
 namespace core
@@ -11,12 +13,14 @@ namespace core
 
   void WindowSystem::Initialize()
   {
-    Glfw_WindowSystem::InitializeWindow(_settings_config);
+    std::cout << "initializing window" << std::endl;
+    // Glfw_WindowSystem::InitializeWindow(_settings_config);
   }
 
   bool WindowSystem::IsRunning() const
   {
-    return Glfw_WindowSystem::IsRunning();
+    // return Glfw_WindowSystem::IsRunning();
+    return false;
   }
 
   void WindowSystem::CleanUp()
