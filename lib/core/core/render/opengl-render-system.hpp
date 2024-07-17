@@ -16,7 +16,10 @@ namespace core
 
   public:
     explicit OpenGl_RenderSystem(const SettingsConfig &settings_config)
-      : RenderSystem(settings_config) {}
+      : RenderSystem(settings_config),
+        _geometry_references(_max_buff_size),
+        _shader_references(_max_buff_size),
+        _texture_references(_max_buff_size) {}
 
     void Initialize() override;
 
@@ -24,9 +27,11 @@ namespace core
 
     void RenderFrame() override;
 
-    RenderContext* GetContext() override;
+    RenderContext *GetContext() override;
 
-    int InitGeometry() override;
+    int InitGeometry(
+      const std::vector<float> &vertices,
+      const std::vector<int> &indices) override;
 
     void DestroyGeometry(int geometry_id) override;
 

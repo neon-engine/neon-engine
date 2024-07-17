@@ -57,5 +57,7 @@ namespace core
       scene.Draw();
       _window_system->Update();
     }
+
+    scene.CleanUp();
   }
 } // core
