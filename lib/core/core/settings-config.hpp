@@ -1,5 +1,6 @@
 #ifndef WINDOW_INFO_HPP
 #define WINDOW_INFO_HPP
+
 #include <string>
 
 enum class RenderingApi
