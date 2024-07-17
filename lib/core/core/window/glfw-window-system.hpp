@@ -1,10 +1,10 @@
 #ifndef GLFW_WINDOW_SYSTEM_HPP
 #define GLFW_WINDOW_SYSTEM_HPP
 
-#include <GLFW/glfw3.h>
+#include "core/private/neon.hpp"
 
-#include "settings-config.hpp"
 #include "window-system.hpp"
+#include "core/settings-config.hpp"
 
 namespace core
 {

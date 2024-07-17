@@ -1,9 +1,9 @@
 #ifndef APPLICATION_HPP
 #define APPLICATION_HPP
 
-#include "input-system.hpp"
-#include "render-system.hpp"
-#include "window-system.hpp"
+#include "core/input/input-system.hpp"
+#include "core/render/render-system.hpp"
+#include "core/window/window-system.hpp"
 
 namespace core
 {
@@ -18,9 +18,9 @@ namespace core
 
     Application(
       const SettingsConfig &settings_config,
-      WindowSystem &window_system,
-      InputSystem &input_system,
-      RenderSystem &render_system);
+      WindowSystem *window_system,
+      InputSystem *input_system,
+      RenderSystem *render_system);
 
     void Initialize() const;
 

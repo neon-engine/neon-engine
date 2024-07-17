@@ -2,7 +2,7 @@
 #define GLFW_INPUT_SYSTEM_HPP
 
 #include <GLFW/glfw3.h>
-#include "input-system.hpp"
+#include "core/input/input-system.hpp"
 
 namespace core
 {

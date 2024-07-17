@@ -1,11 +1,12 @@
 #ifndef RENDER_SYSTEM_HPP
 #define RENDER_SYSTEM_HPP
 
+#include "render-context.hpp"
 #include "core/settings-config.hpp"
 
 namespace core
 {
-  class RenderSystem
+  class RenderSystem : public RenderContext
   {
   protected:
     SettingsConfig _settings_config;
@@ -23,6 +24,8 @@ namespace core
     virtual void CleanUp() = 0;
 
     virtual void RenderFrame() = 0;
+
+    virtual RenderContext* GetContext() = 0;
   };
 } // core
 

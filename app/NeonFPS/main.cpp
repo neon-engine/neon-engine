@@ -1,10 +1,10 @@
 #include <iostream>
 #include <stdexcept>
-#include "core/glfw-input-system.hpp"
-#include "core/settings-config.hpp"
 #include "neon-fps-application.hpp"
-#include "core/glfw-window-system.hpp"
-#include "core/opengl-render-system.hpp"
+#include "core/settings-config.hpp"
+#include "core/input/glfw-input-system.hpp"
+#include "core/render/opengl-render-system.hpp"
+#include "core/window/glfw-window-system.hpp"
 
 int main()
 {
@@ -16,7 +16,7 @@ int main()
   core::Glfw_InputSystem input_system(settings_config, window_system.GetWindow());
   core::OpenGl_RenderSystem render_system(settings_config);
 
-  NeonFpsApplication app(settings_config, window_system, input_system, render_system);
+  NeonFpsApplication app(settings_config, &window_system, &input_system, &render_system);
 
   try
   {
