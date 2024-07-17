@@ -1,6 +1,8 @@
 #ifndef RENDER_CONTEXT_HPP
 #define RENDER_CONTEXT_HPP
 
+#include <vector>
+
 namespace core
 {
   class RenderContext
@@ -13,7 +15,9 @@ namespace core
     ~RenderContext() = default;
 
   public:
-    virtual int InitGeometry() = 0;
+    virtual int InitGeometry(
+      const std::vector<float> &vertices,
+      const std::vector<int> &indices) = 0;
 
     virtual void DestroyGeometry(int geometry_id) = 0;
 

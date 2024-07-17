@@ -11,6 +11,7 @@ namespace core
     explicit Scene(RenderContext *render_context);
     void Initialize();
     void Draw();
+    void CleanUp();
   };
 }
 
