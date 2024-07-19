@@ -22,6 +22,8 @@ add_library(${TARGET} STATIC
         core/render/render-context.hpp
 
         core/private/neon.hpp
+        core/window/sdl2-window-system.cpp
+        core/window/sdl2-window-system.hpp
 )
 
 target_include_directories(${TARGET}

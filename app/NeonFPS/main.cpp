@@ -12,7 +12,7 @@ int main()
     .width = 800, .height = 600, .selected_api = RenderingApi::OpenGl
   };
 
-  core::Glfw_WindowSystem window_system(settings_config);
+  core::GLFW_WindowSystem window_system(settings_config);
   core::Glfw_InputSystem input_system(settings_config, window_system.GetWindow());
   core::OpenGl_RenderSystem render_system(settings_config);
 

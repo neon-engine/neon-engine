@@ -8,10 +8,11 @@
 
 namespace core
 {
-  class Glfw_WindowSystem final : public WindowSystem
+  // ReSharper disable once CppInconsistentNaming
+  class GLFW_WindowSystem final : public WindowSystem
   {
   public:
-    explicit Glfw_WindowSystem(const SettingsConfig &settings_config)
+    explicit GLFW_WindowSystem(const SettingsConfig &settings_config)
       : WindowSystem(settings_config) {}
 
   private:
