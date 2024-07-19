@@ -10,7 +10,7 @@ namespace core
   public:
     explicit Scene(RenderContext *render_context);
     void Initialize();
-    void Draw();
+    void DrawFrame();
     void CleanUp();
   };
 }

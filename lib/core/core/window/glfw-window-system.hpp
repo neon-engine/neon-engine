@@ -1,7 +1,10 @@
 #ifndef GLFW_WINDOW_SYSTEM_HPP
 #define GLFW_WINDOW_SYSTEM_HPP
 
-#include "private/neon.hpp"
+// gl3w must be first
+// ReSharper disable once CppUnusedIncludeDirective
+#include <GL/gl3w.h>
+#include <GLFW/glfw3.h>
 
 #include "settings-config.hpp"
 #include "window-system.hpp"

@@ -20,8 +20,8 @@ namespace core
 
     _window = SDL_CreateWindow(
       _settings_config.title.c_str(),
-      0,
-      0,
+      SDL_WINDOWPOS_CENTERED,
+      SDL_WINDOWPOS_CENTERED,
       _settings_config.width,
       _settings_config.height,
       _window_flags);

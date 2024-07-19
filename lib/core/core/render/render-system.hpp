@@ -23,7 +23,7 @@ namespace core
 
     virtual void CleanUp() = 0;
 
-    virtual void RenderFrame() = 0;
+    virtual void PrepareFrame() = 0;
 
     virtual RenderContext* GetContext() = 0;
   };

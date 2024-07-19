@@ -1,9 +1,10 @@
 #ifndef OPEN_GL_RENDER_SYSTEM_HPP
 #define OPEN_GL_RENDER_SYSTEM_HPP
 
+#include <GL/gl3w.h>
+
 #include <vector>
 #include "render-system.hpp"
-#include "private/neon.hpp"
 
 namespace core
 {
@@ -36,7 +37,7 @@ namespace core
 
     void CleanUp() override;
 
-    void RenderFrame() override;
+    void PrepareFrame() override;
 
     RenderContext *GetContext() override;
 
@@ -52,7 +53,7 @@ namespace core
 
     void DestroyShader(int shader_id) override;
 
-    int InitTexture() override;
+    int InitTexture(std::string texture_path) override;
 
     void DestroyTexture(int texture_id) override;
   };
