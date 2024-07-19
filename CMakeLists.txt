@@ -37,6 +37,7 @@ find_package(stb REQUIRED)
 # Add external subdirectories
 add_subdirectory(external/glfw)
 add_subdirectory(external/glm)
+add_subdirectory(external/sdl2)
 
 # Additional libraries
 add_subdirectory(lib/core)

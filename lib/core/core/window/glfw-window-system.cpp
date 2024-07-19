@@ -5,7 +5,7 @@
 
 namespace core
 {
-  void Glfw_WindowSystem::ConfigureWindowForRenderer(const SettingsConfig &settings_config) const
+  void GLFW_WindowSystem::ConfigureWindowForRenderer(const SettingsConfig &settings_config) const
   {
     switch (_settings_config.selected_api)
     {
@@ -21,7 +21,7 @@ namespace core
     }
   }
 
-  void Glfw_WindowSystem::Initialize()
+  void GLFW_WindowSystem::Initialize()
   {
     std::cout << "Initializing GLFW window system" << std::endl;
     if (!glfwInit())
@@ -51,34 +51,34 @@ namespace core
     // HideCursor();
   }
 
-  bool Glfw_WindowSystem::IsRunning() const
+  bool GLFW_WindowSystem::IsRunning() const
   {
     return !glfwWindowShouldClose(_window);
   }
 
-  GLFWwindow *Glfw_WindowSystem::GetWindow() const
+  GLFWwindow *GLFW_WindowSystem::GetWindow() const
   {
     return _window;
   }
 
-  void Glfw_WindowSystem::Update()
+  void GLFW_WindowSystem::Update()
   {
     // check and call events and swap the buffers
     glfwSwapBuffers(_window);
     glfwPollEvents();
   }
 
-  void Glfw_WindowSystem::HideCursor()
+  void GLFW_WindowSystem::HideCursor()
   {
     glfwSetInputMode(_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
   }
 
-  void Glfw_WindowSystem::ShowCursor()
+  void GLFW_WindowSystem::ShowCursor()
   {
     glfwSetInputMode(_window, GLFW_CURSOR, GLFW_CURSOR_CAPTURED);
   }
 
-  void Glfw_WindowSystem::CleanUp()
+  void GLFW_WindowSystem::CleanUp()
   {
     std::cout << "Cleaning up GLFW window system" << std::endl;
     glfwDestroyWindow(_window);
