@@ -28,7 +28,7 @@ namespace core
 
     virtual void DestroyShader(int shader_id) = 0;
 
-    virtual int InitTexture() = 0;
+    virtual int InitTexture(std::string texture_path) = 0;
 
     virtual void DestroyTexture(int texture_id) = 0;
   };

@@ -1,11 +1,14 @@
 #include "opengl-render-system.hpp"
 
+#define STB_IMAGE_IMPLEMENTATION
+
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <stb_image.h>
 #include <stdexcept>
-
 #include <GL/gl3w.h>
+
 
 namespace core
 {
@@ -31,15 +34,13 @@ namespace core
     std::cout << "Cleaning up OpenGL" << std::endl;
   }
 
-  void OpenGL_RenderSystem::RenderFrame()
+  void OpenGL_RenderSystem::PrepareFrame()
   {
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); for wireframe
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    // draw the scene here
   }
 
   RenderContext *OpenGL_RenderSystem::GetContext()
@@ -186,7 +187,7 @@ namespace core
     } catch (const std::ifstream::failure &)
     {
       std::cout << "Error opening shader " << shader_path << std::endl;
-      return 0;
+      return -1;
     }
     const char *vert_shader_code = vertex_code.c_str();
     const char *frag_shader_code = fragment_code.c_str();
@@ -196,6 +197,7 @@ namespace core
     constexpr GLsizei buf_size = 512;
     GLint success;
     char info_log[buf_size];
+    auto error = false;
 
     // vertex Shader
     vertex = glCreateShader(GL_VERTEX_SHADER);
@@ -206,7 +208,8 @@ namespace core
     if (!success)
     {
       glGetShaderInfoLog(vertex, buf_size, nullptr, info_log);
-      std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << info_log << std::endl;
+      std::cout << "Error compiling vertex shader:\n" << info_log << std::endl;
+      error = true;
     }
 
     // similar for Fragment Shader
@@ -218,7 +221,8 @@ namespace core
     if (!success)
     {
       glGetShaderInfoLog(fragment, buf_size, nullptr, info_log);
-      std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << info_log << std::endl;
+      std::cout << "Error compiling fragment shader:\n" << info_log << std::endl;
+      error = true;
     }
 
     // shader Program
@@ -231,12 +235,15 @@ namespace core
     if (!success)
     {
       glGetProgramInfoLog(program_id, buf_size, nullptr, info_log);
-      std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << info_log << std::endl;
+      std::cout << "Error linking shader program:\n" << info_log << std::endl;
+      error = true;
     }
 
     // delete the shaders as they're linked into our program now and no longer necessary
     glDeleteShader(vertex);
     glDeleteShader(fragment);
+
+    if (error) { return -1; }
 
     _shader_references[shader_id] = program_id;
 
@@ -249,12 +256,57 @@ namespace core
     glDeleteProgram(program_id);
   }
 
-  int OpenGL_RenderSystem::InitTexture()
+  int OpenGL_RenderSystem::InitTexture(const std::string texture_path)
   {
     const auto texture_id = _texture_index++;
-    std::cout << "Initializing texture: " << texture_id << std::endl;
+    std::cout << "Initializing texture from " << texture_path << " with texture id " << texture_id << std::endl;
+
+    GLint tex_width, tex_height;
+    int nr_channels;
+    stbi_set_flip_vertically_on_load(true);
+    GLuint opengl_texture_id;
+    if (unsigned char *data = stbi_load(
+      texture_path.c_str(),
+      &tex_width,
+      &tex_height,
+      &nr_channels,
+      STBI_default))
+    {
+      glGenTextures(1, &opengl_texture_id);
+      glBindTexture(GL_TEXTURE_2D, opengl_texture_id);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      glTexImage2D(GL_TEXTURE_2D,
+                   0,
+                   GL_RGBA,
+                   tex_width,
+                   tex_height,
+                   0,
+                   GL_RGBA, // consider making this configurable
+                   GL_UNSIGNED_BYTE,
+                   data);
+      glGenerateMipmap(GL_TEXTURE_2D);
+
+      // free the memory after we are done creating texture
+      stbi_image_free(data);
+    } else
+    {
+      std::cout << "Failed to load texture" << std::endl;
+      return -1;
+    }
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    _texture_references[texture_id] = opengl_texture_id;
+
     return texture_id;
   }
 
-  void OpenGL_RenderSystem::DestroyTexture(int texture_id) {}
+  void OpenGL_RenderSystem::DestroyTexture(const int texture_id)
+  {
+    const auto opengl_texture_id = _texture_references[texture_id];
+    glDeleteTextures(1, &opengl_texture_id);
+  }
 } // core

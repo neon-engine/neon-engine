@@ -10,7 +10,7 @@ void core::Scene::Initialize()
 {
 }
 
-void core::Scene::Draw() {}
+void core::Scene::DrawFrame() {}
 
 void core::Scene::CleanUp()
 {

@@ -53,8 +53,8 @@ namespace core
     while (_window_system->IsRunning())
     {
       _input_system->ProcessInput();
-      _render_system->RenderFrame();
-      scene.Draw();
+      _render_system->PrepareFrame();
+      scene.DrawFrame();
       _window_system->Update();
     }
 

@@ -1,6 +1,10 @@
 #ifndef SDL_2_WINDOW_SYSTEM_HPP
 #define SDL_2_WINDOW_SYSTEM_HPP
-#include <SDL_video.h>
+
+// ReSharper disable once CppUnusedIncludeDirective
+#include <GL/gl3w.h>
+
+#include <SDL.h>
 
 #include "sdl-2-window-context.hpp"
 #include "window-system.hpp"
