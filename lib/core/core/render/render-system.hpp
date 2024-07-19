@@ -2,7 +2,7 @@
 #define RENDER_SYSTEM_HPP
 
 #include "render-context.hpp"
-#include "core/settings-config.hpp"
+#include "settings-config.hpp"
 
 namespace core
 {

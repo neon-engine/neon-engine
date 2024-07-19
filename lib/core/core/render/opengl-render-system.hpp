@@ -3,7 +3,7 @@
 
 #include <vector>
 #include "render-system.hpp"
-#include "core/private/neon.hpp"
+#include "private/neon.hpp"
 
 namespace core
 {

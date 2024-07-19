@@ -1,10 +1,10 @@
 #include <iostream>
 #include <stdexcept>
 #include "neon-fps-application.hpp"
-#include "core/settings-config.hpp"
-#include "core/input/glfw-input-system.hpp"
-#include "core/render/opengl-render-system.hpp"
-#include "core/window/glfw-window-system.hpp"
+#include "settings-config.hpp"
+#include "input/glfw-input-system.hpp"
+#include "render/opengl-render-system.hpp"
+#include "window/glfw-window-system.hpp"
 
 int main()
 {
