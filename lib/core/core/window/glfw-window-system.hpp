@@ -18,8 +18,6 @@ namespace core
   private:
     GLFWwindow *_window = nullptr;
 
-    void ConfigureWindowForRenderer(const SettingsConfig &settings_config) const;
-
   public:
     void Initialize() override;
 
@@ -34,6 +32,9 @@ namespace core
     [[nodiscard]] GLFWwindow *GetWindow() const;
 
     void Update() override;
+
+  protected:
+    void ConfigureWindowForRenderer() override;
   };
 } // core
 

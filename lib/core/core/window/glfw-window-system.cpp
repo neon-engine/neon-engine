@@ -5,21 +5,6 @@
 
 namespace core
 {
-  void GLFW_WindowSystem::ConfigureWindowForRenderer(const SettingsConfig &settings_config) const
-  {
-    switch (_settings_config.selected_api)
-    {
-      case RenderingApi::OpenGl:
-      {
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-        break;
-      }
-      default:
-        throw std::runtime_error("Unsupported rendering API configured");
-    }
-  }
 
   void GLFW_WindowSystem::Initialize()
   {
@@ -29,7 +14,7 @@ namespace core
       throw std::runtime_error("Failed to initialize GLFW");
     }
 
-    ConfigureWindowForRenderer(_settings_config);
+    ConfigureWindowForRenderer();
 
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
@@ -83,5 +68,21 @@ namespace core
     std::cout << "Cleaning up GLFW window system" << std::endl;
     glfwDestroyWindow(_window);
     glfwTerminate();
+  }
+
+  void GLFW_WindowSystem::ConfigureWindowForRenderer()
+  {
+    switch (_settings_config.selected_api)
+    {
+      case RenderingApi::OpenGl:
+      {
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+        break;
+      }
+      default:
+        throw std::runtime_error("Unsupported rendering API configured");
+    }
   }
 } // core

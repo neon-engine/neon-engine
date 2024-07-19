@@ -10,6 +10,8 @@ namespace core
   protected:
     SettingsConfig _settings_config;
 
+    virtual void ConfigureWindowForRenderer() = 0;
+
     ~WindowSystem() = default;
 
   public:
