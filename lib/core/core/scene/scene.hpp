@@ -1,6 +1,6 @@
 #ifndef SCENE_HPP
 #define SCENE_HPP
-#include "core/render/render-context.hpp"
+#include "render/render-context.hpp"
 
 namespace core
 {

@@ -1,9 +1,10 @@
 #ifndef APPLICATION_HPP
 #define APPLICATION_HPP
 
-#include "core/input/input-system.hpp"
-#include "core/render/render-system.hpp"
-#include "core/window/window-system.hpp"
+#include "settings-config.hpp"
+#include "input/input-system.hpp"
+#include "render/render-system.hpp"
+#include "window/window-system.hpp"
 
 namespace core
 {

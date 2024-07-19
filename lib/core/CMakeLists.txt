@@ -27,13 +27,13 @@ add_library(${TARGET} STATIC
 )
 
 target_include_directories(${TARGET}
-        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
-        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/entity
-        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/input
-        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/render
-        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/scene
-        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/window
-        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/private
+        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/core
+        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/core/entity
+        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/core/input
+        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/core/render
+        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/core/scene
+        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/core/window
+        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/core/private
 )
 
 target_link_libraries(${TARGET} glfw glm gl3w)
