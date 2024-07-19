@@ -1,13 +1,15 @@
 #include "opengl-render-system.hpp"
 
+#include <fstream>
 #include <iostream>
+#include <sstream>
 #include <stdexcept>
 
 #include <GL/gl3w.h>
 
 namespace core
 {
-  void OpenGl_RenderSystem::Initialize()
+  void OpenGL_RenderSystem::Initialize()
   {
     std::cout << "Initializing OpenGL" << std::endl;
     if (gl3wInit())
@@ -24,12 +26,12 @@ namespace core
     glViewport(0, 0, _settings_config.width, _settings_config.height);
   }
 
-  void OpenGl_RenderSystem::CleanUp()
+  void OpenGL_RenderSystem::CleanUp()
   {
     std::cout << "Cleaning up OpenGL" << std::endl;
   }
 
-  void OpenGl_RenderSystem::RenderFrame()
+  void OpenGL_RenderSystem::RenderFrame()
   {
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); for wireframe
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -40,13 +42,15 @@ namespace core
     // draw the scene here
   }
 
-  RenderContext* OpenGl_RenderSystem::GetContext()
+  RenderContext *OpenGL_RenderSystem::GetContext()
   {
     return this;
   }
 
-  int OpenGl_RenderSystem::InitGeometry(
+  int OpenGL_RenderSystem::InitGeometry(
     const std::vector<float> &vertices,
+    const std::vector<float> &normals,
+    const std::vector<float> &tex_coordinates,
     const std::vector<int> &indices)
   {
     const auto geometry_id = _geometry_index++;
@@ -59,22 +63,64 @@ namespace core
 
     GLuint vao = 0;
     GLuint vbo = 0;
+    GLuint nvbo = 0;
+    GLuint uvbo = 0;
     GLuint ebo = 0;
-
-    // this can be configurable to make data more compact, but hard coding it to 8 * float for now
-    constexpr GLint stride = 8 * sizeof(GLfloat);
 
     glGenVertexArrays(1, &vao);
     glGenBuffers(1, &vbo);
+    glGenBuffers(1, &nvbo);
+    glGenBuffers(1, &uvbo);
     glGenBuffers(1, &ebo);
 
     glBindVertexArray(vao);
 
+    // vbo - vertices
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(
+      GL_ARRAY_BUFFER,
+      static_cast<GLsizeiptr>(vertices.size() * sizeof(float)),
+      &vertices[0],
+      GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(
+      0,
+      3,
+      GL_FLOAT,
+      GL_FALSE,
+      3 * sizeof(GLfloat),
+      static_cast<void *>(nullptr));
+
+    // nvbo - normals
+    glBindBuffer(GL_ARRAY_BUFFER, nvbo);
     glBufferData(GL_ARRAY_BUFFER,
-                 static_cast<GLsizeiptr>(vertices.size() * sizeof(float)),
-                 &vertices[0],
+                 static_cast<GLsizeiptr>(normals.size() * sizeof(float)),
+                 &normals[0],
                  GL_STATIC_DRAW);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(
+      1,
+      3,
+      GL_FLOAT,
+      GL_FALSE,
+      3 * sizeof(GLfloat),
+      static_cast<void *>(nullptr));
+
+    // uvbo - texture coordinates
+    glBindBuffer(GL_ARRAY_BUFFER, uvbo);
+    glBufferData(GL_ARRAY_BUFFER,
+                 static_cast<GLsizeiptr>(tex_coordinates.size() * sizeof(float)),
+                 &tex_coordinates[0],
+                 GL_STATIC_DRAW);
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(
+      2,
+      2,
+      GL_FLOAT,
+      GL_FALSE,
+      2 * sizeof(GLfloat),
+      static_cast<void *>(nullptr));
+
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER,
@@ -82,82 +128,133 @@ namespace core
                  &indices[0],
                  GL_STATIC_DRAW);
 
-    // position
-    glVertexAttribPointer(
-      0,
-      // "layout (location = x)" in the vertex shader
-      3,
-      // how many components there are per vertex
-      GL_FLOAT,
-      // What type these components are
-      GL_FALSE,
-      // GL_TRUE means the values should be normalized. GL_FALSE means they shouldn't
-      stride,
-      static_cast<void *>(nullptr));
-    glEnableVertexAttribArray(0);
-
-    // indices
-    glVertexAttribPointer(
-      1,
-      3,
-      GL_FLOAT,
-      GL_FALSE,
-      stride,
-      reinterpret_cast<void *>(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-
-    // texture coordinates
-    glVertexAttribPointer(
-      2,
-      2,
-      GL_FLOAT,
-      GL_FALSE,
-      stride,
-      reinterpret_cast<void *>(6 * sizeof(float)));
-    glEnableVertexAttribArray(2);
-
-    // We've sent the vertex data over to OpenGL, but there's still something missing.
-    // In what order should it draw those vertices? That's why we'll need a GL_ELEMENT_ARRAY_BUFFER for this.
-
-
     // Unbind the currently bound buffer so that we don't accidentally make unwanted changes to it.
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     // Unbind the VAO now, so we don't accidentally tamper with it.
     // NOTE: You must NEVER unbind the element array buffer associated with a VAO!
     glBindVertexArray(0);
-    _geometry_references[geometry_id] = std::make_tuple(vao, vbo, ebo, stride);
+    _geometry_references[geometry_id] = OpenGL_Geometry{vao, vbo, nvbo, uvbo, ebo};
     return geometry_id;
   }
 
-  void OpenGl_RenderSystem::DestroyGeometry(int geometry_id)
+  void OpenGL_RenderSystem::DestroyGeometry(const int geometry_id)
   {
-    const auto tuple = _geometry_references[geometry_id];
-    const auto vao = std::get<0>(tuple);
-    const auto vbo = std::get<1>(tuple);
-    const auto ebo = std::get<2>(tuple);
+    const auto [
+      vao,
+      vbo,
+      nvbo,
+      uvbo,
+      ebo] = _geometry_references[geometry_id];
 
     glDeleteBuffers(1, &vao);
     glDeleteBuffers(1, &vbo);
+    glDeleteBuffers(1, &nvbo);
+    glDeleteBuffers(1, &uvbo);
     glDeleteBuffers(1, &ebo);
   }
 
-  int OpenGl_RenderSystem::InitShader()
+  int OpenGL_RenderSystem::InitShader(const std::string shader_path)
   {
     const auto shader_id = _shader_index++;
-    std::cout << "Initializing shader: " << shader_id << std::endl;
+    std::cout << "Initializing shader from " << shader_path << " with shader id " << shader_id << std::endl;
+
+    std::string vertex_path = shader_path + ".vert";
+    std::string fragment_path = shader_path + ".frag";
+    std::string vertex_code;
+    std::string fragment_code;
+    std::ifstream vert_shader_file;
+    std::ifstream frag_shader_file;
+
+    vert_shader_file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+    frag_shader_file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+
+    try
+    {
+      vert_shader_file.open(vertex_path);
+      frag_shader_file.open(fragment_path);
+      std::stringstream vert_shader_stream, frag_shader_stream;
+
+      vert_shader_stream << vert_shader_file.rdbuf();
+      frag_shader_stream << frag_shader_file.rdbuf();
+
+      vert_shader_file.close();
+      frag_shader_file.close();
+
+      vertex_code = vert_shader_stream.str();
+      fragment_code = frag_shader_stream.str();
+    } catch (const std::ifstream::failure &)
+    {
+      std::cout << "Error opening shader " << shader_path << std::endl;
+      return 0;
+    }
+    const char *vert_shader_code = vertex_code.c_str();
+    const char *frag_shader_code = fragment_code.c_str();
+
+    // 2. compile shaders
+    GLuint vertex, fragment;
+    constexpr GLsizei buf_size = 512;
+    GLint success;
+    char info_log[buf_size];
+
+    // vertex Shader
+    vertex = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vertex, 1, &vert_shader_code, nullptr);
+    glCompileShader(vertex);
+    // print compile errors if any
+    glGetShaderiv(vertex, GL_COMPILE_STATUS, &success);
+    if (!success)
+    {
+      glGetShaderInfoLog(vertex, buf_size, nullptr, info_log);
+      std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << info_log << std::endl;
+    }
+
+    // similar for Fragment Shader
+    fragment = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragment, 1, &frag_shader_code, nullptr);
+    glCompileShader(fragment);
+    // print compile errors if any
+    glGetShaderiv(fragment, GL_COMPILE_STATUS, &success);
+    if (!success)
+    {
+      glGetShaderInfoLog(fragment, buf_size, nullptr, info_log);
+      std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << info_log << std::endl;
+    }
+
+    // shader Program
+    auto program_id = glCreateProgram();
+    glAttachShader(program_id, vertex);
+    glAttachShader(program_id, fragment);
+    glLinkProgram(program_id);
+    // print linking errors if any
+    glGetProgramiv(program_id, GL_LINK_STATUS, &success);
+    if (!success)
+    {
+      glGetProgramInfoLog(program_id, buf_size, nullptr, info_log);
+      std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << info_log << std::endl;
+    }
+
+    // delete the shaders as they're linked into our program now and no longer necessary
+    glDeleteShader(vertex);
+    glDeleteShader(fragment);
+
+    _shader_references[shader_id] = program_id;
+
     return shader_id;
   }
 
-  void OpenGl_RenderSystem::DestroyShader(int shader_id) {}
+  void OpenGL_RenderSystem::DestroyShader(const int shader_id)
+  {
+    const auto program_id = _shader_references[shader_id];
+    glDeleteProgram(program_id);
+  }
 
-  int OpenGl_RenderSystem::InitTexture()
+  int OpenGL_RenderSystem::InitTexture()
   {
     const auto texture_id = _texture_index++;
     std::cout << "Initializing texture: " << texture_id << std::endl;
     return texture_id;
   }
 
-  void OpenGl_RenderSystem::DestroyTexture(int texture_id) {}
-
+  void OpenGL_RenderSystem::DestroyTexture(int texture_id) {}
 } // core

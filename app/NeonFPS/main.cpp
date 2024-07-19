@@ -14,7 +14,7 @@ int main()
 
   core::SDL2_WindowSystem window_system(settings_config);
   core::SDL2_InputSystem input_system(settings_config, &window_system);
-  core::OpenGl_RenderSystem render_system(settings_config);
+  core::OpenGL_RenderSystem render_system(settings_config);
 
   NeonFpsApplication app(settings_config, &window_system, &input_system, &render_system);
 

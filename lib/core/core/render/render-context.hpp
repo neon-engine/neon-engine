@@ -1,6 +1,7 @@
 #ifndef RENDER_CONTEXT_HPP
 #define RENDER_CONTEXT_HPP
 
+#include <string>
 #include <vector>
 
 namespace core
@@ -17,11 +18,13 @@ namespace core
   public:
     virtual int InitGeometry(
       const std::vector<float> &vertices,
+      const std::vector<float> &normals,
+      const std::vector<float> &tex_coordinates,
       const std::vector<int> &indices) = 0;
 
     virtual void DestroyGeometry(int geometry_id) = 0;
 
-    virtual int InitShader() = 0;
+    virtual int InitShader(std::string shader_path) = 0;
 
     virtual void DestroyShader(int shader_id) = 0;
 
