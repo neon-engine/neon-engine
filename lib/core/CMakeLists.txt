@@ -24,6 +24,9 @@ add_library(${TARGET} STATIC
         core/private/neon.hpp
         core/window/sdl2-window-system.cpp
         core/window/sdl2-window-system.hpp
+        core/input/sdl-2-input-system.cpp
+        core/input/sdl-2-input-system.hpp
+        core/window/sdl-2-window-context.hpp
 )
 
 target_include_directories(${TARGET}
@@ -36,5 +39,5 @@ target_include_directories(${TARGET}
         PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/core/private
 )
 
-target_link_libraries(${TARGET} glfw glm gl3w)
+target_link_libraries(${TARGET} glfw glm gl3w SDL2::SDL2main SDL2::SDL2-static)
 target_precompile_headers(${TARGET} INTERFACE core/private/neon.hpp)
