@@ -6,8 +6,7 @@ namespace core
 {
   Cube::Cube(RenderContext *render_context, const std::string &texture_path, const std::string &shader_path)
     : _geometry_id(0),
-      _material_id(0),
-      _shader_id(0)
+      _material_id(0)
   {
     _render_context = render_context;
     _texture_path = texture_path;
