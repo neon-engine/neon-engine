@@ -136,7 +136,6 @@ namespace core
 
     int _geometry_id;
     int _material_id;
-    int _shader_id;
 
     bool _destroyed = false;
 
