@@ -14,7 +14,11 @@ namespace core
     Cube _cube;
 
   public:
-    explicit Scene(RenderContext *render_context): _cube(render_context), _render_context(render_context) {}
+    explicit Scene(RenderContext *render_context)
+      : _render_context(render_context),
+        _cube(render_context,
+          "assets/textures/container.jpg",
+          "assets/shaders/mix-textured-shader") {}
 
     void Initialize();
 

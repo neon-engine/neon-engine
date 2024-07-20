@@ -132,13 +132,15 @@ namespace core
     RenderContext *_render_context;
 
     int _geometry_id;
+    int _texture_id;
+    int _shader_id;
 
   public:
-    explicit Cube(RenderContext *render_context);
+    explicit Cube(RenderContext *render_context, const std::string &texture_path, const std::string &shader_path);
 
     ~Cube();
 
-    void Draw();
+    void Draw() const;
   };
 } // core
 
