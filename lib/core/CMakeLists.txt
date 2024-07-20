@@ -24,6 +24,10 @@ add_library(${TARGET} STATIC
         core/input/sdl-2-input-system.cpp
         core/input/sdl-2-input-system.hpp
         core/window/sdl-2-window-context.hpp
+        core/camera/camera.cpp
+        core/camera/camera.hpp
+        core/render/primitives/cube.cpp
+        core/render/primitives/cube.hpp
 )
 
 target_include_directories(${TARGET}

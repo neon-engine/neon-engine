@@ -22,13 +22,19 @@ namespace core
       const std::vector<float> &tex_coordinates,
       const std::vector<int> &indices) = 0;
 
+    virtual void DrawGeometry(int geometry_id) = 0;
+
     virtual void DestroyGeometry(int geometry_id) = 0;
 
     virtual int InitShader(std::string shader_path) = 0;
 
+    virtual void UseShader(int shader_id) = 0;
+
     virtual void DestroyShader(int shader_id) = 0;
 
     virtual int InitTexture(std::string texture_path) = 0;
+
+    virtual void UseTexture(int texture_id) = 0;
 
     virtual void DestroyTexture(int texture_id) = 0;
   };

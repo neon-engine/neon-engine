@@ -135,24 +135,49 @@ namespace core
     // Unbind the VAO now, so we don't accidentally tamper with it.
     // NOTE: You must NEVER unbind the element array buffer associated with a VAO!
     glBindVertexArray(0);
-    _geometry_references[geometry_id] = OpenGL_Geometry{vao, vbo, nvbo, uvbo, ebo};
+
+    _geometry_references[geometry_id] = OpenGL_Geometry{
+      .vao = vao,
+      .vbo = vbo,
+      .vertices_size = vertices.size(),
+      .nvbo = nvbo,
+      .normals_size = normals.size(),
+      .uvbo = uvbo,
+      .uvs_size = tex_coordinates.size(),
+      .ebo = ebo,
+      .indices_size = indices.size()
+    };
+
     return geometry_id;
   }
 
+  void OpenGL_RenderSystem::DrawGeometry(const int geometry_id)
+  {
+    // ReSharper disable once CppUseStructuredBinding
+    const auto geometry = _geometry_references[geometry_id];
+    if (geometry.vao == 0)
+    {
+      std::cerr << "Attempted to draw geometry id " << geometry_id << " but it is currently not loaded" << std::endl;
+      return;
+    }
+
+    glBindVertexArray(geometry.vao);
+    glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(geometry.indices_size), GL_UNSIGNED_INT, nullptr);
+  }
+
+
   void OpenGL_RenderSystem::DestroyGeometry(const int geometry_id)
   {
-    const auto [
-      vao,
-      vbo,
-      nvbo,
-      uvbo,
-      ebo] = _geometry_references[geometry_id];
+    // ReSharper disable once CppUseStructuredBinding
+    const auto geometry = _geometry_references[geometry_id];
 
-    glDeleteBuffers(1, &vao);
-    glDeleteBuffers(1, &vbo);
-    glDeleteBuffers(1, &nvbo);
-    glDeleteBuffers(1, &uvbo);
-    glDeleteBuffers(1, &ebo);
+    glDeleteBuffers(1, &geometry.vao);
+    glDeleteBuffers(1, &geometry.vbo);
+    glDeleteBuffers(1, &geometry.nvbo);
+    glDeleteBuffers(1, &geometry.uvbo);
+    glDeleteBuffers(1, &geometry.ebo);
+
+    _geometry_references[geometry_id] = OpenGL_Geometry{};
   }
 
   int OpenGL_RenderSystem::InitShader(const std::string shader_path)
@@ -250,10 +275,14 @@ namespace core
     return shader_id;
   }
 
+  void OpenGL_RenderSystem::UseShader(int shader_id) {}
+
+
   void OpenGL_RenderSystem::DestroyShader(const int shader_id)
   {
     const auto program_id = _shader_references[shader_id];
     glDeleteProgram(program_id);
+    _shader_references[shader_id] = 0;
   }
 
   int OpenGL_RenderSystem::InitTexture(const std::string texture_path)
@@ -284,7 +313,8 @@ namespace core
                    tex_width,
                    tex_height,
                    0,
-                   GL_RGBA, // consider making this configurable
+                   // consider making this configurable
+                   GL_RGBA,
                    GL_UNSIGNED_BYTE,
                    data);
       glGenerateMipmap(GL_TEXTURE_2D);
@@ -304,9 +334,12 @@ namespace core
     return texture_id;
   }
 
+  void OpenGL_RenderSystem::UseTexture(int texture_id) {}
+
   void OpenGL_RenderSystem::DestroyTexture(const int texture_id)
   {
     const auto opengl_texture_id = _texture_references[texture_id];
     glDeleteTextures(1, &opengl_texture_id);
+    _texture_references[texture_id] = 0;
   }
 } // core
