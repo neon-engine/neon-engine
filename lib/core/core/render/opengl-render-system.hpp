@@ -52,32 +52,21 @@ namespace core
 
     RenderContext *GetContext() override;
 
-    int InitGeometry(
+    int InitMesh(
       const std::vector<float> &vertices,
       const std::vector<float> &normals,
       const std::vector<float> &tex_coordinates,
       const std::vector<int> &indices) override;
 
-    void DrawGeometry(int geometry_id) override;
+    void DrawMesh(int geometry_id) override;
 
-    void DestroyGeometry(int geometry_id) override;
+    void DestroyMesh(int geometry_id) override;
 
     int InitMaterial(std::string shader_path, std::string texture_paths[]) override;
 
     void UseMaterial(int material_id) override;
 
     void DestroyMaterial(int material_id) override;
-
-    static GLuint InitShader(const std::string &shader_path);
-
-    static void DestroyShader(GLuint shader_id);
-
-    static GLuint InitTexture(const std::string &texture_path);
-
-    static void DestroyTexture(GLuint texture_id);
-
-  private:
-    static std::string GetFileExtension(const std::string& filename);
   };
 } // core
 

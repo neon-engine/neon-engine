@@ -21,7 +21,7 @@ namespace core
   void Cube::Initialize()
   {
     std::cout << "Initializing Cube" << std::endl;
-    _geometry_id = _render_context->InitGeometry(_vertices, _normals, _tex_coordinates, _indices);
+    _geometry_id = _render_context->InitMesh(_vertices, _normals, _tex_coordinates, _indices);
     std::string textures[] = {_texture_path};
     _material_id = _render_context->InitMaterial(_shader_path, textures);
   }
@@ -29,7 +29,7 @@ namespace core
   void Cube::Draw() const
   {
     _render_context->UseMaterial(_material_id);
-    _render_context->DrawGeometry(_geometry_id);
+    _render_context->DrawMesh(_geometry_id);
   }
 
   void Cube::CleanUp()
@@ -41,7 +41,7 @@ namespace core
 
     std::cout << "Cleaning up Cube" << std::endl;
     _render_context->DestroyMaterial(_material_id);
-    _render_context->DestroyGeometry(_geometry_id);
+    _render_context->DestroyMesh(_geometry_id);
     _destroyed = true;
   }
 } // core

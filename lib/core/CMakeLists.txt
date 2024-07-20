@@ -28,6 +28,12 @@ add_library(${TARGET} STATIC
         core/camera/camera.hpp
         core/render/primitives/cube.cpp
         core/render/primitives/cube.hpp
+        core/render/open-gl-shader.cpp
+        core/render/open-gl-shader.hpp
+        core/render/open-gl-texture.cpp
+        core/render/open-gl-texture.hpp
+        core/render/open-gl-mesh.cpp
+        core/render/open-gl-mesh.hpp
 )
 
 target_include_directories(${TARGET}
