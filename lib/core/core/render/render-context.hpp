@@ -26,6 +26,10 @@ namespace core
     virtual void DestroyGeometry(int geometry_id) = 0;
 
     virtual int InitMaterial(std::string shader_path, std::string texture_paths[]) = 0;
+
+    virtual void UseMaterial(int material_id) = 0;
+
+    virtual void DestroyMaterial(int material_id) = 0;
   };
 } // core
 

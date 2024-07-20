@@ -64,15 +64,15 @@ namespace core
 
     int InitMaterial(std::string shader_path, std::string texture_paths[]) override;
 
-    static GLuint InitShader(const std::string &shader_path);
+    void UseMaterial(int material_id) override;
 
-    static void UseShader(GLuint shader_id);
+    void DestroyMaterial(int material_id) override;
+
+    static GLuint InitShader(const std::string &shader_path);
 
     static void DestroyShader(GLuint shader_id);
 
     static GLuint InitTexture(const std::string &texture_path);
-
-    static void UseTexture(GLuint texture_id);
 
     static void DestroyTexture(GLuint texture_id);
 
