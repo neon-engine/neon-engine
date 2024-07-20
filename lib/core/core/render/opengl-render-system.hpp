@@ -13,13 +13,21 @@ namespace core
   {
     GLuint vao = 0;
     GLuint vbo = 0;
-    size_t vertices_size;
+    size_t vertices_size{};
     GLuint nvbo = 0;
-    size_t normals_size;
+    size_t normals_size{};
     GLuint uvbo = 0;
-    size_t uvs_size;
+    size_t uvs_size{};
     GLuint ebo = 0;
-    size_t indices_size;
+    size_t indices_size{};
+  };
+
+  // ReSharper disable once CppInconsistentNaming
+  struct OpenGL_Material
+  {
+    GLuint shader_program_id;
+    size_t texture_ref_size;
+    GLuint* texture_references;
   };
 
   // ReSharper disable once CppInconsistentNaming
@@ -27,15 +35,14 @@ namespace core
   {
     const uint _max_buff_size = 65536;
     std::vector<OpenGL_Geometry> _geometry_references;
-    std::vector<GLuint> _shader_references;
-    std::vector<GLuint> _texture_references;
+    std::vector<OpenGL_Material> _material_references;
+    GLint _max_texture_units = 0;
 
   public:
     explicit OpenGL_RenderSystem(const SettingsConfig &settings_config)
       : RenderSystem(settings_config),
         _geometry_references(_max_buff_size),
-        _shader_references(_max_buff_size),
-        _texture_references(_max_buff_size) {}
+        _material_references(_max_buff_size) {}
 
     void Initialize() override;
 
@@ -55,17 +62,19 @@ namespace core
 
     void DestroyGeometry(int geometry_id) override;
 
-    int InitShader(std::string shader_path) override;
+    int InitMaterial(std::string shader_path, std::string texture_paths[]) override;
 
-    void UseShader(int shader_id) override;
+    static GLuint InitShader(const std::string &shader_path);
 
-    void DestroyShader(int shader_id) override;
+    static void UseShader(GLuint shader_id);
 
-    int InitTexture(std::string texture_path) override;
+    static void DestroyShader(GLuint shader_id);
 
-    void UseTexture(int texture_id) override;
+    static GLuint InitTexture(const std::string &texture_path);
 
-    void DestroyTexture(int texture_id) override;
+    static void UseTexture(GLuint texture_id);
+
+    static void DestroyTexture(GLuint texture_id);
 
   private:
     static std::string GetFileExtension(const std::string& filename);

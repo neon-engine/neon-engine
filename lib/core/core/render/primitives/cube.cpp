@@ -23,14 +23,12 @@ namespace core
   {
     std::cout << "Initializing Cube" << std::endl;
     _geometry_id = _render_context->InitGeometry(_vertices, _normals, _tex_coordinates, _indices);
-    _texture_id = _render_context->InitTexture(_texture_path);
-    _shader_id = _render_context->InitShader(_shader_path);
+    std::string textures[] = {_texture_path};
+    _texture_id = _render_context->InitMaterial(_shader_path, textures);
   }
 
   void Cube::Draw() const
   {
-    _render_context->UseShader(_shader_id);
-    _render_context->UseTexture(_texture_id);
     _render_context->DrawGeometry(_geometry_id);
   }
 
@@ -42,8 +40,6 @@ namespace core
     }
 
     std::cout << "Cleaning up Cube" << std::endl;
-    _render_context->DestroyShader(_shader_id);
-    _render_context->DestroyTexture(_texture_id);
     _render_context->DestroyGeometry(_geometry_id);
     _destroyed = true;
   }

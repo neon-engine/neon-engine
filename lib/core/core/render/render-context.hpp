@@ -10,8 +10,7 @@ namespace core
   {
   protected:
     int _geometry_index = 0;
-    int _shader_index = 0;
-    int _texture_index = 0;
+    int _material_index = 0;
 
     ~RenderContext() = default;
 
@@ -26,17 +25,7 @@ namespace core
 
     virtual void DestroyGeometry(int geometry_id) = 0;
 
-    virtual int InitShader(std::string shader_path) = 0;
-
-    virtual void UseShader(int shader_id) = 0;
-
-    virtual void DestroyShader(int shader_id) = 0;
-
-    virtual int InitTexture(std::string texture_path) = 0;
-
-    virtual void UseTexture(int texture_id) = 0;
-
-    virtual void DestroyTexture(int texture_id) = 0;
+    virtual int InitMaterial(std::string shader_path, std::string texture_paths[]) = 0;
   };
 } // core
 

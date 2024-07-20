@@ -27,6 +27,8 @@ namespace core
     std::cout << "Maximum number of vertex attributes supported: " << num_vertex_attributes_supported << std::endl;
 
     glViewport(0, 0, _settings_config.width, _settings_config.height);
+
+    glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &_max_texture_units);
   }
 
   void OpenGL_RenderSystem::CleanUp()
@@ -182,10 +184,32 @@ namespace core
     _geometry_references[geometry_id] = OpenGL_Geometry{};
   }
 
-  int OpenGL_RenderSystem::InitShader(const std::string shader_path)
+  int OpenGL_RenderSystem::InitMaterial(const std::string shader_path, std::string texture_paths[])
   {
-    const auto shader_id = _shader_index++;
-    std::cout << "Initializing shader from " << shader_path << " with shader id " << shader_id << std::endl;
+    const auto material_id = _material_index++;
+    std::cout << "Initializing material with id " << material_id << std::endl;
+    const auto shader_id = InitShader(shader_path);
+    std::vector<GLuint> texture_references;
+
+    for(auto i = 0; i < texture_paths->length(); i++)
+    {
+      texture_references.push_back(InitTexture(texture_paths[i]));
+    }
+
+    const auto material = OpenGL_Material{
+      .shader_program_id = shader_id,
+      .texture_ref_size = texture_references.size(),
+      .texture_references = texture_references.data()
+    };
+
+    _material_references[material_id] = material;
+
+    return material_id;
+  }
+
+  GLuint OpenGL_RenderSystem::InitShader(const std::string &shader_path)
+  {
+    std::cout << "Initializing shader from " << shader_path << std::endl;
 
     std::string vertex_path = shader_path + ".vert";
     std::string fragment_path = shader_path + ".frag";
@@ -272,27 +296,24 @@ namespace core
 
     if (error) { return -1; }
 
-    _shader_references[shader_id] = program_id;
-
-    return shader_id;
+    return program_id;
   }
 
-  void OpenGL_RenderSystem::UseShader(int shader_id) {}
+  void OpenGL_RenderSystem::UseShader(const GLuint shader_id)
+  {
+    glUseProgram(shader_id);
+  }
 
-
-  void OpenGL_RenderSystem::DestroyShader(const int shader_id)
+  void OpenGL_RenderSystem::DestroyShader(const GLuint shader_id)
   {
     std::cout << "Destroying shader with id " << shader_id << std::endl;
 
-    const auto program_id = _shader_references[shader_id];
-    glDeleteProgram(program_id);
-    _shader_references[shader_id] = 0;
+    glDeleteProgram(shader_id);
   }
 
-  int OpenGL_RenderSystem::InitTexture(const std::string texture_path)
+  GLuint OpenGL_RenderSystem::InitTexture(const std::string &texture_path)
   {
-    const auto texture_id = _texture_index++;
-    std::cout << "Initializing texture from " << texture_path << " with texture id " << texture_id << std::endl;
+    std::cout << "Initializing texture from " << texture_path << std::endl;
 
     const auto file_extension = GetFileExtension(texture_path);
     auto format = GL_RGB;
@@ -345,19 +366,15 @@ namespace core
 
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    _texture_references[texture_id] = opengl_texture_id;
-
-    return texture_id;
+    return opengl_texture_id;
   }
 
-  void OpenGL_RenderSystem::UseTexture(int texture_id) {}
+  void OpenGL_RenderSystem::UseTexture(GLuint texture_id) {}
 
-  void OpenGL_RenderSystem::DestroyTexture(const int texture_id)
+  void OpenGL_RenderSystem::DestroyTexture(const GLuint texture_id)
   {
     std::cout << "Destroying texture with id " << texture_id << std::endl;
-    const auto opengl_texture_id = _texture_references[texture_id];
-    glDeleteTextures(1, &opengl_texture_id);
-    _texture_references[texture_id] = 0;
+    glDeleteTextures(1, &texture_id);
   }
 
   std::string OpenGL_RenderSystem::GetFileExtension(const std::string &filename)
