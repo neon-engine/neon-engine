@@ -1,11 +1,11 @@
 #include "opengl-render-system.hpp"
 
-#define STB_IMAGE_IMPLEMENTATION
+
 
 #include <fstream>
 #include <iostream>
 #include <sstream>
-#include <stb_image.h>
+
 #include <stdexcept>
 #include <GL/gl3w.h>
 
@@ -50,7 +50,7 @@ namespace core
     return this;
   }
 
-  int OpenGL_RenderSystem::InitGeometry(
+  int OpenGL_RenderSystem::InitMesh(
     const std::vector<float> &vertices,
     const std::vector<float> &normals,
     const std::vector<float> &tex_coordinates,
@@ -153,7 +153,7 @@ namespace core
     return geometry_id;
   }
 
-  void OpenGL_RenderSystem::DrawGeometry(const int geometry_id)
+  void OpenGL_RenderSystem::DrawMesh(const int geometry_id)
   {
     // ReSharper disable once CppUseStructuredBinding
     const auto geometry = _geometry_references[geometry_id];
@@ -168,18 +168,14 @@ namespace core
   }
 
 
-  void OpenGL_RenderSystem::DestroyGeometry(const int geometry_id)
+  void OpenGL_RenderSystem::DestroyMesh(const int geometry_id)
   {
     std::cout << "Destroying geometry with id " << geometry_id << std::endl;
 
     // ReSharper disable once CppUseStructuredBinding
     const auto geometry = _geometry_references[geometry_id];
 
-    glDeleteBuffers(1, &geometry.vao);
-    glDeleteBuffers(1, &geometry.vbo);
-    glDeleteBuffers(1, &geometry.nvbo);
-    glDeleteBuffers(1, &geometry.uvbo);
-    glDeleteBuffers(1, &geometry.ebo);
+
 
     _geometry_references[geometry_id] = OpenGL_Geometry{};
   }
@@ -237,175 +233,4 @@ namespace core
   }
 
   void OpenGL_RenderSystem::DestroyMaterial(int material_id) {}
-
-  GLuint OpenGL_RenderSystem::InitShader(const std::string &shader_path)
-  {
-    std::cout << "Initializing shader from " << shader_path << std::endl;
-
-    std::string vertex_path = shader_path + ".vert";
-    std::string fragment_path = shader_path + ".frag";
-    std::string vertex_code;
-    std::string fragment_code;
-    std::ifstream vert_shader_file;
-    std::ifstream frag_shader_file;
-
-    vert_shader_file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-    frag_shader_file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-
-    try
-    {
-      vert_shader_file.open(vertex_path);
-      frag_shader_file.open(fragment_path);
-      std::stringstream vert_shader_stream, frag_shader_stream;
-
-      vert_shader_stream << vert_shader_file.rdbuf();
-      frag_shader_stream << frag_shader_file.rdbuf();
-
-      vert_shader_file.close();
-      frag_shader_file.close();
-
-      vertex_code = vert_shader_stream.str();
-      fragment_code = frag_shader_stream.str();
-    } catch (const std::ifstream::failure &)
-    {
-      std::cout << "Error opening shader " << shader_path << std::endl;
-      return -1;
-    }
-    const char *vert_shader_code = vertex_code.c_str();
-    const char *frag_shader_code = fragment_code.c_str();
-
-    // 2. compile shaders
-    GLuint vertex, fragment;
-    constexpr GLsizei buf_size = 512;
-    GLint success;
-    char info_log[buf_size];
-    auto error = false;
-
-    // vertex Shader
-    vertex = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertex, 1, &vert_shader_code, nullptr);
-    glCompileShader(vertex);
-    // print compile errors if any
-    glGetShaderiv(vertex, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-      glGetShaderInfoLog(vertex, buf_size, nullptr, info_log);
-      std::cout << "Error compiling vertex shader:\n" << info_log << std::endl;
-      error = true;
-    }
-
-    // similar for Fragment Shader
-    fragment = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragment, 1, &frag_shader_code, nullptr);
-    glCompileShader(fragment);
-    // print compile errors if any
-    glGetShaderiv(fragment, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-      glGetShaderInfoLog(fragment, buf_size, nullptr, info_log);
-      std::cout << "Error compiling fragment shader:\n" << info_log << std::endl;
-      error = true;
-    }
-
-    // shader Program
-    auto program_id = glCreateProgram();
-    glAttachShader(program_id, vertex);
-    glAttachShader(program_id, fragment);
-    glLinkProgram(program_id);
-    // print linking errors if any
-    glGetProgramiv(program_id, GL_LINK_STATUS, &success);
-    if (!success)
-    {
-      glGetProgramInfoLog(program_id, buf_size, nullptr, info_log);
-      std::cout << "Error linking shader program:\n" << info_log << std::endl;
-      error = true;
-    }
-
-    // delete the shaders as they're linked into our program now and no longer necessary
-    glDeleteShader(vertex);
-    glDeleteShader(fragment);
-
-    if (error) { return -1; }
-
-    return program_id;
-  }
-
-  void OpenGL_RenderSystem::DestroyShader(const GLuint shader_id)
-  {
-    std::cout << "Destroying shader with id " << shader_id << std::endl;
-
-    glDeleteProgram(shader_id);
-  }
-
-  GLuint OpenGL_RenderSystem::InitTexture(const std::string &texture_path)
-  {
-    std::cout << "Initializing texture from " << texture_path << std::endl;
-
-    const auto file_extension = GetFileExtension(texture_path);
-    auto format = GL_RGB;
-
-    if (file_extension == "png")
-    {
-      format = GL_RGBA;
-    }
-    else
-    {
-      format = GL_RGB;
-    }
-
-    GLint tex_width, tex_height;
-    int nr_channels;
-    stbi_set_flip_vertically_on_load(true);
-    GLuint opengl_texture_id;
-    if (unsigned char *data = stbi_load(
-      texture_path.c_str(),
-      &tex_width,
-      &tex_height,
-      &nr_channels,
-      STBI_default))
-    {
-      glGenTextures(1, &opengl_texture_id);
-      glBindTexture(GL_TEXTURE_2D, opengl_texture_id);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-      glTexImage2D(GL_TEXTURE_2D,
-                   0,
-                   format,
-                   tex_width,
-                   tex_height,
-                   0,
-                   // consider making this configurable
-                   format,
-                   GL_UNSIGNED_BYTE,
-                   data);
-      glGenerateMipmap(GL_TEXTURE_2D);
-
-      // free the memory after we are done creating texture
-      stbi_image_free(data);
-    } else
-    {
-      std::cout << "Failed to load texture" << std::endl;
-      return -1;
-    }
-
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    return opengl_texture_id;
-  }
-
-  void OpenGL_RenderSystem::DestroyTexture(const GLuint texture_id)
-  {
-    std::cout << "Destroying texture with id " << texture_id << std::endl;
-    glDeleteTextures(1, &texture_id);
-  }
-
-  std::string OpenGL_RenderSystem::GetFileExtension(const std::string &filename)
-  {
-    if (const size_t dot_position = filename.find_last_of('.'); dot_position != std::string::npos) {
-      return filename.substr(dot_position + 1);
-    }
-    return "";
-  }
 } // core

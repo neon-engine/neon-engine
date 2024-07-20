@@ -15,15 +15,15 @@ namespace core
     ~RenderContext() = default;
 
   public:
-    virtual int InitGeometry(
+    virtual int InitMesh(
       const std::vector<float> &vertices,
       const std::vector<float> &normals,
       const std::vector<float> &tex_coordinates,
       const std::vector<int> &indices) = 0;
 
-    virtual void DrawGeometry(int geometry_id) = 0;
+    virtual void DrawMesh(int geometry_id) = 0;
 
-    virtual void DestroyGeometry(int geometry_id) = 0;
+    virtual void DestroyMesh(int geometry_id) = 0;
 
     virtual int InitMaterial(std::string shader_path, std::string texture_paths[]) = 0;
 
