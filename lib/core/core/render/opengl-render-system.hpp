@@ -13,9 +13,13 @@ namespace core
   {
     GLuint vao = 0;
     GLuint vbo = 0;
+    size_t vertices_size;
     GLuint nvbo = 0;
+    size_t normals_size;
     GLuint uvbo = 0;
+    size_t uvs_size;
     GLuint ebo = 0;
+    size_t indices_size;
   };
 
   // ReSharper disable once CppInconsistentNaming
@@ -47,13 +51,19 @@ namespace core
       const std::vector<float> &tex_coordinates,
       const std::vector<int> &indices) override;
 
+    void DrawGeometry(int geometry_id) override;
+
     void DestroyGeometry(int geometry_id) override;
 
     int InitShader(std::string shader_path) override;
 
+    void UseShader(int shader_id) override;
+
     void DestroyShader(int shader_id) override;
 
     int InitTexture(std::string texture_path) override;
+
+    void UseTexture(int texture_id) override;
 
     void DestroyTexture(int texture_id) override;
   };
