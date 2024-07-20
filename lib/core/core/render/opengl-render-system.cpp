@@ -191,10 +191,15 @@ namespace core
     const auto shader_id = InitShader(shader_path);
     std::vector<GLuint> texture_references;
 
+    glUseProgram(shader_id);
     for(auto i = 0; i < texture_paths->length(); i++)
     {
       texture_references.push_back(InitTexture(texture_paths[i]));
+      std::string texture_str = "texture";
+      texture_str += std::to_string(i);
+      glUniform1i(glGetUniformLocation(shader_id, texture_str.c_str()), i);
     }
+    glUseProgram(0);
 
     const auto material = OpenGL_Material{
       .shader_program_id = shader_id,
@@ -206,6 +211,32 @@ namespace core
 
     return material_id;
   }
+
+  void OpenGL_RenderSystem::UseMaterial(const int material_id)
+  {
+    // ReSharper disable once CppUseStructuredBinding
+    const auto material = _material_references[material_id];
+    if (material.shader_program_id == 0)
+    {
+      std::cerr << "Attempted to use material id " << material_id << " but it is currently not loaded" << std::endl;
+      return;
+    }
+
+    for (auto i = 0; i < material.texture_ref_size; i++)
+    {
+      const auto texture_id = material.texture_references[i];
+      const GLint unit = i;
+      // todo: implement queue based ids
+      // currently this only works with a single textured object in the scene
+      // we need to save the state
+      const GLenum texture_unit = GL_TEXTURE0 + unit;
+      glActiveTexture(texture_unit);
+      glBindTexture(GL_TEXTURE_2D, texture_id);
+    }
+    glUseProgram(material.shader_program_id);
+  }
+
+  void OpenGL_RenderSystem::DestroyMaterial(int material_id) {}
 
   GLuint OpenGL_RenderSystem::InitShader(const std::string &shader_path)
   {
@@ -299,11 +330,6 @@ namespace core
     return program_id;
   }
 
-  void OpenGL_RenderSystem::UseShader(const GLuint shader_id)
-  {
-    glUseProgram(shader_id);
-  }
-
   void OpenGL_RenderSystem::DestroyShader(const GLuint shader_id)
   {
     std::cout << "Destroying shader with id " << shader_id << std::endl;
@@ -368,8 +394,6 @@ namespace core
 
     return opengl_texture_id;
   }
-
-  void OpenGL_RenderSystem::UseTexture(GLuint texture_id) {}
 
   void OpenGL_RenderSystem::DestroyTexture(const GLuint texture_id)
   {
