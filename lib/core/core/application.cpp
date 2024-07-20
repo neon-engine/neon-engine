@@ -54,7 +54,7 @@ namespace core
     {
       _input_system->ProcessInput();
       _render_system->PrepareFrame();
-      scene.DrawFrame();
+      scene.Draw();
       _window_system->Update();
     }
 

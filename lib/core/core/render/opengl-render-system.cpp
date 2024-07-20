@@ -168,6 +168,8 @@ namespace core
 
   void OpenGL_RenderSystem::DestroyGeometry(const int geometry_id)
   {
+    std::cout << "Destroying geometry with id " << geometry_id << std::endl;
+
     // ReSharper disable once CppUseStructuredBinding
     const auto geometry = _geometry_references[geometry_id];
 
@@ -280,6 +282,8 @@ namespace core
 
   void OpenGL_RenderSystem::DestroyShader(const int shader_id)
   {
+    std::cout << "Destroying shader with id " << shader_id << std::endl;
+
     const auto program_id = _shader_references[shader_id];
     glDeleteProgram(program_id);
     _shader_references[shader_id] = 0;
@@ -289,6 +293,18 @@ namespace core
   {
     const auto texture_id = _texture_index++;
     std::cout << "Initializing texture from " << texture_path << " with texture id " << texture_id << std::endl;
+
+    const auto file_extension = GetFileExtension(texture_path);
+    auto format = GL_RGB;
+
+    if (file_extension == "png")
+    {
+      format = GL_RGBA;
+    }
+    else
+    {
+      format = GL_RGB;
+    }
 
     GLint tex_width, tex_height;
     int nr_channels;
@@ -309,12 +325,12 @@ namespace core
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
       glTexImage2D(GL_TEXTURE_2D,
                    0,
-                   GL_RGBA,
+                   format,
                    tex_width,
                    tex_height,
                    0,
                    // consider making this configurable
-                   GL_RGBA,
+                   format,
                    GL_UNSIGNED_BYTE,
                    data);
       glGenerateMipmap(GL_TEXTURE_2D);
@@ -338,8 +354,17 @@ namespace core
 
   void OpenGL_RenderSystem::DestroyTexture(const int texture_id)
   {
+    std::cout << "Destroying texture with id " << texture_id << std::endl;
     const auto opengl_texture_id = _texture_references[texture_id];
     glDeleteTextures(1, &opengl_texture_id);
     _texture_references[texture_id] = 0;
+  }
+
+  std::string OpenGL_RenderSystem::GetFileExtension(const std::string &filename)
+  {
+    if (const size_t dot_position = filename.find_last_of('.'); dot_position != std::string::npos) {
+      return filename.substr(dot_position + 1);
+    }
+    return "";
   }
 } // core

@@ -20,8 +20,9 @@ namespace core
 
     void Update(
       const float &delta_time,
-      const glm::vec3 &move_direction,
-      const glm::vec3 &look_direction);
+      const glm::vec3 &move_direction);
+
+    static glm::vec3 GetLookDirection();
   };
 } // core
 
