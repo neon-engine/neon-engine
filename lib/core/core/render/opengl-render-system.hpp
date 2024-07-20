@@ -66,6 +66,9 @@ namespace core
     void UseTexture(int texture_id) override;
 
     void DestroyTexture(int texture_id) override;
+
+  private:
+    static std::string GetFileExtension(const std::string& filename);
   };
 } // core
 

@@ -22,7 +22,7 @@ namespace core
 
     void Initialize();
 
-    void DrawFrame();
+    void Draw();
 
     void CleanUp();
   };
