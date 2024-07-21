@@ -14,15 +14,24 @@ namespace core
     GLuint _shader_program_id = 0;
     bool _initialize = false;
   public:
+    OpenGL_Shader();
     explicit OpenGL_Shader(const std::string &shader_path);
 
     ~OpenGL_Shader();
 
     bool Initialize();
 
-    void Use() const;
+    void Activate() const;
+
+    void Deactivate();
 
     void CleanUp();
+
+    void SetInt(const std::string &name, const int &value) const;
+
+    void SetFloat(const std::string &name, const float &value) const;
+
+    void SetBool(const std::string &name, const bool &value) const;
   };
 } // core
 

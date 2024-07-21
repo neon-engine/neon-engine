@@ -13,13 +13,11 @@ namespace core
     GLuint _texture_id = 0;
     std::string _texture_path;
     bool _initialized = false;
-
-    static GLint _max_texture_units;
+    // static GLint _max_texture_units;
 
   public:
+    OpenGL_Texture();
     explicit OpenGL_Texture(const std::string &texture_path);
-
-    ~OpenGL_Texture();
 
     bool Initialize();
 

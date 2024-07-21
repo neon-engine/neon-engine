@@ -4,45 +4,30 @@
 #include <GL/gl3w.h>
 
 #include <vector>
+
+#include "open-gl-material.hpp"
+#include "open-gl-mesh.hpp"
 #include "render-system.hpp"
 
 namespace core
 {
-  // ReSharper disable once CppInconsistentNaming
-  struct OpenGL_Geometry
-  {
-    GLuint vao = 0;
-    GLuint vbo = 0;
-    size_t vertices_size{};
-    GLuint nvbo = 0;
-    size_t normals_size{};
-    GLuint uvbo = 0;
-    size_t uvs_size{};
-    GLuint ebo = 0;
-    size_t indices_size{};
-  };
-
-  // ReSharper disable once CppInconsistentNaming
-  struct OpenGL_Material
-  {
-    GLuint shader_program_id;
-    size_t texture_ref_size;
-    GLuint* texture_references;
-  };
 
   // ReSharper disable once CppInconsistentNaming
   class OpenGL_RenderSystem final : public RenderSystem
   {
-    const uint _max_buff_size = 65536;
-    std::vector<OpenGL_Geometry> _geometry_references;
-    std::vector<OpenGL_Material> _material_references;
+    std::vector<OpenGL_Mesh> _mesh_refs;
+    std::vector<OpenGL_Material> _material_refs;
     GLint _max_texture_units = 0;
 
   public:
     explicit OpenGL_RenderSystem(const SettingsConfig &settings_config)
-      : RenderSystem(settings_config),
-        _geometry_references(_max_buff_size),
-        _material_references(_max_buff_size) {}
+      : RenderSystem(settings_config)
+    {
+      _max_supported_meshes = 4096;
+      _max_supported_materials = 4096;
+      _mesh_refs = std::vector<OpenGL_Mesh>(_max_supported_meshes);
+      _material_refs = std::vector<OpenGL_Material>(_max_supported_materials);
+    }
 
     void Initialize() override;
 
@@ -58,11 +43,11 @@ namespace core
       const std::vector<float> &tex_coordinates,
       const std::vector<int> &indices) override;
 
-    void DrawMesh(int geometry_id) override;
+    void DrawMesh(int mesh_id) override;
 
-    void DestroyMesh(int geometry_id) override;
+    void DestroyMesh(int mesh_id) override;
 
-    int InitMaterial(std::string shader_path, std::string texture_paths[]) override;
+    int InitMaterial(std::string shader_path, std::vector<std::string> texture_paths) override;
 
     void UseMaterial(int material_id) override;
 

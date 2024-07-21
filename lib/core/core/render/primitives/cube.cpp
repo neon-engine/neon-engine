@@ -22,8 +22,7 @@ namespace core
   {
     std::cout << "Initializing Cube" << std::endl;
     _geometry_id = _render_context->InitMesh(_vertices, _normals, _tex_coordinates, _indices);
-    std::string textures[] = {_texture_path};
-    _material_id = _render_context->InitMaterial(_shader_path, textures);
+    _material_id = _render_context->InitMaterial(_shader_path, {_texture_path});
   }
 
   void Cube::Draw() const

@@ -3,10 +3,12 @@
 #include <iostream>
 
 namespace core {
+  OpenGL_Mesh::OpenGL_Mesh() = default;
+
   OpenGL_Mesh::OpenGL_Mesh(const std::vector<float> &vertices,
-    const std::vector<float> &normals,
-    const std::vector<float> &uvs,
-    const std::vector<int> &indices)
+                           const std::vector<float> &normals,
+                           const std::vector<float> &uvs,
+                           const std::vector<int> &indices)
   {
     _vertices = vertices;
     _normals = normals;

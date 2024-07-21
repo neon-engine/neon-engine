@@ -6,6 +6,8 @@
 
 namespace core
 {
+  OpenGL_Shader::OpenGL_Shader() = default;
+
   OpenGL_Shader::OpenGL_Shader(const std::string &shader_path)
   {
     _shader_path = shader_path;
@@ -114,9 +116,15 @@ namespace core
     return true;
   }
 
-  void OpenGL_Shader::Use() const
+  void OpenGL_Shader::Activate() const
   {
     glUseProgram(_shader_program_id);
+  }
+
+  // ReSharper disable once CppMemberFunctionMayBeStatic
+  void OpenGL_Shader::Deactivate() // NOLINT(*-convert-member-functions-to-static)
+  {
+    glUseProgram(0);
   }
 
   void OpenGL_Shader::CleanUp()
@@ -125,5 +133,20 @@ namespace core
     std::cout << "Cleaning up shader " << _shader_path << " with opengl id " << _shader_program_id << std::endl;
     glDeleteProgram(_shader_program_id);
     _initialize = false;
+  }
+
+  void OpenGL_Shader::SetInt(const std::string &name, const int &value) const
+  {
+    glUniform1i(glGetUniformLocation(_shader_program_id, name.c_str()), value);
+  }
+
+  void OpenGL_Shader::SetFloat(const std::string &name, const float &value) const
+  {
+    glUniform1f(glGetUniformLocation(_shader_program_id, name.c_str()), value);
+  }
+
+  void OpenGL_Shader::SetBool(const std::string &name, const bool &value) const
+  {
+    glUniform1i(glGetUniformLocation(_shader_program_id, name.c_str()), static_cast<int>(value));
   }
 } // core
