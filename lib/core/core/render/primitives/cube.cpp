@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include <glm/gtc/matrix_transform.hpp>
+
 namespace core
 {
   Cube::Cube(RenderContext *render_context, const std::string &texture_path, const std::string &shader_path)
@@ -27,7 +29,7 @@ namespace core
 
   void Cube::Draw(const glm::mat4 &view, const glm::mat4 &projection) const
   {
-    _render_context->UseMaterial(_material_id, _model, view, projection);
+    _render_context->UseMaterial(_material_id, translate(_model, _position), view, projection);
     _render_context->DrawMesh(_geometry_id);
   }
 
