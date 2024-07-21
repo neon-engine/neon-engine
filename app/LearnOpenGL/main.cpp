@@ -235,7 +235,7 @@ int main()
     texture2.Use(1);
     mix_textured_shader.Use();
 
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < 1; i++)
     {
       glm::mat4 model(1.0f);
       model = translate(model, cube_positions[i]);

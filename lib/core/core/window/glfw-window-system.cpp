@@ -9,6 +9,8 @@ namespace core
   void GLFW_WindowSystem::Initialize()
   {
     std::cout << "Initializing GLFW window system" << std::endl;
+    glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
+
     if (!glfwInit())
     {
       throw std::runtime_error("Failed to initialize GLFW");
@@ -77,7 +79,7 @@ namespace core
       case RenderingApi::OpenGl:
       {
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
         break;
       }
