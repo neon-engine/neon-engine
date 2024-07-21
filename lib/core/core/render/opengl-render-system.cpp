@@ -54,13 +54,14 @@ namespace core
     const std::vector<int> &indices)
   {
     const auto mesh_id = GetMeshId();
+    if (mesh_id < 0) { return -1; }
     std::cout << "Initializing mesh: " << mesh_id << std::endl;
 
     auto mesh = OpenGL_Mesh(vertices, normals, tex_coordinates, indices);
 
     if (!mesh.Initialize())
     {
-      throw std::runtime_error("Could not initialize mesh with id " + std::to_string(mesh_id));
+      std::cout << "Could not initialize mesh with id " << mesh_id << std::endl;
     }
 
     _mesh_refs[mesh_id] = mesh;
@@ -72,6 +73,7 @@ namespace core
   {
     // ReSharper disable once CppUseStructuredBinding
     const auto mesh = _mesh_refs[mesh_id];
+
     mesh.Use();
   }
 
@@ -93,7 +95,15 @@ namespace core
     const auto material_id = GetMaterialId();
     std::cout << "Initializing material with id " << material_id << std::endl;
 
-    _material_refs[material_id] = OpenGL_Material(shader_path, texture_paths);
+    auto material = OpenGL_Material(shader_path, texture_paths);
+
+    if (!material.Initialize())
+    {
+      std::cerr << "Could not initialize material with id " << material_id << std::endl;
+      return -1;
+    }
+
+    _material_refs[material_id] = material;
 
     return material_id;
   }
@@ -102,8 +112,18 @@ namespace core
   {
     // ReSharper disable once CppUseStructuredBinding
     const auto material = _material_refs[material_id];
+
     material.Use();
   }
 
-  void OpenGL_RenderSystem::DestroyMaterial(int material_id) {}
+  void OpenGL_RenderSystem::DestroyMaterial(int material_id)
+  {
+    std::cout << "Cleaning up material with id " << material_id << std::endl;
+
+    auto material = _material_refs[material_id];
+
+    material.CleanUp();
+
+    _deleted_material_ids.push(material_id);
+  }
 } // core

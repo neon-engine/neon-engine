@@ -99,7 +99,7 @@ namespace core
 
   void OpenGL_Texture::CleanUp()
   {
-    // if (!_initialized) { return; }
+    if (!_initialized) { return; }
     std::cout << "Cleaning up texture " << _texture_path << " with opengl id " << _texture_id << std::endl;
     glDeleteTextures(1, &_texture_id);
     _initialized = false;

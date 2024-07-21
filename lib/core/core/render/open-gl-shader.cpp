@@ -13,11 +13,6 @@ namespace core
     _shader_path = shader_path;
   }
 
-  OpenGL_Shader::~OpenGL_Shader()
-  {
-    CleanUp();
-  }
-
   bool OpenGL_Shader::Initialize()
   {
     if (_initialize)

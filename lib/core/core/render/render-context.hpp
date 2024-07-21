@@ -1,6 +1,7 @@
 #ifndef RENDER_CONTEXT_HPP
 #define RENDER_CONTEXT_HPP
 
+#include <iostream>
 #include <queue>
 #include <stdexcept>
 #include <string>
@@ -50,8 +51,11 @@ namespace core
         return _mesh_index++;
       }
 
-      throw std::runtime_error(
-        "Could not create mesh id as it would exceed the supported " + _max_supported_meshes);
+      std::cerr << "Could not create mesh id as it would exceed the supported "
+        << _max_supported_meshes
+        << std::endl;
+
+      return -1;
     }
 
     int GetMaterialId()
@@ -68,8 +72,11 @@ namespace core
         return _material_index++;
       }
 
-      throw std::runtime_error(
-        "Could not create material id as it would exceed the supported " + _max_supported_materials);
+      std::cerr << "Could not create material id as it would exceed the supported "
+        << _max_supported_materials
+        << std::endl;
+
+      return -1;
     }
   };
 } // core
