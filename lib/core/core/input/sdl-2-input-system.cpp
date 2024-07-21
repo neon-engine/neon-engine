@@ -17,11 +17,13 @@ namespace core {
       if (event.type == SDL_QUIT)
       {
         _context->SignalToClose();
+        return;
       }
 
       if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE)
       {
         _context->SignalToClose();
+        return;
       }
     }
   }
