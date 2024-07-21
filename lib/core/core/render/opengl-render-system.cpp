@@ -24,8 +24,6 @@ namespace core
     std::cout << "Maximum number of vertex attributes supported: " << num_vertex_attributes_supported << std::endl;
 
     glViewport(0, 0, _settings_config.width, _settings_config.height);
-
-    glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &_max_texture_units);
   }
 
   void OpenGL_RenderSystem::CleanUp()

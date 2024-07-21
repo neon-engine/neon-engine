@@ -23,8 +23,8 @@ namespace core
   void Cube::Initialize()
   {
     std::cout << "Initializing Cube" << std::endl;
-    _geometry_id = _render_context->InitMesh(_vertices, _normals, _tex_coordinates, _indices);
     _material_id = _render_context->InitMaterial(_shader_path, _texture_paths);
+    _geometry_id = _render_context->InitMesh(_vertices, _normals, _tex_coordinates, _indices);
   }
 
   void Cube::Draw(const glm::mat4 &view, const glm::mat4 &projection) const
