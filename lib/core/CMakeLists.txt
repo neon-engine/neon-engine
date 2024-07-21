@@ -36,7 +36,7 @@ add_library(${TARGET} STATIC
         core/render/open-gl-mesh.hpp
         core/render/open-gl-material.cpp
         core/render/open-gl-material.hpp
-        core/render/util.hpp
+        core/util.hpp
         core/private/neon-pch.hpp
 )
 

@@ -57,6 +57,8 @@ namespace core
     void DestroyMaterial(int material_id) override;
 
     RenderResolution GetRenderResolution() override;
+
+    int InitMesh(std::string model_path) override;
   };
 } // core
 
