@@ -36,6 +36,7 @@ add_library(${TARGET} STATIC
         core/render/open-gl-mesh.hpp
         core/render/open-gl-material.cpp
         core/render/open-gl-material.hpp
+        core/render/util.hpp
 )
 
 target_include_directories(${TARGET}

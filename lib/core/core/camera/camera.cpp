@@ -23,6 +23,6 @@ namespace core
 
   glm::vec3 Camera::GetLookDirection()
   {
-    return {0, 0, 0};
+    return {0, 0, -1};
   }
 } // core
