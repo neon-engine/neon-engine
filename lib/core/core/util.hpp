@@ -2,24 +2,25 @@
 #define UTIL_HPP
 
 #include <iomanip>
-#include <GL/gl3w.h>
 
 #include <iostream>
 #include <vector>
 #include <glm/glm.hpp>
 
-#include "glm/gtc/type_ptr.hpp"
+#include <glm/gtc/type_ptr.hpp>
 
 namespace core
 {
-  static void load_obj(const char *filename)
+  static bool load_obj(
+    const char *filename,
+    std::vector<float> &vertices,
+    std::vector<float> &normals,
+    std::vector<float> &uvs,
+    std::vector<int> &indices
+    )
   {
-    std::vector<GLfloat> vertices;
-    std::vector<GLfloat> normals;
-    std::vector<GLuint> indices;
-    std::vector<GLuint> indices_n;
-    std::vector<GLuint> indices_t;
-    std::vector<GLfloat> uv;
+    std::vector<unsigned int> indices_n;
+    std::vector<unsigned int> indices_t;
     std::cout << "loading " << filename << std::endl;
 
     float x, y, z;
@@ -38,9 +39,8 @@ namespace core
     if (fp == nullptr)
     {
       std::cerr << "error loading file" << std::endl;
-      exit(-1);
+      return false;
     }
-    int curr = 0;
 
     while (fgets(line, BUFSIZ, fp) != nullptr)
     {
@@ -49,15 +49,15 @@ namespace core
         if (line[1] == ' ')
         {
           sscanf(line, "v %f %f %f %f %f %f", &x, &y, &z, &r, &g, &b);
-          temp_v.push_back(glm::vec3(x, y, z));
+          temp_v.push_back(glm::vec3(x, y, z)); // NOLINT(*-use-emplace)
         } else if (line[1] == 'n')
         {
           sscanf(line, "vn %f %f %f", &x, &y, &z);
-          temp_n.push_back(glm::vec3(x, y, z));
+          temp_n.push_back(glm::vec3(x, y, z)); // NOLINT(*-use-emplace)
         } else if (line[1] == 't')
         {
           sscanf(line, "vt %f %f", &x, &y);
-          temp_t.push_back(glm::vec2(x, -y));
+          temp_t.push_back(glm::vec2(x, -y)); // NOLINT(*-use-emplace)
         }
       }
       if (line[0] == 'f')
@@ -101,30 +101,11 @@ namespace core
     for (auto index : indices_t)
     {
       auto temp = temp_t[index];
-      uv.push_back(temp.x);
-      uv.push_back(temp.y);
+      uvs.push_back(temp.x);
+      uvs.push_back(temp.y);
     }
 
-    std::cout << "vertices: " << vertices.size() << std::endl;
-    for (auto i = 0; i < vertices.size(); i += 3)
-    {
-      std::cout << vertices[i] << "f, " << vertices[i + 1] << "f, " << vertices[i + 2] << "f," << std::endl;
-    }
-    std::cout << "normals: " << normals.size() << std::endl;
-    for (auto i = 0; i < normals.size(); i += 3)
-    {
-      std::cout << normals[i] << "f, " << normals[i + 1] << "f, " << normals[i + 2] << "f," << std::endl;
-    }
-    std::cout << "uvs: " << uv.size() << std::endl;
-    for (auto i = 0; i < uv.size(); i += 2)
-    {
-      std::cout << uv[i] << "f, " << uv[i + 1] << "f," << std::endl;
-    }
-    std::cout << "indices: " << indices.size() << std::endl;
-    for (auto i = 0; i < indices.size(); i += 3)
-    {
-      std::cout << indices[i] << ", " << indices[i + 1] << ", " << indices[i + 2] << "," << std::endl;
-    }
+    return true;
   }
 
   static std::string mat4_to_string(const glm::mat4 &matrix)
@@ -144,6 +125,14 @@ namespace core
     }
 
     return oss.str();
+  }
+
+  static std::string get_file_extension(const std::string &filename)
+  {
+    if (const size_t dot_position = filename.find_last_of('.'); dot_position != std::string::npos) {
+      return filename.substr(dot_position + 1);
+    }
+    return "";
   }
 }
 

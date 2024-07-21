@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#include "util.hpp"
+#include "../util.hpp"
 #include "glm/ext/matrix_transform.hpp"
 
 namespace core

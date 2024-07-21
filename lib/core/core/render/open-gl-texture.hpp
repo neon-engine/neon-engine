@@ -25,8 +25,6 @@ namespace core
 
     void CleanUp();
 
-  private:
-    static std::string GetFileExtension(const std::string& filename);
   };
 } // core
 

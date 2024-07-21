@@ -5,6 +5,8 @@
 #include <iostream>
 #include <stb_image.h>
 
+#include "../util.hpp"
+
 namespace core
 {
   OpenGL_Texture::OpenGL_Texture() = default;
@@ -25,7 +27,7 @@ namespace core
 
     std::cout << "Initializing texture from " << _texture_path << std::endl;
 
-    const auto file_extension = GetFileExtension(_texture_path);
+    const auto file_extension = get_file_extension(_texture_path);
     auto format = GL_RGB;
 
     if (file_extension == "png")
@@ -102,13 +104,5 @@ namespace core
     std::cout << "Cleaning up texture " << _texture_path << " with opengl id " << _texture_id << std::endl;
     glDeleteTextures(1, &_texture_id);
     _initialized = false;
-  }
-
-  std::string OpenGL_Texture::GetFileExtension(const std::string &filename)
-  {
-    if (const size_t dot_position = filename.find_last_of('.'); dot_position != std::string::npos) {
-      return filename.substr(dot_position + 1);
-    }
-    return "";
   }
 } // core

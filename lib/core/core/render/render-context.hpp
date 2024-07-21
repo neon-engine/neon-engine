@@ -32,6 +32,8 @@ namespace core
     ~RenderContext() = default;
 
   public:
+    virtual int InitMesh(std::string model_path) = 0;
+
     virtual int InitMesh(
       const std::vector<float> &vertices,
       const std::vector<float> &normals,
