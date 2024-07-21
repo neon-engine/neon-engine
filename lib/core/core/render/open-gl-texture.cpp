@@ -7,18 +7,16 @@
 
 namespace core
 {
+  OpenGL_Texture::OpenGL_Texture() = default;
+
   OpenGL_Texture::OpenGL_Texture(const std::string &texture_path)
   {
     _texture_path = texture_path;
   }
 
-  OpenGL_Texture::~OpenGL_Texture()
-  {
-    CleanUp();
-  }
-
   bool OpenGL_Texture::Initialize()
   {
+
     if (_initialized)
     {
       std::cerr << "Texture " << _texture_path << " already initialized with opengl id " << _texture_id << std::endl;
@@ -83,21 +81,25 @@ namespace core
 
   void OpenGL_Texture::Use(const GLint unit) const
   {
-    if (unit >= 0 && unit < _max_texture_units)
-    {
-      const GLenum texture_unit = GL_TEXTURE0 + unit;
-      glActiveTexture(texture_unit);
-      glBindTexture(GL_TEXTURE_2D, _texture_id);
-    } else
-    {
-      std::cerr << "Error: Texture unit " << unit << " is out of range. Supported range: 0 to "
-       << (_max_texture_units - 1) << std::endl;
-    }
+    const GLenum texture_unit = GL_TEXTURE0 + unit;
+    glActiveTexture(texture_unit);
+    glBindTexture(GL_TEXTURE_2D, _texture_id);
+    // if (unit >= 0 && unit < _max_texture_units)
+    // {
+    //   const GLenum texture_unit = GL_TEXTURE0 + unit;
+    //   glActiveTexture(texture_unit);
+    //   glBindTexture(GL_TEXTURE_2D, _texture_id);
+    // } else
+    // {
+    //   auto max_val = std::to_string(_max_texture_units - 1);
+    //   std::cerr << "Error: Texture unit " << unit << " is out of range. Supported range: 0 to "
+    //    << max_val << std::endl;
+    // }
   }
 
   void OpenGL_Texture::CleanUp()
   {
-    if (!_initialized) { return; }
+    // if (!_initialized) { return; }
     std::cout << "Cleaning up texture " << _texture_path << " with opengl id " << _texture_id << std::endl;
     glDeleteTextures(1, &_texture_id);
     _initialized = false;

@@ -16,11 +16,12 @@ namespace core
     GLuint _uvbo = 0;
     GLuint _ebo = 0;
     bool _initialized = false;
-    std::vector<float> _vertices;
-    std::vector<float> _normals;
-    std::vector<float> _uvs;
-    std::vector<int> _indices;
+    std::vector<float> _vertices{};
+    std::vector<float> _normals{};
+    std::vector<float> _uvs{};
+    std::vector<int> _indices{};
   public:
+    OpenGL_Mesh();
     explicit OpenGL_Mesh(
       const std::vector<float> &vertices,
       const std::vector<float> &normals,
