@@ -126,4 +126,12 @@ namespace core
 
     _deleted_material_ids.push(material_id);
   }
+
+  RenderResolution OpenGL_RenderSystem::GetRenderResolution()
+  {
+    return RenderResolution{
+      _settings_config.width,
+      _settings_config.height
+    };
+  }
 } // core

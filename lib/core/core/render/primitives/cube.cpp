@@ -25,7 +25,7 @@ namespace core
     _material_id = _render_context->InitMaterial(_shader_path, {_texture_path});
   }
 
-  void Cube::Draw() const
+  void Cube::Draw(glm::mat4 view, glm::mat4 projection) const
   {
     _render_context->UseMaterial(_material_id);
     _render_context->DrawMesh(_geometry_id);

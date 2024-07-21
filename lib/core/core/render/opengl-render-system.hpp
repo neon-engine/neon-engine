@@ -52,6 +52,8 @@ namespace core
     void UseMaterial(int material_id) override;
 
     void DestroyMaterial(int material_id) override;
+
+    RenderResolution GetRenderResolution() override;
   };
 } // core
 
