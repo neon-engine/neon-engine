@@ -37,6 +37,7 @@ add_library(${TARGET} STATIC
         core/render/open-gl-material.cpp
         core/render/open-gl-material.hpp
         core/render/util.hpp
+        core/private/neon-pch.hpp
 )
 
 target_include_directories(${TARGET}
@@ -49,3 +50,4 @@ target_include_directories(${TARGET}
 )
 
 target_link_libraries(${TARGET} glfw glm gl3w stb SDL2::SDL2main SDL2::SDL2-static)
+target_precompile_headers(${TARGET} PRIVATE core/private/neon-pch.hpp)

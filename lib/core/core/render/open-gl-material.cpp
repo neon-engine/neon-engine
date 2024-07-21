@@ -41,7 +41,8 @@ namespace core
     {
       if (auto texture = _textures[texture_unit]; !texture.Initialize())
       {
-        throw std::runtime_error("Could not initialize texture");
+        std::cerr << "Could not initialize texture" << std::endl;
+        return false;
       }
       std::string texture_str = "texture";
       texture_str += std::to_string(texture_unit);
@@ -71,18 +72,19 @@ namespace core
 
   void OpenGL_Material::Use(const glm::mat4 &model, const glm::mat4 &view, const glm::mat4 &projection) const
   {
-    std::cout << "model:" << std::endl;
-    std::cout << mat4ToString(model) << std::endl;
-
-    std::cout << "view:" << std::endl;
-    std::cout << mat4ToString(view) << std::endl;
-
-    std::cout << "projection" << std::endl;
-    std::cout << mat4ToString(projection) << std::endl;
+    // std::cout << "model:" << std::endl;
+    // std::cout << mat4ToString(model) << std::endl;
+    //
+    // std::cout << "view:" << std::endl;
+    // std::cout << mat4ToString(view) << std::endl;
+    //
+    // std::cout << "projection" << std::endl;
+    // std::cout << mat4ToString(projection) << std::endl;
 
     for (auto texture_unit = 0; texture_unit < _textures.size(); texture_unit++)
     {
-      _textures[texture_unit].Use(texture_unit);
+      auto texture = _textures[texture_unit];
+      texture.Use(texture_unit);
     }
 
     _shader.Activate();
