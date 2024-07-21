@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <iomanip>
 #include <iostream>
 #include <GL/gl3w.h>
 #include <GLFW/glfw3.h>
@@ -70,37 +71,56 @@ static void process_input_callback(
 
 static void mouse_callback(GLFWwindow *window, const double x_pos, const double y_pos)
 {
-  if (first_mouse)
-  {
-    first_mouse = false;
-    last_x = static_cast<float>(x_pos);
-    last_y = static_cast<float>(y_pos);
-  }
-
-  x_offset = static_cast<float>(x_pos) - last_x;
-  y_offset = last_y - static_cast<float>(y_pos);
-  last_x = static_cast<float>(x_pos);
-  last_y = static_cast<float>(y_pos);
-
-  x_offset *= kMouseSensitivity;
-  y_offset *= kMouseSensitivity;
-
-  yaw += x_offset;
-  pitch += y_offset;
-
-  pitch = std::clamp(pitch, -89.0f, 89.0f);
-
-  glm::vec3 direction;
-  direction.x = glm::cos(glm::radians(yaw)) * glm::cos(glm::radians(pitch));
-  direction.y = glm::sin(glm::radians(pitch));
-  direction.z = glm::sin(glm::radians(yaw)) * glm::cos(glm::radians(pitch));
-  look_direction = normalize(direction);
+  // if (first_mouse)
+  // {
+  //   first_mouse = false;
+  //   last_x = static_cast<float>(x_pos);
+  //   last_y = static_cast<float>(y_pos);
+  // }
+  //
+  // x_offset = static_cast<float>(x_pos) - last_x;
+  // y_offset = last_y - static_cast<float>(y_pos);
+  // last_x = static_cast<float>(x_pos);
+  // last_y = static_cast<float>(y_pos);
+  //
+  // x_offset *= kMouseSensitivity;
+  // y_offset *= kMouseSensitivity;
+  //
+  // yaw += x_offset;
+  // pitch += y_offset;
+  //
+  // pitch = std::clamp(pitch, -89.0f, 89.0f);
+  //
+  // glm::vec3 direction;
+  // direction.x = glm::cos(glm::radians(yaw)) * glm::cos(glm::radians(pitch));
+  // direction.y = glm::sin(glm::radians(pitch));
+  // direction.z = glm::sin(glm::radians(yaw)) * glm::cos(glm::radians(pitch));
+  // look_direction = normalize(direction);
 }
 
 void scroll_callback(GLFWwindow *window, const double scroll_x_offset, const double scroll_y_offset)
 {
   fov -= static_cast<float>(scroll_y_offset);
   fov = std::clamp(fov, 1.0f, 90.0f);
+}
+
+static std::string mat4_to_string(const glm::mat4 &matrix)
+{
+  std::ostringstream oss;
+  oss << std::fixed << std::setprecision(2);
+
+  const float *m = glm::value_ptr(matrix);
+
+  for (int row = 0; row < 4; ++row)
+  {
+    for (int col = 0; col < 4; ++col)
+    {
+      oss << m[col * 4 + row] << " ";
+    }
+    oss << "\n";
+  }
+
+  return oss.str();
 }
 
 int main()
@@ -240,9 +260,18 @@ int main()
       glm::mat4 model(1.0f);
       model = translate(model, cube_positions[i]);
       const float angle = 20.0f * static_cast<float>(i);
-      model = rotate(model,
-                     glm::radians(angle),
-                     glm::vec3(0.5f, 1.0f, 0.0f));
+      // model = rotate(model,
+      //                glm::radians(angle),
+      //                glm::vec3(0.5f, 1.0f, 0.0f));
+
+      std::cout << "model:" << std::endl;
+      std::cout << mat4_to_string(model) << std::endl;
+
+      std::cout << "view:" << std::endl;
+      std::cout << mat4_to_string(view) << std::endl;
+
+      std::cout << "projection" << std::endl;
+      std::cout << mat4_to_string(projection) << std::endl;
       glUniformMatrix4fv(model_loc, 1, GL_FALSE, value_ptr(model));
       glUniformMatrix4fv(view_loc, 1, GL_FALSE, value_ptr(view));
       glUniformMatrix4fv(projection_loc, 1, GL_FALSE, value_ptr(projection));

@@ -10,7 +10,7 @@ namespace core
 {
   class Cube
   {
-    glm::vec3 _position = glm::vec3(0.0f, 0.0f, -5.0f);
+    glm::vec3 _position = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::mat4 _model = glm::mat4(1.0f);
 
     RenderContext *_render_context;
