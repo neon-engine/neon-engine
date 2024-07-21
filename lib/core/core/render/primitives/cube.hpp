@@ -11,7 +11,30 @@ namespace core
   class Cube
   {
     glm::vec3 _position = glm::vec3(0.0f, 0.0f, 0.0f);
+    glm::mat4 _model = glm::mat4(1.0f);
 
+    RenderContext *_render_context;
+
+    std::string _texture_path;
+    std::string _shader_path;
+
+    int _geometry_id;
+    int _material_id;
+
+    bool _destroyed = false;
+
+  public:
+    explicit Cube(RenderContext *render_context, const std::string &texture_path, const std::string &shader_path);
+
+    ~Cube();
+
+    void Initialize();
+
+    void CleanUp();
+
+    void Draw(const glm::mat4 &view, const glm::mat4 &projection) const;
+
+  private:
     std::vector<float> _vertices = {
       // Front face
       -1.0, -1.0, 1.0,
@@ -131,27 +154,6 @@ namespace core
       20, 21, 22,
       22, 23, 20
     };
-
-    RenderContext *_render_context;
-
-    std::string _texture_path;
-    std::string _shader_path;
-
-    int _geometry_id;
-    int _material_id;
-
-    bool _destroyed = false;
-
-  public:
-    explicit Cube(RenderContext *render_context, const std::string &texture_path, const std::string &shader_path);
-
-    ~Cube();
-
-    void Initialize();
-
-    void CleanUp();
-
-    void Draw(glm::mat4 view, glm::mat4 projection) const;
   };
 } // core
 

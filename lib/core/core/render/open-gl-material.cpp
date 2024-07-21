@@ -50,7 +50,7 @@ namespace core
     return true;
   }
 
-  void OpenGL_Material::Use() const
+  void OpenGL_Material::Use(const glm::mat4 &model, const glm::mat4 &view, const glm::mat4 &projection) const
   {
     for (auto texture_unit = 0; texture_unit < _textures.size(); texture_unit++)
     {
@@ -58,6 +58,10 @@ namespace core
     }
 
     _shader.Activate();
+
+    _shader.SetMat4("model", model);
+    _shader.SetMat4("view", view);
+    _shader.SetMat4("projection", projection);
   }
   void OpenGL_Material::CleanUp()
   {

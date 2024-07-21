@@ -108,15 +108,15 @@ namespace core
     return material_id;
   }
 
-  void OpenGL_RenderSystem::UseMaterial(const int material_id)
+  void OpenGL_RenderSystem::UseMaterial(const int material_id, const glm::mat4 &model, const glm::mat4 &view, const glm::mat4 &projection)
   {
     // ReSharper disable once CppUseStructuredBinding
     const auto material = _material_refs[material_id];
 
-    material.Use();
+    material.Use(model, view, projection);
   }
 
-  void OpenGL_RenderSystem::DestroyMaterial(int material_id)
+  void OpenGL_RenderSystem::DestroyMaterial(const int material_id)
   {
     std::cout << "Cleaning up material with id " << material_id << std::endl;
 
