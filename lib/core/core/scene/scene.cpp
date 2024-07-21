@@ -15,9 +15,9 @@ void core::Scene::Initialize()
 void core::Scene::Draw()
 {
   _camera.Update(1.0f, {0.0f, 0.0f, 0.0f});
-  glm::mat4 view = _camera.GetView();
-  auto [width, height] = _render_context->GetRenderResolution();
-  glm::mat4 projection = glm::perspective(
+  const glm::mat4 view = _camera.GetView();
+  const auto [width, height] = _render_context->GetRenderResolution();
+  const glm::mat4 projection = glm::perspective(
     glm::radians(_camera.GetFov()),
     static_cast<float>(width) / static_cast<float>(height),
     0.1f,

@@ -9,6 +9,7 @@ namespace core
   {
     glm::vec3 _camera_pos = glm::vec3(0.0f, 0.0f, 3.0f);
     glm::vec3 _camera_up = glm::vec3(0.0f, 1.0f, 0.0f);
+    glm::vec3 _look_direction = glm::vec3(0, 0, -1);
     glm::mat4 _view = glm::mat4(1.0f);
     float _fov = 45.0f;
 
@@ -25,7 +26,7 @@ namespace core
       const float &delta_time,
       const glm::vec3 &move_direction);
 
-    static glm::vec3 GetLookDirection();
+    glm::vec3 GetLookDirection();
   };
 } // core
 

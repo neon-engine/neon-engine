@@ -18,11 +18,11 @@ namespace core
   void Camera::Update(const float &delta_time, const glm::vec3 &move_direction)
   {
     _camera_pos += move_direction * delta_time;
-    _view = lookAt(_camera_pos, _camera_pos + GetLookDirection(), _camera_up);
+    _view = lookAt(_camera_pos, _camera_pos + _look_direction, _camera_up);
   }
 
   glm::vec3 Camera::GetLookDirection()
   {
-    return {0, 0, -1};
+    return _look_direction;
   }
 } // core
