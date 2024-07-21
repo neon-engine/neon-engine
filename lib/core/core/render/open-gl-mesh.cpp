@@ -58,7 +58,7 @@ namespace core {
       static_cast<GLsizeiptr>(_vertices.size() * sizeof(float)),
       &_vertices[0],
       GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0);
+
     glVertexAttribPointer(
       0,
       3,
@@ -66,6 +66,7 @@ namespace core {
       GL_FALSE,
       3 * sizeof(GLfloat),
       static_cast<void *>(nullptr));
+    glEnableVertexAttribArray(0);
 
     // nvbo - normals
     glBindBuffer(GL_ARRAY_BUFFER, _nvbo);
@@ -73,7 +74,7 @@ namespace core {
                  static_cast<GLsizeiptr>(_normals.size() * sizeof(float)),
                  &_normals[0],
                  GL_STATIC_DRAW);
-    glEnableVertexAttribArray(1);
+
     glVertexAttribPointer(
       1,
       3,
@@ -81,6 +82,7 @@ namespace core {
       GL_FALSE,
       3 * sizeof(GLfloat),
       static_cast<void *>(nullptr));
+    glEnableVertexAttribArray(1);
 
     // uvbo - texture coordinates
     glBindBuffer(GL_ARRAY_BUFFER, _uvbo);
@@ -88,7 +90,7 @@ namespace core {
                  static_cast<GLsizeiptr>(_uvs.size() * sizeof(float)),
                  &_uvs[0],
                  GL_STATIC_DRAW);
-    glEnableVertexAttribArray(2);
+
     glVertexAttribPointer(
       2,
       2,
@@ -96,6 +98,7 @@ namespace core {
       GL_FALSE,
       2 * sizeof(GLfloat),
       static_cast<void *>(nullptr));
+    glEnableVertexAttribArray(2);
 
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ebo);

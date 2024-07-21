@@ -6,12 +6,12 @@
 
 namespace core
 {
-  Cube::Cube(RenderContext *render_context, const std::string &texture_path, const std::string &shader_path)
+  Cube::Cube(RenderContext *render_context, const std::vector<std::string> &texture_paths, const std::string &shader_path)
     : _geometry_id(0),
       _material_id(0)
   {
     _render_context = render_context;
-    _texture_path = texture_path;
+    _texture_paths = texture_paths;
     _shader_path = shader_path;
   }
 
@@ -24,7 +24,7 @@ namespace core
   {
     std::cout << "Initializing Cube" << std::endl;
     _geometry_id = _render_context->InitMesh(_vertices, _normals, _tex_coordinates, _indices);
-    _material_id = _render_context->InitMaterial(_shader_path, {_texture_path});
+    _material_id = _render_context->InitMaterial(_shader_path, _texture_paths);
   }
 
   void Cube::Draw(const glm::mat4 &view, const glm::mat4 &projection) const

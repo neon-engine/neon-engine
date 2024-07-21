@@ -1,6 +1,9 @@
 #include "open-gl-material.hpp"
 
+#include <iomanip>
 #include <iostream>
+
+#include "glm/gtc/type_ptr.hpp"
 
 namespace core
 {
@@ -50,8 +53,33 @@ namespace core
     return true;
   }
 
+  static std::string mat4ToString(const glm::mat4& matrix) {
+    std::ostringstream oss;
+    oss << std::fixed << std::setprecision(2);
+
+    const float* m = glm::value_ptr(matrix);
+
+    for (int row = 0; row < 4; ++row) {
+      for (int col = 0; col < 4; ++col) {
+        oss << m[col * 4 + row] << " ";
+      }
+      oss << "\n";
+    }
+
+    return oss.str();
+  }
+
   void OpenGL_Material::Use(const glm::mat4 &model, const glm::mat4 &view, const glm::mat4 &projection) const
   {
+    std::cout << "model:" << std::endl;
+    std::cout << mat4ToString(model) << std::endl;
+
+    std::cout << "view:" << std::endl;
+    std::cout << mat4ToString(view) << std::endl;
+
+    std::cout << "projection" << std::endl;
+    std::cout << mat4ToString(projection) << std::endl;
+
     for (auto texture_unit = 0; texture_unit < _textures.size(); texture_unit++)
     {
       _textures[texture_unit].Use(texture_unit);
