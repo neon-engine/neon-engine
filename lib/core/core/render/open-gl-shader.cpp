@@ -107,6 +107,7 @@ namespace core
 
     if (error) { return false; }
 
+    _shader_program_id = program_id;
     _initialize = true;
     return true;
   }

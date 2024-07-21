@@ -3,6 +3,7 @@
 #include <iomanip>
 #include <iostream>
 
+#include "util.hpp"
 #include "glm/gtc/type_ptr.hpp"
 
 namespace core
@@ -35,44 +36,39 @@ namespace core
       return false;
     }
 
-    _shader.Activate();
-
-    for (auto texture_unit = 0; texture_unit < _textures.size(); texture_unit++)
+    for (auto &texture : _textures)
     {
-      if (auto texture = _textures[texture_unit]; !texture.Initialize())
+      if (!texture.Initialize())
       {
         std::cerr << "Could not initialize texture" << std::endl;
         return false;
       }
-      std::string texture_str = "texture";
-      texture_str += std::to_string(texture_unit + 1);
-      std::cout << "Binding " << texture_str << " to texture unit " << texture_unit << std::endl;
-      _shader.SetInt(texture_str, texture_unit);
     }
 
-    _shader.Deactivate();
     _initialized = true;
     return true;
   }
 
   void OpenGL_Material::Use(const glm::mat4 &model, const glm::mat4 &view, const glm::mat4 &projection) const
   {
-    // std::cout << "model:" << std::endl;
-    // std::cout << mat4ToString(model) << std::endl;
-    //
-    // std::cout << "view:" << std::endl;
-    // std::cout << mat4ToString(view) << std::endl;
-    //
-    // std::cout << "projection" << std::endl;
-    // std::cout << mat4ToString(projection) << std::endl;
+    std::cout << "model:" << std::endl;
+    std::cout << mat4_to_string(model) << std::endl;
 
+    std::cout << "view:" << std::endl;
+    std::cout << mat4_to_string(view) << std::endl;
+
+    std::cout << "projection" << std::endl;
+    std::cout << mat4_to_string(projection) << std::endl;
+
+    _shader.Activate();
     for (auto texture_unit = 0; texture_unit < _textures.size(); texture_unit++)
     {
       auto texture = _textures[texture_unit];
+      std::string texture_str = "texture";
+      texture_str += std::to_string(texture_unit + 1);
+      _shader.SetInt(texture_str, texture_unit);
       texture.Use(texture_unit);
     }
-
-    _shader.Activate();
 
     _shader.SetMat4("model", model);
     _shader.SetMat4("view", view);
