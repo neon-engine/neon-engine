@@ -3,9 +3,9 @@
 
 #include <iostream>
 #include <queue>
-#include <stdexcept>
 #include <string>
 #include <vector>
+#include <glm/glm.hpp>
 
 namespace core
 {
@@ -44,7 +44,7 @@ namespace core
 
     virtual int InitMaterial(std::string shader_path, std::vector<std::string> texture_paths) = 0;
 
-    virtual void UseMaterial(int mesh_id) = 0;
+    virtual void UseMaterial(int mesh_id, const glm::mat4 &model, const glm::mat4 &view, const glm::mat4 &projection) = 0;
 
     virtual void DestroyMaterial(int mesh_id) = 0;
 

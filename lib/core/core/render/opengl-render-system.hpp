@@ -49,7 +49,11 @@ namespace core
 
     int InitMaterial(std::string shader_path, std::vector<std::string> texture_paths) override;
 
-    void UseMaterial(int material_id) override;
+    void UseMaterial(
+      int material_id,
+      const glm::mat4 &model,
+      const glm::mat4 &view,
+      const glm::mat4 &projection) override;
 
     void DestroyMaterial(int material_id) override;
 

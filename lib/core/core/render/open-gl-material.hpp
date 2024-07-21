@@ -21,7 +21,7 @@ namespace core
 
     bool Initialize();
 
-    void Use() const;
+    void Use(const glm::mat4 &model, const glm::mat4 &view, const glm::mat4 &projection) const;
 
     void CleanUp();
   };
