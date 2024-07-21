@@ -4,6 +4,7 @@
 #include <GL/gl3w.h>
 
 #include <string>
+#include <glm/glm.hpp>
 
 namespace core
 {
@@ -30,6 +31,18 @@ namespace core
     void SetFloat(const std::string &name, const float &value) const;
 
     void SetBool(const std::string &name, const bool &value) const;
+
+    void SetVec2(const std::string &name, const glm::vec2 &value) const;
+
+    void SetVec3(const std::string &name, const glm::vec3 &value) const;
+
+    void SetVec4(const std::string &name, const glm::vec4 &value) const;
+
+    void SetMat2(const std::string &name, const glm::mat2 &mat) const;
+
+    void SetMat3(const std::string &name, const glm::mat3 &mat) const;
+
+    void SetMat4(const std::string &name, const glm::mat4 &mat) const;
   };
 } // core
 

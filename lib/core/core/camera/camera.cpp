@@ -2,10 +2,19 @@
 
 #include "glm/ext/matrix_transform.hpp"
 
-namespace core {
+namespace core
+{
   Camera::Camera() = default;
+
   Camera::~Camera() = default;
+
   glm::mat4 Camera::GetView() const { return _view; }
+
+  float Camera::GetFov() const
+  {
+    return _fov;
+  }
+
   void Camera::Update(const float &delta_time, const glm::vec3 &move_direction)
   {
     _camera_pos += move_direction * delta_time;
@@ -16,5 +25,4 @@ namespace core {
   {
     return {0, 0, 0};
   }
-
 } // core

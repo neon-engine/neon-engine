@@ -1,7 +1,10 @@
 #ifndef CUBE_HPP
 #define CUBE_HPP
+
+#include <glm/glm.hpp>
+
 #include "render-context.hpp"
-#include "glm/vec3.hpp"
+
 
 namespace core
 {
@@ -148,7 +151,7 @@ namespace core
 
     void CleanUp();
 
-    void Draw() const;
+    void Draw(glm::mat4 view, glm::mat4 projection) const;
   };
 } // core
 

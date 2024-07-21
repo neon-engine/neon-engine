@@ -9,6 +9,16 @@
 
 namespace core
 {
+  struct RenderResolution
+  {
+    RenderResolution(const int width, const int height)
+      : width(width),
+        height(height) {}
+
+    const int width;
+    const int height;
+  };
+
   class RenderContext
   {
     int _mesh_index = 0;
@@ -37,6 +47,8 @@ namespace core
     virtual void UseMaterial(int mesh_id) = 0;
 
     virtual void DestroyMaterial(int mesh_id) = 0;
+
+    virtual RenderResolution GetRenderResolution() = 0;
 
     int GetMeshId()
     {

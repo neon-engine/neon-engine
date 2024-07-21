@@ -2,6 +2,9 @@
 
 #include <iostream>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 void core::Scene::Initialize()
 {
   std::cout << "Initializing the scene" << std::endl;
@@ -12,7 +15,16 @@ void core::Scene::Initialize()
 void core::Scene::Draw()
 {
   _camera.Update(1.0f, {0.0f, 0.0f, 0.0f});
-  _cube.Draw();
+  glm::mat4 view = _camera.GetView();
+  auto [width, height] = _render_context->GetRenderResolution();
+  glm::mat4 projection = glm::perspective(
+    glm::radians(_camera.GetFov()),
+    static_cast<float>(width) / static_cast<float>(height),
+    0.1f,
+    1000.0f
+    );
+
+  _cube.Draw(view, projection);
 }
 
 void core::Scene::CleanUp()
