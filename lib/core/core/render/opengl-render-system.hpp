@@ -17,7 +17,6 @@ namespace core
   {
     std::vector<OpenGL_Mesh> _mesh_refs;
     std::vector<OpenGL_Material> _material_refs;
-    GLint _max_texture_units = 0;
 
   public:
     explicit OpenGL_RenderSystem(const SettingsConfig &settings_config)

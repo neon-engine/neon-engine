@@ -46,6 +46,7 @@ namespace core
       }
       std::string texture_str = "texture";
       texture_str += std::to_string(texture_unit + 1);
+      std::cout << "Binding " << texture_str << " to texture unit " << texture_unit << std::endl;
       _shader.SetInt(texture_str, texture_unit);
     }
 

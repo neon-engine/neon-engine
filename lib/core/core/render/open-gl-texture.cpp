@@ -40,7 +40,6 @@ namespace core
     GLint tex_width, tex_height;
     int nr_channels;
     stbi_set_flip_vertically_on_load(true);
-    GLuint opengl_texture_id;
     if (unsigned char *data = stbi_load(
       _texture_path.c_str(),
       &tex_width,
@@ -48,15 +47,15 @@ namespace core
       &nr_channels,
       STBI_default))
     {
-      glGenTextures(1, &opengl_texture_id);
-      glBindTexture(GL_TEXTURE_2D, opengl_texture_id);
+      glGenTextures(1, &_texture_id);
+      glBindTexture(GL_TEXTURE_2D, _texture_id);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
       glTexImage2D(GL_TEXTURE_2D,
                    0,
-                   format,
+                   static_cast<GLint>(format),
                    tex_width,
                    tex_height,
                    0,
