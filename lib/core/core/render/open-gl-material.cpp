@@ -6,21 +6,16 @@ namespace core
 {
   OpenGL_Material::OpenGL_Material() = default;
 
-  OpenGL_Material::OpenGL_Material(const std::string &shader_path, std::vector<std::string> texture_paths)
+  OpenGL_Material::OpenGL_Material(const std::string &shader_path, const std::vector<std::string> &texture_paths)
   {
     _shader = OpenGL_Shader(shader_path);
     _textures = std::vector<OpenGL_Texture>();
 
-    for (auto texture_path : texture_paths)
+    for (auto &texture_path : texture_paths)
     {
       const auto texture = OpenGL_Texture(texture_path);
       _textures.push_back(texture);
     }
-  }
-
-  OpenGL_Material::~OpenGL_Material()
-  {
-    CleanUp();
   }
 
   bool OpenGL_Material::Initialize()
@@ -41,12 +36,10 @@ namespace core
 
     for (auto texture_unit = 0; texture_unit < _textures.size(); texture_unit++)
     {
-      auto texture = _textures[texture_unit];
-      if (!texture.Initialize())
+      if (auto texture = _textures[texture_unit]; !texture.Initialize())
       {
         throw std::runtime_error("Could not initialize texture");
       }
-      _textures.push_back(texture);
       std::string texture_str = "texture";
       texture_str += std::to_string(texture_unit);
       _shader.SetInt(texture_str, texture_unit);
@@ -68,6 +61,7 @@ namespace core
   }
   void OpenGL_Material::CleanUp()
   {
+    std::cout << "Cleaning up opengl material" << std::endl;
     if (!_initialized) { return; }
 
     _shader.CleanUp();

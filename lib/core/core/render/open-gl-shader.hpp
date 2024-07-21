@@ -17,8 +17,6 @@ namespace core
     OpenGL_Shader();
     explicit OpenGL_Shader(const std::string &shader_path);
 
-    ~OpenGL_Shader();
-
     bool Initialize();
 
     void Activate() const;

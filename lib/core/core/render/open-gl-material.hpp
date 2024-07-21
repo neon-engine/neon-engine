@@ -16,9 +16,8 @@ namespace core
     std::vector<OpenGL_Texture> _textures{};
   public:
     OpenGL_Material();
-    OpenGL_Material(const std::string &shader_path, std::vector<std::string> texture_paths);
 
-    ~OpenGL_Material();
+    OpenGL_Material(const std::string &shader_path, const std::vector<std::string> &texture_paths);
 
     bool Initialize();
 

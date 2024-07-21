@@ -25,8 +25,8 @@ namespace core
     {
       _max_supported_meshes = 4096;
       _max_supported_materials = 4096;
-      _mesh_refs = std::vector<OpenGL_Mesh>(_max_supported_meshes);
-      _material_refs = std::vector<OpenGL_Material>(_max_supported_materials);
+      _mesh_refs.reserve(_max_supported_meshes);
+      _material_refs.reserve(_max_supported_materials);
     }
 
     void Initialize() override;
