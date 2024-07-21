@@ -26,7 +26,7 @@ namespace core
       const float &delta_time,
       const glm::vec3 &move_direction);
 
-    glm::vec3 GetLookDirection();
+    glm::vec3 GetLookDirection() const;
   };
 } // core
 

@@ -51,15 +51,6 @@ namespace core
 
   void OpenGL_Material::Use(const glm::mat4 &model, const glm::mat4 &view, const glm::mat4 &projection) const
   {
-    std::cout << "model:" << std::endl;
-    std::cout << mat4_to_string(model) << std::endl;
-
-    std::cout << "view:" << std::endl;
-    std::cout << mat4_to_string(view) << std::endl;
-
-    std::cout << "projection" << std::endl;
-    std::cout << mat4_to_string(projection) << std::endl;
-
     _shader.Activate();
     for (auto texture_unit = 0; texture_unit < _textures.size(); texture_unit++)
     {
