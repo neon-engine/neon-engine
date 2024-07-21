@@ -49,12 +49,13 @@ namespace core
 
   int OpenGL_RenderSystem::InitMesh(const std::string model_path)
   {
-    if (const auto extension = get_file_extension(model_path); extension == "obj")
+    const auto extension = get_file_extension(model_path);
+    if (extension == "obj")
     {
-      std::vector<float> vertices;
-      std::vector<float> normals;
-      std::vector<float> uvs;
-      std::vector<int> indices;
+      std::vector<float> vertices(0);
+      std::vector<float> normals(0);
+      std::vector<float> uvs(0);
+      std::vector<int> indices(0);
       load_obj(model_path.c_str(), vertices, normals, uvs, indices);
 
       std::cout << "Loaded mesh data from " << model_path << std::endl;

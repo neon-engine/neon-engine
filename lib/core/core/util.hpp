@@ -29,7 +29,6 @@ namespace core
     int fnx, fny, fnz;
     int ftx, fty, ftz;
 
-    std::vector<glm::vec3> temp_v;
     std::vector<glm::vec3> temp_n;
     std::vector<glm::vec2> temp_t;
 
@@ -49,7 +48,9 @@ namespace core
         if (line[1] == ' ')
         {
           sscanf(line, "v %f %f %f %f %f %f", &x, &y, &z, &r, &g, &b);
-          temp_v.push_back(glm::vec3(x, y, z)); // NOLINT(*-use-emplace)
+          vertices.push_back(x);
+          vertices.push_back(y);
+          vertices.push_back(z);
         } else if (line[1] == 'n')
         {
           sscanf(line, "vn %f %f %f", &x, &y, &z);
@@ -78,15 +79,6 @@ namespace core
           indices_t.push_back(ftz - 1);
         }
       }
-    }
-
-    for (auto vertex : indices)
-    {
-      auto temp = temp_v[vertex];
-
-      vertices.push_back(temp.x);
-      vertices.push_back(temp.y);
-      vertices.push_back(temp.z);
     }
 
     for (auto normal : indices_n)
