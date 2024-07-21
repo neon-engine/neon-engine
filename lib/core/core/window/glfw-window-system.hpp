@@ -4,6 +4,7 @@
 // gl3w must be first
 // ReSharper disable once CppUnusedIncludeDirective
 #include <GL/gl3w.h>
+
 #include <GLFW/glfw3.h>
 
 #include "settings-config.hpp"

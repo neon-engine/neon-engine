@@ -47,7 +47,11 @@ namespace core {
     glGenBuffers(1, &_vbo);
     glGenBuffers(1, &_nvbo);
     glGenBuffers(1, &_uvbo);
-    glGenBuffers(1, &_ebo);
+
+    if (!_indices.empty())
+    {
+      glGenBuffers(1, &_ebo);
+    }
 
     glBindVertexArray(_vao);
 
@@ -101,11 +105,14 @@ namespace core {
     glEnableVertexAttribArray(2);
 
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-                 static_cast<GLsizeiptr>(_indices.size() * sizeof(int)),
-                 &_indices[0],
-                 GL_STATIC_DRAW);
+    if (!_indices.empty())
+    {
+      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ebo);
+      glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+                   static_cast<GLsizeiptr>(_indices.size() * sizeof(int)),
+                   &_indices[0],
+                   GL_STATIC_DRAW);
+    }
 
     // Unbind the currently bound buffer so that we don't accidentally make unwanted changes to it.
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -121,7 +128,13 @@ namespace core {
   void OpenGL_Mesh::Use() const
   {
     glBindVertexArray(_vao);
-    glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(_indices.size()), GL_UNSIGNED_INT, nullptr);
+    if (!_indices.empty())
+    {
+      glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(_indices.size()), GL_UNSIGNED_INT, nullptr);
+    } else
+    {
+      glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(_vertices.size() / 3));
+    }
   }
 
   void OpenGL_Mesh::CleanUp()
@@ -132,7 +145,11 @@ namespace core {
     glDeleteBuffers(1, &_vbo);
     glDeleteBuffers(1, &_nvbo);
     glDeleteBuffers(1, &_uvbo);
-    glDeleteBuffers(1, &_ebo);
+
+    if (!_indices.empty())
+    {
+      glDeleteBuffers(1, &_ebo);
+    }
 
     _initialized = false;
   }

@@ -1,7 +1,7 @@
 #ifndef GLFW_INPUT_SYSTEM_HPP
 #define GLFW_INPUT_SYSTEM_HPP
 
-#include <GLFW/glfw3.h>
+#include "private/neon-pch.hpp"
 
 #include "settings-config.hpp"
 #include "input/input-system.hpp"
