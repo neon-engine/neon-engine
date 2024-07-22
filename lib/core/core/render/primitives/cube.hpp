@@ -155,7 +155,7 @@ namespace core
       0.0f, 1.0f
     };
 
-    std::vector<int> _indices = {};
+    std::vector<unsigned int> _indices = {};
   };
 } // core
 
