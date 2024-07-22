@@ -1,8 +1,8 @@
 set(TARGET core)
 
 add_library(${TARGET} STATIC
-        core/application.cpp
-        core/application.hpp
+        core/application/application.cpp
+        core/application/application.hpp
         core/settings-config.hpp
 
         core/input/input-system.hpp
