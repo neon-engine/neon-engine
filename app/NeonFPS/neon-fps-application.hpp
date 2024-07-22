@@ -1,6 +1,7 @@
 #ifndef NEON_FPS_APPLICATION_HPP
 #define NEON_FPS_APPLICATION_HPP
-#include "application.hpp"
+
+#include "application/application.hpp"
 
 
 class NeonFpsApplication final : public core::Application {
