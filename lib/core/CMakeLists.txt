@@ -23,7 +23,7 @@ add_library(${TARGET} STATIC
         core/window/sdl2-window-system.hpp
         core/input/sdl-2-input-system.cpp
         core/input/sdl-2-input-system.hpp
-        core/window/sdl-2-window-context.hpp
+        core/window/window-context.hpp
         core/camera/camera.cpp
         core/camera/camera.hpp
         core/render/primitives/cube.cpp
