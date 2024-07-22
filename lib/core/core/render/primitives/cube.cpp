@@ -24,12 +24,12 @@ namespace core
   {
     std::cout << "Initializing Cube" << std::endl;
     _material_id = _render_context->InitMaterial(_shader_path, _texture_paths);
-    _geometry_id = _render_context->InitMesh("assets/models/bear.obj");
+    _geometry_id = _render_context->InitMesh("assets/models/bear.obj", _normal_matrix);
   }
 
   void Cube::Draw(const glm::mat4 &view, const glm::mat4 &projection) const
   {
-    _render_context->UseMaterial(_material_id, translate(_model, _position), view, projection);
+    _render_context->UseMaterial(_material_id, translate(_model, _position) * _normal_matrix, view, projection);
     _render_context->DrawMesh(_geometry_id);
   }
 

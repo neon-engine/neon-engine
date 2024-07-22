@@ -41,7 +41,7 @@ namespace core
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   }
 
-  int OpenGL_RenderSystem::InitMesh(const std::string model_path)
+  int OpenGL_RenderSystem::InitMesh(const std::string model_path, glm::mat4 &normalized_matrix)
   {
     if (const auto extension = get_file_extension(model_path); extension == "obj")
     {
@@ -52,7 +52,7 @@ namespace core
       load_obj(model_path, vertices, normals, uvs, indices);
 
       std::cout << "Loaded mesh data from " << model_path << std::endl;
-      return InitMesh(vertices, normals, uvs, indices);
+      return InitMesh(vertices, normals, uvs, indices, normalized_matrix);
     } else
     {
       std::cerr << "Unsupported model format: " << extension << std::endl;
@@ -64,7 +64,8 @@ namespace core
     const std::vector<float> &vertices,
     const std::vector<float> &normals,
     const std::vector<float> &tex_coordinates,
-    const std::vector<unsigned int> &indices)
+    const std::vector<unsigned int> &indices,
+    glm::mat4 &normalized_matrix)
   {
     const auto mesh_id = GetMeshId();
     if (mesh_id < 0) { return -1; }
@@ -76,6 +77,8 @@ namespace core
     {
       std::cout << "Could not initialize mesh with id " << mesh_id << std::endl;
     }
+
+    normalized_matrix = mesh.GetNormalizedMatrix();
 
     _mesh_refs[mesh_id] = mesh;
 

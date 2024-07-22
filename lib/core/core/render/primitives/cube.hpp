@@ -17,6 +17,7 @@ namespace core
 
     std::vector<std::string> _texture_paths;
     std::string _shader_path;
+    glm::mat4 _normal_matrix{};
 
     int _geometry_id;
     int _material_id;

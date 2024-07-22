@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <glm/gtc/matrix_transform.hpp>
 
 namespace core {
   OpenGL_Mesh::OpenGL_Mesh() = default;
@@ -38,7 +39,7 @@ namespace core {
       return true;
     }
 
-    CenterAndScale();
+    GenerateNormalizationMatrix();
 
     _vao = 0;
     _vbo = 0;
@@ -157,8 +158,14 @@ namespace core {
     _initialized = false;
   }
 
-  void OpenGL_Mesh::CenterAndScale()
+  glm::mat4 OpenGL_Mesh::GetNormalizedMatrix() const
   {
+    return _normal_matrix;
+  }
+
+  void OpenGL_Mesh::GenerateNormalizationMatrix()
+  {
+    std::cout << "Generating normalizing matrix using the loaded vertices" << std::endl;
     auto min_x = _vertices[0];
     auto min_y = _vertices[1];
     auto min_z = _vertices[2];
@@ -181,10 +188,6 @@ namespace core {
       if (z > max_z) {max_z = z;}
     }
 
-    std::cout << "min_values: <" << min_x << ", " << min_y << ", " << min_z << ">" << std::endl;
-    std::cout << "min_values: <" << max_x << ", " << max_y << ", " << max_z << ">" << std::endl;
-
-
     const auto x_center = (min_x + max_x) / 2.0f;
     const auto y_center = (min_y + max_y) / 2.0f;
     const auto z_center = (min_z + max_z) / 2.0f;
@@ -193,23 +196,10 @@ namespace core {
     const auto range_y = max_y - min_y;
     const auto range_z = max_z - min_z;
 
-    for (int i = 3; i < _vertices.size(); i += 3)
-    {
-      const auto x = _vertices[i];
-      const auto y = _vertices[i + 1];
-      const auto z = _vertices[i + 2];
+    const auto max_range = std::max(std::max(range_x, range_y), range_z) / 2.0f;
 
-      const auto x_centered = x - x_center;
-      const auto y_centered = y - y_center;
-      const auto z_centered = z - z_center;
-
-      const auto x_normalized = std::clamp(x_centered / (range_x / 2.0f), -1.0f, 1.0f);
-      const auto y_normalized = std::clamp(y_centered / (range_y / 2.0f), -1.0f, 1.0f);
-      const auto z_normalized = std::clamp(z_centered / (range_z / 2.0f), -1.0f, 1.0f);
-
-      _vertices[i] = x_normalized;
-      _vertices[i + 1] = y_normalized;
-      _vertices[i + 2] = z_normalized;
-    }
+    const auto translation = translate(glm::mat4(1.0f), {-x_center, -y_center, -z_center});
+    _normal_matrix =
+      scale(glm::mat4(1.0f), {1.0f / max_range, 1.0f / max_range, 1.0f / max_range}) * translation;
   }
 } // core
