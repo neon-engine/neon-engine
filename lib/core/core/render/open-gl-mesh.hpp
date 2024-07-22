@@ -35,6 +35,8 @@ namespace core
     void Use() const;
 
     void CleanUp();
+
+    void CenterAndScale();
   };
 } // core
 

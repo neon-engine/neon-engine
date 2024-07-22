@@ -19,10 +19,9 @@ namespace core
       : _render_context(render_context),
         _cube(render_context,
           {
-            "assets/textures/container.jpg",
-            "assets/textures/awesomeface.png"
+            "assets/textures/dark.png"
           },
-          "assets/shaders/mix-textured-shader") {}
+          "assets/shaders/unlit") {}
 
     void Initialize();
 

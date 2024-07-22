@@ -86,7 +86,9 @@ namespace core
           } else
           {
             auto indices_parts = split(vertex_data, '/');
-            int vert_index = -1, tex_index = -1, norm_index = -1;
+            int vert_index;
+            int tex_index = -1;
+            int norm_index = -1;
 
             if (indices_parts.empty())
             {
