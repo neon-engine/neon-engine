@@ -8,7 +8,7 @@ namespace core {
   OpenGL_Mesh::OpenGL_Mesh(const std::vector<float> &vertices,
                            const std::vector<float> &normals,
                            const std::vector<float> &uvs,
-                           const std::vector<int> &indices)
+                           const std::vector<unsigned int> &indices)
   {
     _vertices = vertices;
     _normals = normals;
@@ -109,7 +109,7 @@ namespace core {
     {
       glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ebo);
       glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-                   static_cast<GLsizeiptr>(_indices.size() * sizeof(int)),
+                   static_cast<GLsizeiptr>(_indices.size() * sizeof(unsigned int)),
                    &_indices[0],
                    GL_STATIC_DRAW);
     }

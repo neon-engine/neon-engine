@@ -19,14 +19,14 @@ namespace core
     std::vector<float> _vertices{};
     std::vector<float> _normals{};
     std::vector<float> _uvs{};
-    std::vector<int> _indices{};
+    std::vector<unsigned int> _indices{};
   public:
     OpenGL_Mesh();
     explicit OpenGL_Mesh(
       const std::vector<float> &vertices,
       const std::vector<float> &normals,
       const std::vector<float> &uvs,
-      const std::vector<int> &indices);
+      const std::vector<unsigned int> &indices);
 
     ~OpenGL_Mesh();
 

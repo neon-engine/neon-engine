@@ -55,7 +55,7 @@ namespace core
       std::vector<float> vertices(0);
       std::vector<float> normals(0);
       std::vector<float> uvs(0);
-      std::vector<int> indices(0);
+      std::vector<unsigned int> indices(0);
       load_obj(model_path.c_str(), vertices, normals, uvs, indices);
 
       std::cout << "Loaded mesh data from " << model_path << std::endl;
@@ -72,7 +72,7 @@ namespace core
     const std::vector<float> &vertices,
     const std::vector<float> &normals,
     const std::vector<float> &tex_coordinates,
-    const std::vector<int> &indices)
+    const std::vector<unsigned int> &indices)
   {
     const auto mesh_id = GetMeshId();
     if (mesh_id < 0) { return -1; }

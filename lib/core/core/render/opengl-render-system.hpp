@@ -40,7 +40,7 @@ namespace core
       const std::vector<float> &vertices,
       const std::vector<float> &normals,
       const std::vector<float> &tex_coordinates,
-      const std::vector<int> &indices) override;
+      const std::vector<unsigned int> &indices) override;
 
     void DrawMesh(int mesh_id) override;
 

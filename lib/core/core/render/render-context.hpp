@@ -38,7 +38,7 @@ namespace core
       const std::vector<float> &vertices,
       const std::vector<float> &normals,
       const std::vector<float> &tex_coordinates,
-      const std::vector<int> &indices) = 0;
+      const std::vector<unsigned int> &indices) = 0;
 
     virtual void DrawMesh(int mesh_id) = 0;
 
