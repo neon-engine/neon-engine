@@ -1,5 +1,6 @@
 #include "open-gl-mesh.hpp"
 
+#include <algorithm>
 #include <iostream>
 
 namespace core {
@@ -183,17 +184,14 @@ namespace core {
     std::cout << "min_values: <" << min_x << ", " << min_y << ", " << min_z << ">" << std::endl;
     std::cout << "min_values: <" << max_x << ", " << max_y << ", " << max_z << ">" << std::endl;
 
-    const auto range_x = max_x - min_y;
-    const auto range_y = max_y - min_y;
-    const auto range_z = max_z - min_z;
 
     const auto x_center = (min_x + max_x) / 2.0f;
     const auto y_center = (min_y + max_y) / 2.0f;
     const auto z_center = (min_z + max_z) / 2.0f;
 
-    const auto x_norm = 2.0f / range_x;
-    const auto y_norm = 2.0f / range_y;
-    const auto z_norm = 2.0f / range_z;
+    const auto range_x = max_x - min_x;
+    const auto range_y = max_y - min_y;
+    const auto range_z = max_z - min_z;
 
     for (int i = 3; i < _vertices.size(); i += 3)
     {
@@ -201,17 +199,13 @@ namespace core {
       const auto y = _vertices[i + 1];
       const auto z = _vertices[i + 2];
 
-      std::cout << "original: <" << x << ", " << y << ", " << z << ">" << std::endl;
-
       const auto x_centered = x - x_center;
       const auto y_centered = y - y_center;
       const auto z_centered = z - z_center;
 
-      const auto x_normalized = x_centered * x_norm;
-      const auto y_normalized = y_centered * y_norm;
-      const auto z_normalized = z_centered * z_norm;
-
-      std::cout << "scaled and centered: <" << x_normalized << ", " << y_normalized << ", " << z_normalized << ">" << std::endl;
+      const auto x_normalized = std::clamp(x_centered / (range_x / 2.0f), -1.0f, 1.0f);
+      const auto y_normalized = std::clamp(y_centered / (range_y / 2.0f), -1.0f, 1.0f);
+      const auto z_normalized = std::clamp(z_centered / (range_z / 2.0f), -1.0f, 1.0f);
 
       _vertices[i] = x_normalized;
       _vertices[i + 1] = y_normalized;

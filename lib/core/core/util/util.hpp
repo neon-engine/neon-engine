@@ -179,6 +179,10 @@ namespace core
     }
     return "";
   }
+
+  static float scale(const float val, glm::vec2 src, glm::vec2 dst) {
+    return ((val - src[0]) / (src[1] - src[0])) * (dst[1] - dst[0]) + dst[0];
+  }
 }
 
 #endif //UTIL_HPP

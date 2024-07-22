@@ -12,7 +12,7 @@
 int main()
 {
   const auto settings_config = SettingsConfig{
-    .width = 800, .height = 600, .selected_api = RenderingApi::OpenGl
+    .width = 1280, .height = 720, .selected_api = RenderingApi::OpenGl
   };
 
   core::GLFW_WindowSystem window_system(settings_config);
