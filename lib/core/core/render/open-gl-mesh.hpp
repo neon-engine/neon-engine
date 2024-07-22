@@ -21,6 +21,7 @@ namespace core
     std::vector<float> _normals{};
     std::vector<float> _uvs{};
     std::vector<unsigned int> _indices{};
+    glm::mat4 _normal_matrix{1.0f};
   public:
     OpenGL_Mesh();
     explicit OpenGL_Mesh(
@@ -37,7 +38,10 @@ namespace core
 
     void CleanUp();
 
-    void CenterAndScale();
+    [[nodiscard]] glm::mat4 GetNormalizedMatrix() const;
+
+  private:
+    void GenerateNormalizationMatrix();
   };
 } // core
 

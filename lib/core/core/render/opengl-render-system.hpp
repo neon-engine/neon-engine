@@ -34,11 +34,14 @@ namespace core
 
     // RenderContext *GetContext() override;
 
+    int InitMesh(std::string model_path, glm::mat4 &normalized_matrix) override;
+
     int InitMesh(
       const std::vector<float> &vertices,
       const std::vector<float> &normals,
       const std::vector<float> &tex_coordinates,
-      const std::vector<unsigned int> &indices) override;
+      const std::vector<unsigned int> &indices,
+      glm::mat4 &normalized_matrix) override;
 
     void DrawMesh(int mesh_id) override;
 
@@ -55,8 +58,6 @@ namespace core
     void DestroyMaterial(int material_id) override;
 
     RenderResolution GetRenderResolution() override;
-
-    int InitMesh(std::string model_path) override;
   };
 } // core
 

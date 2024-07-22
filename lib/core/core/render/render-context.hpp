@@ -32,13 +32,14 @@ namespace core
     ~RenderContext() = default;
 
   public:
-    virtual int InitMesh(std::string model_path) = 0;
+    virtual int InitMesh(std::string model_path, glm::mat4 &normalized_matrix) = 0;
 
     virtual int InitMesh(
       const std::vector<float> &vertices,
       const std::vector<float> &normals,
       const std::vector<float> &tex_coordinates,
-      const std::vector<unsigned int> &indices) = 0;
+      const std::vector<unsigned int> &indices,
+      glm::mat4 &normalized_matrix) = 0;
 
     virtual void DrawMesh(int mesh_id) = 0;
 
