@@ -1,9 +1,10 @@
 #ifndef SCENE_HPP
 #define SCENE_HPP
 
-#include "camera/camera.hpp"
+
+#include "camera.hpp"
 #include "primitives/cube.hpp"
-#include "render/render-context.hpp"
+
 
 namespace core
 {

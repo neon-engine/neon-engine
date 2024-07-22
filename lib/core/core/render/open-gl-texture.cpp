@@ -5,7 +5,7 @@
 #include <iostream>
 #include <stb_image.h>
 
-#include "../util.hpp"
+#include "util.hpp"
 
 namespace core
 {

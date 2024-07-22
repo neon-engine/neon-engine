@@ -3,9 +3,6 @@
 #include <iomanip>
 #include <iostream>
 
-#include "../util.hpp"
-#include "glm/gtc/type_ptr.hpp"
-
 namespace core
 {
   OpenGL_Material::OpenGL_Material() = default;

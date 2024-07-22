@@ -1,10 +1,6 @@
 #ifndef GLFW_WINDOW_SYSTEM_HPP
 #define GLFW_WINDOW_SYSTEM_HPP
 
-// gl3w must be first
-// ReSharper disable once CppUnusedIncludeDirective
-#include <GL/gl3w.h>
-
 #include <GLFW/glfw3.h>
 
 #include "settings-config.hpp"
@@ -32,8 +28,6 @@ namespace core
     void HideCursor() override;
 
     void ShowCursor() override;
-
-    [[nodiscard]] GLFWwindow *GetWindow() const;
 
     void Update() override;
 

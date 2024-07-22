@@ -1,12 +1,8 @@
 #ifndef SDL_2_WINDOW_SYSTEM_HPP
 #define SDL_2_WINDOW_SYSTEM_HPP
 
-// ReSharper disable once CppUnusedIncludeDirective
-#include <GL/gl3w.h>
-
 #include <SDL.h>
 
-#include "window-context.hpp"
 #include "window-system.hpp"
 
 namespace core

@@ -44,11 +44,6 @@ namespace core
     return !glfwWindowShouldClose(_window);
   }
 
-  GLFWwindow *GLFW_WindowSystem::GetWindow() const
-  {
-    return _window;
-  }
-
   void GLFW_WindowSystem::Update()
   {
     // check and call events and swap the buffers

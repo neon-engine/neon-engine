@@ -1,8 +1,6 @@
 #ifndef OPEN_GL_RENDER_SYSTEM_HPP
 #define OPEN_GL_RENDER_SYSTEM_HPP
 
-#include <GL/gl3w.h>
-
 #include <vector>
 
 #include "open-gl-material.hpp"

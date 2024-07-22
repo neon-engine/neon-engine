@@ -1,11 +1,13 @@
 #include <iostream>
 #include <stdexcept>
 
+#include "glfw-input-system.hpp"
+#include "glfw-window-system.hpp"
 #include "neon-fps-application.hpp"
 #include "sdl-2-input-system.hpp"
 #include "sdl2-window-system.hpp"
 #include "settings-config.hpp"
-#include "render/opengl-render-system.hpp"
+#include "opengl-render-system.hpp"
 
 int main()
 {
@@ -13,8 +15,8 @@ int main()
     .width = 800, .height = 600, .selected_api = RenderingApi::OpenGl
   };
 
-  core::SDL2_WindowSystem window_system(settings_config);
-  core::SDL2_InputSystem input_system(settings_config, &window_system);
+  core::GLFW_WindowSystem window_system(settings_config);
+  core::GLFW_InputSystem input_system(settings_config, &window_system);
   core::OpenGL_RenderSystem render_system(settings_config);
 
   NeonFpsApplication app(settings_config, &window_system, &input_system, &render_system);

@@ -3,8 +3,7 @@ set(TARGET core)
 add_library(${TARGET} STATIC
         core/application/application.cpp
         core/application/application.hpp
-        core/settings-config.hpp
-
+        core/application/settings-config.hpp
         core/input/input-system.hpp
         core/input/glfw-input-system.cpp
         core/input/glfw-input-system.hpp
@@ -36,17 +35,19 @@ add_library(${TARGET} STATIC
         core/render/open-gl-mesh.hpp
         core/render/open-gl-material.cpp
         core/render/open-gl-material.hpp
-        core/util.hpp
-        core/private/neon-pch.hpp
+        core/util/util.hpp
 )
 
 target_include_directories(${TARGET}
-        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/core
+        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/core/application
+        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/core/camera
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/core/entity
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/core/input
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/core/render
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/core/scene
+        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/core/util
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/core/window
+        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/core/private
 )
 
 target_link_libraries(${TARGET} glfw glm gl3w stb SDL2::SDL2main SDL2::SDL2-static)
