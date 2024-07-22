@@ -4,6 +4,7 @@
 #include <GL/gl3w.h>
 
 #include <vector>
+#include <glm/glm.hpp>
 
 namespace core
 {

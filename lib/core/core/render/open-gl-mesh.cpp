@@ -1,7 +1,6 @@
 #include "open-gl-mesh.hpp"
 
 #include <iostream>
-#include <glm/glm.hpp>
 
 namespace core {
   OpenGL_Mesh::OpenGL_Mesh() = default;
@@ -37,6 +36,8 @@ namespace core {
       std::cerr << "Mesh with opengl id " << _vao << " already initialized" << std::endl;
       return true;
     }
+
+    CenterAndScale();
 
     _vao = 0;
     _vbo = 0;
@@ -122,8 +123,6 @@ namespace core {
     // NOTE: You must NEVER unbind the element array buffer associated with a VAO!
     glBindVertexArray(0);
 
-    CenterAndScale();
-
     _initialized = true;
     return true;
   }
@@ -181,6 +180,9 @@ namespace core {
       if (z > max_z) {max_z = z;}
     }
 
+    std::cout << "min_values: <" << min_x << ", " << min_y << ", " << min_z << ">" << std::endl;
+    std::cout << "min_values: <" << max_x << ", " << max_y << ", " << max_z << ">" << std::endl;
+
     const auto range_x = max_x - min_y;
     const auto range_y = max_y - min_y;
     const auto range_z = max_z - min_z;
@@ -189,20 +191,31 @@ namespace core {
     const auto y_center = (min_y + max_y) / 2.0f;
     const auto z_center = (min_z + max_z) / 2.0f;
 
-    const auto x_norm = x_center / (range_x / 2.0f);
+    const auto x_norm = 2.0f / range_x;
+    const auto y_norm = 2.0f / range_y;
+    const auto z_norm = 2.0f / range_z;
 
+    for (int i = 3; i < _vertices.size(); i += 3)
+    {
+      const auto x = _vertices[i];
+      const auto y = _vertices[i + 1];
+      const auto z = _vertices[i + 2];
 
-    const glm::vec3 translation(-x_center, -y_center, -z_center);
+      std::cout << "original: <" << x << ", " << y << ", " << z << ">" << std::endl;
 
-    std::cout << "translating to the center: <" << -x_center << ", " << -y_center << ", " << -z_center << ">" << std::endl;
+      const auto x_centered = x - x_center;
+      const auto y_centered = y - y_center;
+      const auto z_centered = z - z_center;
 
-    std::cout << "need to scale to normalize by: <" << x_norm << ">" << std::endl;
+      const auto x_normalized = x_centered * x_norm;
+      const auto y_normalized = y_centered * y_norm;
+      const auto z_normalized = z_centered * z_norm;
 
-    // radius = max_abs_x / 2;
-    //
-    // defCenterMatrix = glm::translate(glm::mat4(1.0f), translation);
-    //
-    // glm::vec3 scale(0.05f, 0.05f, 0.05f);
-    // defScaleMatrix = glm::scale(glm::mat4(1.0f), scale);
+      std::cout << "scaled and centered: <" << x_normalized << ", " << y_normalized << ", " << z_normalized << ">" << std::endl;
+
+      _vertices[i] = x_normalized;
+      _vertices[i + 1] = y_normalized;
+      _vertices[i + 2] = z_normalized;
+    }
   }
 } // core
