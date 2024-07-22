@@ -38,6 +38,8 @@ namespace core
 
   public:
     void SignalToClose() override;
+
+    float GetTime() override;
   };
 } // core
 

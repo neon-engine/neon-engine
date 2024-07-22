@@ -12,6 +12,8 @@ namespace core
 
   public:
     virtual void SignalToClose() = 0;
+
+    virtual float GetTime() = 0;
   };
 }
 
