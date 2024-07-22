@@ -47,8 +47,7 @@ namespace core
   {
     Initialize();
 
-    const auto context = _render_system->GetContext();
-    Scene scene(context);
+    Scene scene(_render_system);
     scene.Initialize();
 
     while (_window_system->IsRunning())

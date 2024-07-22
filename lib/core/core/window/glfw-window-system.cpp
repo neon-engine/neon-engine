@@ -1,5 +1,6 @@
 #include "glfw-window-system.hpp"
 
+#include <cassert>
 #include <iostream>
 #include <stdexcept>
 
@@ -87,5 +88,14 @@ namespace core
       default:
         throw std::runtime_error("Unsupported rendering API configured");
     }
+  }
+
+  void GLFW_WindowSystem::SignalToClose()
+  {
+    throw std::logic_error("GLFW_WindowSystem::SignalToClose() not implemented");
+  }
+  double GLFW_WindowSystem::GetDeltaTime()
+  {
+    throw std::logic_error("GLFW_WindowSystem::GetDeltaTime() not implemented");
   }
 } // core

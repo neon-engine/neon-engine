@@ -25,7 +25,7 @@ namespace core
 
     virtual void PrepareFrame() = 0;
 
-    virtual RenderContext* GetContext() = 0;
+    // virtual RenderContext* GetContext() = 0;
   };
 } // core
 

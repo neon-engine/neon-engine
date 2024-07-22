@@ -4,16 +4,15 @@
 
 namespace core
 {
-  // ReSharper disable once CppInconsistentNaming
-  class SDL2_WindowContext
+  class WindowContext
   {
   protected:
-    ~SDL2_WindowContext() = default;
+    ~WindowContext() = default;
 
   public:
     virtual void SignalToClose() = 0;
 
-    virtual float GetTime() = 0;
+    virtual double GetDeltaTime() = 0;
   };
 }
 

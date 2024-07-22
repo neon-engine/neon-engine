@@ -42,11 +42,6 @@ namespace core
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   }
 
-  RenderContext *OpenGL_RenderSystem::GetContext()
-  {
-    return this;
-  }
-
   int OpenGL_RenderSystem::InitMesh(const std::string model_path)
   {
     if (const auto extension = get_file_extension(model_path); extension == "obj")

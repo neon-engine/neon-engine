@@ -2,10 +2,11 @@
 #define WINDOW_SYSTEM_HPP
 
 #include "settings-config.hpp"
+#include "window-context.hpp"
 
 namespace core
 {
-  class WindowSystem
+  class WindowSystem : public WindowContext
   {
   protected:
     SettingsConfig _settings_config;

@@ -39,6 +39,11 @@ namespace core
 
   protected:
     void ConfigureWindowForRenderer() override;
+
+  public:
+    void SignalToClose() override;
+
+    double GetDeltaTime() override;
   };
 } // core
 
