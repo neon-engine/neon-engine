@@ -49,19 +49,17 @@ namespace core
 
   int OpenGL_RenderSystem::InitMesh(const std::string model_path)
   {
-    const auto extension = get_file_extension(model_path);
-    if (extension == "obj")
+    if (const auto extension = get_file_extension(model_path); extension == "obj")
     {
       std::vector<float> vertices(0);
       std::vector<float> normals(0);
       std::vector<float> uvs(0);
       std::vector<unsigned int> indices(0);
-      load_obj(model_path.c_str(), vertices, normals, uvs, indices);
+      load_obj(model_path, vertices, normals, uvs, indices);
 
       std::cout << "Loaded mesh data from " << model_path << std::endl;
       return InitMesh(vertices, normals, uvs, indices);
-    }
-    else
+    } else
     {
       std::cerr << "Unsupported model format: " << extension << std::endl;
       return -1;
@@ -98,7 +96,6 @@ namespace core
     mesh.Use();
   }
 
-
   void OpenGL_RenderSystem::DestroyMesh(const int mesh_id)
   {
     std::cout << "Cleaning up mesh with id " << mesh_id << std::endl;
@@ -129,7 +126,10 @@ namespace core
     return material_id;
   }
 
-  void OpenGL_RenderSystem::UseMaterial(const int material_id, const glm::mat4 &model, const glm::mat4 &view, const glm::mat4 &projection)
+  void OpenGL_RenderSystem::UseMaterial(const int material_id,
+                                        const glm::mat4 &model,
+                                        const glm::mat4 &view,
+                                        const glm::mat4 &projection)
   {
     // ReSharper disable once CppUseStructuredBinding
     const auto material = _material_refs[material_id];
