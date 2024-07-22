@@ -1,7 +1,7 @@
 #ifndef INPUT_SYSTEM_HPP
 #define INPUT_SYSTEM_HPP
 
-#include "settings-config.hpp"
+#include "../application/settings-config.hpp"
 
 namespace core
 {

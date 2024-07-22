@@ -1,7 +1,6 @@
 #include "application.hpp"
 
-#include "util.hpp"
-#include "scene/scene.hpp"
+#include "scene.hpp"
 
 namespace core
 {

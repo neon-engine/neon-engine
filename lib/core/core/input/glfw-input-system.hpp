@@ -1,22 +1,23 @@
 #ifndef GLFW_INPUT_SYSTEM_HPP
 #define GLFW_INPUT_SYSTEM_HPP
 
-#include "private/neon-pch.hpp"
+#include "neon-pch.hpp"
 
+#include "input-system.hpp"
 #include "settings-config.hpp"
-#include "input/input-system.hpp"
+#include "window-context.hpp"
 
 namespace core
 {
   // ReSharper disable once CppInconsistentNaming
   class GLFW_InputSystem final : public InputSystem
   {
-    GLFWwindow *_window = nullptr;
+    WindowContext *_window = nullptr;
 
   public:
     explicit GLFW_InputSystem(
       const SettingsConfig &settings_config,
-      GLFWwindow *window)
+      WindowContext *window)
       : InputSystem(settings_config)
     {
       _window = window;

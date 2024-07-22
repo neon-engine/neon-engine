@@ -4,7 +4,6 @@
 #include <iostream>
 
 #include <stdexcept>
-#include <GL/gl3w.h>
 
 #include "util.hpp"
 
