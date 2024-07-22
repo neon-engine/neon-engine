@@ -1,6 +1,7 @@
 #include "open-gl-mesh.hpp"
 
 #include <iostream>
+#include <glm/glm.hpp>
 
 namespace core {
   OpenGL_Mesh::OpenGL_Mesh() = default;
@@ -121,6 +122,8 @@ namespace core {
     // NOTE: You must NEVER unbind the element array buffer associated with a VAO!
     glBindVertexArray(0);
 
+    CenterAndScale();
+
     _initialized = true;
     return true;
   }
@@ -152,5 +155,54 @@ namespace core {
     }
 
     _initialized = false;
+  }
+
+  void OpenGL_Mesh::CenterAndScale()
+  {
+    auto min_x = _vertices[0];
+    auto min_y = _vertices[1];
+    auto min_z = _vertices[2];
+
+    auto max_x = _vertices[0];
+    auto max_y = _vertices[1];
+    auto max_z = _vertices[2];
+
+    for (int i = 3; i < _vertices.size(); i += 3) {
+      const auto x = _vertices[i];
+      const auto y = _vertices[i + 1];
+      const auto z = _vertices[i + 2];
+
+      if (x < min_x) {min_x = x;}
+      if (y < min_y) {min_y = y;}
+      if (z < min_z) {min_z = z;}
+
+      if (x > max_x) {max_x = x;}
+      if (y > max_y) {max_y = y;}
+      if (z > max_z) {max_z = z;}
+    }
+
+    const auto range_x = max_x - min_y;
+    const auto range_y = max_y - min_y;
+    const auto range_z = max_z - min_z;
+
+    const auto x_center = (min_x + max_x) / 2.0f;
+    const auto y_center = (min_y + max_y) / 2.0f;
+    const auto z_center = (min_z + max_z) / 2.0f;
+
+    const auto x_norm = x_center / (range_x / 2.0f);
+
+
+    const glm::vec3 translation(-x_center, -y_center, -z_center);
+
+    std::cout << "translating to the center: <" << -x_center << ", " << -y_center << ", " << -z_center << ">" << std::endl;
+
+    std::cout << "need to scale to normalize by: <" << x_norm << ">" << std::endl;
+
+    // radius = max_abs_x / 2;
+    //
+    // defCenterMatrix = glm::translate(glm::mat4(1.0f), translation);
+    //
+    // glm::vec3 scale(0.05f, 0.05f, 0.05f);
+    // defScaleMatrix = glm::scale(glm::mat4(1.0f), scale);
   }
 } // core

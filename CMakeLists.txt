@@ -4,6 +4,11 @@ cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 project(ProjectNeon)
 set(CMAKE_CXX_STANDARD 20)
 
+# TODO set Wall/Wextra/Werror later when we no longer have git submodules and these libraries are in the toolchain instead
+#set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wall -Wextra -Werror")
+#set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra -Werror -fno-inline")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-inline")
+
 # Echo system/build information
 message("system name: ${CMAKE_SYSTEM_NAME}")
 message("architecture: ${CMAKE_SYSTEM_PROCESSOR}")

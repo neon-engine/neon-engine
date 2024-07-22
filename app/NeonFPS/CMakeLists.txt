@@ -12,7 +12,7 @@ add_custom_target(${TARGET}_copy_assets ALL
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         "${CMAKE_CURRENT_SOURCE_DIR}/assets"
         "${BASE_APP_BIN_DIRECTORY}/${TARGET}/assets"
-        COMMENT "Copying shaders to ${BASE_APP_BIN_DIRECTORY}"
+        COMMENT "Copying assets to ${BASE_APP_BIN_DIRECTORY}"
         DEPENDS ${ASSETS_FILES}
 )
 
