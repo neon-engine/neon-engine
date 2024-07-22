@@ -93,8 +93,11 @@ namespace core
     _should_close = true;
   }
 
-  float SDL2_WindowSystem::GetTime()
+  double SDL2_WindowSystem::GetDeltaTime()
   {
-    return static_cast<float>(SDL_GetTicks());
+    const auto current_frame = SDL_GetPerformanceCounter();
+    const auto delta_time = (static_cast<double>(current_frame - _last_frame)*1000 / static_cast<double>(SDL_GetPerformanceFrequency()));
+    _last_frame = current_frame;
+    return delta_time * .001;
   }
 } // core

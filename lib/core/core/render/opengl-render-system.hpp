@@ -34,7 +34,7 @@ namespace core
 
     void PrepareFrame() override;
 
-    RenderContext *GetContext() override;
+    // RenderContext *GetContext() override;
 
     int InitMesh(
       const std::vector<float> &vertices,
