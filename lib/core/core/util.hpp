@@ -86,34 +86,61 @@ namespace core
           } else
           {
             auto indices_parts = split(vertex_data, '/');
-            int vert_index = (std::stoi(indices_parts[0]) - 1) * 3;
-            int tex_index = (std::stoi(indices_parts[1]) - 1) * 2;
-            int norm_index = (std::stoi(indices_parts[2]) - 1) * 3;
+            int vert_index = -1, tex_index = -1, norm_index = -1;
+
+            if (indices_parts.empty())
+            {
+              std::cerr << "vertex data is missing, cannot proceed" << std::endl;
+              return false;
+            }
+
+            // case: f v
+            vert_index = (std::stoi(indices_parts[0]) - 1) * 3;
+
+            if (indices_parts.size() == 2)
+            {
+              // case: f v/vt
+              tex_index = (std::stoi(indices_parts[1]) - 1) * 2;
+            } else if (indices_parts.size() == 3)
+            {
+              // case: f v//vn
+              if(!indices_parts[1].empty())
+              {
+                // case: f v/vt/vn
+                tex_index = (std::stoi(indices_parts[1]) - 1) * 2;
+              }
+              norm_index = (std::stoi(indices_parts[2]) - 1) * 3;
+            }
 
             auto x = temp_vert[vert_index];
             auto y = temp_vert[vert_index + 1];
             auto z = temp_vert[vert_index + 2];
 
-            auto u = temp_uv[tex_index];
-            auto v = temp_uv[tex_index + 1];
-
-            auto nx = temp_normals[norm_index];
-            auto ny = temp_normals[norm_index + 1];
-            auto nz = temp_normals[norm_index + 2];
-
             vertices.push_back(x);
             vertices.push_back(y);
             vertices.push_back(z);
 
-            normals.push_back(nx);
-            normals.push_back(ny);
-            normals.push_back(nz);
+            if (tex_index != -1)
+            {
+              auto u = temp_uv[tex_index];
+              auto v = temp_uv[tex_index + 1];
 
-            uvs.push_back(u);
-            uvs.push_back(v);
+              uvs.push_back(u);
+              uvs.push_back(v);
+            }
+
+            if (norm_index != -1)
+            {
+              auto nx = temp_normals[norm_index];
+              auto ny = temp_normals[norm_index + 1];
+              auto nz = temp_normals[norm_index + 2];
+
+              normals.push_back(nx);
+              normals.push_back(ny);
+              normals.push_back(nz);
+            }
 
             index_map[vertex_data] = current_index;
-
             indices.push_back(current_index);
             current_index++;
           }
