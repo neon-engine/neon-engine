@@ -92,4 +92,9 @@ namespace core
     std::cout << "SDL2 signaled to close" << std::endl;
     _should_close = true;
   }
+
+  float SDL2_WindowSystem::GetTime()
+  {
+    return static_cast<float>(SDL_GetTicks());
+  }
 } // core
