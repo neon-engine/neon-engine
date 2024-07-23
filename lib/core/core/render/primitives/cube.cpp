@@ -15,11 +15,6 @@ namespace core
     _shader_path = shader_path;
   }
 
-  Cube::~Cube()
-  {
-    CleanUp();
-  }
-
   void Cube::Initialize()
   {
     std::cout << "Initializing Cube" << std::endl;

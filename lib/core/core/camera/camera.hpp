@@ -16,8 +16,6 @@ namespace core
   public:
     Camera();
 
-    ~Camera();
-
     [[nodiscard]] glm::mat4 GetView() const;
 
     [[nodiscard]] float GetFov() const;
