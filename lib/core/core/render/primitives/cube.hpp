@@ -30,8 +30,6 @@ namespace core
       const std::vector<std::string> &texture_paths,
       const std::string &shader_path);
 
-    ~Cube();
-
     void Initialize();
 
     void CleanUp();
