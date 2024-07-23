@@ -30,8 +30,6 @@ namespace core
       const std::vector<float> &uvs,
       const std::vector<unsigned int> &indices);
 
-    ~OpenGL_Mesh();
-
     bool Initialize();
 
     void Use() const;
