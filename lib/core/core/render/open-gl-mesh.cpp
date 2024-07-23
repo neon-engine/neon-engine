@@ -18,18 +18,6 @@ namespace core {
     _indices = indices;
   }
 
-  OpenGL_Mesh::~OpenGL_Mesh()
-  {
-    if (!_initialized) { return; }
-
-    glDeleteBuffers(1, &_vao);
-    glDeleteBuffers(1, &_vbo);
-    glDeleteBuffers(1, &_nvbo);
-    glDeleteBuffers(1, &_uvbo);
-    glDeleteBuffers(1, &_ebo);
-    _initialized = false;
-  }
-
   // ReSharper disable once CppDFAConstantFunctionResult
   bool OpenGL_Mesh::Initialize()
   {
@@ -158,7 +146,7 @@ namespace core {
     _initialized = false;
   }
 
-  glm::mat4 OpenGL_Mesh::GetNormalizedMatrix() const
+  glm::mat4 OpenGL_Mesh::GetModelMatrix() const
   {
     return _normal_matrix;
   }

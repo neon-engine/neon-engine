@@ -30,15 +30,13 @@ namespace core
       const std::vector<float> &uvs,
       const std::vector<unsigned int> &indices);
 
-    ~OpenGL_Mesh();
-
     bool Initialize();
 
     void Use() const;
 
     void CleanUp();
 
-    [[nodiscard]] glm::mat4 GetNormalizedMatrix() const;
+    [[nodiscard]] glm::mat4 GetModelMatrix() const;
 
   private:
     void GenerateNormalizationMatrix();

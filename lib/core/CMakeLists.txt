@@ -36,6 +36,8 @@ add_library(${TARGET} STATIC
         core/render/open-gl-material.cpp
         core/render/open-gl-material.hpp
         core/util/util.hpp
+        core/render/data-types.hpp
+        core/util/data-buffer.hpp
 )
 
 target_include_directories(${TARGET}
