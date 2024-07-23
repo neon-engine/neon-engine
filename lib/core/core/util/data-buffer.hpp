@@ -13,7 +13,7 @@ namespace core
   {
     int _index = 0;
     int _capacity = 0;
-    std::vector<std::optional<T> > _refs;
+    std::vector<T> _refs;
     std::queue<int> _deleted_ids{};
 
   public:
@@ -32,29 +32,17 @@ namespace core
       return id;
     }
 
-    bool Remove(int index, T &out)
+    T Remove(int index)
     {
-      out = _refs[index];
-      if (out == std::nullopt)
-      {
-        std::cerr << "Nothing to remove at index " << index << "!" << std::endl;
-        return false;
-      }
-      _refs[_index] = std::nullopt;
+      // todo setup a way so that multiple removals are not possible
+      const auto out = _refs[index];
       _deleted_ids.push(_index);
-
-      return true;
+      return out;
     }
 
-    bool Get(int index, T &out)
+    T Get(int index)
     {
-      out = _refs[index];
-      if (out == std::nullopt)
-      {
-        std::cerr << "Element at index " << index << " not found!" << std::endl;
-      }
-
-      return true;
+      return _refs[index];
     }
 
   private:
