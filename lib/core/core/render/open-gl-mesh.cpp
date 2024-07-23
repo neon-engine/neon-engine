@@ -148,7 +148,7 @@ namespace core {
 
   glm::mat4 OpenGL_Mesh::GetModelMatrix() const
   {
-    return _normal_matrix;
+    return _model_matrix;
   }
 
   void OpenGL_Mesh::GenerateNormalizationMatrix()
@@ -187,7 +187,7 @@ namespace core {
     const auto max_range = std::max(std::max(range_x, range_y), range_z) / 2.0f;
 
     const auto translation = translate(glm::mat4(1.0f), {-x_center, -y_center, -z_center});
-    _normal_matrix =
+    _model_matrix =
       scale(glm::mat4(1.0f), {1.0f / max_range, 1.0f / max_range, 1.0f / max_range}) * translation;
   }
 } // core

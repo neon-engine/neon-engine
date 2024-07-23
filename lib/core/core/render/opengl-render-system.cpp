@@ -143,11 +143,43 @@ namespace core
     };
   }
 
-  int OpenGL_RenderSystem::CreateRenderObject(std::string model_path,
-    std::string shader_path,
-    std::vector<std::string> texture_paths)
+  int OpenGL_RenderSystem::CreateRenderObject(
+    const std::string model_path,
+    const std::string shader_path,
+    const std::vector<std::string> texture_paths)
   {
-    return -1;
+    std::vector<float> vertices(0);
+    std::vector<float> normals(0);
+    std::vector<float> uvs(0);
+    std::vector<unsigned int> indices(0);
+    load_obj(model_path, vertices, normals, uvs, indices);
+
+    // todo optimization opportunity
+    // find a way to reuse materials and meshes already created
+    // the same materials can make use of different materials and vice versa
+    auto mesh = OpenGL_Mesh(vertices, normals, uvs, indices);
+    auto material = OpenGL_Material(shader_path, texture_paths);
+
+    if (!mesh.Initialize())
+    {
+      std::cerr << "Could not initialize mesh" << std::endl;
+      return -1;
+    }
+
+    if (!material.Initialize())
+    {
+      std::cerr << "Could not initialize material" << std::endl;
+      return -1;
+    }
+
+    const auto mesh_id = _mesh_refs.Add(mesh);
+    const auto material_id = _material_refs.Add(material);
+
+    const auto render_object = RenderObject{
+      .mesh_id = mesh_id,
+      .material_id = material_id
+    };
+    return _render_object_buffer.Add(render_object);
   }
 
   int OpenGL_RenderSystem::CreateRenderObject(const std::vector<float> &vertices,
@@ -160,6 +192,28 @@ namespace core
     return -1;
   }
 
-  void OpenGL_RenderSystem::UseRenderObject() {}
-  void OpenGL_RenderSystem::DestroyRenderObject() {}
+  void OpenGL_RenderSystem::DrawRenderObject(
+    const int render_object_id,
+    const Transform &transform,
+    const glm::mat4 &view,
+    const glm::mat4 &projection)
+  {
+    const auto [mesh_id, material_id] = _render_object_buffer.Get(render_object_id);
+    const auto mesh = _mesh_refs.Get(mesh_id);
+    const auto material = _material_refs.Get(material_id);
+
+    const auto model = mesh.GetModelMatrix();
+    material.Use(model, view, projection);
+    mesh.Use();
+  }
+
+  void OpenGL_RenderSystem::DestroyRenderObject(const int render_object_id)
+  {
+    const auto [mesh_id, material_id] = _render_object_buffer.Remove(render_object_id);
+    auto mesh = _mesh_refs.Remove(mesh_id);
+    auto material = _material_refs.Remove(material_id);
+
+    mesh.CleanUp();
+    material.CleanUp();
+  }
 } // core

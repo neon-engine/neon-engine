@@ -11,9 +11,9 @@ namespace core
 {
   class RenderContext
   {
+  protected:
     DataBuffer<RenderObject> _render_object_buffer;
 
-  protected:
     ~RenderContext() = default;
 
   public:
@@ -32,9 +32,13 @@ namespace core
       std::string shader_path,
       std::vector<std::string> texture_paths) = 0;
 
-    virtual void UseRenderObject() = 0;
+    virtual void DrawRenderObject(
+      int render_object_id,
+      const Transform &transform,
+      const glm::mat4 &view,
+      const glm::mat4 &projection) = 0;
 
-    virtual void DestroyRenderObject() = 0;
+    virtual void DestroyRenderObject(int render_object_id) = 0;
 
     virtual RenderResolution GetRenderResolution() = 0;
   };
