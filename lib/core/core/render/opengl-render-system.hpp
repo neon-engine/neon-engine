@@ -9,14 +9,12 @@
 
 namespace core
 {
-
   // ReSharper disable once CppInconsistentNaming
   class OpenGL_RenderSystem final : public RenderSystem
   {
   public:
     explicit OpenGL_RenderSystem(const SettingsConfig &settings_config)
-      : RenderSystem(settings_config, 4096)
-    { }
+      : RenderSystem(settings_config, 4096) {}
 
     void Initialize() override;
 
@@ -52,19 +50,22 @@ namespace core
     RenderResolution GetRenderResolution() override;
 
     int CreateRenderObject(std::string model_path,
-      std::string shader_path,
-      std::vector<std::string> texture_paths) override;
+                           std::string shader_path,
+                           std::vector<std::string> texture_paths) override;
 
     int CreateRenderObject(const std::vector<float> &vertices,
-      const std::vector<float> &normals,
-      const std::vector<float> &tex_coordinates,
-      const std::vector<unsigned int> &indices,
-      std::string shader_path,
-      std::vector<std::string> texture_paths) override;
+                           const std::vector<float> &normals,
+                           const std::vector<float> &tex_coordinates,
+                           const std::vector<unsigned int> &indices,
+                           std::string shader_path,
+                           std::vector<std::string> texture_paths) override;
 
-    void UseRenderObject() override;
+    void DrawRenderObject(int render_object_id,
+                          const Transform &transform,
+                          const glm::mat4 &view,
+                          const glm::mat4 &projection) override;
 
-    void DestroyRenderObject() override;
+    void DestroyRenderObject(int render_object_id) override;
   };
 } // core
 

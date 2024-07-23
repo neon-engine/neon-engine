@@ -10,17 +10,18 @@ namespace core
 {
   class Cube
   {
-    glm::vec3 _position = glm::vec3(0.0f, 0.0f, 0.0f);
-    glm::mat4 _model = glm::mat4(1.0f);
+    Transform _transform = Transform{
+      .position = glm::vec3(0.0f, 0.0f, 0.0f),
+      .rotation = glm::vec3(0.0f, 0.0f, 0.0f),
+      .scale = glm::vec3(1.0f, 1.0f, 1.0f)
+    };
 
     RenderContext *_render_context;
 
     std::vector<std::string> _texture_paths;
     std::string _shader_path;
-    glm::mat4 _normal_matrix{};
 
     int _render_object_id;
-    int _material_id;
 
     bool _destroyed = false;
 

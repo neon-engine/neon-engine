@@ -17,15 +17,15 @@ namespace core
 
   struct RenderObject
   {
-    int material_id;
-    int mesh_id;
+    int mesh_id = -1;
+    int material_id = -1;
   };
 
   struct Transform
   {
     glm::vec3 position;
-    glm::vec3 scale;
     glm::vec3 rotation;
+    glm::vec3 scale;
   };
 }
 
