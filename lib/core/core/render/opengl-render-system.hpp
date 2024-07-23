@@ -13,18 +13,10 @@ namespace core
   // ReSharper disable once CppInconsistentNaming
   class OpenGL_RenderSystem final : public RenderSystem
   {
-    std::vector<OpenGL_Mesh> _mesh_refs;
-    std::vector<OpenGL_Material> _material_refs;
-
   public:
     explicit OpenGL_RenderSystem(const SettingsConfig &settings_config)
-      : RenderSystem(settings_config)
-    {
-      _max_supported_meshes = 4096;
-      _max_supported_materials = 4096;
-      _mesh_refs.reserve(_max_supported_meshes);
-      _material_refs.reserve(_max_supported_materials);
-    }
+      : RenderSystem(settings_config, 4096)
+    { }
 
     void Initialize() override;
 
@@ -58,6 +50,21 @@ namespace core
     void DestroyMaterial(int material_id) override;
 
     RenderResolution GetRenderResolution() override;
+
+    int CreateRenderObject(std::string model_path,
+      std::string shader_path,
+      std::vector<std::string> texture_paths) override;
+
+    int CreateRenderObject(const std::vector<float> &vertices,
+      const std::vector<float> &normals,
+      const std::vector<float> &tex_coordinates,
+      const std::vector<unsigned int> &indices,
+      std::string shader_path,
+      std::vector<std::string> texture_paths) override;
+
+    void UseRenderObject() override;
+
+    void DestroyRenderObject() override;
   };
 } // core
 

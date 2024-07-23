@@ -19,7 +19,7 @@ namespace core
     std::string _shader_path;
     glm::mat4 _normal_matrix{};
 
-    int _geometry_id;
+    int _render_object_id;
     int _material_id;
 
     bool _destroyed = false;
