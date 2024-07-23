@@ -88,8 +88,7 @@ namespace core
 
   void OpenGL_RenderSystem::DrawMesh(const int mesh_id)
   {
-    OpenGL_Mesh mesh;
-    _mesh_refs.Get(mesh_id, mesh);
+    const auto mesh = _mesh_refs.Get(mesh_id);
 
     mesh.Use();
   }
@@ -98,10 +97,8 @@ namespace core
   {
     std::cout << "Cleaning up mesh with id " << mesh_id << std::endl;
 
-    if (OpenGL_Mesh mesh; _mesh_refs.Remove(mesh_id, mesh))
-    {
-      mesh.CleanUp();
-    }
+    auto mesh = _mesh_refs.Remove(mesh_id);
+    mesh.CleanUp();
   }
 
   int OpenGL_RenderSystem::InitMaterial(const std::string shader_path, const std::vector<std::string> texture_paths)
@@ -126,9 +123,7 @@ namespace core
                                         const glm::mat4 &view,
                                         const glm::mat4 &projection)
   {
-    // ReSharper disable once CppUseStructuredBinding
-    OpenGL_Material material;
-    _material_refs.Get(material_id, material);
+    const auto material = _material_refs.Get(material_id);
     material.Use(model, view, projection);
   }
 
@@ -136,10 +131,8 @@ namespace core
   {
     std::cout << "Cleaning up material with id " << material_id << std::endl;
 
-    if (OpenGL_Material material; _material_refs.Remove(material_id, material))
-    {
-      material.CleanUp();
-    }
+    auto material = _material_refs.Remove(material_id);
+    material.CleanUp();
   }
 
   RenderResolution OpenGL_RenderSystem::GetRenderResolution()
