@@ -71,31 +71,31 @@ static void process_input_callback(
 
 static void mouse_callback(GLFWwindow *window, const double x_pos, const double y_pos)
 {
-  // if (first_mouse)
-  // {
-  //   first_mouse = false;
-  //   last_x = static_cast<float>(x_pos);
-  //   last_y = static_cast<float>(y_pos);
-  // }
-  //
-  // x_offset = static_cast<float>(x_pos) - last_x;
-  // y_offset = last_y - static_cast<float>(y_pos);
-  // last_x = static_cast<float>(x_pos);
-  // last_y = static_cast<float>(y_pos);
-  //
-  // x_offset *= kMouseSensitivity;
-  // y_offset *= kMouseSensitivity;
-  //
-  // yaw += x_offset;
-  // pitch += y_offset;
-  //
-  // pitch = std::clamp(pitch, -89.0f, 89.0f);
-  //
-  // glm::vec3 direction;
-  // direction.x = glm::cos(glm::radians(yaw)) * glm::cos(glm::radians(pitch));
-  // direction.y = glm::sin(glm::radians(pitch));
-  // direction.z = glm::sin(glm::radians(yaw)) * glm::cos(glm::radians(pitch));
-  // look_direction = normalize(direction);
+  if (first_mouse)
+  {
+    first_mouse = false;
+    last_x = static_cast<float>(x_pos);
+    last_y = static_cast<float>(y_pos);
+  }
+
+  x_offset = static_cast<float>(x_pos) - last_x;
+  y_offset = last_y - static_cast<float>(y_pos);
+  last_x = static_cast<float>(x_pos);
+  last_y = static_cast<float>(y_pos);
+
+  x_offset *= kMouseSensitivity;
+  y_offset *= kMouseSensitivity;
+
+  yaw += x_offset;
+  pitch += y_offset;
+
+  pitch = std::clamp(pitch, -89.0f, 89.0f);
+
+  glm::vec3 direction;
+  direction.x = glm::cos(glm::radians(yaw)) * glm::cos(glm::radians(pitch));
+  direction.y = glm::sin(glm::radians(pitch));
+  direction.z = glm::sin(glm::radians(yaw)) * glm::cos(glm::radians(pitch));
+  look_direction = normalize(direction);
 }
 
 void scroll_callback(GLFWwindow *window, const double scroll_x_offset, const double scroll_y_offset)
