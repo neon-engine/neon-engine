@@ -1,8 +1,9 @@
 #ifndef SCENE_HPP
 #define SCENE_HPP
 
-#include "camera.hpp"
 #include "input-context.hpp"
+#include "window-context.hpp"
+#include "controllers/player-controller.hpp"
 #include "primitives/cube.hpp"
 
 namespace core
@@ -11,13 +12,19 @@ namespace core
   {
     RenderContext *_render_context;
     InputContext *_input_context;
-    Camera _camera;
+    WindowContext *_window_context;
+    PlayerController _player;
     Cube _cube;
 
   public:
-    explicit Scene(RenderContext *render_context, InputContext *input_context)
+    explicit Scene(
+      RenderContext *render_context,
+      InputContext *input_context,
+      WindowContext *window_context)
       : _render_context(render_context),
         _input_context(input_context),
+        _window_context(window_context),
+        _player(input_context),
         _cube(render_context,
               {
                 "assets/textures/dark.png"

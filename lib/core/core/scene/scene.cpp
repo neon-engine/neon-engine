@@ -14,14 +14,16 @@ void core::Scene::Initialize()
 
 void core::Scene::Draw()
 {
-  _camera.Update(1.0f, {0.0f, 0.0f, 0.0f});
-  const glm::mat4 view = _camera.GetView();
+  const auto delta_time = _window_context->GetDeltaTime();
+  _player.Update(delta_time, glm::mat4{1.0f});
+  const auto camera = _player.GetCamera();
+  const glm::mat4 view = camera.GetView();
   const auto [width, height] = _render_context->GetRenderResolution();
   const glm::mat4 projection = glm::perspective(
-    glm::radians(_camera.GetFov()),
+    glm::radians(camera.GetFov()),
     static_cast<float>(width) / static_cast<float>(height),
     0.1f,
-    1000.0f
+    100.0f
     );
 
   _cube.Draw(view, projection);

@@ -32,6 +32,11 @@ namespace core
     {
       _action_map.reset();
     }
+
+    bool operator[](Action action) const
+    {
+      return _action_map.test(static_cast<size_t>(action));
+    }
   };
 }
 

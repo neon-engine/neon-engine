@@ -15,9 +15,10 @@ namespace core
     return _fov;
   }
 
-  void Camera::Update(const float &delta_time, const glm::vec3 &move_direction)
+  void Camera::Update(const glm::mat4 &parent_matrix)
   {
-    _camera_pos += move_direction * delta_time;
+    _camera_pos = parent_matrix[3];
+    _look_direction = normalize(-parent_matrix[2]);
     _view = lookAt(_camera_pos, _camera_pos + _look_direction, _camera_up);
   }
 
