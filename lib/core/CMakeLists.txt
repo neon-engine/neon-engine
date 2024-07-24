@@ -45,7 +45,6 @@ target_include_directories(${TARGET}
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/core/scene
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/core/util
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/core/window
-        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/core/private
 )
 
 target_link_libraries(${TARGET} glm gl3w stb SDL2::SDL2main SDL2::SDL2-static)
