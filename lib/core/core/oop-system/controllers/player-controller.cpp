@@ -9,7 +9,7 @@ core::PlayerController::PlayerController(InputContext *input_context)
   _transform.position = glm::vec3(0.0f, 0.0f, 3.0f);
 }
 
-void core::PlayerController::Update(double delta_time, const glm::mat4 &parent_matrix)
+void core::PlayerController::Update(const double delta_time, const glm::mat4 &parent_matrix)
 {
   const auto input_state = _input_context->GetInputState();
 
