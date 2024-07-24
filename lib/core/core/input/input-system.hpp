@@ -2,7 +2,7 @@
 #define INPUT_SYSTEM_HPP
 
 #include "input-context.hpp"
-#include "../application/settings-config.hpp"
+#include "settings-config.hpp"
 
 namespace core
 {

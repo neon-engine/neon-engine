@@ -1,7 +1,7 @@
 #ifndef WINDOW_SYSTEM_HPP
 #define WINDOW_SYSTEM_HPP
 
-#include "../application/settings-config.hpp"
+#include "settings-config.hpp"
 #include "window-context.hpp"
 
 namespace core

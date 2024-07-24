@@ -2,7 +2,6 @@
 #define DATA_BUFFER_HPP
 
 #include <iostream>
-#include <optional>
 #include <queue>
 #include <vector>
 
