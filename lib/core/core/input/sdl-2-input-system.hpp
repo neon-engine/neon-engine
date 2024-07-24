@@ -8,6 +8,7 @@ namespace core
   // ReSharper disable once CppInconsistentNaming
   class SDL2_InputSystem final : public InputSystem {
     WindowContext* _context;
+    InputState _input_state{};
   public:
     explicit SDL2_InputSystem(const SettingsConfig &settings_config, WindowContext* context)
       : InputSystem(settings_config)
@@ -20,6 +21,8 @@ namespace core
     void ProcessInput() override;
 
     void CleanUp() override;
+
+    const InputState & GetInputState() override;
   };
 } // core
 

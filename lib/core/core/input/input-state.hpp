@@ -2,8 +2,6 @@
 #define INPUT_STATE_HPP
 #include <bitset>
 
-#include "private/input-state-constants.hpp"
-
 namespace core
 {
   enum class Action
@@ -18,9 +16,22 @@ namespace core
     COUNT
   };
 
-  struct InputState
+  constexpr std::size_t kAction_Size = static_cast<std::size_t>(Action::COUNT);
+
+  class InputState
   {
-    std::bitset<kAction_Size> action_map{};
+    std::bitset<kAction_Size> _action_map{};
+
+  public:
+    void SetAction(Action action)
+    {
+      _action_map.set(static_cast<size_t>(action));
+    }
+
+    void Reset()
+    {
+      _action_map.reset();
+    }
   };
 }
 

@@ -35,6 +35,8 @@ namespace core {
 
     const auto *state = SDL_GetKeyboardState(nullptr);
 
+    _input_state.Reset();
+
     // todo escape by itself should not close the game
     // we want to be able to handle input events contextually, will create an input handler later on
     if (state[SDL_SCANCODE_ESCAPE])
@@ -42,9 +44,35 @@ namespace core {
       _context->SignalToClose();
     }
 
+    if (state[SDL_SCANCODE_W])
+    {
+      _input_state.SetAction(Action::Forward);
+    }
+
+    if (state[SDL_SCANCODE_A])
+    {
+      _input_state.SetAction(Action::Back);
+    }
+
+    if (state[SDL_SCANCODE_S])
+    {
+      _input_state.SetAction(Action::Left);
+    }
+
+    if (state[SDL_SCANCODE_D])
+    {
+      _input_state.SetAction(Action::Right);
+    }
+
   }
+
   void SDL2_InputSystem::CleanUp()
   {
     std::cout << "Cleaning up SDL2 input system" << std::endl;
+  }
+
+  const InputState &SDL2_InputSystem::GetInputState()
+  {
+    return _input_state;
   }
 } // core
