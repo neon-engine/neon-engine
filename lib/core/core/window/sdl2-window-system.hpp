@@ -1,6 +1,10 @@
 #ifndef SDL_2_WINDOW_SYSTEM_HPP
 #define SDL_2_WINDOW_SYSTEM_HPP
 
+// gl3w must be included first
+// ReSharper disable once CppUnusedIncludeDirective
+#include <GL/gl3w.h>
+
 #include <SDL.h>
 
 #include "window-system.hpp"

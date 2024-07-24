@@ -33,7 +33,6 @@ namespace core {
       }
     }
 
-    _move_direction = glm::vec3(0.0f, 0.0f, 0.0f);
     const auto *state = SDL_GetKeyboardState(nullptr);
 
     // todo escape by itself should not close the game
@@ -47,10 +46,5 @@ namespace core {
   void SDL2_InputSystem::CleanUp()
   {
     std::cout << "Cleaning up SDL2 input system" << std::endl;
-  }
-
-  glm::vec3 SDL2_InputSystem::GetMovementDirection()
-  {
-    return _move_direction;
   }
 } // core
