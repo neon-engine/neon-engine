@@ -51,12 +51,12 @@ namespace core {
 
     if (state[SDL_SCANCODE_A])
     {
-      _input_state.SetAction(Action::Back);
+      _input_state.SetAction(Action::Left);
     }
 
     if (state[SDL_SCANCODE_S])
     {
-      _input_state.SetAction(Action::Left);
+      _input_state.SetAction(Action::Back);
     }
 
     if (state[SDL_SCANCODE_D])

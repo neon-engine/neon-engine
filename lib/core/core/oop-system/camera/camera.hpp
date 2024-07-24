@@ -20,11 +20,9 @@ namespace core
 
     [[nodiscard]] float GetFov() const;
 
-    void Update(
-      const float &delta_time,
-      const glm::vec3 &move_direction);
+    void Update(const glm::mat4 &parent_matrix);
 
-    glm::vec3 GetLookDirection() const;
+    [[nodiscard]] glm::vec3 GetLookDirection() const;
   };
 } // core
 

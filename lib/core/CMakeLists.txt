@@ -41,7 +41,7 @@ add_library(${TARGET} STATIC
 
 target_include_directories(${TARGET}
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/core/application
-        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/core/oop-system/camera
+        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/core/oop-system
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/core/entity
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/core/input
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/core/render

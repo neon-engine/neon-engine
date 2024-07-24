@@ -1,5 +1,6 @@
 #ifndef SDL_2_INPUT_SYSTEM_HPP
 #define SDL_2_INPUT_SYSTEM_HPP
+#include "input-state.hpp"
 #include "input-system.hpp"
 #include "window-context.hpp"
 
