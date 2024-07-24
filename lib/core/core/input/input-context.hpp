@@ -1,5 +1,6 @@
 #ifndef INPUT_CONTEXT_HPP
 #define INPUT_CONTEXT_HPP
+#include "input-state.hpp"
 
 namespace core
 {
@@ -10,6 +11,7 @@ namespace core
     ~InputContext() = default;
 
   public:
+    virtual const InputState& GetInputState() = 0;
   };
 } // core
 

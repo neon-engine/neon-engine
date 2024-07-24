@@ -88,7 +88,7 @@ namespace core
 
   void OpenGL_RenderSystem::DrawMesh(const int mesh_id)
   {
-    const auto mesh = _mesh_refs.Get(mesh_id);
+    const auto mesh = _mesh_refs[mesh_id];
 
     mesh.Use();
   }
@@ -123,7 +123,7 @@ namespace core
                                         const glm::mat4 &view,
                                         const glm::mat4 &projection)
   {
-    const auto material = _material_refs.Get(material_id);
+    const auto material = _material_refs[material_id];
     material.Use(model, view, projection);
   }
 
@@ -135,12 +135,9 @@ namespace core
     material.CleanUp();
   }
 
-  RenderResolution OpenGL_RenderSystem::GetRenderResolution()
+  const RenderResolution& OpenGL_RenderSystem::GetRenderResolution()
   {
-    return RenderResolution{
-      _settings_config.width,
-      _settings_config.height
-    };
+    return _render_resolution;
   }
 
   int OpenGL_RenderSystem::CreateRenderObject(
@@ -198,9 +195,9 @@ namespace core
     const glm::mat4 &view,
     const glm::mat4 &projection)
   {
-    const auto [mesh_id, material_id] = _render_object_buffer.Get(render_object_id);
-    const auto mesh = _mesh_refs.Get(mesh_id);
-    const auto material = _material_refs.Get(material_id);
+    const auto [mesh_id, material_id] = _render_object_buffer[render_object_id];
+    const auto mesh = _mesh_refs[mesh_id];
+    const auto material = _material_refs[material_id];
 
     const auto model = mesh.GetModelMatrix();
     material.Use(model, view, projection);

@@ -12,9 +12,12 @@ namespace core
   // ReSharper disable once CppInconsistentNaming
   class OpenGL_RenderSystem final : public RenderSystem
   {
+    RenderResolution _render_resolution;
   public:
     explicit OpenGL_RenderSystem(const SettingsConfig &settings_config)
-      : RenderSystem(settings_config, 4096) {}
+      : RenderSystem(settings_config, 4096),
+    _render_resolution(_settings_config.width, _settings_config.height)
+    {}
 
     void Initialize() override;
 
@@ -47,7 +50,7 @@ namespace core
 
     void DestroyMaterial(int material_id) override;
 
-    RenderResolution GetRenderResolution() override;
+    const RenderResolution& GetRenderResolution() override;
 
     int CreateRenderObject(std::string model_path,
                            std::string shader_path,

@@ -40,7 +40,7 @@ namespace core
 
     virtual void DestroyRenderObject(int render_object_id) = 0;
 
-    virtual RenderResolution GetRenderResolution() = 0;
+    virtual const RenderResolution& GetRenderResolution() = 0;
   };
 } // core
 

@@ -39,7 +39,12 @@ namespace core
       return out;
     }
 
-    T Get(int index)
+    T& operator[](int index)
+    {
+      return _refs[index];
+    }
+
+    const T& operator[](int index) const
     {
       return _refs[index];
     }

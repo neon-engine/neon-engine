@@ -17,8 +17,8 @@ add_library(${TARGET} STATIC
         core/input/sdl-2-input-system.cpp
         core/input/sdl-2-input-system.hpp
         core/window/window-context.hpp
-        core/camera/camera.cpp
-        core/camera/camera.hpp
+        core/oop-system/camera/camera.cpp
+        core/oop-system/camera/camera.hpp
         core/render/primitives/cube.cpp
         core/render/primitives/cube.hpp
         core/render/open-gl-shader.cpp
@@ -34,11 +34,14 @@ add_library(${TARGET} STATIC
         core/util/data-buffer.hpp
         core/input/input-context.hpp
         core/input/input-state.hpp
+        core/oop-system/controllers/controller.hpp
+        core/oop-system/controllers/player-controller.cpp
+        core/oop-system/controllers/player-controller.hpp
 )
 
 target_include_directories(${TARGET}
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/core/application
-        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/core/camera
+        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/core/oop-system/camera
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/core/entity
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/core/input
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/core/render

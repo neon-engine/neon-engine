@@ -7,7 +7,7 @@ namespace core
 {
   Camera::Camera() = default;
 
-  glm::mat4 Camera::GetView() const { return _view; }
+  const glm::mat4& Camera::GetView() const { return _view; }
 
   // ReSharper disable once CppDFAConstantFunctionResult
   float Camera::GetFov() const
