@@ -44,6 +44,8 @@ namespace core
     void ScrollCallback(
       const double scroll_x_offset,
       const double scroll_y_offset);
+
+    glm::vec3 GetMovementDirection() override;
   };
 } // core
 

@@ -1,27 +1,28 @@
 #ifndef SCENE_HPP
 #define SCENE_HPP
 
-
 #include "camera.hpp"
+#include "input-context.hpp"
 #include "primitives/cube.hpp"
-
 
 namespace core
 {
   class Scene
   {
     RenderContext *_render_context;
+    InputContext *_input_context;
     Camera _camera;
     Cube _cube;
 
   public:
-    explicit Scene(RenderContext *render_context)
+    explicit Scene(RenderContext *render_context, InputContext *input_context)
       : _render_context(render_context),
+        _input_context(input_context),
         _cube(render_context,
-          {
-            "assets/textures/dark.png"
-          },
-          "assets/shaders/unlit") {}
+              {
+                "assets/textures/dark.png"
+              },
+              "assets/shaders/unlit") {}
 
     void Initialize();
 

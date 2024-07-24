@@ -1,11 +1,12 @@
 #ifndef INPUT_SYSTEM_HPP
 #define INPUT_SYSTEM_HPP
 
+#include "input-context.hpp"
 #include "../application/settings-config.hpp"
 
 namespace core
 {
-  class InputSystem
+  class InputSystem : public InputContext
   {
   protected:
     SettingsConfig _settings_config;

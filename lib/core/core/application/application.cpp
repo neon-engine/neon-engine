@@ -46,7 +46,7 @@ namespace core
   {
     Initialize();
 
-    Scene scene(_render_system);
+    Scene scene(_render_system, _input_system);
     scene.Initialize();
 
     while (_window_system->IsRunning())

@@ -38,6 +38,8 @@ add_library(${TARGET} STATIC
         core/util/util.hpp
         core/render/data-types.hpp
         core/util/data-buffer.hpp
+        core/input/input-context.hpp
+        core/input/input-state.hpp
 )
 
 target_include_directories(${TARGET}

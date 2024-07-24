@@ -7,6 +7,7 @@ namespace core
 {
   // ReSharper disable once CppInconsistentNaming
   class SDL2_InputSystem final : public InputSystem {
+    glm::vec3 _move_direction{};
     WindowContext* _context;
   public:
     explicit SDL2_InputSystem(const SettingsConfig &settings_config, WindowContext* context)
@@ -20,6 +21,8 @@ namespace core
     void ProcessInput() override;
 
     void CleanUp() override;
+
+    glm::vec3 GetMovementDirection() override;
   };
 } // core
 
