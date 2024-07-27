@@ -38,17 +38,7 @@ void core::FPS_PlayerController::Update(const double delta_time, const glm::mat4
     _move_direction += normalize(cross(_forward, _up)) * _move_speed;
   }
 
-  _transform.position += _move_direction * static_cast<float>(delta_time);
-
-  const auto model =
-    translate(parent_matrix, _transform.position);
-
-  _camera.Update(model);
-}
-
-void core::FPS_PlayerController::LateUpdate()
-{
-  if (const auto input_state = _input_context->GetInputState(); input_state[Action::Mouse])
+  if (input_state[Action::Mouse])
   {
     const auto [x_pos, y_pos] = input_state[Axis::Mouse];
 
@@ -67,6 +57,18 @@ void core::FPS_PlayerController::LateUpdate()
     _forward = normalize(direction);
     _camera.SetLookDirection(_forward);
   }
+
+  _transform.position += _move_direction * static_cast<float>(delta_time);
+
+  const auto model =
+    translate(parent_matrix, _transform.position);
+
+  _camera.Update(model);
+}
+
+void core::FPS_PlayerController::LateUpdate()
+{
+
 }
 
 const core::Camera & core::FPS_PlayerController::GetCamera() const
