@@ -11,7 +11,12 @@ namespace core
     glm::vec3 _forward{0.0f, 0.0f, -1.0f};
     glm::vec3 _move_direction{0, 0, 0};
     glm::vec3 _up{0.0f, 1.0f, 0.0f};
-    float _speed = 0;
+    float _move_speed = 0;
+    float _look_speed = 0;
+
+    // consider using vector 3 rotation for this
+    float _yaw = -90.0f;
+    float _pitch = 0.0f;
     ~Controller() = default;
 
   public:

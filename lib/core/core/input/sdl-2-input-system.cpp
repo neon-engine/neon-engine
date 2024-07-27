@@ -10,6 +10,7 @@ namespace core {
   }
   void SDL2_InputSystem::ProcessInput()
   {
+    _input_state.Reset();
     SDL_Event event;
 
     while (SDL_PollEvent(&event))
@@ -23,19 +24,40 @@ namespace core {
         }
 
         case SDL_WINDOWEVENT:
+        {
           if (event.window.event == SDL_WINDOWEVENT_CLOSE)
           {
             _context->SignalToClose();
             break;
           }
+          if (event.window.event == SDL_WINDOWEVENT_FOCUS_GAINED)
+          {
+            _window_focus = true;
+          }
+          else if (event.window.event == SDL_WINDOWEVENT_FOCUS_LOST)
+          {
+            _window_focus = false;
+          }
+          break;
+        }
+
+        case SDL_MOUSEMOTION:
+        {
+          if (_window_focus)
+          {
+            _input_state.SetAxisMotion(
+              Axis::Mouse,
+              static_cast<float>(event.motion.xrel),
+              static_cast<float>(event.motion.yrel));
+          }
+        }
+
         default:
           break;
       }
     }
 
     const auto *state = SDL_GetKeyboardState(nullptr);
-
-    _input_state.Reset();
 
     // todo escape by itself should not close the game
     // we want to be able to handle input events contextually, will create an input handler later on
@@ -46,22 +68,22 @@ namespace core {
 
     if (state[SDL_SCANCODE_W])
     {
-      _input_state.SetAction(Action::Forward);
+      _input_state.SetAction(Action::L_Up);
     }
 
     if (state[SDL_SCANCODE_A])
     {
-      _input_state.SetAction(Action::Left);
+      _input_state.SetAction(Action::L_Left);
     }
 
     if (state[SDL_SCANCODE_S])
     {
-      _input_state.SetAction(Action::Back);
+      _input_state.SetAction(Action::L_Down);
     }
 
     if (state[SDL_SCANCODE_D])
     {
-      _input_state.SetAction(Action::Right);
+      _input_state.SetAction(Action::L_Right);
     }
 
   }
@@ -74,5 +96,10 @@ namespace core {
   const InputState &SDL2_InputSystem::GetInputState()
   {
     return _input_state;
+  }
+
+  void SDL2_InputSystem::SnapCursorToWindow()
+  {
+    SDL_SetRelativeMouseMode(SDL_TRUE);
   }
 } // core

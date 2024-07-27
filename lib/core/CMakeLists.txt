@@ -35,8 +35,8 @@ add_library(${TARGET} STATIC
         core/input/input-context.hpp
         core/input/input-state.hpp
         core/oop-system/controllers/controller.hpp
-        core/oop-system/controllers/player-controller.cpp
-        core/oop-system/controllers/player-controller.hpp
+        core/oop-system/controllers/fps-player-controller.cpp
+        core/oop-system/controllers/fps-player-controller.hpp
 )
 
 target_include_directories(${TARGET}

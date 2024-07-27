@@ -10,6 +10,7 @@ void core::Scene::Initialize()
   std::cout << "Initializing the scene" << std::endl;
   _cube.Initialize();
   std::cout << "Initialized scene!" << std::endl;
+  _input_context->SnapCursorToWindow();
 }
 
 void core::Scene::Draw()
