@@ -21,6 +21,8 @@ namespace core
 
   public:
     virtual void Update(double delta_time, const glm::mat4 &parent_matrix) = 0;
+
+    virtual void LateUpdate() = 0;
   };
 } // core
 

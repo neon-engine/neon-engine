@@ -47,6 +47,8 @@ namespace core
     double GetDeltaTime() override;
 
     void CenterCursor() override;
+
+    void SetWindowFocus(bool focus) override;
   };
 } // core
 

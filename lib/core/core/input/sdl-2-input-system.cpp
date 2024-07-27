@@ -33,10 +33,14 @@ namespace core {
           if (event.window.event == SDL_WINDOWEVENT_FOCUS_GAINED)
           {
             _window_focus = true;
+            std::cout << "Gained window focus" << std::endl;
+            _context->SetWindowFocus(true);
           }
           else if (event.window.event == SDL_WINDOWEVENT_FOCUS_LOST)
           {
             _window_focus = false;
+            std::cout << "Lost window focus" << std::endl;
+            _context->SetWindowFocus(false);
           }
           break;
         }
@@ -98,7 +102,7 @@ namespace core {
     return _input_state;
   }
 
-  void SDL2_InputSystem::SnapCursorToWindow()
+  void SDL2_InputSystem::CenterAndHideCursor()
   {
     SDL_SetRelativeMouseMode(SDL_TRUE);
   }
@@ -110,6 +114,6 @@ namespace core {
 
   void SDL2_InputSystem::ShowCursor()
   {
-    SDL_ShowCursor(SDL_ENABLE);
+    SDL_SetRelativeMouseMode(SDL_FALSE);
   }
 } // core

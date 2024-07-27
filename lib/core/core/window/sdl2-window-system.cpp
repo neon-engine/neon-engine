@@ -37,7 +37,7 @@ namespace core
       throw std::runtime_error("Failed to create SDL2 Window");
     }
 
-    SDL_SetWindowGrab(_window, SDL_TRUE);
+    // SDL_SetWindowGrab(_window, SDL_TRUE);
 
     switch (_settings_config.selected_api)
     {
@@ -104,7 +104,8 @@ namespace core
   double SDL2_WindowSystem::GetDeltaTime()
   {
     const auto current_frame = SDL_GetPerformanceCounter();
-    const auto delta_time = (static_cast<double>(current_frame - _last_frame)*1000 / static_cast<double>(SDL_GetPerformanceFrequency()));
+    const auto delta_time =
+      static_cast<double>(current_frame - _last_frame)*1000 / static_cast<double>(SDL_GetPerformanceFrequency());
     _last_frame = current_frame;
     return delta_time * .001;
   }
@@ -112,5 +113,16 @@ namespace core
   void SDL2_WindowSystem::CenterCursor()
   {
     SDL_WarpMouseInWindow(_window, _settings_config.width / 2, _settings_config.height / 2);
+  }
+
+  void SDL2_WindowSystem::SetWindowFocus(const bool focus)
+  {
+    if (focus)
+    {
+      SDL_SetWindowGrab(_window, SDL_TRUE);
+    } else
+    {
+      SDL_SetWindowGrab(_window, SDL_FALSE);
+    }
   }
 } // core

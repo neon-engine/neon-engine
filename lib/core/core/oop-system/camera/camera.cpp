@@ -9,6 +9,16 @@ namespace core
 
   const glm::mat4& Camera::GetView() const { return _view; }
 
+  glm::mat4 Camera::GetProjection(int width, int height) const
+  {
+    return glm::perspective(
+    glm::radians(GetFov()),
+    static_cast<float>(width) / static_cast<float>(height),
+    0.1f,
+    100.0f
+    );
+  }
+
   // ReSharper disable once CppDFAConstantFunctionResult
   float Camera::GetFov() const
   {

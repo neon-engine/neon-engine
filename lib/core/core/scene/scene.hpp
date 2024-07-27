@@ -35,6 +35,8 @@ namespace core
 
     void Update();
 
+    void RenderFrame() const;
+
     void CleanUp();
   };
 }

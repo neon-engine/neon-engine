@@ -4,8 +4,6 @@
 #include <iostream>
 #include <vector>
 
-#include <glm/glm.hpp>
-
 namespace core
 {
   enum class Action
@@ -36,13 +34,19 @@ namespace core
     COUNT
   };
 
+  struct AxisState
+  {
+    double x = 0;
+    double y = 0;
+  };
+
   constexpr std::size_t kAction_Size = static_cast<std::size_t>(Action::COUNT);
   constexpr std::size_t kAxis_Size = static_cast<std::size_t>(Axis::COUNT);
 
   class InputState
   {
     std::bitset<kAction_Size> _action_map{};
-    std::vector<glm::vec2> _axis_map{kAxis_Size};
+    std::vector<AxisState> _axis_map{kAxis_Size};
 
   public:
 
@@ -51,7 +55,7 @@ namespace core
       _action_map.set(static_cast<size_t>(action));
     }
 
-    void SetAxisMotion(const Axis axis, const float x_pos, const float y_pos)
+    void SetAxisMotion(const Axis axis, const double x_pos, const double y_pos)
     {
       switch (axis)
       {
@@ -78,7 +82,7 @@ namespace core
       return _action_map.test(static_cast<size_t>(action));
     }
 
-    const glm::vec2& operator[](Axis axis) const
+    const AxisState& operator[](Axis axis) const
     {
       return _axis_map[static_cast<size_t>(axis)];
     }
