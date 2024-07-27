@@ -35,8 +35,6 @@ namespace core
 
     void Update();
 
-    void LateUpdate() const;
-
     void CleanUp();
   };
 }

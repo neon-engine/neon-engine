@@ -31,11 +31,6 @@ void core::Scene::Update()
   _cube.Draw(view, projection);
 }
 
-void core::Scene::LateUpdate() const
-{
-  _window_context->CenterCursor();
-}
-
 void core::Scene::CleanUp()
 {
   std::cout << "Cleaning up the scene" << std::endl;
