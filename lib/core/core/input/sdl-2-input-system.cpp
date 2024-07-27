@@ -47,8 +47,8 @@ namespace core {
           {
             _input_state.SetAxisMotion(
               Axis::Mouse,
-              static_cast<float>(event.motion.x),
-              static_cast<float>(event.motion.y));
+              static_cast<float>(event.motion.xrel),
+              static_cast<float>(event.motion.yrel));
           }
         }
 
@@ -105,11 +105,11 @@ namespace core {
 
   void SDL2_InputSystem::HideCursor()
   {
-    // SDL_ShowCursor(SDL_DISABLE);
+    SDL_ShowCursor(SDL_DISABLE);
   }
 
   void SDL2_InputSystem::ShowCursor()
   {
-    // SDL_ShowCursor(SDL_ENABLE);
+    SDL_ShowCursor(SDL_ENABLE);
   }
 } // core

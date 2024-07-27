@@ -14,7 +14,7 @@ void core::Scene::Initialize()
   _input_context->HideCursor();
 }
 
-void core::Scene::Draw()
+void core::Scene::Update()
 {
   const auto delta_time = _window_context->GetDeltaTime();
   _player.Update(delta_time, glm::mat4{1.0f});
@@ -29,6 +29,11 @@ void core::Scene::Draw()
     );
 
   _cube.Draw(view, projection);
+}
+
+void core::Scene::LateUpdate() const
+{
+  _window_context->CenterCursor();
 }
 
 void core::Scene::CleanUp()

@@ -33,7 +33,9 @@ namespace core
 
     void Initialize();
 
-    void Draw();
+    void Update();
+
+    void LateUpdate() const;
 
     void CleanUp();
   };
