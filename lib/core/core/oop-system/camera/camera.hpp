@@ -23,6 +23,8 @@ namespace core
     void Update(const glm::mat4 &parent_matrix);
 
     [[nodiscard]] glm::vec3 GetLookDirection() const;
+
+    void SetLookDirection(const glm::vec3 &direction);
   };
 } // core
 

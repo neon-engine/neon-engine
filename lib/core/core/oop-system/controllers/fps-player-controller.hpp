@@ -8,17 +8,21 @@
 
 namespace core
 {
-  class PlayerController final : public Controller
+  // ReSharper disable once CppInconsistentNaming
+  class FPS_PlayerController final : public Controller
   {
     Camera _camera;
     InputContext *_input_context;
+    float _last_x = 0.f;
+    float _last_y = 0.f;
+    bool _first_mouse = true;
 
   public:
-    explicit PlayerController(InputContext *input_context);
+    explicit FPS_PlayerController(InputContext *input_context);
 
     void Update(double delta_time, const glm::mat4 &parent_matrix) override;
 
-    const Camera &GetCamera() const;
+    [[nodiscard]] const Camera &GetCamera() const;
   };
 }
 

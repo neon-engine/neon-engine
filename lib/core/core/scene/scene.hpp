@@ -3,7 +3,7 @@
 
 #include "input-context.hpp"
 #include "window-context.hpp"
-#include "controllers/player-controller.hpp"
+#include "controllers/fps-player-controller.hpp"
 #include "primitives/cube.hpp"
 
 namespace core
@@ -13,7 +13,7 @@ namespace core
     RenderContext *_render_context;
     InputContext *_input_context;
     WindowContext *_window_context;
-    PlayerController _player;
+    FPS_PlayerController _player;
     Cube _cube;
 
   public:
