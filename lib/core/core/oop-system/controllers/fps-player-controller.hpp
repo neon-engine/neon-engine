@@ -13,9 +13,6 @@ namespace core
   {
     Camera _camera;
     InputContext *_input_context;
-    float _last_x = 0.f;
-    float _last_y = 0.f;
-    bool _first_mouse = true;
 
   public:
     explicit FPS_PlayerController(InputContext *input_context);

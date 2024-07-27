@@ -13,6 +13,8 @@ namespace core
     virtual void SignalToClose() = 0;
 
     virtual double GetDeltaTime() = 0;
+
+    virtual void CenterCursor() = 0;
   };
 }
 

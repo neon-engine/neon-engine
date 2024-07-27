@@ -45,6 +45,8 @@ namespace core
     void SignalToClose() override;
 
     double GetDeltaTime() override;
+
+    void CenterCursor() override;
   };
 } // core
 

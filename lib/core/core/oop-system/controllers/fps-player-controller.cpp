@@ -44,23 +44,11 @@ void core::FPS_PlayerController::Update(const double delta_time, const glm::mat4
     const auto x_pos = mouse_movement.x;
     const auto y_pos = mouse_movement.y;
 
-    if (_first_mouse)
-    {
-      _first_mouse = false;
-      _last_x = static_cast<float>(x_pos);
-      _last_y = static_cast<float>(y_pos);
-    }
-
-    auto x_offset = static_cast<float>(x_pos) - _last_x;
-    auto y_offset = _last_y - static_cast<float>(y_pos);
-    _last_x = x_pos;
-    _last_y = y_pos;
-
-    x_offset *= _look_speed;
-    y_offset *= _look_speed;
+    const auto x_offset = static_cast<float>(x_pos) * _look_speed;
+    const auto y_offset = static_cast<float>(y_pos) * _look_speed;
 
     _yaw += x_offset;
-    _pitch += y_offset;
+    _pitch -= y_offset;
 
     _pitch = std::clamp(_pitch, -89.0f, 89.0f);
 
@@ -68,7 +56,7 @@ void core::FPS_PlayerController::Update(const double delta_time, const glm::mat4
     direction.x = glm::cos(glm::radians(_yaw)) * glm::cos(glm::radians(_pitch));
     direction.y = glm::sin(glm::radians(_pitch));
     direction.z = glm::sin(glm::radians(_yaw)) * glm::cos(glm::radians(_pitch));
-    _camera.SetLookDirection(glm::normalize(direction));
+    _camera.SetLookDirection(normalize(direction));
   }
 
   _transform.position += _move_direction * static_cast<float>(delta_time);

@@ -9,6 +9,11 @@ namespace core
   void SDL2_WindowSystem::Initialize()
   {
     std::cout << "Initializing SDL2 window system" << std::endl;
+    std::cout << "SDL version: "
+      << SDL_MAJOR_VERSION << "."
+      << SDL_MINOR_VERSION << "."
+      << SDL_PATCHLEVEL << std::endl;
+
     if (SDL_InitSubSystem(SDL_INIT_VIDEO))
     {
       std::stringstream ss;
@@ -31,6 +36,8 @@ namespace core
       SDL_Quit();
       throw std::runtime_error("Failed to create SDL2 Window");
     }
+
+    SDL_SetWindowGrab(_window, SDL_TRUE);
 
     switch (_settings_config.selected_api)
     {
@@ -66,6 +73,7 @@ namespace core
       case RenderingApi::OpenGl:
       {
         SDL_GL_SwapWindow(_window);
+        break;
       }
     }
   }
@@ -99,5 +107,10 @@ namespace core
     const auto delta_time = (static_cast<double>(current_frame - _last_frame)*1000 / static_cast<double>(SDL_GetPerformanceFrequency()));
     _last_frame = current_frame;
     return delta_time * .001;
+  }
+
+  void SDL2_WindowSystem::CenterCursor()
+  {
+    SDL_WarpMouseInWindow(_window, _settings_config.width / 2, _settings_config.height / 2);
   }
 } // core
