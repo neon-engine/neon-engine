@@ -14,6 +14,10 @@ namespace core
     virtual const InputState& GetInputState() = 0;
 
     virtual void SnapCursorToWindow() = 0;
+
+    virtual void HideCursor() = 0;
+
+    virtual void ShowCursor() = 0;
   };
 } // core
 
