@@ -11,6 +11,7 @@ void core::Scene::Initialize()
   _cube.Initialize();
   std::cout << "Initialized scene!" << std::endl;
   _input_context->SnapCursorToWindow();
+  _input_context->HideCursor();
 }
 
 void core::Scene::Draw()

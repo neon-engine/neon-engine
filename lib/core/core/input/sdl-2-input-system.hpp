@@ -27,6 +27,10 @@ namespace core
     const InputState & GetInputState() override;
 
     void SnapCursorToWindow() override;
+
+    void HideCursor() override;
+
+    void ShowCursor() override;
   };
 } // core
 
