@@ -15,6 +15,8 @@ namespace core
     virtual double GetDeltaTime() = 0;
 
     virtual void CenterCursor() = 0;
+
+    virtual void SetWindowFocus(bool focus) = 0;
   };
 }
 

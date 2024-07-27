@@ -8,7 +8,7 @@ core::FPS_PlayerController::FPS_PlayerController(InputContext *input_context)
   : _input_context(input_context)
 {
   _move_speed = 2.5f;
-  _look_speed = .1f;
+  _look_speed = 0.2f;
   _transform.position = glm::vec3(0.0f, 0.0f, 3.0f);
 }
 
@@ -38,14 +38,22 @@ void core::FPS_PlayerController::Update(const double delta_time, const glm::mat4
     _move_direction += normalize(cross(_forward, _up)) * _move_speed;
   }
 
-  if (input_state[Action::Mouse])
-  {
-    const auto mouse_movement = input_state[Axis::Mouse];
-    const auto x_pos = mouse_movement.x;
-    const auto y_pos = mouse_movement.y;
+  _transform.position += _move_direction * static_cast<float>(delta_time);
 
-    const auto x_offset = static_cast<float>(x_pos) * _look_speed;
-    const auto y_offset = static_cast<float>(y_pos) * _look_speed;
+  const auto model =
+    translate(parent_matrix, _transform.position);
+
+  _camera.Update(model);
+}
+
+void core::FPS_PlayerController::LateUpdate()
+{
+  if (const auto input_state = _input_context->GetInputState(); input_state[Action::Mouse])
+  {
+    const auto [x_pos, y_pos] = input_state[Axis::Mouse];
+
+    const auto x_offset = static_cast<float>(x_pos * _look_speed);
+    const auto y_offset = static_cast<float>(y_pos * _look_speed);
 
     _yaw += x_offset;
     _pitch -= y_offset;
@@ -56,15 +64,9 @@ void core::FPS_PlayerController::Update(const double delta_time, const glm::mat4
     direction.x = glm::cos(glm::radians(_yaw)) * glm::cos(glm::radians(_pitch));
     direction.y = glm::sin(glm::radians(_pitch));
     direction.z = glm::sin(glm::radians(_yaw)) * glm::cos(glm::radians(_pitch));
-    _camera.SetLookDirection(normalize(direction));
+    _forward = normalize(direction);
+    _camera.SetLookDirection(_forward);
   }
-
-  _transform.position += _move_direction * static_cast<float>(delta_time);
-
-  const auto model =
-    translate(parent_matrix, _transform.position);
-
-  _camera.Update(model);
 }
 
 const core::Camera & core::FPS_PlayerController::GetCamera() const

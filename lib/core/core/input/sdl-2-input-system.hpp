@@ -26,7 +26,7 @@ namespace core
 
     const InputState & GetInputState() override;
 
-    void SnapCursorToWindow() override;
+    void CenterAndHideCursor() override;
 
     void HideCursor() override;
 

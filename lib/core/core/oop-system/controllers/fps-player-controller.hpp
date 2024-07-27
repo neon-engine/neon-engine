@@ -19,6 +19,8 @@ namespace core
 
     void Update(double delta_time, const glm::mat4 &parent_matrix) override;
 
+    void LateUpdate() override;
+
     [[nodiscard]] const Camera &GetCamera() const;
   };
 }
