@@ -50,7 +50,6 @@ void core::FPS_PlayerController::Update(const double delta_time, const glm::mat4
 
     _pitch = std::clamp(_pitch, -89.0f, 89.0f);
 
-    // todo apply rotation to Transform.rotation rather than have yaw/pitch
     glm::vec3 direction;
     direction.x = glm::cos(glm::radians(_yaw)) * glm::cos(glm::radians(_pitch));
     direction.y = glm::sin(glm::radians(_pitch));
