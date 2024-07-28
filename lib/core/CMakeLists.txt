@@ -36,6 +36,7 @@ add_library(${TARGET} STATIC
         core/oop-system/controllers/fps-player-controller.cpp
         core/oop-system/controllers/fps-player-controller.hpp
         core/render/render-pipeline.hpp
+        core/oop-system/actor/actor.hpp
 )
 
 target_include_directories(${TARGET}
