@@ -29,9 +29,7 @@ add_library(${TARGET} STATIC
         core/render/open-gl-mesh.hpp
         core/render/open-gl-material.cpp
         core/render/open-gl-material.hpp
-        core/util/util.hpp
         core/render/data-types.hpp
-        core/util/data-buffer.hpp
         core/input/input-context.hpp
         core/input/input-state.hpp
         core/oop-system/controllers/controller.hpp
@@ -51,4 +49,4 @@ target_include_directories(${TARGET}
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/core/window
 )
 
-target_link_libraries(${TARGET} glm gl3w stb SDL2::SDL2main SDL2::SDL2-static)
+target_link_libraries(${TARGET} glm gl3w stb SDL2::SDL2main SDL2::SDL2-static common)
