@@ -48,7 +48,10 @@ namespace core
 
     virtual void DestroyMesh(int mesh_id) = 0;
 
-    virtual int InitMaterial(std::string shader_path, std::vector<std::string> texture_paths) = 0;
+    virtual int InitMaterial(
+      const std::string &shader_path,
+      const std::vector<std::string> &texture_paths,
+      const Color &color) = 0;
 
     virtual void UseMaterial(int mesh_id, const glm::mat4 &model, const glm::mat4 &view, const glm::mat4 &projection) = 0;
 

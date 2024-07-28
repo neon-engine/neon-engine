@@ -8,7 +8,7 @@ namespace core
     RenderContext *render_context,
     const std::vector<std::string> &texture_paths,
     const std::string &shader_path,
-    const glm::vec3 &color)
+    const Color &color)
     : _render_object_id(-1)
   {
     _render_context = render_context;
@@ -23,7 +23,8 @@ namespace core
     _render_object_id = _render_context->CreateRenderObject(
       "assets/models/cube.obj",
       _shader_path,
-      _texture_paths);
+      _texture_paths,
+      _color);
   }
 
   void Cube::Draw(const glm::mat4 &view, const glm::mat4 &projection) const

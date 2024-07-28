@@ -105,9 +105,12 @@ namespace core
     mesh.CleanUp();
   }
 
-  int OpenGL_RenderSystem::InitMaterial(const std::string shader_path, const std::vector<std::string> texture_paths)
+  int OpenGL_RenderSystem::InitMaterial(
+    const std::string &shader_path,
+    const std::vector<std::string> &texture_paths,
+    const Color &color)
   {
-    auto material = OpenGL_Material(shader_path, texture_paths);
+    auto material = OpenGL_Material(shader_path, texture_paths, color);
 
     const auto material_id = _material_refs.Add(material);
 
@@ -145,9 +148,10 @@ namespace core
   }
 
   int OpenGL_RenderSystem::CreateRenderObject(
-    const std::string model_path,
-    const std::string shader_path,
-    const std::vector<std::string> texture_paths)
+    const std::string &model_path,
+    const std::string &shader_path,
+    const std::vector<std::string> &texture_paths,
+    const Color &color)
   {
     std::vector<float> vertices(0);
     std::vector<float> normals(0);
@@ -155,7 +159,7 @@ namespace core
     std::vector<unsigned int> indices(0);
     load_obj(model_path, vertices, normals, uvs, indices);
 
-    return CreateRenderObject(vertices, normals, uvs, indices, shader_path, texture_paths);
+    return CreateRenderObject(vertices, normals, uvs, indices, shader_path, texture_paths, color);
   }
 
   int OpenGL_RenderSystem::CreateRenderObject(
@@ -163,14 +167,15 @@ namespace core
     const std::vector<float> &normals,
     const std::vector<float> &uvs,
     const std::vector<unsigned int> &indices,
-    const std::string shader_path,
-    const std::vector<std::string> texture_paths)
+    const std::string &shader_path,
+    const std::vector<std::string> &texture_paths,
+    const Color &color)
   {
     // todo optimization opportunity
     // find a way to reuse materials and meshes already created
     // the same materials can make use of different materials and vice versa
     auto mesh = OpenGL_Mesh(vertices, normals, uvs, indices);
-    auto material = OpenGL_Material(shader_path, texture_paths);
+    auto material = OpenGL_Material(shader_path, texture_paths, color);
 
     if (!mesh.Initialize())
     {

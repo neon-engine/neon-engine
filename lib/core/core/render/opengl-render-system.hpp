@@ -40,7 +40,10 @@ namespace core
 
     void DestroyMesh(int mesh_id) override;
 
-    int InitMaterial(std::string shader_path, std::vector<std::string> texture_paths) override;
+    int InitMaterial(
+      const std::string &shader_path,
+      const std::vector<std::string> &texture_paths,
+      const Color &color) override;
 
     void UseMaterial(
       int material_id,
@@ -52,16 +55,18 @@ namespace core
 
     const RenderResolution& GetRenderResolution() override;
 
-    int CreateRenderObject(std::string model_path,
-                           std::string shader_path,
-                           std::vector<std::string> texture_paths) override;
+    int CreateRenderObject(const std::string &model_path,
+                           const std::string &shader_path,
+                           const std::vector<std::string> &texture_paths,
+                           const Color &color) override;
 
     int CreateRenderObject(const std::vector<float> &vertices,
                            const std::vector<float> &normals,
                            const std::vector<float> &uvs,
                            const std::vector<unsigned int> &indices,
-                           std::string shader_path,
-                           std::vector<std::string> texture_paths) override;
+                           const std::string &shader_path,
+                           const std::vector<std::string> &texture_paths,
+                           const Color &color) override;
 
     void DrawRenderObject(int render_object_id,
                           const Transform &transform,
