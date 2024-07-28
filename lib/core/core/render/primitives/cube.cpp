@@ -4,12 +4,17 @@
 
 namespace core
 {
-  Cube::Cube(RenderContext *render_context, const std::vector<std::string> &texture_paths, const std::string &shader_path)
+  Cube::Cube(
+    RenderContext *render_context,
+    const std::vector<std::string> &texture_paths,
+    const std::string &shader_path,
+    const glm::vec3 &color)
     : _render_object_id(-1)
   {
     _render_context = render_context;
     _texture_paths = texture_paths;
     _shader_path = shader_path;
+    _color = color;
   }
 
   void Cube::Initialize()

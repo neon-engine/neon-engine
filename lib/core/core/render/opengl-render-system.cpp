@@ -155,6 +155,17 @@ namespace core
     std::vector<unsigned int> indices(0);
     load_obj(model_path, vertices, normals, uvs, indices);
 
+    return CreateRenderObject(vertices, normals, uvs, indices, shader_path, texture_paths);
+  }
+
+  int OpenGL_RenderSystem::CreateRenderObject(
+    const std::vector<float> &vertices,
+    const std::vector<float> &normals,
+    const std::vector<float> &uvs,
+    const std::vector<unsigned int> &indices,
+    const std::string shader_path,
+    const std::vector<std::string> texture_paths)
+  {
     // todo optimization opportunity
     // find a way to reuse materials and meshes already created
     // the same materials can make use of different materials and vice versa
@@ -181,16 +192,6 @@ namespace core
       .material_id = material_id
     };
     return _render_object_buffer.Add(render_object);
-  }
-
-  int OpenGL_RenderSystem::CreateRenderObject(const std::vector<float> &vertices,
-    const std::vector<float> &normals,
-    const std::vector<float> &tex_coordinates,
-    const std::vector<unsigned int> &indices,
-    std::string shader_path,
-    std::vector<std::string> texture_paths)
-  {
-    return -1;
   }
 
   void OpenGL_RenderSystem::DrawRenderObject(

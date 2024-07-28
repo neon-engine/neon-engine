@@ -11,15 +11,16 @@ namespace core
   class Cube
   {
     Transform _transform = Transform{
-      .position = glm::vec3(0.0f, 0.0f, 0.0f),
-      .rotation = glm::vec3(0.0f, 0.0f, 0.0f),
-      .scale = glm::vec3(1.0f, 1.0f, 1.0f)
+      .position = {0.0f, 0.0f, 0.0f},
+      .rotation = {0.0f, 0.0f, 0.0f},
+      .scale = {1.0f, 1.0f, 1.0f}
     };
 
     RenderContext *_render_context;
 
     std::vector<std::string> _texture_paths;
     std::string _shader_path;
+    glm::vec3 _color{};
 
     int _render_object_id;
 
@@ -29,7 +30,8 @@ namespace core
     explicit Cube(
       RenderContext *render_context,
       const std::vector<std::string> &texture_paths,
-      const std::string &shader_path);
+      const std::string &shader_path,
+      const glm::vec3 &color = glm::vec3(0.5f));
 
     void Initialize();
 
