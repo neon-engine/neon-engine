@@ -66,11 +66,6 @@ void core::FPS_PlayerController::Update(const double delta_time, const glm::mat4
   _camera.Update(model);
 }
 
-void core::FPS_PlayerController::LateUpdate()
-{
-
-}
-
 const core::Camera & core::FPS_PlayerController::GetCamera() const
 {
   return _camera;
