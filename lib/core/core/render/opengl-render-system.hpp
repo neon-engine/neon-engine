@@ -58,7 +58,7 @@ namespace core
 
     int CreateRenderObject(const std::vector<float> &vertices,
                            const std::vector<float> &normals,
-                           const std::vector<float> &tex_coordinates,
+                           const std::vector<float> &uvs,
                            const std::vector<unsigned int> &indices,
                            std::string shader_path,
                            std::vector<std::string> texture_paths) override;

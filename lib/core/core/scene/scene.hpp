@@ -15,6 +15,7 @@ namespace core
     WindowContext *_window_context;
     FPS_PlayerController _player;
     Cube _cube;
+    Cube _light_cube;
 
   public:
     explicit Scene(
@@ -25,11 +26,12 @@ namespace core
         _input_context(input_context),
         _window_context(window_context),
         _player(input_context),
+        _light_cube(render_context,
+          {},
+          "assets/shaders/color"),
         _cube(render_context,
-              {
-                "assets/textures/dark.png"
-              },
-              "assets/shaders/unlit") {}
+              {},
+              "assets/shaders/color") {}
 
     void Initialize();
 
