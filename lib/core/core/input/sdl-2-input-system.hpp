@@ -28,8 +28,6 @@ namespace core
 
     void CenterAndHideCursor() override;
 
-    void HideCursor() override;
-
     void ShowCursor() override;
   };
 } // core
