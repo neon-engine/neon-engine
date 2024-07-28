@@ -3,7 +3,6 @@
 #include <iostream>
 
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 
 void core::Scene::Initialize()
 {
