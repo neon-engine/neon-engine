@@ -3,6 +3,8 @@
 
 #include <glm/glm.hpp>
 
+#include "glm/detail/type_quat.hpp"
+
 namespace core
 {
   struct RenderResolution
@@ -21,10 +23,27 @@ namespace core
     int material_id = -1;
   };
 
+  struct Rotation
+  {
+    float yaw{};
+    float pitch{};
+    float roll{};
+
+    [[nodiscard]] glm::vec3 GetEulerAngle() const
+    {
+      return {yaw, pitch, roll};
+    }
+
+    [[nodiscard]] glm::quat GetQuaternion() const
+    {
+      return {GetEulerAngle()};
+    }
+  };
+
   struct Transform
   {
     glm::vec3 position{0.0f};
-    glm::vec3 rotation{0.0f};
+    Rotation rotation{0.0f};
     glm::vec3 scale{1.0f};
   };
 }
