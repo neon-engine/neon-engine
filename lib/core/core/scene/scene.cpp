@@ -16,7 +16,7 @@ core::Scene::Scene(
           {
           },
           "assets/shaders/color",
-          Transform(),
+          Transform{},
           {1.0f, 0.5f, 0.31f}),
     _light_cube(render_context,
                 {},
