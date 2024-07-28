@@ -32,10 +32,6 @@ namespace core
 
     void CleanUp() override;
 
-    void HideCursor() override;
-
-    void ShowCursor() override;
-
     void Update() override;
 
   protected:

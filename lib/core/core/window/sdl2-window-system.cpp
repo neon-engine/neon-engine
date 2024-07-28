@@ -43,7 +43,8 @@ namespace core
       {
         _context = SDL_GL_CreateContext(_window);
 
-        // disable vsync after creating the context
+        // disable vsync after creating the context on KDE
+        // todo make vsync configurable
         SDL_GL_SetSwapInterval(0);
         break;
       }
@@ -65,8 +66,6 @@ namespace core
     SDL_Quit();
   }
 
-  void SDL2_WindowSystem::HideCursor() {}
-  void SDL2_WindowSystem::ShowCursor() {}
   void SDL2_WindowSystem::Update()
   {
     switch (_settings_config.selected_api)
