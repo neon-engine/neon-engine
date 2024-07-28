@@ -44,6 +44,7 @@ add_subdirectory(external/glfw)
 add_subdirectory(external/glm)
 add_subdirectory(external/sdl2)
 add_subdirectory(external/assimp)
+add_subdirectory(external/jolt-physics/Build)
 
 # Additional libraries
 add_subdirectory(lib/core)
@@ -51,6 +52,7 @@ add_subdirectory(lib/core)
 set(APP_TARGETS
         LearnOpenGL
         NeonFPS
+        JoltTest
 )
 
 string(TOLOWER ${CMAKE_SYSTEM_NAME} LOWER_CMAKE_SYSTEM_NAME)
