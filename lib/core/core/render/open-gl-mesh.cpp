@@ -43,6 +43,10 @@ namespace core {
     if (!_indices.empty())
     {
       glGenBuffers(1, &_ebo);
+      _rendering_mode = RenderingMode::Element;
+    } else
+    {
+      _rendering_mode = RenderingMode::Array;
     }
 
     glBindVertexArray(_vao);
@@ -120,12 +124,20 @@ namespace core {
   void OpenGL_Mesh::Use() const
   {
     glBindVertexArray(_vao);
-    if (!_indices.empty())
+    switch (_rendering_mode)
     {
-      glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(_indices.size()), GL_UNSIGNED_INT, nullptr);
-    } else
-    {
-      glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(_vertices.size() / 3));
+      case RenderingMode::Element:
+      {
+        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(_indices.size()), GL_UNSIGNED_INT, nullptr);
+        break;
+      }
+      case RenderingMode::Array:
+      {
+        glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(_vertices.size() / 3));
+        break;
+      }
+      default:
+        throw std::runtime_error("Rendering mode set to none");
     }
   }
 
