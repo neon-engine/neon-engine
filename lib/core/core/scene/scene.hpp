@@ -26,12 +26,14 @@ namespace core
         _input_context(input_context),
         _window_context(window_context),
         _player(input_context),
-        _light_cube(render_context,
-          {},
-          "assets/shaders/color"),
         _cube(render_context,
-              {},
-              "assets/shaders/color") {}
+              {
+                "assets/textures/concrete.png"
+              },
+              "assets/shaders/unlit"),
+        _light_cube(render_context,
+                    {},
+                    "assets/shaders/color") {}
 
     void Initialize();
 

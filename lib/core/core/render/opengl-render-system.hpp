@@ -25,34 +25,6 @@ namespace core
 
     void PrepareFrame() override;
 
-    // RenderContext *GetContext() override;
-
-    int InitMesh(std::string model_path, glm::mat4 &normalized_matrix) override;
-
-    int InitMesh(
-      const std::vector<float> &vertices,
-      const std::vector<float> &normals,
-      const std::vector<float> &tex_coordinates,
-      const std::vector<unsigned int> &indices,
-      glm::mat4 &normalized_matrix) override;
-
-    void DrawMesh(int mesh_id) override;
-
-    void DestroyMesh(int mesh_id) override;
-
-    int InitMaterial(
-      const std::string &shader_path,
-      const std::vector<std::string> &texture_paths,
-      const Color &color) override;
-
-    void UseMaterial(
-      int material_id,
-      const glm::mat4 &model,
-      const glm::mat4 &view,
-      const glm::mat4 &projection) override;
-
-    void DestroyMaterial(int material_id) override;
-
     const RenderResolution& GetRenderResolution() override;
 
     int CreateRenderObject(const std::string &model_path,
