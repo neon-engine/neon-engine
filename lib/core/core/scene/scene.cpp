@@ -17,7 +17,6 @@ void core::Scene::Update()
 {
   const auto delta_time = _window_context->GetDeltaTime();
   _player.Update(delta_time, glm::mat4{1.0f});
-  _player.LateUpdate();
 }
 
 void core::Scene::RenderFrame() const
