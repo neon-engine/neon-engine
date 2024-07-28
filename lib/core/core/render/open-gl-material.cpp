@@ -65,6 +65,7 @@ namespace core
     _shader.SetMat4("model", model);
     _shader.SetMat4("view", view);
     _shader.SetMat4("projection", projection);
+    _shader.SetVec3("color", _color.r, _color.g, _color.b);
   }
   void OpenGL_Material::CleanUp()
   {

@@ -8,7 +8,7 @@ core::FPS_PlayerController::FPS_PlayerController(InputContext *input_context)
   : _input_context(input_context)
 {
   _move_speed = 2.5f;
-  _look_speed = 0.2f;
+  _look_speed = 0.1f;
   _transform.position = glm::vec3(0.0f, 0.0f, 3.0f);
 }
 
@@ -42,8 +42,8 @@ void core::FPS_PlayerController::Update(const double delta_time, const glm::mat4
   {
     const auto [x_pos, y_pos] = input_state[Axis::Mouse];
 
-    const auto x_offset = static_cast<float>(x_pos * _look_speed);
-    const auto y_offset = static_cast<float>(y_pos * _look_speed);
+    const auto x_offset = static_cast<float>(x_pos) * _look_speed;
+    const auto y_offset = static_cast<float>(y_pos) * _look_speed;
 
     _yaw += x_offset;
     _pitch -= y_offset;

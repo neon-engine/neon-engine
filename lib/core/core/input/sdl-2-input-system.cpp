@@ -51,8 +51,8 @@ namespace core {
           {
             _input_state.SetAxisMotion(
               Axis::Mouse,
-              static_cast<float>(event.motion.xrel),
-              static_cast<float>(event.motion.yrel));
+              event.motion.xrel,
+              event.motion.yrel);
           }
         }
 

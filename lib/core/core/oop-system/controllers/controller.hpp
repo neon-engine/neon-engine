@@ -15,8 +15,8 @@ namespace core
     float _look_speed = 0;
 
     // consider using vector 3 rotation for this
-    float _yaw = -90.0f;
-    float _pitch = 0.0f;
+    float _yaw = -90.0;
+    float _pitch = 0.0;
     ~Controller() = default;
 
   public:
