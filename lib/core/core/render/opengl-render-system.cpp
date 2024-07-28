@@ -2,8 +2,10 @@
 
 #include <fstream>
 #include <iostream>
-
 #include <stdexcept>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include "util.hpp"
 
@@ -104,6 +106,7 @@ namespace core
 
   void OpenGL_RenderSystem::DrawRenderObject(
     const int render_object_id,
+    const Transform &transform,
     const glm::mat4 &view,
     const glm::mat4 &projection)
   {
@@ -111,7 +114,11 @@ namespace core
     const auto mesh = _mesh_refs[mesh_id];
     const auto material = _material_refs[material_id];
 
-    const auto model = mesh.GetModelMatrix();
+    auto model = mesh.GetModelMatrix();
+    const auto position = translate(glm::mat4{1.0f}, transform.position);
+    const auto rotation = mat4_cast(transform.rotation.GetQuaternion());
+    const auto scale = glm::scale(glm::mat4{1.0f}, transform.scale);
+    model = position * rotation * scale * model;
     material.Use(model, view, projection);
     mesh.Use();
   }

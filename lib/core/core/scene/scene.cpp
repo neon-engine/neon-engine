@@ -4,10 +4,33 @@
 
 #include <glm/glm.hpp>
 
+core::Scene::Scene(
+  RenderContext *render_context,
+  InputContext *input_context,
+  WindowContext *window_context)
+  : _render_context(render_context),
+    _input_context(input_context),
+    _window_context(window_context),
+    _player(input_context),
+    _cube(render_context,
+          {
+          },
+          "assets/shaders/color",
+          Transform(),
+          {1.0f, 0.5f, 0.31f}),
+    _light_cube(render_context,
+                {},
+                "assets/shaders/color",
+                Transform{
+                  .position = {1.2f, 1.0f, -2.0f},
+                  .scale = glm::vec3{0.2f}
+                }) {}
+
 void core::Scene::Initialize()
 {
   std::cout << "Initializing the scene" << std::endl;
   _cube.Initialize();
+  _light_cube.Initialize();
   std::cout << "Initialized scene!" << std::endl;
   _input_context->CenterAndHideCursor();
 }
@@ -25,10 +48,12 @@ void core::Scene::RenderFrame() const
   const auto [width, height] = _render_context->GetRenderResolution();
   const glm::mat4 projection = camera.GetProjection(width, height);
   _cube.Draw(view, projection);
+  _light_cube.Draw(view, projection);
 }
 
 void core::Scene::CleanUp()
 {
   std::cout << "Cleaning up the scene" << std::endl;
   _cube.CleanUp();
+  _light_cube.CleanUp();
 }

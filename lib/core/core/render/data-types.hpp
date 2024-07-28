@@ -65,7 +65,7 @@ namespace core
   struct Transform
   {
     glm::vec3 position{0.0f};
-    Rotation rotation{0.0f};
+    Rotation rotation{0.0f, 0.0f, 0.0f};
     glm::vec3 scale{1.0f};
   };
 }

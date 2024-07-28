@@ -21,19 +21,7 @@ namespace core
     explicit Scene(
       RenderContext *render_context,
       InputContext *input_context,
-      WindowContext *window_context)
-      : _render_context(render_context),
-        _input_context(input_context),
-        _window_context(window_context),
-        _player(input_context),
-        _cube(render_context,
-              {
-                "assets/textures/concrete.png"
-              },
-              "assets/shaders/unlit"),
-        _light_cube(render_context,
-                    {},
-                    "assets/shaders/color") {}
+      WindowContext *window_context);
 
     void Initialize();
 
