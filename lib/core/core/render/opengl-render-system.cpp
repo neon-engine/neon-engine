@@ -104,7 +104,6 @@ namespace core
 
   void OpenGL_RenderSystem::DrawRenderObject(
     const int render_object_id,
-    const Transform &transform,
     const glm::mat4 &view,
     const glm::mat4 &projection)
   {

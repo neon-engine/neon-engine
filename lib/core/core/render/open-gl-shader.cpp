@@ -151,14 +151,29 @@ namespace core
     glUniform2fv(glGetUniformLocation(_shader_program_id, name.c_str()), 1, &value[0]);
   }
 
+  void OpenGL_Shader::SetVec2(const std::string &name, float x, float y) const
+  {
+    glUniform2f(glGetUniformLocation(_shader_program_id, name.c_str()), x, y);
+  }
+
   void OpenGL_Shader::SetVec3(const std::string &name, const glm::vec3 &value) const
   {
     glUniform3fv(glGetUniformLocation(_shader_program_id, name.c_str()), 1, &value[0]);
   }
 
+  void OpenGL_Shader::SetVec3(const std::string &name, float x, float y, float z) const
+  {
+    glUniform3f(glGetUniformLocation(_shader_program_id, name.c_str()), x, y, z);
+  }
+
   void OpenGL_Shader::SetVec4(const std::string &name, const glm::vec4 &value) const
   {
     glUniform4fv(glGetUniformLocation(_shader_program_id, name.c_str()), 1, &value[0]);
+  }
+
+  void OpenGL_Shader::SetVec4(const std::string &name, float x, float y, float z, float w) const
+  {
+    glUniform4f(glGetUniformLocation(_shader_program_id, name.c_str()), x, y, z, w);
   }
 
   void OpenGL_Shader::SetMat2(const std::string &name, const glm::mat2 &mat) const

@@ -107,11 +107,6 @@ namespace core {
     SDL_SetRelativeMouseMode(SDL_TRUE);
   }
 
-  void SDL2_InputSystem::HideCursor()
-  {
-    SDL_ShowCursor(SDL_DISABLE);
-  }
-
   void SDL2_InputSystem::ShowCursor()
   {
     SDL_SetRelativeMouseMode(SDL_FALSE);

@@ -15,8 +15,6 @@ namespace core
 
     virtual void CenterAndHideCursor() = 0;
 
-    virtual void HideCursor() = 0;
-
     virtual void ShowCursor() = 0;
   };
 } // core

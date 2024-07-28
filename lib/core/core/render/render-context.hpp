@@ -36,7 +36,6 @@ namespace core
 
     virtual void DrawRenderObject(
       int render_object_id,
-      const Transform &transform,
       const glm::mat4 &view,
       const glm::mat4 &projection) = 0;
 
