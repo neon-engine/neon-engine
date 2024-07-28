@@ -29,7 +29,7 @@ namespace core
 
   void Cube::Draw(const glm::mat4 &view, const glm::mat4 &projection) const
   {
-    _render_context->DrawRenderObject(_render_object_id, _transform, view, projection);
+    _render_context->DrawRenderObject(_render_object_id, view, projection);
   }
 
   void Cube::CleanUp()
