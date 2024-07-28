@@ -23,14 +23,14 @@ namespace core
       InputSystem *input_system,
       RenderSystem *render_system);
 
-    void Initialize() const;
-
-    void CleanUp();
-
   public:
     virtual ~Application();
 
     virtual void Run();
+
+    void Initialize() const;
+
+    void CleanUp();
   };
 } // core
 
