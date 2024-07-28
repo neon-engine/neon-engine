@@ -2,7 +2,7 @@
 
 out vec4 color;
 
-in vec3 out_normal;
+in vec3 out_normal_coord;
 in vec2 out_uv_coord;
 
 uniform sampler2D texture0;
