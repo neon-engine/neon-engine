@@ -20,17 +20,19 @@ namespace core
     explicit RenderContext(const int max_render_objects): _render_object_buffer(max_render_objects) {}
 
     virtual int CreateRenderObject(
-      std::string model_path,
-      std::string shader_path,
-      std::vector<std::string> texture_paths) = 0;
+      const std::string &model_path,
+      const std::string &shader_path,
+      const std::vector<std::string> &texture_paths,
+      const Color &color) = 0;
 
     virtual int CreateRenderObject(
       const std::vector<float> &vertices,
       const std::vector<float> &normals,
       const std::vector<float> &tex_coordinates,
       const std::vector<unsigned int> &indices,
-      std::string shader_path,
-      std::vector<std::string> texture_paths) = 0;
+      const std::string &shader_path,
+      const std::vector<std::string> &texture_paths,
+      const Color &color) = 0;
 
     virtual void DrawRenderObject(
       int render_object_id,

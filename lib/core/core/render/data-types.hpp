@@ -1,12 +1,34 @@
 #ifndef DATA_TYPES_HPP
 #define DATA_TYPES_HPP
 
+#include <string>
 #include <glm/glm.hpp>
-
-#include "glm/detail/type_quat.hpp"
+#include <glm/detail/type_quat.hpp>
 
 namespace core
 {
+  struct Color
+  {
+    float r = 0.5;
+    float g = 0.5;
+    float b = 0.5;
+    float a = 1.0f;
+  };
+
+  struct MaterialInfo
+  {
+    Color color;
+    std::string shader_path;
+    std::string texture_paths[];
+  };
+
+  struct Vertex
+  {
+    glm::vec3 position;
+    glm::vec3 normal;
+    glm::vec3 uv;
+  };
+
   struct RenderResolution
   {
     RenderResolution(const int width, const int height)

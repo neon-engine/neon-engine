@@ -20,7 +20,7 @@ namespace core
 
     std::vector<std::string> _texture_paths;
     std::string _shader_path;
-    glm::vec3 _color{};
+    Color _color{};
 
     int _render_object_id;
 
@@ -31,7 +31,7 @@ namespace core
       RenderContext *render_context,
       const std::vector<std::string> &texture_paths,
       const std::string &shader_path,
-      const glm::vec3 &color = glm::vec3(0.5f));
+      const Color &color = Color());
 
     void Initialize();
 

@@ -7,10 +7,14 @@ namespace core
 {
   OpenGL_Material::OpenGL_Material() = default;
 
-  OpenGL_Material::OpenGL_Material(const std::string &shader_path, const std::vector<std::string> &texture_paths)
+  OpenGL_Material::OpenGL_Material(
+    const std::string &shader_path,
+    const std::vector<std::string> &texture_paths,
+    const Color &color)
   {
     _shader = OpenGL_Shader(shader_path);
     _textures = std::vector<OpenGL_Texture>();
+    _color = color;
 
     for (auto &texture_path : texture_paths)
     {

@@ -3,6 +3,7 @@
 
 #include <vector>
 
+#include "data-types.hpp"
 #include "open-gl-shader.hpp"
 #include "open-gl-texture.hpp"
 
@@ -14,12 +15,14 @@ namespace core
     bool _initialized = false;
     OpenGL_Shader _shader{};
     std::vector<OpenGL_Texture> _textures{};
+    Color _color;
   public:
     OpenGL_Material();
 
     OpenGL_Material(
       const std::string &shader_path,
-      const std::vector<std::string> &texture_paths);
+      const std::vector<std::string> &texture_paths,
+      const Color &color);
 
     bool Initialize();
 
