@@ -11,6 +11,13 @@ namespace core
   // ReSharper disable once CppInconsistentNaming
   class OpenGL_Mesh
   {
+    enum class RenderingMode
+    {
+      None,
+      Array,
+      Element
+    };
+    RenderingMode _rendering_mode = RenderingMode::None;
     GLuint _vao = 0;
     GLuint _vbo = 0;
     GLuint _nvbo = 0;
