@@ -34,28 +34,6 @@ namespace core
     virtual void CleanUp() = 0;
 
     virtual void PrepareFrame() = 0;
-
-    virtual int InitMesh(std::string model_path, glm::mat4 &normalized_matrix) = 0;
-
-    virtual int InitMesh(
-      const std::vector<float> &vertices,
-      const std::vector<float> &normals,
-      const std::vector<float> &tex_coordinates,
-      const std::vector<unsigned int> &indices,
-      glm::mat4 &normalized_matrix) = 0;
-
-    virtual void DrawMesh(int mesh_id) = 0;
-
-    virtual void DestroyMesh(int mesh_id) = 0;
-
-    virtual int InitMaterial(
-      const std::string &shader_path,
-      const std::vector<std::string> &texture_paths,
-      const Color &color) = 0;
-
-    virtual void UseMaterial(int mesh_id, const glm::mat4 &model, const glm::mat4 &view, const glm::mat4 &projection) = 0;
-
-    virtual void DestroyMaterial(int mesh_id) = 0;
   };
 } // core
 
