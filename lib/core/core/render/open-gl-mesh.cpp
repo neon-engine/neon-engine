@@ -184,7 +184,7 @@ namespace core {
     const auto range_y = max_y - min_y;
     const auto range_z = max_z - min_z;
 
-    const auto max_range = std::max(std::max(range_x, range_y), range_z) / 2.0f;
+    const auto max_range = std::max(std::max(range_x, range_y), range_z);
 
     const auto translation = translate(glm::mat4(1.0f), {-x_center, -y_center, -z_center});
     _model_matrix =
