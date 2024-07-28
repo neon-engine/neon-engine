@@ -13,11 +13,11 @@ namespace core
   class OpenGL_RenderSystem final : public RenderSystem
   {
     RenderResolution _render_resolution;
+
   public:
     explicit OpenGL_RenderSystem(const SettingsConfig &settings_config)
       : RenderSystem(settings_config, 4096),
-    _render_resolution(_settings_config.width, _settings_config.height)
-    {}
+        _render_resolution(_settings_config.width, _settings_config.height) {}
 
     void Initialize() override;
 
@@ -25,24 +25,28 @@ namespace core
 
     void PrepareFrame() override;
 
-    const RenderResolution& GetRenderResolution() override;
+    const RenderResolution &GetRenderResolution() override;
 
-    int CreateRenderObject(const std::string &model_path,
-                           const std::string &shader_path,
-                           const std::vector<std::string> &texture_paths,
-                           const Color &color) override;
+    int CreateRenderObject(
+      const std::string &model_path,
+      const std::string &shader_path,
+      const std::vector<std::string> &texture_paths,
+      const Color &color) override;
 
-    int CreateRenderObject(const std::vector<float> &vertices,
-                           const std::vector<float> &normals,
-                           const std::vector<float> &uvs,
-                           const std::vector<unsigned int> &indices,
-                           const std::string &shader_path,
-                           const std::vector<std::string> &texture_paths,
-                           const Color &color) override;
+    int CreateRenderObject(
+      const std::vector<float> &vertices,
+      const std::vector<float> &normals,
+      const std::vector<float> &uvs,
+      const std::vector<unsigned int> &indices,
+      const std::string &shader_path,
+      const std::vector<std::string> &texture_paths,
+      const Color &color) override;
 
-    void DrawRenderObject(int render_object_id,
-                          const glm::mat4 &view,
-                          const glm::mat4 &projection) override;
+    void DrawRenderObject(
+      int render_object_id,
+      const Transform &transform,
+      const glm::mat4 &view,
+      const glm::mat4 &projection) override;
 
     void DestroyRenderObject(int render_object_id) override;
   };

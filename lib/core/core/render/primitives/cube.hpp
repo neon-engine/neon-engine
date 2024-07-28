@@ -10,16 +10,12 @@ namespace core
 {
   class Cube
   {
-    Transform _transform = Transform{
-      .position = {0.0f, 0.0f, 0.0f},
-      .rotation = {0.0f, 0.0f, 0.0f},
-      .scale = {1.0f, 1.0f, 1.0f}
-    };
+    Transform _transform;
 
     RenderContext *_render_context;
     std::vector<std::string> _texture_paths;
     std::string _shader_path;
-    Color _color{};
+    Color _color;
 
     int _render_object_id;
 
@@ -30,6 +26,7 @@ namespace core
       RenderContext *render_context,
       const std::vector<std::string> &texture_paths,
       const std::string &shader_path,
+      Transform transform = Transform(),
       const Color &color = Color());
 
     void Initialize();
