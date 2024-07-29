@@ -38,6 +38,8 @@ add_library(${TARGET} STATIC
         core/render/render-pipeline.hpp
         core/oop-system/scene-graph/node.cpp
         core/oop-system/scene-graph/node.hpp
+        core/oop-system/scene-graph/render-node.cpp
+        core/oop-system/scene-graph/render-node.hpp
 )
 
 target_include_directories(${TARGET}
