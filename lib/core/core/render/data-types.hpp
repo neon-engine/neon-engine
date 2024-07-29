@@ -2,11 +2,19 @@
 #define DATA_TYPES_HPP
 
 #include <string>
+#include <vector>
 #include <glm/glm.hpp>
 #include <glm/detail/type_quat.hpp>
 
 namespace core
 {
+
+  struct RenderObjectRef
+  {
+    int mesh_id = -1;
+    int material_id = -1;
+  };
+
   struct Color
   {
     float r = 0.5;
@@ -15,34 +23,11 @@ namespace core
     float a = 1.0f;
   };
 
-  struct MaterialInfo
-  {
-    Color color;
-    std::string shader_path;
-    std::string texture_paths[];
-  };
-
   struct Vertex
   {
     glm::vec3 position;
     glm::vec3 normal;
     glm::vec3 uv;
-  };
-
-  struct RenderResolution
-  {
-    RenderResolution(const int width, const int height)
-      : width(width),
-        height(height) {}
-
-    const int width;
-    const int height;
-  };
-
-  struct RenderObject
-  {
-    int mesh_id = -1;
-    int material_id = -1;
   };
 
   struct Rotation
@@ -67,6 +52,14 @@ namespace core
     glm::vec3 position{0.0f};
     Rotation rotation{0.0f, 0.0f, 0.0f};
     glm::vec3 scale{1.0f};
+  };
+
+  struct RenderInfo
+  {
+    Color color;
+    std::string model_path;
+    std::string shader_path;
+    std::vector<std::string> texture_paths;
   };
 }
 

@@ -13,12 +13,12 @@ namespace core
   protected:
     std::string _name;
     Transform _transform;
-    glm::mat4 _world_matrix;
+    glm::mat4 _world_matrix{1.0f};
     Node *_parent = nullptr;
     std::vector<Node *> _children;
 
   public:
-    explicit Node(const std::string &name);
+    Node(const std::string &name, const Transform &transform);
 
     virtual ~Node();
 

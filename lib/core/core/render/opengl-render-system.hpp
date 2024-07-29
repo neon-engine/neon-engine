@@ -49,6 +49,10 @@ namespace core
       const glm::mat4 &projection) override;
 
     void DestroyRenderObject(int render_object_id) override;
+
+    void EnqueueForRendering(int render_object_id) override;
+
+    void ProcessRenderingQueue() override;
   };
 } // core
 

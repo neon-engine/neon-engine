@@ -5,6 +5,7 @@
 #include "window-context.hpp"
 #include "controllers/fps-player-controller.hpp"
 #include "primitives/cube.hpp"
+#include "scene-graph/node.hpp"
 
 namespace core
 {
@@ -14,8 +15,9 @@ namespace core
     InputContext *_input_context;
     WindowContext *_window_context;
     FPS_PlayerController _player;
-    Cube _cube;
-    Cube _light_cube;
+    // Cube _cube;
+    // Cube _light_cube;
+    Node _scene_graph;
 
   public:
     explicit Scene(
