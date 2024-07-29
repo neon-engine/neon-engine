@@ -9,10 +9,21 @@
 
 namespace core
 {
+  struct RenderResolution
+  {
+    RenderResolution(const int width, const int height)
+      : width(width),
+        height(height) {}
+
+    const int width;
+    const int height;
+  };
+
   class RenderContext
   {
   protected:
-    DataBuffer<RenderObject> _render_object_buffer;
+    DataBuffer<RenderObjectRef> _render_object_buffer;
+    std::queue<int> _render_queue;
 
     ~RenderContext() = default;
 
@@ -43,6 +54,10 @@ namespace core
     virtual void DestroyRenderObject(int render_object_id) = 0;
 
     virtual const RenderResolution& GetRenderResolution() = 0;
+
+    virtual void EnqueueForRendering(int render_object_id) = 0;
+
+    virtual void ProcessRenderingQueue() = 0;
   };
 } // core
 

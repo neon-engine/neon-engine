@@ -97,7 +97,7 @@ namespace core
     const auto mesh_id = _mesh_refs.Add(mesh);
     const auto material_id = _material_refs.Add(material);
 
-    const auto render_object = RenderObject{
+    const auto render_object = RenderObjectRef{
       .mesh_id = mesh_id,
       .material_id = material_id
     };
@@ -132,4 +132,8 @@ namespace core
     mesh.CleanUp();
     material.CleanUp();
   }
+
+  void OpenGL_RenderSystem::EnqueueForRendering(int render_object_id) {}
+
+  void OpenGL_RenderSystem::ProcessRenderingQueue() {}
 } // core
