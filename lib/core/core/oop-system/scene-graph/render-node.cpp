@@ -10,4 +10,20 @@ namespace core
   {
     _render_info = render_info;
   }
+
+  void RenderNode::Initialize()
+  {
+  }
+
+  void RenderNode::Update()
+  {
+  }
+
+  void RenderNode::Render()
+  {
+  }
+
+  void RenderNode::CleanUp()
+  {
+  }
 } // core

@@ -11,14 +11,14 @@ namespace core {
 
   Node::~Node() = default;
 
-  void Node::AddChild(Node *child)
+  void Node::AddChild(const std::shared_ptr<Node> &child)
   {
     _children.push_back(child);
     child->_parent = this;
     std::cout << "Added node " << child->_name << " to node " << _name << std::endl;
   }
 
-  void Node::RemoveChild(Node *child)
+  void Node::RemoveChild(const std::shared_ptr<Node> &child)
   {
     if (const auto it = std::ranges::find(_children, child);
       it != _children.end())
@@ -26,6 +26,11 @@ namespace core {
       _children.erase(it);
       std::cout << "Removed node " << child->_name << " from node " << _name << std::endl;
     }
+  }
+
+  const std::vector<std::shared_ptr<Node>> & Node::GetChildren() const
+  {
+    return _children;
   }
 
   void Node::Initialize() {}
