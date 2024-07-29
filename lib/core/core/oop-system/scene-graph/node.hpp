@@ -13,6 +13,7 @@ namespace core
   protected:
     std::string _name;
     Transform _transform;
+    glm::mat4 _world_matrix;
     Node *_parent = nullptr;
     std::vector<Node *> _children;
 
