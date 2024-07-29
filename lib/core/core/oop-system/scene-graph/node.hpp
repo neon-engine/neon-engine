@@ -3,25 +3,35 @@
 #include <vector>
 
 #include "data-types.hpp"
+#include "render-context.hpp"
 
 namespace core
 {
+  // ReSharper disable once CppClassCanBeFinal
   class Node
   {
+  protected:
+    std::string _name;
     Transform _transform;
-    Node* _parent;
+    Node *_parent = nullptr;
     std::vector<Node *> _children;
 
   public:
-    Node();
+    explicit Node(const std::string &name);
 
-    Node(Node* parent, std::vector<Node> children);
+    virtual ~Node();
+
+    void AddChild(Node *child);
+
+    void RemoveChild(Node *child);
 
     virtual void Initialize();
 
-    virtual void CleanUp();
-
     virtual void Update();
+
+    virtual void Render();
+
+    virtual void CleanUp();
   };
 } // core
 
