@@ -39,6 +39,10 @@ add_library(${TARGET} STATIC
         core/oop-system/scene-graph/node.hpp
         core/oop-system/scene-graph/render-node.cpp
         core/oop-system/scene-graph/render-node.hpp
+        core/oop-system/scene-graph/scene-graph.cpp
+        core/oop-system/scene-graph/scene-graph.hpp
+        core/oop-system/scene-graph/camera-node.cpp
+        core/oop-system/scene-graph/camera-node.hpp
 )
 
 target_include_directories(${TARGET}

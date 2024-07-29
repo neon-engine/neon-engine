@@ -1,6 +1,7 @@
 #include "scene.hpp"
 
 #include <iostream>
+#include <memory>
 
 #include <glm/glm.hpp>
 
@@ -32,7 +33,30 @@ void core::Scene::Initialize()
   //                 .position = {1.2f, 1.0f, -2.0f},
   //                 .scale = glm::vec3{0.2f}
   //               })
-  auto cube = RenderNode("cube", {}, {});
+
+  const auto cube = std::make_shared<RenderNode>(
+    "cube",
+    Transform{},
+    RenderInfo{
+      .model_path = "assets/models/cube.obj",
+      .shader_path = "assets/shaders/color",
+      .color = {1.0f, 0.5f, 0.31f}
+    });
+
+  const auto light_cube = std::make_shared<RenderNode>(
+    "light cube",
+    Transform{
+      .position = {1.2f, 1.0f, -2.0f},
+      .scale = glm::vec3{0.2f}
+    },
+    RenderInfo{
+      .model_path = "assets/models/cube.obj",
+      .shader_path = "assets/shaders/color",
+      .color = {1.0f, 1.0f, 1.0f}
+    });
+  _scene_graph.AddChild(cube);
+  _scene_graph.AddChild(light_cube);
+  _scene_graph.Initialize();
   std::cout << "Initialized scene!" << std::endl;
   _input_context->CenterAndHideCursor();
 }
@@ -56,6 +80,5 @@ void core::Scene::RenderFrame() const
 void core::Scene::CleanUp()
 {
   std::cout << "Cleaning up the scene" << std::endl;
-  // _cube.CleanUp();
-  // _light_cube.CleanUp();
+  _scene_graph.CleanUp();
 }

@@ -13,6 +13,14 @@ namespace core
       const std::string &name,
       const Transform &transform,
       const RenderInfo &render_info);
+
+    void Initialize() override;
+
+    void Update() override;
+
+    void Render() override;
+
+    void CleanUp() override;
   };
 } // core
 
