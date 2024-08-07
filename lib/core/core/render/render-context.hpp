@@ -55,7 +55,7 @@ namespace core
 
     virtual const RenderResolution& GetRenderResolution() = 0;
 
-    virtual void EnqueueForRendering(int render_object_id) = 0;
+    virtual void EnqueueForRendering(int render_object_id, glm::mat4 to_world) = 0;
 
     virtual void ProcessRenderingQueue() = 0;
   };

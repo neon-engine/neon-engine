@@ -133,7 +133,7 @@ namespace core
     material.CleanUp();
   }
 
-  void OpenGL_RenderSystem::EnqueueForRendering(int render_object_id) {}
+  void OpenGL_RenderSystem::EnqueueForRendering(int render_object_id, glm::mat4 to_world) {}
 
   void OpenGL_RenderSystem::ProcessRenderingQueue() {}
 } // core
