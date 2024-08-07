@@ -1,6 +1,7 @@
 #ifndef OPEN_GL_RENDER_SYSTEM_HPP
 #define OPEN_GL_RENDER_SYSTEM_HPP
 
+#include <queue>
 #include <vector>
 
 #include "open-gl-material.hpp"
@@ -50,7 +51,7 @@ namespace core
 
     void DestroyRenderObject(int render_object_id) override;
 
-    void EnqueueForRendering(int render_object_id) override;
+    void EnqueueForRendering(int render_object_id, glm::mat4 to_world) override;
 
     void ProcessRenderingQueue() override;
   };

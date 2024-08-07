@@ -33,7 +33,7 @@ namespace core
 
     virtual void Update();
 
-    virtual void Render();
+    virtual void Render(const glm::mat4 &parent_matrix);
 
     virtual void CleanUp();
   };

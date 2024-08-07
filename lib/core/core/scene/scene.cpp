@@ -20,19 +20,6 @@ core::Scene::Scene(
 void core::Scene::Initialize()
 {
   std::cout << "Initializing the scene" << std::endl;
-  // _cube(render_context,
-  //         {
-  //         },
-  //         "assets/shaders/color",
-  //         Transform{},
-  //         {1.0f, 0.5f, 0.31f}),
-  //   _light_cube(render_context,
-  //               {},
-  //               "assets/shaders/color",
-  //               Transform{
-  //                 .position = {1.2f, 1.0f, -2.0f},
-  //                 .scale = glm::vec3{0.2f}
-  //               })
 
   const auto cube = std::make_shared<RenderNode>(
     "cube",
@@ -41,7 +28,8 @@ void core::Scene::Initialize()
       .model_path = "assets/models/cube.obj",
       .shader_path = "assets/shaders/color",
       .color = {1.0f, 0.5f, 0.31f}
-    });
+    },
+    _render_context);
 
   const auto light_cube = std::make_shared<RenderNode>(
     "light cube",
@@ -53,7 +41,8 @@ void core::Scene::Initialize()
       .model_path = "assets/models/cube.obj",
       .shader_path = "assets/shaders/color",
       .color = {1.0f, 1.0f, 1.0f}
-    });
+    },
+    _render_context);
   _scene_graph.AddChild(cube);
   _scene_graph.AddChild(light_cube);
   _scene_graph.Initialize();

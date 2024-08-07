@@ -37,7 +37,7 @@ namespace core {
 
   void Node::Update() {}
 
-  void Node::Render() {}
+  void Node::Render(const glm::mat4 &parent_matrix) {}
 
   void Node::CleanUp() {}
 } // core
