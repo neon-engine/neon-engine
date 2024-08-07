@@ -2,7 +2,6 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 
-#include <iostream>
 #include <stb_image.h>
 
 #include "neon/core/common/util.hpp"

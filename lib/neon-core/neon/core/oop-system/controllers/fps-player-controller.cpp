@@ -2,8 +2,6 @@
 
 #include <algorithm>
 
-#include "glm/gtc/matrix_transform.hpp"
-
 core::FPS_PlayerController::FPS_PlayerController(InputContext *input_context)
   : _input_context(input_context)
 {

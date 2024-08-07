@@ -1,10 +1,5 @@
 #include "scene.hpp"
 
-#include <iostream>
-#include <memory>
-
-#include <glm/glm.hpp>
-
 #include "neon/core/oop-system/scene-graph/render-node.hpp"
 
 core::Scene::Scene(
@@ -62,8 +57,6 @@ void core::Scene::RenderFrame() const
   const glm::mat4 view = camera.GetView();
   const auto [width, height] = _render_context->GetRenderResolution();
   const glm::mat4 projection = camera.GetProjection(width, height);
-  // _cube.Draw(view, projection);
-  // _light_cube.Draw(view, projection);
 }
 
 void core::Scene::CleanUp()

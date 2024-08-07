@@ -1,6 +1,5 @@
 #include "render-node.hpp"
 
-#include <iostream>
 #include <glm/gtc/quaternion.hpp>
 
 namespace core
