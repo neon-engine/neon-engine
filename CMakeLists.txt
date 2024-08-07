@@ -47,8 +47,7 @@ add_subdirectory(external/assimp)
 add_subdirectory(external/jolt-physics/Build)
 
 # Additional libraries
-add_subdirectory(lib/common)
-add_subdirectory(lib/core)
+add_subdirectory(lib/neon-core)
 
 set(APP_TARGETS
         LearnOpenGL

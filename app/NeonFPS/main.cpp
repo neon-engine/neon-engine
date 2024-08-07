@@ -2,10 +2,9 @@
 #include <stdexcept>
 
 #include "neon-fps-application.hpp"
-#include "opengl-render-system.hpp"
-#include "sdl-2-input-system.hpp"
-#include "sdl2-window-system.hpp"
-#include "settings-config.hpp"
+#include "neon/core/input/sdl-2-input-system.hpp"
+#include "neon/core/render/opengl-render-system.hpp"
+#include "neon/core/window/sdl2-window-system.hpp"
 
 int main()
 {
