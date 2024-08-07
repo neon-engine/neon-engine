@@ -24,6 +24,7 @@ namespace core
     return tokens;
   }
 
+  // todo replace using three distinct vectors with a single vector of type Vertex in data-types.hpp
   static bool load_obj(
     const std::string &filename,
     std::vector<float> &vertices,
