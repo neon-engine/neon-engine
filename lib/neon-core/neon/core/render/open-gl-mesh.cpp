@@ -1,6 +1,5 @@
 #include "open-gl-mesh.hpp"
 
-#include <algorithm>
 #include <iostream>
 #include <glm/gtc/matrix_transform.hpp>
 

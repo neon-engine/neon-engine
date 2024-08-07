@@ -1,12 +1,5 @@
 #include "opengl-render-system.hpp"
 
-#include <fstream>
-#include <iostream>
-#include <stdexcept>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/quaternion.hpp>
-#include <glm/gtc/type_ptr.hpp>
-
 #include "neon/core/common/util.hpp"
 
 

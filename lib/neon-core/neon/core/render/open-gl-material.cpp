@@ -1,6 +1,5 @@
 #include "open-gl-material.hpp"
 
-#include <iomanip>
 #include <iostream>
 
 namespace core
