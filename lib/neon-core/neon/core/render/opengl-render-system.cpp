@@ -45,21 +45,25 @@ namespace core
     return _render_resolution;
   }
 
-  int OpenGL_RenderSystem::CreateRenderObject(
-    const std::string &model_path,
-    const std::string &shader_path,
-    const std::vector<std::string> &texture_paths,
-    const Color &color)
+  int OpenGL_RenderSystem::CreateRenderObject(const RenderInfo &render_info)
   {
     std::vector<float> vertices(0);
     std::vector<float> normals(0);
     std::vector<float> uvs(0);
     std::vector<unsigned int> indices(0);
-    load_obj(model_path, vertices, normals, uvs, indices);
+    load_obj(render_info.model_path, vertices, normals, uvs, indices);
 
-    return CreateRenderObject(vertices, normals, uvs, indices, shader_path, texture_paths, color);
+    return CreateRenderObject(
+      vertices,
+      normals,
+      uvs,
+      indices,
+      render_info.shader_path,
+      render_info.texture_paths,
+      render_info.color);
   }
 
+  // todo find out if returning -1 is the best way to handle this, maybe assert calls are better
   int OpenGL_RenderSystem::CreateRenderObject(
     const std::vector<float> &vertices,
     const std::vector<float> &normals,
@@ -84,11 +88,19 @@ namespace core
     if (!material.Initialize())
     {
       std::cerr << "Could not initialize material" << std::endl;
+      mesh.CleanUp();
       return -1;
     }
 
     const auto mesh_id = _mesh_refs.Add(mesh);
     const auto material_id = _material_refs.Add(material);
+
+    if (mesh_id < 0 || material_id < 0)
+    {
+      mesh.CleanUp();
+      material.CleanUp();
+      return -1;
+    }
 
     const auto render_object = RenderObjectRef{
       .mesh_id = mesh_id,
