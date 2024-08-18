@@ -26,11 +26,7 @@ namespace core
 
     const RenderResolution &GetRenderResolution() override;
 
-    int CreateRenderObject(
-      const std::string &model_path,
-      const std::string &shader_path,
-      const std::vector<std::string> &texture_paths,
-      const Color &color) override;
+    int CreateRenderObject(const RenderInfo &render_info) override;
 
     int CreateRenderObject(
       const std::vector<float> &vertices,

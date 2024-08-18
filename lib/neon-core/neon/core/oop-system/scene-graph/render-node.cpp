@@ -18,11 +18,7 @@ namespace core
   void RenderNode::Initialize()
   {
     std::cout << "Initializing " << _name << std::endl;
-    _render_object_id = _render_context->CreateRenderObject(
-      _render_info.model_path,
-      _render_info.shader_path,
-      _render_info.texture_paths,
-      _render_info.color);
+    _render_object_id = _render_context->CreateRenderObject(_render_info);
   }
 
   void RenderNode::Update()

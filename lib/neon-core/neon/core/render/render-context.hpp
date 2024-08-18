@@ -29,11 +29,7 @@ namespace core
   public:
     explicit RenderContext(const int max_render_objects): _render_object_buffer(max_render_objects) {}
 
-    virtual int CreateRenderObject(
-      const std::string &model_path,
-      const std::string &shader_path,
-      const std::vector<std::string> &texture_paths,
-      const Color &color) = 0;
+    virtual int CreateRenderObject(const RenderInfo &render_info) = 0;
 
     virtual int CreateRenderObject(
       const std::vector<float> &vertices,
