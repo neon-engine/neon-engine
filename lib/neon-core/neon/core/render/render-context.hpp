@@ -23,7 +23,6 @@ namespace core
   {
   protected:
     DataBuffer<RenderObjectRef> _render_object_buffer;
-    std::queue<int> _render_queue;
 
     ~RenderContext() = default;
 
