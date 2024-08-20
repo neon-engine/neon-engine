@@ -2,7 +2,10 @@
 
 #include <iostream>
 
+#include "glm/gtc/quaternion.hpp"
+
 namespace core {
+
   Node::Node(
     const std::string &name,
     const Transform &transform)
@@ -12,6 +15,15 @@ namespace core {
   }
 
   Node::~Node() = default;
+
+  void Node::CalculateWorldMatrix()
+  {
+    const auto position = translate(glm::mat4{1.0f}, _transform.position);
+    const auto rotation = mat4_cast(_transform.rotation.GetQuaternion());
+    const auto scale = glm::scale(glm::mat4{1.0f}, _transform.scale);
+    const auto parent_matrix = _parent == nullptr ? glm::mat4(1.0f) : _parent->GetWorldMatrix();
+    _world_matrix = position * rotation * scale * parent_matrix;
+  }
 
   void Node::AddChild(const std::shared_ptr<Node> &child)
   {
@@ -35,11 +47,17 @@ namespace core {
     return _children;
   }
 
+  glm::mat4 Node::GetWorldMatrix()
+  {
+    return _world_matrix;
+  }
+
   void Node::Initialize() {}
 
-  void Node::Update() {}
-
-  void Node::Render(const glm::mat4 &parent_matrix) {}
+  void Node::Update()
+  {
+    CalculateWorldMatrix();
+  }
 
   void Node::CleanUp() {}
 } // core

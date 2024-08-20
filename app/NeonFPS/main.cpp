@@ -3,6 +3,7 @@
 
 #include "neon-fps-application.hpp"
 #include "neon/core/input/sdl-2-input-system.hpp"
+#include "neon/core/render/forward-render-pipeline.hpp"
 #include "neon/core/render/opengl-render-system.hpp"
 #include "neon/core/window/sdl2-window-system.hpp"
 
@@ -15,8 +16,9 @@ int main()
   core::SDL2_WindowSystem window_system(settings_config);
   core::SDL2_InputSystem input_system(settings_config, &window_system);
   core::OpenGL_RenderSystem render_system(settings_config);
+  core::Forward_RenderPipeline render_pipeline(&render_system);
 
-  NeonFpsApplication app(settings_config, &window_system, &input_system, &render_system);
+  NeonFpsApplication app(settings_config, &window_system, &input_system, &render_system, &render_pipeline);
 
   try
   {

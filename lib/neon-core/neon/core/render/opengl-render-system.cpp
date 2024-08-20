@@ -128,6 +128,22 @@ namespace core
     mesh.Use();
   }
 
+  void OpenGL_RenderSystem::DrawRenderObject(
+    const int render_object_id,
+    const glm::mat4 &to_world,
+    const glm::mat4 &view,
+    const glm::mat4 &projection)
+  {
+    const auto [mesh_id, material_id] = _render_object_buffer[render_object_id];
+    const auto mesh = _mesh_refs[mesh_id];
+    const auto material = _material_refs[material_id];
+
+    auto model = mesh.GetModelMatrix();
+    model = to_world * model;
+    material.Use(model, view, projection);
+    mesh.Use();
+  }
+
   void OpenGL_RenderSystem::DestroyRenderObject(const int render_object_id)
   {
     const auto [mesh_id, material_id] = _render_object_buffer.Remove(render_object_id);
@@ -137,8 +153,4 @@ namespace core
     mesh.CleanUp();
     material.CleanUp();
   }
-
-  void OpenGL_RenderSystem::EnqueueForRendering(int render_object_id, glm::mat4 to_world) {}
-
-  void OpenGL_RenderSystem::ProcessRenderingQueue() {}
 } // core

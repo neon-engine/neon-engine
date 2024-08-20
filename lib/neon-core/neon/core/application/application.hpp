@@ -3,6 +3,7 @@
 
 #include "settings-config.hpp"
 #include "neon/core/input/input-system.hpp"
+#include "neon/core/render/render-pipeline.hpp"
 #include "neon/core/render/render-system.hpp"
 #include "neon/core/window/window-system.hpp"
 
@@ -16,12 +17,14 @@ namespace core
     WindowSystem *_window_system;
     InputSystem *_input_system;
     RenderSystem *_render_system;
+    RenderPipeline *_render_pipeline;
 
     Application(
       const SettingsConfig &settings_config,
       WindowSystem *window_system,
       InputSystem *input_system,
-      RenderSystem *render_system);
+      RenderSystem *render_system,
+      RenderPipeline *render_pipeline);
 
   public:
     virtual ~Application();

@@ -3,12 +3,12 @@
 #include "neon/core/oop-system/scene-graph/render-node.hpp"
 
 core::Scene::Scene(
-  RenderContext *render_context,
+  RenderPipeline *render_pipeline,
   InputContext *input_context,
   WindowContext *window_context)
-  : _render_context(render_context),
+  : _window_context(window_context),
     _input_context(input_context),
-    _window_context(window_context),
+    _render_pipeline(render_pipeline),
     _player(input_context),
     _scene_graph("root", {}) {}
 
@@ -24,7 +24,7 @@ void core::Scene::Initialize()
       .shader_path = "assets/shaders/color",
       .color = {1.0f, 0.5f, 0.31f}
     },
-    _render_context);
+    _render_pipeline);
 
   const auto light_cube = std::make_shared<RenderNode>(
     "light cube",
@@ -37,7 +37,7 @@ void core::Scene::Initialize()
       .shader_path = "assets/shaders/color",
       .color = {1.0f, 1.0f, 1.0f}
     },
-    _render_context);
+    _render_pipeline);
   _scene_graph.AddChild(cube);
   _scene_graph.AddChild(light_cube);
   _scene_graph.Initialize();
@@ -55,7 +55,7 @@ void core::Scene::RenderFrame() const
 {
   const auto camera = _player.GetCamera();
   const glm::mat4 view = camera.GetView();
-  const auto [width, height] = _render_context->GetRenderResolution();
+  const auto [width, height] = _render_pipeline->GetRenderResolution();
   const glm::mat4 projection = camera.GetProjection(width, height);
 }
 

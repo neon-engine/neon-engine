@@ -61,6 +61,21 @@ namespace core
     std::vector<std::string> texture_paths;
     Color color;
   };
+
+  enum class RenderTarget
+  {
+    Window,
+    Texture
+  };
+
+  struct CameraInfo
+  {
+    RenderTarget target{RenderTarget::Window};
+    float fov{45.0f};
+    glm::mat4 view{1.0f};
+    float near{0.1f};
+    float far{1000.f};
+  };
 }
 
 #endif //DATA_TYPES_HPP

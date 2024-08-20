@@ -19,6 +19,8 @@ namespace core
     Node *_parent = nullptr;
     std::vector<std::shared_ptr<Node>> _children;
 
+    void CalculateWorldMatrix();
+
   public:
     Node(const std::string &name, const Transform &transform);
 
@@ -30,11 +32,11 @@ namespace core
 
     [[nodiscard]] const std::vector<std::shared_ptr<Node>>& GetChildren() const;
 
+    virtual glm::mat4 GetWorldMatrix();
+
     virtual void Initialize();
 
     virtual void Update();
-
-    virtual void Render(const glm::mat4 &parent_matrix);
 
     virtual void CleanUp();
   };

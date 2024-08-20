@@ -2,14 +2,14 @@
 #define RENDER_NODE_HPP
 
 #include "node.hpp"
-#include "neon/core/render/render-context.hpp"
+#include "neon/core/render/render-pipeline.hpp"
 
 namespace core
 {
   class RenderNode final : public Node
   {
     RenderInfo _render_info;
-    RenderContext *_render_context;
+    RenderPipeline *_render_pipeline;
     int _render_object_id = -1;
 
   public:
@@ -17,13 +17,11 @@ namespace core
       const std::string &name,
       const Transform &transform,
       const RenderInfo &render_info,
-      RenderContext *render_context);
+      RenderPipeline *render_pipeline);
 
     void Initialize() override;
 
     void Update() override;
-
-    void Render(const glm::mat4 &parent_matrix) override;
 
     void CleanUp() override;
   };
