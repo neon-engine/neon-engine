@@ -1,7 +1,5 @@
 #include "render-node.hpp"
 
-#include <glm/gtc/quaternion.hpp>
-
 namespace core
 {
   RenderNode::RenderNode(

@@ -53,10 +53,6 @@ void core::Scene::Update()
 
 void core::Scene::RenderFrame() const
 {
-  const auto camera = _player.GetCamera();
-  const glm::mat4 view = camera.GetView();
-  const auto [width, height] = _render_pipeline->GetRenderResolution();
-  const glm::mat4 projection = camera.GetProjection(width, height);
 }
 
 void core::Scene::CleanUp()
