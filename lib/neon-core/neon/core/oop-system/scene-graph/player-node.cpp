@@ -35,7 +35,7 @@ namespace core {
       move_direction += normalize(cross(_forward, _up)) * _move_speed;
     }
 
-    _transform.position += move_direction;
+    _transform.position += move_direction * static_cast<float>(1.0f);
     CalculateWorldMatrix();
   }
 } // core
