@@ -13,7 +13,7 @@ namespace core
     explicit Forward_RenderPipeline(RenderContext *render_context)
       : RenderPipeline(render_context) {}
 
-    void SetCameraInfo(const CameraInfo& camera_info);
+    void SetCameraInfo(const CameraInfo& camera_info) override;
 
     void EnqueueForRendering(int render_object_id, const glm::mat4& to_world) override;
 

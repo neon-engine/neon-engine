@@ -46,6 +46,8 @@ add_library(${TARGET} STATIC
         neon/core/render/render-pipeline.hpp
         neon/core/render/forward-render-pipeline.cpp
         neon/core/render/forward-render-pipeline.hpp
+        neon/core/oop-system/scene-graph/player-node.cpp
+        neon/core/oop-system/scene-graph/player-node.hpp
 )
 
 target_include_directories(${TARGET}

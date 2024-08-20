@@ -27,10 +27,7 @@ namespace core
       _render_context->DestroyRenderObject(render_object_id);
     }
 
-    virtual RenderResolution GetRenderResolution()
-    {
-      return _render_context->GetRenderResolution();
-    }
+    virtual void SetCameraInfo(const CameraInfo& camera_info) = 0;
 
     virtual void EnqueueForRendering(int render_object_id, const glm::mat4& to_world) = 0;
 
