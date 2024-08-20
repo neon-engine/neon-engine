@@ -52,6 +52,8 @@ namespace core
     glm::vec3 position{0.0f};
     Rotation rotation{0.0f, 0.0f, 0.0f};
     glm::vec3 scale{1.0f};
+    static glm::vec3 Forward() { return {0.0f, 0.0f, -1.0f}; }
+    static glm::vec3 Up() { return { 0.0f, 1.0f, 0.0f }; }
   };
 
   struct RenderInfo
