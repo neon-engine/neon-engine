@@ -46,13 +46,15 @@ namespace core
       const glm::mat4 &view,
       const glm::mat4 &projection) = 0;
 
+    virtual void DrawRenderObject(
+      int render_object_id,
+      const glm::mat4 &to_world,
+      const glm::mat4 &view,
+      const glm::mat4 &projection) = 0;
+
     virtual void DestroyRenderObject(int render_object_id) = 0;
 
     virtual const RenderResolution& GetRenderResolution() = 0;
-
-    virtual void EnqueueForRendering(int render_object_id, glm::mat4 to_world) = 0;
-
-    virtual void ProcessRenderingQueue() = 0;
   };
 } // core
 

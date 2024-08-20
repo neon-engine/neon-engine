@@ -44,6 +44,8 @@ add_library(${TARGET} STATIC
         neon/core/oop-system/scene-graph/camera-node.cpp
         neon/core/oop-system/scene-graph/camera-node.hpp
         neon/core/render/render-pipeline.hpp
+        neon/core/render/forward-render-pipeline.cpp
+        neon/core/render/forward-render-pipeline.hpp
 )
 
 target_include_directories(${TARGET}
