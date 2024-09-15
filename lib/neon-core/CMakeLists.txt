@@ -11,8 +11,6 @@ add_library(${TARGET} STATIC
         neon/core/render/opengl-render-system.cpp
         neon/core/render/opengl-render-system.hpp
         neon/core/window/window-system.hpp
-        neon/core/scene/scene.cpp
-        neon/core/scene/scene.hpp
         neon/core/render/render-context.hpp
         neon/core/window/sdl2-window-system.cpp
         neon/core/window/sdl2-window-system.hpp
@@ -43,6 +41,8 @@ add_library(${TARGET} STATIC
         neon/core/oop-system/scene-graph/scene-graph.hpp
         neon/core/oop-system/scene-graph/camera-node.cpp
         neon/core/oop-system/scene-graph/camera-node.hpp
+        neon/core/oop-system/scene-graph/scene-loader.cpp
+        neon/core/oop-system/scene-graph/scene-loader.hpp
         neon/core/render/render-pipeline.hpp
         neon/core/render/forward-render-pipeline.cpp
         neon/core/render/forward-render-pipeline.hpp

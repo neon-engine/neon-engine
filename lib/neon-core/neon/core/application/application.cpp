@@ -1,6 +1,6 @@
 #include "application.hpp"
 
-#include "neon/core/scene/scene.hpp"
+#include "../oop-system/scene-graph/scene-loader.hpp"
 
 
 namespace core
@@ -51,7 +51,7 @@ namespace core
   {
     Initialize();
 
-    Scene scene(_render_pipeline, _input_system, _window_system);
+    SceneLoader scene(_render_pipeline, _input_system, _window_system);
     scene.Initialize();
 
     while (_window_system->IsRunning())
