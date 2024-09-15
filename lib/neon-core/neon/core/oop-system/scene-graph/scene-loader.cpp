@@ -1,8 +1,8 @@
-#include "scene.hpp"
+#include "scene-loader.hpp"
 
-#include "neon/core/oop-system/scene-graph/render-node.hpp"
+#include "render-node.hpp"
 
-core::Scene::Scene(
+core::SceneLoader::SceneLoader(
   RenderPipeline *render_pipeline,
   InputContext *input_context,
   WindowContext *window_context)
@@ -12,7 +12,7 @@ core::Scene::Scene(
     _player(input_context),
     _scene_graph("root", {}) {}
 
-void core::Scene::Initialize()
+void core::SceneLoader::Initialize()
 {
   std::cout << "Initializing the scene" << std::endl;
 
@@ -45,17 +45,17 @@ void core::Scene::Initialize()
   _input_context->CenterAndHideCursor();
 }
 
-void core::Scene::Update()
+void core::SceneLoader::Update()
 {
   const auto delta_time = _window_context->GetDeltaTime();
   _player.Update(delta_time, glm::mat4{1.0f});
 }
 
-void core::Scene::RenderFrame() const
+void core::SceneLoader::RenderFrame() const
 {
 }
 
-void core::Scene::CleanUp()
+void core::SceneLoader::CleanUp()
 {
   std::cout << "Cleaning up the scene" << std::endl;
   _scene_graph.CleanUp();
