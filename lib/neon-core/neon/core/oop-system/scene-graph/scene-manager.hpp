@@ -12,7 +12,7 @@
 
 namespace core
 {
-  class Scene
+  class SceneManager
   {
     WindowContext *_window_context;
     InputContext *_input_context;
@@ -21,12 +21,12 @@ namespace core
     Node* _root;
 
   public:
-    explicit Scene(
+    explicit SceneManager(
       RenderPipeline *render_pipeline,
       InputContext *input_context,
       WindowContext *window_context);
 
-    void Initialize();
+    void Initialize() const;
 
     void Update() const;
 

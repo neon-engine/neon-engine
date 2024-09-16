@@ -106,7 +106,12 @@ namespace core
       .mesh_id = mesh_id,
       .material_id = material_id
     };
-    return _render_object_buffer.Add(render_object);
+    const auto render_id = _render_object_buffer.Add(render_object);
+
+    std::cout << "Created render object with id " << render_id << std::endl;
+    std::cout << "With mesh id " << mesh_id << std::endl;
+    std::cout << "With material id " << material_id << std::endl;
+    return render_id;
   }
 
   void OpenGL_RenderSystem::DrawRenderObject(

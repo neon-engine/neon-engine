@@ -41,8 +41,8 @@ add_library(${TARGET} STATIC
         neon/core/oop-system/scene-graph/node/camera-node.hpp
         neon/core/oop-system/scene-graph/node/player-node.cpp
         neon/core/oop-system/scene-graph/node/player-node.hpp
-        neon/core/oop-system/scene-graph/scene.cpp
-        neon/core/oop-system/scene-graph/scene.hpp
+        neon/core/oop-system/scene-graph/scene-manager.cpp
+        neon/core/oop-system/scene-graph/scene-manager.hpp
         neon/core/render/render-pipeline.hpp
         neon/core/render/forward-render-pipeline.cpp
         neon/core/render/forward-render-pipeline.hpp
