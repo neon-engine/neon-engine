@@ -33,21 +33,19 @@ add_library(${TARGET} STATIC
         neon/core/oop-system/controllers/controller.hpp
         neon/core/oop-system/controllers/fps-player-controller.cpp
         neon/core/oop-system/controllers/fps-player-controller.hpp
-        neon/core/oop-system/scene-graph/node.cpp
-        neon/core/oop-system/scene-graph/node.hpp
-        neon/core/oop-system/scene-graph/render-node.cpp
-        neon/core/oop-system/scene-graph/render-node.hpp
-        neon/core/oop-system/scene-graph/scene-graph.cpp
-        neon/core/oop-system/scene-graph/scene-graph.hpp
-        neon/core/oop-system/scene-graph/camera-node.cpp
-        neon/core/oop-system/scene-graph/camera-node.hpp
-        neon/core/oop-system/scene-graph/scene-loader.cpp
-        neon/core/oop-system/scene-graph/scene-loader.hpp
+        neon/core/oop-system/scene-graph/node/node.cpp
+        neon/core/oop-system/scene-graph/node/node.hpp
+        neon/core/oop-system/scene-graph/node/render-node.cpp
+        neon/core/oop-system/scene-graph/node/render-node.hpp
+        neon/core/oop-system/scene-graph/node/camera-node.cpp
+        neon/core/oop-system/scene-graph/node/camera-node.hpp
+        neon/core/oop-system/scene-graph/node/player-node.cpp
+        neon/core/oop-system/scene-graph/node/player-node.hpp
+        neon/core/oop-system/scene-graph/scene.cpp
+        neon/core/oop-system/scene-graph/scene.hpp
         neon/core/render/render-pipeline.hpp
         neon/core/render/forward-render-pipeline.cpp
         neon/core/render/forward-render-pipeline.hpp
-        neon/core/oop-system/scene-graph/player-node.cpp
-        neon/core/oop-system/scene-graph/player-node.hpp
 )
 
 target_include_directories(${TARGET}

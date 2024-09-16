@@ -21,7 +21,7 @@ namespace core
 
     void Initialize() override;
 
-    void Update() override;
+    void Update(double delta_time) override;
 
     void CleanUp() override;
   };

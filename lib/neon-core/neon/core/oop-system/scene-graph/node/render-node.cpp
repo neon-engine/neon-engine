@@ -20,9 +20,9 @@ namespace core
     _render_object_id = _render_pipeline->CreateRenderObject(_render_info);
   }
 
-  void RenderNode::Update()
+  void RenderNode::Update(const double delta_time)
   {
-    Node::Update();
+    Node::Update(delta_time);
     _render_pipeline->EnqueueForRendering(_render_object_id, _world_matrix);
   }
 
