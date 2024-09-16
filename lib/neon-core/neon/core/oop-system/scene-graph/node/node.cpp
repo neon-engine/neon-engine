@@ -57,12 +57,19 @@ namespace core {
     return _world_matrix;
   }
 
-  void Node::Initialize() {}
+  void Node::Initialize()
+  {
+    std::cout << "Initializing " << _name << std::endl;
+    _initialized = true;
+  }
 
   void Node::Update(const double delta_time)
   {
     CalculateWorldMatrix();
   }
 
-  void Node::CleanUp() {}
+  void Node::CleanUp()
+  {
+    std::cout << "Cleaning up " << _name << std::endl;
+  }
 } // core

@@ -12,6 +12,7 @@ namespace core
   // ReSharper disable once CppClassCanBeFinal
   class Node
   {
+    bool _initialized;
   protected:
     std::string _name;
     Transform _transform;

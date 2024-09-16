@@ -29,7 +29,6 @@ namespace core
   void RenderNode::CleanUp()
   {
     Node::CleanUp();
-    std::cout << "Cleaning up " << _name << std::endl;
     _render_pipeline->DestroyRenderObject(_render_object_id);
   }
 } // core

@@ -1,11 +1,11 @@
-#include "scene.hpp"
+#include "scene-manager.hpp"
 
 #include <ranges>
 #include <stack>
 
 #include "node/render-node.hpp"
 
-core::Scene::Scene(
+core::SceneManager::SceneManager(
   RenderPipeline *render_pipeline,
   InputContext *input_context,
   WindowContext *window_context)
@@ -17,11 +17,12 @@ core::Scene::Scene(
   _root = new Node("root", {});
 }
 
-void core::Scene::Initialize()
+void core::SceneManager::Initialize() const
 {
   std::cout << "Initializing the scene" << std::endl;
 
-  // todo create a NodeFactory class and use that to initialize nodes
+  // TODO create a NodeFactory class and use that to initialize nodes
+  // avoid using the heap to avoid std::bad_alloc exceptions as well as make use of locality
 
   const auto cube = new RenderNode(
     "cube",
@@ -47,12 +48,13 @@ void core::Scene::Initialize()
     _render_pipeline);
   _root->AddChild(cube);
   _root->AddChild(light_cube);
-  _root->Initialize();
+
+  PostOrderTraversal([](Node *node) { node->Initialize(); });
   std::cout << "Initialized scene!" << std::endl;
   _input_context->CenterAndHideCursor();
 }
 
-void core::Scene::Update() const
+void core::SceneManager::Update() const
 {
   const auto delta_time = _window_context->GetDeltaTime();
 
@@ -62,7 +64,7 @@ void core::Scene::Update() const
   });
 }
 
-void core::Scene::CleanUp() const
+void core::SceneManager::CleanUp() const
 {
   std::cout << "Cleaning up the scene" << std::endl;
   PostOrderTraversal([](Node *node)
@@ -73,9 +75,8 @@ void core::Scene::CleanUp() const
   });
 }
 
-void core::Scene::PreOrderTraversal(const std::function<void(Node *)> &func) const
+void core::SceneManager::PreOrderTraversal(const std::function<void(Node *)> &func) const
 {
-  std::cout << "Processing scene graph in pre-order traversal" << std::endl;
   std::stack<Node *> stack{};
   stack.push(_root);
 
@@ -92,13 +93,10 @@ void core::Scene::PreOrderTraversal(const std::function<void(Node *)> &func) con
       stack.push(it);
     }
   }
-
-  std::cout << "Done with pre-order traversal" << std::endl;
 }
 
-void core::Scene::PostOrderTraversal(const std::function<void(Node *)> &func) const
+void core::SceneManager::PostOrderTraversal(const std::function<void(Node *)> &func) const
 {
-  std::cout << "Processing scene graph in post-order traversal" << std::endl;
   std::stack<Node *> stack1, stack2;
   stack1.push(_root);
 
@@ -120,6 +118,4 @@ void core::Scene::PostOrderTraversal(const std::function<void(Node *)> &func) co
     stack2.pop();
     func(current);
   }
-
-  std::cout << "Done with post-order traversal" << std::endl;
 }
