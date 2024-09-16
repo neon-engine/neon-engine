@@ -1,6 +1,6 @@
 #include "application.hpp"
 
-#include "../oop-system/scene-graph/scene-loader.hpp"
+#include "../oop-system/scene-graph/scene.hpp"
 
 
 namespace core
@@ -51,7 +51,7 @@ namespace core
   {
     Initialize();
 
-    SceneLoader scene(_render_pipeline, _input_system, _window_system);
+    Scene scene(_render_pipeline, _input_system, _window_system);
     scene.Initialize();
 
     while (_window_system->IsRunning())
@@ -59,7 +59,6 @@ namespace core
       _input_system->ProcessInput();
       _render_system->PrepareFrame();
       scene.Update();
-      scene.RenderFrame();
       _window_system->Update();
     }
 

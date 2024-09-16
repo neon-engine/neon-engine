@@ -9,7 +9,7 @@ namespace core {
     _input_context = input_context;
   }
 
-  void PlayerNode::Update()
+  void PlayerNode::Update(const double delta_time)
   {
     const auto input_state = _input_context->GetInputState();
 
@@ -35,7 +35,7 @@ namespace core {
       move_direction += normalize(cross(_forward, _up)) * _move_speed;
     }
 
-    _transform.position += move_direction * static_cast<float>(1.0f);
+    _transform.position += move_direction * static_cast<float>(delta_time);
     CalculateWorldMatrix();
   }
 } // core

@@ -18,7 +18,7 @@ namespace core
       const Transform &transform,
       InputContext *input_context);
 
-    void Update() override;
+    void Update(double delta_time) override;
   };
 } // core
 

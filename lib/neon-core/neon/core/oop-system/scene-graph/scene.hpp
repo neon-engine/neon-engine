@@ -1,36 +1,41 @@
 #ifndef SCENE_HPP
 #define SCENE_HPP
 
-#include "node.hpp"
+#include <functional>
+
 #include "neon/core/input/input-context.hpp"
 #include "neon/core/oop-system/controllers/fps-player-controller.hpp"
 #include "neon/core/render/render-pipeline.hpp"
 #include "neon/core/window/window-context.hpp"
+#include "node/node.hpp"
 
 
 namespace core
 {
-  class SceneLoader
+  class Scene
   {
     WindowContext *_window_context;
     InputContext *_input_context;
     RenderPipeline *_render_pipeline;
     FPS_PlayerController _player;
-    Node _scene_graph;
+    Node* _root;
 
   public:
-    explicit SceneLoader(
+    explicit Scene(
       RenderPipeline *render_pipeline,
       InputContext *input_context,
       WindowContext *window_context);
 
     void Initialize();
 
-    void Update();
+    void Update() const;
 
-    void RenderFrame() const;
+    void CleanUp() const;
 
-    void CleanUp();
+  private:
+    void PreOrderTraversal(const std::function<void(Node *)> & func) const;
+
+    void PostOrderTraversal(const std::function<void(Node *)> & func) const;
   };
 }
 

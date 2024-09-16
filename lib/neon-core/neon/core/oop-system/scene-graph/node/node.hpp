@@ -17,7 +17,7 @@ namespace core
     Transform _transform;
     glm::mat4 _world_matrix{1.0f};
     Node *_parent = nullptr;
-    std::vector<std::shared_ptr<Node>> _children;
+    std::vector<Node *> _children;
 
     void CalculateWorldMatrix();
 
@@ -26,17 +26,19 @@ namespace core
 
     virtual ~Node();
 
-    void AddChild(const std::shared_ptr<Node> &child);
+    [[nodiscard]] const std::string& GetName();
 
-    void RemoveChild(const std::shared_ptr<Node> &child);
+    void AddChild(Node *child);
 
-    [[nodiscard]] const std::vector<std::shared_ptr<Node>>& GetChildren() const;
+    void RemoveChild(Node *child);
+
+    [[nodiscard]] const std::vector<Node *>& GetChildren() const;
 
     virtual glm::mat4 GetWorldMatrix();
 
     virtual void Initialize();
 
-    virtual void Update();
+    virtual void Update(double delta_time);
 
     virtual void CleanUp();
   };

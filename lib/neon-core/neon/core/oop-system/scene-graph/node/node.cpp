@@ -16,6 +16,11 @@ namespace core {
 
   Node::~Node() = default;
 
+  const std::string & Node::GetName()
+  {
+    return _name;
+  }
+
   void Node::CalculateWorldMatrix()
   {
     const auto position = translate(glm::mat4{1.0f}, _transform.position);
@@ -25,14 +30,14 @@ namespace core {
     _world_matrix = position * rotation * scale * parent_matrix;
   }
 
-  void Node::AddChild(const std::shared_ptr<Node> &child)
+  void Node::AddChild(Node *child)
   {
     _children.push_back(child);
     child->_parent = this;
     std::cout << "Added node " << child->_name << " to node " << _name << std::endl;
   }
 
-  void Node::RemoveChild(const std::shared_ptr<Node> &child)
+  void Node::RemoveChild(Node *child)
   {
     if (const auto it = std::ranges::find(_children, child);
       it != _children.end())
@@ -42,7 +47,7 @@ namespace core {
     }
   }
 
-  const std::vector<std::shared_ptr<Node>> & Node::GetChildren() const
+  const std::vector<Node *> & Node::GetChildren() const
   {
     return _children;
   }
@@ -54,7 +59,7 @@ namespace core {
 
   void Node::Initialize() {}
 
-  void Node::Update()
+  void Node::Update(const double delta_time)
   {
     CalculateWorldMatrix();
   }

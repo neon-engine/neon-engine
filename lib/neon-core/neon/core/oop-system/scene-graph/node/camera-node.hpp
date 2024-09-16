@@ -23,7 +23,7 @@ public:
     const Transform &transform,
     RenderPipeline *render_pipeline);
 
-  void Update() override;
+  void Update(double delta_time) override;
 };
 
 } // core
