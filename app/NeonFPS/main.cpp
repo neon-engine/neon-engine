@@ -17,8 +17,15 @@ int main()
   core::SDL2_InputSystem input_system(settings_config, &window_system);
   core::OpenGL_RenderSystem render_system(settings_config);
   core::Forward_RenderPipeline render_pipeline(&render_system);
+  core::LoggingSystem logging_system{};
 
-  NeonFpsApplication app(settings_config, &window_system, &input_system, &render_system, &render_pipeline);
+  NeonFpsApplication app(
+    settings_config,
+    &window_system,
+    &input_system,
+    &render_system,
+    &render_pipeline,
+    &logging_system);
 
   try
   {

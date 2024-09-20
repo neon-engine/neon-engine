@@ -45,6 +45,7 @@ add_subdirectory(external/glm)
 add_subdirectory(external/sdl2)
 add_subdirectory(external/assimp)
 add_subdirectory(external/jolt-physics/Build)
+add_subdirectory(external/spdlog)
 
 # Additional libraries
 add_subdirectory(lib/neon-core)

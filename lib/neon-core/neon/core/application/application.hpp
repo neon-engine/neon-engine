@@ -3,6 +3,7 @@
 
 #include "settings-config.hpp"
 #include "neon/core/input/input-system.hpp"
+#include "neon/core/logging/logging-system.hpp"
 #include "neon/core/oop-system/scene-graph/scene-manager.hpp"
 #include "neon/core/render/render-pipeline.hpp"
 #include "neon/core/render/render-system.hpp"
@@ -20,13 +21,15 @@ namespace core
     RenderSystem *_render_system;
     RenderPipeline *_render_pipeline;
     SceneManager _scene_manager;
+    LoggingSystem *_logging_system;
 
     Application(
       const SettingsConfig &settings_config,
       WindowSystem *window_system,
       InputSystem *input_system,
       RenderSystem *render_system,
-      RenderPipeline *render_pipeline);
+      RenderPipeline *render_pipeline,
+      LoggingSystem *logging_system);
 
   public:
     virtual ~Application();
