@@ -3,6 +3,8 @@
 #include <ranges>
 #include <stack>
 
+#include "node/camera-node.hpp"
+#include "node/player-node.hpp"
 #include "node/render-node.hpp"
 
 core::SceneManager::SceneManager(
@@ -46,8 +48,17 @@ void core::SceneManager::Initialize() const
       .color = {1.0f, 1.0f, 1.0f}
     },
     _render_pipeline);
+  const auto player = new PlayerNode(
+    "player",
+    Transform{},
+    _input_context);
+
+  const auto camera = new CameraNode("camera", Transform{}, _render_pipeline);
+
   _root->AddChild(cube);
   _root->AddChild(light_cube);
+  _root->AddChild(player);
+  player->AddChild(camera);
 
   PostOrderTraversal([](Node *node) { node->Initialize(); });
   std::cout << "Initialized scene!" << std::endl;

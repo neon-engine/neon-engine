@@ -5,9 +5,11 @@ NeonFpsApplication::NeonFpsApplication(
   core::WindowSystem *window_system,
   core::InputSystem *input_system,
   core::RenderSystem *render_system,
-  core::RenderPipeline *render_pipeline): Application(
+  core::RenderPipeline *render_pipeline,
+  core::LoggingSystem *logging_system): Application(
     settings_config,
   window_system,
   input_system,
   render_system,
-  render_pipeline) {}
+  render_pipeline,
+  logging_system) {}

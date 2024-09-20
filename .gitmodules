@@ -16,3 +16,6 @@
 [submodule "external/jolt-physics"]
 	path = external/jolt-physics
 	url = https://github.com/jrouwe/JoltPhysics.git
+[submodule "external/spdlog"]
+	path = external/spdlog
+	url = https://github.com/gabime/spdlog.git
