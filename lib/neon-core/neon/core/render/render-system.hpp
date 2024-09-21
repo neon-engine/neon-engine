@@ -5,6 +5,7 @@
 #include "open-gl-mesh.hpp"
 #include "render-context.hpp"
 #include "neon/core/application/settings-config.hpp"
+#include "neon/core/logging/logger.hpp"
 
 namespace core
 {
@@ -17,12 +18,17 @@ namespace core
     DataBuffer<OpenGL_Mesh> _mesh_refs;
     DataBuffer<OpenGL_Material> _material_refs;
     SettingsConfig _settings_config;
+    std::shared_ptr<Logger> _logger;
 
   public:
-    explicit RenderSystem(const SettingsConfig &settings_config, const int max_render_objects)
+    explicit RenderSystem(
+      const SettingsConfig &settings_config,
+      const int max_render_objects,
+      const std::shared_ptr<Logger> &logger)
     : RenderContext(max_render_objects), _mesh_refs(max_render_objects), _material_refs(max_render_objects)
     {
       _settings_config = settings_config;
+      _logger = logger;
     }
 
   protected:

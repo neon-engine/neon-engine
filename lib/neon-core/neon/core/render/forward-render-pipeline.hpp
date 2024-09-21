@@ -10,8 +10,8 @@ namespace core
     CameraInfo _camera_info;
 
   public:
-    explicit Forward_RenderPipeline(RenderContext *render_context)
-      : RenderPipeline(render_context) {}
+    explicit Forward_RenderPipeline(RenderContext *render_context, const std::shared_ptr<Logger> &logger)
+      : RenderPipeline(render_context, logger) {}
 
     void SetCameraInfo(const CameraInfo& camera_info) override;
 

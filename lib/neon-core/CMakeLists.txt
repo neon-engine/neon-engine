@@ -48,6 +48,17 @@ add_library(${TARGET} STATIC
         neon/core/render/forward-render-pipeline.hpp
         neon/core/logging/logging-system.cpp
         neon/core/logging/logging-system.hpp
+        neon/core/logging/logger.hpp
+        neon/core/logging/logging-system.cpp
+        neon/core/logging/logging-system.hpp
+        neon/core/logging/logging-system.cpp
+        neon/core/logging/logging-system.hpp
+        neon/core/logging/logger.hpp
+        neon/core/logging/spd-logger.cpp
+        neon/core/logging/spd-logger.hpp
+        neon/core/logging/spd-logger.cpp
+        neon/core/logging/spd-logger.hpp
+        neon/core/logging/logging-context.hpp
 )
 
 target_include_directories(${TARGET}

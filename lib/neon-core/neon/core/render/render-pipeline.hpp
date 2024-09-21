@@ -1,6 +1,9 @@
 #ifndef RENDER_PIPELINE_HPP
 #define RENDER_PIPELINE_HPP
+#include <memory>
+
 #include "render-context.hpp"
+#include "neon/core/logging/logger.hpp"
 
 namespace core
 {
@@ -8,13 +11,15 @@ namespace core
   {
   protected:
     RenderContext *_render_context;
+    std::shared_ptr<Logger> _logger;
 
     ~RenderPipeline() = default;
 
   public:
-    explicit RenderPipeline(RenderContext *render_context)
+    explicit RenderPipeline(RenderContext *render_context, const std::shared_ptr<Logger> &logger)
     {
       _render_context = render_context;
+      _logger = logger;
     }
 
     virtual int CreateRenderObject(const RenderInfo &render_info)

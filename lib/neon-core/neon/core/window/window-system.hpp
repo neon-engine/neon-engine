@@ -3,6 +3,7 @@
 
 #include "window-context.hpp"
 #include "neon/core/application/settings-config.hpp"
+#include "neon/core/logging/logger.hpp"
 
 namespace core
 {
@@ -10,15 +11,17 @@ namespace core
   {
   protected:
     SettingsConfig _settings_config;
+    std::shared_ptr<Logger> _logger;
 
     virtual void ConfigureWindowForRenderer() = 0;
 
     ~WindowSystem() = default;
 
   public:
-    explicit WindowSystem(const SettingsConfig &settings_config)
+    explicit WindowSystem(const SettingsConfig &settings_config, const std::shared_ptr<Logger> &logger)
     {
       _settings_config = settings_config;
+      _logger = logger;
     }
 
     virtual void Initialize() = 0;

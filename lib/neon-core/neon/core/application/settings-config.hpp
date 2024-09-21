@@ -14,6 +14,9 @@ struct SettingsConfig
   int height;
   std::string title;
   RenderingApi selected_api;
+  std::string logpath = "logs/neon-engine.log";
+  std::size_t log_max_size = 1048576 * 5;
+  std::size_t log_max_files = 1;
 };
 
 #endif //WINDOW_INFO_HPP

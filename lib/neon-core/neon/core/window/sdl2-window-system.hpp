@@ -3,12 +3,15 @@
 
 // gl3w must be included first
 // ReSharper disable once CppUnusedIncludeDirective
+#include <memory>
+#include <utility>
 #include <GL/gl3w.h>
 
 #include <SDL.h>
 
 #include "window-system.hpp"
 #include "neon/core/application/settings-config.hpp"
+#include "neon/core/logging/logger.hpp"
 
 namespace core
 {
@@ -21,8 +24,8 @@ namespace core
     uint64_t _last_frame;
 
   public:
-    explicit SDL2_WindowSystem(const SettingsConfig &settings_config)
-      : WindowSystem(settings_config)
+    explicit SDL2_WindowSystem(const SettingsConfig &settings_config, const std::shared_ptr<Logger> &logger)
+      : WindowSystem(settings_config, logger)
     {
       _last_frame = SDL_GetPerformanceCounter();
     }

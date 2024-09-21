@@ -1,10 +1,12 @@
 #ifndef OPEN_GL_RENDER_SYSTEM_HPP
 #define OPEN_GL_RENDER_SYSTEM_HPP
 
+#include <memory>
 #include <vector>
 
 #include "render-system.hpp"
 #include "neon/core/application/settings-config.hpp"
+#include "neon/core/logging/logger.hpp"
 
 namespace core
 {
@@ -14,8 +16,10 @@ namespace core
     RenderResolution _render_resolution;
 
   public:
-    explicit OpenGL_RenderSystem(const SettingsConfig &settings_config)
-      : RenderSystem(settings_config, 4096),
+    explicit OpenGL_RenderSystem(
+      const SettingsConfig &settings_config,
+      std::shared_ptr<Logger> logger)
+      : RenderSystem(settings_config, 4096, std::move(logger)),
         _render_resolution(_settings_config.width, _settings_config.height) {}
 
     void Initialize() override;

@@ -6,10 +6,12 @@ NeonFpsApplication::NeonFpsApplication(
   core::InputSystem *input_system,
   core::RenderSystem *render_system,
   core::RenderPipeline *render_pipeline,
-  core::LoggingSystem *logging_system): Application(
+  core::LoggingSystem *logging_system,
+  const std::shared_ptr<core::Logger> &logger): Application(
     settings_config,
-  window_system,
-  input_system,
-  render_system,
-  render_pipeline,
-  logging_system) {}
+    window_system,
+    input_system,
+    render_system,
+    render_pipeline,
+    logging_system,
+    logger) {}
