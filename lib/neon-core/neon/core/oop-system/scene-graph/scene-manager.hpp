@@ -19,12 +19,14 @@ namespace core
     RenderPipeline *_render_pipeline;
     FPS_PlayerController _player;
     Node* _root;
+    std::shared_ptr<Logger> _logger;
 
   public:
     explicit SceneManager(
       RenderPipeline *render_pipeline,
       InputContext *input_context,
-      WindowContext *window_context);
+      WindowContext *window_context,
+      const std::shared_ptr<Logger> &logger);
 
     void Initialize() const;
 

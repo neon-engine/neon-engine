@@ -10,13 +10,15 @@
 core::SceneManager::SceneManager(
   RenderPipeline *render_pipeline,
   InputContext *input_context,
-  WindowContext *window_context)
+  WindowContext *window_context,
+  const std::shared_ptr<Logger> &logger)
   : _window_context(window_context),
     _input_context(input_context),
     _render_pipeline(render_pipeline),
     _player(input_context)
 {
   _root = new Node("root", {});
+  _logger = logger;
 }
 
 void core::SceneManager::Initialize() const

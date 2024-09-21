@@ -13,8 +13,11 @@ namespace core
     InputState _input_state{};
     bool _window_focus = false;
   public:
-    explicit SDL2_InputSystem(const SettingsConfig &settings_config, WindowContext* context)
-      : InputSystem(settings_config)
+    explicit SDL2_InputSystem(
+      const SettingsConfig &settings_config,
+      WindowContext* context,
+      const std::shared_ptr<Logger> &logger)
+      : InputSystem(settings_config, logger)
     {
       _context = context;
     }

@@ -9,13 +9,20 @@ namespace core
     InputSystem *input_system,
     RenderSystem *render_system,
     RenderPipeline *render_pipeline,
-    LoggingSystem *logging_system) : _scene_manager(render_pipeline,input_system, window_system)
+    LoggingSystem *logging_system,
+    const std::shared_ptr<Logger> &logger)
+  : _scene_manager(
+      render_pipeline,
+      input_system,
+      window_system,
+      logging_system->CreateLogger("SceneManager"))
   {
     _window_system = window_system;
     _input_system = input_system;
     _render_system = render_system;
     _render_pipeline = render_pipeline;
     _logging_system = logging_system;
+    _logger = logger;
   }
 
   void Application::Initialize() const

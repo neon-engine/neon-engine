@@ -20,8 +20,10 @@ namespace core
     InputSystem *_input_system;
     RenderSystem *_render_system;
     RenderPipeline *_render_pipeline;
-    SceneManager _scene_manager;
     LoggingSystem *_logging_system;
+    std::shared_ptr<Logger> _logger;
+
+    SceneManager _scene_manager;
 
     Application(
       const SettingsConfig &settings_config,
@@ -29,7 +31,8 @@ namespace core
       InputSystem *input_system,
       RenderSystem *render_system,
       RenderPipeline *render_pipeline,
-      LoggingSystem *logging_system);
+      LoggingSystem *logging_system,
+      const std::shared_ptr<Logger> &logger);
 
   public:
     virtual ~Application();

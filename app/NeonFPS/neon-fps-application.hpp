@@ -13,7 +13,8 @@ public:
     core::InputSystem *input_system,
     core::RenderSystem *render_system,
     core::RenderPipeline *render_pipeline,
-    core::LoggingSystem *logging_system);
+    core::LoggingSystem *logging_system,
+    const std::shared_ptr<core::Logger> &logger);
 };
 
 
