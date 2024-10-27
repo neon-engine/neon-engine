@@ -7,6 +7,7 @@
     <mapping directory="$PROJECT_DIR$/external/glm" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/external/jolt-physics" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/external/sdl2" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/spdlog" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/external/stb" vcs="Git" />
   </component>
 </project>
