@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="NeonFPS" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="ProjectNeon" TARGET_NAME="NeonFPS" CONFIG_NAME="Debug-x86_64-linux" RUN_TARGET_PROJECT_NAME="ProjectNeon" RUN_TARGET_NAME="NeonFPS">
+  <configuration default="false" name="NeonFPS" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="ProjectNeon" TARGET_NAME="NeonFPS" CONFIG_NAME="debug-x86_64-linux" RUN_TARGET_PROJECT_NAME="ProjectNeon" RUN_TARGET_NAME="NeonFPS">
     <envs>
       <env name="SDL_VIDEODRIVER" value="wayland" />
     </envs>

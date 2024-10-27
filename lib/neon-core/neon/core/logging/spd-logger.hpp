@@ -13,7 +13,17 @@ namespace core
     explicit Spd_Logger(const std::shared_ptr<spdlog::logger> &logger);
 
   protected:
-    void DebugImpl(const std::string &format, std::format_args args) override;
+    void TraceImpl(const std::string &format, const std::format_args &args) override;
+
+    void DebugImpl(const std::string &format, const std::format_args &args) override;
+
+    void InfoImpl(const std::string &format, const std::format_args &args) override;
+
+    void WarnImpl(const std::string &format, const std::format_args &args) override;
+
+    void ErrorImpl(const std::string &format, const std::format_args &args) override;
+
+    void CriticalImpl(const std::string &format, const std::format_args &args) override;
   };
 } // core
 

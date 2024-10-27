@@ -14,8 +14,13 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     # TODO set Wall/Wextra/Werror later when we no longer have git submodules and these libraries are in the toolchain instead
     #set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wall -Wextra -Werror")
     #set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra -Werror -fno-inline")
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-inline")
+    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -g")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -fno-inline")
+
+    message("CMAKE_C_FLAGS_DEBUG: ${CMAKE_C_FLAGS_DEBUG}")
+    message("CMAKE_CXX_FLAGS_DEBUG: ${CMAKE_CXX_FLAGS_DEBUG}")
 endif ()
+# TODO set release flags here
 
 # Set output directories for anyone not using CLion
 
@@ -51,6 +56,10 @@ add_subdirectory(external/spdlog)
 
 # Additional libraries
 add_subdirectory(lib/neon-core)
+
+if (CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
+    add_compile_options(-march=armv8-a)
+endif ()
 
 set(APP_TARGETS
         LearnOpenGL

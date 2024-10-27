@@ -6,7 +6,7 @@
 namespace core {
   void SDL2_InputSystem::Initialize()
   {
-    std::cout << "Initializing SDL2 input system" << std::endl;
+    _logger->Info("Initializing SDL2 input system");
   }
   void SDL2_InputSystem::ProcessInput()
   {
