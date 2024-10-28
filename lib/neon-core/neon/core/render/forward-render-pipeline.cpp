@@ -16,7 +16,7 @@ namespace core
 
   void Forward_RenderPipeline::Initialize()
   {
-    std::cout << "Initializing forward rendering pipeline" << std::endl;
+    _logger->Info("Initializing forward rendering pipeline");
   }
 
   void Forward_RenderPipeline::RenderFrame()
@@ -37,6 +37,6 @@ namespace core
 
   void Forward_RenderPipeline::CleanUp()
   {
-    std::cout << "Cleaning up forward rendering pipeline" << std::endl;
+    _logger->Info("Cleaning up forward rendering pipeline");
   }
 } // core

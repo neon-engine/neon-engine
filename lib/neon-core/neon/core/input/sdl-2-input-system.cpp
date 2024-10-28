@@ -33,13 +33,13 @@ namespace core {
           if (event.window.event == SDL_WINDOWEVENT_FOCUS_GAINED)
           {
             _window_focus = true;
-            std::cout << "Gained window focus" << std::endl;
+            _logger->Trace("Gained window focus");
             _context->SetWindowFocus(true);
           }
           else if (event.window.event == SDL_WINDOWEVENT_FOCUS_LOST)
           {
             _window_focus = false;
-            std::cout << "Lost window focus" << std::endl;
+            _logger->Trace("Lost window focus");
             _context->SetWindowFocus(false);
           }
           break;
@@ -93,7 +93,7 @@ namespace core {
 
   void SDL2_InputSystem::CleanUp()
   {
-    std::cout << "Cleaning up SDL2 input system" << std::endl;
+    _logger->Info("Cleaning up SDL2 input system");
   }
 
   const InputState &SDL2_InputSystem::GetInputState()
