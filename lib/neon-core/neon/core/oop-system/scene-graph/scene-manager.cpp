@@ -52,7 +52,9 @@ void core::SceneManager::Initialize() const
     _render_pipeline);
   const auto player = new PlayerNode(
     "player",
-    Transform{},
+    Transform{
+      .position = {0.f, 0.f, 2.0f}
+    },
     _input_context);
 
   const auto camera = new CameraNode("camera", Transform{}, _render_pipeline);
