@@ -84,7 +84,7 @@ namespace core
     const GLenum texture_unit = GL_TEXTURE0 + unit;
     glActiveTexture(texture_unit);
     glBindTexture(GL_TEXTURE_2D, _texture_id);
-    // todo add check to make sure we are not exceeding max_texture_units
+    // TODO [issues/5] add check to make sure we are not exceeding max_texture_units
     // if (unit >= 0 && unit < _max_texture_units)
     // {
     //   const GLenum texture_unit = GL_TEXTURE0 + unit;

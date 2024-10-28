@@ -25,7 +25,7 @@ void core::SceneManager::Initialize() const
 {
   std::cout << "Initializing the scene" << std::endl;
 
-  // TODO create a NodeFactory class and use that to initialize nodes
+  // TODO [issues/4] create a NodeFactory class and use that to initialize nodes
   // avoid using the heap to avoid std::bad_alloc exceptions as well as make use of locality
 
   const auto cube = new RenderNode(

@@ -43,7 +43,7 @@ namespace core
         _context = SDL_GL_CreateContext(_window);
 
         // disable vsync after creating the context on KDE
-        // todo make vsync configurable
+        // TODO [issues/1] make vsync configurable
         SDL_GL_SetSwapInterval(0);
         break;
       }

@@ -33,7 +33,7 @@ namespace core
 
     T Remove(int index)
     {
-      // todo setup a way so that multiple removals are not possible
+      // TODO [issues/2] setup a way so that multiple removals are not possible
       const auto out = _refs[index];
       _deleted_ids.push(_index);
       return out;
