@@ -23,7 +23,7 @@ core::SceneManager::SceneManager(
 
 void core::SceneManager::Initialize() const
 {
-  std::cout << "Initializing the scene" << std::endl;
+  _logger->Info("Initializing the scene");
 
   // TODO [issues/4] create a NodeFactory class and use that to initialize nodes
   // avoid using the heap to avoid std::bad_alloc exceptions as well as make use of locality
@@ -63,7 +63,7 @@ void core::SceneManager::Initialize() const
   player->AddChild(camera);
 
   PostOrderTraversal([](Node *node) { node->Initialize(); });
-  std::cout << "Initialized scene!" << std::endl;
+  _logger->Info("Initialized scene!");
   _input_context->CenterAndHideCursor();
 }
 
@@ -75,15 +75,17 @@ void core::SceneManager::Update() const
   {
     node->Update(delta_time);
   });
+
+  _render_pipeline->RenderFrame();
 }
 
 void core::SceneManager::CleanUp() const
 {
-  std::cout << "Cleaning up the scene" << std::endl;
-  PostOrderTraversal([](Node *node)
+  _logger->Info("Cleaning up the scene");
+  PostOrderTraversal([this](Node *node)
   {
     node->CleanUp();
-    std::cout << "Deleting " << node->GetName() << std::endl;
+    _logger->Debug("Deleting %s", node->GetName());
     delete node;
   });
 }
