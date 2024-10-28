@@ -32,7 +32,7 @@ namespace core
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); for wireframe
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-    // todo uncomment the next two lines for performance optimization later
+    // TODO [issues/6] uncomment the next two lines for performance optimization later
     // glEnable(GL_CULL_FACE);
     // glCullFace(GL_BACK);
 
@@ -63,7 +63,7 @@ namespace core
       render_info.color);
   }
 
-  // todo find out if returning -1 is the best way to handle this, maybe assert calls are better
+  // TODO [issues/7] find out if returning -1 is the best way to handle this, maybe assert calls are better
   int OpenGL_RenderSystem::CreateRenderObject(
     const std::vector<float> &vertices,
     const std::vector<float> &normals,
@@ -73,7 +73,7 @@ namespace core
     const std::vector<std::string> &texture_paths,
     const Color &color)
   {
-    // todo optimization opportunity
+    // TODO [issues/8] optimization opportunity
     // find a way to reuse materials and meshes already created
     // the same materials can make use of different materials and vice versa
     auto mesh = OpenGL_Mesh(vertices, normals, uvs, indices);

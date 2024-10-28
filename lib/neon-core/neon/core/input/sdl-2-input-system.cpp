@@ -63,7 +63,6 @@ namespace core {
 
     const auto *state = SDL_GetKeyboardState(nullptr);
 
-    // todo escape by itself should not close the game
     // we want to be able to handle input events contextually, will create an input handler later on
     if (state[SDL_SCANCODE_ESCAPE])
     {

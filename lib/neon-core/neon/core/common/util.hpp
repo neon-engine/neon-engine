@@ -24,7 +24,7 @@ namespace core
     return tokens;
   }
 
-  // todo replace using three distinct vectors with a single vector of type Vertex in data-types.hpp
+  // TODO [issues/3] replace using three distinct vectors with a single vector of type Vertex in data-types.hpp
   static bool load_obj(
     const std::string &filename,
     std::vector<float> &vertices,
@@ -105,7 +105,7 @@ namespace core
             } else if (indices_parts.size() == 3)
             {
               // case: f v//vn
-              if(!indices_parts[1].empty())
+              if (!indices_parts[1].empty())
               {
                 // case: f v/vt/vn
                 tex_index = (std::stoi(indices_parts[1]) - 1) * 2;
