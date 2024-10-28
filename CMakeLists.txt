@@ -57,10 +57,6 @@ add_subdirectory(external/spdlog)
 # Additional libraries
 add_subdirectory(lib/neon-core)
 
-if (CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
-    add_compile_options(-march=armv8-a)
-endif ()
-
 set(APP_TARGETS
         LearnOpenGL
         NeonFPS
