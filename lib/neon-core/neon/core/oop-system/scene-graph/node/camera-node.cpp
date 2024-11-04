@@ -13,7 +13,7 @@ namespace core {
   {
     Node::Update(delta_time);
     const glm::vec3 position = _world_matrix[3];
-    _view = lookAt(position, position + _look_direction, _camera_up);
+    _view = lookAt(position, position + _transform.Forward(), _camera_up);
     _render_pipeline->SetCameraInfo({_render_target, _fov, _view, _near, _far});
   }
 } // core
