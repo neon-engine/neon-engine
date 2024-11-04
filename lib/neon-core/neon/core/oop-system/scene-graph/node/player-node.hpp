@@ -9,8 +9,6 @@ namespace core
   {
     float _move_speed = 2.5f;
     float _look_speed = 0.1f;
-    glm::vec3 _up = Transform::Up();
-    glm::vec3 _forward = Transform::Forward();
     InputContext *_input_context;
   public:
     PlayerNode(

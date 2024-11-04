@@ -17,22 +17,22 @@ namespace core {
 
     if (input_state[Action::L_Up])
     {
-      move_direction += _forward * _move_speed;
+      move_direction += _transform.Forward() * _move_speed;
     }
 
     if (input_state[Action::L_Down])
     {
-      move_direction += _forward * -_move_speed;
+      move_direction += _transform.Forward() * -_move_speed;
     }
 
     if (input_state[Action::L_Left])
     {
-      move_direction += normalize(cross(_forward, _up)) * -_move_speed;
+      move_direction += _transform.Right() * -_move_speed;
     }
 
     if (input_state[Action::L_Right])
     {
-      move_direction += normalize(cross(_forward, _up)) * _move_speed;
+      move_direction += _transform.Right() * _move_speed;
     }
 
     _transform.position += move_direction * static_cast<float>(delta_time);

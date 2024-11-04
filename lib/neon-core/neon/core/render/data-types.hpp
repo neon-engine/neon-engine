@@ -5,6 +5,7 @@
 #include <vector>
 #include <glm/glm.hpp>
 #include <glm/detail/type_quat.hpp>
+#include "glm/gtc/quaternion.hpp"
 
 namespace core
 {
@@ -32,18 +33,27 @@ namespace core
 
   struct Rotation
   {
-    float yaw{};
     float pitch{};
+    float yaw{};
     float roll{};
 
     [[nodiscard]] glm::vec3 GetEulerAngle() const
     {
-      return {yaw, pitch, roll};
+      return eulerAngles(GetQuaternion());
     }
 
     [[nodiscard]] glm::quat GetQuaternion() const
     {
-      return {GetEulerAngle()};
+      const float yaw_rad = glm::radians(yaw);
+      const float pitch_rad = glm::radians(pitch);
+      const float roll_rad = glm::radians(roll);
+      const glm::quat yaw_quat   = angleAxis(yaw_rad,   glm::vec3(0.0f, 1.0f, 0.0f)); // Yaw around Y-axis
+      const glm::quat pitch_quat = angleAxis(pitch_rad, glm::vec3(1.0f, 0.0f, 0.0f)); // Pitch around X-axis
+      const glm::quat roll_quat  = angleAxis(roll_rad,  glm::vec3(0.0f, 0.0f, 1.0f)); // Roll around Z-axis
+
+      const glm::quat orientation = yaw_quat * pitch_quat * roll_quat;
+
+      return orientation;
     }
   };
 
@@ -52,8 +62,12 @@ namespace core
     glm::vec3 position{0.0f};
     Rotation rotation{0.0f, 0.0f, 0.0f};
     glm::vec3 scale{1.0f};
-    static glm::vec3 Forward() { return {0.0f, 0.0f, -1.0f}; }
-    static glm::vec3 Up() { return { 0.0f, 1.0f, 0.0f }; }
+    [[nodiscard]] glm::vec3 Forward() const { return normalize(rotation.GetQuaternion() * World_Forward()); }
+    // ReSharper disable once CppMemberFunctionMayBeStatic
+    [[nodiscard]] glm::vec3 Up() const { return World_Up(); } // NOLINT(*-convert-member-functions-to-static)
+    [[nodiscard]] glm::vec3 Right() const { return normalize(cross(Forward(), Up())); }
+    static glm::vec3 World_Forward() { return {0.0f, 0.0f, -1.0f}; }
+    static glm::vec3 World_Up() { return { 0.0f, 1.0f, 0.0f }; }
   };
 
   struct RenderInfo
