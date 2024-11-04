@@ -19,3 +19,6 @@
 [submodule "external/spdlog"]
 	path = external/spdlog
 	url = https://github.com/gabime/spdlog.git
+[submodule "external/SDL_mixer"]
+	path = external/SDL_mixer
+	url = https://github.com/libsdl-org/SDL_mixer.git
