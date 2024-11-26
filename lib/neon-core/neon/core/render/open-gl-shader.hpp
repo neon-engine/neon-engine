@@ -1,7 +1,7 @@
 #ifndef OPEN_GL_SHADER_HPP
 #define OPEN_GL_SHADER_HPP
 
-#include <GL/gl3w.h>
+#include <glad/gl.h>
 
 #include <string>
 #include <glm/glm.hpp>

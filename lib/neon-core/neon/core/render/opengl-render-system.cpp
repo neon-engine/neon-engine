@@ -8,10 +8,13 @@ namespace core
   void OpenGL_RenderSystem::Initialize()
   {
     std::cout << "Initializing OpenGL" << std::endl;
-    if (gl3wInit())
-    {
-      throw std::runtime_error("Failed to initialize gl3w");
-    }
+    const auto version = gladLoadGL(reinterpret_cast<GLADloadfunc>(_window_context->GetGlProcAddress()));
+
+    auto major = GLAD_VERSION_MAJOR(version);
+    auto minor = GLAD_VERSION_MINOR(version);
+    _logger->Info("GL {}.{}\n", major, minor);
+
+    // todo check for opengl loading error here
 
     glEnable(GL_DEPTH_TEST);
 

@@ -65,4 +65,4 @@ target_include_directories(${TARGET}
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-target_link_libraries(${TARGET} glm gl3w stb SDL2::SDL2main SDL2::SDL2-static spdlog)
+target_link_libraries(${TARGET} glm glad stb SDL2::SDL2main SDL2::SDL2-static spdlog)

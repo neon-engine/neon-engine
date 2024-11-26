@@ -126,4 +126,9 @@ namespace core
       SDL_SetWindowGrab(_window, SDL_FALSE);
     }
   }
+
+  void *SDL2_WindowSystem::GetGlProcAddress()
+  {
+    return reinterpret_cast<void*>(SDL_GL_GetProcAddress);
+  }
 } // core

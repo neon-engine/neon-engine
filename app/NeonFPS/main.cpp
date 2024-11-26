@@ -17,7 +17,7 @@ int main()
   logging_system.Initialize();
   core::SDL2_WindowSystem window_system(settings_config, logging_system.CreateLogger("SDL2_WindowSystem"));
   core::SDL2_InputSystem input_system(settings_config, &window_system, logging_system.CreateLogger("SDL2_InputSystem"));
-  core::OpenGL_RenderSystem render_system(settings_config, logging_system.CreateLogger("OpenGL_RenderSystem"));
+  core::OpenGL_RenderSystem render_system(&window_system, settings_config, logging_system.CreateLogger("OpenGL_RenderSystem"));
   core::Forward_RenderPipeline render_pipeline(&render_system, logging_system.CreateLogger("Forward_RenderPipeline"));
 
   const auto app_logger = logging_system.CreateLogger("NeonFpsApplication");

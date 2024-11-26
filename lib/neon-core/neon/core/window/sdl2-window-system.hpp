@@ -4,8 +4,7 @@
 // gl3w must be included first
 // ReSharper disable once CppUnusedIncludeDirective
 #include <memory>
-#include <utility>
-#include <GL/gl3w.h>
+#include <glad/gl.h>
 
 #include <SDL.h>
 
@@ -49,6 +48,8 @@ namespace core
     void CenterCursor() override;
 
     void SetWindowFocus(bool focus) override;
+
+    void* GetGlProcAddress() override;
   };
 } // core
 

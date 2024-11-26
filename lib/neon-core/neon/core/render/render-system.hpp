@@ -6,6 +6,7 @@
 #include "render-context.hpp"
 #include "neon/core/application/settings-config.hpp"
 #include "neon/core/logging/logger.hpp"
+#include "neon/core/window/window-context.hpp"
 
 namespace core
 {
@@ -13,8 +14,9 @@ namespace core
   {
     int _mesh_index = 0;
     int _material_index = 0;
-  protected:
 
+  protected:
+    WindowContext *_window_context;
     DataBuffer<OpenGL_Mesh> _mesh_refs;
     DataBuffer<OpenGL_Material> _material_refs;
     SettingsConfig _settings_config;
@@ -22,11 +24,13 @@ namespace core
 
   public:
     explicit RenderSystem(
+      WindowContext *window_context,
       const SettingsConfig &settings_config,
       const int max_render_objects,
       const std::shared_ptr<Logger> &logger)
-    : RenderContext(max_render_objects), _mesh_refs(max_render_objects), _material_refs(max_render_objects)
+      : RenderContext(max_render_objects), _mesh_refs(max_render_objects), _material_refs(max_render_objects)
     {
+      _window_context = window_context;
       _settings_config = settings_config;
       _logger = logger;
     }
