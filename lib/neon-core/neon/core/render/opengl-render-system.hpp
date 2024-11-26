@@ -17,9 +17,10 @@ namespace core
 
   public:
     explicit OpenGL_RenderSystem(
+      WindowContext *window_context,
       const SettingsConfig &settings_config,
-      std::shared_ptr<Logger> logger)
-      : RenderSystem(settings_config, 4096, std::move(logger)),
+      const std::shared_ptr<Logger> &logger)
+      : RenderSystem(window_context, settings_config, 4096, logger),
         _render_resolution(_settings_config.width, _settings_config.height) {}
 
     void Initialize() override;

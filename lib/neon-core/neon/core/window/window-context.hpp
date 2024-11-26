@@ -1,7 +1,6 @@
 #ifndef SDL_2_WINDOW_CONTEXT_HPP
 #define SDL_2_WINDOW_CONTEXT_HPP
 
-
 namespace core
 {
   class WindowContext
@@ -17,6 +16,8 @@ namespace core
     virtual void CenterCursor() = 0;
 
     virtual void SetWindowFocus(bool focus) = 0;
+
+    virtual void* GetGlProcAddress() = 0;
   };
 }
 

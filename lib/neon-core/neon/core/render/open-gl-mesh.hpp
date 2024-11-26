@@ -1,7 +1,7 @@
 #ifndef OPEN_GL_MESH_HPP
 #define OPEN_GL_MESH_HPP
 
-#include <GL/gl3w.h>
+#include <glad/gl.h>
 
 #include <vector>
 #include <glm/glm.hpp>
