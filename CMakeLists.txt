@@ -41,8 +41,9 @@ message("runtime output directory: ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
 # And locate custom packages within our file structure
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
+
 # Find packages installed on the toolchain/sysroot
-#find_package(Vulkan REQUIRED)
+find_package(Vulkan REQUIRED)
 find_package(gl3w REQUIRED)
 find_package(glad REQUIRED)
 find_package(stb REQUIRED)

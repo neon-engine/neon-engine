@@ -8,13 +8,16 @@ namespace core
   void OpenGL_RenderSystem::Initialize()
   {
     std::cout << "Initializing OpenGL" << std::endl;
-    const auto version = gladLoadGL(reinterpret_cast<GLADloadfunc>(_window_context->GetGlProcAddress()));
 
-    auto major = GLAD_VERSION_MAJOR(version);
-    auto minor = GLAD_VERSION_MINOR(version);
-    _logger->Info("GL {}.{}\n", major, minor);
+    if (gladLoadGL(reinterpret_cast<GLADloadfunc>(_window_context->GetGlProcAddress())) == 0)
+    {
+      throw std::runtime_error("Failed to load OpenGL");
+    }
 
-    // todo check for opengl loading error here
+    int major, minor;
+    glGetIntegerv(GL_MAJOR_VERSION, &major);
+    glGetIntegerv(GL_MINOR_VERSION, &minor);
+    _logger->Info("OpenGL context version: {}.{}\n", major, minor);
 
     glEnable(GL_DEPTH_TEST);
 
