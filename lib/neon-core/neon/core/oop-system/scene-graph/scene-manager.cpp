@@ -87,7 +87,7 @@ void core::SceneManager::CleanUp() const
   PostOrderTraversal([this](Node *node)
   {
     node->CleanUp();
-    _logger->Debug("Deleting %s", node->GetName());
+    _logger->Debug("Deleting \"{}\"", node->GetName());
     delete node;
   });
 }

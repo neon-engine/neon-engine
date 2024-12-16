@@ -17,20 +17,20 @@ namespace core
     int major, minor;
     glGetIntegerv(GL_MAJOR_VERSION, &major);
     glGetIntegerv(GL_MINOR_VERSION, &minor);
-    _logger->Info("OpenGL context version: {}.{}\n", major, minor);
+    _logger->Info("OpenGL context version: {}.{}", major, minor);
 
     glEnable(GL_DEPTH_TEST);
 
     int num_vertex_attributes_supported;
     glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &num_vertex_attributes_supported);
-    std::cout << "Maximum number of vertex attributes supported: " << num_vertex_attributes_supported << std::endl;
+    _logger->Debug("Maximum number of vertex attributes supported: {}", num_vertex_attributes_supported);
 
     glViewport(0, 0, _settings_config.width, _settings_config.height);
   }
 
   void OpenGL_RenderSystem::CleanUp()
   {
-    std::cout << "Cleaning up OpenGL" << std::endl;
+    _logger->Info("Cleaning up OpenGL");
   }
 
   void OpenGL_RenderSystem::PrepareFrame()

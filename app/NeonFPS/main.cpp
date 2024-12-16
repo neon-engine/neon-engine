@@ -36,7 +36,7 @@ int main()
     app.Run();
   } catch (const std::exception &e)
   {
-    std::cerr << e.what() << std::endl;
+    app_logger->Critical(e.what());
     app.CleanUp();
   }
 }

@@ -35,7 +35,19 @@ namespace core {
       move_direction += _transform.Right() * _move_speed;
     }
 
+    if (input_state[Action::Mouse])
+    {
+      const auto x = input_state[Axis::Mouse].x;
+      const auto y = input_state[Axis::Mouse].y;
+
+      MouseCallback(x, y);
+    }
+
     _transform.position += move_direction * static_cast<float>(delta_time);
     CalculateWorldMatrix();
+  }
+
+  void PlayerNode::MouseCallback(double x, double y)
+  {
   }
 } // core
