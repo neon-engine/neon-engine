@@ -20,6 +20,7 @@ namespace core
         _settings_config.log_max_size,
         _settings_config.log_max_files));
     _logger = std::make_shared<spdlog::logger>("LoggingSystem", begin(_sinks), end(_sinks));
+    _logger->set_level(spdlog::level::debug);
     _logger->info("LoggingSystem initialized");
   }
 
@@ -30,8 +31,9 @@ namespace core
 
   std::shared_ptr<Logger> LoggingSystem::CreateLogger(const std::string &name)
   {
-    _logger->debug("Creating logger for ", name);
+    _logger->debug("Creating logger for {}", name);
     const auto logger = std::make_shared<spdlog::logger>(name, begin(_sinks), end(_sinks));
+    logger->set_level(spdlog::level::debug);
     return std::make_shared<Spd_Logger>(logger);
   }
 } // core

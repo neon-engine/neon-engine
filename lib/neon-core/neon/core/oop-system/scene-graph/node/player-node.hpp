@@ -17,6 +17,8 @@ namespace core
       InputContext *input_context);
 
     void Update(double delta_time) override;
+
+    void MouseCallback(double x, double y);
   };
 } // core
 

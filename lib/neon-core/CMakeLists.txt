@@ -59,6 +59,7 @@ add_library(${TARGET} STATIC
         neon/core/logging/spd-logger.cpp
         neon/core/logging/spd-logger.hpp
         neon/core/logging/logging-context.hpp
+        neon/core/oop-system/scene-graph/node-factory.hpp
 )
 
 target_include_directories(${TARGET}

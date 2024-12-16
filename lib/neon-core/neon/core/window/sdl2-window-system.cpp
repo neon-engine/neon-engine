@@ -59,7 +59,7 @@ namespace core
 
   void SDL2_WindowSystem::CleanUp()
   {
-    std::cout << "Cleaning up SDL2 window system" << std::endl;
+    _logger->Info("Cleaning up SDL2 window system");
     if (_context != nullptr) { SDL_GL_DeleteContext(_context); }
     SDL_DestroyWindow(_window);
     SDL_Quit();
@@ -98,7 +98,7 @@ namespace core
 
   void SDL2_WindowSystem::SignalToClose()
   {
-    std::cout << "SDL2 signaled to close" << std::endl;
+    _logger->Info("SDL2 signaled to close");
     _should_close = true;
   }
 
