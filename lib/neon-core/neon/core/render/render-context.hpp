@@ -3,9 +3,11 @@
 
 #include <string>
 #include <vector>
+#include <neon/core/common/data-buffer.hpp>
+#include <neon/core/common/transform.hpp>
+#include "common/render-info.hpp"
+#include "common/render-object-ref.hpp"
 
-#include "data-types.hpp"
-#include "neon/core/common/data-buffer.hpp"
 
 namespace core
 {
