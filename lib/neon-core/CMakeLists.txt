@@ -57,6 +57,14 @@ add_library(${TARGET} STATIC
         neon/core/logging/spd-logger.hpp
         neon/core/logging/logging-context.hpp
         neon/core/oop-system/scene-graph/node-factory.hpp
+        neon/core/common/color.hpp
+        neon/core/common/transform.hpp
+        neon/core/common/rotation.hpp
+        neon/core/render/common/camera-info.hpp
+        neon/core/render/common/render-target.hpp
+        neon/core/render/common/render-info.hpp
+        neon/core/render/common/render-object-ref.hpp
+        neon/core/render/common/vertex.hpp
 )
 
 target_include_directories(${TARGET}

@@ -2,10 +2,11 @@
 #define OPEN_GL_MATERIAL_HPP
 
 #include <vector>
+#include <neon/core/common/color.hpp>
 
-#include "data-types.hpp"
 #include "open-gl-shader.hpp"
 #include "open-gl-texture.hpp"
+
 
 namespace core
 {
