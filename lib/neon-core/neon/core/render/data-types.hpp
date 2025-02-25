@@ -62,7 +62,8 @@ namespace core
     glm::vec3 position{0.0f};
     Rotation rotation{0.0f, 0.0f, 0.0f};
     glm::vec3 scale{1.0f};
-    [[nodiscard]] glm::vec3 Forward() const { return normalize(rotation.GetQuaternion() * World_Forward()); }
+    glm::mat4 world_coordinates{1.0f};
+    [[nodiscard]] glm::vec3 Forward() const { return normalize(glm::mat3(world_coordinates) * World_Forward()); }
     // ReSharper disable once CppMemberFunctionMayBeStatic
     [[nodiscard]] glm::vec3 Up() const { return World_Up(); } // NOLINT(*-convert-member-functions-to-static)
     [[nodiscard]] glm::vec3 Right() const { return normalize(cross(Forward(), Up())); }

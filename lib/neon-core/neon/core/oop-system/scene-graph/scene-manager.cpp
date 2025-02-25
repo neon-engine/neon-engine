@@ -4,7 +4,7 @@
 #include <stack>
 
 #include "node/camera-node.hpp"
-#include "node/player-node.hpp"
+#include "node/spectator-node.hpp"
 #include "node/render-node.hpp"
 
 core::SceneManager::SceneManager(
@@ -14,8 +14,7 @@ core::SceneManager::SceneManager(
   const std::shared_ptr<Logger> &logger)
   : _window_context(window_context),
     _input_context(input_context),
-    _render_pipeline(render_pipeline),
-    _player(input_context)
+    _render_pipeline(render_pipeline)
 {
   _root = new Node("root", {});
   _logger = logger;
@@ -50,7 +49,7 @@ void core::SceneManager::Initialize() const
       .color = {1.0f, 1.0f, 1.0f}
     },
     _render_pipeline);
-  const auto player = new PlayerNode(
+  const auto player = new SpectatorNode(
     "player",
     Transform{
       .position = {0.f, 0.f, 2.0f}

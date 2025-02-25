@@ -28,6 +28,7 @@ namespace core {
     const auto scale = glm::scale(glm::mat4{1.0f}, _transform.scale);
     const auto parent_matrix = _parent == nullptr ? glm::mat4(1.0f) : _parent->GetWorldMatrix();
     _world_matrix = position * rotation * scale * parent_matrix;
+    _transform.world_coordinates = _world_matrix;
   }
 
   void Node::AddChild(Node *child)

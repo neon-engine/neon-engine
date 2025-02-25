@@ -30,17 +30,14 @@ add_library(${TARGET} STATIC
         neon/core/render/data-types.hpp
         neon/core/input/input-context.hpp
         neon/core/input/input-state.hpp
-        neon/core/oop-system/controllers/controller.hpp
-        neon/core/oop-system/controllers/fps-player-controller.cpp
-        neon/core/oop-system/controllers/fps-player-controller.hpp
         neon/core/oop-system/scene-graph/node/node.cpp
         neon/core/oop-system/scene-graph/node/node.hpp
         neon/core/oop-system/scene-graph/node/render-node.cpp
         neon/core/oop-system/scene-graph/node/render-node.hpp
         neon/core/oop-system/scene-graph/node/camera-node.cpp
         neon/core/oop-system/scene-graph/node/camera-node.hpp
-        neon/core/oop-system/scene-graph/node/player-node.cpp
-        neon/core/oop-system/scene-graph/node/player-node.hpp
+        neon/core/oop-system/scene-graph/node/spectator-node.cpp
+        neon/core/oop-system/scene-graph/node/spectator-node.hpp
         neon/core/oop-system/scene-graph/scene-manager.cpp
         neon/core/oop-system/scene-graph/scene-manager.hpp
         neon/core/render/render-pipeline.hpp
