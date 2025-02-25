@@ -2,7 +2,6 @@
 #define CAMERA_NODE_HPP
 
 #include "node.hpp"
-#include "neon/core/render/data-types.hpp"
 #include "neon/core/render/render-pipeline.hpp"
 
 
