@@ -1,7 +1,7 @@
-#include "player-node.hpp"
+#include "spectator-node.hpp"
 
 namespace core {
-  PlayerNode::PlayerNode(
+  SpectatorNode::SpectatorNode(
     const std::string &name,
     const Transform &transform,
     InputContext *input_context) : Node(name, transform)
@@ -9,7 +9,7 @@ namespace core {
     _input_context = input_context;
   }
 
-  void PlayerNode::Update(const double delta_time)
+  void SpectatorNode::Update(const double delta_time)
   {
     const auto input_state = _input_context->GetInputState();
 
@@ -47,7 +47,9 @@ namespace core {
     CalculateWorldMatrix();
   }
 
-  void PlayerNode::MouseCallback(double x, double y)
+  void SpectatorNode::MouseCallback(const double &x, const double &y)
   {
+    _transform.rotation.yaw -= static_cast<float>(x) * 0.1f;
+    _transform.rotation.pitch -= static_cast<float>(y) * 0.1f;
   }
 } // core

@@ -5,20 +5,21 @@
 
 namespace core
 {
-  class PlayerNode final : public Node
+  class SpectatorNode final : public Node
   {
     float _move_speed = 2.5f;
     float _look_speed = 0.1f;
     InputContext *_input_context;
+
   public:
-    PlayerNode(
+    SpectatorNode(
       const std::string &name,
       const Transform &transform,
       InputContext *input_context);
 
     void Update(double delta_time) override;
 
-    void MouseCallback(double x, double y);
+    void MouseCallback(const double &x, const double &y);
   };
 } // core
 
