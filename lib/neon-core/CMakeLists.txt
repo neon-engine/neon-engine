@@ -27,7 +27,6 @@ add_library(${TARGET} STATIC
         neon/core/render/open-gl-mesh.hpp
         neon/core/render/open-gl-material.cpp
         neon/core/render/open-gl-material.hpp
-        neon/core/render/data-types.hpp
         neon/core/input/input-context.hpp
         neon/core/input/input-state.hpp
         neon/core/oop-system/scene-graph/node/node.cpp
