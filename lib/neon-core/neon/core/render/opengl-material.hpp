@@ -4,8 +4,8 @@
 #include <vector>
 #include <neon/core/common/color.hpp>
 
-#include "open-gl-shader.hpp"
-#include "open-gl-texture.hpp"
+#include "opengl-shader.hpp"
+#include "opengl-texture.hpp"
 
 
 namespace core

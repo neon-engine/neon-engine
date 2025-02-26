@@ -1,8 +1,8 @@
 #ifndef RENDER_SYSTEM_HPP
 #define RENDER_SYSTEM_HPP
 
-#include "open-gl-material.hpp"
-#include "open-gl-mesh.hpp"
+#include "opengl-material.hpp"
+#include "opengl-mesh-deprecated.hpp"
 #include "render-context.hpp"
 #include "neon/core/application/settings-config.hpp"
 #include "neon/core/logging/logger.hpp"
@@ -17,7 +17,7 @@ namespace core
 
   protected:
     WindowContext *_window_context;
-    DataBuffer<OpenGL_Mesh> _mesh_refs;
+    DataBuffer<OpenGL_Mesh_Deprecated> _mesh_refs;
     DataBuffer<OpenGL_Material> _material_refs;
     SettingsConfig _settings_config;
     std::shared_ptr<Logger> _logger;

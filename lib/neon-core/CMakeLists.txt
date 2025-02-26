@@ -7,11 +7,9 @@ add_library(${TARGET} STATIC
         neon/core/common/data-buffer.hpp
         neon/core/common/util.hpp
         neon/core/input/input-system.hpp
-        neon/core/render/render-system.hpp
-        neon/core/render/opengl-render-system.cpp
-        neon/core/render/opengl-render-system.hpp
+
         neon/core/window/window-system.hpp
-        neon/core/render/render-context.hpp
+
         neon/core/window/sdl2-window-system.cpp
         neon/core/window/sdl2-window-system.hpp
         neon/core/input/sdl-2-input-system.cpp
@@ -19,14 +17,7 @@ add_library(${TARGET} STATIC
         neon/core/window/window-context.hpp
         neon/core/oop-system/camera/camera.cpp
         neon/core/oop-system/camera/camera.hpp
-        neon/core/render/open-gl-shader.cpp
-        neon/core/render/open-gl-shader.hpp
-        neon/core/render/open-gl-texture.cpp
-        neon/core/render/open-gl-texture.hpp
-        neon/core/render/open-gl-mesh.cpp
-        neon/core/render/open-gl-mesh.hpp
-        neon/core/render/open-gl-material.cpp
-        neon/core/render/open-gl-material.hpp
+
         neon/core/input/input-context.hpp
         neon/core/input/input-state.hpp
         neon/core/oop-system/scene-graph/node/node.cpp
@@ -39,9 +30,6 @@ add_library(${TARGET} STATIC
         neon/core/oop-system/scene-graph/node/spectator-node.hpp
         neon/core/oop-system/scene-graph/scene-manager.cpp
         neon/core/oop-system/scene-graph/scene-manager.hpp
-        neon/core/render/render-pipeline.hpp
-        neon/core/render/forward-render-pipeline.cpp
-        neon/core/render/forward-render-pipeline.hpp
         neon/core/logging/logging-system.cpp
         neon/core/logging/logging-system.hpp
         neon/core/logging/logger.hpp
@@ -64,8 +52,25 @@ add_library(${TARGET} STATIC
         neon/core/render/render-info.hpp
         neon/core/render/render-object-ref.hpp
         neon/core/render/vertex.hpp
-        neon/core/render/mesh.cpp
         neon/core/render/mesh.hpp
+        neon/core/render/texture.hpp
+        neon/core/render/opengl-mesh.cpp
+        neon/core/render/opengl-mesh.hpp
+        neon/core/render/render-pipeline.hpp
+        neon/core/render/forward-render-pipeline.cpp
+        neon/core/render/forward-render-pipeline.hpp
+        neon/core/render/opengl-shader.cpp
+        neon/core/render/opengl-shader.hpp
+        neon/core/render/opengl-texture.cpp
+        neon/core/render/opengl-texture.hpp
+        neon/core/render/opengl-mesh-deprecated.cpp
+        neon/core/render/opengl-mesh-deprecated.hpp
+        neon/core/render/opengl-material.cpp
+        neon/core/render/opengl-material.hpp
+        neon/core/render/render-system.hpp
+        neon/core/render/opengl-render-system.cpp
+        neon/core/render/opengl-render-system.hpp
+        neon/core/render/render-context.hpp
 )
 
 target_include_directories(${TARGET}

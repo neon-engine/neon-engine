@@ -1,4 +1,4 @@
-#include "open-gl-texture.hpp"
+#include "opengl-texture.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
 
