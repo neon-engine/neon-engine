@@ -82,7 +82,7 @@ namespace core
     // TODO [issues/8] optimization opportunity
     // find a way to reuse materials and meshes already created
     // the same materials can make use of different materials and vice versa
-    auto mesh = OpenGL_Mesh(vertices, normals, uvs, indices);
+    auto mesh = OpenGL_Mesh_Deprecated(vertices, normals, uvs, indices);
     auto material = OpenGL_Material(shader_path, texture_paths, color);
 
     if (!mesh.Initialize())

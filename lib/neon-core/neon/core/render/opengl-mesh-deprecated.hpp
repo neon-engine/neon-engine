@@ -9,7 +9,7 @@
 namespace core
 {
   // ReSharper disable once CppInconsistentNaming
-  class OpenGL_Mesh
+  class OpenGL_Mesh_Deprecated
   {
     enum class RenderingMode
     {
@@ -30,8 +30,8 @@ namespace core
     std::vector<unsigned int> _indices{};
     glm::mat4 _model_matrix{1.0f};
   public:
-    OpenGL_Mesh();
-    explicit OpenGL_Mesh(
+    OpenGL_Mesh_Deprecated();
+    explicit OpenGL_Mesh_Deprecated(
       const std::vector<float> &vertices,
       const std::vector<float> &normals,
       const std::vector<float> &uvs,

@@ -1,12 +1,12 @@
-#include "open-gl-mesh.hpp"
+#include "opengl-mesh-deprecated.hpp"
 
 #include <iostream>
 #include <glm/gtc/matrix_transform.hpp>
 
 namespace core {
-  OpenGL_Mesh::OpenGL_Mesh() = default;
+  OpenGL_Mesh_Deprecated::OpenGL_Mesh_Deprecated() = default;
 
-  OpenGL_Mesh::OpenGL_Mesh(const std::vector<float> &vertices,
+  OpenGL_Mesh_Deprecated::OpenGL_Mesh_Deprecated(const std::vector<float> &vertices,
                            const std::vector<float> &normals,
                            const std::vector<float> &uvs,
                            const std::vector<unsigned int> &indices)
@@ -18,7 +18,7 @@ namespace core {
   }
 
   // ReSharper disable once CppDFAConstantFunctionResult
-  bool OpenGL_Mesh::Initialize()
+  bool OpenGL_Mesh_Deprecated::Initialize()
   {
     if (_initialized)
     {
@@ -120,7 +120,7 @@ namespace core {
     return true;
   }
 
-  void OpenGL_Mesh::Use() const
+  void OpenGL_Mesh_Deprecated::Use() const
   {
     glBindVertexArray(_vao);
     switch (_rendering_mode)
@@ -140,7 +140,7 @@ namespace core {
     }
   }
 
-  void OpenGL_Mesh::CleanUp()
+  void OpenGL_Mesh_Deprecated::CleanUp()
   {
     if (!_initialized) { return; }
 
@@ -157,12 +157,12 @@ namespace core {
     _initialized = false;
   }
 
-  glm::mat4 OpenGL_Mesh::GetModelMatrix() const
+  glm::mat4 OpenGL_Mesh_Deprecated::GetModelMatrix() const
   {
     return _model_matrix;
   }
 
-  void OpenGL_Mesh::GenerateNormalizationMatrix()
+  void OpenGL_Mesh_Deprecated::GenerateNormalizationMatrix()
   {
     std::cout << "Generating normalizing matrix using the loaded vertices" << std::endl;
     auto min_x = _vertices[0];

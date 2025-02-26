@@ -1,4 +1,4 @@
-#include "open-gl-material.hpp"
+#include "opengl-material.hpp"
 
 #include <iostream>
 
