@@ -5,8 +5,8 @@
 #include <vector>
 #include <neon/core/common/data-buffer.hpp>
 #include <neon/core/common/transform.hpp>
-#include "common/render-info.hpp"
-#include "common/render-object-ref.hpp"
+#include "render-info.hpp"
+#include "render-object-ref.hpp"
 
 
 namespace core
