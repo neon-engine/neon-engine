@@ -15,14 +15,14 @@ namespace core
   public:
     OpenGL_Mesh(const std::vector<Vertex> &vertices,
                 const std::vector<unsigned int> &indices,
-                const std::vector<Texture> &textures)
+                const std::vector<std::string> &textures)
       : Mesh(vertices, indices, textures) {}
 
-  protected:
-    void SetupMesh() override;
+    void Initialize() override;
 
-  public:
     void Draw() override;
+
+    void CleanUp() override;
   };
 } // core
 
