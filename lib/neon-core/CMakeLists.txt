@@ -64,6 +64,8 @@ add_library(${TARGET} STATIC
         neon/core/render/render-info.hpp
         neon/core/render/render-object-ref.hpp
         neon/core/render/vertex.hpp
+        neon/core/render/mesh.cpp
+        neon/core/render/mesh.hpp
 )
 
 target_include_directories(${TARGET}
