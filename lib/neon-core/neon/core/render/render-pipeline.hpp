@@ -2,9 +2,10 @@
 #define RENDER_PIPELINE_HPP
 
 #include <memory>
+#include <neon/core/logging/logger.hpp>
+#include "camera-info.hpp"
 #include "render-context.hpp"
-#include "common/camera-info.hpp"
-#include "neon/core/logging/logger.hpp"
+
 
 namespace core
 {

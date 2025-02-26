@@ -59,11 +59,11 @@ add_library(${TARGET} STATIC
         neon/core/common/color.hpp
         neon/core/common/transform.hpp
         neon/core/common/rotation.hpp
-        neon/core/render/common/camera-info.hpp
-        neon/core/render/common/render-target.hpp
-        neon/core/render/common/render-info.hpp
-        neon/core/render/common/render-object-ref.hpp
-        neon/core/render/common/vertex.hpp
+        neon/core/render/camera-info.hpp
+        neon/core/render/render-target.hpp
+        neon/core/render/render-info.hpp
+        neon/core/render/render-object-ref.hpp
+        neon/core/render/vertex.hpp
 )
 
 target_include_directories(${TARGET}
