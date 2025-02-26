@@ -3,7 +3,7 @@
 #include <string>
 
 namespace core {
-  void OpenGL_Mesh::SetupMesh()
+  void OpenGL_Mesh::Initialize()
   {
     glGenVertexArrays(1, &_vao);
     glGenBuffers(1, &_vbo);
@@ -41,21 +41,8 @@ namespace core {
 
   void OpenGL_Mesh::Draw()
   {
-    GLuint diffuseNr = 1;
-    GLuint specularNr = 1;
 
-    for (unsigned int i = 0; i < _textures.size(); i++)
-    {
-      glActiveTexture(GL_TEXTURE0 + i);
-      auto type = _textures[i].type;
-      std::string number;
-      if (type == TextureType::Diffuse)
-      {
-        number = std::to_string(diffuseNr++);
-      } else if (type == TextureType::Specular)
-      {
-        number = std::to_string(specularNr++);
-      }
-    }
   }
+
+  void OpenGL_Mesh::CleanUp() {}
 } // core

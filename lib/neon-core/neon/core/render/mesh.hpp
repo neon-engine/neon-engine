@@ -1,8 +1,9 @@
 #ifndef MESH_HPP
 #define MESH_HPP
+
+#include <string>
 #include <vector>
 
-#include "texture.hpp"
 #include "vertex.hpp"
 
 
@@ -13,21 +14,23 @@ namespace core
   protected:
     std::vector<Vertex> _vertices;
     std::vector<unsigned int> _indices;
-    std::vector<Texture> _textures;
+    std::vector<std::string> _textures;
 
     ~Mesh() = default;
-
-    virtual void SetupMesh() = 0;
 
   public:
     Mesh(const std::vector<Vertex> &vertices,
          const std::vector<unsigned int> &indices,
-         const std::vector<Texture> &textures)
+         const std::vector<std::string> &textures)
     {
       _vertices = vertices;
       _indices = indices;
       _textures = textures;
     }
+
+    virtual void Initialize() = 0;
+
+    virtual void CleanUp() = 0;
 
     virtual void Draw() = 0;
   };
