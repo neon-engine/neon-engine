@@ -1,0 +1,5 @@
+outs:
+- md5: 70ad7bf05ba25759941554ff8a471245
+  size: 799
+  hash: md5
+  path: cube.obj
