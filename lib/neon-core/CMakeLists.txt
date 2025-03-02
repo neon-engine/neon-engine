@@ -78,6 +78,7 @@ add_library(${TARGET} STATIC
         neon/core/render/light-source.hpp
         neon/core/oop-system/scene-graph/node/light-node.cpp
         neon/core/oop-system/scene-graph/node/light-node.hpp
+        neon/core/render/material-info.hpp
 )
 
 target_include_directories(${TARGET}

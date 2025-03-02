@@ -5,6 +5,8 @@
 #include <vector>
 #include <neon/core/common/color.hpp>
 
+#include "material-info.hpp"
+
 
 namespace core
 {
@@ -13,7 +15,7 @@ namespace core
     std::string model_path;
     std::string shader_path;
     std::vector<std::string> texture_paths;
-    Color color;
+    MaterialInfo material_info;
   };
 } // core
 
