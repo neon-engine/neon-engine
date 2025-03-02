@@ -3,7 +3,3 @@ cmake-build-*
 bin/
 build/
 
-app/*/assets/models/*
-!app/*/assets/models/cube.obj
-!app/*/assets/models/sphere.obj
-!app/*/assets/models/cone.obj
