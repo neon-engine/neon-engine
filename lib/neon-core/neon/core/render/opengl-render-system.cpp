@@ -93,25 +93,6 @@ namespace core
 
   void OpenGL_RenderSystem::DrawRenderObject(
     const int render_object_id,
-    const Transform &transform,
-    const glm::mat4 &view,
-    const glm::mat4 &projection)
-  {
-    const auto [model_id, material_id] = _render_object_buffer[render_object_id];
-    const auto model = _model_refs[model_id];
-    const auto material = _material_refs[material_id];
-
-    auto normalized_model_matrix = model.GetNormalizedModelMatrix();
-    const auto position = translate(glm::mat4{1.0f}, transform.position);
-    const auto rotation = mat4_cast(transform.rotation.GetQuaternion());
-    const auto scale = glm::scale(glm::mat4{1.0f}, transform.scale);
-    normalized_model_matrix = position * rotation * scale * normalized_model_matrix;
-    material.Use(normalized_model_matrix, view, projection);
-    model.Use();
-  }
-
-  void OpenGL_RenderSystem::DrawRenderObject(
-    const int render_object_id,
     const glm::mat4 &to_world,
     const glm::mat4 &view,
     const glm::mat4 &projection)
