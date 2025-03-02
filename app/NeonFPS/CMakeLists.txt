@@ -6,14 +6,8 @@ add_executable(${TARGET} main.cpp
 
 target_link_libraries(${TARGET} PRIVATE core)
 
-file(GLOB_RECURSE ASSETS_FILES "${CMAKE_CURRENT_SOURCE_DIR}/assets/*")
-
-add_custom_target(${TARGET}_copy_assets ALL
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
+setup_copy_assets(
+        ${TARGET}
         "${CMAKE_CURRENT_SOURCE_DIR}/assets"
-        "${BASE_APP_BIN_DIRECTORY}/${TARGET}/assets"
-        COMMENT "Copying assets to ${BASE_APP_BIN_DIRECTORY}"
-        DEPENDS ${ASSETS_FILES}
+        "${CMAKE_BINARY_DIR}/${TARGET}/assets"
 )
-
-add_dependencies(${TARGET} ${TARGET}_copy_assets)
