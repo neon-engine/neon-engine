@@ -1,6 +1,7 @@
 #ifndef LOGGER_HPP
 #define LOGGER_HPP
 #include <format>
+#include <memory>
 #include <string>
 
 namespace core
@@ -16,6 +17,7 @@ namespace core
     virtual void WarnImpl(const std::string& format, const std::format_args &args) = 0;
     virtual void ErrorImpl(const std::string& format, const std::format_args &args) = 0;
     virtual void CriticalImpl(const std::string& format, const std::format_args &args) = 0;
+    virtual std::shared_ptr<Logger> CreateChildLogger(const std::string &name) = 0;
 
   public:
     template<typename... Args>
@@ -47,7 +49,7 @@ namespace core
     }
 
     template<typename... Args>
-    void Err(const std::string& format, Args&&... args)
+    void Error(const std::string& format, Args&&... args)
     {
       auto args_pack = std::make_format_args(std::forward<Args>(args)...);
       ErrorImpl(format, args_pack);

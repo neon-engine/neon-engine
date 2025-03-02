@@ -56,17 +56,17 @@ namespace core
   int OpenGL_RenderSystem::CreateRenderObject(const RenderInfo &render_info)
   {
     OpenGL_Model model(render_info.model_path, _logger);
-    OpenGL_Material material(render_info.shader_path, render_info.texture_paths, render_info.color);
+    OpenGL_Material material(render_info.shader_path, render_info.texture_paths, render_info.color, _logger);
 
     if (!model.Initialize())
     {
-      _logger->Err("Could not initialize model {}", render_info.model_path);
+      _logger->Error("Could not initialize model {}", render_info.model_path);
       return -1;
     }
 
     if (!material.Initialize())
     {
-      _logger->Err("Could not initialize material with shader {}", render_info.shader_path);
+      _logger->Error("Could not initialize material with shader {}", render_info.shader_path);
       model.CleanUp();
       return -1;
     }

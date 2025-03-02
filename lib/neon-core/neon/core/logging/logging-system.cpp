@@ -34,6 +34,6 @@ namespace core
     _logger->debug("Creating logger for {}", name);
     const auto logger = std::make_shared<spdlog::logger>(name, begin(_sinks), end(_sinks));
     logger->set_level(spdlog::level::debug);
-    return std::make_shared<Spd_Logger>(logger);
+    return std::make_shared<Spd_Logger>(logger, this);
   }
 } // core

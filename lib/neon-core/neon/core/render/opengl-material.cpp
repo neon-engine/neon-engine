@@ -9,11 +9,13 @@ namespace core
   OpenGL_Material::OpenGL_Material(
     const std::string &shader_path,
     const std::vector<std::string> &texture_paths,
-    const Color &color)
+    const Color &color,
+    const std::shared_ptr<Logger> &logger)
   {
     _shader = OpenGL_Shader(shader_path);
     _textures = std::vector<OpenGL_Texture>();
     _color = color;
+    _logger = logger;
 
     for (auto &texture_path : texture_paths)
     {
@@ -26,13 +28,13 @@ namespace core
   {
     if (_initialized)
     {
-      std::cerr << "Material is already initialized" << std::endl;
+      _logger->Error("Material is already initialized");
       return true;
     }
 
     if (!_shader.Initialize())
     {
-      std::cerr << "Could not initialize shader" << std::endl;
+      _logger->Error("Could not initialize shader");
       return false;
     }
 
@@ -40,7 +42,7 @@ namespace core
     {
       if (!texture.Initialize())
       {
-        std::cerr << "Could not initialize texture" << std::endl;
+        _logger->Error("Could not initialize texture");
         return false;
       }
     }
