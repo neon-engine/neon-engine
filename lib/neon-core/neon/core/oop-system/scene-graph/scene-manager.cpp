@@ -4,6 +4,7 @@
 #include <stack>
 
 #include "node/camera-node.hpp"
+#include "node/light-node.hpp"
 #include "node/spectator-node.hpp"
 #include "node/render-node.hpp"
 
@@ -32,16 +33,25 @@ void core::SceneManager::Initialize() const
     Transform{},
     RenderInfo{
       .model_path = "assets/models/bear.obj",
-      .shader_path = "assets/shaders/color",
+      .shader_path = "assets/shaders/basic-lit",
       .color = {1.0f, 0.5f, 0.31f}
     },
     _render_pipeline,
     _logger);
 
+  const auto direction_light = new LightNode(
+    "direction",
+    Transform{
+      .position = {1.2f, 1.0f, -2.0f}
+    },
+    _render_pipeline,
+    LightSource{},
+    _logger
+  );
+
   const auto light_cube = new RenderNode(
     "light cube",
     Transform{
-      .position = {1.2f, 1.0f, -2.0f},
       .scale = glm::vec3{0.2f}
     },
     RenderInfo{
@@ -63,6 +73,7 @@ void core::SceneManager::Initialize() const
   const auto camera = new CameraNode("camera", Transform{}, _render_pipeline, _logger);
 
   _root->AddChild(cube);
+  _root->AddChild(direction_light);
   _root->AddChild(light_cube);
   _root->AddChild(player);
   player->AddChild(camera);
