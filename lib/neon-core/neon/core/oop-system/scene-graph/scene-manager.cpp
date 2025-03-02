@@ -31,7 +31,7 @@ void core::SceneManager::Initialize() const
     "cube",
     Transform{},
     RenderInfo{
-      .model_path = "assets/models/cube.obj",
+      .model_path = "assets/models/bunny.obj",
       .shader_path = "assets/shaders/color",
       .color = {1.0f, 0.5f, 0.31f}
     },
@@ -49,6 +49,7 @@ void core::SceneManager::Initialize() const
       .color = {1.0f, 1.0f, 1.0f}
     },
     _render_pipeline);
+
   const auto player = new SpectatorNode(
     "player",
     Transform{

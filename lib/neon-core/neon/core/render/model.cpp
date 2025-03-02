@@ -20,7 +20,7 @@ namespace core
     if (scene == nullptr || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || scene->mRootNode == nullptr)
     {
       auto error_message = std::string(import.GetErrorString());
-      _logger->Err("Error importing model {}: {}", _path, error_message);
+      _logger->Error("Error importing model {}: {}", _path, error_message);
       return false;
     }
 
