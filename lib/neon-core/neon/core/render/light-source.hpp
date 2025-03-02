@@ -16,7 +16,7 @@ namespace core
   struct LightSource
   {
     std::string id;
-    LightType light_type{};
+    LightType light_type;
     glm::vec3 position{};
     glm::vec3 direction{};
     glm::vec3 ambient{};
