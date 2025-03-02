@@ -25,11 +25,13 @@ namespace core
   {
   protected:
     DataBuffer<RenderObjectRef> _render_object_buffer;
+    std::shared_ptr<Logger> _logger;
 
     ~RenderContext() = default;
 
   public:
-    explicit RenderContext(const int max_render_objects): _render_object_buffer(max_render_objects) {}
+    explicit RenderContext(const int max_render_objects, const std::shared_ptr<Logger> &logger):
+      _render_object_buffer(max_render_objects, logger) {}
 
     virtual int CreateRenderObject(const RenderInfo &render_info) = 0;
 

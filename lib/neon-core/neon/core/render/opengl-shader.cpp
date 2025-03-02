@@ -2,26 +2,28 @@
 
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include <sstream>
 
 namespace core
 {
   OpenGL_Shader::OpenGL_Shader() = default;
 
-  OpenGL_Shader::OpenGL_Shader(const std::string &shader_path)
+  OpenGL_Shader::OpenGL_Shader(const std::string &shader_path, const std::shared_ptr<Logger> &logger)
   {
     _shader_path = shader_path;
+    _logger = logger;
   }
 
   bool OpenGL_Shader::Initialize()
   {
     if (_initialize)
     {
-      std::cerr << "Shader " << _shader_path << " already loaded with opengl id " << _shader_program_id << std::endl;
+      _logger->Error("Shader {} already loaded opengl id {}", _shader_path, _shader_program_id);
       return true;
     }
 
-    std::cout << "Initializing shader from " << _shader_path << std::endl;
+    _logger->Info("Initializing shader from {}", _shader_path);
 
     std::string vertex_path = _shader_path + ".vert";
     std::string fragment_path = _shader_path + ".frag";
@@ -49,7 +51,8 @@ namespace core
       fragment_code = frag_shader_stream.str();
     } catch (const std::ifstream::failure &)
     {
-      std::cout << "Error opening shader " << _shader_path << std::endl;
+      _logger->Error("Error opening shader {}", _shader_path);
+      return false;
     }
     const char *vert_shader_code = vertex_code.c_str();
     const char *frag_shader_code = fragment_code.c_str();
@@ -70,7 +73,7 @@ namespace core
     if (!success)
     {
       glGetShaderInfoLog(vertex, buf_size, nullptr, info_log);
-      std::cout << "Error compiling vertex shader:\n" << info_log << std::endl;
+      _logger->Error("Error compiling vertex shader: {}", info_log);
       error = true;
     }
 
@@ -83,7 +86,7 @@ namespace core
     if (!success)
     {
       glGetShaderInfoLog(fragment, buf_size, nullptr, info_log);
-      std::cout << "Error compiling fragment shader:\n" << info_log << std::endl;
+      _logger->Error("Error compiling fragment shader: {}", info_log);
       error = true;
     }
 
@@ -97,7 +100,7 @@ namespace core
     if (!success)
     {
       glGetProgramInfoLog(program_id, buf_size, nullptr, info_log);
-      std::cout << "Error linking shader program:\n" << info_log << std::endl;
+      _logger->Error("Error linking shader program: {}", info_log);
       error = true;
     }
 
@@ -126,7 +129,7 @@ namespace core
   void OpenGL_Shader::CleanUp()
   {
     if (!_initialize) { return; }
-    std::cout << "Cleaning up shader " << _shader_path << " with opengl id " << _shader_program_id << std::endl;
+    _logger->Info("Cleaning up shader {} with opengl id {}", _shader_path, _shader_program_id);
     glDeleteProgram(_shader_program_id);
     _initialize = false;
   }

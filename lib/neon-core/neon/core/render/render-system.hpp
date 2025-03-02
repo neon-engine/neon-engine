@@ -28,9 +28,9 @@ namespace core
       const SettingsConfig &settings_config,
       const int max_render_objects,
       const std::shared_ptr<Logger> &logger)
-      : RenderContext(max_render_objects),
-        _model_refs(max_render_objects),
-        _material_refs(max_render_objects)
+      : RenderContext(max_render_objects, logger),
+        _model_refs(max_render_objects, logger),
+        _material_refs(max_render_objects, logger)
     {
       _window_context = window_context;
       _settings_config = settings_config;

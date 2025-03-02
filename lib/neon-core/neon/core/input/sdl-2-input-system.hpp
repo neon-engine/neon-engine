@@ -10,14 +10,14 @@ namespace core
   // ReSharper disable once CppInconsistentNaming
   class SDL2_InputSystem final : public InputSystem {
     WindowContext* _context;
-    InputState _input_state{};
+    InputState _input_state;
     bool _window_focus = false;
   public:
     explicit SDL2_InputSystem(
       const SettingsConfig &settings_config,
       WindowContext* context,
       const std::shared_ptr<Logger> &logger)
-      : InputSystem(settings_config, logger)
+      : InputSystem(settings_config, logger), _input_state(logger)
     {
       _context = context;
     }
