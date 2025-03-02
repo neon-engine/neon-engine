@@ -1,5 +1,7 @@
 #include "opengl-material.hpp"
 
+#include <sstream>
+
 namespace core
 {
   OpenGL_Material::OpenGL_Material() = default;
@@ -69,7 +71,101 @@ namespace core
     _shader.SetMat4("view", view);
     _shader.SetMat4("projection", projection);
     _shader.SetVec3("color", _color.r, _color.g, _color.b);
+
+    int point_light_count = 0;
+    int spot_light_count = 0;
+
+    for (const auto &light : lights)
+    {
+      switch (light.light_type)
+      {
+        case LightType::Direction:
+        {
+          SetDirectionLight(light);
+          break;
+        }
+        case LightType::Point:
+        {
+          SetPointLight(light, point_light_count++);
+          break;
+        }
+        case LightType::SpotLight:
+        {
+          SetSpotLight(light, spot_light_count++);
+          break;
+        }
+        default:
+        {
+          int type = static_cast<int>(light.light_type);
+          _logger->Error("Unsupported light type {} in material with value {}", type);
+        }
+      }
+    }
+
+    _shader.SetInt("num_point_lights", point_light_count);
+    _shader.SetInt("num_spot_lights", spot_light_count);
   }
+
+  void OpenGL_Material::SetDirectionLight(const LightSource &light) const
+  {
+    _shader.SetVec3("direction_light.direction", light.direction);
+    _shader.SetVec3("direction_light.ambient", light.ambient);
+    _shader.SetVec3("direction_light.diffuse", light.diffuse);
+    _shader.SetVec3("dirLight.specular", light.specular);
+  }
+
+  void OpenGL_Material::SetPointLight(const LightSource &light, size_t index) const
+  {
+    const std::string position = std::format("point_lights[{}].position", index);
+
+    const std::string constant = std::format("point_lights[{}].constant", index);
+    const std::string linear = std::format("point_lights[{}].linear", index);
+    const std::string quadratic = std::format("point_lights[{}].quadratic", index);
+
+    const std::string ambient = std::format("point_lights[{}].ambient", index);
+    const std::string diffuse = std::format("point_lights[{}].diffuse", index);
+    const std::string specular = std::format("point_lights[{}].specular", index);
+
+    _shader.SetVec3(position, light.position);
+
+    _shader.SetFloat(constant, light.constant);
+    _shader.SetFloat(linear, light.linear);
+    _shader.SetFloat(quadratic, light.quadratic);
+
+    _shader.SetVec3(ambient, light.ambient);
+    _shader.SetVec3(diffuse, light.diffuse);
+    _shader.SetVec3(specular, light.specular);
+  }
+
+  void OpenGL_Material::SetSpotLight(const LightSource &light, size_t index) const
+  {
+    const std::string position = std::format("spot_lights[{}].position", index);
+    const std::string direction = std::format("spot_lights[{}].direction", index);
+    const std::string cutoff = std::format("spot_lights[{}].cutoff", index);
+    const std::string outer_cutoff = std::format("spot_lights[{}].outer_cutoff", index);
+
+    const std::string constant = std::format("spot_lights[{}].constant", index);
+    const std::string linear = std::format("spot_lights[{}].linear", index);
+    const std::string quadratic = std::format("spot_lights[{}].quadratic", index);
+
+    const std::string ambient = std::format("spot_lights[{}].ambient", index);
+    const std::string diffuse = std::format("spot_lights[{}].diffuse", index);
+    const std::string specular = std::format("spot_lights[{}].specular", index);
+
+    _shader.SetVec3(position, light.position);
+    _shader.SetVec3(direction, light.direction);
+    _shader.SetFloat(cutoff, light.cutoff);
+    _shader.SetFloat(outer_cutoff, light.outer_cutoff);
+
+    _shader.SetFloat(constant, light.constant);
+    _shader.SetFloat(linear, light.linear);
+    _shader.SetFloat(quadratic, light.quadratic);
+
+    _shader.SetVec3(ambient, light.ambient);
+    _shader.SetVec3(diffuse, light.diffuse);
+    _shader.SetVec3(specular, light.specular);
+  }
+
   void OpenGL_Material::CleanUp()
   {
     _logger->Info("Cleaning up opengl material");
