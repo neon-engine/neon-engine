@@ -8,8 +8,6 @@ if (NOT DEFINED OUTPUT_ASSETS_DIR)
     message(FATAL_ERROR "OUTPUT_ASSETS_DIR variable not defined!")
 endif ()
 
-message(STATUS "Checking for orphaned files in: ${OUTPUT_ASSETS_DIR}")
-
 file(GLOB_RECURSE CURRENT_TARGET_FILES
         "${OUTPUT_ASSETS_DIR}/*"
 )
