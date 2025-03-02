@@ -17,7 +17,6 @@ namespace core
     std::vector<Vertex> _vertices;
     std::vector<unsigned int> _indices;
     std::vector<Texture> _textures;
-    glm::mat4 _model_matrix{1.0f};
     std::shared_ptr<Logger> _logger;
 
     bool _initialized = false;
@@ -33,20 +32,24 @@ namespace core
       _vertices = vertices;
       _indices = indices;
       _textures = textures;
+      _logger = logger;
     }
 
-    [[nodiscard]] const std::vector<Texture>& GetTextures() const;
+    [[nodiscard]] const std::vector<Texture>& GetTextures() const
+    {
+      return _textures;
+    }
+
+    [[nodiscard]] const std::vector<Vertex>& GetVertices() const
+    {
+      return _vertices;
+    }
 
     virtual bool Initialize() = 0;
 
     virtual void CleanUp() = 0;
 
-    virtual void Use() = 0;
-
-    [[nodiscard]] glm::mat4 GetModelMatrix() const;
-
-  protected:
-    void GenerateNormalizationMatrix();
+    virtual void Use() const = 0;
   };
 } // core
 

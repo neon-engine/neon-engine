@@ -70,7 +70,6 @@ add_library(${TARGET} STATIC
         neon/core/render/opengl-render-system.cpp
         neon/core/render/opengl-render-system.hpp
         neon/core/render/render-context.hpp
-        neon/core/render/mesh.cpp
         neon/core/render/mesh.hpp
         neon/core/render/model.cpp
         neon/core/render/model.hpp

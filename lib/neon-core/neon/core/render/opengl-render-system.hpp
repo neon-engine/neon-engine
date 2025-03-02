@@ -2,7 +2,6 @@
 #define OPEN_GL_RENDER_SYSTEM_HPP
 
 #include <memory>
-#include <vector>
 
 #include "render-system.hpp"
 #include "neon/core/application/settings-config.hpp"
@@ -32,15 +31,6 @@ namespace core
     const RenderResolution &GetRenderResolution() override;
 
     int CreateRenderObject(const RenderInfo &render_info) override;
-
-    int CreateRenderObject(
-      const std::vector<float> &vertices,
-      const std::vector<float> &normals,
-      const std::vector<float> &uvs,
-      const std::vector<unsigned int> &indices,
-      const std::string &shader_path,
-      const std::vector<std::string> &texture_paths,
-      const Color &color) override;
 
     void DrawRenderObject(
       int render_object_id,

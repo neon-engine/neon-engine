@@ -3,6 +3,7 @@
 
 #include "opengl-material.hpp"
 #include "opengl-mesh-deprecated.hpp"
+#include "opengl-model.hpp"
 #include "render-context.hpp"
 #include "neon/core/application/settings-config.hpp"
 #include "neon/core/logging/logger.hpp"
@@ -17,7 +18,7 @@ namespace core
 
   protected:
     WindowContext *_window_context;
-    DataBuffer<OpenGL_Mesh_Deprecated> _mesh_refs;
+    DataBuffer<OpenGL_Model> _model_refs;
     DataBuffer<OpenGL_Material> _material_refs;
     SettingsConfig _settings_config;
     std::shared_ptr<Logger> _logger;
@@ -28,7 +29,9 @@ namespace core
       const SettingsConfig &settings_config,
       const int max_render_objects,
       const std::shared_ptr<Logger> &logger)
-      : RenderContext(max_render_objects), _mesh_refs(max_render_objects), _material_refs(max_render_objects)
+      : RenderContext(max_render_objects),
+        _model_refs(max_render_objects),
+        _material_refs(max_render_objects)
     {
       _window_context = window_context;
       _settings_config = settings_config;

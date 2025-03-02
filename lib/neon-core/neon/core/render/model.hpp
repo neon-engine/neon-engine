@@ -16,6 +16,7 @@ namespace core
     bool ProcessNode(aiNode *root, const aiScene *scene);
 
   protected:
+    glm::mat4 _model_matrix{1.0f};
     std::shared_ptr<Logger> _logger;
 
     bool LoadModel();
@@ -25,11 +26,7 @@ namespace core
       const aiTextureType &type,
       std::vector<Texture> textures) const;
 
-    virtual bool Initialize() = 0;
-
-    virtual void Use() = 0;
-
-    virtual void CleanUp() = 0;
+    virtual void GenerateNormalizationMatrix() = 0;
 
     virtual bool ProcessMesh(aiMesh *mesh, const aiScene *scene) = 0;
 
@@ -37,6 +34,14 @@ namespace core
 
   public:
     Model(const std::string &path, const std::shared_ptr<Logger> &logger);
+
+    virtual bool Initialize() = 0;
+
+    virtual void Use() const = 0;
+
+    virtual void CleanUp() = 0;
+
+    [[nodiscard]] glm::mat4 GetNormalizedModelMatrix() const;
   };
 } // core
 

@@ -87,4 +87,9 @@ namespace core
 
     return true;
   }
+
+  glm::mat4 Model::GetNormalizedModelMatrix() const
+  {
+    return _model_matrix;
+  }
 } // core

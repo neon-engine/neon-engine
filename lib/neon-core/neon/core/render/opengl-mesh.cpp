@@ -60,7 +60,7 @@ namespace core {
     return true;
   }
 
-  void OpenGL_Mesh::Use()
+  void OpenGL_Mesh::Use() const
   {
     glBindVertexArray(_vao);
     glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(_indices.size()), GL_UNSIGNED_INT, nullptr);

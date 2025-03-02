@@ -23,7 +23,7 @@ namespace core
 
     bool Initialize() override;
 
-    void Use() override;
+    void Use() const override;
 
     void CleanUp() override;
   };

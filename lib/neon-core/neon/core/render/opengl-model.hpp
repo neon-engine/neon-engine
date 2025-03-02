@@ -8,18 +8,21 @@ namespace core
   // ReSharper disable once CppInconsistentNaming
   class OpenGL_Model final : public Model
   {
-    std::vector<OpenGL_Mesh> _meshes;
+    std::vector<OpenGL_Mesh> _meshes{};
   protected:
-    bool Initialize() override;
-
-    void Use() override;
-
-    void CleanUp() override;
-
     bool ProcessMesh(aiMesh *mesh, const aiScene *scene) override;
 
   public:
     OpenGL_Model(const std::string &path, const std::shared_ptr<Logger> &logger);
+
+    bool Initialize() override;
+
+    void Use() const override;
+
+    void CleanUp() override;
+
+  protected:
+    void GenerateNormalizationMatrix() override;
   };
 } // core
 
