@@ -22,3 +22,9 @@
 [submodule "external/SDL_mixer"]
 	path = external/SDL_mixer
 	url = https://github.com/libsdl-org/SDL_mixer.git
+[submodule "external/soloud"]
+	path = external/soloud
+	url = https://github.com/jarikomppa/soloud.git
+[submodule "external/steam-audio"]
+	path = external/steam-audio
+	url = https://github.com/ValveSoftware/steam-audio.git
