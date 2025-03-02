@@ -21,6 +21,12 @@ namespace core
     Color _color;
     std::shared_ptr<Logger> _logger;
 
+    void SetDirectionLight(const LightSource &light) const;
+
+    void SetPointLight(const LightSource &light, size_t index) const;
+
+    void SetSpotLight(const LightSource &light, size_t index) const;
+
   public:
     OpenGL_Material();
 
