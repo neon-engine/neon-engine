@@ -1,0 +1,4 @@
+[core]
+    remote = nas-01
+['remote "nas-01"']
+    url = /mnt/assets/neon-engine
