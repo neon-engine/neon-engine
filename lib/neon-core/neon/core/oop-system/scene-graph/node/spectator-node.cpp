@@ -1,5 +1,7 @@
 #include "spectator-node.hpp"
 
+#include <bits/stl_algo.h>
+
 namespace core {
   SpectatorNode::SpectatorNode(
     const std::string &name,
@@ -52,5 +54,7 @@ namespace core {
   {
     _transform.rotation.yaw -= static_cast<float>(x) * 0.1f;
     _transform.rotation.pitch -= static_cast<float>(y) * 0.1f;
+
+    _transform.rotation.pitch = std::clamp(_transform.rotation.pitch, -89.f, 89.f);
   }
 } // core
