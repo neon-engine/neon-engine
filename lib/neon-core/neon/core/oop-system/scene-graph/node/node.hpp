@@ -6,24 +6,27 @@
 
 #include <neon/core/common/transform.hpp>
 
+#include "neon/core/logging/logger.hpp"
+
 
 namespace core
 {
   // ReSharper disable once CppClassCanBeFinal
   class Node
   {
-    bool _initialized;
+    bool _initialized = false;
   protected:
     std::string _name;
     Transform _transform;
     glm::mat4 _world_matrix{1.0f};
     Node *_parent = nullptr;
     std::vector<Node *> _children;
+    std::shared_ptr<Logger> _logger;
 
     void CalculateWorldMatrix();
 
   public:
-    Node(const std::string &name, const Transform &transform);
+    Node(const std::string &name, const Transform &transform, const std::shared_ptr<Logger> &logger);
 
     virtual ~Node();
 

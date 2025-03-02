@@ -15,7 +15,8 @@ namespace core
     SpectatorNode(
       const std::string &name,
       const Transform &transform,
-      InputContext *input_context);
+      InputContext *input_context,
+      const std::shared_ptr<Logger> &logger);
 
     void Update(double delta_time) override;
 

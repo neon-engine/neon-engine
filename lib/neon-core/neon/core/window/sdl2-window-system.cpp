@@ -7,17 +7,17 @@ namespace core
 {
   void SDL2_WindowSystem::Initialize()
   {
-    std::cout << "Initializing SDL2 window system" << std::endl;
-    std::cout << "SDL version: "
-      << SDL_MAJOR_VERSION << "."
-      << SDL_MINOR_VERSION << "."
-      << SDL_PATCHLEVEL << std::endl;
+    _logger->Info("Initializing SDL2 window system");
+    constexpr int major = SDL_MAJOR_VERSION;
+    constexpr int minor = SDL_MINOR_VERSION;
+    constexpr int patch = SDL_PATCHLEVEL;
+    _logger->Info("SDL version: {}.{}.{}", major, minor, patch);
 
     if (SDL_InitSubSystem(SDL_INIT_VIDEO))
     {
-      std::stringstream ss;
-      ss << "Failed to initialize SDL2: " << SDL_GetError();
-      throw std::runtime_error(ss.str());
+      auto error = std::string(SDL_GetError());
+      _logger->Critical("Failed to initialize SDL2: {}", error);
+      throw std::runtime_error("Failed to initialize SDL2");
     }
 
     ConfigureWindowForRenderer();
@@ -33,6 +33,7 @@ namespace core
     if (_window == nullptr)
     {
       SDL_Quit();
+      _logger->Critical("Failed to create SDL2 Window");
       throw std::runtime_error("Failed to create SDL2 Window");
     }
 
@@ -48,7 +49,10 @@ namespace core
         break;
       }
       default:
+      {
+        _logger->Critical("Unsupported rendering API configured");
         throw std::runtime_error("Unsupported rendering API configured");
+      }
     }
   }
 
@@ -92,7 +96,10 @@ namespace core
         break;
       }
       default:
+      {
+        _logger->Critical("Unsupported rendering API configured");
         throw std::runtime_error("Unsupported rendering API configured");
+      }
     }
   }
 

@@ -4,7 +4,8 @@ namespace core {
   CameraNode::CameraNode(
     const std::string &name,
     const Transform &transform,
-    RenderPipeline *render_pipeline) : Node(name, transform)
+    RenderPipeline *render_pipeline,
+    const std::shared_ptr<Logger> &logger) : Node(name, transform, logger)
   {
     _render_pipeline = render_pipeline;
   }

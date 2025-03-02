@@ -1,17 +1,18 @@
 #include "node.hpp"
 
 #include <iostream>
-
-#include "glm/gtc/quaternion.hpp"
+#include <glm/gtc/quaternion.hpp>
 
 namespace core {
 
   Node::Node(
     const std::string &name,
-    const Transform &transform)
+    const Transform &transform,
+    const std::shared_ptr<Logger> &logger)
   {
     _name = name;
     _transform = transform;
+    _logger = logger;
   }
 
   Node::~Node() = default;
@@ -35,7 +36,7 @@ namespace core {
   {
     _children.push_back(child);
     child->_parent = this;
-    std::cout << "Added node " << child->_name << " to node " << _name << std::endl;
+    _logger->Info("Added node {} to node {}", child->_name, _name);
   }
 
   void Node::RemoveChild(Node *child)
@@ -44,7 +45,7 @@ namespace core {
       it != _children.end())
     {
       _children.erase(it);
-      std::cout << "Removed node " << child->_name << " from node " << _name << std::endl;
+      _logger->Info("Removed node {} from node {}", child->_name, _name);
     }
   }
 
@@ -60,7 +61,7 @@ namespace core {
 
   void Node::Initialize()
   {
-    std::cout << "Initializing " << _name << std::endl;
+    _logger->Info("Initialized {}", _name);
     _initialized = true;
   }
 
@@ -71,6 +72,7 @@ namespace core {
 
   void Node::CleanUp()
   {
-    std::cout << "Cleaning up " << _name << std::endl;
+    _logger->Info("Cleaned up {}",_name);
+    _initialized = false;
   }
 } // core

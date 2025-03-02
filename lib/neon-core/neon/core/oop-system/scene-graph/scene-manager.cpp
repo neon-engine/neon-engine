@@ -16,7 +16,7 @@ core::SceneManager::SceneManager(
     _input_context(input_context),
     _render_pipeline(render_pipeline)
 {
-  _root = new Node("root", {});
+  _root = new Node("root", {}, logger);
   _logger = logger;
 }
 
@@ -35,7 +35,8 @@ void core::SceneManager::Initialize() const
       .shader_path = "assets/shaders/color",
       .color = {1.0f, 0.5f, 0.31f}
     },
-    _render_pipeline);
+    _render_pipeline,
+    _logger);
 
   const auto light_cube = new RenderNode(
     "light cube",
@@ -48,16 +49,18 @@ void core::SceneManager::Initialize() const
       .shader_path = "assets/shaders/color",
       .color = {1.0f, 1.0f, 1.0f}
     },
-    _render_pipeline);
+    _render_pipeline,
+    _logger);
 
   const auto player = new SpectatorNode(
     "player",
     Transform{
       .position = {0.f, 0.f, 2.0f}
     },
-    _input_context);
+    _input_context,
+    _logger);
 
-  const auto camera = new CameraNode("camera", Transform{}, _render_pipeline);
+  const auto camera = new CameraNode("camera", Transform{}, _render_pipeline, _logger);
 
   _root->AddChild(cube);
   _root->AddChild(light_cube);

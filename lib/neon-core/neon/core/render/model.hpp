@@ -5,7 +5,7 @@
 #include <neon/core/logging/logger.hpp>
 
 #include "mesh.hpp"
-#include "texture.hpp"
+#include "texture-info.hpp"
 
 namespace core
 {
@@ -24,7 +24,7 @@ namespace core
     void LoadMaterialTextures(
       const aiMaterial *material,
       const aiTextureType &type,
-      std::vector<Texture> textures) const;
+      std::vector<TextureInfo> textures) const;
 
     virtual void GenerateNormalizationMatrix() = 0;
 

@@ -73,7 +73,7 @@ add_library(${TARGET} STATIC
         neon/core/render/model.hpp
         neon/core/render/opengl-model.cpp
         neon/core/render/opengl-model.hpp
-        neon/core/render/texture.hpp
+        neon/core/render/texture-info.hpp
         neon/core/render/texture-type.hpp
 )
 
