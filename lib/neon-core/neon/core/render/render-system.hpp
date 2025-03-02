@@ -2,7 +2,6 @@
 #define RENDER_SYSTEM_HPP
 
 #include "opengl-material.hpp"
-#include "opengl-mesh-deprecated.hpp"
 #include "opengl-model.hpp"
 #include "render-context.hpp"
 #include "neon/core/application/settings-config.hpp"

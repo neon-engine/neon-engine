@@ -62,8 +62,6 @@ add_library(${TARGET} STATIC
         neon/core/render/opengl-shader.hpp
         neon/core/render/opengl-texture.cpp
         neon/core/render/opengl-texture.hpp
-        neon/core/render/opengl-mesh-deprecated.cpp
-        neon/core/render/opengl-mesh-deprecated.hpp
         neon/core/render/opengl-material.cpp
         neon/core/render/opengl-material.hpp
         neon/core/render/render-system.hpp
