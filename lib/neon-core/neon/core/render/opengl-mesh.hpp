@@ -1,7 +1,9 @@
 #ifndef OPEN_GL_MESH_HPP
 #define OPEN_GL_MESH_HPP
+
+#include <glad/gl.h>
+
 #include "mesh.hpp"
-#include "glad/gl.h"
 
 namespace core
 {
@@ -15,12 +17,13 @@ namespace core
   public:
     OpenGL_Mesh(const std::vector<Vertex> &vertices,
                 const std::vector<unsigned int> &indices,
-                const std::vector<std::string> &textures)
-      : Mesh(vertices, indices, textures) {}
+                const std::vector<Texture> &textures,
+                const std::shared_ptr<Logger> &logger)
+      : Mesh(vertices, indices, textures, logger) {}
 
-    void Initialize() override;
+    bool Initialize() override;
 
-    void Draw() override;
+    void Use() override;
 
     void CleanUp() override;
   };

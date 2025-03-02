@@ -53,7 +53,6 @@ add_library(${TARGET} STATIC
         neon/core/render/render-object-ref.hpp
         neon/core/render/vertex.hpp
         neon/core/render/mesh.hpp
-        neon/core/render/texture.hpp
         neon/core/render/opengl-mesh.cpp
         neon/core/render/opengl-mesh.hpp
         neon/core/render/render-pipeline.hpp
@@ -71,10 +70,25 @@ add_library(${TARGET} STATIC
         neon/core/render/opengl-render-system.cpp
         neon/core/render/opengl-render-system.hpp
         neon/core/render/render-context.hpp
+        neon/core/render/mesh.cpp
+        neon/core/render/mesh.hpp
+        neon/core/render/model.cpp
+        neon/core/render/model.hpp
+        neon/core/render/opengl-model.cpp
+        neon/core/render/opengl-model.hpp
+        neon/core/render/texture.hpp
+        neon/core/render/texture-type.hpp
 )
 
 target_include_directories(${TARGET}
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-target_link_libraries(${TARGET} glm glad stb SDL2::SDL2main SDL2::SDL2-static spdlog)
+target_link_libraries(${TARGET}
+        glm::glm
+        SDL2::SDL2main
+        SDL2::SDL2-static
+        spdlog::spdlog
+        assimp
+        glad
+        stb)
