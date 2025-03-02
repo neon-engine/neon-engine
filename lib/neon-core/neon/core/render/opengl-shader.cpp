@@ -134,17 +134,17 @@ namespace core
     _initialize = false;
   }
 
-  void OpenGL_Shader::SetInt(const std::string &name, const int &value) const
+  void OpenGL_Shader::SetInt(const std::string &name, const int value) const
   {
     glUniform1i(glGetUniformLocation(_shader_program_id, name.c_str()), value);
   }
 
-  void OpenGL_Shader::SetFloat(const std::string &name, const float &value) const
+  void OpenGL_Shader::SetFloat(const std::string &name, const float value) const
   {
     glUniform1f(glGetUniformLocation(_shader_program_id, name.c_str()), value);
   }
 
-  void OpenGL_Shader::SetBool(const std::string &name, const bool &value) const
+  void OpenGL_Shader::SetBool(const std::string &name, const bool value) const
   {
     glUniform1i(glGetUniformLocation(_shader_program_id, name.c_str()), static_cast<int>(value));
   }
@@ -154,7 +154,7 @@ namespace core
     glUniform2fv(glGetUniformLocation(_shader_program_id, name.c_str()), 1, &value[0]);
   }
 
-  void OpenGL_Shader::SetVec2(const std::string &name, const float &x, const float &y) const
+  void OpenGL_Shader::SetVec2(const std::string &name, const float x, const float y) const
   {
     glUniform2f(glGetUniformLocation(_shader_program_id, name.c_str()), x, y);
   }
@@ -164,7 +164,7 @@ namespace core
     glUniform3fv(glGetUniformLocation(_shader_program_id, name.c_str()), 1, &value[0]);
   }
 
-  void OpenGL_Shader::SetVec3(const std::string &name, const float &x, const float &y, const float &z) const
+  void OpenGL_Shader::SetVec3(const std::string &name, const float x, const float y, const float z) const
   {
     glUniform3f(glGetUniformLocation(_shader_program_id, name.c_str()), x, y, z);
   }
@@ -174,7 +174,7 @@ namespace core
     glUniform4fv(glGetUniformLocation(_shader_program_id, name.c_str()), 1, &value[0]);
   }
 
-  void OpenGL_Shader::SetVec4(const std::string &name, const float &x, const float &y, const float &z, const float &w) const
+  void OpenGL_Shader::SetVec4(const std::string &name, const float x, const float y, const float z, const float w) const
   {
     glUniform4f(glGetUniformLocation(_shader_program_id, name.c_str()), x, y, z, w);
   }
