@@ -16,9 +16,9 @@ namespace core
 
   void RenderNode::Initialize()
   {
-    Node::Initialize();
     _logger->Info("Initializing {}", _name);
     _render_object_id = _render_pipeline->CreateRenderObject(_render_info);
+    Node::Initialize();
   }
 
   void RenderNode::Update(const double delta_time)
@@ -29,7 +29,7 @@ namespace core
 
   void RenderNode::CleanUp()
   {
-    Node::CleanUp();
     _render_pipeline->DestroyRenderObject(_render_object_id);
+    Node::CleanUp();
   }
 } // core
