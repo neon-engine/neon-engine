@@ -5,6 +5,8 @@
 #include <vector>
 #include <neon/core/common/data-buffer.hpp>
 #include <neon/core/common/transform.hpp>
+
+#include "light-source.hpp"
 #include "render-info.hpp"
 #include "render-object-ref.hpp"
 
@@ -39,7 +41,8 @@ namespace core
       int render_object_id,
       const glm::mat4 &to_world,
       const glm::mat4 &view,
-      const glm::mat4 &projection) = 0;
+      const glm::mat4 &projection,
+      const std::vector<LightSource> &lights) = 0;
 
     virtual void DestroyRenderObject(int render_object_id) = 0;
 

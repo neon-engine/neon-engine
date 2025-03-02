@@ -32,7 +32,7 @@ void core::SceneManager::Initialize() const
     Transform{},
     RenderInfo{
       .model_path = "assets/models/bear.obj",
-      .shader_path = "assets/shaders/color",
+      .shader_path = "assets/shaders/basic-lit",
       .color = {1.0f, 0.5f, 0.31f}
     },
     _render_pipeline,

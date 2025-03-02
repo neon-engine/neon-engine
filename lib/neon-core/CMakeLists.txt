@@ -75,6 +75,9 @@ add_library(${TARGET} STATIC
         neon/core/render/opengl-model.hpp
         neon/core/render/texture-info.hpp
         neon/core/render/texture-type.hpp
+        neon/core/render/light-source.hpp
+        neon/core/oop-system/scene-graph/node/light-node.cpp
+        neon/core/oop-system/scene-graph/node/light-node.hpp
 )
 
 target_include_directories(${TARGET}
