@@ -4,6 +4,7 @@
 #include <vector>
 #include <neon/core/common/color.hpp>
 
+#include "light-source.hpp"
 #include "opengl-shader.hpp"
 #include "opengl-texture.hpp"
 #include "neon/core/logging/logger.hpp"
@@ -31,7 +32,11 @@ namespace core
 
     bool Initialize();
 
-    void Use(const glm::mat4 &model, const glm::mat4 &view, const glm::mat4 &projection) const;
+    void Use(
+      const glm::mat4 &model,
+      const glm::mat4 &view,
+      const glm::mat4 &projection,
+      const std::vector<LightSource> &lights) const;
 
     void CleanUp();
   };

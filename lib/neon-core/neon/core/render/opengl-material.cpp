@@ -1,7 +1,5 @@
 #include "opengl-material.hpp"
 
-#include <iostream>
-
 namespace core
 {
   OpenGL_Material::OpenGL_Material() = default;
@@ -51,7 +49,11 @@ namespace core
     return true;
   }
 
-  void OpenGL_Material::Use(const glm::mat4 &model, const glm::mat4 &view, const glm::mat4 &projection) const
+  void OpenGL_Material::Use(
+    const glm::mat4 &model,
+    const glm::mat4 &view,
+    const glm::mat4 &projection,
+    const std::vector<LightSource> &lights) const
   {
     _shader.Activate();
     for (auto texture_unit = 0; texture_unit < _textures.size(); texture_unit++)

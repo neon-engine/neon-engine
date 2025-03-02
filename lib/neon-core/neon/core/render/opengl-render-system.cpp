@@ -95,7 +95,8 @@ namespace core
     const int render_object_id,
     const glm::mat4 &to_world,
     const glm::mat4 &view,
-    const glm::mat4 &projection)
+    const glm::mat4 &projection,
+    const std::vector<LightSource> &lights)
   {
     const auto [model_id, material_id] = _render_object_buffer[render_object_id];
     const auto model = _model_refs[model_id];
@@ -103,7 +104,7 @@ namespace core
 
     auto normalized_model_matrix = model.GetNormalizedModelMatrix();
     normalized_model_matrix = to_world * normalized_model_matrix;
-    material.Use(normalized_model_matrix, view, projection);
+    material.Use(normalized_model_matrix, view, projection, lights);
     model.Use();
   }
 

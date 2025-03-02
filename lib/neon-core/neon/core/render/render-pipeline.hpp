@@ -38,6 +38,8 @@ namespace core
 
     virtual void EnqueueForRendering(int render_object_id, const glm::mat4& to_world) = 0;
 
+    virtual void EnqueueLightSource(const LightSource &light_source) = 0;
+
     virtual void Initialize() = 0;
 
     virtual void RenderFrame() = 0;

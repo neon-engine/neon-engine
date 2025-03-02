@@ -36,7 +36,8 @@ namespace core
       int render_object_id,
       const glm::mat4 &to_world,
       const glm::mat4 &view,
-      const glm::mat4 &projection) override;
+      const glm::mat4 &projection,
+      const std::vector<LightSource> &lights) override;
 
     void DestroyRenderObject(int render_object_id) override;
   };
