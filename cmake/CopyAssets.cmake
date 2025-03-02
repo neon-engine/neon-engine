@@ -16,6 +16,7 @@ function(setup_copy_assets TARGET_NAME SOURCE_ASSETS_DIR OUTPUT_ASSETS_DIR)
             "${SOURCE_ASSETS_DIR}/*"
     )
     list(FILTER SOURCE_FILES EXCLUDE REGEX "\\.dvc$")
+    list(FILTER SOURCE_FILES EXCLUDE REGEX "\\.gitignore$")
 
     foreach (SRC_FILE IN LISTS SOURCE_FILES)
         file(RELATIVE_PATH REL_PATH "${SOURCE_ASSETS_DIR}" "${SRC_FILE}")
