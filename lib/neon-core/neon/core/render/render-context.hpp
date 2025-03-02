@@ -33,15 +33,6 @@ namespace core
 
     virtual int CreateRenderObject(const RenderInfo &render_info) = 0;
 
-    virtual int CreateRenderObject(
-      const std::vector<float> &vertices,
-      const std::vector<float> &normals,
-      const std::vector<float> &tex_coordinates,
-      const std::vector<unsigned int> &indices,
-      const std::string &shader_path,
-      const std::vector<std::string> &texture_paths,
-      const Color &color) = 0;
-
     virtual void DrawRenderObject(
       int render_object_id,
       const Transform &transform,

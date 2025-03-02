@@ -5,7 +5,7 @@ namespace core
 {
   struct RenderObjectRef
   {
-    int mesh_id = -1;
+    int model_id = -1;
     int material_id = -1;
   };
 

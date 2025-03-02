@@ -1,5 +1,6 @@
 #include "opengl-render-system.hpp"
 
+#include "opengl-model.hpp"
 #include "neon/core/common/util.hpp"
 
 
@@ -51,72 +52,42 @@ namespace core
     return _render_resolution;
   }
 
+  // TODO [issues/7] find out if returning -1 is the best way to handle this, maybe assert calls are better
   int OpenGL_RenderSystem::CreateRenderObject(const RenderInfo &render_info)
   {
-    std::vector<float> vertices(0);
-    std::vector<float> normals(0);
-    std::vector<float> uvs(0);
-    std::vector<unsigned int> indices(0);
-    load_obj(render_info.model_path, vertices, normals, uvs, indices);
+    OpenGL_Model model(render_info.model_path, _logger);
+    OpenGL_Material material(render_info.shader_path, render_info.texture_paths, render_info.color);
 
-    return CreateRenderObject(
-      vertices,
-      normals,
-      uvs,
-      indices,
-      render_info.shader_path,
-      render_info.texture_paths,
-      render_info.color);
-  }
-
-  // TODO [issues/7] find out if returning -1 is the best way to handle this, maybe assert calls are better
-  int OpenGL_RenderSystem::CreateRenderObject(
-    const std::vector<float> &vertices,
-    const std::vector<float> &normals,
-    const std::vector<float> &uvs,
-    const std::vector<unsigned int> &indices,
-    const std::string &shader_path,
-    const std::vector<std::string> &texture_paths,
-    const Color &color)
-  {
-    // TODO [issues/8] optimization opportunity
-    // find a way to reuse materials and meshes already created
-    // the same materials can make use of different materials and vice versa
-    auto mesh = OpenGL_Mesh_Deprecated(vertices, normals, uvs, indices);
-    auto material = OpenGL_Material(shader_path, texture_paths, color);
-
-    if (!mesh.Initialize())
+    if (!model.Initialize())
     {
-      std::cerr << "Could not initialize mesh" << std::endl;
+      _logger->Err("Could not initialize model {}", render_info.model_path);
       return -1;
     }
 
     if (!material.Initialize())
     {
-      std::cerr << "Could not initialize material" << std::endl;
-      mesh.CleanUp();
+      _logger->Err("Could not initialize material with shader {}", render_info.shader_path);
+      model.CleanUp();
       return -1;
     }
 
-    const auto mesh_id = _mesh_refs.Add(mesh);
+    const auto model_id = _model_refs.Add(model);
     const auto material_id = _material_refs.Add(material);
 
-    if (mesh_id < 0 || material_id < 0)
+    if (model_id < 0 || material_id < 0)
     {
-      mesh.CleanUp();
+      model.CleanUp();
       material.CleanUp();
       return -1;
     }
 
     const auto render_object = RenderObjectRef{
-      .mesh_id = mesh_id,
+      .model_id = model_id,
       .material_id = material_id
     };
     const auto render_id = _render_object_buffer.Add(render_object);
 
-    std::cout << "Created render object with id " << render_id << std::endl;
-    std::cout << "With mesh id " << mesh_id << std::endl;
-    std::cout << "With material id " << material_id << std::endl;
+    _logger->Debug("Created render object from {} with model id {} and material id {}", render_info.model_path, model_id, material_id);
     return render_id;
   }
 
@@ -126,17 +97,17 @@ namespace core
     const glm::mat4 &view,
     const glm::mat4 &projection)
   {
-    const auto [mesh_id, material_id] = _render_object_buffer[render_object_id];
-    const auto mesh = _mesh_refs[mesh_id];
+    const auto [model_id, material_id] = _render_object_buffer[render_object_id];
+    const auto model = _model_refs[model_id];
     const auto material = _material_refs[material_id];
 
-    auto model = mesh.GetModelMatrix();
+    auto normalized_model_matrix = model.GetNormalizedModelMatrix();
     const auto position = translate(glm::mat4{1.0f}, transform.position);
     const auto rotation = mat4_cast(transform.rotation.GetQuaternion());
     const auto scale = glm::scale(glm::mat4{1.0f}, transform.scale);
-    model = position * rotation * scale * model;
-    material.Use(model, view, projection);
-    mesh.Use();
+    normalized_model_matrix = position * rotation * scale * normalized_model_matrix;
+    material.Use(normalized_model_matrix, view, projection);
+    model.Use();
   }
 
   void OpenGL_RenderSystem::DrawRenderObject(
@@ -145,23 +116,23 @@ namespace core
     const glm::mat4 &view,
     const glm::mat4 &projection)
   {
-    const auto [mesh_id, material_id] = _render_object_buffer[render_object_id];
-    const auto mesh = _mesh_refs[mesh_id];
+    const auto [model_id, material_id] = _render_object_buffer[render_object_id];
+    const auto model = _model_refs[model_id];
     const auto material = _material_refs[material_id];
 
-    auto model = mesh.GetModelMatrix();
-    model = to_world * model;
-    material.Use(model, view, projection);
-    mesh.Use();
+    auto normalized_model_matrix = model.GetNormalizedModelMatrix();
+    normalized_model_matrix = to_world * normalized_model_matrix;
+    material.Use(normalized_model_matrix, view, projection);
+    model.Use();
   }
 
   void OpenGL_RenderSystem::DestroyRenderObject(const int render_object_id)
   {
-    const auto [mesh_id, material_id] = _render_object_buffer.Remove(render_object_id);
-    auto mesh = _mesh_refs.Remove(mesh_id);
+    const auto [model_id, material_id] = _render_object_buffer.Remove(render_object_id);
+    auto normalized_model_matrix = _model_refs.Remove(model_id);
     auto material = _material_refs.Remove(material_id);
 
-    mesh.CleanUp();
+    normalized_model_matrix.CleanUp();
     material.CleanUp();
   }
 } // core
