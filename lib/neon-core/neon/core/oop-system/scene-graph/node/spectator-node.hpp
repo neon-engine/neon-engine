@@ -20,7 +20,7 @@ namespace core
 
     void Update(double delta_time) override;
 
-    void MouseCallback(const double &x, const double &y);
+    void MouseCallback(double x, double y);
   };
 } // core
 

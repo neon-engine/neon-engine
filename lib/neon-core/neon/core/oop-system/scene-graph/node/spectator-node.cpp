@@ -50,7 +50,7 @@ namespace core {
     CalculateWorldMatrix();
   }
 
-  void SpectatorNode::MouseCallback(const double &x, const double &y)
+  void SpectatorNode::MouseCallback(const double x, const double y)
   {
     _transform.rotation.yaw -= static_cast<float>(x) * 0.1f;
     _transform.rotation.pitch -= static_cast<float>(y) * 0.1f;
