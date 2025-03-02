@@ -14,12 +14,14 @@ namespace core
     int _capacity = 0;
     std::vector<T> _refs;
     std::queue<int> _deleted_ids{};
+    std::shared_ptr<Logger> _logger;
 
   public:
-    explicit DataBuffer(const int max_capacity)
+    DataBuffer(const int max_capacity, const std::shared_ptr<Logger> logger)
     {
       _capacity = max_capacity;
       _refs.reserve(_capacity);
+      _logger = logger;
     }
 
     int Add(const T &element)
@@ -64,9 +66,7 @@ namespace core
         return _index++;
       }
 
-      std::cerr <<
-          "Could not create id for buffer with since it is at capacity (" << _capacity << " elements)"
-          << std::endl;
+      _logger->Error("Could not create id for buffer with since it is at capacity {} elements)", _capacity);
       return -1;
     }
   };

@@ -5,6 +5,8 @@
 #include <iostream>
 #include <vector>
 
+#include "neon/core/logging/logger.hpp"
+
 namespace core
 {
   enum class Action
@@ -48,8 +50,13 @@ namespace core
   {
     std::bitset<kAction_Size> _action_map{};
     std::vector<AxisState> _axis_map{kAxis_Size};
+    std::shared_ptr<Logger> _logger;
 
   public:
+    explicit InputState(const std::shared_ptr<Logger> &logger)
+    {
+      _logger = logger;
+    }
 
     void SetAction(Action action)
     {
@@ -68,8 +75,9 @@ namespace core
           break;
         }
         default:
-          std::cerr << "unsupported axis passed in" << std::endl;
-          return;
+        {
+          _logger->Error("unsupported axis passed in");
+        }
       }
     }
 

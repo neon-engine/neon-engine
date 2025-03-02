@@ -1,10 +1,13 @@
 #ifndef OPEN_GL_SHADER_HPP
 #define OPEN_GL_SHADER_HPP
 
+#include <memory>
 #include <glad/gl.h>
 
 #include <string>
 #include <glm/glm.hpp>
+
+#include "neon/core/logging/logger.hpp"
 
 namespace core
 {
@@ -14,11 +17,12 @@ namespace core
     std::string _shader_path;
     GLuint _shader_program_id = 0;
     bool _initialize = false;
+    std::shared_ptr<Logger> _logger;
 
   public:
     OpenGL_Shader();
 
-    explicit OpenGL_Shader(const std::string &shader_path);
+    explicit OpenGL_Shader(const std::string &shader_path, const std::shared_ptr<Logger> &logger);
 
     bool Initialize();
 

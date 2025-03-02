@@ -12,14 +12,14 @@ namespace core
     const Color &color,
     const std::shared_ptr<Logger> &logger)
   {
-    _shader = OpenGL_Shader(shader_path);
+    _shader = OpenGL_Shader(shader_path, logger);
     _textures = std::vector<OpenGL_Texture>();
     _color = color;
     _logger = logger;
 
     for (auto &texture_path : texture_paths)
     {
-      const auto texture = OpenGL_Texture(texture_path);
+      const auto texture = OpenGL_Texture(texture_path, _logger);
       _textures.push_back(texture);
     }
   }
@@ -70,7 +70,7 @@ namespace core
   }
   void OpenGL_Material::CleanUp()
   {
-    std::cout << "Cleaning up opengl material" << std::endl;
+    _logger->Info("Cleaning up opengl material");
     if (!_initialized) { return; }
 
     _shader.CleanUp();

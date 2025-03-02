@@ -10,9 +10,10 @@ namespace core
 {
   OpenGL_Texture::OpenGL_Texture() = default;
 
-  OpenGL_Texture::OpenGL_Texture(const std::string &texture_path)
+  OpenGL_Texture::OpenGL_Texture(const std::string &texture_path, const std::shared_ptr<Logger> &logger)
   {
     _texture_path = texture_path;
+    _logger = logger;
   }
 
   bool OpenGL_Texture::Initialize()
@@ -20,11 +21,11 @@ namespace core
 
     if (_initialized)
     {
-      std::cerr << "Texture " << _texture_path << " already initialized with opengl id " << _texture_id << std::endl;
+      _logger->Error("Texture {} already initialized with opengl id {}", _texture_path, _texture_id);
       return true;
     }
 
-    std::cout << "Initializing texture from " << _texture_path << std::endl;
+    _logger->Info("Initializing texture from {}", _texture_path);
 
     const auto file_extension = get_file_extension(_texture_path);
     auto format = GL_RGB;
@@ -70,7 +71,7 @@ namespace core
       stbi_image_free(data);
     } else
     {
-      std::cout << "Failed to load texture " << _texture_path << std::endl;
+      _logger->Error("Failed to load texture {}", _texture_path);
       return false;
     }
 
@@ -93,15 +94,14 @@ namespace core
     // } else
     // {
     //   auto max_val = std::to_string(_max_texture_units - 1);
-    //   std::cerr << "Error: Texture unit " << unit << " is out of range. Supported range: 0 to "
-    //    << max_val << std::endl;
+    //   _logger->Error("Error: Texture unit {} is out of range. Supported range: 0 to {}", unit, max_val);
     // }
   }
 
   void OpenGL_Texture::CleanUp()
   {
     if (!_initialized) { return; }
-    std::cout << "Cleaning up texture " << _texture_path << " with opengl id " << _texture_id << std::endl;
+    _logger->Info("Cleaning up texture {} with opengl id {}", _texture_path, _texture_id);
     glDeleteTextures(1, &_texture_id);
     _initialized = false;
   }

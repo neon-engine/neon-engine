@@ -86,6 +86,6 @@ target_link_libraries(${TARGET}
         SDL2::SDL2main
         SDL2::SDL2-static
         spdlog::spdlog
-        assimp
+        assimp::assimp
         glad
         stb)
