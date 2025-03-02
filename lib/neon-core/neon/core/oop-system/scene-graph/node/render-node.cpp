@@ -6,8 +6,9 @@ namespace core
     const std::string &name,
     const Transform &transform,
     const RenderInfo &render_info,
-    RenderPipeline *render_pipeline)
-    : Node(name, transform)
+    RenderPipeline *render_pipeline,
+    const std::shared_ptr<Logger> &logger)
+    : Node(name, transform, logger)
   {
     _render_info = render_info;
     _render_pipeline = render_pipeline;
@@ -16,7 +17,7 @@ namespace core
   void RenderNode::Initialize()
   {
     Node::Initialize();
-    std::cout << "Initializing " << _name << std::endl;
+    _logger->Info("Initializing {}", _name);
     _render_object_id = _render_pipeline->CreateRenderObject(_render_info);
   }
 

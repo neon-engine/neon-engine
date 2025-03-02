@@ -8,7 +8,7 @@ namespace core
 {
   void OpenGL_RenderSystem::Initialize()
   {
-    std::cout << "Initializing OpenGL" << std::endl;
+    _logger->Info("Initializing OpenGL");
 
     if (gladLoadGL(reinterpret_cast<GLADloadfunc>(_window_context->GetGlProcAddress())) == 0)
     {

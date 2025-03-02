@@ -7,7 +7,7 @@
 
 namespace core
 {
-  struct Texture
+  struct TextureInfo
   {
     std::string path;
     TextureType texture_type;

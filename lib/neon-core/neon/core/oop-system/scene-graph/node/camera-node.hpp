@@ -20,7 +20,8 @@ public:
   CameraNode(
     const std::string &name,
     const Transform &transform,
-    RenderPipeline *render_pipeline);
+    RenderPipeline *render_pipeline,
+    const std::shared_ptr<Logger> &logger);
 
   void Update(double delta_time) override;
 };

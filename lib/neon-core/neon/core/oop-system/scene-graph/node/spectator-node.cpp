@@ -4,7 +4,8 @@ namespace core {
   SpectatorNode::SpectatorNode(
     const std::string &name,
     const Transform &transform,
-    InputContext *input_context) : Node(name, transform)
+    InputContext *input_context,
+    const std::shared_ptr<Logger> &logger) : Node(name, transform, logger)
   {
     _input_context = input_context;
   }

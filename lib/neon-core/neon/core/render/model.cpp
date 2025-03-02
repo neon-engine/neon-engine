@@ -30,13 +30,13 @@ namespace core
   void Model::LoadMaterialTextures(
     const aiMaterial *material,
     const aiTextureType &type,
-    std::vector<Texture> textures) const
+    std::vector<TextureInfo> textures) const
   {
     for(unsigned int i = 0; i < material->GetTextureCount(type); i++)
     {
       aiString str;
       material->GetTexture(type, i, &str);
-      Texture texture;
+      TextureInfo texture;
       texture.path = str.C_Str();
       switch (type)
       {

@@ -17,7 +17,8 @@ namespace core
       const std::string &name,
       const Transform &transform,
       const RenderInfo &render_info,
-      RenderPipeline *render_pipeline);
+      RenderPipeline *render_pipeline,
+      const std::shared_ptr<Logger> &logger);
 
     void Initialize() override;
 

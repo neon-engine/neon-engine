@@ -17,7 +17,7 @@ namespace core
   public:
     OpenGL_Mesh(const std::vector<Vertex> &vertices,
                 const std::vector<unsigned int> &indices,
-                const std::vector<Texture> &textures,
+                const std::vector<TextureInfo> &textures,
                 const std::shared_ptr<Logger> &logger)
       : Mesh(vertices, indices, textures, logger) {}
 

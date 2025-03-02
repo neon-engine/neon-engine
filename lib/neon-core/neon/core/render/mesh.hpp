@@ -6,7 +6,7 @@
 #include <vector>
 #include <neon/core/logging/logger.hpp>
 
-#include "texture.hpp"
+#include "texture-info.hpp"
 #include "vertex.hpp"
 
 namespace core
@@ -16,7 +16,7 @@ namespace core
   protected:
     std::vector<Vertex> _vertices;
     std::vector<unsigned int> _indices;
-    std::vector<Texture> _textures;
+    std::vector<TextureInfo> _textures;
     std::shared_ptr<Logger> _logger;
 
     bool _initialized = false;
@@ -26,7 +26,7 @@ namespace core
   public:
     Mesh(const std::vector<Vertex> &vertices,
          const std::vector<unsigned int> &indices,
-         const std::vector<Texture> &textures,
+         const std::vector<TextureInfo> &textures,
          const std::shared_ptr<Logger> &logger)
     {
       _vertices = vertices;
@@ -35,7 +35,7 @@ namespace core
       _logger = logger;
     }
 
-    [[nodiscard]] const std::vector<Texture>& GetTextures() const
+    [[nodiscard]] const std::vector<TextureInfo>& GetTextures() const
     {
       return _textures;
     }
