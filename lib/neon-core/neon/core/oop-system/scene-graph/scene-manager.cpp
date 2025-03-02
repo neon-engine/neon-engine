@@ -37,18 +37,18 @@ void core::SceneManager::Initialize() const
     },
     _render_pipeline);
 
-  const auto light_cube = new RenderNode(
-    "light cube",
-    Transform{
-      .position = {1.2f, 1.0f, -2.0f},
-      .scale = glm::vec3{0.2f}
-    },
-    RenderInfo{
-      .model_path = "assets/models/cube.obj",
-      .shader_path = "assets/shaders/color",
-      .color = {1.0f, 1.0f, 1.0f}
-    },
-    _render_pipeline);
+  // const auto light_cube = new RenderNode(
+  //   "light cube",
+  //   Transform{
+  //     .position = {1.2f, 1.0f, -2.0f},
+  //     .scale = glm::vec3{0.2f}
+  //   },
+  //   RenderInfo{
+  //     .model_path = "assets/models/cube.obj",
+  //     .shader_path = "assets/shaders/color",
+  //     .color = {1.0f, 1.0f, 1.0f}
+  //   },
+  //   _render_pipeline);
   const auto player = new SpectatorNode(
     "player",
     Transform{
@@ -59,7 +59,7 @@ void core::SceneManager::Initialize() const
   const auto camera = new CameraNode("camera", Transform{}, _render_pipeline);
 
   _root->AddChild(cube);
-  _root->AddChild(light_cube);
+  // _root->AddChild(light_cube);
   _root->AddChild(player);
   player->AddChild(camera);
 

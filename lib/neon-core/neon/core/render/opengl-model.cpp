@@ -115,6 +115,7 @@ namespace core
       {
         vertex.tex_coords = glm::vec2(0.0f, 0.0f);
       }
+      vertices.push_back(vertex);
     }
 
     for(unsigned int i = 0; i < mesh->mNumFaces; i++)
