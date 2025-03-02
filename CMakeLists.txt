@@ -39,7 +39,7 @@ message("runtime output directory: ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
 
 # Add cmake folder where we place our own custom Find*.cmake files
 # And locate custom packages within our file structure
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake/find")
 
 
 # Find packages installed on the toolchain/sysroot
@@ -58,6 +58,9 @@ add_subdirectory(external/spdlog)
 
 # Additional libraries
 add_subdirectory(lib/neon-core)
+
+# Load additional cmake
+include("${CMAKE_CURRENT_LIST_DIR}/cmake/CopyAssets.cmake")
 
 set(APP_TARGETS
         LearnOpenGL
