@@ -1,12 +1,17 @@
 #ifndef SCENE_HPP
 #define SCENE_HPP
+#include <string>
 
-namespace core {
+#include "node/node.hpp"
 
-class Scene {
-
-};
-
+namespace core
+{
+  class Scene
+  {
+    Node _root;
+  public:
+    void Initialize(std::string filepath);
+  };
 } // core
 
 #endif //SCENE_HPP
