@@ -13,7 +13,7 @@ namespace core {
   void CameraNode::Update(const double delta_time)
   {
     Node::Update(delta_time);
-    const glm::vec3 position = _world_matrix[3];
+    const glm::vec3 position = _transform.world_coordinates[3];
     _view = lookAt(position, position + _transform.Forward(), _camera_up);
     _render_pipeline->SetCameraInfo({_render_target, _fov, _view, _near, _far});
   }

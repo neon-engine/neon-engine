@@ -18,7 +18,6 @@ namespace core
   protected:
     std::string _name;
     Transform _transform;
-    glm::mat4 _world_matrix{1.0f};
     Node *_parent = nullptr;
     std::vector<Node *> _children;
     std::shared_ptr<Logger> _logger;
