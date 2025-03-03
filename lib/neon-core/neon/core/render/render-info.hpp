@@ -15,6 +15,7 @@ namespace core
     std::string model_path;
     std::string shader_path;
     std::vector<std::string> texture_paths;
+    bool scale_textures;
     MaterialInfo material_info;
   };
 } // core
