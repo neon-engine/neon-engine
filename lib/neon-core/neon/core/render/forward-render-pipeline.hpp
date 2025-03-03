@@ -6,7 +6,7 @@ namespace core
 {
   class Forward_RenderPipeline final : public RenderPipeline
   {
-    std::queue<std::tuple<int, glm::mat4> > _render_queue;
+    std::queue<std::tuple<int, Transform> > _render_queue;
     std::vector<LightSource> _light_sources;
     std::size_t _max_light_sources;
     CameraInfo _camera_info;
@@ -17,9 +17,11 @@ namespace core
       std::size_t max_light_sources,
       const std::shared_ptr<Logger> &logger);
 
-    void SetCameraInfo(const CameraInfo& camera_info) override;
+    void SetCameraInfo(const CameraInfo &camera_info) override;
 
-    void EnqueueForRendering(int render_object_id, const glm::mat4& to_world) override;
+    void EnqueueForRendering(
+      int render_object_id,
+      const Transform &transform) override;
 
     void Initialize() override;
 

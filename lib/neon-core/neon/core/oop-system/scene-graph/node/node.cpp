@@ -1,6 +1,5 @@
 #include "node.hpp"
 
-#include <iostream>
 #include <glm/gtc/quaternion.hpp>
 
 namespace core {
@@ -28,8 +27,7 @@ namespace core {
     const auto rotation = mat4_cast(_transform.rotation.GetQuaternion());
     const auto scale = glm::scale(glm::mat4{1.0f}, _transform.scale);
     const auto parent_matrix = _parent == nullptr ? glm::mat4(1.0f) : _parent->GetWorldMatrix();
-    _world_matrix = position * rotation * scale * parent_matrix;
-    _transform.world_coordinates = _world_matrix;
+    _transform.world_coordinates = position * rotation * scale * parent_matrix;
   }
 
   void Node::AddChild(Node *child)
@@ -56,7 +54,7 @@ namespace core {
 
   glm::mat4 Node::GetWorldMatrix()
   {
-    return _world_matrix;
+    return _transform.world_coordinates;
   }
 
   void Node::Initialize()

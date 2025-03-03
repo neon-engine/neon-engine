@@ -60,6 +60,7 @@ namespace core
       render_info.shader_path,
       render_info.texture_paths,
       render_info.material_info,
+      render_info.scale_textures,
       _logger);
 
     if (!model.Initialize())
@@ -97,7 +98,7 @@ namespace core
 
   void OpenGL_RenderSystem::DrawRenderObject(
     const int render_object_id,
-    const glm::mat4 &to_world,
+    const Transform &transform,
     const glm::mat4 &view,
     const glm::mat4 &projection,
     const std::vector<LightSource> &lights)
@@ -107,8 +108,8 @@ namespace core
     const auto material = _material_refs[material_id];
 
     auto normalized_model_matrix = model.GetNormalizedModelMatrix();
-    normalized_model_matrix = to_world * normalized_model_matrix;
-    material.Use(normalized_model_matrix, view, projection, lights);
+    normalized_model_matrix = transform.world_coordinates * normalized_model_matrix;
+    material.Use(normalized_model_matrix, view, projection, transform, lights);
     model.Use();
   }
 

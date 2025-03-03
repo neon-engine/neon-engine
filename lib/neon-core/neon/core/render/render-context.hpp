@@ -1,7 +1,6 @@
 #ifndef RENDER_CONTEXT_HPP
 #define RENDER_CONTEXT_HPP
 
-#include <string>
 #include <vector>
 #include <neon/core/common/data-buffer.hpp>
 #include <neon/core/common/transform.hpp>
@@ -39,7 +38,7 @@ namespace core
 
     virtual void DrawRenderObject(
       int render_object_id,
-      const glm::mat4 &to_world,
+      const Transform &transform,
       const glm::mat4 &view,
       const glm::mat4 &projection,
       const std::vector<LightSource> &lights) = 0;

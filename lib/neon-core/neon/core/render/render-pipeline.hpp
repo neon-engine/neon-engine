@@ -36,7 +36,9 @@ namespace core
 
     virtual void SetCameraInfo(const CameraInfo& camera_info) = 0;
 
-    virtual void EnqueueForRendering(int render_object_id, const glm::mat4& to_world) = 0;
+    virtual void EnqueueForRendering(
+      int render_object_id,
+      const Transform &local_transform) = 0;
 
     virtual void EnqueueLightSource(const LightSource &light_source) = 0;
 

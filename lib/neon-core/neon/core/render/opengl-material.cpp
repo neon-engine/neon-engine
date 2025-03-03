@@ -10,11 +10,13 @@ namespace core
     const std::string &shader_path,
     const std::vector<std::string> &texture_paths,
     const MaterialInfo &material_info,
+    const bool scale_textures,
     const std::shared_ptr<Logger> &logger)
   {
     _shader = OpenGL_Shader(shader_path, logger);
     _textures = std::vector<OpenGL_Texture>();
     _material_info = material_info;
+    _scale_textures = scale_textures;
     _logger = logger;
 
     for (auto &texture_path : texture_paths)
@@ -55,6 +57,7 @@ namespace core
     const glm::mat4 &model,
     const glm::mat4 &view,
     const glm::mat4 &projection,
+    const Transform &transform,
     const std::vector<LightSource> &lights) const
   {
     _shader.Activate();
@@ -74,6 +77,14 @@ namespace core
     _shader.SetMat4("projection", projection);
     _shader.SetVec3("color", color.r, color.g, color.b);
     _shader.SetFloat("material.shininess", _material_info.shininess);
+
+    if (!_scale_textures)
+    {
+      _shader.SetVec2("texture_scale", glm::vec2{1.0f});
+    } else
+    {
+      _shader.SetVec2("texture_scale", GetMaxPositiveComponents(transform.scale));
+    }
 
     int point_light_count = 0;
     int spot_light_count = 0;
@@ -167,6 +178,19 @@ namespace core
     _shader.SetVec3(ambient, light.ambient);
     _shader.SetVec3(diffuse, light.diffuse);
     _shader.SetVec3(specular, light.specular);
+  }
+
+  glm::vec2 OpenGL_Material::GetMaxPositiveComponents(const glm::vec3 &vector)
+  {
+    float a = (vector.x > 0) ? vector.x : 0.0f;
+    float b = (vector.y > 0) ? vector.y : 0.0f;
+    float c = (vector.z > 0) ? vector.z : 0.0f;
+
+    if (b > a) { std::swap(a, b); }
+    if (c > a) { std::swap(a, c); }
+    if (c > b) { std::swap(b, c); }
+
+    return glm::vec2(a, b);
   }
 
   void OpenGL_Material::CleanUp()

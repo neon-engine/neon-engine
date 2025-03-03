@@ -19,9 +19,9 @@ namespace core
 
   void Forward_RenderPipeline::EnqueueForRendering(
     int render_object_id,
-    const glm::mat4 &to_world)
+    const Transform &transform)
   {
-    _render_queue.emplace(render_object_id, to_world);
+    _render_queue.emplace(render_object_id, transform);
   }
 
   void Forward_RenderPipeline::Initialize()
@@ -39,9 +39,9 @@ namespace core
       _camera_info.far);
     while (!_render_queue.empty())
     {
-      auto [render_object_id, to_world] = _render_queue.front();
+      auto [render_object_id, transform] = _render_queue.front();
       _render_queue.pop();
-      _render_context->DrawRenderObject(render_object_id, to_world, _camera_info.view, projection, _light_sources);
+      _render_context->DrawRenderObject(render_object_id, transform, _camera_info.view, projection, _light_sources);
     }
 
     _light_sources.clear();
