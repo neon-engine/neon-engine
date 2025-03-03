@@ -48,17 +48,19 @@ void core::SceneManager::Initialize() const
   const auto sphere = new RenderNode(
     "sphere",
     Transform{
-      .position = {0.2f, 0.2f, -2.0f}
+      .position = {1.2f, 1.0f, -2.0f},
+      .scale = glm::vec3{0.2f}
     },
     RenderInfo{
-      .model_path = "assets/models/cone.obj",
+      .model_path = "assets/models/sphere.obj",
       .shader_path = "assets/shaders/basic-lit",
       .texture_paths = {
         "assets/textures/fire.png"
       },
       .material_info = {
         .shininess = 100.f,
-        .color = {0.5f, 0.5f, 0.5f}
+        .color = {1.0f, 1.0f, 1.0f},
+        .use_textures = false
       },
     },
     _render_pipeline,

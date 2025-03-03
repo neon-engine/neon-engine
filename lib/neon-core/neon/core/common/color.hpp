@@ -5,9 +5,9 @@ namespace core
 {
   struct Color
   {
-    float r = 0.5;
-    float g = 0.5;
-    float b = 0.5;
+    float r = 1.0f;
+    float g = 1.0f;
+    float b = 1.0f;
     float a = 1.0f;
   };
 } // core

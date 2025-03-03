@@ -9,6 +9,7 @@ namespace core
   class OpenGL_Model final : public Model
   {
     std::vector<OpenGL_Mesh> _meshes{};
+    bool _has_texture_coordinates = true;
   protected:
     bool ProcessMesh(aiMesh *mesh, const aiScene *scene) override;
 
