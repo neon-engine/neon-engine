@@ -55,6 +55,7 @@ add_subdirectory(external/sdl2)
 add_subdirectory(external/assimp)
 add_subdirectory(external/jolt-physics/Build)
 add_subdirectory(external/spdlog)
+add_subdirectory(external/rapidyaml)
 
 # Additional libraries
 add_subdirectory(lib/neon-core)
@@ -63,7 +64,6 @@ add_subdirectory(lib/neon-core)
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/CopyAssets.cmake")
 
 set(APP_TARGETS
-        LearnOpenGL
         NeonFPS
         JoltTest
 )
