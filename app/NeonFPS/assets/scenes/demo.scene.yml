@@ -1,0 +1,75 @@
+scene:
+  name: "demo"
+  children:
+    - node_type: RenderNode
+      name: "bear"
+      transform:
+        position: [ 0, 0, 0 ]
+        rotation: [ 0.0, 0.0, 0.0 ]
+        scale: [ 1.0, 1.0, 1.0 ]
+      render_info:
+        model_path: "assets/models/bear.obj"
+        shader_path: "assets/shaders/basic-lit"
+        texture_paths:
+          - "assets/textures/concrete.png"
+        material_info:
+          shininess: 32.0
+          color: [ 0.5, 0.5, 0.5 ]
+
+    - node_type: RenderNode
+      name: "sphere"
+      transform:
+        position: [ 1.2, 1.0, -2.0 ]
+        rotation: [ 0.0, 0.0, 0.0 ]
+        scale: [ 0.2, 0.2, 0.2 ]
+      render_info:
+        model_path: "assets/models/sphere.obj"
+        shader_path: "assets/shaders/basic-lit"
+        material_info:
+          shininess: 100.0
+          color: [ 1.0, 1.0, 1.0 ]
+          use_textures: false
+
+    - node_type: RenderNode
+      name: "floor"
+      transform:
+        position: [ 0.0, -0.55, 0.0 ]
+        rotation: [ 0.0, 0.0, 0.0 ]
+        scale: [ 100.0, 0.1, 100.0 ]
+      render_info:
+        model_path: "assets/models/cube.obj"
+        shader_path: "assets/shaders/basic-lit"
+        texture_paths:
+          - "assets/textures/concrete.png"
+        scale_textures: true
+        material_info:
+          shininess: 32.0
+          color: [ 0.5, 0.5, 0.5 ]
+
+    - node_type: LightNode
+      name: "direction_light"
+      transform:
+        position: [ 1.2, 1.0, -2.0 ]
+        rotation: [ 0.0, 0.0, 0.0 ]
+        scale: [ 1.0, 1.0, 1.0 ]
+      light_source:
+        id: "direction"
+        light_type: "Direction"
+        direction: [ -0.2, -1.0, -0.3 ]
+        ambient: [ 0.05, 0.05, 0.05 ]
+        diffuse: [ 0.4, 0.4, 0.4 ]
+        specular: [ 0.5, 0.5, 0.5 ]
+
+    - node_type: SpectatorNode
+      name: "player"
+      transform:
+        position: [ 0.0, 0.0, 2.0 ]
+        rotation: [ 0.0, 0.0, 0.0 ]
+        scale: [ 1.0, 1.0, 1.0 ]
+      children:
+        - node_type: CameraNode
+          name: "camera"
+          transform:
+            position: [ 0.0, 0.0, 0.0 ]
+            rotation: [ 0.0, 0.0, 0.0 ]
+            scale: [ 1.0, 1.0, 1.0 ]
