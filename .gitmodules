@@ -28,3 +28,6 @@
 [submodule "external/steam-audio"]
 	path = external/steam-audio
 	url = https://github.com/ValveSoftware/steam-audio.git
+[submodule "external/rapidyaml"]
+	path = external/rapidyaml
+	url = https://github.com/biojppm/rapidyaml.git
