@@ -56,7 +56,11 @@ namespace core
   int OpenGL_RenderSystem::CreateRenderObject(const RenderInfo &render_info)
   {
     OpenGL_Model model(render_info.model_path, _logger);
-    OpenGL_Material material(render_info.shader_path, render_info.texture_paths, render_info.color, _logger);
+    OpenGL_Material material(
+      render_info.shader_path,
+      render_info.texture_paths,
+      render_info.material_info,
+      _logger);
 
     if (!model.Initialize())
     {

@@ -5,6 +5,7 @@
 #include <neon/core/common/color.hpp>
 
 #include "light-source.hpp"
+#include "material-info.hpp"
 #include "opengl-shader.hpp"
 #include "opengl-texture.hpp"
 #include "neon/core/logging/logger.hpp"
@@ -18,7 +19,7 @@ namespace core
     bool _initialized = false;
     OpenGL_Shader _shader{};
     std::vector<OpenGL_Texture> _textures{};
-    Color _color;
+    MaterialInfo _material_info;
     std::shared_ptr<Logger> _logger;
 
     void SetDirectionLight(const LightSource &light) const;
@@ -33,7 +34,7 @@ namespace core
     OpenGL_Material(
       const std::string &shader_path,
       const std::vector<std::string> &texture_paths,
-      const Color &color,
+      const MaterialInfo &material_info,
       const std::shared_ptr<Logger> &logger);
 
     bool Initialize();

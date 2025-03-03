@@ -28,13 +28,40 @@ void core::SceneManager::Initialize() const
   // TODO [issues/4] create a NodeFactory class and use that to initialize nodes
   // avoid using the heap to avoid std::bad_alloc exceptions as well as make use of locality
 
-  const auto cube = new RenderNode(
-    "cube",
+  const auto bear = new RenderNode(
+    "bear",
     Transform{},
     RenderInfo{
       .model_path = "assets/models/bear.obj",
       .shader_path = "assets/shaders/basic-lit",
-      .color = {1.0f, 0.5f, 0.31f}
+      .texture_paths = {
+        "assets/textures/concrete.png"
+      },
+      .material_info = {
+        .shininess = 32.f,
+        .color = {1.0f, 0.5f, 0.31f}
+      },
+    },
+    _render_pipeline,
+    _logger);
+
+  const auto floor = new RenderNode(
+    "floor",
+    Transform{
+      .position = glm::vec3{0.f, -.55f, 0.f},
+      .scale = glm::vec3{ 100.f, .1f, 100.f }
+    },
+    RenderInfo{
+      .model_path = "assets/models/cube.obj",
+      .shader_path = "assets/shaders/basic-lit",
+      .texture_paths = {
+        "assets/textures/concrete.png"
+      },
+      .scale_textures = true,
+      .material_info = {
+        .shininess = 32.f,
+        .color = {0.5f, 0.5f, 0.5f}
+      },
     },
     _render_pipeline,
     _logger);
@@ -45,22 +72,31 @@ void core::SceneManager::Initialize() const
       .position = {1.2f, 1.0f, -2.0f}
     },
     _render_pipeline,
-    LightSource{},
+    LightSource{
+      .id = "direction",
+      .light_type = LightType::Direction,
+      .direction = glm::vec3(-0.2f, -1.0f, -0.3f),
+      .ambient = glm::vec3(0.05f, 0.05f, 0.05f),
+      .diffuse = glm::vec3(0.4f, 0.4f, 0.4f),
+      .specular = glm::vec3(0.5f, 0.5f, 0.5f)
+    },
     _logger
   );
 
-  const auto light_cube = new RenderNode(
-    "light cube",
-    Transform{
-      .scale = glm::vec3{0.2f}
-    },
-    RenderInfo{
-      .model_path = "assets/models/cube.obj",
-      .shader_path = "assets/shaders/color",
-      .color = {1.0f, 1.0f, 1.0f}
-    },
-    _render_pipeline,
-    _logger);
+  // const auto light_cube = new RenderNode(
+  //   "light cube",
+  //   Transform{
+  //     .scale = glm::vec3{0.2f}
+  //   },
+  //   RenderInfo{
+  //     .model_path = "assets/models/cube.obj",
+  //     .shader_path = "assets/shaders/color",
+  //     .material_info = {
+  //       .color = {1.0f, 1.0f, 1.0f}
+  //     }
+  //   },
+  //   _render_pipeline,
+  //   _logger);
 
   const auto player = new SpectatorNode(
     "player",
@@ -72,9 +108,9 @@ void core::SceneManager::Initialize() const
 
   const auto camera = new CameraNode("camera", Transform{}, _render_pipeline, _logger);
 
-  _root->AddChild(cube);
+  _root->AddChild(bear);
+  _root->AddChild(floor);
   _root->AddChild(direction_light);
-  _root->AddChild(light_cube);
   _root->AddChild(player);
   player->AddChild(camera);
 

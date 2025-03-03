@@ -9,12 +9,12 @@ namespace core
   OpenGL_Material::OpenGL_Material(
     const std::string &shader_path,
     const std::vector<std::string> &texture_paths,
-    const Color &color,
+    const MaterialInfo &material_info,
     const std::shared_ptr<Logger> &logger)
   {
     _shader = OpenGL_Shader(shader_path, logger);
     _textures = std::vector<OpenGL_Texture>();
-    _color = color;
+    _material_info = material_info;
     _logger = logger;
 
     for (auto &texture_path : texture_paths)
@@ -67,10 +67,13 @@ namespace core
       texture.Use(texture_unit);
     }
 
+    const auto color = _material_info.color;
+
     _shader.SetMat4("model", model);
     _shader.SetMat4("view", view);
     _shader.SetMat4("projection", projection);
-    _shader.SetVec3("color", _color.r, _color.g, _color.b);
+    _shader.SetVec3("color", color.r, color.g, color.b);
+    _shader.SetFloat("material.shininess", _material_info.shininess);
 
     int point_light_count = 0;
     int spot_light_count = 0;
