@@ -45,6 +45,25 @@ void core::SceneManager::Initialize() const
     _render_pipeline,
     _logger);
 
+  const auto sphere = new RenderNode(
+    "sphere",
+    Transform{
+      .position = {0.2f, 0.2f, -2.0f}
+    },
+    RenderInfo{
+      .model_path = "assets/models/cone.obj",
+      .shader_path = "assets/shaders/basic-lit",
+      .texture_paths = {
+        "assets/textures/fire.png"
+      },
+      .material_info = {
+        .shininess = 100.f,
+        .color = {0.5f, 0.5f, 0.5f}
+      },
+    },
+    _render_pipeline,
+    _logger);
+
   const auto floor = new RenderNode(
     "floor",
     Transform{
@@ -112,6 +131,7 @@ void core::SceneManager::Initialize() const
   _root->AddChild(floor);
   _root->AddChild(direction_light);
   _root->AddChild(player);
+  _root->AddChild(sphere);
   player->AddChild(camera);
 
   PostOrderTraversal([](Node *node) { node->Initialize(); });
