@@ -57,12 +57,19 @@ uniform int num_point_lights;
 uniform SpotLight spot_lights[NUM_SPOT_LIGHTS];
 uniform int num_spot_lights;
 uniform Material material;
+uniform vec4 color;
+uniform bool use_tex_coords;
 
+float is_color_mode = float(!use_tex_coords);
+
+vec3 GetDiffuseColor();
+vec3 GetSpecularColor();
 vec3 CalcDirectionLight(DirectionLight light, vec3 normal, vec3 view_direction);
 vec3 CalcPointLight(PointLight light, vec3 normal, vec3 frag_pos, vec3 view_dir);
 vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 frag_pos, vec3 view_dir);
 
-void main() {
+void main()
+{
     vec3 norm = normalize(normal_coord);
     vec3 view_dir = normalize(view_position - frag_coord);
 
@@ -76,7 +83,19 @@ void main() {
         result += CalcSpotLight(spot_lights[i], norm, frag_coord, view_dir);
     }
 
-    FragColor = vec4(result, 1.0);
+    FragColor = color * vec4(result, 1.0);
+}
+
+vec3 GetDiffuseColor()
+{
+    vec3 texture_color = texture(material.diffuse, tex_coord * vec2(float(use_tex_coords))).rgb;
+    return mix(texture_color, color.rgb, is_color_mode);
+}
+
+vec3 GetSpecularColor()
+{
+    vec3 texture_color = texture(material.specular, tex_coord * vec2(float(use_tex_coords))).rgb;
+    return mix(texture_color, vec3(0.0), is_color_mode);
 }
 
 vec3 CalcDirectionLight(DirectionLight light, vec3 normal, vec3 viewDir)
@@ -87,10 +106,14 @@ vec3 CalcDirectionLight(DirectionLight light, vec3 normal, vec3 viewDir)
     // specular shading
     vec3 reflectDir = reflect(-lightDir, normal);
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
+
+    vec3 diffuse_sample = GetDiffuseColor();
+    vec3 specular_sample = GetSpecularColor();
+
     // combine results
-    vec3 ambient = light.ambient * vec3(texture(material.diffuse, tex_coord));
-    vec3 diffuse = light.diffuse * diff * vec3(texture(material.diffuse, tex_coord));
-    vec3 specular = light.specular * spec * vec3(texture(material.specular, tex_coord));
+    vec3 ambient = light.ambient * diffuse_sample;
+    vec3 diffuse = light.diffuse * diff * diffuse_sample;
+    vec3 specular = light.specular * spec * specular_sample;
     return (ambient + diffuse + specular);
 }
 
@@ -106,10 +129,14 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
     // attenuation
     float distance = length(light.position - fragPos);
     float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
+
+    vec3 diffuse_sample = GetDiffuseColor();
+    vec3 specular_sample = GetSpecularColor();
+
     // combine results
-    vec3 ambient = light.ambient * vec3(texture(material.diffuse, tex_coord));
-    vec3 diffuse = light.diffuse * diff * vec3(texture(material.diffuse, tex_coord));
-    vec3 specular = light.specular * spec * vec3(texture(material.specular, tex_coord));
+    vec3 ambient = light.ambient * diffuse_sample;
+    vec3 diffuse = light.diffuse * diff * diffuse_sample;
+    vec3 specular = light.specular * spec * specular_sample;
     ambient *= attenuation;
     diffuse *= attenuation;
     specular *= attenuation;
@@ -132,10 +159,14 @@ vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
     float theta = dot(lightDir, normalize(-light.direction));
     float epsilon = light.cutoff - light.outer_cutoff;
     float intensity = clamp((theta - light.outer_cutoff) / epsilon, 0.0, 1.0);
+
+    vec3 diffuse_sample = GetDiffuseColor();
+    vec3 specular_sample = GetSpecularColor();
+
     // combine results
-    vec3 ambient = light.ambient * vec3(texture(material.diffuse, tex_coord));
-    vec3 diffuse = light.diffuse * diff * vec3(texture(material.diffuse, tex_coord));
-    vec3 specular = light.specular * spec * vec3(texture(material.specular, tex_coord));
+    vec3 ambient = light.ambient * diffuse_sample;
+    vec3 diffuse = light.diffuse * diff * diffuse_sample;
+    vec3 specular = light.specular * spec * specular_sample;
     ambient *= attenuation * intensity;
     diffuse *= attenuation * intensity;
     specular *= attenuation * intensity;

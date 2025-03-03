@@ -21,7 +21,9 @@ namespace core
   public:
     OpenGL_Texture();
 
-    explicit OpenGL_Texture(const std::string &texture_path, const std::shared_ptr<Logger> &logger);
+    explicit OpenGL_Texture(
+      const std::string &texture_path,
+      const std::shared_ptr<Logger> &logger);
 
     bool Initialize();
 

@@ -21,7 +21,7 @@ namespace core
     OpenGL_Shader _shader{};
     std::vector<OpenGL_Texture> _textures{};
     MaterialInfo _material_info;
-    bool _scale_textures;
+    bool _scale_textures = false;
     std::shared_ptr<Logger> _logger;
 
     void SetDirectionLight(const LightSource &light) const;

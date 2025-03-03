@@ -70,13 +70,14 @@ namespace core
       texture.Use(texture_unit);
     }
 
-    const auto color = _material_info.color;
+    const auto [red, green, blue, alpha] = _material_info.color;
 
     _shader.SetMat4("model", model);
     _shader.SetMat4("view", view);
     _shader.SetMat4("projection", projection);
-    _shader.SetVec3("color", color.r, color.g, color.b);
+    _shader.SetVec4("color", red, green, blue, alpha);
     _shader.SetFloat("material.shininess", _material_info.shininess);
+    _shader.SetBool("use_tex_coords", _material_info.use_textures);
 
     if (!_scale_textures)
     {
@@ -190,7 +191,7 @@ namespace core
     if (c > a) { std::swap(a, c); }
     if (c > b) { std::swap(b, c); }
 
-    return glm::vec2(a, b);
+    return {a, b};
   }
 
   void OpenGL_Material::CleanUp()

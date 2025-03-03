@@ -8,6 +8,7 @@ namespace core
   {
     float shininess{};
     Color color;
+    bool use_textures = true;
   };
 } // core
 
