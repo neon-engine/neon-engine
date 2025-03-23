@@ -97,7 +97,7 @@ void core::SceneManager::Initialize() const
       .id = "direction",
       .light_type = LightType::Direction,
       .direction = glm::vec3(-0.2f, -1.0f, -0.3f),
-      .ambient = glm::vec3(0.05f, 0.05f, 0.05f),
+      .ambient = glm::vec3(0.5f, 0.5f, 0.5f),
       .diffuse = glm::vec3(0.4f, 0.4f, 0.4f),
       .specular = glm::vec3(0.5f, 0.5f, 0.5f)
     },
