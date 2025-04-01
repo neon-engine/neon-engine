@@ -1,4 +1,4 @@
-#include "opengl-shader.hpp"
+#include "gl-shader.hpp"
 
 #include <fstream>
 #include <iostream>
@@ -7,15 +7,15 @@
 
 namespace neon
 {
-  OpenGL_Shader::OpenGL_Shader() = default;
+  GL_Shader::GL_Shader() = default;
 
-  OpenGL_Shader::OpenGL_Shader(const std::string &shader_path, const std::shared_ptr<Logger> &logger)
+  GL_Shader::GL_Shader(const std::string &shader_path, const std::shared_ptr<Logger> &logger)
   {
     _shader_path = shader_path;
     _logger = logger;
   }
 
-  bool OpenGL_Shader::Initialize()
+  bool GL_Shader::Initialize()
   {
     if (_initialize)
     {
@@ -115,18 +115,18 @@ namespace neon
     return true;
   }
 
-  void OpenGL_Shader::Activate() const
+  void GL_Shader::Activate() const
   {
     glUseProgram(_shader_program_id);
   }
 
   // ReSharper disable once CppMemberFunctionMayBeStatic
-  void OpenGL_Shader::Deactivate() // NOLINT(*-convert-member-functions-to-static)
+  void GL_Shader::Deactivate() // NOLINT(*-convert-member-functions-to-static)
   {
     glUseProgram(0);
   }
 
-  void OpenGL_Shader::CleanUp()
+  void GL_Shader::CleanUp()
   {
     if (!_initialize) { return; }
     _logger->Info("Cleaning up shader {} with opengl id {}", _shader_path, _shader_program_id);
@@ -134,62 +134,62 @@ namespace neon
     _initialize = false;
   }
 
-  void OpenGL_Shader::SetInt(const std::string &name, const int value) const
+  void GL_Shader::SetInt(const std::string &name, const int value) const
   {
     glUniform1i(glGetUniformLocation(_shader_program_id, name.c_str()), value);
   }
 
-  void OpenGL_Shader::SetFloat(const std::string &name, const float value) const
+  void GL_Shader::SetFloat(const std::string &name, const float value) const
   {
     glUniform1f(glGetUniformLocation(_shader_program_id, name.c_str()), value);
   }
 
-  void OpenGL_Shader::SetBool(const std::string &name, const bool value) const
+  void GL_Shader::SetBool(const std::string &name, const bool value) const
   {
     glUniform1i(glGetUniformLocation(_shader_program_id, name.c_str()), static_cast<int>(value));
   }
 
-  void OpenGL_Shader::SetVec2(const std::string &name, const glm::vec2 &value) const
+  void GL_Shader::SetVec2(const std::string &name, const glm::vec2 &value) const
   {
     glUniform2fv(glGetUniformLocation(_shader_program_id, name.c_str()), 1, &value[0]);
   }
 
-  void OpenGL_Shader::SetVec2(const std::string &name, const float x, const float y) const
+  void GL_Shader::SetVec2(const std::string &name, const float x, const float y) const
   {
     glUniform2f(glGetUniformLocation(_shader_program_id, name.c_str()), x, y);
   }
 
-  void OpenGL_Shader::SetVec3(const std::string &name, const glm::vec3 &value) const
+  void GL_Shader::SetVec3(const std::string &name, const glm::vec3 &value) const
   {
     glUniform3fv(glGetUniformLocation(_shader_program_id, name.c_str()), 1, &value[0]);
   }
 
-  void OpenGL_Shader::SetVec3(const std::string &name, const float x, const float y, const float z) const
+  void GL_Shader::SetVec3(const std::string &name, const float x, const float y, const float z) const
   {
     glUniform3f(glGetUniformLocation(_shader_program_id, name.c_str()), x, y, z);
   }
 
-  void OpenGL_Shader::SetVec4(const std::string &name, const glm::vec4 &value) const
+  void GL_Shader::SetVec4(const std::string &name, const glm::vec4 &value) const
   {
     glUniform4fv(glGetUniformLocation(_shader_program_id, name.c_str()), 1, &value[0]);
   }
 
-  void OpenGL_Shader::SetVec4(const std::string &name, const float x, const float y, const float z, const float w) const
+  void GL_Shader::SetVec4(const std::string &name, const float x, const float y, const float z, const float w) const
   {
     glUniform4f(glGetUniformLocation(_shader_program_id, name.c_str()), x, y, z, w);
   }
 
-  void OpenGL_Shader::SetMat2(const std::string &name, const glm::mat2 &mat) const
+  void GL_Shader::SetMat2(const std::string &name, const glm::mat2 &mat) const
   {
     glUniformMatrix2fv(glGetUniformLocation(_shader_program_id, name.c_str()), 1, GL_FALSE, &mat[0][0]);
   }
 
-  void OpenGL_Shader::SetMat3(const std::string &name, const glm::mat3 &mat) const
+  void GL_Shader::SetMat3(const std::string &name, const glm::mat3 &mat) const
   {
     glUniformMatrix3fv(glGetUniformLocation(_shader_program_id, name.c_str()), 1, GL_FALSE, &mat[0][0]);
   }
 
-  void OpenGL_Shader::SetMat4(const std::string &name, const glm::mat4 &mat) const
+  void GL_Shader::SetMat4(const std::string &name, const glm::mat4 &mat) const
   {
     glUniformMatrix4fv(glGetUniformLocation(_shader_program_id, name.c_str()), 1, GL_FALSE, &mat[0][0]);
   }

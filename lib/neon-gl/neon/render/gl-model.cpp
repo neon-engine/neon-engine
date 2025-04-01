@@ -1,16 +1,16 @@
-#include "opengl-model.hpp"
+#include "gl-model.hpp"
 
 #include <limits>
 #include <glm/gtc/matrix_transform.hpp>
-#include "opengl-mesh.hpp"
+#include "gl-mesh.hpp"
 
 namespace neon
 {
-  OpenGL_Model::OpenGL_Model(
+  GL_Model::GL_Model(
     const std::string &path,
     const std::shared_ptr<Logger> &logger): Model(path, logger) {}
 
-  bool OpenGL_Model::Initialize()
+  bool GL_Model::Initialize()
   {
     if (!LoadModel())
     {
@@ -20,7 +20,7 @@ namespace neon
     return true;
   }
 
-  void OpenGL_Model::Use() const
+  void GL_Model::Use() const
   {
     for (auto &mesh : _meshes)
     {
@@ -28,7 +28,7 @@ namespace neon
     }
   }
 
-  void OpenGL_Model::CleanUp()
+  void GL_Model::CleanUp()
   {
     // the Model load may have been interrupted so some meshes may have been initialized
     while (!_meshes.empty())
@@ -38,7 +38,7 @@ namespace neon
     }
   }
 
-  void OpenGL_Model::GenerateNormalizationMatrix()
+  void GL_Model::GenerateNormalizationMatrix()
   {
     _logger->Debug("Generating normalized matrix using the loaded vertices");
     constexpr auto max_float_limit = std::numeric_limits<float>::max();
@@ -84,7 +84,7 @@ namespace neon
       scale(glm::mat4(1.0f), {1.0f / max_range, 1.0f / max_range, 1.0f / max_range}) * translation;
   }
 
-  bool OpenGL_Model::ProcessMesh(aiMesh *mesh, const aiScene *scene)
+  bool GL_Model::ProcessMesh(aiMesh *mesh, const aiScene *scene)
   {
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
@@ -131,7 +131,7 @@ namespace neon
     LoadMaterialTextures(material, aiTextureType_DIFFUSE, textures);
     LoadMaterialTextures(material, aiTextureType_SPECULAR, textures);
 
-    OpenGL_Mesh opengl_mesh(vertices, indices, textures, _logger);
+    GL_Mesh opengl_mesh(vertices, indices, textures, _logger);
     opengl_mesh.Initialize();
     _meshes.push_back(opengl_mesh);
 

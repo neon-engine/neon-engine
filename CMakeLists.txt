@@ -60,6 +60,7 @@ add_subdirectory(external/rapidyaml)
 # Additional libraries
 add_subdirectory(lib/neon-core)
 add_subdirectory(lib/neon-gl)
+add_subdirectory(lib/neon-sdl2)
 
 # Load additional cmake
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/CopyAssets.cmake")

@@ -1,23 +1,23 @@
-#ifndef OPEN_GL_MATERIAL_HPP
-#define OPEN_GL_MATERIAL_HPP
+#ifndef GL_MATERIAL_HPP
+#define GL_MATERIAL_HPP
 #include <vector>
 #include <neon/common/transform.hpp>
 #include <neon/logging/logger.hpp>
 #include <neon/render/light-source.hpp>
 #include <neon/render/material-info.hpp>
-#include "opengl-shader.hpp"
-#include "opengl-texture.hpp"
+#include "gl-shader.hpp"
+#include "gl-texture.hpp"
 
 
 
 namespace neon
 {
   // ReSharper disable once CppInconsistentNaming
-  class OpenGL_Material
+  class GL_Material
   {
     bool _initialized = false;
-    OpenGL_Shader _shader{};
-    std::vector<OpenGL_Texture> _textures{};
+    GL_Shader _shader{};
+    std::vector<GL_Texture> _textures{};
     MaterialInfo _material_info;
     bool _scale_textures = false;
     std::shared_ptr<Logger> _logger;
@@ -31,9 +31,9 @@ namespace neon
     static glm::vec2 GetMaxPositiveComponents(const glm::vec3 &vector);
 
   public:
-    OpenGL_Material();
+    GL_Material();
 
-    OpenGL_Material(
+    GL_Material(
       const std::string &shader_path,
       const std::vector<std::string> &texture_paths,
       const MaterialInfo &material_info,
@@ -53,4 +53,4 @@ namespace neon
   };
 } // neon
 
-#endif //OPEN_GL_MATERIAL_HPP
+#endif //GL_MATERIAL_HPP

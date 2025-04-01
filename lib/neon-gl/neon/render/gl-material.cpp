@@ -1,32 +1,32 @@
-#include "opengl-material.hpp"
+#include "gl-material.hpp"
 
 #include <sstream>
 
 namespace neon
 {
-  OpenGL_Material::OpenGL_Material() = default;
+  GL_Material::GL_Material() = default;
 
-  OpenGL_Material::OpenGL_Material(
+  GL_Material::GL_Material(
     const std::string &shader_path,
     const std::vector<std::string> &texture_paths,
     const MaterialInfo &material_info,
     const bool scale_textures,
     const std::shared_ptr<Logger> &logger)
   {
-    _shader = OpenGL_Shader(shader_path, logger);
-    _textures = std::vector<OpenGL_Texture>();
+    _shader = GL_Shader(shader_path, logger);
+    _textures = std::vector<GL_Texture>();
     _material_info = material_info;
     _scale_textures = scale_textures;
     _logger = logger;
 
     for (auto &texture_path : texture_paths)
     {
-      const auto texture = OpenGL_Texture(texture_path, _logger);
+      const auto texture = GL_Texture(texture_path, _logger);
       _textures.push_back(texture);
     }
   }
 
-  bool OpenGL_Material::Initialize()
+  bool GL_Material::Initialize()
   {
     if (_initialized)
     {
@@ -53,7 +53,7 @@ namespace neon
     return true;
   }
 
-  void OpenGL_Material::Use(
+  void GL_Material::Use(
     const glm::mat4 &model,
     const glm::mat4 &view,
     const glm::mat4 &projection,
@@ -121,7 +121,7 @@ namespace neon
     _shader.SetInt("num_spot_lights", spot_light_count);
   }
 
-  void OpenGL_Material::SetDirectionLight(const LightSource &light) const
+  void GL_Material::SetDirectionLight(const LightSource &light) const
   {
     _shader.SetVec3("direction_light.direction", light.direction);
     _shader.SetVec3("direction_light.ambient", light.ambient);
@@ -129,7 +129,7 @@ namespace neon
     _shader.SetVec3("dirLight.specular", light.specular);
   }
 
-  void OpenGL_Material::SetPointLight(const LightSource &light, size_t index) const
+  void GL_Material::SetPointLight(const LightSource &light, size_t index) const
   {
     const std::string position = std::format("point_lights[{}].position", index);
 
@@ -152,7 +152,7 @@ namespace neon
     _shader.SetVec3(specular, light.specular);
   }
 
-  void OpenGL_Material::SetSpotLight(const LightSource &light, size_t index) const
+  void GL_Material::SetSpotLight(const LightSource &light, size_t index) const
   {
     const std::string position = std::format("spot_lights[{}].position", index);
     const std::string direction = std::format("spot_lights[{}].direction", index);
@@ -181,7 +181,7 @@ namespace neon
     _shader.SetVec3(specular, light.specular);
   }
 
-  glm::vec2 OpenGL_Material::GetMaxPositiveComponents(const glm::vec3 &vector)
+  glm::vec2 GL_Material::GetMaxPositiveComponents(const glm::vec3 &vector)
   {
     float a = (vector.x > 0) ? vector.x : 0.0f;
     float b = (vector.y > 0) ? vector.y : 0.0f;
@@ -194,7 +194,7 @@ namespace neon
     return {a, b};
   }
 
-  void OpenGL_Material::CleanUp()
+  void GL_Material::CleanUp()
   {
     _logger->Info("Cleaning up opengl material");
     if (!_initialized) { return; }

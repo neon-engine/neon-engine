@@ -1,6 +1,5 @@
-#include "sdl-2-input-system.hpp"
+#include "sdl2-input-system.hpp"
 
-#include <iostream>
 #include <SDL_events.h>
 
 namespace neon

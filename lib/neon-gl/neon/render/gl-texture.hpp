@@ -1,5 +1,5 @@
-#ifndef OPEN_GL_TEXTURE_HPP
-#define OPEN_GL_TEXTURE_HPP
+#ifndef GL_TEXTURE_HPP
+#define GL_TEXTURE_HPP
 
 #include <memory>
 #include <string>
@@ -9,7 +9,7 @@
 namespace neon
 {
   // ReSharper disable once CppInconsistentNaming
-  class OpenGL_Texture
+  class GL_Texture
   {
     GLuint _texture_id = 0;
     std::string _texture_path;
@@ -17,9 +17,9 @@ namespace neon
     std::shared_ptr<Logger> _logger;
 
   public:
-    OpenGL_Texture();
+    GL_Texture();
 
-    explicit OpenGL_Texture(
+    explicit GL_Texture(
       const std::string &texture_path,
       const std::shared_ptr<Logger> &logger);
 
@@ -31,4 +31,4 @@ namespace neon
   };
 } // neon
 
-#endif //OPEN_GL_TEXTURE_HPP
+#endif //GL_TEXTURE_HPP

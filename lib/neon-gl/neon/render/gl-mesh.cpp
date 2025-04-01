@@ -1,10 +1,10 @@
-#include "opengl-mesh.hpp"
+#include "gl-mesh.hpp"
 
 #include <string>
 
 namespace neon
 {
-  bool OpenGL_Mesh::Initialize()
+  bool GL_Mesh::Initialize()
   {
     glGenVertexArrays(1, &_vao);
     glGenBuffers(1, &_vbo);
@@ -61,14 +61,14 @@ namespace neon
     return true;
   }
 
-  void OpenGL_Mesh::Use() const
+  void GL_Mesh::Use() const
   {
     glBindVertexArray(_vao);
     glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(_indices.size()), GL_UNSIGNED_INT, nullptr);
     glBindVertexArray(0);
   }
 
-  void OpenGL_Mesh::CleanUp()
+  void GL_Mesh::CleanUp()
   {
     if (!_initialized) { return; }
 

@@ -1,16 +1,15 @@
 #ifndef SDL_2_WINDOW_SYSTEM_HPP
 #define SDL_2_WINDOW_SYSTEM_HPP
 
-// gl3w must be included first
+// make sure to include glad before SDL
 // ReSharper disable once CppUnusedIncludeDirective
-#include <memory>
 #include <glad/gl.h>
 
+#include <memory>
 #include <SDL.h>
-
-#include "window-system.hpp"
-#include "neon/application/settings-config.hpp"
-#include "neon/logging/logger.hpp"
+#include <neon/application/settings-config.hpp>
+#include <neon/logging/logger.hpp>
+#include <neon/window/window-system.hpp>
 
 namespace neon
 {
