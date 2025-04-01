@@ -4,7 +4,7 @@
 #include <memory>
 #include <string>
 
-namespace core
+namespace neon
 {
   class Logger
   {
@@ -62,6 +62,6 @@ namespace core
       CriticalImpl(format, args_pack);
     }
   };
-} // core
+} // neon
 
 #endif //LOGGER_HPP

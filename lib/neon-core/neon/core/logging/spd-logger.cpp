@@ -1,6 +1,6 @@
 #include "spd-logger.hpp"
 
-namespace core
+namespace neon
 {
   Spd_Logger::Spd_Logger(const std::shared_ptr<spdlog::logger> &logger, LoggingContext *logging_context)
   {
@@ -48,4 +48,4 @@ namespace core
   {
     return _logging_context->CreateLogger(name);
   }
-} // core
+} // neon

@@ -9,7 +9,7 @@
 #include "node/node.hpp"
 
 
-namespace core
+namespace neon
 {
   class SceneManager
   {

@@ -5,7 +5,7 @@
 #include "neon/core/application/settings-config.hpp"
 #include "neon/core/logging/logger.hpp"
 
-namespace core
+namespace neon
 {
   class WindowSystem : public WindowContext
   {
@@ -33,6 +33,6 @@ namespace core
     virtual void Update() = 0;
 
   };
-} // core
+} // neon
 
 #endif //WINDOW_SYSTEM_HPP

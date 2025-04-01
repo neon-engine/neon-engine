@@ -6,7 +6,7 @@
 
 #include "neon/core/common/util.hpp"
 
-namespace core
+namespace neon
 {
   OpenGL_Texture::OpenGL_Texture() = default;
 
@@ -106,4 +106,4 @@ namespace core
     glDeleteTextures(1, &_texture_id);
     _initialized = false;
   }
-} // core
+} // neon

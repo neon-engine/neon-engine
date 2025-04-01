@@ -4,7 +4,7 @@
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 
-namespace core
+namespace neon
 {
   Model::Model(const std::string &path, const std::shared_ptr<Logger> &logger)
   {
@@ -92,4 +92,4 @@ namespace core
   {
     return _model_matrix;
   }
-} // core
+} // neon

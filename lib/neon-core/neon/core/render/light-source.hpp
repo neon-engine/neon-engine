@@ -4,7 +4,7 @@
 #include <string>
 #include <glm/vec3.hpp>
 
-namespace core
+namespace neon
 {
   enum class LightType
   {
@@ -28,6 +28,6 @@ namespace core
     glm::vec3 diffuse{};
     glm::vec3 specular{};
   };
-} // core
+} // neon
 
 #endif //LIGHT_HPP

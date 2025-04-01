@@ -2,7 +2,8 @@
 
 #include <glm/gtc/quaternion.hpp>
 
-namespace core {
+namespace neon
+{
 
   Node::Node(
     const std::string &name,
@@ -73,4 +74,4 @@ namespace core {
     _logger->Info("Cleaned up {}",_name);
     _initialized = false;
   }
-} // core
+} // neon

@@ -3,7 +3,7 @@
 #include <iostream>
 #include <sstream>
 
-namespace core
+namespace neon
 {
   void SDL2_WindowSystem::Initialize()
   {
@@ -138,4 +138,4 @@ namespace core
   {
     return reinterpret_cast<void*>(SDL_GL_GetProcAddress);
   }
-} // core
+} // neon

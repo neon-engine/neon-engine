@@ -4,7 +4,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-namespace core
+namespace neon
 {
   struct Rotation
   {
@@ -31,6 +31,6 @@ namespace core
       return orientation;
     }
   };
-} // core
+} // neon
 
 #endif //ROTATION_HPP

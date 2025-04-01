@@ -1,13 +1,13 @@
 #ifndef RENDER_TARGET_HPP
 #define RENDER_TARGET_HPP
 
-namespace core
+namespace neon
 {
   enum class RenderTarget
   {
     Window,
     Texture
   };
-} // core
+} // neon
 
 #endif //RENDER_TARGET_HPP

@@ -2,7 +2,7 @@
 #define MATERIAL_INFO_HPP
 #include "neon/core/common/color.hpp"
 
-namespace core
+namespace neon
 {
   struct MaterialInfo
   {
@@ -10,6 +10,6 @@ namespace core
     Color color;
     bool use_textures = true;
   };
-} // core
+} // neon
 
 #endif //MATERIAL_INFO_HPP

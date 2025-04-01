@@ -5,7 +5,7 @@
 
 #include "mesh.hpp"
 
-namespace core
+namespace neon
 {
   // ReSharper disable once CppInconsistentNaming
   class OpenGL_Mesh final : public Mesh
@@ -27,6 +27,6 @@ namespace core
 
     void CleanUp() override;
   };
-} // core
+} // neon
 
 #endif //OPEN_GL_MESH_HPP

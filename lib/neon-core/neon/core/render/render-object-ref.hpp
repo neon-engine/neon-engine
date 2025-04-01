@@ -1,7 +1,7 @@
 #ifndef RENDER_OBJECT_REF_HPP
 #define RENDER_OBJECT_REF_HPP
 
-namespace core
+namespace neon
 {
   struct RenderObjectRef
   {
@@ -9,6 +9,6 @@ namespace core
     int material_id = -1;
   };
 
-} // core
+} // neon
 
 #endif //RENDER_OBJECT_REF_HPP

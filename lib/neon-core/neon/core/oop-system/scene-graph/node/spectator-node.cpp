@@ -2,7 +2,8 @@
 
 #include <bits/stl_algo.h>
 
-namespace core {
+namespace neon
+{
   SpectatorNode::SpectatorNode(
     const std::string &name,
     const Transform &transform,
@@ -57,4 +58,4 @@ namespace core {
 
     _transform.rotation.pitch = std::clamp(_transform.rotation.pitch, -89.f, 89.f);
   }
-} // core
+} // neon

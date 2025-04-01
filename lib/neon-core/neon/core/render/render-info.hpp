@@ -8,7 +8,7 @@
 #include "material-info.hpp"
 
 
-namespace core
+namespace neon
 {
   struct RenderInfo
   {
@@ -18,6 +18,6 @@ namespace core
     bool scale_textures;
     MaterialInfo material_info;
   };
-} // core
+} // neon
 
 #endif //RENDER_INFO_HPP

@@ -5,7 +5,7 @@
 #include "input-system.hpp"
 #include "neon/core/window/window-context.hpp"
 
-namespace core
+namespace neon
 {
   // ReSharper disable once CppInconsistentNaming
   class SDL2_InputSystem final : public InputSystem {
@@ -34,6 +34,6 @@ namespace core
 
     void ShowCursor() override;
   };
-} // core
+} // neon
 
 #endif //SDL_2_INPUT_SYSTEM_HPP

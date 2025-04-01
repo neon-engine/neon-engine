@@ -2,7 +2,7 @@
 
 #include <sstream>
 
-namespace core
+namespace neon
 {
   OpenGL_Material::OpenGL_Material() = default;
 
@@ -206,4 +206,4 @@ namespace core
     }
     _initialized = false;
   }
-} // core
+} // neon

@@ -3,7 +3,8 @@
 #include <iostream>
 #include <SDL_events.h>
 
-namespace core {
+namespace neon
+{
   void SDL2_InputSystem::Initialize()
   {
     _logger->Info("Initializing SDL2 input system");
@@ -110,4 +111,4 @@ namespace core {
   {
     SDL_SetRelativeMouseMode(SDL_FALSE);
   }
-} // core
+} // neon

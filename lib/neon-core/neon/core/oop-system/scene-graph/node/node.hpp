@@ -9,7 +9,7 @@
 #include "neon/core/logging/logger.hpp"
 
 
-namespace core
+namespace neon
 {
   // ReSharper disable once CppClassCanBeFinal
   class Node
@@ -45,6 +45,6 @@ namespace core
 
     virtual void CleanUp();
   };
-} // core
+} // neon
 
 #endif //NODE_HPP

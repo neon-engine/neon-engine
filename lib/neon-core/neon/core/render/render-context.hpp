@@ -10,7 +10,7 @@
 #include "render-object-ref.hpp"
 
 
-namespace core
+namespace neon
 {
   struct RenderResolution
   {
@@ -47,6 +47,6 @@ namespace core
 
     virtual const RenderResolution& GetRenderResolution() = 0;
   };
-} // core
+} // neon
 
 #endif //RENDER_CONTEXT_HPP

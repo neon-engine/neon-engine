@@ -1,6 +1,7 @@
 #include "camera-node.hpp"
 
-namespace core {
+namespace neon
+{
   CameraNode::CameraNode(
     const std::string &name,
     const Transform &transform,
@@ -17,4 +18,4 @@ namespace core {
     _view = lookAt(position, position + _transform.Forward(), _camera_up);
     _render_pipeline->SetCameraInfo({_render_target, _fov, _view, _near, _far});
   }
-} // core
+} // neon

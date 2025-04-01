@@ -5,7 +5,8 @@
 #include "neon/core/render/render-pipeline.hpp"
 
 
-namespace core {
+namespace neon
+{
 
 class CameraNode final : public Node {
   RenderPipeline *_render_pipeline;
@@ -26,6 +27,6 @@ public:
   void Update(double delta_time) override;
 };
 
-} // core
+} // neon
 
 #endif //CAMERA_NODE_HPP

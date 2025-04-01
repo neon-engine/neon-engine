@@ -4,7 +4,7 @@
 #include "spdlog/sinks/rotating_file_sink.h"
 #include "spdlog/sinks/stdout_color_sinks-inl.h"
 
-namespace core
+namespace neon
 {
   LoggingSystem::LoggingSystem(const SettingsConfig &settings_config)
   {
@@ -36,4 +36,4 @@ namespace core
     logger->set_level(spdlog::level::debug);
     return std::make_shared<Spd_Logger>(logger, this);
   }
-} // core
+} // neon

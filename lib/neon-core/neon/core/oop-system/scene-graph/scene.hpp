@@ -4,7 +4,7 @@
 
 #include "node/node.hpp"
 
-namespace core
+namespace neon
 {
   class Scene
   {
@@ -12,6 +12,6 @@ namespace core
   public:
     void Initialize(std::string filepath);
   };
-} // core
+} // neon
 
 #endif //SCENE_HPP

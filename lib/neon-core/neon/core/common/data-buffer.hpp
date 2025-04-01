@@ -5,7 +5,7 @@
 #include <queue>
 #include <vector>
 
-namespace core
+namespace neon
 {
   template<typename T>
   class DataBuffer
@@ -70,6 +70,6 @@ namespace core
       return -1;
     }
   };
-} // core
+} // neon
 
 #endif //DATA_BUFFER_HPP

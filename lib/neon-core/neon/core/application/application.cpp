@@ -1,7 +1,7 @@
 #include "application.hpp"
 
 
-namespace core
+namespace neon
 {
   Application::Application(
     const SettingsConfig &settings_config,
@@ -68,4 +68,4 @@ namespace core
       _window_system->Update();
     }
   }
-} // core
+} // neon

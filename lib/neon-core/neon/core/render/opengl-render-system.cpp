@@ -4,7 +4,7 @@
 #include "neon/core/common/util.hpp"
 
 
-namespace core
+namespace neon
 {
   void OpenGL_RenderSystem::Initialize()
   {
@@ -122,4 +122,4 @@ namespace core
     normalized_model_matrix.CleanUp();
     material.CleanUp();
   }
-} // core
+} // neon

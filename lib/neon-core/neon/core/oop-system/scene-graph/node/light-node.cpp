@@ -1,6 +1,7 @@
 #include "light-node.hpp"
 
-namespace core {
+namespace neon
+{
   LightNode::LightNode(
     const std::string &name,
     const Transform &transform,
@@ -30,4 +31,4 @@ namespace core {
   {
     Node::CleanUp();
   }
-} // core
+} // neon

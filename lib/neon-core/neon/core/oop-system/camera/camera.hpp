@@ -3,7 +3,7 @@
 
 #include <glm/glm.hpp>
 
-namespace core
+namespace neon
 {
   class Camera
   {
@@ -29,6 +29,6 @@ namespace core
 
     void SetLookDirection(const glm::vec3 &direction);
   };
-} // core
+} // neon
 
 #endif //CAMERA_HPP
