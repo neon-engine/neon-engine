@@ -4,7 +4,7 @@ add_executable(${TARGET} main.cpp
         neon-fps-application.cpp
         neon-fps-application.hpp)
 
-target_link_libraries(${TARGET} PRIVATE core)
+target_link_libraries(${TARGET} PRIVATE neon-core neon-gl)
 
 setup_copy_assets(
         ${TARGET}
