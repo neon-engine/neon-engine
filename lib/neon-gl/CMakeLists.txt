@@ -1,18 +1,18 @@
 set(TARGET neon-gl)
 
 add_library(${TARGET} STATIC
-        neon/render/opengl-material.cpp
-        neon/render/opengl-material.hpp
-        neon/render/opengl-mesh.cpp
-        neon/render/opengl-mesh.hpp
-        neon/render/opengl-model.cpp
-        neon/render/opengl-model.hpp
-        neon/render/opengl-render-system.cpp
-        neon/render/opengl-render-system.hpp
-        neon/render/opengl-shader.cpp
-        neon/render/opengl-shader.hpp
-        neon/render/opengl-texture.cpp
-        neon/render/opengl-texture.hpp
+        neon/render/gl-material.cpp
+        neon/render/gl-material.hpp
+        neon/render/gl-mesh.cpp
+        neon/render/gl-mesh.hpp
+        neon/render/gl-model.cpp
+        neon/render/gl-model.hpp
+        neon/render/gl-render-system.cpp
+        neon/render/gl-render-system.hpp
+        neon/render/gl-shader.cpp
+        neon/render/gl-shader.hpp
+        neon/render/gl-texture.cpp
+        neon/render/gl-texture.hpp
 )
 
 target_include_directories(${TARGET}
@@ -21,7 +21,6 @@ target_include_directories(${TARGET}
 
 target_link_libraries(${TARGET}
         glm::glm
-        assimp::assimp
         glad
         stb
         neon-core

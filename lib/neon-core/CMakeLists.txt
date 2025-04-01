@@ -8,10 +8,6 @@ add_library(${TARGET} STATIC
         neon/common/util.hpp
         neon/input/input-system.hpp
         neon/window/window-system.hpp
-        neon/window/sdl2-window-system.cpp
-        neon/window/sdl2-window-system.hpp
-        neon/input/sdl-2-input-system.cpp
-        neon/input/sdl-2-input-system.hpp
         neon/window/window-context.hpp
         neon/oop-system/camera/camera.cpp
         neon/oop-system/camera/camera.hpp
@@ -74,9 +70,6 @@ target_include_directories(${TARGET}
 
 target_link_libraries(${TARGET}
         glm::glm
-        SDL2::SDL2main
-        SDL2::SDL2-static
         spdlog::spdlog
         assimp::assimp
-        glad
-        stb)
+)

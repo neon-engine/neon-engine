@@ -1,5 +1,5 @@
-#ifndef OPEN_GL_SHADER_HPP
-#define OPEN_GL_SHADER_HPP
+#ifndef GL_SHADER_HPP
+#define GL_SHADER_HPP
 
 #include <memory>
 #include <glad/gl.h>
@@ -10,7 +10,7 @@
 namespace neon
 {
   // ReSharper disable once CppInconsistentNaming
-  class OpenGL_Shader
+  class GL_Shader
   {
     std::string _shader_path;
     GLuint _shader_program_id = 0;
@@ -18,9 +18,9 @@ namespace neon
     std::shared_ptr<Logger> _logger;
 
   public:
-    OpenGL_Shader();
+    GL_Shader();
 
-    explicit OpenGL_Shader(const std::string &shader_path, const std::shared_ptr<Logger> &logger);
+    explicit GL_Shader(const std::string &shader_path, const std::shared_ptr<Logger> &logger);
 
     bool Initialize();
 
@@ -56,4 +56,4 @@ namespace neon
   };
 } // neon
 
-#endif //OPEN_GL_SHADER_HPP
+#endif //GL_SHADER_HPP

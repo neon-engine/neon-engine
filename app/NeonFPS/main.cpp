@@ -1,8 +1,9 @@
+#include <neon/input/sdl2-input-system.hpp>
+#include <neon/render/forward-render-pipeline.hpp>
+#include <neon/render/gl-render-system.hpp>
+#include <neon/window/sdl2-window-system.hpp>
+
 #include "neon-fps-application.hpp"
-#include "neon/input/sdl-2-input-system.hpp"
-#include "neon/render/forward-render-pipeline.hpp"
-#include "neon/render/opengl-render-system.hpp"
-#include "neon/window/sdl2-window-system.hpp"
 
 int main()
 {
@@ -16,7 +17,7 @@ int main()
 
   neon::SDL2_WindowSystem window_system(settings_config, logging_system.CreateLogger("SDL2_WindowSystem"));
   neon::SDL2_InputSystem input_system(settings_config, &window_system, logging_system.CreateLogger("SDL2_InputSystem"));
-  neon::OpenGL_RenderSystem render_system(&window_system, settings_config, logging_system.CreateLogger("OpenGL_RenderSystem"));
+  neon::GL_RenderSystem render_system(&window_system, settings_config, logging_system.CreateLogger("OpenGL_RenderSystem"));
   neon::Forward_RenderPipeline render_pipeline(
     &render_system, settings_config.max_light_sources, logging_system.CreateLogger("Forward_RenderPipeline"));
 

@@ -1,7 +1,6 @@
 #include "sdl2-window-system.hpp"
 
 #include <iostream>
-#include <sstream>
 
 namespace neon
 {

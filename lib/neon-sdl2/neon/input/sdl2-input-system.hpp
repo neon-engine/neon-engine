@@ -1,9 +1,9 @@
 #ifndef SDL_2_INPUT_SYSTEM_HPP
 #define SDL_2_INPUT_SYSTEM_HPP
 
-#include "input-state.hpp"
-#include "input-system.hpp"
-#include "neon/window/window-context.hpp"
+#include <neon/input/input-state.hpp>
+#include <neon/input/input-system.hpp>
+#include <neon/window/window-context.hpp>
 
 namespace neon
 {

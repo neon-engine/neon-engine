@@ -1,13 +1,13 @@
-#include "opengl-render-system.hpp"
+#include "gl-render-system.hpp"
 
-#include "opengl-material.hpp"
-#include "opengl-model.hpp"
+#include "gl-material.hpp"
+#include "gl-model.hpp"
 #include "neon/common/util.hpp"
 
 
 namespace neon
 {
-  void OpenGL_RenderSystem::Initialize()
+  void GL_RenderSystem::Initialize()
   {
     _logger->Info("Initializing OpenGL");
 
@@ -30,12 +30,12 @@ namespace neon
     glViewport(0, 0, _settings_config.width, _settings_config.height);
   }
 
-  void OpenGL_RenderSystem::CleanUp()
+  void GL_RenderSystem::CleanUp()
   {
     _logger->Info("Cleaning up OpenGL");
   }
 
-  void OpenGL_RenderSystem::PrepareFrame()
+  void GL_RenderSystem::PrepareFrame()
   {
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); for wireframe
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -48,16 +48,16 @@ namespace neon
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   }
 
-  const RenderResolution& OpenGL_RenderSystem::GetRenderResolution()
+  const RenderResolution& GL_RenderSystem::GetRenderResolution()
   {
     return _render_resolution;
   }
 
   // TODO [issues/7] find out if returning -1 is the best way to handle this, maybe assert calls are better
-  int OpenGL_RenderSystem::CreateRenderObject(const RenderInfo &render_info)
+  int GL_RenderSystem::CreateRenderObject(const RenderInfo &render_info)
   {
-    OpenGL_Model model(render_info.model_path, _logger);
-    OpenGL_Material material(
+    GL_Model model(render_info.model_path, _logger);
+    GL_Material material(
       render_info.shader_path,
       render_info.texture_paths,
       render_info.material_info,
@@ -102,7 +102,7 @@ namespace neon
     return render_id;
   }
 
-  void OpenGL_RenderSystem::DrawRenderObject(
+  void GL_RenderSystem::DrawRenderObject(
     const int render_object_id,
     const Transform &transform,
     const glm::mat4 &view,
@@ -119,7 +119,7 @@ namespace neon
     model.Use();
   }
 
-  void OpenGL_RenderSystem::DestroyRenderObject(const int render_object_id)
+  void GL_RenderSystem::DestroyRenderObject(const int render_object_id)
   {
     const auto [model_id, material_id] = _render_object_buffer.Remove(render_object_id);
     auto normalized_model_matrix = _model_refs.Remove(model_id);

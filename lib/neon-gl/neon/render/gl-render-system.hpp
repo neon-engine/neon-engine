@@ -1,5 +1,5 @@
-#ifndef OPEN_GL_RENDER_SYSTEM_HPP
-#define OPEN_GL_RENDER_SYSTEM_HPP
+#ifndef GL_RENDER_SYSTEM_HPP
+#define GL_RENDER_SYSTEM_HPP
 
 #include <memory>
 
@@ -7,20 +7,20 @@
 #include <neon/application/settings-config.hpp>
 #include <neon/logging/logger.hpp>
 
-#include "opengl-material.hpp"
-#include "opengl-model.hpp"
+#include "gl-material.hpp"
+#include "gl-model.hpp"
 
 namespace neon
 {
   // ReSharper disable once CppInconsistentNaming
-  class OpenGL_RenderSystem final : public RenderSystem
+  class GL_RenderSystem final : public RenderSystem
   {
     RenderResolution _render_resolution;
-    DataBuffer<OpenGL_Model> _model_refs;
-    DataBuffer<OpenGL_Material> _material_refs;
+    DataBuffer<GL_Model> _model_refs;
+    DataBuffer<GL_Material> _material_refs;
 
   public:
-    explicit OpenGL_RenderSystem(
+    explicit GL_RenderSystem(
       WindowContext *window_context,
       const SettingsConfig &settings_config,
       const std::shared_ptr<Logger> &logger)
@@ -50,4 +50,4 @@ namespace neon
   };
 } // neon
 
-#endif //OPEN_GL_RENDER_SYSTEM_HPP
+#endif //GL_RENDER_SYSTEM_HPP

@@ -1,4 +1,4 @@
-#include "opengl-texture.hpp"
+#include "gl-texture.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
 
@@ -7,15 +7,15 @@
 
 namespace neon
 {
-  OpenGL_Texture::OpenGL_Texture() = default;
+  GL_Texture::GL_Texture() = default;
 
-  OpenGL_Texture::OpenGL_Texture(const std::string &texture_path, const std::shared_ptr<Logger> &logger)
+  GL_Texture::GL_Texture(const std::string &texture_path, const std::shared_ptr<Logger> &logger)
   {
     _texture_path = texture_path;
     _logger = logger;
   }
 
-  bool OpenGL_Texture::Initialize()
+  bool GL_Texture::Initialize()
   {
 
     if (_initialized)
@@ -80,7 +80,7 @@ namespace neon
     return true;
   }
 
-  void OpenGL_Texture::Use(const GLint unit) const
+  void GL_Texture::Use(const GLint unit) const
   {
     const GLenum texture_unit = GL_TEXTURE0 + unit;
     glActiveTexture(texture_unit);
@@ -98,7 +98,7 @@ namespace neon
     // }
   }
 
-  void OpenGL_Texture::CleanUp()
+  void GL_Texture::CleanUp()
   {
     if (!_initialized) { return; }
     _logger->Info("Cleaning up texture {} with opengl id {}", _texture_path, _texture_id);
