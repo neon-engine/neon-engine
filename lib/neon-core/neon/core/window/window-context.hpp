@@ -1,7 +1,7 @@
 #ifndef SDL_2_WINDOW_CONTEXT_HPP
 #define SDL_2_WINDOW_CONTEXT_HPP
 
-namespace core
+namespace neon
 {
   class WindowContext
   {

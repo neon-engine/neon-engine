@@ -2,7 +2,8 @@
 
 #include <string>
 
-namespace core {
+namespace neon
+{
   bool OpenGL_Mesh::Initialize()
   {
     glGenVertexArrays(1, &_vao);
@@ -77,4 +78,4 @@ namespace core {
 
     _initialized = false;
   }
-} // core
+} // neon

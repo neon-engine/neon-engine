@@ -12,7 +12,7 @@
 #include "neon/core/application/settings-config.hpp"
 #include "neon/core/logging/logger.hpp"
 
-namespace core
+namespace neon
 {
   // ReSharper disable once CppInconsistentNaming
   class SDL2_WindowSystem final : public WindowSystem {
@@ -51,6 +51,6 @@ namespace core
 
     void* GetGlProcAddress() override;
   };
-} // core
+} // neon
 
 #endif //SDL_2_WINDOW_SYSTEM_HPP

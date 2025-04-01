@@ -5,7 +5,7 @@
 #include "render-target.hpp"
 
 
-namespace core
+namespace neon
 {
   struct CameraInfo
   {
@@ -15,6 +15,6 @@ namespace core
     float near{0.1f};
     float far{1000.f};
   };
-} // core
+} // neon
 
 #endif //CAMERA_INFO_HPP

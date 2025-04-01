@@ -8,7 +8,7 @@
 #include "node/spectator-node.hpp"
 #include "node/render-node.hpp"
 
-core::SceneManager::SceneManager(
+neon::SceneManager::SceneManager(
   RenderPipeline *render_pipeline,
   InputContext *input_context,
   WindowContext *window_context,
@@ -21,7 +21,7 @@ core::SceneManager::SceneManager(
   _logger = logger;
 }
 
-void core::SceneManager::Initialize() const
+void neon::SceneManager::Initialize() const
 {
   _logger->Info("Initializing the scene");
 
@@ -141,7 +141,7 @@ void core::SceneManager::Initialize() const
   _input_context->CenterAndHideCursor();
 }
 
-void core::SceneManager::Update() const
+void neon::SceneManager::Update() const
 {
   const auto delta_time = _window_context->GetDeltaTime();
 
@@ -153,7 +153,7 @@ void core::SceneManager::Update() const
   _render_pipeline->RenderFrame();
 }
 
-void core::SceneManager::CleanUp() const
+void neon::SceneManager::CleanUp() const
 {
   _logger->Info("Cleaning up the scene");
   PostOrderTraversal([this](Node *node)
@@ -164,7 +164,7 @@ void core::SceneManager::CleanUp() const
   });
 }
 
-void core::SceneManager::PreOrderTraversal(const std::function<void(Node *)> &func) const
+void neon::SceneManager::PreOrderTraversal(const std::function<void(Node *)> &func) const
 {
   std::stack<Node *> stack{};
   stack.push(_root);
@@ -184,7 +184,7 @@ void core::SceneManager::PreOrderTraversal(const std::function<void(Node *)> &fu
   }
 }
 
-void core::SceneManager::PostOrderTraversal(const std::function<void(Node *)> &func) const
+void neon::SceneManager::PostOrderTraversal(const std::function<void(Node *)> &func) const
 {
   std::stack<Node *> stack1, stack2;
   stack1.push(_root);

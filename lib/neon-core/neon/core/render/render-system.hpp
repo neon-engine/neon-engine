@@ -8,7 +8,7 @@
 #include "neon/core/logging/logger.hpp"
 #include "neon/core/window/window-context.hpp"
 
-namespace core
+namespace neon
 {
   class RenderSystem : public RenderContext
   {
@@ -47,6 +47,6 @@ namespace core
 
     virtual void PrepareFrame() = 0;
   };
-} // core
+} // neon
 
 #endif //RENDER_SYSTEM_HPP

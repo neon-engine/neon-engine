@@ -2,7 +2,7 @@
 #define FORWARD_RENDER_PIPELINE_HPP
 #include "render-pipeline.hpp"
 
-namespace core
+namespace neon
 {
   class Forward_RenderPipeline final : public RenderPipeline
   {
@@ -31,6 +31,6 @@ namespace core
 
     void EnqueueLightSource(const LightSource &light_source) override;
   };
-} // core
+} // neon
 
 #endif //FORWARD_RENDER_PIPELINE_HPP

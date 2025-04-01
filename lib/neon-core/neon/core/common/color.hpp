@@ -1,7 +1,7 @@
 #ifndef COLOR_HPP
 #define COLOR_HPP
 
-namespace core
+namespace neon
 {
   struct Color
   {
@@ -10,6 +10,6 @@ namespace core
     float b = 1.0f;
     float a = 1.0f;
   };
-} // core
+} // neon
 
 #endif //COLOR_HPP

@@ -3,7 +3,7 @@
 #include "node.hpp"
 #include "neon/core/input/input-context.hpp"
 
-namespace core
+namespace neon
 {
   class SpectatorNode final : public Node
   {
@@ -22,6 +22,6 @@ namespace core
 
     void MouseCallback(double x, double y);
   };
-} // core
+} // neon
 
 #endif //PLAYER_NODE_HPP

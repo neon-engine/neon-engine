@@ -1,6 +1,6 @@
 #include "render-node.hpp"
 
-namespace core
+namespace neon
 {
   RenderNode::RenderNode(
     const std::string &name,
@@ -32,4 +32,4 @@ namespace core
     _render_pipeline->DestroyRenderObject(_render_object_id);
     Node::CleanUp();
   }
-} // core
+} // neon

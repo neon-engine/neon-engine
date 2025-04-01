@@ -1,13 +1,13 @@
 #ifndef TEXTURE_TYPE_HPP
 #define TEXTURE_TYPE_HPP
 
-namespace core
+namespace neon
 {
   enum class TextureType
   {
     Diffuse,
     Specular
   };
-} // core
+} // neon
 
 #endif //TEXTURE_TYPE_HPP

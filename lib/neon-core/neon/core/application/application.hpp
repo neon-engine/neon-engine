@@ -9,7 +9,7 @@
 #include "neon/core/render/render-system.hpp"
 #include "neon/core/window/window-system.hpp"
 
-namespace core
+namespace neon
 {
   class Application
   {
@@ -43,6 +43,6 @@ namespace core
 
     void CleanUp();
   };
-} // core
+} // neon
 
 #endif //APPLICATION_HPP

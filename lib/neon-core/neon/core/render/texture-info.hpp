@@ -5,13 +5,13 @@
 
 #include "texture-type.hpp"
 
-namespace core
+namespace neon
 {
   struct TextureInfo
   {
     std::string path;
     TextureType texture_type;
   };
-} // core
+} // neon
 
 #endif //TEXTURE_HPP

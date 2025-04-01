@@ -8,7 +8,7 @@
 
 #include "neon/core/logging/logger.hpp"
 
-namespace core
+namespace neon
 {
   // ReSharper disable once CppInconsistentNaming
   class OpenGL_Texture
@@ -31,6 +31,6 @@ namespace core
 
     void CleanUp();
   };
-} // core
+} // neon
 
 #endif //OPEN_GL_TEXTURE_HPP

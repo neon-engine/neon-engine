@@ -5,7 +5,7 @@
 
 #include "rotation.hpp"
 
-namespace core
+namespace neon
 {
   struct Transform
   {
@@ -20,6 +20,6 @@ namespace core
     static glm::vec3 World_Forward() { return {0.0f, 0.0f, -1.0f}; }
     static glm::vec3 World_Up() { return {0.0f, 1.0f, 0.0f}; }
   };
-} // core
+} // neon
 
 #endif //TRANSFORM_HPP

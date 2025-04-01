@@ -7,7 +7,7 @@
 #include "render-context.hpp"
 
 
-namespace core
+namespace neon
 {
   class RenderPipeline
   {
@@ -48,6 +48,6 @@ namespace core
 
     virtual void CleanUp() = 0;
   };
-} // core
+} // neon
 
 #endif //RENDER_PIPELINE_HPP

@@ -3,7 +3,7 @@
 #include "model.hpp"
 #include "opengl-mesh.hpp"
 
-namespace core
+namespace neon
 {
   // ReSharper disable once CppInconsistentNaming
   class OpenGL_Model final : public Model
@@ -25,6 +25,6 @@ namespace core
   protected:
     void GenerateNormalizationMatrix() override;
   };
-} // core
+} // neon
 
 #endif //OPEN_GL_MODEL_HPP

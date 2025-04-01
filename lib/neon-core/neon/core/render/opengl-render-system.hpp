@@ -7,7 +7,7 @@
 #include "neon/core/application/settings-config.hpp"
 #include "neon/core/logging/logger.hpp"
 
-namespace core
+namespace neon
 {
   // ReSharper disable once CppInconsistentNaming
   class OpenGL_RenderSystem final : public RenderSystem
@@ -41,6 +41,6 @@ namespace core
 
     void DestroyRenderObject(int render_object_id) override;
   };
-} // core
+} // neon
 
 #endif //OPEN_GL_RENDER_SYSTEM_HPP

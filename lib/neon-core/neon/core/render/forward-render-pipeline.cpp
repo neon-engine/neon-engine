@@ -1,6 +1,6 @@
 #include "forward-render-pipeline.hpp"
 
-namespace core
+namespace neon
 {
   Forward_RenderPipeline::Forward_RenderPipeline(
     RenderContext *render_context,
@@ -64,4 +64,4 @@ namespace core
         light_source.id);
     }
   }
-} // core
+} // neon

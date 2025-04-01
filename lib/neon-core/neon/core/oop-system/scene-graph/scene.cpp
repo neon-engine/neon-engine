@@ -1,5 +1,6 @@
 #include "scene.hpp"
 
-namespace core {
+namespace neon
+{
   void Scene::Initialize(std::string filepath) {}
-} // core
+} // neon

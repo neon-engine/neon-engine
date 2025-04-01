@@ -3,7 +3,7 @@
 
 #include <glm/glm.hpp>
 
-namespace core
+namespace neon
 {
   struct Vertex
   {
@@ -11,6 +11,6 @@ namespace core
     glm::vec3 normal;
     glm::vec2 tex_coords;
   };
-} // core
+} // neon
 
 #endif //VERTEX_HPP

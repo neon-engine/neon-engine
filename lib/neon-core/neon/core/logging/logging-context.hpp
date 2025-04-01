@@ -5,7 +5,7 @@
 
 #include "logger.hpp"
 
-namespace core
+namespace neon
 {
   class LoggingContext
   {
@@ -15,6 +15,6 @@ namespace core
   public:
     virtual std::shared_ptr<Logger> CreateLogger(const std::string &name) = 0;
   };
-} // core
+} // neon
 
 #endif //LOGGING_CONTEXT_HPP

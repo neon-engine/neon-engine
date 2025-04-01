@@ -4,7 +4,7 @@
 #include "logging-context.hpp"
 #include "spdlog/spdlog.h"
 
-namespace core
+namespace neon
 {
   class Spd_Logger final : public Logger
   {
@@ -29,6 +29,6 @@ namespace core
 
     std::shared_ptr<Logger> CreateChildLogger(const std::string &name) override;
   };
-} // core
+} // neon
 
 #endif //SPD_LOGGER_HPP

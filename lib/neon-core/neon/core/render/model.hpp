@@ -7,7 +7,7 @@
 #include "mesh.hpp"
 #include "texture-info.hpp"
 
-namespace core
+namespace neon
 {
   class Model
   {
@@ -43,6 +43,6 @@ namespace core
 
     [[nodiscard]] glm::mat4 GetNormalizedModelMatrix() const;
   };
-} // core
+} // neon
 
 #endif //MODEL_HPP

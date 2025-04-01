@@ -7,7 +7,7 @@
 #include "neon/core/application/settings-config.hpp"
 #include "neon/core/logging/logger.hpp"
 
-namespace core
+namespace neon
 {
   class InputSystem : public InputContext
   {
@@ -30,6 +30,6 @@ namespace core
 
     virtual void CleanUp() = 0;
   };
-} // core
+} // neon
 
 #endif //INPUT_SYSTEM_HPP

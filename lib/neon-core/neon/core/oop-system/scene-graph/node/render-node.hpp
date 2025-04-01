@@ -4,7 +4,7 @@
 #include "node.hpp"
 #include "neon/core/render/render-pipeline.hpp"
 
-namespace core
+namespace neon
 {
   class RenderNode final : public Node
   {
@@ -26,6 +26,6 @@ namespace core
 
     void CleanUp() override;
   };
-} // core
+} // neon
 
 #endif //RENDER_NODE_HPP

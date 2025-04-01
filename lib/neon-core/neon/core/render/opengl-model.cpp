@@ -4,7 +4,7 @@
 #include <limits>
 #include <glm/gtc/matrix_transform.hpp>
 
-namespace core
+namespace neon
 {
   OpenGL_Model::OpenGL_Model(
     const std::string &path,
@@ -137,4 +137,4 @@ namespace core
 
     return true;
   }
-} // core
+} // neon

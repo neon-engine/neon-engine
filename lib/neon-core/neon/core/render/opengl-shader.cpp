@@ -5,7 +5,7 @@
 #include <memory>
 #include <sstream>
 
-namespace core
+namespace neon
 {
   OpenGL_Shader::OpenGL_Shader() = default;
 
@@ -193,4 +193,4 @@ namespace core
   {
     glUniformMatrix4fv(glGetUniformLocation(_shader_program_id, name.c_str()), 1, GL_FALSE, &mat[0][0]);
   }
-} // core
+} // neon

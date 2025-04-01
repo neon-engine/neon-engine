@@ -3,7 +3,7 @@
 
 #include "input-state.hpp"
 
-namespace core
+namespace neon
 {
   class InputContext
   {
@@ -18,6 +18,6 @@ namespace core
 
     virtual void ShowCursor() = 0;
   };
-} // core
+} // neon
 
 #endif //INPUT_CONTEXT_HPP

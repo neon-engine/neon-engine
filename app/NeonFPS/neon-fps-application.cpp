@@ -2,12 +2,12 @@
 
 NeonFpsApplication::NeonFpsApplication(
   const SettingsConfig &settings_config,
-  core::WindowSystem *window_system,
-  core::InputSystem *input_system,
-  core::RenderSystem *render_system,
-  core::RenderPipeline *render_pipeline,
-  core::LoggingSystem *logging_system,
-  const std::shared_ptr<core::Logger> &logger): Application(
+  neon::WindowSystem *window_system,
+  neon::InputSystem *input_system,
+  neon::RenderSystem *render_system,
+  neon::RenderPipeline *render_pipeline,
+  neon::LoggingSystem *logging_system,
+  const std::shared_ptr<neon::Logger> &logger): Application(
     settings_config,
     window_system,
     input_system,

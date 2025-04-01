@@ -3,7 +3,7 @@
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
 
-namespace core
+namespace neon
 {
   Camera::Camera() = default;
 
@@ -41,4 +41,4 @@ namespace core
   {
     _look_direction = direction;
   }
-} // core
+} // neon

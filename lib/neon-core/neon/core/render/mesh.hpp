@@ -9,7 +9,7 @@
 #include "texture-info.hpp"
 #include "vertex.hpp"
 
-namespace core
+namespace neon
 {
   class Mesh
   {
@@ -51,6 +51,6 @@ namespace core
 
     virtual void Use() const = 0;
   };
-} // core
+} // neon
 
 #endif //MESH_HPP

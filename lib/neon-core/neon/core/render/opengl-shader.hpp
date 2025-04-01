@@ -9,7 +9,7 @@
 
 #include "neon/core/logging/logger.hpp"
 
-namespace core
+namespace neon
 {
   // ReSharper disable once CppInconsistentNaming
   class OpenGL_Shader
@@ -56,6 +56,6 @@ namespace core
 
     void SetMat4(const std::string &name, const glm::mat4 &mat) const;
   };
-} // core
+} // neon
 
 #endif //OPEN_GL_SHADER_HPP

@@ -9,7 +9,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-namespace core
+namespace neon
 {
   // ReSharper disable once CppDFAUnreachableFunctionCall
   static std::vector<std::string> split(const std::string &s, const char delimiter)

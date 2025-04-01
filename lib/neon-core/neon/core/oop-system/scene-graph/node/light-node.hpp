@@ -3,7 +3,8 @@
 #include "node.hpp"
 #include "neon/core/render/render-pipeline.hpp"
 
-namespace core {
+namespace neon
+{
 
 class LightNode final : public Node {
   RenderPipeline *_render_pipeline;
@@ -23,6 +24,6 @@ public:
   void CleanUp() override;
 };
 
-} // core
+} // neon
 
 #endif //LIGHT_NODE_HPP

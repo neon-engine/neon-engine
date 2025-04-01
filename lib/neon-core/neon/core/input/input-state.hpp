@@ -7,7 +7,7 @@
 
 #include "neon/core/logging/logger.hpp"
 
-namespace core
+namespace neon
 {
   enum class Action
   {
