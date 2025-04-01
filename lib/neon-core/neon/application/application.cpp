@@ -10,18 +10,15 @@ namespace neon
     RenderSystem *render_system,
     RenderPipeline *render_pipeline,
     LoggingSystem *logging_system,
+    WorldSystem *world_system,
     const std::shared_ptr<Logger> &logger)
-  : _scene_manager(
-      render_pipeline,
-      input_system,
-      window_system,
-      logging_system->CreateLogger("SceneManager"))
   {
     _window_system = window_system;
     _input_system = input_system;
     _render_system = render_system;
     _render_pipeline = render_pipeline;
     _logging_system = logging_system;
+    _world_system = world_system,
     _logger = logger;
   }
 
@@ -36,7 +33,7 @@ namespace neon
     _input_system->Initialize();
     _render_system->Initialize();
     _render_pipeline->Initialize();
-    _scene_manager.Initialize();
+    _world_system->Initialize();
   }
 
   void Application::CleanUp()
@@ -44,7 +41,7 @@ namespace neon
     if (_destroyed) { return; }
     _destroyed = true;
 
-    _scene_manager.CleanUp();
+    _world_system->CleanUp();
     _render_pipeline->CleanUp();
     _render_system->CleanUp();
     _input_system->CleanUp();
@@ -64,7 +61,7 @@ namespace neon
     {
       _input_system->ProcessInput();
       _render_system->PrepareFrame();
-      _scene_manager.Update();
+      _world_system->Update();
       _window_system->Update();
     }
   }

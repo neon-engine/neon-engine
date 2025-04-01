@@ -14,6 +14,7 @@ public:
     neon::RenderSystem *render_system,
     neon::RenderPipeline *render_pipeline,
     neon::LoggingSystem *logging_system,
+    neon::WorldSystem *world_system,
     const std::shared_ptr<neon::Logger> &logger);
 };
 
