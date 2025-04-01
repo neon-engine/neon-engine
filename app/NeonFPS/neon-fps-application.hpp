@@ -1,8 +1,8 @@
 #ifndef NEON_FPS_APPLICATION_HPP
 #define NEON_FPS_APPLICATION_HPP
 
-#include "neon/core/application/application.hpp"
-#include "neon/core/application/settings-config.hpp"
+#include "neon/application/application.hpp"
+#include "neon/application/settings-config.hpp"
 
 
 class NeonFpsApplication final : public neon::Application {
