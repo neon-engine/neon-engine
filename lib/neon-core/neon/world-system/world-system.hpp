@@ -6,6 +6,8 @@
 #include <neon/render/render-pipeline.hpp>
 #include <neon/window/window-context.hpp>
 
+#include <ryml.hpp>
+
 namespace neon
 {
   class WorldSystem
@@ -36,6 +38,12 @@ namespace neon
     virtual void Update() = 0;
 
     virtual void CleanUp() = 0;
+
+    virtual void LoadScene(const std::string &file_path)
+    {
+    }
+
+    // virtual void LoadSceneImpl() = 0;
   };
 }
 

@@ -84,4 +84,5 @@ target_link_libraries(${TARGET}
         glm::glm
         spdlog::spdlog
         assimp::assimp
+        ryml
 )
