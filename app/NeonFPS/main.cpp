@@ -19,7 +19,15 @@ int main()
   neon::SDL2_InputSystem input_system(settings_config, &window_system, logging_system.CreateLogger("SDL2_InputSystem"));
   neon::GL_RenderSystem render_system(&window_system, settings_config, logging_system.CreateLogger("OpenGL_RenderSystem"));
   neon::Forward_RenderPipeline render_pipeline(
-    &render_system, settings_config.max_light_sources, logging_system.CreateLogger("Forward_RenderPipeline"));
+    &render_system,
+    settings_config.max_light_sources,
+    logging_system.CreateLogger("Forward_RenderPipeline"));
+
+  neon::SceneManager scene_manager(
+    &render_pipeline,
+    &input_system,
+    &window_system,
+    logging_system.CreateLogger("SceneManager"));
 
   const auto app_logger = logging_system.CreateLogger("NeonFpsApplication");
 
@@ -30,6 +38,7 @@ int main()
     &render_system,
     &render_pipeline,
     &logging_system,
+    &scene_manager,
     app_logger);
 
   try

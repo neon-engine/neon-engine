@@ -6,12 +6,13 @@
 #include "neon/input/input-context.hpp"
 #include "neon/render/render-pipeline.hpp"
 #include "neon/window/window-context.hpp"
+#include "neon/world-system/world-system.hpp"
 #include "node/node.hpp"
 
 
 namespace neon
 {
-  class SceneManager
+  class SceneManager final : public WorldSystem
   {
     WindowContext *_window_context;
     InputContext *_input_context;
@@ -26,11 +27,11 @@ namespace neon
       WindowContext *window_context,
       const std::shared_ptr<Logger> &logger);
 
-    void Initialize() const;
+    void Initialize() override;
 
-    void Update() const;
+    void Update() override;
 
-    void CleanUp() const;
+    void CleanUp() override;
 
   private:
     void PreOrderTraversal(const std::function<void(Node *)> & func) const;

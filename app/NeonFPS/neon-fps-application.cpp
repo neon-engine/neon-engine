@@ -7,6 +7,7 @@ NeonFpsApplication::NeonFpsApplication(
   neon::RenderSystem *render_system,
   neon::RenderPipeline *render_pipeline,
   neon::LoggingSystem *logging_system,
+  neon::WorldSystem *world_system,
   const std::shared_ptr<neon::Logger> &logger): Application(
     settings_config,
     window_system,
@@ -14,4 +15,5 @@ NeonFpsApplication::NeonFpsApplication(
     render_system,
     render_pipeline,
     logging_system,
+    world_system,
     logger) {}
