@@ -21,6 +21,9 @@ namespace neon
     bool _should_close = false;
     uint64_t _last_frame;
 
+  protected:
+    void ConfigureWindowForRenderer() override;
+
   public:
     explicit SDL2_WindowSystem(const SettingsConfig &settings_config, const std::shared_ptr<Logger> &logger)
       : WindowSystem(settings_config, logger)
@@ -36,10 +39,6 @@ namespace neon
 
     void Update() override;
 
-  protected:
-    void ConfigureWindowForRenderer() override;
-
-  public:
     void SignalToClose() override;
 
     double GetDeltaTime() override;

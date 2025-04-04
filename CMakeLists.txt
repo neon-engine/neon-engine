@@ -43,7 +43,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake/find")
 
 
 # Find packages installed on the toolchain/sysroot
-find_package(Vulkan REQUIRED)
+find_package(Vulkan)
 find_package(gl3w REQUIRED)
 find_package(glad REQUIRED)
 find_package(stb REQUIRED)
@@ -68,6 +68,7 @@ include("${CMAKE_CURRENT_LIST_DIR}/cmake/CopyAssets.cmake")
 set(APP_TARGETS
         NeonFPS
         JoltTest
+        LearnOpenGL
 )
 
 string(TOLOWER ${CMAKE_SYSTEM_NAME} LOWER_CMAKE_SYSTEM_NAME)
