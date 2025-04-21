@@ -1,4 +1,4 @@
-set(TARGET NeonFPS)
+set(TARGET NeonRuntime)
 
 add_executable(${TARGET} main.cpp
         neon-fps-application.cpp

@@ -44,12 +44,10 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake/find")
 
 # Find packages installed on the toolchain/sysroot
 find_package(Vulkan)
-find_package(gl3w REQUIRED)
 find_package(glad REQUIRED)
 find_package(stb REQUIRED)
 
 # Add external subdirectories
-add_subdirectory(external/glfw)
 add_subdirectory(external/glm)
 add_subdirectory(external/sdl2)
 add_subdirectory(external/assimp)
@@ -66,9 +64,7 @@ add_subdirectory(lib/neon-sdl2)
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/CopyAssets.cmake")
 
 set(APP_TARGETS
-        NeonFPS
-        JoltTest
-        LearnOpenGL
+        NeonRuntime
 )
 
 string(TOLOWER ${CMAKE_SYSTEM_NAME} LOWER_CMAKE_SYSTEM_NAME)
