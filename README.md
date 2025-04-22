@@ -4,7 +4,7 @@
 
 ## Description
 
-Neon Engine is a modular, high-performance hobby game engine written in C++.
+Neon Engine is a modular, high-performance game engine written in C++.
 It leverages the power of existing open source libraries while maintaining a clean,
 extensible architecture.
 
