@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 
 # General build settings
-project(ProjectNeon)
+project(neon-engine)
 set(CMAKE_CXX_STANDARD 20)
 
 # Echo system/build information
@@ -11,14 +11,14 @@ message("build type: ${CMAKE_BUILD_TYPE}")
 message("source directory: ${CMAKE_SOURCE_DIR}")
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-    # TODO set Wall/Wextra/Werror later when we no longer have git submodules and these libraries are in the toolchain instead
-    #set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wall -Wextra -Werror")
-    #set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra -Werror -fno-inline")
-    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -g -O0 -U_FORTIFY_SOURCE")
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -O0 -U_FORTIFY_SOURCE -fno-inline")
+  # TODO set Wall/Wextra/Werror later when we no longer have git submodules and these libraries are in the toolchain instead
+  #set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wall -Wextra -Werror")
+  #set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra -Werror -fno-inline")
+  set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -g -O0 -U_FORTIFY_SOURCE")
+  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -O0 -U_FORTIFY_SOURCE -fno-inline")
 
-    message("CMAKE_C_FLAGS_DEBUG: ${CMAKE_C_FLAGS_DEBUG}")
-    message("CMAKE_CXX_FLAGS_DEBUG: ${CMAKE_CXX_FLAGS_DEBUG}")
+  message("CMAKE_C_FLAGS_DEBUG: ${CMAKE_C_FLAGS_DEBUG}")
+  message("CMAKE_CXX_FLAGS_DEBUG: ${CMAKE_CXX_FLAGS_DEBUG}")
 endif ()
 # TODO set release flags here
 
@@ -70,23 +70,23 @@ set(APP_TARGETS
 string(TOLOWER ${CMAKE_SYSTEM_NAME} LOWER_CMAKE_SYSTEM_NAME)
 
 foreach (APP IN LISTS APP_TARGETS)
-    message("generating build target ${APP}")
+  message("generating build target ${APP}")
 
-    set(BASE_APP_BIN_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${LOWER_CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}")
-    set(APP_BIN_DIRECTORY "${BASE_APP_BIN_DIRECTORY}/${APP}")
+  set(BASE_APP_BIN_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${LOWER_CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}")
+  set(APP_BIN_DIRECTORY "${BASE_APP_BIN_DIRECTORY}/${APP}")
 
-    # ensure binaries can run anywhere, assuming they are ABI compatible that is
-    # todo consider downgrading GCC so this is not necessary
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libstdc++")
+  # ensure binaries can run anywhere, assuming they are ABI compatible that is
+  # todo consider downgrading GCC so this is not necessary
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libstdc++")
 
-    add_subdirectory(app/${APP})
+  add_subdirectory(app/${APP})
 
-    # Each executable will be in its own folder
-    set_target_properties(
-            ${APP}
-            PROPERTIES
-            ARCHIVE_OUTPUT_DIRECTORY "${APP_BIN_DIRECTORY}/lib"
-            LIBRARY_OUTPUT_DIRECTORY "${APP_BIN_DIRECTORY}/lib"
-            RUNTIME_OUTPUT_DIRECTORY "${APP_BIN_DIRECTORY}"
-    )
+  # Each executable will be in its own folder
+  set_target_properties(
+          ${APP}
+          PROPERTIES
+          ARCHIVE_OUTPUT_DIRECTORY "${APP_BIN_DIRECTORY}/lib"
+          LIBRARY_OUTPUT_DIRECTORY "${APP_BIN_DIRECTORY}/lib"
+          RUNTIME_OUTPUT_DIRECTORY "${APP_BIN_DIRECTORY}"
+  )
 endforeach ()
