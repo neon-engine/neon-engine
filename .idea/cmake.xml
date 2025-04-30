@@ -2,8 +2,8 @@
 <project version="4">
   <component name="CMakeSharedSettings">
     <configurations>
-      <configuration PROFILE_NAME="debug-x86_64-linux-x86_64" ENABLED="true" GENERATION_DIR="build/debug/x86_64" CONFIG_NAME="Debug" TOOLCHAIN_NAME="neon-sdk-x86_64-toolchain-x86_64" GENERATION_OPTIONS="-DCMAKE_TOOLCHAIN_FILE=/opt/neon-sdk/x86_64-linux-x86_64/share/buildroot/toolchainfile.cmake" />
-      <configuration PROFILE_NAME="debug-x86_64-linux-aarch64" ENABLED="false" GENERATION_DIR="build/debug/aarch64" CONFIG_NAME="Debug" TOOLCHAIN_NAME="neon-sdk-x86_64-toolchain-aarch64" GENERATION_OPTIONS="-DCMAKE_TOOLCHAIN_FILE=/opt/neon-sdk/x86_64-linux-aarch64/share/buildroot/toolchainfile.cmake" />
+      <configuration PROFILE_NAME="debug-x86_64-linux-x86_64" ENABLED="true" GENERATION_DIR="build/debug/x86_64" CONFIG_NAME="Debug" TOOLCHAIN_NAME="neon-sdk-x86_64-toolchain-x86_64" GENERATION_OPTIONS="-G Ninja -DCMAKE_TOOLCHAIN_FILE=/opt/neon-sdk/x86_64-linux-x86_64/share/buildroot/toolchainfile.cmake" />
+      <configuration PROFILE_NAME="debug-x86_64-linux-aarch64" ENABLED="false" GENERATION_DIR="build/debug/aarch64" CONFIG_NAME="Debug" TOOLCHAIN_NAME="neon-sdk-x86_64-toolchain-aarch64" GENERATION_OPTIONS="-G Ninja -DCMAKE_TOOLCHAIN_FILE=/opt/neon-sdk/x86_64-linux-aarch64/share/buildroot/toolchainfile.cmake" />
     </configurations>
   </component>
 </project>

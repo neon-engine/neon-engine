@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="VcsDirectoryMappings">
-    <mapping directory="$PROJECT_DIR$" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/external/SDL_mixer" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/external/SDL_mixer/external/flac" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/external/SDL_mixer/external/libgme" vcs="Git" />
@@ -26,30 +25,5 @@
     <mapping directory="$PROJECT_DIR$/external/spdlog" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/external/stb" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/external/steam-audio" vcs="Git" />
-    <mapping directory="/var/home/cchulo/Dev/neon-engine" vcs="Git" />
-    <mapping directory="/var/home/cchulo/Dev/neon-engine/external/SDL_mixer" vcs="Git" />
-    <mapping directory="/var/home/cchulo/Dev/neon-engine/external/SDL_mixer/external/flac" vcs="Git" />
-    <mapping directory="/var/home/cchulo/Dev/neon-engine/external/SDL_mixer/external/libgme" vcs="Git" />
-    <mapping directory="/var/home/cchulo/Dev/neon-engine/external/SDL_mixer/external/libxmp" vcs="Git" />
-    <mapping directory="/var/home/cchulo/Dev/neon-engine/external/SDL_mixer/external/mpg123" vcs="Git" />
-    <mapping directory="/var/home/cchulo/Dev/neon-engine/external/SDL_mixer/external/ogg" vcs="Git" />
-    <mapping directory="/var/home/cchulo/Dev/neon-engine/external/SDL_mixer/external/opus" vcs="Git" />
-    <mapping directory="/var/home/cchulo/Dev/neon-engine/external/SDL_mixer/external/opusfile" vcs="Git" />
-    <mapping directory="/var/home/cchulo/Dev/neon-engine/external/SDL_mixer/external/tremor" vcs="Git" />
-    <mapping directory="/var/home/cchulo/Dev/neon-engine/external/SDL_mixer/external/vorbis" vcs="Git" />
-    <mapping directory="/var/home/cchulo/Dev/neon-engine/external/SDL_mixer/external/wavpack" vcs="Git" />
-    <mapping directory="/var/home/cchulo/Dev/neon-engine/external/assimp" vcs="Git" />
-    <mapping directory="/var/home/cchulo/Dev/neon-engine/external/glm" vcs="Git" />
-    <mapping directory="/var/home/cchulo/Dev/neon-engine/external/jolt-physics" vcs="Git" />
-    <mapping directory="/var/home/cchulo/Dev/neon-engine/external/rapidyaml" vcs="Git" />
-    <mapping directory="/var/home/cchulo/Dev/neon-engine/external/rapidyaml/ext/c4core" vcs="Git" />
-    <mapping directory="/var/home/cchulo/Dev/neon-engine/external/rapidyaml/ext/c4core/cmake" vcs="Git" />
-    <mapping directory="/var/home/cchulo/Dev/neon-engine/external/rapidyaml/ext/c4core/src/c4/ext/debugbreak" vcs="Git" />
-    <mapping directory="/var/home/cchulo/Dev/neon-engine/external/rapidyaml/ext/c4core/src/c4/ext/fast_float" vcs="Git" />
-    <mapping directory="/var/home/cchulo/Dev/neon-engine/external/sdl2" vcs="Git" />
-    <mapping directory="/var/home/cchulo/Dev/neon-engine/external/soloud" vcs="Git" />
-    <mapping directory="/var/home/cchulo/Dev/neon-engine/external/spdlog" vcs="Git" />
-    <mapping directory="/var/home/cchulo/Dev/neon-engine/external/stb" vcs="Git" />
-    <mapping directory="/var/home/cchulo/Dev/neon-engine/external/steam-audio" vcs="Git" />
   </component>
 </project>
