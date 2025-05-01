@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/ProjectNeon.iml" filepath="$PROJECT_DIR$/.idea/ProjectNeon.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/neon-engine.iml" filepath="$PROJECT_DIR$/.idea/neon-engine.iml" />
     </modules>
   </component>
 </project>

@@ -1,8 +1,8 @@
 set(_stb_srcdir ${CMAKE_SOURCE_DIR}/external/stb)
 
 if (NOT TARGET stb)
-    add_library(stb INTERFACE)
-    target_include_directories(stb INTERFACE ${_stb_srcdir})
+  add_library(stb INTERFACE)
+  target_include_directories(stb INTERFACE ${_stb_srcdir})
 endif ()
 
 include(${CMAKE_ROOT}/Modules/FindPackageHandleStandardArgs.cmake)
