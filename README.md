@@ -1,6 +1,8 @@
-<h1 style="text-align: center">NEON Engine</h1>
+<p align=center>
+<img src="./docs/logo/main-logo.png" width=320>
 
-<h2 style="text-align: center">[N]ext-gen [E]xtensible [O]pen e[N]gine</h2>
+<h1 align=center>a[N]other [E]xtensible [O]pen-source e[N]gine</h2>
+</p>
 
 ## Description
 
@@ -12,6 +14,8 @@ What started as a hobby engine, the goal is for the engine to support multiple p
 and provide intuitive tools for creating interactive experiences without sacrificing low-level control.
 Neon Engine aims to balance flexibility with simplicity, making game development accessible
 while allowing for advanced customization.
+
+Special thanks to [Akusha](https://vgen.co/Akusha/portfolio) for the logo for the project
 
 ## Planned Features
 
@@ -36,10 +40,3 @@ while allowing for advanced customization.
 
 ## Development
 Review the [docs](./docs) section for how to build and run the project
-
-## Why C++?
-It is 2025, what am I thinking?! Well, jokes aside, C++ has been around for a few decades, Rust still lacks libraries found within
-the C++ ecosystem. Typically, libraries found on Rust cargo are just wrappers around C++ libraries anyway.
-But I would be lying if I did not wish to be writing this project in rust. This is part of the reason why I am
-focusing on making this engine modular. I hope that as time goes on I can swap out pieces of the engine with modules
-written in Rust. I do plan on supporting Rust as a language to allow developers to code their games in.
