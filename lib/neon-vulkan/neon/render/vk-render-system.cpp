@@ -1,8 +1,8 @@
-#include "vulkan-render-system.hpp"
+#include "vk-render-system.hpp"
 
 namespace neon
 {
-  VulkanRenderSystem::VulkanRenderSystem(
+  Vk_RenderSystem::Vk_RenderSystem(
     WindowContext *window_context,
     const SettingsConfig &settings_config,
     const std::shared_ptr<Logger> &logger): RenderSystem(
@@ -11,21 +11,21 @@ namespace neon
     4096,
     logger) {}
 
-  int VulkanRenderSystem::CreateRenderObject(const RenderInfo &render_info)
+  int Vk_RenderSystem::CreateRenderObject(const RenderInfo &render_info)
   {
     return 0;
   }
 
-  void VulkanRenderSystem::DrawRenderObject(
+  void Vk_RenderSystem::DrawRenderObject(
     int render_object_id,
     const Transform &transform,
     const glm::mat4 &view,
     const glm::mat4 &projection,
     const std::vector<LightSource> &lights) {}
 
-  void VulkanRenderSystem::DestroyRenderObject(int render_object_id) {}
+  void Vk_RenderSystem::DestroyRenderObject(int render_object_id) {}
 
-  void VulkanRenderSystem::Initialize() {}
-  void VulkanRenderSystem::CleanUp() {}
-  void VulkanRenderSystem::PrepareFrame() {}
+  void Vk_RenderSystem::Initialize() {}
+  void Vk_RenderSystem::CleanUp() {}
+  void Vk_RenderSystem::PrepareFrame() {}
 } // neon

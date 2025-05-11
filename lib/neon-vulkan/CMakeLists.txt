@@ -1,8 +1,8 @@
 set(TARGET neon-vulkan)
 
 add_library(${TARGET} STATIC
-        neon/render/vulkan-render-system.cpp
-        neon/render/vulkan-render-system.hpp
+        neon/render/vk-render-system.cpp
+        neon/render/vk-render-system.hpp
         neon/render/vk-material.cpp
         neon/render/vk-material.hpp
         neon/render/vk-mesh.cpp

@@ -4,10 +4,10 @@
 
 namespace neon
 {
-  class VulkanRenderSystem final : public RenderSystem
+  class Vk_RenderSystem final : public RenderSystem
   {
   public:
-    VulkanRenderSystem(WindowContext *window_context,
+    Vk_RenderSystem(WindowContext *window_context,
                        const SettingsConfig &settings_config,
                        const std::shared_ptr<Logger> &logger);
 

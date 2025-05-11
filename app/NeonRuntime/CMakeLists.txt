@@ -1,10 +1,10 @@
 set(TARGET NeonRuntime)
 
 add_executable(${TARGET} main.cpp
-        neon-fps-application.cpp
-        neon-fps-application.hpp)
+        neon-runtime-app.cpp
+        neon-runtime-app.hpp)
 
-target_link_libraries(${TARGET} PRIVATE neon-core neon-gl neon-sdl2)
+target_link_libraries(${TARGET} PRIVATE neon-core neon-gl neon-sdl2 neon-vulkan)
 
 setup_copy_assets(
         ${TARGET}

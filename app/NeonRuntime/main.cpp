@@ -1,14 +1,15 @@
 #include <neon/input/sdl2-input-system.hpp>
 #include <neon/render/forward-render-pipeline.hpp>
 #include <neon/render/gl-render-system.hpp>
+#include <neon/render/vk-render-system.hpp>
 #include <neon/window/sdl2-window-system.hpp>
 
-#include "neon-fps-application.hpp"
+#include "neon-runtime-app.hpp"
 
 int main()
 {
   const auto settings_config = SettingsConfig{
-    .width = 1920, .height = 1080, .selected_api = RenderingApi::OpenGl
+    .width = 1920, .height = 1080, .selected_api = RenderingApi::Vulkan
   };
 
   neon::LoggingSystem logging_system(settings_config);
@@ -17,7 +18,7 @@ int main()
 
   neon::SDL2_WindowSystem window_system(settings_config, logging_system.CreateLogger("SDL2_WindowSystem"));
   neon::SDL2_InputSystem input_system(settings_config, &window_system, logging_system.CreateLogger("SDL2_InputSystem"));
-  neon::GL_RenderSystem render_system(&window_system, settings_config, logging_system.CreateLogger("OpenGL_RenderSystem"));
+  neon::Vk_RenderSystem render_system(&window_system, settings_config, logging_system.CreateLogger("Vk_RenderSystem"));
   neon::Forward_RenderPipeline render_pipeline(
     &render_system,
     settings_config.max_light_sources,
@@ -29,9 +30,9 @@ int main()
     &window_system,
     logging_system.CreateLogger("SceneManager"));
 
-  const auto app_logger = logging_system.CreateLogger("NeonFpsApplication");
+  const auto app_logger = logging_system.CreateLogger("NeonRuntimeApp");
 
-  NeonFpsApplication app(
+  NeonRuntimeApp app(
     settings_config,
     &window_system,
     &input_system,

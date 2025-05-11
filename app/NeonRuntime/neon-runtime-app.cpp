@@ -1,6 +1,6 @@
-#include "neon-fps-application.hpp"
+#include "neon-runtime-app.hpp"
 
-NeonFpsApplication::NeonFpsApplication(
+NeonRuntimeApp::NeonRuntimeApp(
   const SettingsConfig &settings_config,
   neon::WindowSystem *window_system,
   neon::InputSystem *input_system,

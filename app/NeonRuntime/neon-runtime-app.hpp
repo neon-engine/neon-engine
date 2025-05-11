@@ -5,9 +5,9 @@
 #include "neon/application/settings-config.hpp"
 
 
-class NeonFpsApplication final : public neon::Application {
+class NeonRuntimeApp final : public neon::Application {
 public:
-  NeonFpsApplication(
+  NeonRuntimeApp(
     const SettingsConfig &settings_config,
     neon::WindowSystem *window_system,
     neon::InputSystem *input_system,

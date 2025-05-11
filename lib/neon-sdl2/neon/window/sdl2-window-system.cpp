@@ -1,6 +1,7 @@
 #include "sdl2-window-system.hpp"
 
 #include <iostream>
+#include <SDL_vulkan.h>
 
 namespace neon
 {
@@ -50,8 +51,6 @@ namespace neon
       }
       case RenderingApi::Vulkan:
       {
-        _logger->Info("Creating Vulkan context");
-        throw std::runtime_error("not yet implemented");
         break;
       }
       default:
@@ -84,9 +83,8 @@ namespace neon
         SDL_GL_SwapWindow(_window);
         break;
       }
-      case RenderingApi::Vulkan:
+      default:
       {
-        throw std::runtime_error("not yet implemented");
         break;
       }
     }
@@ -108,7 +106,8 @@ namespace neon
       }
       case RenderingApi::Vulkan:
       {
-        throw std::runtime_error("not yet implemented");
+        _window_flags = SDL_WINDOW_VULKAN | SDL_WINDOW_SHOWN;
+        SDL_Vulkan_LoadLibrary(nullptr);
         break;
       }
       default:
