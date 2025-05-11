@@ -69,7 +69,19 @@ namespace neon
   void SDL2_WindowSystem::CleanUp()
   {
     _logger->Info("Cleaning up SDL2 window system");
-    if (_context != nullptr) { SDL_GL_DeleteContext(_context); }
+    switch (_settings_config.selected_api)
+    {
+      case RenderingApi::OpenGl:
+      {
+        if (_context != nullptr) { SDL_GL_DeleteContext(_context); }
+        break;
+      }
+      case RenderingApi::Vulkan:
+      {
+        SDL_Vulkan_UnloadLibrary();
+        break;
+      }
+    }
     SDL_DestroyWindow(_window);
     SDL_Quit();
   }

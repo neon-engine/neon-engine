@@ -43,6 +43,10 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake/find")
 
 
 # Find packages installed on the toolchain/sysroot
+message("VulkanSDK: $ENV{VULKAN_SDK}")
+message("Vulkan_LIBRARY: $ENV{Vulkan_LIBRARY}")
+message("Vulkan_INCLUDE_DIR: $ENV{Vulkan_INCLUDE_DIR}")
+message("PATH: $ENV{PATH}")
 find_package(Vulkan REQUIRED)
 find_package(glad REQUIRED)
 find_package(stb REQUIRED)
@@ -65,6 +69,7 @@ add_subdirectory(src/lib/neon-vulkan)
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/CopyAssets.cmake")
 
 set(APP_TARGETS
+        HelloTriangle
         NeonRuntime
 )
 
