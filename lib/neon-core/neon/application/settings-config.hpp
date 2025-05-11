@@ -5,7 +5,8 @@
 
 enum class RenderingApi
 {
-  OpenGl = 0
+  OpenGl = 0,
+  Vulkan = 1
 };
 
 struct SettingsConfig

@@ -23,11 +23,7 @@ namespace neon
     explicit GL_RenderSystem(
       WindowContext *window_context,
       const SettingsConfig &settings_config,
-      const std::shared_ptr<Logger> &logger)
-      : RenderSystem(window_context, settings_config, 4096, logger),
-        _render_resolution(_settings_config.width, _settings_config.height),
-        _model_refs(4096),
-        _material_refs(4096) {}
+      const std::shared_ptr<Logger> &logger);
 
     void Initialize() override;
 

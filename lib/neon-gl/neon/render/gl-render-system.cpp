@@ -7,6 +7,15 @@
 
 namespace neon
 {
+  GL_RenderSystem::GL_RenderSystem(
+    WindowContext *window_context,
+    const SettingsConfig &settings_config,
+    const std::shared_ptr<Logger> &logger)
+    : RenderSystem(window_context, settings_config, 4096, logger),
+      _render_resolution(_settings_config.width, _settings_config.height),
+      _model_refs(4096),
+      _material_refs(4096) {}
+
   void GL_RenderSystem::Initialize()
   {
     _logger->Info("Initializing OpenGL");
@@ -48,7 +57,7 @@ namespace neon
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   }
 
-  const RenderResolution& GL_RenderSystem::GetRenderResolution()
+  const RenderResolution &GL_RenderSystem::GetRenderResolution()
   {
     return _render_resolution;
   }

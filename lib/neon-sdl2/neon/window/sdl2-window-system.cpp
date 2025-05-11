@@ -40,11 +40,18 @@ namespace neon
     {
       case RenderingApi::OpenGl:
       {
+        _logger->Info("Creating OpenGL context");
         _context = SDL_GL_CreateContext(_window);
 
         // disable vsync after creating the context on KDE
         // TODO [issues/1] make vsync configurable
         SDL_GL_SetSwapInterval(0);
+        break;
+      }
+      case RenderingApi::Vulkan:
+      {
+        _logger->Info("Creating Vulkan context");
+        throw std::runtime_error("not yet implemented");
         break;
       }
       default:
@@ -77,6 +84,11 @@ namespace neon
         SDL_GL_SwapWindow(_window);
         break;
       }
+      case RenderingApi::Vulkan:
+      {
+        throw std::runtime_error("not yet implemented");
+        break;
+      }
     }
   }
 
@@ -92,6 +104,11 @@ namespace neon
         SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
         SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
         _window_flags = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN;
+        break;
+      }
+      case RenderingApi::Vulkan:
+      {
+        throw std::runtime_error("not yet implemented");
         break;
       }
       default:
