@@ -5,8 +5,11 @@ namespace neon
   VulkanRenderSystem::VulkanRenderSystem(
     WindowContext *window_context,
     const SettingsConfig &settings_config,
-    int max_render_objects,
-    const std::shared_ptr<Logger> &logger): RenderSystem(window_context, settings_config, max_render_objects, logger) {}
+    const std::shared_ptr<Logger> &logger): RenderSystem(
+    window_context,
+    settings_config,
+    4096,
+    logger) {}
 
   int VulkanRenderSystem::CreateRenderObject(const RenderInfo &render_info)
   {
@@ -21,11 +24,6 @@ namespace neon
     const std::vector<LightSource> &lights) {}
 
   void VulkanRenderSystem::DestroyRenderObject(int render_object_id) {}
-
-  const RenderResolution &VulkanRenderSystem::GetRenderResolution()
-  {
-    return RenderResolution(1920, 1080);
-  }
 
   void VulkanRenderSystem::Initialize() {}
   void VulkanRenderSystem::CleanUp() {}

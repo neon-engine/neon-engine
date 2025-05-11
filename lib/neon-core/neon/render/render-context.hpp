@@ -9,6 +9,7 @@
 #include "light-source.hpp"
 #include "render-info.hpp"
 #include "render-object-ref.hpp"
+#include "neon/application/settings-config.hpp"
 
 
 namespace neon
@@ -26,13 +27,18 @@ namespace neon
   class RenderContext
   {
   protected:
+    RenderResolution _render_resolution;
     DataBuffer<RenderObjectRef> _render_object_buffer;
     std::shared_ptr<Logger> _logger;
 
     ~RenderContext() = default;
 
   public:
-    explicit RenderContext(const int max_render_objects, const std::shared_ptr<Logger> &logger):
+    explicit RenderContext(
+      const int max_render_objects,
+      const SettingsConfig &settings_config,
+      const std::shared_ptr<Logger> &logger):
+      _render_resolution(settings_config.width, settings_config.height),
       _render_object_buffer(max_render_objects)
     {
       _logger = logger;
@@ -49,7 +55,10 @@ namespace neon
 
     virtual void DestroyRenderObject(int render_object_id) = 0;
 
-    virtual const RenderResolution& GetRenderResolution() = 0;
+    virtual const RenderResolution& GetRenderResolution()
+    {
+      return _render_resolution;
+    };
   };
 } // neon
 

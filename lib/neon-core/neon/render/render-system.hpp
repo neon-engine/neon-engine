@@ -24,7 +24,7 @@ namespace neon
       const SettingsConfig &settings_config,
       const int max_render_objects,
       const std::shared_ptr<Logger> &logger)
-      : RenderContext(max_render_objects, logger)
+      : RenderContext(max_render_objects, settings_config, logger)
     {
       _window_context = window_context;
       _settings_config = settings_config;

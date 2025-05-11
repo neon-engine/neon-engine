@@ -12,7 +12,6 @@ namespace neon
     const SettingsConfig &settings_config,
     const std::shared_ptr<Logger> &logger)
     : RenderSystem(window_context, settings_config, 4096, logger),
-      _render_resolution(_settings_config.width, _settings_config.height),
       _model_refs(4096),
       _material_refs(4096) {}
 
@@ -55,11 +54,6 @@ namespace neon
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  }
-
-  const RenderResolution &GL_RenderSystem::GetRenderResolution()
-  {
-    return _render_resolution;
   }
 
   // TODO [issues/7] find out if returning -1 is the best way to handle this, maybe assert calls are better

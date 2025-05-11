@@ -15,7 +15,6 @@ namespace neon
   // ReSharper disable once CppInconsistentNaming
   class GL_RenderSystem final : public RenderSystem
   {
-    RenderResolution _render_resolution;
     DataBuffer<GL_Model> _model_refs;
     DataBuffer<GL_Material> _material_refs;
 
@@ -30,8 +29,6 @@ namespace neon
     void CleanUp() override;
 
     void PrepareFrame() override;
-
-    const RenderResolution &GetRenderResolution() override;
 
     int CreateRenderObject(const RenderInfo &render_info) override;
 

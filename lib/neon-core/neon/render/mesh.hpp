@@ -2,7 +2,6 @@
 #define MESH_HPP
 
 #include <memory>
-#include <string>
 #include <vector>
 #include <neon/logging/logger.hpp>
 
