@@ -43,7 +43,11 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake/find")
 
 
 # Find packages installed on the toolchain/sysroot
-find_package(Vulkan)
+message("VulkanSDK: $ENV{VULKAN_SDK}")
+message("Vulkan_LIBRARY: $ENV{Vulkan_LIBRARY}")
+message("Vulkan_INCLUDE_DIR: $ENV{Vulkan_INCLUDE_DIR}")
+message("PATH: $ENV{PATH}")
+find_package(Vulkan REQUIRED)
 find_package(glad REQUIRED)
 find_package(stb REQUIRED)
 
@@ -56,14 +60,16 @@ add_subdirectory(external/spdlog)
 add_subdirectory(external/rapidyaml)
 
 # Additional libraries
-add_subdirectory(lib/neon-core)
-add_subdirectory(lib/neon-gl)
-add_subdirectory(lib/neon-sdl2)
+add_subdirectory(src/lib/neon-core)
+add_subdirectory(src/lib/neon-gl)
+add_subdirectory(src/lib/neon-sdl2)
+add_subdirectory(src/lib/neon-vulkan)
 
 # Load additional cmake
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/CopyAssets.cmake")
 
 set(APP_TARGETS
+        HelloTriangle
         NeonRuntime
 )
 
@@ -79,7 +85,7 @@ foreach (APP IN LISTS APP_TARGETS)
   # todo consider downgrading GCC so this is not necessary
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libstdc++")
 
-  add_subdirectory(app/${APP})
+  add_subdirectory(src/app/${APP})
 
   # Each executable will be in its own folder
   set_target_properties(
