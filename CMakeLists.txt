@@ -20,7 +20,7 @@ endif ()
 # Platform-specific linking flags
 if (UNIX AND NOT APPLE)
     # Linux-specific: static linking of libstdc++
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libstdc++")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libgcc -static-libstdc++")
 
     set(USING_GCC TRUE)
 elseif (WIN32)
