@@ -26,7 +26,13 @@ namespace neon
       const auto id = GetId();
       if (id < 0) { return id; }
 
-      _refs[id] = element;
+      if (id >= _refs.size())
+      {
+        _refs.push_back(element);
+      } else
+      {
+        _refs[id] = element;
+      }
       return id;
     }
 
@@ -38,12 +44,12 @@ namespace neon
       return out;
     }
 
-    T& operator[](int index)
+    T &operator[](int index)
     {
       return _refs[index];
     }
 
-    const T& operator[](int index) const
+    const T &operator[](int index) const
     {
       return _refs[index];
     }
