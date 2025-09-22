@@ -32,8 +32,8 @@ namespace neon
     if (_window == nullptr)
     {
       SDL_Quit();
-      _logger->Critical("Failed to create SDL2 Window");
-      throw std::runtime_error("Failed to create SDL2 Window");
+      const auto error = "Failed to create SDL2 Window:" + std::string(SDL_GetError());
+      throw std::runtime_error(error);
     }
 
     switch (_settings_config.selected_api)

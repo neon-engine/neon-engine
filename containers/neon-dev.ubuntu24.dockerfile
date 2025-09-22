@@ -7,6 +7,7 @@ RUN apt-get update && \
         git \
         cmake \
         ninja-build \
+        gdb lldb \
         clang \
         llvm \
         llvm-dev \
@@ -17,6 +18,7 @@ RUN apt-get update && \
         spirv-tools \
         glslang-tools \
         mesa-vulkan-drivers \
+        mesa-utils \
         python3 \
         python3-pip && \
     clang --version && \

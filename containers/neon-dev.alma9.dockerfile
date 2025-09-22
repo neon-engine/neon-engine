@@ -20,6 +20,8 @@ RUN dnf update -y && \
         spirv-tools \
         glslang \
         mesa-vulkan-drivers \
+        mesa-libGL-devel mesa-libGLU-devel \
+        libX11-devel libXrandr-devel libXi-devel \
         python3 \
         python3-pip && \
     clang --version && \
