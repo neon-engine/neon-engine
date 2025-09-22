@@ -32,8 +32,3 @@ RUN dnf update -y && \
 ENV VULKAN_SDK_PATH="/usr" \
     VK_LAYER_PATH="/usr/share/vulkan/explicit_layer.d"
 
-# Set working directory
-WORKDIR /workspace
-
-# Set default command
-CMD ["/bin/bash"]
