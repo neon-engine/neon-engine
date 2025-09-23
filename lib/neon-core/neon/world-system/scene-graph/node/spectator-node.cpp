@@ -1,5 +1,7 @@
 #include "spectator-node.hpp"
 
+#include <algorithm>
+
 namespace neon
 {
   SpectatorNode::SpectatorNode(
