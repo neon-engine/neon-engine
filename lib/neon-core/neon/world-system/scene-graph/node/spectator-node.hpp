@@ -1,5 +1,5 @@
-#ifndef PLAYER_NODE_HPP
-#define PLAYER_NODE_HPP
+#ifndef SPECTATOR_NODE_HPP
+#define SPECTATOR_NODE_HPP
 #include "node.hpp"
 #include "neon/input/input-context.hpp"
 
@@ -24,4 +24,4 @@ namespace neon
   };
 } // neon
 
-#endif //PLAYER_NODE_HPP
+#endif //SPECTATOR_NODE_HPP
