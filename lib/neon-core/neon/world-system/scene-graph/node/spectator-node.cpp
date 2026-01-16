@@ -1,6 +1,6 @@
 #include "spectator-node.hpp"
 
-#include <bits/stl_algo.h>
+#include <algorithm>
 
 namespace neon
 {
