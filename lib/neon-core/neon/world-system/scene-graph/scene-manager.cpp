@@ -35,7 +35,7 @@ namespace neon
       "bear",
       Transform{},
       RenderInfo{
-        .model_path = "assets/models/bear.obj",
+        .model_path = "assets/models/cube.obj",
         .shader_path = "assets/shaders/basic-lit",
         .texture_paths = {
           "assets/textures/concrete.png"

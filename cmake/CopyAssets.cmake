@@ -25,6 +25,7 @@ function(setup_copy_assets TARGET_NAME SOURCE_ASSETS_DIR OUTPUT_ASSETS_DIR)
 
         add_custom_command(
                 TARGET ${TARGET_NAME}_copy_assets
+                POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E make_directory
                 "${OUTPUT_ASSETS_DIR}/${REL_DIR}"
 
@@ -32,8 +33,6 @@ function(setup_copy_assets TARGET_NAME SOURCE_ASSETS_DIR OUTPUT_ASSETS_DIR)
                 -DSRC="${SRC_FILE}"
                 -DDST="${DEST_FILE}"
                 -P "${CMAKE_SOURCE_DIR}/cmake/scripts/CheckAndCopy.cmake"
-
-                DEPENDS "${SRC_FILE}"
         )
     endforeach ()
 

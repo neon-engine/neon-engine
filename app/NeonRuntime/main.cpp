@@ -5,7 +5,7 @@
 
 #include "neon-fps-application.hpp"
 
-int main()
+int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 {
   const auto settings_config = SettingsConfig{
     .width = 1920, .height = 1080, .selected_api = RenderingApi::OpenGl
@@ -48,5 +48,8 @@ int main()
   {
     app_logger->Critical(e.what());
     app.CleanUp();
+    return 1;
   }
+
+  return 0;
 }
