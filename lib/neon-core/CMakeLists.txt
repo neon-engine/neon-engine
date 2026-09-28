@@ -6,6 +6,14 @@ add_library(${TARGET} STATIC
         neon/application/application.hpp
         neon/application/settings-config.hpp
 
+        # command line
+        neon/command-line/command-line.cpp
+        neon/command-line/command-line.hpp
+        neon/command-line/command-line-context.hpp
+        neon/command-line/command-line-options.hpp
+        neon/command-line/runtime-options.cpp
+        neon/command-line/runtime-options.hpp
+
         # common
         neon/common/data-buffer.hpp
         neon/common/util.hpp

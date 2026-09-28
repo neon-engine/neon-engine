@@ -195,19 +195,22 @@ A material names its shader without an extension, such as
 To add one, put its `.vert` and `.frag` files in the sources folder and run
 the configure step again.
 
-### Command line
+## Command line
 
 ```
-NeonRuntime [options]
+Usage: NeonRuntime [options]
 
-  --renderer vulkan         Renderer to draw with. Vulkan is the only one so far
-  --help                    Show this text
+  --help             Show this text
+  --renderer vulkan  Renderer to draw with. Default: vulkan
 
-For development:
-  --frames N                Stop after N frames
-  --screenshot PATH         Save the last frame as a PNG image before stopping
-  --headless                Run without a window
+Development:
+  --frames N         Stop after N frames
+  --screenshot PATH  Save the last frame as a PNG image before stopping. Needs --frames
+  --headless         Run without a window
 ```
+
+A switch is written as `--name`. An option with a value is written as
+`--name value` or `--name=value`.
 
 Together the development options render a scene without a window and save the
 result, which is how the renderer is checked on a machine with no display:
@@ -217,6 +220,72 @@ NeonRuntime --headless --frames 3 --screenshot user://screenshots/frame.png
 ```
 
 The log says where `user://` is on the machine.
+
+### How it is built
+
+Each application decides which options it accepts. NeonRuntime has one set.
+NeonEditor will have that set and one of its own, which the runtime never
+sees.
+
+| Piece | Location | Role |
+|---|---|---|
+| `CommandLine` | [neon-core](../lib/neon-core/neon/command-line/command-line.hpp) | Parses arguments, checks them, and writes the help text. Knows no application |
+| `CommandLineContext` | [neon-core](../lib/neon-core/neon/command-line/command-line-context.hpp) | The read side, for code that wants to know what was asked for |
+| `CommandLineOptions` | [neon-core](../lib/neon-core/neon/command-line/command-line-options.hpp) | Interface of a set of options: what they are, and what they do to the settings |
+| `RuntimeOptions` | [neon-core](../lib/neon-core/neon/command-line/runtime-options.hpp) | The set every runtime has |
+
+An application puts them together in `main.cpp`:
+
+```cpp
+neon::CommandLine command_line("NeonRuntime", "Runs a Neon Engine project.");
+neon::RuntimeOptions runtime_options;
+runtime_options.Register(command_line);
+
+if (!command_line.Parse(argc, argv)) { /* print GetError() and GetHelp() */ }
+if (command_line.WantsHelp()) { /* print GetHelp() */ }
+
+SettingsConfig settings_config{ /* defaults of the application */ };
+runtime_options.Apply(command_line, settings_config, error);
+```
+
+### Adding options
+
+To add an option to every runtime, declare it in `RuntimeOptions::Register()`
+and act on it in `RuntimeOptions::Apply()`.
+
+To give one application options of its own, write a class that implements
+`CommandLineOptions` and register it next to the runtime set:
+
+```cpp
+class EditorOptions final : public neon::CommandLineOptions
+{
+public:
+  void Register(neon::CommandLine &command_line) override
+  {
+    command_line.Add({
+      .name = "project",
+      .value_name = "PATH",
+      .description = "Project to open",
+      .group = "Editor"
+    });
+  }
+
+  bool Apply(const neon::CommandLineContext &command_line, SettingsConfig &settings, std::string &error) override;
+};
+```
+
+| Field of an option | Meaning |
+|---|---|
+| `name` | Without dashes |
+| `value_name` | What the help text calls the value. Leave it out for a switch |
+| `description` | One line for the help text |
+| `group` | Heading in the help text. Options without one come first |
+| `allowed_values` | The values that are accepted. The parser rejects any other |
+| `default_value` | The value when the option is not given |
+
+Checks that involve one option belong to the parser: whether it is known,
+whether it has a value, whether the value is accepted. Checks that involve
+several, such as one option needing another, belong in `Apply()`.
 
 ## Window modes
 

@@ -38,5 +38,9 @@ Special thanks to [Akusha](https://vgen.co/Akusha/portfolio) for the logo for th
     - [ ] Rust Bindings
     - [ ] Python Bindings
 
+## Roadmap
+
+Where the engine is heading is described in the [roadmap](./docs/roadmap.md).
+
 ## Development
 Review the [docs](./docs) section for how to build and run the project

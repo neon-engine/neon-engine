@@ -41,6 +41,9 @@ struct SettingsConfig
   std::size_t log_max_files = 1;
   std::size_t max_light_sources = 1024;
 
+  /// Run without a window and without input devices.
+  bool headless = false;
+
   /// Number of frames to render before the application stops by itself.
   /// 0 keeps it running until its window is closed.
   std::size_t max_frames = 0;

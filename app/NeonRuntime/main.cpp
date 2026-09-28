@@ -2,8 +2,9 @@
 #include <iostream>
 #include <optional>
 #include <string>
-#include <string_view>
 
+#include <neon/command-line/command-line.hpp>
+#include <neon/command-line/runtime-options.hpp>
 #include <neon/filesystem/sdl2-file-system.hpp>
 #include <neon/input/headless-input-system.hpp>
 #include <neon/input/sdl2-input-system.hpp>
@@ -19,111 +20,38 @@
 // full argc/argv signature.
 #include <SDL_main.h>
 
-namespace
-{
-  struct Options
-  {
-    RenderingApi renderer = RenderingApi::Vulkan;
-    bool headless = false;
-    std::size_t frames = 0;
-    std::string screenshot;
-  };
-
-  void print_usage()
-  {
-    std::cout <<
-      "Usage: NeonRuntime [options]\n"
-      "\n"
-      "  --renderer vulkan         Renderer to draw with. Vulkan is the only one so far\n"
-      "  --help                    Show this text\n"
-      "\n"
-      "For development:\n"
-      "  --frames N                Stop after N frames\n"
-      "  --screenshot PATH         Save the last frame as a PNG image before stopping,\n"
-      "                            for example user://screenshots/frame.png. Needs --frames\n"
-      "  --headless                Run without a window\n";
-  }
-
-  /// Returns false when the application should not start. `exit_code` says
-  /// whether that is an error.
-  bool parse_options(const int argc, char *argv[], Options &options, int &exit_code)
-  {
-    exit_code = EXIT_FAILURE;
-
-    for (int i = 1; i < argc; i++)
-    {
-      const std::string_view argument = argv[i];
-      const bool has_value = i + 1 < argc;
-
-      if (argument == "--help")
-      {
-        print_usage();
-        exit_code = EXIT_SUCCESS;
-        return false;
-      }
-
-      if (argument == "--headless")
-      {
-        options.headless = true;
-      } else if (argument == "--renderer" && has_value)
-      {
-        const std::string_view value = argv[++i];
-        if (value == "vulkan")
-        {
-          options.renderer = RenderingApi::Vulkan;
-        } else
-        {
-          std::cerr << "Unknown renderer '" << value << "'\n\n";
-          print_usage();
-          return false;
-        }
-      } else if (argument == "--frames" && has_value)
-      {
-        const long frames = std::strtol(argv[++i], nullptr, 10);
-        if (frames <= 0)
-        {
-          std::cerr << "--frames needs a number above zero\n\n";
-          print_usage();
-          return false;
-        }
-        options.frames = static_cast<std::size_t>(frames);
-      } else if (argument == "--screenshot" && has_value)
-      {
-        options.screenshot = argv[++i];
-      } else
-      {
-        std::cerr << "Unknown or incomplete option '" << argument << "'\n\n";
-        print_usage();
-        return false;
-      }
-    }
-
-    if (!options.screenshot.empty() && options.frames == 0)
-    {
-      std::cerr << "--screenshot needs --frames\n";
-      return false;
-    }
-
-    return true;
-  }
-}
-
 int main(const int argc, char *argv[])
 {
-  Options options;
-  if (int exit_code; !parse_options(argc, argv, options, exit_code))
+  // What this application accepts on its command line. The editor will add a
+  // set of its own next to the one every runtime has.
+  neon::CommandLine command_line("NeonRuntime", "Runs a Neon Engine project.");
+  neon::RuntimeOptions runtime_options;
+  runtime_options.Register(command_line);
+
+  if (!command_line.Parse(argc, argv))
   {
-    return exit_code;
+    std::cerr << command_line.GetError() << "\n\n" << command_line.GetHelp();
+    return EXIT_FAILURE;
+  }
+
+  if (command_line.WantsHelp())
+  {
+    std::cout << command_line.GetHelp();
+    return EXIT_SUCCESS;
   }
 
   auto settings_config = SettingsConfig{
     .width = 1920,
     .height = 1080,
-    .selected_api = options.renderer,
+    .selected_api = RenderingApi::Vulkan,
     .window_mode = WindowMode::Borderless
   };
-  settings_config.max_frames = options.frames;
-  settings_config.screenshot_path = options.screenshot;
+
+  if (std::string error; !runtime_options.Apply(command_line, settings_config, error))
+  {
+    std::cerr << error << "\n\n" << command_line.GetHelp();
+    return EXIT_FAILURE;
+  }
 
   neon::LoggingSystem logging_system(settings_config);
 
@@ -146,7 +74,7 @@ int main(const int argc, char *argv[])
   neon::InputSystem *input_system;
   neon::RenderSystem *render_system;
 
-  if (options.headless)
+  if (settings_config.headless)
   {
     window_system = &headless_window_system.emplace(
       settings_config,
@@ -165,7 +93,7 @@ int main(const int argc, char *argv[])
       logging_system.CreateLogger("SDL2_InputSystem"));
   }
 
-  switch (options.renderer)
+  switch (settings_config.selected_api)
   {
     case RenderingApi::Vulkan:
     {
