@@ -3,6 +3,9 @@
 Where Neon Engine is heading, what is decided, and what is still open. It is
 a plan, not a promise. Items move as they are understood better.
 
+The goal is a complete engine: rendering, physics, audio, scripting, user
+interfaces, and an editor to make games with.
+
 ## The shape of the product
 
 Neon Engine is built as two applications on one engine, in the way Godot is.
@@ -21,7 +24,8 @@ Principles that hold for both:
   others unchanged. See the path rules in the
   [development guide](development.md#path-rules).
 - **The runtime is separate from the game.** Assets, and later game code in
-  libraries of its own, are loaded by the runtime and not compiled into it.
+  scripts and libraries of its own, are loaded by the runtime and not compiled
+  into it.
 
 ## Done
 
@@ -33,6 +37,7 @@ Principles that hold for both:
 | Window modes | Windowed, borderless, and fullscreen |
 | Command line | An abstraction with a set of options for each application |
 | Runtime class | The core class an application is built from is `neon::Runtime` |
+| Running without a window | `--headless`, `--frames`, and `--screenshot` render a number of frames and save the last one |
 
 ## Next
 
@@ -45,18 +50,99 @@ Work that builds directly on what exists.
 | Run on Windows | The build works. It has not been run |
 | Log file under `user://` | It is still written relative to the working directory |
 
-## Later
+## Planned
+
+Everything the engine needs to be complete, by area. The order to build it in
+is [below](#order).
+
+### Foundations
+
+These come first, because everything after them is cheaper with them in place.
+
+| Item | Detail |
+|---|---|
+| Unit tests | A test framework, and tests for what exists. The command line parser has checks that are not yet part of the build |
+| clang-tidy | Checks that code follows the conventions the code base already has, such as naming. Run in the build and in the editor |
+| The TODOs in the repository | Listed [below](#todos-in-the-repository) |
+| Architecture document | How the libraries, interfaces, and applications fit together, and why |
+| A document for each major feature | In the way [file-systems.md](file-systems.md) describes the file system: what it does, how it is used, and what is open |
+
+### World
+
+| Item | Detail |
+|---|---|
+| Entities and components | The world system is rebuilt on an entity component system. The scene graph stays as the way a scene is described. What stores and updates it changes |
+| Physics | Jolt Physics, behind an interface in neon-core. It is in the tree and builds. Nothing uses it yet |
+| Scripting | Lua first. Game code is loaded by the runtime, not compiled into it. Bindings for other languages can follow the same interface |
+
+Entities and components come before physics and scripting. Both attach to
+whatever the world is made of, and would have to be redone if it changed under
+them.
+
+### Rendering
+
+| Item | Detail |
+|---|---|
+| Physically based materials | Metalness and roughness, as glTF describes them |
+| Shadow mapping | For directional, point, and spot lights |
+| Deferred rendering | A second pipeline next to the forward one, for scenes with many lights |
+| Compute shaders | Used by the engine, and offered to games through the render interfaces |
+| Light mapping | Lighting computed ahead of time for what does not move. Baked by the editor |
+| Global illumination | Which technique is open. It builds on deferred rendering and compute shaders |
+| Metal renderer | macOS without MoltenVK |
+| WebGPU renderer | The web. Through Dawn or wgpu also the desktop platforms |
+
+**Shaders are written once.** They are compiled to SPIR-V, and
+[SPIRV-Cross](https://github.com/KhronosGroup/SPIRV-Cross) turns that into
+what Metal and WebGPU want. A second renderer adds a step to the build, not a
+second set of shaders. [Slang](https://shader-slang.org) is the alternative if
+shaders grow numerous.
+
+Every technique above has to be built once for each renderer. The more of them
+exist before Metal and WebGPU are started, the more there is to port. The more
+renderers exist, the more each new technique costs. See [order](#order).
+
+### Audio
+
+| Item | Detail |
+|---|---|
+| Sound effects and music | Playing, stopping, looping, and mixing, behind an interface in neon-core |
+| Spatial audio | Sounds placed in the world, heard from where the listener is |
+
+SDL_mixer, SoLoud, and Steam Audio are in the tree. Nothing uses them yet, and
+which of them stay is open.
+
+### User interface
+
+| Item | Detail |
+|---|---|
+| A framework for interfaces in games | Menus and the display shown during play. Layout, text, input, and drawing through the renderer |
+
+This is separate from the interface of the editor, which uses Dear ImGui.
+Dear ImGui suits tools. It is not meant for what players see.
+
+### Running without a window
+
+Rendering without a window and saving a frame exist. What is planned makes
+them a supported way to run a game, for automated checks and for agents.
+
+| Item | Detail |
+|---|---|
+| Setting the state of a game | Options to start from a given state, such as a scene, a saved game, or values of the game's own |
+| Starting at a frame | Running the game forward to a given frame before anything is captured |
+| Repeatable runs | A fixed time step and fixed random numbers, so that the same options give the same image |
 
 ### NeonEditor
 
 | Part | Detail |
 |---|---|
+| Interface | Built with [Dear ImGui](https://github.com/ocornut/imgui) |
 | Editing | Scenes, assets, and settings of a project |
 | Running a game from the editor | With options the runtime alone does not have, for debugging |
 | Exporting | Turning a project into something that can be distributed |
+| Compiler tools | The tools that prepare a project are packaged with the editor: compiling shaders, preparing models and textures, and baking light maps |
 | Command line | The options of the runtime, plus a set only the editor has |
-| Runtime class | The core class an application is built from is `neon::Runtime` |
-| Agent support | See below |
+| Agent support | A Model Context Protocol server. See below |
 
 ### Exporting games
 
@@ -92,10 +178,10 @@ runtime was compiled somewhere. Compiling it can still be automated, on a Mac:
 The editor is meant to be driven by AI agents as well as by hand: Claude
 Code, ChatGPT, Cursor, and others.
 
-**Proposed: the Model Context Protocol.** It is an open protocol for giving
+**Decided: the Model Context Protocol.** It is an open protocol for giving
 an agent tools, and the products named above already speak it. The editor
-would run a server that offers its abilities as tools. One implementation
-then serves every agent, and a protocol of our own is not needed.
+runs a server that offers its abilities as tools. One implementation then
+serves every agent, and a protocol of our own is not needed.
 
 | Tool an agent could be given | Built on |
 |---|---|
@@ -103,6 +189,7 @@ then serves every agent, and a protocol of our own is not needed.
 | List, import, and inspect assets | The file system |
 | Run the game and stop it | The runtime |
 | Look at what is on screen | Rendering without a window and saving the frame, which exists |
+| Put the game into a state and look at it | Setting the state and starting at a frame, which are planned |
 | Read the log | The logging system |
 | Export the project | The exporter |
 
@@ -119,33 +206,12 @@ client. That means building for WebAssembly.
 
 | Needed | Detail |
 |---|---|
-| A renderer for the web | Browsers have no Vulkan. They offer WebGPU and WebGL 2 |
+| A renderer for the web | The WebGPU renderer. Browsers have no Vulkan |
 | A main loop the browser drives | The browser calls the engine once per frame. The engine cannot loop by itself |
 | Assets served with the page | A file system backend that reads what was packed |
 | A fourth toolchain | Emscripten |
 
 Threads are limited in browsers, which will matter for physics.
-
-### Renderers
-
-Vulkan is the renderer today. Which one comes second is open, and the web
-weighs on it.
-
-| Option | Covers | Cost |
-|---|---|---|
-| **Metal** | macOS without MoltenVK | A renderer for one platform |
-| **WebGPU** | The web. Through Dawn or wgpu also macOS, Windows, and Linux | A large dependency, and only the features every platform has |
-| **WebGL 2** | The web, including older browsers | An older design. The removed OpenGL renderer would be a starting point |
-
-WebGPU would answer both the web and the dependency on MoltenVK, which would
-make a Metal renderer unnecessary. This is to be decided before either is
-started.
-
-**Shaders are written once.** They are compiled to SPIR-V, and
-[SPIRV-Cross](https://github.com/KhronosGroup/SPIRV-Cross) turns that into
-what Metal, DirectX, and OpenGL want. A second renderer adds a step to the
-build, not a second set of shaders. [Slang](https://shader-slang.org) is the
-alternative if shaders grow numerous.
 
 ### Other
 
@@ -153,17 +219,55 @@ alternative if shaders grow numerous.
 |---|---|
 | Replace assimp | It is temporary. It is large, and a game should load models that were prepared ahead of time |
 | Packed assets | Shipping archives instead of loose files. See [file-systems.md](file-systems.md) |
-| Headless as a feature | It works and is used to check the renderer. Making it a supported way to run is deferred |
-| Physics | Jolt is in the tree and builds. Nothing uses it yet |
-| Audio | Not started |
-| Scripting | Bindings for Lua, Rust, and Python are planned |
+
+## Order
+
+A proposal. Each step builds on the ones before it.
+
+| Step | What | Why here |
+|---|---|---|
+| 1 | Unit tests, clang-tidy, the TODOs | Small, and they protect everything that follows |
+| 2 | Architecture document | Writing it down exposes what the next steps have to change |
+| 3 | Load a project, and the rest of [Next](#next) | The runtime has to run something other than a scene written in code |
+| 4 | Entities and components | Physics, scripting, and audio all attach to the world |
+| 5 | Physics, then scripting with Lua | With both, a game can be written without touching the engine |
+| 6 | Running without a window, in full | Makes every later feature checkable by a script or an agent |
+| 7 | Sound effects, music, then spatial audio | Independent of rendering |
+| 8 | Physically based materials, shadow mapping | The largest gain in how a scene looks |
+| 9 | Deferred rendering, compute shaders | What the advanced lighting builds on |
+| 10 | User interface framework | Needs the renderer to be settled enough to draw through |
+| 11 | NeonEditor, with its compiler tools and the agent server | Needs most of the above to have something to edit |
+| 12 | Light mapping, global illumination | Light maps are baked by the editor |
+| 13 | Metal and WebGPU renderers, web builds | See below |
+
+**Where the renderers go is the main open question of the order.** Placed
+last, they have the most to port, all at once. Placed early, every rendering
+step after them is built three times. A middle way is to start the second
+renderer after step 8, while the render interfaces are still small, and to
+hold later techniques to what both can do.
+
+A document for each feature is written with the feature, not as a step.
+
+## TODOs in the repository
+
+| Where | What |
+|---|---|
+| [scene-manager.cpp](../lib/neon-core/neon/world-system/scene-graph/scene-manager.cpp) | Create nodes through a factory class. Tracked as issue 4. Rebuilding the world on entities and components may replace it |
+| [CMakeLists.txt](../CMakeLists.txt) | Turn on `-Wall`, `-Wextra`, and `-Werror`, once the libraries in `external/` no longer compile as part of the project |
+| [CMakeLists.txt](../CMakeLists.txt) | Set the compiler flags for release builds |
+| [CMakeLists.txt](../CMakeLists.txt) | Consider whether the C++ runtime still has to be linked statically |
 
 ## Open decisions
 
 | Decision | Depends on |
 |---|---|
-| The second renderer: Metal, WebGPU, or WebGL 2 | How much web builds matter, and how much control is wanted on desktop |
+| When the Metal and WebGPU renderers are started | How much is to be ported, against how much is to be built three times |
+| Whether WebGPU also serves the desktop | If it does on macOS, the Metal renderer has less to justify it |
 | Shaders in GLSL or in Slang | How many shaders there will be. Cheap to change now, expensive later |
+| Which technique for global illumination | What the target hardware is, and whether the web has to be able to run it |
+| Which audio libraries stay | Whether one of them covers effects, music, and spatial audio together |
+| Which library for entities and components | One of our own, or an existing one such as EnTT or Flecs |
+| Which test framework | Catch2, GoogleTest, or doctest |
 | How agents reach the editor | What the editor turns out to be |
 | What a project is on disk | Needed before the runtime can load one |
-| How game code is loaded | Libraries loaded at run time, scripts, or both |
+| How game code is loaded | Scripts are decided. Whether libraries loaded at run time are offered as well is open |

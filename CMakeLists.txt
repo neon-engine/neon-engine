@@ -111,7 +111,10 @@ foreach (APP IN LISTS APP_TARGETS)
 
   # ensure binaries can run anywhere, assuming they are ABI compatible that is
   # todo consider downgrading GCC so this is not necessary
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libstdc++")
+  # Apple has no static C++ runtime to link. It ships with the system instead
+  if (NOT APPLE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libstdc++")
+  endif ()
 
   add_subdirectory(app/${APP})
 
