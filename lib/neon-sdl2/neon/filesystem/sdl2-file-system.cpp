@@ -29,12 +29,27 @@ namespace neon
     _assets_directory = application_directory + "assets" + _native_separator;
 
     _logger->Info("assets:// is {}", _assets_directory);
+
+    // a folder of the current user, which SDL creates if it is missing
+    char *user_path = SDL_GetPrefPath(_settings_config.organization.c_str(), _settings_config.application.c_str());
+    if (user_path == nullptr)
+    {
+      auto error = std::string(SDL_GetError());
+      _logger->Critical("Failed to find the user directory: {}", error);
+      throw std::runtime_error("Failed to find the user directory");
+    }
+
+    _user_directory = user_path;
+    SDL_free(user_path);
+
+    _logger->Info("user:// is {}", _user_directory);
   }
 
   void SDL2_FileSystem::CleanUp()
   {
     _logger->Info("Cleaning up SDL2 file system");
     _assets_directory.clear();
+    _user_directory.clear();
   }
 
   bool SDL2_FileSystem::Exists(const std::string &path)
@@ -66,6 +81,50 @@ namespace neon
 
       const std::u8string name = entries->path().filename().u8string();
       names.emplace_back(name.begin(), name.end());
+    }
+
+    return true;
+  }
+
+  bool SDL2_FileSystem::MakeDirectory(const std::string &native_directory)
+  {
+    // SDL2 cannot create folders either, see ListDirectory
+    const std::filesystem::path directory(std::u8string(native_directory.begin(), native_directory.end()));
+
+    std::error_code error;
+    std::filesystem::create_directory(directory, error);
+    return !error;
+  }
+
+  bool SDL2_FileSystem::WriteBytes(const std::string &path, const std::vector<unsigned char> &contents)
+  {
+    std::string native_path;
+    if (!LocateForWriting(path, native_path)) { return false; }
+
+    SDL_RWops *file = SDL_RWFromFile(native_path.c_str(), "wb");
+    if (file == nullptr)
+    {
+      auto error = std::string(SDL_GetError());
+      _logger->Error("Could not open {} for writing: {}", path, error);
+      return false;
+    }
+
+    size_t total = 0;
+    while (total < contents.size())
+    {
+      const size_t written = SDL_RWwrite(file, contents.data() + total, 1, contents.size() - total);
+      if (written == 0) { break; }
+      total += written;
+    }
+
+    // closing flushes, so a failure here means the file is incomplete
+    const bool closed = SDL_RWclose(file) == 0;
+
+    if (total != contents.size() || !closed)
+    {
+      auto error = std::string(SDL_GetError());
+      _logger->Error("Could not write all of {}: {}", path, error);
+      return false;
     }
 
     return true;

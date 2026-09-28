@@ -24,7 +24,7 @@ preset writes into `build/<preset-name>` and the resulting executable lands in
 | Linux x64 | In the Linux Docker image |
 | Windows x64 | In the Windows Docker image, cross-compiled with llvm-mingw |
 
-A GPU with OpenGL 3.3 support is needed to run the result.
+A graphics card with a Vulkan 1.1 driver is needed to run the result.
 
 ## First-time setup
 
@@ -66,8 +66,14 @@ git submodule update --init --recursive \
 Install the toolchain with Homebrew:
 
 ```bash
-brew install llvm@20 cmake ninja
+brew install llvm@20 cmake ninja glslang molten-vk vulkan-loader
 ```
+
+| Package | Needed for |
+|---|---|
+| `llvm@20`, `cmake`, `ninja` | Building |
+| `glslang` | Building. It compiles the shaders of the Vulkan renderer |
+| `molten-vk`, `vulkan-loader` | Running. macOS has no Vulkan driver of its own, MoltenVK provides one on top of Metal |
 
 Homebrew's LLVM is keg-only and never shadows Apple's clang. The macOS preset
 points at it by absolute path, so nothing needs to be added to `PATH`.
@@ -85,11 +91,12 @@ Run:
 ./bin/debug/darwin-arm64/NeonRuntime/NeonRuntime
 ```
 
+
 ## Linux (x64)
 
 Linux builds run inside a Docker image so the toolchain is reproducible. The
 image is defined in [docker/linux-x64.dockerfile](../docker/linux-x64.dockerfile)
-and installs LLVM 20 from apt.llvm.org plus the X11, Wayland, OpenGL, and audio
+and installs LLVM 20 from apt.llvm.org plus the X11, Wayland, graphics, and audio
 development packages that SDL2 needs to build from source.
 
 Build the image once, from the repository root:
@@ -156,6 +163,61 @@ directory on `PATH`, and run the same two preset commands from a shell. The
 toolchain file reads `LLVM_MINGW_ROOT` from the environment if llvm-mingw is not
 installed at `/opt/llvm-mingw`.
 
+## Renderer
+
+The engine renders with Vulkan, through the neon-vulkan library. On macOS that
+runs on top of Metal through MoltenVK. A Metal renderer of its own is planned.
+An OpenGL renderer existed and was removed, see
+[vulkan-renderer.md](vulkan-renderer.md) for the reasons and the design.
+
+The rest of the engine reaches the renderer through the interfaces in
+neon-core and sees no Vulkan type, so another renderer can be added next to it.
+
+### Shaders
+
+| | |
+|---|---|
+| Sources | `app/<app>/shaders/vulkan/*.vert` and `*.frag`, written in GLSL 450 |
+| Shared declarations | `scene-data.glsl` in the same folder, pulled in with `#include` |
+| Compiled by | The build, with glslang |
+| Compiled to | `assets/shaders/<name>.vert.spv` and `<name>.frag.spv` next to the binary |
+
+A material names its shader without an extension, such as
+`assets://shaders/basic-lit`, and the renderer adds `.vert.spv` and
+`.frag.spv`. Scene files therefore never mention a shader format.
+
+| Shader | Draws |
+|---|---|
+| `basic-lit` | Textured or plain colored surfaces lit by one direction light and up to 64 point and 64 spot lights |
+| `unlit` | The texture as it is, without lighting |
+| `color` | The plain color of the material, without lighting |
+
+To add one, put its `.vert` and `.frag` files in the sources folder and run
+the configure step again.
+
+### Command line
+
+```
+NeonRuntime [options]
+
+  --renderer vulkan         Renderer to draw with. Vulkan is the only one so far
+  --help                    Show this text
+
+For development:
+  --frames N                Stop after N frames
+  --screenshot PATH         Save the last frame as a PNG image before stopping
+  --headless                Run without a window
+```
+
+Together the development options render a scene without a window and save the
+result, which is how the renderer is checked on a machine with no display:
+
+```bash
+NeonRuntime --headless --frames 3 --screenshot user://screenshots/frame.png
+```
+
+The log says where `user://` is on the machine.
+
 ## Window modes
 
 The window mode is chosen through `SettingsConfig::window_mode`, defined in
@@ -172,7 +234,7 @@ It defaults to `Windowed`. NeonRuntime sets `Borderless` in its `main.cpp`.
 const auto settings_config = SettingsConfig{
   .width = 1920,
   .height = 1080,
-  .selected_api = RenderingApi::OpenGl,
+  .selected_api = RenderingApi::Vulkan,
   .window_mode = WindowMode::Borderless
 };
 ```
@@ -181,7 +243,7 @@ Because the window is not always the configured size, code must not use
 `width` and `height` from the settings to mean the size on screen.
 
 - Renderers ask the window for its real size through
-  `WindowContext::GetDrawableSize()`. The OpenGL render system does this once
+  `WindowContext::GetDrawableSize()`. The Vulkan render system does this once
   in `Initialize()` to set its viewport and render resolution.
 - Anything that needs the render size afterwards, such as the projection
   matrix, reads `RenderContext::GetRenderResolution()`.
@@ -208,8 +270,18 @@ also never depends on the directory the app was started from.
 
 | Scheme | Points at | Status |
 |---|---|---|
-| `assets://` | `<directory of executable>/assets` | Implemented |
-| `user://` | A per-user folder for saves and settings | Planned |
+| `assets://` | `<directory of executable>/assets` | Read-only |
+| `user://` | A folder of the current user, for saves, settings, and anything else the app writes | Read and write |
+
+Where `user://` lives depends on the platform, and on the `organization` and
+`application` names in `SettingsConfig`, so that applications do not share a
+folder.
+
+| Platform | `user://` |
+|---|---|
+| macOS | `~/Library/Application Support/<organization>/<application>/` |
+| Linux | `~/.local/share/<organization>/<application>/` |
+| Windows | `%APPDATA%\<organization>\<application>\` |
 
 `assets://models/sphere.obj` therefore reads
 `<directory of executable>/assets/models/sphere.obj`. The build copies
@@ -280,9 +352,11 @@ A backend derives from `FileSystem` and implements:
 
 | Function | Purpose |
 |---|---|
-| `Initialize()` | Set `_assets_directory` and `_native_separator` |
+| `Initialize()` | Set `_assets_directory`, `_user_directory`, and `_native_separator` |
 | `CleanUp()` | Release anything it holds |
 | `Exists(path)`, `ReadBytes(path, contents)` | Call `Locate()` first, then use the native path it returns |
+| `WriteBytes(path, contents)` | Call `LocateForWriting()` first, then use the native path it returns |
+| `MakeDirectory(native_directory)` | Create one folder whose parent exists |
 | `ListDirectory(native_directory, names)` | Report the names in a folder, spelled exactly as stored. `Locate()` relies on it for the letter case check |
 
 The path rules and the letter case check live in the base class, so every
@@ -306,8 +380,13 @@ implementation and injects it as a `FileSystemContext`.
 | `Exists(path)` | Whether the file can be opened for reading |
 | `ReadBytes(path, contents)` | Reads a whole file as raw bytes |
 | `ReadText(path, contents)` | Reads a whole file as text |
+| `WriteBytes(path, contents)` | Writes a whole file, replacing it if it exists |
+| `WriteText(path, contents)` | Writes a whole file as text |
 
-The read functions return `false` when the file cannot be read.
+Every function returns `false` when it fails. Writing creates the folders
+that lead to the file. It is refused outside a writable scheme, and it holds
+letter case to the same standard as reading: a name that matches an existing
+one in everything but case is rejected.
 
 ### How the loaders use it
 
@@ -336,8 +415,8 @@ before any system that loads files. It is cleaned up last, after the
 application has shut its systems down.
 
 The log file path in `SettingsConfig` is still relative to the working
-directory and does not go through the file system yet. It will move to
-`user://` once that scheme exists.
+directory and does not go through the file system yet. `user://` is where it
+belongs.
 
 The libraries that were considered and the conditions for moving to a full
 virtual file system are recorded in [file-systems.md](file-systems.md).

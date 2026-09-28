@@ -25,8 +25,12 @@ namespace neon
 
     bool ReadBytes(const std::string &path, std::vector<unsigned char> &contents) override;
 
+    bool WriteBytes(const std::string &path, const std::vector<unsigned char> &contents) override;
+
   protected:
     bool ListDirectory(const std::string &native_directory, std::vector<std::string> &names) override;
+
+    bool MakeDirectory(const std::string &native_directory) override;
   };
 } // neon
 

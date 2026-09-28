@@ -18,11 +18,15 @@ add_library(${TARGET} STATIC
         # window
         neon/window/window-system.hpp
         neon/window/window-context.hpp
+        neon/window/headless-window-system.cpp
+        neon/window/headless-window-system.hpp
 
         # input
         neon/input/input-system.hpp
         neon/input/input-context.hpp
         neon/input/input-state.hpp
+        neon/input/headless-input-system.cpp
+        neon/input/headless-input-system.hpp
 
         # logging
         neon/logging/logging-system.cpp

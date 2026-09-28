@@ -15,14 +15,14 @@ Resource paths carry a scheme prefix, in the style of Godot.
 | Scheme | Points at | Status |
 |---|---|---|
 | `assets://` | `<directory of executable>/assets` | Implemented |
-| `user://` | A per-user folder for saves and settings | Not implemented |
+| `user://` | A folder of the current user, for saves, settings, and anything else the app writes | Implemented, read and write |
 
 File access sits behind an interface, following the same split as windowing
 and rendering.
 
 | Piece | Location | Role |
 |---|---|---|
-| `FileSystemContext` | neon-core | The interface consumers depend on: `Exists`, `ReadBytes`, `ReadText` |
+| `FileSystemContext` | neon-core | The interface consumers depend on: `Exists`, `ReadBytes`, `ReadText`, `WriteBytes`, `WriteText` |
 | `FileSystem` | neon-core | Base class for backends. Owns the lifecycle, the path rules, and the conversion to native paths |
 | `SDL2_FileSystem` | neon-sdl2 | The implementation. Finds the executable's folder and reads files through SDL2 |
 
@@ -130,10 +130,8 @@ every row.
 
 | Need | Why it matters |
 |---|---|
-| `user://` | Saves, settings, and logs need a writable per-user folder. The install folder is often read-only. The location differs per OS: `AppData` on Windows, `Library/Application Support` on macOS, the XDG folders on Linux |
 | Packed assets | Shipping thousands of loose files is slow to install and easy to tamper with. Engines normally ship a few archives |
 | Layering | Mods, patches, and downloadable content work by mounting a second source over the first, so a newer file shadows an older one |
-| Writing files | The interface is read-only. Saves, settings, and screenshots need a write call, which belongs with `user://` |
 | Listing folders | There is no way to enumerate files, which an asset browser or a scan for scene files would need |
 | Streaming | Files are read whole into memory. Large audio or video would need to be read in pieces |
 | Asynchronous loading | Large assets should load without stalling the frame. This is a separate concern from where files live |
@@ -223,19 +221,17 @@ backend serving archives could not have honoured it.
 
 Keep the SDL2 implementation until one of these becomes a real requirement.
 
-- Save games or settings need a home, which requires `user://` and a write
-  call.
 - Assets are to be shipped packed.
 - Mods or patches need layered mounts.
 - Loading has to happen off the main thread.
 
-The first can be met inside the SDL2 implementation, using SDL2's per-user
-path call. The second and third are the point at which PhysFS pays for itself.
+The first two are the point at which PhysFS pays for itself.
 
 ## Open questions
 
-- Should `user://` be per application, or shared by everything built on the
-  engine?
+- `user://` is per application, placed by the `organization` and
+  `application` names in `SettingsConfig`. Is a second, shared scheme needed
+  for settings that belong to the engine?
 - Should the log file move under `user://`? It is currently relative to the
   working directory.
 - Is a custom archive format needed at all, or is zip enough?

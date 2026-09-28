@@ -16,6 +16,7 @@ namespace neon
     bool _destroyed = false;
 
   protected:
+    SettingsConfig _settings_config;
     WindowSystem *_window_system;
     InputSystem *_input_system;
     RenderSystem *_render_system;

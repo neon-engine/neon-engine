@@ -9,12 +9,17 @@ namespace neon
   /// What the rest of the engine sees of the file system.
   ///
   /// Files are named by virtual paths such as `assets://models/cube.obj`.
+  /// The scheme says where a file lives:
+  ///   - `assets://` is what ships with the application. It is read-only.
+  ///   - `user://` is a folder of the current user, for saves, settings, and
+  ///     anything else the application writes.
+  ///
   /// A virtual path is written the same way on every platform, so content
   /// that refers to files, such as a scene file, works everywhere unchanged.
   ///
   /// The rules are enforced on all platforms, including those whose own file
   /// system would accept more:
-  ///   - it starts with a known scheme, such as `assets://`
+  ///   - it starts with a known scheme
   ///   - folders are separated by forward slashes, never backslashes
   ///   - it has no `..` segments, so it cannot leave the scheme's folder
   ///   - it avoids characters that some platform forbids in file names
@@ -38,6 +43,14 @@ namespace neon
 
     /// Reads a whole file as text. Returns false if it cannot be read.
     virtual bool ReadText(const std::string &path, std::string &contents) = 0;
+
+    /// Writes a whole file, replacing it if it exists. Folders in the path
+    /// that do not exist yet are created. Returns false if it cannot be
+    /// written, which includes every path outside a writable scheme.
+    virtual bool WriteBytes(const std::string &path, const std::vector<unsigned char> &contents) = 0;
+
+    /// Writes a whole file as text. See WriteBytes.
+    virtual bool WriteText(const std::string &path, const std::string &contents) = 0;
   };
 }
 

@@ -30,6 +30,11 @@ namespace neon
 
     virtual void GenerateNormalizationMatrix() = 0;
 
+    /// The matrix that moves a model to the origin and scales it so that its
+    /// longest side has length 1. Backends call this from
+    /// GenerateNormalizationMatrix() with the meshes they loaded.
+    static glm::mat4 ComputeNormalizationMatrix(const std::vector<const Mesh *> &meshes);
+
     virtual bool ProcessMesh(aiMesh *mesh, const aiScene *scene) = 0;
 
     ~Model() = default;

@@ -1,0 +1,45 @@
+# Compiles the shader sources of the Vulkan backend into SPIR-V.
+#
+# Every *.vert and *.frag file in SOURCE_SHADERS_DIR becomes
+# <OUTPUT_SHADERS_DIR>/<file name>.spv, so basic-lit.vert turns into
+# basic-lit.vert.spv. A material names a shader without an extension, such as
+# assets://shaders/basic-lit, and the Vulkan backend adds .vert.spv and
+# .frag.spv to it.
+function(setup_compile_shaders TARGET_NAME SOURCE_SHADERS_DIR OUTPUT_SHADERS_DIR)
+    find_program(GLSLANG_EXECUTABLE NAMES glslang glslangValidator)
+    if (NOT GLSLANG_EXECUTABLE)
+        message(FATAL_ERROR
+                "glslang was not found. It compiles the shaders of the Vulkan backend.\n"
+                "  macOS:  brew install glslang\n"
+                "  Ubuntu: apt install glslang-tools")
+    endif ()
+
+    file(GLOB SHADER_SOURCES CONFIGURE_DEPENDS
+            "${SOURCE_SHADERS_DIR}/*.vert"
+            "${SOURCE_SHADERS_DIR}/*.frag"
+    )
+
+    # shared declarations that the sources pull in with #include
+    file(GLOB SHADER_INCLUDES CONFIGURE_DEPENDS
+            "${SOURCE_SHADERS_DIR}/*.glsl"
+    )
+
+    set(SHADER_OUTPUTS)
+    foreach (SHADER_SOURCE IN LISTS SHADER_SOURCES)
+        get_filename_component(SHADER_NAME "${SHADER_SOURCE}" NAME)
+        set(SHADER_OUTPUT "${OUTPUT_SHADERS_DIR}/${SHADER_NAME}.spv")
+
+        add_custom_command(
+                OUTPUT "${SHADER_OUTPUT}"
+                COMMAND ${CMAKE_COMMAND} -E make_directory "${OUTPUT_SHADERS_DIR}"
+                COMMAND "${GLSLANG_EXECUTABLE}" -V --quiet "${SHADER_SOURCE}" -o "${SHADER_OUTPUT}"
+                DEPENDS "${SHADER_SOURCE}" ${SHADER_INCLUDES}
+                COMMENT "Compiling shader ${SHADER_NAME}"
+                VERBATIM
+        )
+        list(APPEND SHADER_OUTPUTS "${SHADER_OUTPUT}")
+    endforeach ()
+
+    add_custom_target(${TARGET_NAME}_compile_shaders ALL DEPENDS ${SHADER_OUTPUTS})
+    add_dependencies(${TARGET_NAME} ${TARGET_NAME}_compile_shaders)
+endfunction()

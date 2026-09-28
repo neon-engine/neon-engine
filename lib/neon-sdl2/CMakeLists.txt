@@ -17,5 +17,4 @@ target_link_libraries(${TARGET}
         neon-core
         SDL2::SDL2main
         SDL2::SDL2-static
-        glad
 )

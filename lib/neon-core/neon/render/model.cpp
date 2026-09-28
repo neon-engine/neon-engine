@@ -1,6 +1,8 @@
 #include "model.hpp"
 
 #include <algorithm>
+#include <cctype>
+#include <limits>
 #include <cstring>
 #include <stack>
 #include <string_view>
@@ -9,6 +11,7 @@
 #include <assimp/IOStream.hpp>
 #include <assimp/IOSystem.hpp>
 #include <assimp/postprocess.h>
+#include <glm/gtc/matrix_transform.hpp>
 
 namespace
 {
@@ -54,6 +57,25 @@ namespace
     void Flush() override {}
   };
 
+  /// assimp builds the path of a file that a model refers to by putting the
+  /// folder of the model in front of it. When the name it starts from already
+  /// carries that folder, the result holds the scheme twice, as in
+  /// `assets://models/assets://models/cube.mtl`. The last scheme marks where
+  /// the path that was meant begins.
+  std::string without_repeated_folder(const char *file)
+  {
+    const std::string_view path(file);
+
+    const size_t marker = path.rfind("://");
+    if (marker == std::string_view::npos) { return std::string(path); }
+
+    // the name of the scheme is the run of letters in front of the marker
+    size_t start = marker;
+    while (start > 0 && std::isalpha(static_cast<unsigned char>(path[start - 1]))) { start--; }
+
+    return std::string(path.substr(start));
+  }
+
   /// Routes every file assimp opens through the engine's file system. That
   /// covers the model itself and anything it refers to, such as the material
   /// file named by an .obj.
@@ -67,7 +89,7 @@ namespace
 
     bool Exists(const char *file) const override
     {
-      return _file_system_context->Exists(file);
+      return _file_system_context->Exists(without_repeated_folder(file));
     }
 
     [[nodiscard]] char getOsSeparator() const override { return '/'; }
@@ -77,11 +99,13 @@ namespace
       // read only
       if (std::string_view(mode).find_first_of("wa+") != std::string_view::npos) { return nullptr; }
 
+      const std::string path = without_repeated_folder(file);
+
       // assimp probes for optional files, a missing one is not an error
-      if (!_file_system_context->Exists(file)) { return nullptr; }
+      if (!_file_system_context->Exists(path)) { return nullptr; }
 
       std::vector<unsigned char> contents;
-      if (!_file_system_context->ReadBytes(file, contents)) { return nullptr; }
+      if (!_file_system_context->ReadBytes(path, contents)) { return nullptr; }
 
       return new MemoryStream(std::move(contents));
     }
@@ -179,6 +203,32 @@ namespace neon
     }
 
     return true;
+  }
+
+  glm::mat4 Model::ComputeNormalizationMatrix(const std::vector<const Mesh *> &meshes)
+  {
+    auto lowest = glm::vec3(std::numeric_limits<float>::max());
+    auto highest = glm::vec3(std::numeric_limits<float>::lowest());
+
+    for (const auto *mesh : meshes)
+    {
+      for (const auto &vertex : mesh->GetVertices())
+      {
+        lowest = glm::min(lowest, vertex.position);
+        highest = glm::max(highest, vertex.position);
+      }
+    }
+
+    // nothing was loaded, leave the model as it is
+    if (lowest.x > highest.x) { return glm::mat4(1.0f); }
+
+    const glm::vec3 center = (lowest + highest) / 2.0f;
+    const glm::vec3 range = highest - lowest;
+    const float longest = std::max(std::max(range.x, range.y), range.z);
+
+    if (longest <= 0.0f) { return translate(glm::mat4(1.0f), -center); }
+
+    return scale(glm::mat4(1.0f), glm::vec3(1.0f / longest)) * translate(glm::mat4(1.0f), -center);
   }
 
   glm::mat4 Model::GetNormalizedModelMatrix() const

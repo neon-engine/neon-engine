@@ -81,61 +81,152 @@ namespace neon
     }
   }
 
-  bool FileSystem::Locate(const std::string &path, std::string &native_path)
+  namespace
   {
-    if (!path.starts_with(assets_scheme))
+    enum class Match
     {
-      const std::string scheme(assets_scheme);
-      _logger->Error("Invalid path '{}': it does not start with a known scheme such as {}", path, scheme);
+      Exact,
+      DiffersInCase,
+      None
+    };
+
+    /// Looks for a name among the entries of a folder. `on_disk` receives the
+    /// spelling found when only the letter case differs.
+    Match find_name(const std::vector<std::string> &names, const std::string_view wanted, std::string &on_disk)
+    {
+      Match match = Match::None;
+      for (const auto &name : names)
+      {
+        if (name == wanted) { return Match::Exact; }
+
+        if (equals_ignoring_case(name, wanted))
+        {
+          on_disk = name;
+          match = Match::DiffersInCase;
+        }
+      }
+      return match;
+    }
+  }
+
+  bool FileSystem::Parse(
+    const std::string &path,
+    std::string &scheme_directory,
+    bool &writable,
+    std::vector<std::string_view> &segments) const
+  {
+    std::string_view scheme;
+    if (path.starts_with(assets_scheme))
+    {
+      scheme = assets_scheme;
+      scheme_directory = _assets_directory;
+      writable = false;
+    } else if (path.starts_with(user_scheme))
+    {
+      scheme = user_scheme;
+      scheme_directory = _user_directory;
+      writable = true;
+    } else
+    {
+      const std::string known = std::string(assets_scheme) + " or " + std::string(user_scheme);
+      _logger->Error("Invalid path '{}': it does not start with a known scheme, which are {}", path, known);
       return false;
     }
 
-    const std::string_view relative = std::string_view(path).substr(assets_scheme.size());
-
-    std::vector<std::string_view> segments;
+    const std::string_view relative = std::string_view(path).substr(scheme.size());
     if (const std::string reason = check_and_split(relative, segments); !reason.empty())
     {
       _logger->Error("Invalid path '{}': {}", path, reason);
       return false;
     }
 
+    return true;
+  }
+
+  bool FileSystem::Locate(const std::string &path, std::string &native_path)
+  {
+    std::string current;
+    bool writable;
+    std::vector<std::string_view> segments;
+    if (!Parse(path, current, writable, segments)) { return false; }
+
     // walk down one name at a time and compare it with what is on disk
-    std::string current = _assets_directory;
     for (size_t i = 0; i < segments.size(); i++)
     {
       std::vector<std::string> names;
       if (!ListDirectory(current, names)) { return false; }
 
-      const std::string_view wanted = segments[i];
-      bool found = false;
-      std::string differs_in_case;
+      std::string on_disk;
+      const Match match = find_name(names, segments[i], on_disk);
 
-      for (const auto &name : names)
+      if (match == Match::DiffersInCase)
       {
-        if (name == wanted)
-        {
-          found = true;
-          break;
-        }
-        if (equals_ignoring_case(name, wanted)) { differs_in_case = name; }
+        const std::string written(segments[i]);
+        _logger->Error(
+          "Invalid path '{}': '{}' is named '{}' on disk, letter case has to match on every platform",
+          path,
+          written,
+          on_disk);
       }
+      if (match != Match::Exact) { return false; }
 
-      if (!found)
+      current += segments[i];
+      if (i + 1 < segments.size()) { current += _native_separator; }
+    }
+
+    native_path = current;
+    return true;
+  }
+
+  bool FileSystem::LocateForWriting(const std::string &path, std::string &native_path)
+  {
+    std::string current;
+    bool writable;
+    std::vector<std::string_view> segments;
+    if (!Parse(path, current, writable, segments)) { return false; }
+
+    if (!writable)
+    {
+      _logger->Error("Invalid path '{}': its scheme is read-only", path);
+      return false;
+    }
+
+    for (size_t i = 0; i < segments.size(); i++)
+    {
+      const bool is_file = i + 1 == segments.size();
+
+      std::vector<std::string> names;
+      if (!ListDirectory(current, names))
       {
-        if (!differs_in_case.empty())
-        {
-          const std::string written(wanted);
-          _logger->Error(
-            "Invalid path '{}': '{}' is named '{}' on disk, letter case has to match on every platform",
-            path,
-            written,
-            differs_in_case);
-        }
+        _logger->Error("Could not write '{}': a folder on the way to it cannot be listed", path);
         return false;
       }
 
-      current += wanted;
-      if (i + 1 < segments.size()) { current += _native_separator; }
+      std::string on_disk;
+      const Match match = find_name(names, segments[i], on_disk);
+
+      if (match == Match::DiffersInCase)
+      {
+        const std::string written(segments[i]);
+        _logger->Error(
+          "Invalid path '{}': '{}' is named '{}' on disk, letter case has to match on every platform",
+          path,
+          written,
+          on_disk);
+        return false;
+      }
+
+      current += segments[i];
+
+      if (!is_file)
+      {
+        if (match == Match::None && !MakeDirectory(current))
+        {
+          _logger->Error("Could not write '{}': a folder on the way to it cannot be created", path);
+          return false;
+        }
+        current += _native_separator;
+      }
     }
 
     native_path = current;
@@ -149,5 +240,10 @@ namespace neon
 
     contents.assign(bytes.begin(), bytes.end());
     return true;
+  }
+
+  bool FileSystem::WriteText(const std::string &path, const std::string &contents)
+  {
+    return WriteBytes(path, {contents.begin(), contents.end()});
   }
 } // neon

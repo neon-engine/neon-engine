@@ -22,7 +22,7 @@ Special thanks to [Akusha](https://vgen.co/Akusha/portfolio) for the logo for th
 - Cross-platform support
 - Graphics
   - [x] Vulkan
-  - [ ] OpenGL
+  - [ ] Metal
 - Other Library Integrations
   - [x] Windowing / Input
     - [SDL2](https://wiki.libsdl.org/SDL2/Introduction)

@@ -5,7 +5,7 @@
 
 enum class RenderingApi
 {
-  OpenGl = 0
+  Vulkan = 0
 };
 
 enum class WindowMode
@@ -27,12 +27,28 @@ struct SettingsConfig
   int width;
   int height;
   std::string title;
+
+  /// Who makes the application, and what it is called. Together they decide
+  /// where `user://` lives, so that applications do not share a folder. Use
+  /// plain lowercase names without spaces.
+  std::string organization = "neon-engine";
+  std::string application = "neon-runtime";
+
   RenderingApi selected_api;
   WindowMode window_mode = WindowMode::Windowed;
   std::string logpath = "logs/neon-engine.log";
   std::size_t log_max_size = 1048576 * 5;
   std::size_t log_max_files = 1;
   std::size_t max_light_sources = 1024;
+
+  /// Number of frames to render before the application stops by itself.
+  /// 0 keeps it running until its window is closed.
+  std::size_t max_frames = 0;
+
+  /// Virtual path the last frame is saved to as a PNG image before the
+  /// application stops, such as `user://screenshots/frame.png`. Only used
+  /// together with max_frames. Empty saves nothing.
+  std::string screenshot_path;
 };
 
 #endif //WINDOW_INFO_HPP

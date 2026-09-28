@@ -12,7 +12,9 @@ file(GLOB_RECURSE CURRENT_TARGET_FILES
         "${OUTPUT_ASSETS_DIR}/*"
 )
 
-list(FILTER CURRENT_TARGET_FILES EXCLUDE REGEX "\\.dvc$")
+# compiled shaders are produced by the build, they have no counterpart in the
+# source assets and must survive
+list(FILTER CURRENT_TARGET_FILES EXCLUDE REGEX "\\.spv$")
 
 foreach (TGT_FILE IN LISTS CURRENT_TARGET_FILES)
     file(RELATIVE_PATH TGT_FILE_REL "${OUTPUT_ASSETS_DIR}" "${TGT_FILE}")

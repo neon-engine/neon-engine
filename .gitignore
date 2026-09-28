@@ -6,3 +6,7 @@ build/
 
 # Runtime log output
 logs/
+
+# Personal editor settings, not shared. The tasks, launch configurations, and
+# extension recommendations next to it are.
+.vscode/settings.json

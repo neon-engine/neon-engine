@@ -1,6 +1,7 @@
 #include "sdl2-window-system.hpp"
 
 #include <iostream>
+#include <SDL_vulkan.h>
 
 namespace neon
 {
@@ -61,13 +62,9 @@ namespace neon
 
     switch (_settings_config.selected_api)
     {
-      case RenderingApi::OpenGl:
+      case RenderingApi::Vulkan:
       {
-        _context = SDL_GL_CreateContext(_window);
-
-        // disable vsync after creating the context on KDE
-        // TODO [issues/1] make vsync configurable
-        SDL_GL_SetSwapInterval(0);
+        // nothing to create here, the renderer asks for a surface later
         break;
       }
       default:
@@ -86,7 +83,6 @@ namespace neon
   void SDL2_WindowSystem::CleanUp()
   {
     _logger->Info("Cleaning up SDL2 window system");
-    if (_context != nullptr) { SDL_GL_DeleteContext(_context); }
     SDL_DestroyWindow(_window);
     SDL_Quit();
   }
@@ -95,9 +91,9 @@ namespace neon
   {
     switch (_settings_config.selected_api)
     {
-      case RenderingApi::OpenGl:
+      case RenderingApi::Vulkan:
       {
-        SDL_GL_SwapWindow(_window);
+        // the renderer presents its own frames
         break;
       }
     }
@@ -107,14 +103,10 @@ namespace neon
   {
     switch (_settings_config.selected_api)
     {
-      case RenderingApi::OpenGl:
+      case RenderingApi::Vulkan:
       {
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-        SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-        SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-        _window_flags = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN;
+        LoadVulkanLibrary();
+        _window_flags = SDL_WINDOW_VULKAN | SDL_WINDOW_SHOWN;
         break;
       }
       default:
@@ -123,6 +115,30 @@ namespace neon
         throw std::runtime_error("Unsupported rendering API configured");
       }
     }
+  }
+
+  void SDL2_WindowSystem::LoadVulkanLibrary() const
+  {
+    // SDL needs the Vulkan library before it can create a window for it
+    if (SDL_Vulkan_LoadLibrary(nullptr) == 0) { return; }
+
+#if defined(__APPLE__)
+    // macOS only searches a few fixed folders for libraries, and Homebrew
+    // installs the Vulkan loader outside of them
+    for (const char *candidate : {"/opt/homebrew/lib/libvulkan.1.dylib", "/usr/local/lib/libvulkan.1.dylib"})
+    {
+      if (SDL_Vulkan_LoadLibrary(candidate) == 0)
+      {
+        const std::string path(candidate);
+        _logger->Info("Using the Vulkan library at {}", path);
+        return;
+      }
+    }
+#endif
+
+    auto error = std::string(SDL_GetError());
+    _logger->Critical("The Vulkan library could not be loaded: {}", error);
+    throw std::runtime_error("The Vulkan library could not be loaded, is a Vulkan driver installed?");
   }
 
   void SDL2_WindowSystem::SignalToClose()
@@ -159,22 +175,53 @@ namespace neon
     }
   }
 
-  void *SDL2_WindowSystem::GetGlProcAddress()
-  {
-    return reinterpret_cast<void*>(SDL_GL_GetProcAddress);
-  }
-
   WindowSize SDL2_WindowSystem::GetDrawableSize()
   {
     WindowSize size{};
     switch (_settings_config.selected_api)
     {
-      case RenderingApi::OpenGl:
+      case RenderingApi::Vulkan:
       {
-        SDL_GL_GetDrawableSize(_window, &size.width, &size.height);
+        SDL_Vulkan_GetDrawableSize(_window, &size.width, &size.height);
         break;
       }
     }
     return size;
+  }
+
+  std::vector<std::string> SDL2_WindowSystem::GetVulkanInstanceExtensions()
+  {
+    unsigned int count = 0;
+    if (!SDL_Vulkan_GetInstanceExtensions(_window, &count, nullptr))
+    {
+      auto error = std::string(SDL_GetError());
+      _logger->Error("Could not query the Vulkan extensions of the window: {}", error);
+      return {};
+    }
+
+    std::vector<const char *> names(count);
+    if (!SDL_Vulkan_GetInstanceExtensions(_window, &count, names.data()))
+    {
+      auto error = std::string(SDL_GetError());
+      _logger->Error("Could not query the Vulkan extensions of the window: {}", error);
+      return {};
+    }
+
+    return {names.begin(), names.end()};
+  }
+
+  bool SDL2_WindowSystem::CreateVulkanSurface(void *instance, void *surface)
+  {
+    if (!SDL_Vulkan_CreateSurface(
+      _window,
+      static_cast<VkInstance>(instance),
+      static_cast<VkSurfaceKHR *>(surface)))
+    {
+      auto error = std::string(SDL_GetError());
+      _logger->Error("Could not create the Vulkan surface of the window: {}", error);
+      return false;
+    }
+
+    return true;
   }
 } // neon

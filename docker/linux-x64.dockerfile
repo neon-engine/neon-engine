@@ -17,9 +17,15 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # Base tooling plus the system libraries SDL2 needs to build its X11, Wayland,
 # OpenGL, and audio backends from source.
+#
+# glslang compiles the Vulkan shaders during the build. The Vulkan loader and
+# Mesa's lavapipe, a software Vulkan driver, let the container render headless
+# without a GPU.
 RUN apt-get update && apt-get install -y --no-install-recommends \
         ca-certificates curl gnupg git \
         cmake ninja-build make pkg-config \
+        glslang-tools \
+        libvulkan1 mesa-vulkan-drivers \
         libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev \
         libxinerama-dev libxss-dev libxkbcommon-dev \
         libwayland-dev wayland-protocols libdecor-0-dev \

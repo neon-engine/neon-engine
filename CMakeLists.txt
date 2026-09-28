@@ -43,8 +43,6 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake/find")
 
 
 # Find packages installed on the toolchain/sysroot
-find_package(Vulkan)
-find_package(glad REQUIRED)
 find_package(stb REQUIRED)
 
 # Add external subdirectories
@@ -74,6 +72,15 @@ if(APPLE AND TARGET zlibstatic)
 endif()
 add_subdirectory(external/jolt-physics/Build)
 add_subdirectory(external/spdlog)
+
+# Vulkan. The engine builds against the headers alone and volk finds the
+# Vulkan library when the app starts, so no Vulkan SDK is needed to build,
+# not even when cross-compiling.
+add_subdirectory(external/vulkan-headers)
+set(VOLK_PULL_IN_VULKAN OFF CACHE BOOL "" FORCE)
+add_subdirectory(external/volk)
+target_link_libraries(volk PUBLIC Vulkan::Headers)
+
 add_subdirectory(external/rapidyaml)
 if(MINGW)
   # c4core only detects MinGW under GCC. Under clang it misses it and rapidyaml
@@ -83,11 +90,12 @@ endif()
 
 # Additional libraries
 add_subdirectory(lib/neon-core)
-add_subdirectory(lib/neon-gl)
+add_subdirectory(lib/neon-vulkan)
 add_subdirectory(lib/neon-sdl2)
 
 # Load additional cmake
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/CopyAssets.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/cmake/CompileShaders.cmake")
 
 set(APP_TARGETS
         NeonRuntime

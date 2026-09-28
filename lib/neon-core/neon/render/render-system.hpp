@@ -1,6 +1,8 @@
 #ifndef RENDER_SYSTEM_HPP
 #define RENDER_SYSTEM_HPP
 
+#include <string>
+
 #include "render-context.hpp"
 #include "neon/application/settings-config.hpp"
 #include "neon/filesystem/file-system-context.hpp"
@@ -43,7 +45,16 @@ namespace neon
 
     virtual void CleanUp() = 0;
 
+    /// Called once before anything is drawn in a frame.
     virtual void PrepareFrame() = 0;
+
+    /// Called once after everything in a frame has been drawn. A backend that
+    /// collects its drawing and submits it at the end does so here.
+    virtual void FinishFrame() = 0;
+
+    /// Saves the last finished frame as a PNG image at a virtual path, such as
+    /// `user://screenshots/frame.png`. Returns false if it could not be saved.
+    virtual bool CaptureFrame(const std::string &path) = 0;
   };
 } // neon
 

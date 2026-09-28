@@ -28,6 +28,10 @@ namespace neon
     /// Backends set this in Initialize().
     std::string _assets_directory;
 
+    /// Native folder behind `user://`, ending with a native separator.
+    /// Backends set this in Initialize() and make sure it exists.
+    std::string _user_directory;
+
     /// Separator the platform uses between folders in a native path.
     /// Backends set this in Initialize().
     char _native_separator = '/';
@@ -36,6 +40,10 @@ namespace neon
     /// folder, spelled exactly as they are stored. Returns false if the folder
     /// cannot be listed.
     virtual bool ListDirectory(const std::string &native_directory, std::vector<std::string> &names) = 0;
+
+    /// Creates one native folder whose parent exists. Returns false if it
+    /// cannot be created.
+    virtual bool MakeDirectory(const std::string &native_directory) = 0;
 
     /// Finds the file a virtual path names and produces the native path to
     /// open. Returns false if the path breaks a rule or names nothing.
@@ -49,10 +57,21 @@ namespace neon
     /// available to backends.
     bool Locate(const std::string &path, std::string &native_path);
 
+    /// Produces the native path to write a virtual path to, creating the
+    /// folders that lead to it. Returns false if the path breaks a rule or
+    /// its scheme is read-only.
+    ///
+    /// Letter case is held to the same standard as when reading. A name that
+    /// matches an existing one in everything but case is refused, since the
+    /// two would be the same file on some platforms and different files on
+    /// others.
+    bool LocateForWriting(const std::string &path, std::string &native_path);
+
     ~FileSystem() = default;
 
   public:
     static constexpr std::string_view assets_scheme = "assets://";
+    static constexpr std::string_view user_scheme = "user://";
 
     explicit FileSystem(const SettingsConfig &settings_config, const std::shared_ptr<Logger> &logger)
     {
@@ -65,6 +84,17 @@ namespace neon
     virtual void CleanUp() = 0;
 
     bool ReadText(const std::string &path, std::string &contents) override;
+
+    bool WriteText(const std::string &path, const std::string &contents) override;
+
+  private:
+    /// Splits a virtual path into the native folder of its scheme and the
+    /// names that follow, after checking the rules that need no disk access.
+    bool Parse(
+      const std::string &path,
+      std::string &scheme_directory,
+      bool &writable,
+      std::vector<std::string_view> &segments) const;
   };
 } // neon
 

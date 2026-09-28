@@ -22,6 +22,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
         ca-certificates curl xz-utils git \
         cmake ninja-build make \
+        glslang-tools \
     && rm -rf /var/lib/apt/lists/*
 
 RUN case "${TARGETARCH}" in \

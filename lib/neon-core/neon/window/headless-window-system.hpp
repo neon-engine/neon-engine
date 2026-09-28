@@ -1,32 +1,32 @@
-#ifndef SDL_2_WINDOW_SYSTEM_HPP
-#define SDL_2_WINDOW_SYSTEM_HPP
+#ifndef HEADLESS_WINDOW_SYSTEM_HPP
+#define HEADLESS_WINDOW_SYSTEM_HPP
 
 #include <memory>
-#include <SDL.h>
 #include <neon/application/settings-config.hpp>
 #include <neon/logging/logger.hpp>
 #include <neon/window/window-system.hpp>
 
 namespace neon
 {
+  /// A window system without a window. It needs no display, so the engine can
+  /// render on a build server or from a script.
+  ///
+  /// Time advances by the same amount every frame. A run therefore produces
+  /// the same frames every time, whatever the speed of the machine.
   // ReSharper disable once CppInconsistentNaming
-  class SDL2_WindowSystem final : public WindowSystem {
-    SDL_Window *_window = nullptr;
-    int _window_flags = 0;
+  class Headless_WindowSystem final : public WindowSystem
+  {
     bool _should_close = false;
-    uint64_t _last_frame;
-
-    void LoadVulkanLibrary() const;
 
   protected:
     void ConfigureWindowForRenderer() override;
 
   public:
-    explicit SDL2_WindowSystem(const SettingsConfig &settings_config, const std::shared_ptr<Logger> &logger)
-      : WindowSystem(settings_config, logger)
-    {
-      _last_frame = SDL_GetPerformanceCounter();
-    }
+    /// Seconds that pass between two frames.
+    static constexpr double frame_time = 1.0 / 60.0;
+
+    explicit Headless_WindowSystem(const SettingsConfig &settings_config, const std::shared_ptr<Logger> &logger)
+      : WindowSystem(settings_config, logger) {}
 
     void Initialize() override;
 
@@ -52,4 +52,4 @@ namespace neon
   };
 } // neon
 
-#endif //SDL_2_WINDOW_SYSTEM_HPP
+#endif //HEADLESS_WINDOW_SYSTEM_HPP

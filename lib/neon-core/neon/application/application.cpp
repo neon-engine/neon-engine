@@ -13,6 +13,7 @@ namespace neon
     WorldSystem *world_system,
     const std::shared_ptr<Logger> &logger)
   {
+    _settings_config = settings_config;
     _window_system = window_system;
     _input_system = input_system;
     _render_system = render_system;
@@ -57,11 +58,28 @@ namespace neon
   {
     Initialize();
 
+    std::size_t frames_rendered = 0;
+
     while (_window_system->IsRunning())
     {
       _input_system->ProcessInput();
       _render_system->PrepareFrame();
       _world_system->Update();
+      _render_system->FinishFrame();
+      frames_rendered++;
+
+      if (_settings_config.max_frames > 0 && frames_rendered >= _settings_config.max_frames)
+      {
+        _logger->Info("Rendered {} frames, stopping", frames_rendered);
+
+        if (!_settings_config.screenshot_path.empty())
+        {
+          _render_system->CaptureFrame(_settings_config.screenshot_path);
+        }
+
+        _window_system->SignalToClose();
+      }
+
       _window_system->Update();
     }
   }
