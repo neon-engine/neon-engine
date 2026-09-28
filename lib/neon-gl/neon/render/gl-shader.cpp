@@ -1,17 +1,19 @@
 #include "gl-shader.hpp"
 
-#include <fstream>
 #include <iostream>
 #include <memory>
-#include <sstream>
 
 namespace neon
 {
   GL_Shader::GL_Shader() = default;
 
-  GL_Shader::GL_Shader(const std::string &shader_path, const std::shared_ptr<Logger> &logger)
+  GL_Shader::GL_Shader(
+    const std::string &shader_path,
+    FileSystemContext *file_system_context,
+    const std::shared_ptr<Logger> &logger)
   {
     _shader_path = shader_path;
+    _file_system_context = file_system_context;
     _logger = logger;
   }
 
@@ -25,31 +27,13 @@ namespace neon
 
     _logger->Info("Initializing shader from {}", _shader_path);
 
-    std::string vertex_path = _shader_path + ".vert";
-    std::string fragment_path = _shader_path + ".frag";
+    const std::string vertex_path = _shader_path + ".vert";
+    const std::string fragment_path = _shader_path + ".frag";
     std::string vertex_code;
     std::string fragment_code;
-    std::ifstream vert_shader_file;
-    std::ifstream frag_shader_file;
 
-    vert_shader_file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-    frag_shader_file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-
-    try
-    {
-      vert_shader_file.open(vertex_path);
-      frag_shader_file.open(fragment_path);
-      std::stringstream vert_shader_stream, frag_shader_stream;
-
-      vert_shader_stream << vert_shader_file.rdbuf();
-      frag_shader_stream << frag_shader_file.rdbuf();
-
-      vert_shader_file.close();
-      frag_shader_file.close();
-
-      vertex_code = vert_shader_stream.str();
-      fragment_code = frag_shader_stream.str();
-    } catch (const std::ifstream::failure &)
+    if (!_file_system_context->ReadText(vertex_path, vertex_code) ||
+        !_file_system_context->ReadText(fragment_path, fragment_code))
     {
       _logger->Error("Error opening shader {}", _shader_path);
       return false;

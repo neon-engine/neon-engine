@@ -11,9 +11,10 @@ namespace neon
     const std::vector<std::string> &texture_paths,
     const MaterialInfo &material_info,
     const bool scale_textures,
+    FileSystemContext *file_system_context,
     const std::shared_ptr<Logger> &logger)
   {
-    _shader = GL_Shader(shader_path, logger);
+    _shader = GL_Shader(shader_path, file_system_context, logger);
     _textures = std::vector<GL_Texture>();
     _material_info = material_info;
     _scale_textures = scale_textures;
@@ -21,7 +22,7 @@ namespace neon
 
     for (auto &texture_path : texture_paths)
     {
-      const auto texture = GL_Texture(texture_path, _logger);
+      const auto texture = GL_Texture(texture_path, file_system_context, _logger);
       _textures.push_back(texture);
     }
   }

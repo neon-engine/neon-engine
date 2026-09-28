@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 #include <glad/gl.h>
+#include <neon/filesystem/file-system-context.hpp>
 #include <neon/logging/logger.hpp>
 
 namespace neon
@@ -14,6 +15,7 @@ namespace neon
     GLuint _texture_id = 0;
     std::string _texture_path;
     bool _initialized = false;
+    FileSystemContext *_file_system_context = nullptr;
     std::shared_ptr<Logger> _logger;
 
   public:
@@ -21,6 +23,7 @@ namespace neon
 
     explicit GL_Texture(
       const std::string &texture_path,
+      FileSystemContext *file_system_context,
       const std::shared_ptr<Logger> &logger);
 
     bool Initialize();

@@ -3,6 +3,12 @@
 
 namespace neon
 {
+  struct WindowSize
+  {
+    int width;
+    int height;
+  };
+
   class WindowContext
   {
   protected:
@@ -18,6 +24,11 @@ namespace neon
     virtual void SetWindowFocus(bool focus) = 0;
 
     virtual void* GetGlProcAddress() = 0;
+
+    /// Size in pixels of the surface the renderer draws to. This can differ
+    /// from the configured width and height, for example in borderless mode
+    /// where the window takes the size of the display.
+    virtual WindowSize GetDrawableSize() = 0;
   };
 }
 

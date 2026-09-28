@@ -27,7 +27,12 @@ namespace neon
     glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &num_vertex_attributes_supported);
     _logger->Debug("Maximum number of vertex attributes supported: {}", num_vertex_attributes_supported);
 
-    glViewport(0, 0, _settings_config.width, _settings_config.height);
+    // use the size of the surface we actually draw to, which is not always
+    // the configured width and height
+    const auto [width, height] = _window_context->GetDrawableSize();
+    _logger->Info("Render resolution: {}x{}", width, height);
+    _render_resolution.emplace(width, height);
+    glViewport(0, 0, width, height);
   }
 
   void GL_RenderSystem::CleanUp()
@@ -50,18 +55,19 @@ namespace neon
 
   const RenderResolution& GL_RenderSystem::GetRenderResolution()
   {
-    return _render_resolution;
+    return *_render_resolution;
   }
 
   // TODO [issues/7] find out if returning -1 is the best way to handle this, maybe assert calls are better
   int GL_RenderSystem::CreateRenderObject(const RenderInfo &render_info)
   {
-    GL_Model model(render_info.model_path, _logger);
+    GL_Model model(render_info.model_path, _file_system_context, _logger);
     GL_Material material(
       render_info.shader_path,
       render_info.texture_paths,
       render_info.material_info,
       render_info.scale_textures,
+      _file_system_context,
       _logger);
 
     if (!model.Initialize())

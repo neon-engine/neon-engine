@@ -2,6 +2,7 @@
 #define MODEL_HPP
 
 #include <assimp/scene.h>
+#include <neon/filesystem/file-system-context.hpp>
 #include <neon/logging/logger.hpp>
 
 #include "mesh.hpp"
@@ -17,6 +18,7 @@ namespace neon
 
   protected:
     glm::mat4 _model_matrix{1.0f};
+    FileSystemContext *_file_system_context;
     std::shared_ptr<Logger> _logger;
 
     bool LoadModel();
@@ -33,7 +35,10 @@ namespace neon
     ~Model() = default;
 
   public:
-    Model(const std::string &path, const std::shared_ptr<Logger> &logger);
+    Model(
+      const std::string &path,
+      FileSystemContext *file_system_context,
+      const std::shared_ptr<Logger> &logger);
 
     virtual bool Initialize() = 0;
 

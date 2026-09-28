@@ -48,6 +48,8 @@ namespace neon
     void SetWindowFocus(bool focus) override;
 
     void* GetGlProcAddress() override;
+
+    WindowSize GetDrawableSize() override;
   };
 } // neon
 

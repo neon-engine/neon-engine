@@ -5,6 +5,7 @@
 #include <glad/gl.h>
 #include <string>
 #include <glm/glm.hpp>
+#include <neon/filesystem/file-system-context.hpp>
 #include <neon/logging/logger.hpp>
 
 namespace neon
@@ -15,12 +16,16 @@ namespace neon
     std::string _shader_path;
     GLuint _shader_program_id = 0;
     bool _initialize = false;
+    FileSystemContext *_file_system_context = nullptr;
     std::shared_ptr<Logger> _logger;
 
   public:
     GL_Shader();
 
-    explicit GL_Shader(const std::string &shader_path, const std::shared_ptr<Logger> &logger);
+    explicit GL_Shader(
+      const std::string &shader_path,
+      FileSystemContext *file_system_context,
+      const std::shared_ptr<Logger> &logger);
 
     bool Initialize();
 

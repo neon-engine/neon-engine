@@ -156,6 +156,192 @@ directory on `PATH`, and run the same two preset commands from a shell. The
 toolchain file reads `LLVM_MINGW_ROOT` from the environment if llvm-mingw is not
 installed at `/opt/llvm-mingw`.
 
+## Window modes
+
+The window mode is chosen through `SettingsConfig::window_mode`, defined in
+[settings-config.hpp](../lib/neon-core/neon/application/settings-config.hpp).
+It defaults to `Windowed`. NeonRuntime sets `Borderless` in its `main.cpp`.
+
+| Mode | Behaviour | `width` and `height` |
+|---|---|---|
+| `WindowMode::Windowed` | A regular window with a title bar and borders | Size of the window |
+| `WindowMode::Borderless` | No decorations, covers the whole display at the desktop's resolution. Switching applications stays instant because the display mode never changes | Ignored |
+| `WindowMode::Fullscreen` | Exclusive fullscreen | Resolution the display is switched to |
+
+```cpp
+const auto settings_config = SettingsConfig{
+  .width = 1920,
+  .height = 1080,
+  .selected_api = RenderingApi::OpenGl,
+  .window_mode = WindowMode::Borderless
+};
+```
+
+Because the window is not always the configured size, code must not use
+`width` and `height` from the settings to mean the size on screen.
+
+- Renderers ask the window for its real size through
+  `WindowContext::GetDrawableSize()`. The OpenGL render system does this once
+  in `Initialize()` to set its viewport and render resolution.
+- Anything that needs the render size afterwards, such as the projection
+  matrix, reads `RenderContext::GetRenderResolution()`.
+
+The setting lives in neon-core and knows nothing about SDL. Each window system
+translates it for its own backend. The SDL2 window system does so in
+`SDL2_WindowSystem::Initialize()`.
+
+The size is read once at startup. Resizing the window or changing the mode
+while the app runs is not supported yet.
+
+## File system and resource paths
+
+All file access goes through the engine's own file system abstraction. Engine
+and application code does not use `std::filesystem`, `std::ifstream`, or a
+backend's file calls directly. That keeps the implementation replaceable.
+
+### Virtual paths
+
+Files are named by virtual paths, in the style of Godot. A virtual path is
+written the same way on macOS, Linux, and Windows, so anything that refers to
+files, such as a scene file, can be moved between platforms unchanged. Loading
+also never depends on the directory the app was started from.
+
+| Scheme | Points at | Status |
+|---|---|---|
+| `assets://` | `<directory of executable>/assets` | Implemented |
+| `user://` | A per-user folder for saves and settings | Planned |
+
+`assets://models/sphere.obj` therefore reads
+`<directory of executable>/assets/models/sphere.obj`. The build copies
+`app/<app-name>/assets` next to the binary, which is the folder the scheme
+resolves to.
+
+### Path rules
+
+The rules are enforced on every platform, including those whose own file
+system would accept more. A path that works on one machine therefore works on
+all of them, and a path that would fail somewhere fails everywhere.
+
+| Rule | Accepted | Rejected |
+|---|---|---|
+| Starts with a known scheme | `assets://models/cube.obj` | `assets/models/cube.obj`, `/usr/share/x.obj`, `C:\game\x.obj` |
+| Forward slashes between folders | `assets://models/cube.obj` | `assets://models\cube.obj` |
+| No `..` segments | `assets://models/cube.obj` | `assets://../settings.ini` |
+| None of `< > : " \| ? *` or control characters | `assets://models/cube-2.obj` | `assets://models/what?.obj` |
+| No name ending in a dot or a space | `assets://models/cube.obj` | `assets://models/name./cube.obj` |
+| Names a file | `assets://models/cube.obj` | `assets://` |
+| Letter case matches the names on disk | `assets://models/cube.obj` for a file stored as `models/cube.obj` | `assets://Models/Cube.obj` for that same file |
+
+Doubled slashes and `.` segments are harmless and are removed.
+
+A rejected path is logged as an error that says which rule it broke, and is
+then treated as a file that does not exist.
+
+### Letter case
+
+Windows and a default macOS disk ignore letter case. Linux does not. Left to
+the operating system, `assets://Models/Cube.obj` would load a file stored as
+`models/cube.obj` on a Mac and fail on Linux.
+
+The file system does not leave it to the operating system. For every folder
+and file name in a path, it lists the parent folder and requires an entry
+spelled exactly the same. A path with the wrong case is refused on all three
+platforms, and the error names the correct spelling:
+
+```
+Invalid path 'assets://Models/Cube.obj': 'Models' is named 'models' on disk,
+letter case has to match on every platform
+```
+
+Asset names can use any case. The path only has to match the name. Lowercase
+names are still the simplest convention to follow.
+
+Things the rules do not check:
+
+- **Reserved names on Windows**, such as `con`, `nul`, and `com1`. Avoid them
+  as file or folder names.
+- **Two names that differ only in case** in the same folder, such as
+  `cube.obj` and `Cube.obj`. Linux allows that. Windows and macOS cannot store
+  both. Never rely on it.
+- **Accented characters** can be stored in more than one byte form. A path
+  that looks identical can then fail to match. Plain ASCII names avoid this.
+
+### Native paths stay hidden
+
+Paths of the operating system never leave a backend. The interface has no
+function that returns one. `FileSystem::Locate` is the single place a native
+path is produced, and it is protected, so only backends can call it. It checks
+the rules, matches each name against the disk, and joins the folders with the
+platform's own separator.
+
+### Writing a backend
+
+A backend derives from `FileSystem` and implements:
+
+| Function | Purpose |
+|---|---|
+| `Initialize()` | Set `_assets_directory` and `_native_separator` |
+| `CleanUp()` | Release anything it holds |
+| `Exists(path)`, `ReadBytes(path, contents)` | Call `Locate()` first, then use the native path it returns |
+| `ListDirectory(native_directory, names)` | Report the names in a folder, spelled exactly as stored. `Locate()` relies on it for the letter case check |
+
+The path rules and the letter case check live in the base class, so every
+backend enforces them the same way.
+
+### Structure
+
+| Piece | Location | Role |
+|---|---|---|
+| `FileSystemContext` | [neon-core](../lib/neon-core/neon/filesystem/file-system-context.hpp) | The interface consumers depend on |
+| `FileSystem` | [neon-core](../lib/neon-core/neon/filesystem/file-system.hpp) | Base class for backends. Owns the lifecycle and the scheme handling |
+| `SDL2_FileSystem` | [neon-sdl2](../lib/neon-sdl2/neon/filesystem/sdl2-file-system.hpp) | The implementation, built on SDL2 |
+
+This is the same split the window system uses. `main.cpp` constructs the SDL2
+implementation and injects it as a `FileSystemContext`.
+
+### Interface
+
+| Function | Purpose |
+|---|---|
+| `Exists(path)` | Whether the file can be opened for reading |
+| `ReadBytes(path, contents)` | Reads a whole file as raw bytes |
+| `ReadText(path, contents)` | Reads a whole file as text |
+
+The read functions return `false` when the file cannot be read.
+
+### How the loaders use it
+
+| Loader | How it reads |
+|---|---|
+| Shaders | `ReadText` for the `.vert` and `.frag` files |
+| Textures | `ReadBytes`, then stb_image decodes from memory |
+| Models | assimp is given an I/O handler backed by the file system, so the model and any file it refers to, such as an `.obj` material file, come through the engine |
+
+No loader opens a file itself. That is what allows a future backend to serve
+files from an archive without the loaders changing.
+
+### Rules for new code
+
+- Write virtual paths, in code and in scene files, following the rules above.
+- Never build or store a native path outside a backend.
+- Take a `FileSystemContext *` through the constructor and read through it.
+- Keep the stored path in its scheme form so log messages stay readable.
+- Do not include SDL or use `std::filesystem` for file access outside a
+  backend library.
+
+### Lifecycle
+
+The file system is created and initialized in `main.cpp` right after logging,
+before any system that loads files. It is cleaned up last, after the
+application has shut its systems down.
+
+The log file path in `SettingsConfig` is still relative to the working
+directory and does not go through the file system yet. It will move to
+`user://` once that scheme exists.
+
+The libraries that were considered and the conditions for moving to a full
+virtual file system are recorded in [file-systems.md](file-systems.md).
+
 ## Build notes
 
 A few settings in the top-level [CMakeLists.txt](../CMakeLists.txt) exist only

@@ -15,7 +15,10 @@ namespace neon
     bool ProcessMesh(aiMesh *mesh, const aiScene *scene) override;
 
   public:
-    GL_Model(const std::string &path, const std::shared_ptr<Logger> &logger);
+    GL_Model(
+      const std::string &path,
+      FileSystemContext *file_system_context,
+      const std::shared_ptr<Logger> &logger);
 
     bool Initialize() override;
 

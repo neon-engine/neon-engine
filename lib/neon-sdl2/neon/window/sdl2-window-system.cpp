@@ -21,6 +21,29 @@ namespace neon
 
     ConfigureWindowForRenderer();
 
+    switch (_settings_config.window_mode)
+    {
+      case WindowMode::Windowed:
+      {
+        _logger->Info("Window mode: windowed");
+        break;
+      }
+      case WindowMode::Borderless:
+      {
+        // covers the display at the desktop's resolution, the configured
+        // width and height are ignored
+        _logger->Info("Window mode: borderless");
+        _window_flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+        break;
+      }
+      case WindowMode::Fullscreen:
+      {
+        _logger->Info("Window mode: fullscreen");
+        _window_flags |= SDL_WINDOW_FULLSCREEN;
+        break;
+      }
+    }
+
     _window = SDL_CreateWindow(
       _settings_config.title.c_str(),
       SDL_WINDOWPOS_CENTERED,
@@ -119,7 +142,10 @@ namespace neon
 
   void SDL2_WindowSystem::CenterCursor()
   {
-    SDL_WarpMouseInWindow(_window, _settings_config.width / 2, _settings_config.height / 2);
+    // the window is not always the configured size, so ask for the real one
+    int width, height;
+    SDL_GetWindowSize(_window, &width, &height);
+    SDL_WarpMouseInWindow(_window, width / 2, height / 2);
   }
 
   void SDL2_WindowSystem::SetWindowFocus(const bool focus)
@@ -136,5 +162,19 @@ namespace neon
   void *SDL2_WindowSystem::GetGlProcAddress()
   {
     return reinterpret_cast<void*>(SDL_GL_GetProcAddress);
+  }
+
+  WindowSize SDL2_WindowSystem::GetDrawableSize()
+  {
+    WindowSize size{};
+    switch (_settings_config.selected_api)
+    {
+      case RenderingApi::OpenGl:
+      {
+        SDL_GL_GetDrawableSize(_window, &size.width, &size.height);
+        break;
+      }
+    }
+    return size;
   }
 } // neon

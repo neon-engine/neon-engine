@@ -8,10 +8,10 @@ scene:
         rotation: [ 0.0, 0.0, 0.0 ]
         scale: [ 1.0, 1.0, 1.0 ]
       render_info:
-        model_path: "assets/models/bear.obj"
-        shader_path: "assets/shaders/basic-lit"
+        model_path: "assets://models/bear.obj"
+        shader_path: "assets://shaders/basic-lit"
         texture_paths:
-          - "assets/textures/concrete.png"
+          - "assets://textures/concrete.png"
         material_info:
           shininess: 32.0
           color: [ 0.5, 0.5, 0.5 ]
@@ -23,8 +23,8 @@ scene:
         rotation: [ 0.0, 0.0, 0.0 ]
         scale: [ 0.2, 0.2, 0.2 ]
       render_info:
-        model_path: "assets/models/sphere.obj"
-        shader_path: "assets/shaders/basic-lit"
+        model_path: "assets://models/sphere.obj"
+        shader_path: "assets://shaders/basic-lit"
         material_info:
           shininess: 100.0
           color: [ 1.0, 1.0, 1.0 ]
@@ -37,10 +37,10 @@ scene:
         rotation: [ 0.0, 0.0, 0.0 ]
         scale: [ 100.0, 0.1, 100.0 ]
       render_info:
-        model_path: "assets/models/cube.obj"
-        shader_path: "assets/shaders/basic-lit"
+        model_path: "assets://models/cube.obj"
+        shader_path: "assets://shaders/basic-lit"
         texture_paths:
-          - "assets/textures/concrete.png"
+          - "assets://textures/concrete.png"
         scale_textures: true
         material_info:
           shininess: 32.0

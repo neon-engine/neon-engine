@@ -8,7 +8,8 @@ namespace neon
 {
   GL_Model::GL_Model(
     const std::string &path,
-    const std::shared_ptr<Logger> &logger): Model(path, logger) {}
+    FileSystemContext *file_system_context,
+    const std::shared_ptr<Logger> &logger): Model(path, file_system_context, logger) {}
 
   bool GL_Model::Initialize()
   {

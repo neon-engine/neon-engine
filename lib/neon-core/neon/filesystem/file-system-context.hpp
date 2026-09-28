@@ -1,0 +1,44 @@
+#ifndef FILE_SYSTEM_CONTEXT_HPP
+#define FILE_SYSTEM_CONTEXT_HPP
+
+#include <string>
+#include <vector>
+
+namespace neon
+{
+  /// What the rest of the engine sees of the file system.
+  ///
+  /// Files are named by virtual paths such as `assets://models/cube.obj`.
+  /// A virtual path is written the same way on every platform, so content
+  /// that refers to files, such as a scene file, works everywhere unchanged.
+  ///
+  /// The rules are enforced on all platforms, including those whose own file
+  /// system would accept more:
+  ///   - it starts with a known scheme, such as `assets://`
+  ///   - folders are separated by forward slashes, never backslashes
+  ///   - it has no `..` segments, so it cannot leave the scheme's folder
+  ///   - it avoids characters that some platform forbids in file names
+  ///   - its letter case matches the names on disk exactly, so
+  ///     `assets://Models/Cube.obj` does not find `models/cube.obj`
+  ///
+  /// A path that breaks a rule is reported as an error and treated as a file
+  /// that does not exist. Paths of the underlying operating system never
+  /// appear in this interface.
+  class FileSystemContext
+  {
+  protected:
+    ~FileSystemContext() = default;
+
+  public:
+    /// Whether a file can be opened for reading.
+    virtual bool Exists(const std::string &path) = 0;
+
+    /// Reads a whole file as raw bytes. Returns false if it cannot be read.
+    virtual bool ReadBytes(const std::string &path, std::vector<unsigned char> &contents) = 0;
+
+    /// Reads a whole file as text. Returns false if it cannot be read.
+    virtual bool ReadText(const std::string &path, std::string &contents) = 0;
+  };
+}
+
+#endif //FILE_SYSTEM_CONTEXT_HPP

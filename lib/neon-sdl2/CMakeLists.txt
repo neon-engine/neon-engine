@@ -1,6 +1,8 @@
 set(TARGET neon-sdl2)
 
 add_library(${TARGET} STATIC
+        neon/filesystem/sdl2-file-system.cpp
+        neon/filesystem/sdl2-file-system.hpp
         neon/window/sdl2-window-system.cpp
         neon/window/sdl2-window-system.hpp
         neon/input/sdl2-input-system.cpp

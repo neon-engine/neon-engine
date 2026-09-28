@@ -35,10 +35,10 @@ namespace neon
       "bear",
       Transform{},
       RenderInfo{
-        .model_path = "assets/models/bear.obj",
-        .shader_path = "assets/shaders/basic-lit",
+        .model_path = "assets://models/bear.obj",
+        .shader_path = "assets://shaders/basic-lit",
         .texture_paths = {
-          "assets/textures/concrete.png"
+          "assets://textures/concrete.png"
         },
         .material_info = {
           .shininess = 32.f,
@@ -55,10 +55,10 @@ namespace neon
         .scale = glm::vec3{0.2f}
       },
       RenderInfo{
-        .model_path = "assets/models/sphere.obj",
-        .shader_path = "assets/shaders/basic-lit",
+        .model_path = "assets://models/sphere.obj",
+        .shader_path = "assets://shaders/basic-lit",
         .texture_paths = {
-          "assets/textures/fire.png"
+          "assets://textures/fire.png"
         },
         .material_info = {
           .shininess = 100.f,
@@ -76,10 +76,10 @@ namespace neon
         .scale = glm::vec3{100.f, .1f, 100.f}
       },
       RenderInfo{
-        .model_path = "assets/models/cube.obj",
-        .shader_path = "assets/shaders/basic-lit",
+        .model_path = "assets://models/cube.obj",
+        .shader_path = "assets://shaders/basic-lit",
         .texture_paths = {
-          "assets/textures/concrete.png"
+          "assets://textures/concrete.png"
         },
         .scale_textures = true,
         .material_info = {

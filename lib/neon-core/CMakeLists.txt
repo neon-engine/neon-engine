@@ -10,6 +10,11 @@ add_library(${TARGET} STATIC
         neon/common/data-buffer.hpp
         neon/common/util.hpp
 
+        # filesystem
+        neon/filesystem/file-system.cpp
+        neon/filesystem/file-system.hpp
+        neon/filesystem/file-system-context.hpp
+
         # window
         neon/window/window-system.hpp
         neon/window/window-context.hpp

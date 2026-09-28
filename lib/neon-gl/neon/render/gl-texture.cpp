@@ -9,9 +9,13 @@ namespace neon
 {
   GL_Texture::GL_Texture() = default;
 
-  GL_Texture::GL_Texture(const std::string &texture_path, const std::shared_ptr<Logger> &logger)
+  GL_Texture::GL_Texture(
+    const std::string &texture_path,
+    FileSystemContext *file_system_context,
+    const std::shared_ptr<Logger> &logger)
   {
     _texture_path = texture_path;
+    _file_system_context = file_system_context;
     _logger = logger;
   }
 
@@ -38,11 +42,19 @@ namespace neon
       format = GL_RGB;
     }
 
+    std::vector<unsigned char> file_contents;
+    if (!_file_system_context->ReadBytes(_texture_path, file_contents))
+    {
+      _logger->Error("Failed to read texture {}", _texture_path);
+      return false;
+    }
+
     GLint tex_width, tex_height;
     int nr_channels;
     stbi_set_flip_vertically_on_load(false);
-    if (unsigned char *data = stbi_load(
-      _texture_path.c_str(),
+    if (unsigned char *data = stbi_load_from_memory(
+      file_contents.data(),
+      static_cast<int>(file_contents.size()),
       &tex_width,
       &tex_height,
       &nr_channels,

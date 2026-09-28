@@ -38,6 +38,7 @@ namespace neon
       const std::vector<std::string> &texture_paths,
       const MaterialInfo &material_info,
       bool scale_textures,
+      FileSystemContext *file_system_context,
       const std::shared_ptr<Logger> &logger);
 
     bool Initialize();
