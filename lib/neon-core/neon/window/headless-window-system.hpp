@@ -2,7 +2,7 @@
 #define HEADLESS_WINDOW_SYSTEM_HPP
 
 #include <memory>
-#include <neon/application/settings-config.hpp>
+#include <neon/runtime/settings-config.hpp>
 #include <neon/logging/logger.hpp>
 #include <neon/window/window-system.hpp>
 

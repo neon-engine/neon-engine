@@ -2,7 +2,7 @@
 #define COMMAND_LINE_OPTIONS_HPP
 
 #include <string>
-#include <neon/application/settings-config.hpp>
+#include <neon/runtime/settings-config.hpp>
 
 #include "command-line.hpp"
 

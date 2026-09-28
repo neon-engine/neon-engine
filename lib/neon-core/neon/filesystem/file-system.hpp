@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "file-system-context.hpp"
-#include "neon/application/settings-config.hpp"
+#include "neon/runtime/settings-config.hpp"
 #include "neon/logging/logger.hpp"
 
 namespace neon

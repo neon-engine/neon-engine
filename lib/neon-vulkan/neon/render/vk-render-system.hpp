@@ -6,7 +6,7 @@
 #include <optional>
 #include <string>
 #include <vector>
-#include <neon/application/settings-config.hpp>
+#include <neon/runtime/settings-config.hpp>
 #include <neon/logging/logger.hpp>
 #include <neon/render/render-system.hpp>
 

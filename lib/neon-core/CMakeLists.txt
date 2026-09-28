@@ -1,10 +1,10 @@
 set(TARGET neon-core)
 
 add_library(${TARGET} STATIC
-        # application
-        neon/application/application.cpp
-        neon/application/application.hpp
-        neon/application/settings-config.hpp
+        # runtime
+        neon/runtime/runtime.cpp
+        neon/runtime/runtime.hpp
+        neon/runtime/settings-config.hpp
 
         # command line
         neon/command-line/command-line.cpp

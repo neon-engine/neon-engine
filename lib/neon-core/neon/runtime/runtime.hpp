@@ -1,5 +1,5 @@
-#ifndef APPLICATION_HPP
-#define APPLICATION_HPP
+#ifndef RUNTIME_HPP
+#define RUNTIME_HPP
 
 #include "settings-config.hpp"
 #include "neon/input/input-system.hpp"
@@ -11,7 +11,7 @@
 
 namespace neon
 {
-  class Application
+  class Runtime
   {
     bool _destroyed = false;
 
@@ -25,7 +25,7 @@ namespace neon
     WorldSystem* _world_system;
     std::shared_ptr<Logger> _logger;
 
-    Application(
+    Runtime(
       const SettingsConfig &settings_config,
       WindowSystem *window_system,
       InputSystem *input_system,
@@ -36,7 +36,7 @@ namespace neon
       const std::shared_ptr<Logger> &logger);
 
   public:
-    virtual ~Application();
+    virtual ~Runtime();
 
     virtual void Run();
 
@@ -46,4 +46,4 @@ namespace neon
   };
 } // neon
 
-#endif //APPLICATION_HPP
+#endif //RUNTIME_HPP

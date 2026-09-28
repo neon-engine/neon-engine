@@ -1,13 +1,13 @@
-#ifndef NEON_FPS_APPLICATION_HPP
-#define NEON_FPS_APPLICATION_HPP
+#ifndef NEON_RUNTIME_HPP
+#define NEON_RUNTIME_HPP
 
-#include "neon/application/application.hpp"
-#include "neon/application/settings-config.hpp"
+#include "neon/runtime/runtime.hpp"
+#include "neon/runtime/settings-config.hpp"
 
 
-class NeonFpsApplication final : public neon::Application {
+class NeonRuntime final : public neon::Runtime {
 public:
-  NeonFpsApplication(
+  NeonRuntime(
     const SettingsConfig &settings_config,
     neon::WindowSystem *window_system,
     neon::InputSystem *input_system,
@@ -20,4 +20,4 @@ public:
 
 
 
-#endif //NEON_FPS_APPLICATION_HPP
+#endif //NEON_RUNTIME_HPP

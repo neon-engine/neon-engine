@@ -1,6 +1,6 @@
-#include "neon-fps-application.hpp"
+#include "neon-runtime.hpp"
 
-NeonFpsApplication::NeonFpsApplication(
+NeonRuntime::NeonRuntime(
   const SettingsConfig &settings_config,
   neon::WindowSystem *window_system,
   neon::InputSystem *input_system,
@@ -8,7 +8,7 @@ NeonFpsApplication::NeonFpsApplication(
   neon::RenderPipeline *render_pipeline,
   neon::LoggingSystem *logging_system,
   neon::WorldSystem *world_system,
-  const std::shared_ptr<neon::Logger> &logger): Application(
+  const std::shared_ptr<neon::Logger> &logger): Runtime(
     settings_config,
     window_system,
     input_system,

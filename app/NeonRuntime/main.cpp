@@ -13,7 +13,7 @@
 #include <neon/window/headless-window-system.hpp>
 #include <neon/window/sdl2-window-system.hpp>
 
-#include "neon-fps-application.hpp"
+#include "neon-runtime.hpp"
 
 // SDL2 provides the real platform entry point (WinMain on Windows) through
 // SDL2main and renames main to SDL_main behind this include. It requires the
@@ -122,9 +122,9 @@ int main(const int argc, char *argv[])
     window_system,
     logging_system.CreateLogger("SceneManager"));
 
-  const auto app_logger = logging_system.CreateLogger("NeonFpsApplication");
+  const auto app_logger = logging_system.CreateLogger("NeonRuntime");
 
-  NeonFpsApplication app(
+  NeonRuntime app(
     settings_config,
     window_system,
     input_system,

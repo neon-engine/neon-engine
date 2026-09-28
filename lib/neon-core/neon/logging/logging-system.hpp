@@ -4,7 +4,7 @@
 
 #include "logger.hpp"
 #include "logging-context.hpp"
-#include "neon/application/settings-config.hpp"
+#include "neon/runtime/settings-config.hpp"
 #include "spdlog/logger.h"
 
 

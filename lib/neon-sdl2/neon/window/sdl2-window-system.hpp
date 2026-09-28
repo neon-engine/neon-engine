@@ -3,7 +3,7 @@
 
 #include <memory>
 #include <SDL.h>
-#include <neon/application/settings-config.hpp>
+#include <neon/runtime/settings-config.hpp>
 #include <neon/logging/logger.hpp>
 #include <neon/window/window-system.hpp>
 

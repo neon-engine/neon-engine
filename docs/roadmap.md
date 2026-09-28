@@ -32,6 +32,7 @@ Principles that hold for both:
 | File system | Virtual paths with `assets://` and `user://`. See [file-systems.md](file-systems.md) |
 | Window modes | Windowed, borderless, and fullscreen |
 | Command line | An abstraction with a set of options for each application |
+| Runtime class | The core class an application is built from is `neon::Runtime` |
 
 ## Next
 
@@ -39,7 +40,6 @@ Work that builds directly on what exists.
 
 | Item | Detail |
 |---|---|
-| Rename `Application` to `Runtime` | The core class is what a runtime is built from, and its name should say so |
 | Load a project | The runtime takes a project to run. Scenes come from files, such as `demo.scene.yml`, which nothing reads yet |
 | Vulkan version and capabilities | A setting for the version to ask for, and a way for the engine to learn what the graphics card can do, so that menus only offer what works |
 | Run on Windows | The build works. It has not been run |
@@ -55,6 +55,7 @@ Work that builds directly on what exists.
 | Running a game from the editor | With options the runtime alone does not have, for debugging |
 | Exporting | Turning a project into something that can be distributed |
 | Command line | The options of the runtime, plus a set only the editor has |
+| Runtime class | The core class an application is built from is `neon::Runtime` |
 | Agent support | See below |
 
 ### Exporting games

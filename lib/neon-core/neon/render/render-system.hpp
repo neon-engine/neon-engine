@@ -4,7 +4,7 @@
 #include <string>
 
 #include "render-context.hpp"
-#include "neon/application/settings-config.hpp"
+#include "neon/runtime/settings-config.hpp"
 #include "neon/filesystem/file-system-context.hpp"
 #include "neon/logging/logger.hpp"
 #include "neon/window/window-context.hpp"

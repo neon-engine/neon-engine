@@ -4,7 +4,7 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include <neon/application/settings-config.hpp>
+#include <neon/runtime/settings-config.hpp>
 #include <neon/filesystem/file-system.hpp>
 #include <neon/logging/logger.hpp>
 

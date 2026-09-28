@@ -1,9 +1,9 @@
-#include "application.hpp"
+#include "runtime.hpp"
 
 
 namespace neon
 {
-  Application::Application(
+  Runtime::Runtime(
     const SettingsConfig &settings_config,
     WindowSystem *window_system,
     InputSystem *input_system,
@@ -23,7 +23,7 @@ namespace neon
     _logger = logger;
   }
 
-  void Application::Initialize() const
+  void Runtime::Initialize() const
   {
     // order here matters
     // the input system and rendering backend are usually dependent on
@@ -37,7 +37,7 @@ namespace neon
     _world_system->Initialize();
   }
 
-  void Application::CleanUp()
+  void Runtime::CleanUp()
   {
     if (_destroyed) { return; }
     _destroyed = true;
@@ -49,12 +49,12 @@ namespace neon
     _window_system->CleanUp();
   }
 
-  Application::~Application()
+  Runtime::~Runtime()
   {
     CleanUp();
   }
 
-  void Application::Run()
+  void Runtime::Run()
   {
     Initialize();
 

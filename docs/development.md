@@ -290,7 +290,7 @@ several, such as one option needing another, belong in `Apply()`.
 ## Window modes
 
 The window mode is chosen through `SettingsConfig::window_mode`, defined in
-[settings-config.hpp](../lib/neon-core/neon/application/settings-config.hpp).
+[settings-config.hpp](../lib/neon-core/neon/runtime/settings-config.hpp).
 It defaults to `Windowed`. NeonRuntime sets `Borderless` in its `main.cpp`.
 
 | Mode | Behaviour | `width` and `height` |
