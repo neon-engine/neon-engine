@@ -1,0 +1,72 @@
+{
+  "version": "2.0.0",
+  "inputs": [
+    {
+      "id": "preset",
+      "type": "pickString",
+      "description": "CMake preset",
+      "default": "macos-arm64-debug",
+      "options": ["macos-arm64-debug", "linux-x64-debug", "windows-x64-debug"]
+    }
+  ],
+  "options": {
+    "env": { "PATH": "/opt/homebrew/bin:${env:PATH}" }
+  },
+  "presentation": { "reveal": "always", "panel": "shared", "clear": true },
+  "tasks": [
+    {
+      "label": "Configure",
+      "type": "shell",
+      "command": "cmake --preset ${input:preset}",
+      "problemMatcher": []
+    },
+    {
+      "label": "Build",
+      "type": "shell",
+      "command": "cmake --build --preset ${input:preset}",
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": ["$gcc"]
+    },
+    {
+      "label": "Clean",
+      "type": "shell",
+      "command": "cmake --build --preset ${input:preset} --target clean",
+      "problemMatcher": []
+    },
+    {
+      "label": "Rebuild",
+      "type": "shell",
+      "dependsOrder": "sequence",
+      "dependsOn": ["Clean", "Build"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Run",
+      "detail": "Runs the macOS build without a debugger, from the binary's folder so asset paths resolve",
+      "type": "shell",
+      "command": "./NeonRuntime",
+      "options": { "cwd": "${workspaceFolder}/bin/debug/darwin-arm64/NeonRuntime" },
+      "dependsOn": ["Build"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Full Clean",
+      "detail": "Deletes the build directory and binaries for the chosen preset, so Configure has to run again",
+      "type": "shell",
+      "command": "rm -rf build/${input:preset} bin/debug/darwin-arm64 bin/debug/linux-* bin/debug/windows-*",
+      "problemMatcher": []
+    },
+    {
+      "label": "Build in Docker (Linux x64)",
+      "type": "shell",
+      "command": "docker run --rm -v \"${workspaceFolder}\":/src -w /src neon-engine/linux-x64 sh -c 'cmake --preset linux-x64-debug && cmake --build --preset linux-x64-debug'",
+      "problemMatcher": ["$gcc"]
+    },
+    {
+      "label": "Build in Docker (Windows x64)",
+      "type": "shell",
+      "command": "docker run --rm -v \"${workspaceFolder}\":/src -w /src neon-engine/windows-x64 sh -c 'cmake --preset windows-x64-debug && cmake --build --preset windows-x64-debug'",
+      "problemMatcher": ["$gcc"]
+    }
+  ]
+}

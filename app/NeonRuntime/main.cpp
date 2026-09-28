@@ -5,7 +5,12 @@
 
 #include "neon-fps-application.hpp"
 
-int main()
+// SDL2 provides the real platform entry point (WinMain on Windows) through
+// SDL2main and renames main to SDL_main behind this include. It requires the
+// full argc/argv signature.
+#include <SDL_main.h>
+
+int main(int /*argc*/, char * /*argv*/[])
 {
   const auto settings_config = SettingsConfig{
     .width = 1920, .height = 1080, .selected_api = RenderingApi::OpenGl
@@ -49,4 +54,6 @@ int main()
     app_logger->Critical(e.what());
     app.CleanUp();
   }
+
+  return 0;
 }

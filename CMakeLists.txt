@@ -48,12 +48,38 @@ find_package(glad REQUIRED)
 find_package(stb REQUIRED)
 
 # Add external subdirectories
+
+# Build every dependency as a static library so the executables run without
+# shipping shared objects alongside them. assimp flips BUILD_SHARED_LIBS on by
+# default, and that would otherwise leak into every subdirectory after it.
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+
 add_subdirectory(external/glm)
 add_subdirectory(external/sdl2)
+
+# assimp defaults to -Werror, which breaks on new warnings whenever the
+# compiler is upgraded (clang 20 added -Wnontrivial-memcall, for example).
+# Its warnings are not ours to fix, so build it without -Werror.
+set(ASSIMP_WARNINGS_AS_ERRORS OFF CACHE BOOL "" FORCE)
+# Always use assimp's bundled zlib. Picking up a system zlib adds its include
+# directory with -I, which on macOS with Homebrew LLVM puts the SDK's C headers
+# ahead of libc++'s and breaks every <cstdio>/<cmath> include.
+set(ASSIMP_BUILD_ZLIB ON CACHE BOOL "" FORCE)
 add_subdirectory(external/assimp)
+if(APPLE AND TARGET zlibstatic)
+  # assimp's bundled zlib 1.2.13 treats every Apple target as classic Mac OS
+  # and defines fdopen as NULL, which clashes with the SDK's declaration.
+  # Predefining the macro as itself makes zlib skip that define.
+  target_compile_definitions(zlibstatic PRIVATE fdopen=fdopen)
+endif()
 add_subdirectory(external/jolt-physics/Build)
 add_subdirectory(external/spdlog)
 add_subdirectory(external/rapidyaml)
+if(MINGW)
+  # c4core only detects MinGW under GCC. Under clang it misses it and rapidyaml
+  # then includes <alloca.h>, which mingw-w64 does not ship.
+  target_compile_definitions(ryml PUBLIC C4_MINGW)
+endif()
 
 # Additional libraries
 add_subdirectory(lib/neon-core)

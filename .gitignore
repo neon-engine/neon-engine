@@ -3,3 +3,6 @@ cmake-build-*
 bin/
 build/
 
+
+# Runtime log output
+logs/
