@@ -60,6 +60,7 @@ namespace
       "Usage: NeonRuntime [options]\n"
       "\n"
       "  --help                    Show this text\n"
+      "  --scene PATH              Scene to start with, for example assets://scenes/demo.scene.yml\n"
       "  --renderer vulkan         Renderer to draw with. Default: vulkan\n"
       "\n"
       "Development:\n"

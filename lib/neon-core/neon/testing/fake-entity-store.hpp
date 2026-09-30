@@ -249,6 +249,18 @@ namespace neon::testing
       return it == _entities.end() ? No_Entity : it->second.parent;
     }
 
+    std::vector<Entity> GetChildren(const Entity entity) override
+    {
+      // ids count up, and the map keeps them in order, so this is the order
+      // the entities were created in
+      std::vector<Entity> children;
+      for (const auto &[id, record] : _entities)
+      {
+        if (record.parent == entity) { children.push_back(id); }
+      }
+      return children;
+    }
+
     void SetComponent(const Entity entity, const ComponentId component, const void *value) override
     {
       const auto &info = InfoOf(component);

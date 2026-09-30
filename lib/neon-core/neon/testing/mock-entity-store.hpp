@@ -38,6 +38,7 @@ namespace neon::testing
     MOCK_METHOD(void, SetParent, (Entity entity, Entity parent), (override));
 
     MOCK_METHOD(Entity, GetParent, (Entity entity), (override));
+    MOCK_METHOD(std::vector<Entity>, GetChildren, (Entity entity), (override));
 
     MOCK_METHOD(void, SetComponent, (Entity entity, ComponentId component, const void *value), (override));
 
