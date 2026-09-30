@@ -29,8 +29,14 @@ vec3 Shade(vec3 light_dir, vec3 normal, vec3 view_dir, vec3 ambient, vec3 diffus
 {
     float diff = max(dot(normal, light_dir), 0.0);
 
-    vec3 reflect_dir = reflect(-light_dir, normal);
-    float spec = pow(max(dot(view_dir, reflect_dir), 0.0), object.material.x);
+    // A material without shininess has no highlight. It also must not reach
+    // pow(), since 0 to the power of 0 is not defined and turns the whole
+    // fragment black on some graphics cards.
+    float spec = 0.0;
+    if (object.material.x > 0.0) {
+        vec3 reflect_dir = reflect(-light_dir, normal);
+        spec = pow(max(dot(view_dir, reflect_dir), 0.0), object.material.x);
+    }
 
     vec3 diffuse_sample = GetDiffuseColor();
     vec3 specular_sample = GetSpecularColor();
