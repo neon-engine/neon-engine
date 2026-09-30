@@ -1,5 +1,7 @@
 #include "runtime.hpp"
 
+#include "frame-capture.hpp"
+
 
 namespace neon
 {
@@ -49,6 +51,11 @@ namespace neon
     _window_system->CleanUp();
   }
 
+  bool Runtime::HasFailed() const
+  {
+    return _failed;
+  }
+
   Runtime::~Runtime()
   {
     CleanUp();
@@ -58,6 +65,7 @@ namespace neon
   {
     Initialize();
 
+    const FrameCapture frame_capture(_settings_config, _render_system);
     std::size_t frames_rendered = 0;
 
     while (_window_system->IsRunning())
@@ -68,15 +76,11 @@ namespace neon
       _render_system->FinishFrame();
       frames_rendered++;
 
+      if (!frame_capture.AfterFrame(frames_rendered)) { _failed = true; }
+
       if (_settings_config.max_frames > 0 && frames_rendered >= _settings_config.max_frames)
       {
         _logger->Info("Rendered {} frames, stopping", frames_rendered);
-
-        if (!_settings_config.screenshot_path.empty())
-        {
-          _render_system->CaptureFrame(_settings_config.screenshot_path);
-        }
-
         _window_system->SignalToClose();
       }
 

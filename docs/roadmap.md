@@ -33,12 +33,16 @@ Principles that hold for both:
 |---|---|
 | Platforms | Builds on macOS, Linux, and Windows with one toolchain |
 | Renderer | Vulkan, on all three. See [vulkan-renderer.md](vulkan-renderer.md) |
-| File system | Virtual paths with `assets://` and `user://`. See [file-systems.md](file-systems.md) |
+| File system | Virtual paths with `assets://`, `user://`, and `output://`. See [file-systems.md](file-systems.md) |
 | Window modes | Windowed, borderless, and fullscreen |
 | Command line | An abstraction with a set of options for each application |
 | Runtime class | The core class an application is built from is `neon::Runtime` |
 | Entities and components | The world is made of entities, components, and systems, with Flecs behind an interface. See [entity-component-system.md](entity-component-system.md) |
 | Running without a window | `--headless`, `--frames`, and `--screenshot` render a number of frames and save the last one |
+| Screenshots where the caller wants them | `--output-dir` chooses the folder behind `output://` |
+| Screenshots at chosen frames | `--screenshot-at` runs the game forward and saves each frame that is listed |
+| Fixed time step | `--time-step` advances every frame by the same amount of time |
+| Exit codes | The runtime returns a failing exit code when a screenshot could not be written or the run ended with an exception |
 
 ## Next
 
@@ -122,14 +126,15 @@ Dear ImGui suits tools. It is not meant for what players see.
 
 ### Running without a window
 
-Rendering without a window and saving a frame exist. What is planned makes
-them a supported way to run a game, for automated checks and for agents.
+Rendering without a window, saving chosen frames to a chosen folder, and a
+fixed time step exist. See the
+[development guide](development.md#running-without-a-window). What is planned
+makes them a supported way to run a game, for automated checks and for agents.
 
 | Item | Detail |
 |---|---|
-| Setting the state of a game | Options to start from a given state, such as a scene, a saved game, or values of the game's own |
-| Starting at a frame | Running the game forward to a given frame before anything is captured |
-| Repeatable runs | A fixed time step and fixed random numbers, so that the same options give the same image |
+| Setting the state of a game | Options to start from a given state, such as a scene, a saved game, or values of the game's own. Waits for scenes that load from files |
+| Fixed random numbers | A seed given on the command line, so that a game that uses random numbers gives the same image on every run. Nothing in the engine draws random numbers yet |
 
 ### NeonEditor
 

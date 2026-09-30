@@ -153,6 +153,10 @@ namespace neon
     const auto delta_time =
       static_cast<double>(current_frame - _last_frame)*1000 / static_cast<double>(SDL_GetPerformanceFrequency());
     _last_frame = current_frame;
+
+    // a fixed time step replaces the clock
+    if (_settings_config.time_step > 0.0) { return _settings_config.time_step; }
+
     return delta_time * .001;
   }
 

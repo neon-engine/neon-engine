@@ -12,7 +12,8 @@ namespace neon
   /// render on a build server or from a script.
   ///
   /// Time advances by the same amount every frame. A run therefore produces
-  /// the same frames every time, whatever the speed of the machine.
+  /// the same frames every time, whatever the speed of the machine. The
+  /// amount is the time step of the settings, or frame_time without one.
   // ReSharper disable once CppInconsistentNaming
   class Headless_WindowSystem final : public WindowSystem
   {
@@ -22,7 +23,8 @@ namespace neon
     void ConfigureWindowForRenderer() override;
 
   public:
-    /// Seconds that pass between two frames.
+    /// Seconds that pass between two frames when the settings name no time
+    /// step.
     static constexpr double frame_time = 1.0 / 60.0;
 
     explicit Headless_WindowSystem(const SettingsConfig &settings_config, const std::shared_ptr<Logger> &logger)

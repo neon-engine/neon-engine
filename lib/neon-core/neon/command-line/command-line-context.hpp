@@ -24,6 +24,11 @@ namespace neon
     /// The value of the option as a whole number. Returns false when the
     /// value is not one, and leaves `value` alone.
     [[nodiscard]] virtual bool GetInteger(const std::string &name, long &value) const = 0;
+
+    /// The value of the option as a number that may have a fraction, written
+    /// with a dot, such as `0.25`. Returns false when the value is not one,
+    /// and leaves `value` alone.
+    [[nodiscard]] virtual bool GetNumber(const std::string &name, double &value) const = 0;
   };
 } // neon
 

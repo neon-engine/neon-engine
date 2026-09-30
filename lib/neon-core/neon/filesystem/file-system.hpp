@@ -32,6 +32,12 @@ namespace neon
     /// Backends set this in Initialize() and make sure it exists.
     std::string _user_directory;
 
+    /// Native folder behind `output://`, ending with a native separator.
+    /// Backends set this in Initialize() from `output_directory` in the
+    /// settings, and make sure it exists. It stays empty when no folder was
+    /// chosen, or when the chosen one cannot be used.
+    std::string _output_directory;
+
     /// Separator the platform uses between folders in a native path.
     /// Backends set this in Initialize().
     char _native_separator = '/';
@@ -72,6 +78,7 @@ namespace neon
   public:
     static constexpr std::string_view assets_scheme = "assets://";
     static constexpr std::string_view user_scheme = "user://";
+    static constexpr std::string_view output_scheme = "output://";
 
     explicit FileSystem(const SettingsConfig &settings_config, const std::shared_ptr<Logger> &logger)
     {

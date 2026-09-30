@@ -1,7 +1,9 @@
 #ifndef WINDOW_INFO_HPP
 #define WINDOW_INFO_HPP
 
+#include <cstddef>
 #include <string>
+#include <vector>
 
 enum class RenderingApi
 {
@@ -48,10 +50,28 @@ struct SettingsConfig
   /// 0 keeps it running until its window is closed.
   std::size_t max_frames = 0;
 
+  /// Native folder behind `output://`, as it was given by whoever started
+  /// the application. It is absolute or relative to the working directory.
+  /// This is the only native path the settings carry, and only a file system
+  /// backend reads it. Empty leaves `output://` without a folder, and every
+  /// path in it is rejected.
+  std::string output_directory;
+
+  /// Seconds the application advances in every frame, whatever time the
+  /// frame took. The same run then gives the same frames on every machine.
+  /// 0 advances by the time that was measured. Without a window there is
+  /// nothing to measure against, and 0 stands for a sixtieth of a second.
+  double time_step = 0.0;
+
   /// Virtual path the last frame is saved to as a PNG image before the
-  /// application stops, such as `user://screenshots/frame.png`. Only used
+  /// application stops, such as `output://frame.png`. Only used
   /// together with max_frames. Empty saves nothing.
   std::string screenshot_path;
+
+  /// Frames to save instead of the last one, counted from 1 and in rising
+  /// order. Each is saved to screenshot_path with its number in front of the
+  /// extension, such as `output://frame-0030.png`. None is above max_frames.
+  std::vector<std::size_t> screenshot_frames;
 };
 
 #endif //WINDOW_INFO_HPP

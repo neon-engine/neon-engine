@@ -142,12 +142,18 @@ int main(const int argc, char *argv[])
     &world,
     app_logger);
 
+  // a script that starts the runtime learns from the exit code whether the
+  // run did what it was asked to
+  bool failed = false;
+
   try
   {
     app.Run();
+    failed = app.HasFailed();
   } catch (const std::exception &e)
   {
     app_logger->Critical(e.what());
+    failed = true;
   }
 
   // CleanUp is safe to call more than once. Doing it here guarantees the
@@ -155,5 +161,5 @@ int main(const int argc, char *argv[])
   app.CleanUp();
   file_system.CleanUp();
 
-  return 0;
+  return failed ? EXIT_FAILURE : EXIT_SUCCESS;
 }

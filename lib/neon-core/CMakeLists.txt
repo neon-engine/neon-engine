@@ -5,6 +5,8 @@ add_library(${TARGET} STATIC
         neon/runtime/runtime.cpp
         neon/runtime/runtime.hpp
         neon/runtime/settings-config.hpp
+        neon/runtime/frame-capture.cpp
+        neon/runtime/frame-capture.hpp
 
         # command line
         neon/command-line/command-line.cpp

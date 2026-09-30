@@ -20,6 +20,9 @@ namespace neon
   public:
     virtual void SignalToClose() = 0;
 
+    /// Seconds the application advances by in this frame. This is the time
+    /// step of the settings when one is set, and the time since the last
+    /// call otherwise.
     virtual double GetDeltaTime() = 0;
 
     virtual void CenterCursor() = 0;

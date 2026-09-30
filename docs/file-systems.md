@@ -16,6 +16,7 @@ Resource paths carry a scheme prefix, in the style of Godot.
 |---|---|---|
 | `assets://` | `<directory of executable>/assets` | Implemented |
 | `user://` | A folder of the current user, for saves, settings, and anything else the app writes | Implemented, read and write |
+| `output://` | A folder chosen with `--output-dir` when the app is started, for what a run hands back, such as screenshots | Implemented, read and write. Rejected when no folder was chosen |
 
 File access sits behind an interface, following the same split as windowing
 and rendering.
@@ -69,6 +70,22 @@ backend learns the platform's separator from the base path SDL2 reports, so it
 contains no platform checks of its own.
 
 Names reserved by Windows are not checked. See open questions.
+
+### The output folder
+
+A script or an agent that runs the game has to find what the run wrote.
+`user://` is in a different place on every platform, so the caller chooses
+the folder instead.
+
+| Decision | Reason |
+|---|---|
+| The folder is a scheme, `output://`, and not a native path in `--screenshot` | Code that writes files keeps using virtual paths, and the path rules apply as everywhere else |
+| The folder is given as a native path, with `--output-dir` | It belongs to the machine and to whoever starts the run, not to the content |
+| It is the only native path that is accepted | One exception is easy to keep track of |
+| It travels in `SettingsConfig` and is resolved in the backend | The interface still takes and returns no native path |
+| A relative folder is resolved against the working directory, once, when the file system starts | That is what a person at a shell expects |
+| The folder is created when it is missing | A script does not have to prepare it |
+| Without a folder, `output://` paths are rejected | Picking a default would write files to a place nobody asked for |
 
 ### How letter case is enforced
 

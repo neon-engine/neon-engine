@@ -10,9 +10,12 @@ namespace neon
   ///   --renderer NAME     Renderer to draw with
   ///
   ///   Development:
-  ///   --frames N          Stop after N frames
-  ///   --screenshot PATH   Save the last frame as a PNG image before stopping
-  ///   --headless          Run without a window
+  ///   --frames N                Stop after N frames
+  ///   --screenshot PATH         Save the last frame as a PNG image
+  ///   --screenshot-at N[,N...]  Save these frames instead of the last one
+  ///   --output-dir DIR          Folder of this machine that output:// stands for
+  ///   --time-step SECONDS       Advance the game by this much in every frame
+  ///   --headless                Run without a window
   class RuntimeOptions final : public CommandLineOptions
   {
   public:

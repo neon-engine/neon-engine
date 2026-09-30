@@ -32,7 +32,7 @@ namespace neon
 
   double Headless_WindowSystem::GetDeltaTime()
   {
-    return frame_time;
+    return _settings_config.time_step > 0.0 ? _settings_config.time_step : frame_time;
   }
 
   void Headless_WindowSystem::CenterCursor() {}

@@ -126,9 +126,24 @@ namespace neon
       scheme = user_scheme;
       scheme_directory = _user_directory;
       writable = true;
+    } else if (path.starts_with(output_scheme))
+    {
+      if (_output_directory.empty())
+      {
+        _logger->Error(
+          "Invalid path '{}': {} has no folder. None was chosen with --output-dir, or the chosen one cannot be used",
+          path,
+          output_scheme);
+        return false;
+      }
+
+      scheme = output_scheme;
+      scheme_directory = _output_directory;
+      writable = true;
     } else
     {
-      const std::string known = std::string(assets_scheme) + " or " + std::string(user_scheme);
+      const std::string known =
+        std::string(assets_scheme) + ", " + std::string(user_scheme) + " or " + std::string(output_scheme);
       _logger->Error("Invalid path '{}': it does not start with a known scheme, which are {}", path, known);
       return false;
     }

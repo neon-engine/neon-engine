@@ -200,13 +200,16 @@ the configure step again.
 ```
 Usage: NeonRuntime [options]
 
-  --help             Show this text
-  --renderer vulkan  Renderer to draw with. Default: vulkan
+  --help                    Show this text
+  --renderer vulkan         Renderer to draw with. Default: vulkan
 
 Development:
-  --frames N         Stop after N frames
-  --screenshot PATH  Save the last frame as a PNG image before stopping. Needs --frames
-  --headless         Run without a window
+  --frames N                Stop after N frames
+  --screenshot PATH         Save the last frame as a PNG image, for example output://frame.png. Needs --frames or --screenshot-at
+  --screenshot-at N[,N...]  Save these frames instead of the last one, counted from 1. Each file gets its frame in its name, as in frame-0030.png. Needs --screenshot
+  --output-dir DIR          Folder of this machine that output:// stands for. Created when missing
+  --time-step SECONDS       Advance the game by this much time in every frame, for example 0.016667, so that a run gives the same frames every time
+  --headless                Run without a window
 ```
 
 A switch is written as `--name`. An option with a value is written as
@@ -216,10 +219,74 @@ Together the development options render a scene without a window and save the
 result, which is how the renderer is checked on a machine with no display:
 
 ```bash
-NeonRuntime --headless --frames 3 --screenshot user://screenshots/frame.png
+NeonRuntime --headless --frames 3 --output-dir /some/where --screenshot output://frame.png
 ```
 
-The log says where `user://` is on the machine.
+This writes `/some/where/frame.png`.
+
+### Running without a window
+
+| Option | What it does |
+|---|---|
+| `--headless` | Creates no window and reads no input devices. Frames are rendered at the configured size |
+| `--frames N` | Stops after N frames |
+| `--output-dir DIR` | Says which folder `output://` is. `DIR` is a path of the operating system, absolute or relative to the working directory. The folder is created when it is missing |
+| `--screenshot PATH` | Saves the last frame as a PNG image at a virtual path, under the exact name given |
+| `--screenshot-at N[,N...]` | Saves the listed frames instead of the last one. Frames are counted from 1 |
+| `--time-step SECONDS` | Every frame advances the game by this much time, whatever time the frame took |
+
+`--output-dir` is the only place a native path is accepted. Everything else
+names files by virtual paths. A screenshot can also go to `user://`, and the
+log says where that is on the machine.
+
+With `--screenshot-at`, each file carries the number of its frame in front of
+its extension, with at least four digits:
+
+```bash
+NeonRuntime --headless --output-dir shots --screenshot output://frame.png --screenshot-at 1,30,60
+```
+
+This writes `shots/frame-0001.png`, `shots/frame-0030.png`, and
+`shots/frame-0060.png`, and stops after frame 60.
+
+| Given | How long the run is | What is saved |
+|---|---|---|
+| `--frames 60 --screenshot P` | 60 frames | Frame 60, as `P` |
+| `--screenshot P --screenshot-at 10,30` | 30 frames, the highest frame asked for | Frames 10 and 30, numbered |
+| `--frames 60 --screenshot P --screenshot-at 10,30` | 60 frames | Frames 10 and 30, numbered. Frame 60 is not saved |
+
+The order of the list does not matter, and a frame that is listed twice is
+saved once.
+
+**Time.** Without a window, a frame advances the game by a sixtieth of a
+second unless `--time-step` says otherwise. With a window, it advances by the
+time that was measured unless `--time-step` is given. The value is written
+with a dot, such as `0.05`. Game code receives it as the delta time of
+`WindowContext::GetDeltaTime()` and needs no changes. Random numbers are not
+fixed yet. A game that uses them can still differ between runs.
+
+**Errors.** These are reported before anything is rendered, with the help
+text, and the exit code is 1:
+
+| Mistake | Message |
+|---|---|
+| `--screenshot` without `--frames` or `--screenshot-at` | `Option '--screenshot' needs '--frames' or '--screenshot-at'` |
+| `--screenshot-at` without `--screenshot` | `Option '--screenshot-at' needs '--screenshot'` |
+| A frame in `--screenshot-at` above `--frames` | `Frame 11 of '--screenshot-at' is never reached, '--frames' stops after 10` |
+| A frame that is not a whole number above zero | `Option '--screenshot-at' needs whole numbers above zero, separated by commas` |
+| A time step that is not a number above zero | `Option '--time-step' needs a number of seconds above zero, such as 0.016667` |
+| An `output://` screenshot without `--output-dir` | `'output://frame.png' needs '--output-dir', which says where output:// is` |
+
+**Exit code.** A script can rely on it.
+
+| Exit code | Meaning |
+|---|---|
+| 0 | The run did what it was asked to |
+| 1 | The command line was not understood, a screenshot could not be written, or the run ended with an exception. The log says which |
+
+A folder that cannot be created or written to is only found out when the
+file system starts or the frame is written. The run then still renders, logs
+the error, and ends with exit code 1.
 
 ### How it is built
 
@@ -341,6 +408,7 @@ also never depends on the directory the app was started from.
 |---|---|---|
 | `assets://` | `<directory of executable>/assets` | Read-only |
 | `user://` | A folder of the current user, for saves, settings, and anything else the app writes | Read and write |
+| `output://` | A folder chosen with `--output-dir` when the app is started, for what a run hands back, such as screenshots | Read and write. Rejected when no folder was chosen |
 
 Where `user://` lives depends on the platform, and on the `organization` and
 `application` names in `SettingsConfig`, so that applications do not share a
@@ -351,6 +419,12 @@ folder.
 | macOS | `~/Library/Application Support/<organization>/<application>/` |
 | Linux | `~/.local/share/<organization>/<application>/` |
 | Windows | `%APPDATA%\<organization>\<application>\` |
+
+`output://` has no folder of its own. Without `--output-dir`, or when the
+folder that was asked for cannot be created, every `output://` path is
+rejected with an error, like a path that breaks a rule. The folder is a
+native path, which `SettingsConfig` carries as `output_directory`. Only the
+file system backend reads it.
 
 `assets://models/sphere.obj` therefore reads
 `<directory of executable>/assets/models/sphere.obj`. The build copies
@@ -410,7 +484,9 @@ Things the rules do not check:
 ### Native paths stay hidden
 
 Paths of the operating system never leave a backend. The interface has no
-function that returns one. `FileSystem::Locate` is the single place a native
+function that returns one, and none that takes one. The folder of
+`--output-dir` is the one native path that comes in from outside. It goes
+from the command line into `SettingsConfig` and from there into the backend. `FileSystem::Locate` is the single place a native
 path is produced, and it is protected, so only backends can call it. It checks
 the rules, matches each name against the disk, and joins the folders with the
 platform's own separator.
@@ -421,7 +497,7 @@ A backend derives from `FileSystem` and implements:
 
 | Function | Purpose |
 |---|---|
-| `Initialize()` | Set `_assets_directory`, `_user_directory`, and `_native_separator` |
+| `Initialize()` | Set `_assets_directory`, `_user_directory`, and `_native_separator`. Set `_output_directory` from `output_directory` in the settings, as an absolute folder that exists, or leave it empty |
 | `CleanUp()` | Release anything it holds |
 | `Exists(path)`, `ReadBytes(path, contents)` | Call `Locate()` first, then use the native path it returns |
 | `WriteBytes(path, contents)` | Call `LocateForWriting()` first, then use the native path it returns |

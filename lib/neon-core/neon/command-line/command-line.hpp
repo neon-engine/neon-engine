@@ -79,6 +79,8 @@ namespace neon
     [[nodiscard]] std::string GetValue(const std::string &name) const override;
 
     [[nodiscard]] bool GetInteger(const std::string &name, long &value) const override;
+
+    [[nodiscard]] bool GetNumber(const std::string &name, double &value) const override;
   };
 } // neon
 

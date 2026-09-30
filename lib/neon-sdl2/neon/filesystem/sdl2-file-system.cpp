@@ -43,6 +43,48 @@ namespace neon
     SDL_free(user_path);
 
     _logger->Info("user:// is {}", _user_directory);
+
+    InitializeOutputDirectory();
+  }
+
+  void SDL2_FileSystem::InitializeOutputDirectory()
+  {
+    _output_directory.clear();
+
+    const std::string &wanted = _settings_config.output_directory;
+    if (wanted.empty()) { return; }
+
+    // The folder arrives as a native path, relative to the working directory
+    // or absolute. It is made absolute once, so that it keeps pointing at the
+    // same place. Paths are UTF-8, see ListDirectory.
+    std::error_code error;
+    std::filesystem::path directory =
+      std::filesystem::absolute(std::filesystem::path(std::u8string(wanted.begin(), wanted.end())), error);
+
+    if (!error)
+    {
+      directory = directory.lexically_normal().make_preferred();
+      std::filesystem::create_directories(directory, error);
+    }
+
+    // a file of that name is in the way
+    if (!error && !std::filesystem::is_directory(directory, error))
+    {
+      error = std::make_error_code(std::errc::not_a_directory);
+    }
+
+    if (error)
+    {
+      const std::string reason = error.message();
+      _logger->Error("The output folder '{}' cannot be used, output:// stays without a folder: {}", wanted, reason);
+      return;
+    }
+
+    const std::u8string native = directory.u8string();
+    _output_directory.assign(native.begin(), native.end());
+    if (_output_directory.back() != _native_separator) { _output_directory += _native_separator; }
+
+    _logger->Info("output:// is {}", _output_directory);
   }
 
   void SDL2_FileSystem::CleanUp()
@@ -50,6 +92,7 @@ namespace neon
     _logger->Info("Cleaning up SDL2 file system");
     _assets_directory.clear();
     _user_directory.clear();
+    _output_directory.clear();
   }
 
   bool SDL2_FileSystem::Exists(const std::string &path)

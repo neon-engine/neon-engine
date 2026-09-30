@@ -13,6 +13,10 @@ namespace neon
   // ReSharper disable once CppInconsistentNaming
   class SDL2_FileSystem final : public FileSystem
   {
+    /// Turns the output folder of the settings into the folder behind
+    /// `output://`, and creates it when it is missing.
+    void InitializeOutputDirectory();
+
   public:
     explicit SDL2_FileSystem(const SettingsConfig &settings_config, const std::shared_ptr<Logger> &logger)
       : FileSystem(settings_config, logger) {}

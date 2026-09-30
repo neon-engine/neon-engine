@@ -14,6 +14,7 @@ namespace neon
   class Runtime
   {
     bool _destroyed = false;
+    bool _failed = false;
 
   protected:
     SettingsConfig _settings_config;
@@ -43,6 +44,11 @@ namespace neon
     void Initialize() const;
 
     void CleanUp();
+
+    /// Whether something the run was asked to do did not happen, such as a
+    /// screenshot that could not be written. An application turns this into
+    /// its exit code.
+    [[nodiscard]] bool HasFailed() const;
   };
 } // neon
 

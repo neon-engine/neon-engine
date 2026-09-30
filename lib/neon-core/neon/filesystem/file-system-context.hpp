@@ -13,6 +13,10 @@ namespace neon
   ///   - `assets://` is what ships with the application. It is read-only.
   ///   - `user://` is a folder of the current user, for saves, settings, and
   ///     anything else the application writes.
+  ///   - `output://` is a folder chosen by whoever started the application,
+  ///     for what a run hands back, such as screenshots. It can be written
+  ///     to. It only exists when a folder was chosen. Without one, every
+  ///     path in it is rejected.
   ///
   /// A virtual path is written the same way on every platform, so content
   /// that refers to files, such as a scene file, works everywhere unchanged.

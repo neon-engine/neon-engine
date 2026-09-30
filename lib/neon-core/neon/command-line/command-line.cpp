@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <charconv>
+#include <cmath>
 #include <string_view>
 
 namespace neon
@@ -216,6 +217,46 @@ namespace neon
     if (error != std::errc{} || stopped_at != end) { return false; }
 
     value = parsed;
+    return true;
+  }
+
+  bool CommandLine::GetNumber(const std::string &name, double &value) const
+  {
+    const std::string text = GetValue(name);
+
+    // Read by hand. The functions of the standard library either follow the
+    // language of the machine, where the dot may be a comma, or are missing
+    // from one of the compilers the engine is built with.
+    double whole = 0.0;
+    double fraction = 0.0;
+    double scale = 1.0;
+    size_t digits = 0;
+    size_t position = 0;
+    const bool negative = text.starts_with('-');
+    if (negative) { position++; }
+
+    for (; position < text.size() && text[position] >= '0' && text[position] <= '9'; position++, digits++)
+    {
+      whole = whole * 10.0 + (text[position] - '0');
+    }
+
+    if (position < text.size() && text[position] == '.')
+    {
+      position++;
+      for (; position < text.size() && text[position] >= '0' && text[position] <= '9'; position++, digits++)
+      {
+        scale *= 10.0;
+        fraction = fraction * 10.0 + (text[position] - '0');
+      }
+    }
+
+    // the whole value has to be the number, and "." or "-" is not one
+    if (digits == 0 || position != text.size()) { return false; }
+
+    const double parsed = whole + fraction / scale;
+    if (!std::isfinite(parsed)) { return false; }
+
+    value = negative ? -parsed : parsed;
     return true;
   }
 } // neon
