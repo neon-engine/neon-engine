@@ -79,6 +79,10 @@ namespace neon
           renderable.render_object_id = _render_pipeline->CreateRenderObject(renderable.render_info);
         }
 
+        // the renderer could not create it, and has said why. It knows no
+        // render object by that id, so there is nothing to draw
+        if (renderable.render_object_id < 0) { continue; }
+
         _render_pipeline->EnqueueForRendering(renderable.render_object_id, transforms[i]);
       }
     });

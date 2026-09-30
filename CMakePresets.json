@@ -41,6 +41,31 @@
   "buildPresets": [
     { "name": "macos-arm64-debug", "configurePreset": "macos-arm64-debug", "targets": ["NeonRuntime"] },
     { "name": "linux-x64-debug",   "configurePreset": "linux-x64-debug",   "targets": ["NeonRuntime"] },
-    { "name": "windows-x64-debug", "configurePreset": "windows-x64-debug", "targets": ["NeonRuntime"] }
+    { "name": "windows-x64-debug", "configurePreset": "windows-x64-debug", "targets": ["NeonRuntime"] },
+    { "name": "macos-arm64-debug-tests", "configurePreset": "macos-arm64-debug", "targets": ["neon-tests"] },
+    { "name": "linux-x64-debug-tests",   "configurePreset": "linux-x64-debug",   "targets": ["neon-tests"] },
+    { "name": "windows-x64-debug-tests", "configurePreset": "windows-x64-debug", "targets": ["neon-tests"] }
+  ],
+  "testPresets": [
+    {
+      "name": "test-base",
+      "hidden": true,
+      "output": { "outputOnFailure": true },
+      "execution": { "noTestsAction": "error" }
+    },
+    { "name": "macos-arm64-debug", "configurePreset": "macos-arm64-debug", "inherits": "test-base" },
+    { "name": "linux-x64-debug",   "configurePreset": "linux-x64-debug",   "inherits": "test-base" },
+    {
+      "name": "macos-arm64-debug-unit",
+      "configurePreset": "macos-arm64-debug",
+      "inherits": "test-base",
+      "filter": { "include": { "label": "unit" } }
+    },
+    {
+      "name": "linux-x64-debug-unit",
+      "configurePreset": "linux-x64-debug",
+      "inherits": "test-base",
+      "filter": { "include": { "label": "unit" } }
+    }
   ]
 }

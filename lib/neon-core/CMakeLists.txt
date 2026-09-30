@@ -121,3 +121,52 @@ target_link_libraries(${TARGET}
         spdlog::spdlog
         assimp::assimp
 )
+
+if (NEON_BUILD_TESTS)
+  # Mocks and fakes of the interfaces of neon-core, shared by the tests of
+  # every library. They are headers, and are compiled into tests only.
+  add_library(neon-testing INTERFACE
+          neon/testing/fake-entity-store.hpp
+          neon/testing/memory-file-system.hpp
+          neon/testing/mock-entity-store.hpp
+          neon/testing/mock-entity-world.hpp
+          neon/testing/mock-file-system-context.hpp
+          neon/testing/mock-input-system.hpp
+          neon/testing/mock-render-context.hpp
+          neon/testing/mock-render-pipeline.hpp
+          neon/testing/mock-render-system.hpp
+          neon/testing/mock-window-system.hpp
+          neon/testing/mock-world-system.hpp
+          neon/testing/recording-logger.hpp
+          neon/testing/temporary-directory.hpp
+  )
+
+  target_link_libraries(neon-testing INTERFACE
+          neon-core
+          GTest::gmock
+  )
+
+  # Unit tests. Each one sits next to the file it tests.
+  neon_add_unit_test(${TARGET} neon/command-line/command-line.test.cpp)
+  neon_add_unit_test(${TARGET} neon/command-line/runtime-options.test.cpp)
+  neon_add_unit_test(${TARGET} neon/common/data-buffer.test.cpp)
+  neon_add_unit_test(${TARGET} neon/common/rotation.test.cpp)
+  neon_add_unit_test(${TARGET} neon/common/transform.test.cpp)
+  neon_add_unit_test(${TARGET} neon/common/util.test.cpp)
+  neon_add_unit_test(${TARGET} neon/filesystem/file-system.test.cpp)
+  neon_add_unit_test(${TARGET} neon/input/headless-input-system.test.cpp)
+  neon_add_unit_test(${TARGET} neon/input/input-state.test.cpp)
+  neon_add_unit_test(${TARGET} neon/logging/logging-system.test.cpp)
+  neon_add_unit_test(${TARGET} neon/logging/spd-logger.test.cpp)
+  neon_add_unit_test(${TARGET} neon/render/forward-render-pipeline.test.cpp)
+  neon_add_unit_test(${TARGET} neon/render/model.test.cpp)
+  neon_add_unit_test(${TARGET} neon/runtime/frame-capture.test.cpp)
+  neon_add_unit_test(${TARGET} neon/runtime/runtime.test.cpp)
+  neon_add_unit_test(${TARGET} neon/window/headless-window-system.test.cpp)
+  neon_add_unit_test(${TARGET} neon/world-system/ecs/component-info.test.cpp)
+  neon_add_unit_test(${TARGET} neon/world-system/ecs/entity-store.test.cpp)
+  neon_add_unit_test(${TARGET} neon/world-system/ecs/entity-world.test.cpp)
+  neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/render-submission.test.cpp)
+  neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/spectator-movement.test.cpp)
+  neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/transform-propagation.test.cpp)
+endif ()

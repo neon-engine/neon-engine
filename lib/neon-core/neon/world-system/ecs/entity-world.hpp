@@ -45,6 +45,10 @@ namespace neon
       WindowContext *window_context,
       const std::shared_ptr<Logger> &logger);
 
+    /// Cleans up, so that the store is not left with components that refer
+    /// to a world that is gone.
+    ~EntityWorld();
+
     /// Adds behaviour of a game. Call it before Initialize.
     void AddSystem(std::unique_ptr<EntitySystem> system);
 

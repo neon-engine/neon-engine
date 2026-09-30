@@ -15,3 +15,7 @@ target_link_libraries(${TARGET}
         PUBLIC neon-core
         PRIVATE flecs::flecs_static
 )
+
+if (NEON_BUILD_TESTS)
+  neon_add_unit_test(${TARGET} neon/world-system/flecs-entity-store.test.cpp)
+endif ()

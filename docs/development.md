@@ -58,8 +58,10 @@ The engine's dependencies are git submodules. Fetch the ones the build uses:
 ```bash
 git submodule update --init --recursive \
   external/glm external/sdl2 external/assimp external/jolt-physics \
-  external/spdlog external/rapidyaml external/stb
+  external/spdlog external/rapidyaml external/stb external/googletest
 ```
+
+`external/googletest` is only needed for the [tests](#tests).
 
 ## macOS (arm64)
 
@@ -567,6 +569,223 @@ belongs.
 The libraries that were considered and the conditions for moving to a full
 virtual file system are recorded in [file-systems.md](file-systems.md).
 
+## Tests
+
+The engine is tested with [GoogleTest](https://github.com/google/googletest)
+1.18.0, which includes GoogleMock. It is a submodule in `external/googletest`.
+
+```bash
+cmake --preset macos-arm64-debug
+cmake --build --preset macos-arm64-debug-tests
+ctest --preset macos-arm64-debug
+```
+
+Tests are never part of the default build, and never part of a library or an
+application. `cmake --build --preset macos-arm64-debug` builds NeonRuntime and
+nothing else, as before.
+
+### Where tests are stored
+
+The layout follows
+[P1204R0, Canonical Project Structure](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1204r0.html).
+
+| Kind | Tests | Stored | Label |
+|---|---|---|---|
+| Unit test | One source file, with everything around it replaced by mocks and fakes | Next to the file it tests, with `.test` in front of the extension. `command-line.cpp` is tested by `command-line.test.cpp` | `unit` |
+| Functional test | Several libraries together, a real backend, or the application itself | In `tests/`, each in a folder of its own | `integration` |
+
+A unit test next to its source is found without searching, and is moved,
+renamed, and deleted together with it. A file without a test next to it is
+visibly untested.
+
+Each `*.test.cpp` is built into an executable of its own. Started without
+arguments it runs all of its tests and returns 0 when they pass. One test can
+therefore be built, run, and debugged without the others:
+
+```bash
+cmake --build --preset macos-arm64-debug --target neon-core.command-line.test
+./build/macos-arm64-debug/tests/neon-core.command-line.test/neon-core.command-line.test
+```
+
+Where the paper and the repository differ, the repository stays as it is:
+
+| The paper | The repository |
+|---|---|
+| Sources are in a folder named after the project, `neon/` | The same, once for every library: `lib/neon-core/neon/`, `lib/neon-sdl2/neon/`, and so on. The libraries share the `neon` namespace and its include paths |
+| Executables of tests are named after the file they test | Named after the library and the file, such as `neon-core.command-line.test`, since the libraries are built in one project and two of them may have a file of the same name |
+| Says nothing about mocks | Shared mocks and fakes are headers in `lib/neon-core/neon/testing/` |
+| Functional tests are programs in `tests/` | Two of the three are CMake scripts that start NeonRuntime, since that is what they test |
+
+### Building and running
+
+| Command | What it does |
+|---|---|
+| `cmake --build --preset <preset>-tests` | Builds every test, and NeonRuntime for the tests that start it |
+| `cmake --build --preset <preset> --target neon-tests` | The same |
+| `cmake --build --preset <preset> --target <test>` | Builds one test |
+| `ctest --preset <preset>` | Runs every test |
+| `ctest --preset <preset>-unit` | Runs the unit tests only |
+| `ctest --preset <preset> -L integration` | Runs the functional tests only |
+| `ctest --preset <preset> -R FileSystem` | Runs the tests whose name holds `FileSystem` |
+| `<test> --gtest_filter='CommandLine*'` | Runs some tests of one executable. `--help` lists the other options |
+
+`<preset>` is `macos-arm64-debug` or `linux-x64-debug`.
+
+| Platform | Build the tests | Run the tests |
+|---|---|---|
+| macOS arm64 | Yes | Yes |
+| Linux x64 | Yes, in the Docker image | Yes, in the Docker image. A machine without a Vulkan driver skips the tests that render |
+| Windows x64 | Yes, with `windows-x64-debug-tests` | Not where they are built. The cross-compiled tests have to be copied to a Windows machine and started there |
+
+Tests are found when `ctest` runs, not while building. A test that was
+cross-compiled cannot be started on the machine that built it, which finding
+them during the build would need.
+
+`-DNEON_BUILD_TESTS=OFF` leaves the tests and GoogleTest out of the project
+altogether.
+
+### Adding a test
+
+1. Write `<name>.test.cpp` next to `<name>.cpp`.
+2. Add one line to the `CMakeLists.txt` of the library, where the other tests
+   are. Source files are listed by hand, and so are tests:
+
+   ```cmake
+   neon_add_unit_test(${TARGET} neon/command-line/command-line.test.cpp)
+   ```
+
+3. Run `cmake --preset <preset>` again.
+
+```cpp
+#include "command-line.hpp"
+
+#include <gtest/gtest.h>
+
+namespace
+{
+  TEST(CommandLine, RejectsAnOptionItDoesNotKnow)
+  {
+    neon::CommandLine command_line("program", "");
+    const char *argv[] = {"program", "--unknown"};
+
+    EXPECT_FALSE(command_line.Parse(2, argv));
+    EXPECT_EQ(command_line.GetError(), "Unknown option '--unknown'");
+  }
+}
+```
+
+| Rule | Reason |
+|---|---|
+| The suite is named after the class, the test says what is expected: `TEST(CommandLine, RejectsAnOptionItDoesNotKnow)` | A failing test then reads as a sentence about what is broken |
+| A test goes through the public interface | It keeps passing when the code behind the interface is rewritten |
+| A test in neon-core does not call SDL, Vulkan, or Flecs | The same inversion of control as in the engine. A test of a backend library may use that backend |
+| A test writes to a `TemporaryDirectory` only | Nothing is left in the repository or in the home folder |
+| A test does not depend on another, or on the order they run in | Each one can be run by itself |
+| A test that fails is never weakened or deleted | When the fix is not small, the test is kept with `DISABLED_` in front of its name and a comment that says why |
+
+`neon_add_unit_test` takes `LIBRARIES <target>...` for a test that needs more
+than its library. A functional test is declared in a `CMakeLists.txt` of its
+own folder, with `neon_add_functional_test` for a program and
+`neon_add_application_test` for a script that starts an application. All three
+are in [cmake/NeonTests.cmake](../cmake/NeonTests.cmake).
+
+### Mocks and fakes
+
+They are headers in
+[lib/neon-core/neon/testing](../lib/neon-core/neon/testing), in the namespace
+`neon::testing`, and are included as `<neon/testing/recording-logger.hpp>`.
+The tests of every library share them. They belong to the target
+`neon-testing`, which only exists when tests are built, and which every test
+links.
+
+A mock checks what it is asked to do. A fake does the work in a simple way.
+
+| Header | What it holds | Stands for |
+|---|---|---|
+| `recording-logger.hpp` | `RecordingLogger`, a fake that keeps what it is told | `Logger` |
+| `memory-file-system.hpp` | `MemoryFileSystem`, a backend that keeps its files in memory. The path rules are those of `FileSystem` | `FileSystem`, `FileSystemContext` |
+| `mock-file-system-context.hpp` | `MockFileSystemContext` | `FileSystemContext` |
+| `mock-window-system.hpp` | `MockWindowSystem`, `MockWindowContext` | `WindowSystem`, `WindowContext` |
+| `mock-input-system.hpp` | `MockInputSystem`, and `FakeInputContext` whose state a test sets | `InputSystem`, `InputContext` |
+| `mock-render-context.hpp` | `MockRenderContext` | `RenderContext` |
+| `mock-render-system.hpp` | `MockRenderSystem` | `RenderSystem` |
+| `mock-render-pipeline.hpp` | `MockRenderPipeline` | `RenderPipeline` |
+| `mock-world-system.hpp` | `MockWorldSystem` | `WorldSystem` |
+| `mock-entity-store.hpp` | `MockEntityStore` | `EntityStore` |
+| `fake-entity-store.hpp` | `FakeEntityStore`, a store that is as simple as one can be | `EntityStore` |
+| `mock-entity-world.hpp` | `MockEntitySystem`, `MockScene` | `EntitySystem`, `Scene` |
+| `temporary-directory.hpp` | `TemporaryDirectory`, a folder that is removed with the object | |
+
+`TemporaryDirectory` uses `std::filesystem`, which the engine itself must not.
+It is how a test prepares what a backend is expected to find, and looks at
+what it left behind.
+
+### What is covered
+
+| Library | File | Tests | What is tested |
+|---|---|---|---|
+| neon-core | `command-line/command-line` | 94 | Every way to write an option, every message of the parser, defaults, whole numbers, numbers, the help text |
+| neon-core | `command-line/runtime-options` | 64 | Every option and every message of `Apply`. The help text is compared with the one in this guide |
+| neon-core | `common/data-buffer` | 20 | Ids, capacity, reuse of slots, what is thrown |
+| neon-core | `common/rotation` | 13 | The quaternion of known angles, and the order of the turns |
+| neon-core | `common/transform` | 11 | `Forward` and `Right`. 1 disabled |
+| neon-core | `common/util` | 12 | All four functions |
+| neon-core | `filesystem/file-system` | 158 | Every path rule for reading and writing, letter case, the native path, `output://` without a folder |
+| neon-core | `input/input-state` | 11 | Actions, the motion of the mouse, `Reset` |
+| neon-core | `input/headless-input-system` | 7 | Nothing is ever pressed |
+| neon-core | `logging/spd-logger` | 10 | Levels, arguments, what is thrown for a message that cannot be formatted |
+| neon-core | `logging/logging-system` | 11 | The log file, in a temporary folder |
+| neon-core | `render/forward-render-pipeline` | 24 | What is drawn in which order, the projection, lights and their limit |
+| neon-core | `render/model` | 25 | Loading from a file system in memory, material files, textures, the normalization matrix. 1 disabled |
+| neon-core | `runtime/frame-capture` | 21 | `NumberedPath`, and which frames are saved |
+| neon-core | `runtime/runtime` | 19 | The order of `Initialize` and `CleanUp`, the loop, `HasFailed` |
+| neon-core | `window/headless-window-system` | 16 | Closing, the time step, the size |
+| neon-core | `world-system/ecs/component-info` | 15 | `ComponentInfo::Of` with a type that owns memory |
+| neon-core | `world-system/ecs/entity-store` | 16 | What the templates of `EntityStore` ask a backend for, and `EntityBlock` |
+| neon-core | `world-system/ecs/entity-world` | 28 | What is initialized in which order, the order of the systems in a frame, what is released |
+| neon-core | `world-system/ecs/systems/spectator-movement` | 25 | Moving and turning by the input |
+| neon-core | `world-system/ecs/systems/transform-propagation` | 21 | Parent times child, over several levels |
+| neon-core | `world-system/ecs/systems/render-submission` | 31 | The camera, the lights, render objects. 1 disabled |
+| neon-flecs | `world-system/flecs-entity-store` | 103 | Everything `EntityStore` promises, through that interface |
+| neon-sdl2 | `filesystem/sdl2-file-system` | 39 | Real files in the three schemes, letter case on a disk that ignores it |
+| neon-vulkan | `render/vk-material` | 27 | What is handed to the shaders, textures that cannot be used |
+| neon-vulkan | `render/vk-mesh` | 6 | A mesh with nothing to draw |
+| neon-vulkan | `render/vk-model` | 4 | A model that cannot be used |
+| neon-vulkan | `render/vk-shader` | 6 | Which files are read, shaders that cannot be used |
+| neon-vulkan | `render/vk-shader-data` | 8 | Where every field lies that the shaders read |
+| neon-vulkan | `render/vk-texture` | 7 | Textures that cannot be used |
+| `tests/` | `world-with-flecs` | 16 | The world as an application puts it together, with the store of Flecs and the forward pipeline |
+| `tests/` | `runtime-command-line` | 11 | NeonRuntime with a command line it refuses: exit code and message |
+| `tests/` | `runtime-headless` | 5 | NeonRuntime without a window: exit code, and the images it saved |
+
+The headers that only declare an interface or a plain structure have no test
+of their own. There is nothing in them that can be wrong by itself.
+
+**Disabled tests.** Each one describes what the code should do and does not.
+The fix is a question of design, so the test waits with a comment that says
+what is open. `ctest` lists them as not run.
+
+| Test | What is open |
+|---|---|
+| `Transform.RightIsANumberWhenLookingStraightUp` | `Right()` is the cross product of forward and up. Straight up and down the two are parallel and the result is not a number |
+| `ModelTest.FailsAndSaysSoWhenTheFileHoldsNoModel` | A file that is named like a model and holds none loads without an error, as a model without meshes |
+| `RenderSubmissionTest.DoesNotAskTheRendererAgainForAnEntityItCouldNotCreate` | An entity the renderer could not create is handed to it again in every frame. -1 stands for both "not created yet" and "could not be created" |
+
+### What is not covered
+
+| What | Why | What would make it testable |
+|---|---|---|
+| `SDL2_WindowSystem`, `SDL2_InputSystem` | They need a display and input devices. Both call SDL directly, which keeps its state for the whole process | Running the tests under a display server that draws nowhere, such as Xvfb or the `dummy` video driver of SDL. Turning an SDL event into an `InputState` is logic of its own and could move into a function that takes the event |
+| `VK_Device`, `VK_RenderSystem`, and the successful paths of `VK_Mesh`, `VK_Model`, `VK_Shader`, `VK_Texture`, `VK_Material` | They need a graphics card. Vulkan is reached through global function pointers, which cannot be replaced by a mock | They are covered from the outside by `runtime-headless`, on a machine that has a graphics card. A software renderer such as lavapipe would let that test run everywhere |
+| The helpers in `vk-device.cpp` and `vk-render-system.cpp`, such as `rate_device_type`, `align_up`, and `BuildSceneData` | They are private to their file or their class | Moving them into a header of their own. `BuildSceneData` turns lights into shader data and needs no graphics card to do it |
+| `SDL2_FileSystem` on Windows | Windows is asked for the folder of the user directly and takes no hint, so the tests would write into the real one. They are skipped there | Handing the folder behind `user://` to the file system through the settings, as `output_directory` is |
+| An output folder that is relative to the working directory | The test would have to change the working directory of its process | |
+| `LoggingSystem::CreateLogger()` before `Initialize()` | It uses a logger that does not exist yet and ends the process | Creating the sinks in the constructor, or returning a logger that holds back what it is told |
+| `LoggingSystem` writing to the standard output | The sink is created inside `Initialize()` | Handing the sinks in from outside |
+| `Logger::CreateChildLogger` | It is protected and nothing calls it | |
+| An `EntityWorld` that goes away before its store, without `CleanUp()` | The store tells a `Renderable` that it is removed through a function that belongs to the world. Called after the world is gone, it reads memory that was released. Applications call `CleanUp()` first, as `main.cpp` does | The world cleaning up in its destructor, as `Runtime` does |
+| `app/` | It is put together in `main()` | It is covered from the outside by the tests in `tests/` |
+
 ## Code style
 
 The conventions of the code are described in the
@@ -582,6 +801,9 @@ cmake --build build/macos-arm64-debug --target format-check
 |---|---|
 | `tidy` | Runs clang-tidy with the rules in [.clang-tidy](../.clang-tidy) |
 | `format-check` | Lists what clang-format would change with the rules in [.clang-format](../.clang-format). It changes nothing |
+
+When tests are built, which is the default, both targets check the code of
+the tests as well.
 
 Both tools are part of LLVM 20. The Docker images need `clang-tidy` and
 `clang-format` on `PATH` for the targets to work there.

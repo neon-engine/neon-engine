@@ -37,3 +37,6 @@
 [submodule "external/flecs"]
 	path = external/flecs
 	url = https://github.com/SanderMertens/flecs.git
+[submodule "external/googletest"]
+	path = external/googletest
+	url = https://github.com/google/googletest.git

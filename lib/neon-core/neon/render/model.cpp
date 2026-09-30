@@ -147,7 +147,7 @@ namespace neon
   void Model::LoadMaterialTextures(
     const aiMaterial *material,
     const aiTextureType &type,
-    std::vector<TextureInfo> textures) const
+    std::vector<TextureInfo> &textures) const
   {
     for(unsigned int i = 0; i < material->GetTextureCount(type); i++)
     {

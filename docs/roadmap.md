@@ -44,6 +44,7 @@ Principles that hold for both:
 | Screenshots at chosen frames | `--screenshot-at` runs the game forward and saves each frame that is listed |
 | Fixed time step | `--time-step` advances every frame by the same amount of time |
 | Exit codes | The runtime returns a failing exit code when a screenshot could not be written or the run ended with an exception |
+| Unit tests | GoogleTest, with tests for the four libraries and for the runtime as a whole. See the [development guide](development.md#tests) |
 
 ## Next
 
@@ -67,7 +68,6 @@ These come first, because everything after them is cheaper with them in place.
 
 | Item | Detail |
 |---|---|
-| Unit tests | A test framework, and tests for what exists. The command line parser has checks that are not yet part of the build |
 | clang-tidy | Checks that code follows the conventions the code base already has, such as naming. Run in the build and in the editor |
 | The TODOs in the repository | Listed [below](#todos-in-the-repository) |
 | Architecture document | How the libraries, interfaces, and applications fit together, and why |
@@ -231,7 +231,7 @@ A proposal. Each step builds on the ones before it.
 
 | Step | What | Why here |
 |---|---|---|
-| 1 | Unit tests, clang-tidy, the TODOs | Small, and they protect everything that follows |
+| 1 | clang-tidy, the TODOs | Small, and they protect everything that follows. Unit tests are done, and new code comes with tests |
 | 2 | Architecture document | Writing it down exposes what the next steps have to change |
 | 3 | Load a project, and the rest of [Next](#next) | The runtime has to run something other than a scene written in code |
 | 4 | Entities and components, and scenes in files | Done |
@@ -270,7 +270,6 @@ A document for each feature is written with the feature, not as a step.
 | Shaders in GLSL or in Slang | How many shaders there will be. Cheap to change now, expensive later |
 | Which technique for global illumination | What the target hardware is, and whether the web has to be able to run it |
 | Which audio libraries stay | Whether one of them covers effects, music, and spatial audio together |
-| Which test framework | Catch2, GoogleTest, or doctest |
 | How agents reach the editor | What the editor turns out to be |
 | What a project is on disk | Needed before the runtime can load one |
 | How game code is loaded | Scripts are decided. Whether libraries loaded at run time are offered as well is open |

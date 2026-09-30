@@ -97,6 +97,22 @@ if(MINGW)
   target_compile_definitions(ryml PUBLIC C4_MINGW)
 endif()
 
+# Tests. They are never part of the default build or of an application. The
+# target neon-tests builds them, and ctest runs them.
+option(NEON_BUILD_TESTS "Make the unit tests and functional tests available to build" ON)
+if (NEON_BUILD_TESTS)
+  enable_testing()
+
+  set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
+  set(BUILD_GMOCK ON CACHE BOOL "" FORCE)
+  # only matters to the compiler of Microsoft, where GoogleTest would
+  # otherwise link another C runtime than the engine
+  set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+  add_subdirectory(external/googletest EXCLUDE_FROM_ALL)
+
+  include("${CMAKE_CURRENT_LIST_DIR}/cmake/NeonTests.cmake")
+endif ()
+
 # Additional libraries
 add_subdirectory(lib/neon-core)
 add_subdirectory(lib/neon-vulkan)
@@ -139,6 +155,16 @@ foreach (APP IN LISTS APP_TARGETS)
   )
 endforeach ()
 
+# Functional tests come last, they start the applications declared above
+if (NEON_BUILD_TESTS)
+  add_subdirectory(tests)
+endif ()
+
 # Checks against the style guide. They run on request only
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/ClangTools.cmake")
-setup_clang_tools(neon-core neon-vulkan neon-sdl2 ${APP_TARGETS})
+set(CHECKED_TARGETS neon-core neon-vulkan neon-sdl2 neon-flecs ${APP_TARGETS})
+if (NEON_BUILD_TESTS)
+  get_property(NEON_TEST_TARGETS GLOBAL PROPERTY NEON_TEST_TARGETS)
+  list(APPEND CHECKED_TARGETS neon-testing ${NEON_TEST_TARGETS})
+endif ()
+setup_clang_tools(${CHECKED_TARGETS})

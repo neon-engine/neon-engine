@@ -29,6 +29,11 @@ namespace neon
     _after.push_back(std::make_unique<RenderSubmission>(render_pipeline));
   }
 
+  EntityWorld::~EntityWorld()
+  {
+    CleanUp();
+  }
+
   void EntityWorld::AddSystem(std::unique_ptr<EntitySystem> system)
   {
     _added.push_back(std::move(system));

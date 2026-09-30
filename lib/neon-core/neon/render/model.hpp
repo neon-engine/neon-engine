@@ -23,10 +23,11 @@ namespace neon
 
     bool LoadModel();
 
+    /// Adds the textures of one kind that a material names to `textures`.
     void LoadMaterialTextures(
       const aiMaterial *material,
       const aiTextureType &type,
-      std::vector<TextureInfo> textures) const;
+      std::vector<TextureInfo> &textures) const;
 
     virtual void GenerateNormalizationMatrix() = 0;
 

@@ -29,3 +29,14 @@ target_link_libraries(${TARGET}
         neon-core
         ${CMAKE_DL_LIBS}
 )
+
+if (NEON_BUILD_TESTS)
+  # Only what needs no graphics card: what is worked out before the first
+  # call to Vulkan, and what happens when a file cannot be used.
+  neon_add_unit_test(${TARGET} neon/render/vk-material.test.cpp)
+  neon_add_unit_test(${TARGET} neon/render/vk-mesh.test.cpp)
+  neon_add_unit_test(${TARGET} neon/render/vk-model.test.cpp)
+  neon_add_unit_test(${TARGET} neon/render/vk-shader.test.cpp)
+  neon_add_unit_test(${TARGET} neon/render/vk-shader-data.test.cpp)
+  neon_add_unit_test(${TARGET} neon/render/vk-texture.test.cpp)
+endif ()

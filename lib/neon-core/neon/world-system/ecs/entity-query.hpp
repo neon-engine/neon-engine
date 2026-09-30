@@ -46,8 +46,11 @@ namespace neon
 
     const Entity *entities = nullptr;
 
-    /// The parent that all entities in the block share. No_Entity when they
-    /// have none. Only filled in for QueryOrder::ParentsFirst.
+    /// The nearest entity above those of the block that carries the first
+    /// component the query named. That is their parent, unless the parent
+    /// does not carry it, such as an entity that only groups others. Then it
+    /// is the parent of that, and so on. No_Entity when there is none. Only
+    /// filled in for QueryOrder::ParentsFirst.
     Entity parent = No_Entity;
 
     /// One array for each component of the query, in the order the query
