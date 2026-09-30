@@ -29,6 +29,54 @@ namespace neon
 
     [[nodiscard]] static TextOptions OptionsOf(const UiStyle &style, const UiFrame &frame);
 
+    /// The glyphs of the text, which are made again when the text, its
+    /// fonts, or what shapes it has changed.
+    struct Shaped
+    {
+      bool is_made = false;
+      std::uint64_t made_from = 0;
+      std::uint64_t fonts_revision = 0;
+
+      std::string families;
+      int weight = 0;
+      bool is_italic = false;
+      int pixel_size = 0;
+      ShapingStyle style;
+
+      const UiTextFonts *fonts = nullptr;
+      ShapedText text;
+    };
+
+    /// Where the glyphs go in a room of one size. Kept so that a frame in
+    /// which nothing changed places no glyph again.
+    struct Placed
+    {
+      bool is_made = false;
+      std::uint64_t shaped = 0;
+      float max_width = 0.0f;
+      float box_width = 0.0f;
+      TextAlign align = TextAlign::Left;
+      float line_height = 0.0f;
+      TextOverflow overflow = TextOverflow::Clip;
+
+      PlacedShapedText text;
+    };
+
+    mutable Shaped _shaped;
+    mutable std::uint64_t _shaped_count = 0;
+    mutable Placed _measured;
+    mutable Placed _painted;
+    std::uint64_t _text_count = 0;
+
+    /// The glyphs of the text as the style asks for them, or nullptr when
+    /// no font of the style can be used.
+    [[nodiscard]] const Shaped *Shape(const UiStyle &style, const UiFrame &frame) const;
+
+    [[nodiscard]] const PlacedShapedText &Place(
+      Placed &placed,
+      const Shaped &shaped,
+      const PlacingOptions &options) const;
+
   public:
     /// Reads `text` of the element. Text that is left out is empty.
     void Read(const DataReader &reader);

@@ -29,6 +29,9 @@ namespace neon
     std::string family;
     int weight = 400;
     std::string path;
+
+    /// `style: italic` and `rendering: sdf` of the font.
+    UiFaceOptions options;
   };
 
   /// A user interface as a file holds it: a tree of elements, and what is
@@ -65,6 +68,9 @@ namespace neon
     /// Pixels of the frame for each unit of the file, at a size of the
     /// frame.
     [[nodiscard]] float ScaleFor(int frame_width, int frame_height) const;
+
+    /// The surface the document is shown on. 0 is the window.
+    int surface = 0;
   };
 } // neon
 

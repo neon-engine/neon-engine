@@ -12,5 +12,11 @@ neon_add_functional_test(user-interface
         ui-input.cpp
         ui-layout.cpp
         ui-scenes.cpp
+        ui-text-style.cpp
+        ui-boxes.cpp
+        ui-images.cpp
+        ui-shaders.cpp
+        ui-surfaces.cpp
+        ui-text-rendering.cpp
         LIBRARIES neon-core neon-ryml
 )

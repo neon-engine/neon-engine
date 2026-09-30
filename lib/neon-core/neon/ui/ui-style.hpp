@@ -3,11 +3,15 @@
 
 #include <optional>
 #include <string>
+#include <vector>
 
 #include <neon/common/color.hpp>
 #include <neon/data/data-reader.hpp>
 #include <neon/layout/layout-style.hpp>
+#include <neon/text/shaped-text.hpp>
 #include <neon/text/text-layout.hpp>
+
+#include "ui-paint.hpp"
 
 namespace neon
 {
@@ -30,7 +34,13 @@ namespace neon
   {
     Fill = 0,
     Contain,
-    Cover
+    Cover,
+
+    /// As large as the image is.
+    None,
+
+    /// As `none` or as `contain`, whichever is smaller.
+    ScaleDown
   };
 
   /// What an element looks like and where it goes. The names and the
@@ -91,6 +101,90 @@ namespace neon
     Color accent_color{0.30f, 0.69f, 0.31f, 1.0f};
 
     UiObjectFit object_fit = UiObjectFit::Fill;
+
+    // Text
+
+    /// Added behind every character, and behind every space, in units of
+    /// the file.
+    float letter_spacing = 0.0f;
+    float word_spacing = 0.0f;
+
+    TextTransform text_transform = TextTransform::None;
+
+    /// `text-decoration-line`: a line under the text, and one through it.
+    bool text_underline = false;
+    bool text_line_through = false;
+
+    /// Without one, the lines have the colour of the text.
+    std::optional<Color> text_decoration_color;
+
+    /// 0 stands for what the font asks for.
+    float text_decoration_thickness = 0.0f;
+
+    /// From the one that is drawn on top to the one at the bottom, as CSS
+    /// writes them.
+    std::vector<UiShadow> text_shadow;
+
+    WhiteSpace white_space = WhiteSpace::PreWrap;
+    TextOverflow text_overflow = TextOverflow::Clip;
+
+    /// `font-style: italic`.
+    bool font_italic = false;
+
+    /// `-webkit-text-stroke`: a line around every glyph, half of it over
+    /// the glyph.
+    float text_stroke_width = 0.0f;
+    std::optional<Color> text_stroke_color;
+
+    /// What the text is filled with when `color` is a gradient.
+    std::optional<UiGradient> color_gradient;
+
+    TextDirection direction = TextDirection::LeftToRight;
+
+    // Images
+
+    UiImageRendering image_rendering = UiImageRendering::Auto;
+    UiPlace object_position;
+
+    /// It starts as `100% 100%`, which stretches the image over the box,
+    /// and not as `auto`.
+    UiBackgroundSize background_size{
+      UiBackgroundSize::Kind::Lengths, LayoutLength::Percent(100.0f), LayoutLength::Percent(100.0f)
+    };
+    UiPlace background_position{LayoutLength::Percent(0.0f), LayoutLength::Percent(0.0f)};
+    UiBackgroundRepeat background_repeat = UiBackgroundRepeat::Repeat;
+    UiBorderImageRepeat border_image_repeat = UiBorderImageRepeat::Stretch;
+
+    /// What the box is filled with when `background_image` is a gradient.
+    std::optional<UiGradient> background_gradient;
+
+    // The box
+
+    UiCornerRadii border_radius;
+
+    /// The colour of each side where it differs from `border_color`.
+    std::optional<Color> border_top_color;
+    std::optional<Color> border_right_color;
+    std::optional<Color> border_bottom_color;
+    std::optional<Color> border_left_color;
+
+    /// From the one that is drawn on top to the one at the bottom.
+    std::vector<UiShadow> box_shadow;
+
+    std::vector<UiTransformStep> transform;
+    UiPlace transform_origin;
+
+    /// Virtual path of the shader the element is drawn with, without an
+    /// extension, and the values it is given. Empty for the shader of the
+    /// engine.
+    std::string shader;
+    std::vector<UiShaderValue> shader_values;
+
+    [[nodiscard]] bool HasSideColors() const
+    {
+      return border_top_color.has_value() || border_right_color.has_value() ||
+             border_bottom_color.has_value() || border_left_color.has_value();
+    }
 
     [[nodiscard]] Color BorderColor() const
     {

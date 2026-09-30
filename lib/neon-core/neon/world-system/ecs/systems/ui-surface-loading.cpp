@@ -1,0 +1,125 @@
+#include "ui-surface-loading.hpp"
+
+#include <format>
+#include <stdexcept>
+
+#include <neon/world-system/ecs/components/ui-surface-view.hpp>
+
+namespace neon
+{
+  UiSurfaceLoading::UiSurfaceLoading(UiContext *ui_context)
+  {
+    _ui_context = ui_context;
+  }
+
+  void UiSurfaceLoading::Initialize(EntityStore &store)
+  {
+    store.Register<UiSurfaceView>(kComponent_Name, [this](Entity, UiSurfaceView &view)
+    {
+      // what is shown on the surface goes with it
+      if (view.surface >= 0) { _ui_context->DestroySurface(view.surface); }
+
+      view.surface = -1;
+      view.document = -1;
+    });
+
+    _query = store.Query<UiSurfaceView>();
+  }
+
+  void UiSurfaceLoading::Update(EntityStore &store, double delta_time)
+  {
+    store.Each(_query, [this](const EntityBlock &block)
+    {
+      auto *views = block.Column<UiSurfaceView>(0);
+
+      for (std::size_t i = 0; i < block.count; i++)
+      {
+        UiSurfaceView &view = views[i];
+        if (view.is_tried) { continue; }
+
+        view.is_tried = true;
+        view.surface = _ui_context->CreateSurface(view.name, view.width, view.height, view.scale);
+
+        if (view.surface < 0)
+        {
+          throw std::runtime_error("The surface '" + view.name + "' of a user interface cannot be made");
+        }
+
+        view.document = _ui_context->LoadOnto(view.surface, view.ui);
+
+        if (view.document < 0)
+        {
+          throw std::runtime_error("The user interface " + view.ui + " cannot be used");
+        }
+      }
+    });
+  }
+
+  ComponentFormat UiSurfaceFormat()
+  {
+    return ComponentFormat::Of<UiSurfaceView>(
+      UiSurfaceLoading::kComponent_Name,
+      [](const DataReader &reader, UiSurfaceView &view)
+      {
+        if (!reader.Read("ui", view.ui) && !reader.Has("ui"))
+        {
+          reader.Report(std::format(
+            "{} has no 'ui', where the virtual path of a user interface was expected", reader.GetWhere()));
+        }
+
+        if ((!reader.Read("name", view.name) && !reader.Has("name")) || (reader.Has("name") && view.name.empty()))
+        {
+          reader.Report(std::format(
+            "{} has no 'name', where what the surface is called was expected. A model shows the surface as "
+            "the texture surface:// and the name",
+            reader.GetWhere()));
+        }
+
+        if (const auto *size = reader.ReadValue("size"); size != nullptr)
+        {
+          float width = 0.0f;
+          float height = 0.0f;
+
+          if (size->IsList() && size->GetItems().size() == 2 &&
+              size->GetItems()[0].GetNumber(width) && size->GetItems()[1].GetNumber(height) &&
+              width >= 1.0f && height >= 1.0f)
+          {
+            view.width = static_cast<int>(width);
+            view.height = static_cast<int>(height);
+          } else
+          {
+            reader.Report(*size, std::format(
+                            "'size' of {} is {}, where a list of 2 numbers above 0 was expected, such as "
+                            "[1024, 768]",
+                            reader.GetWhere(),
+                            size->IsList() ? "another list" : DataValue::Describe(size->GetKind())));
+          }
+        }
+
+        if (reader.Read("scale", view.scale) && view.scale <= 0.0f)
+        {
+          reader.Report(*reader.ReadValue("scale"), std::format(
+                          "'scale' of {} is {}, where a number above 0 was expected",
+                          reader.GetWhere(), view.scale));
+          view.scale = 1.0f;
+        }
+      },
+      [](const UiSurfaceView &view, DataValue &map)
+      {
+        const UiSurfaceView standard{};
+
+        map.Set("ui", DataValue::Text(view.ui));
+        map.Set("name", DataValue::Text(view.name));
+
+        if (view.width != standard.width || view.height != standard.height)
+        {
+          auto size = DataValue::List();
+          size.Add(DataValue::Number(view.width));
+          size.Add(DataValue::Number(view.height));
+          map.Set("size", size);
+        }
+
+        if (view.scale != standard.scale) { map.Set("scale", DataValue::Number(view.scale)); }
+      });
+  }
+} // neon

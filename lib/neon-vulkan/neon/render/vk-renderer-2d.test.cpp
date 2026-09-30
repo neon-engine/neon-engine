@@ -66,13 +66,17 @@ namespace
 
   TEST_F(VkRenderer2DTest, ACornerIsAsLargeAsTheShaderExpects)
   {
-    // two for the place, two for the texture, four for the colour, and one
-    // that says whether the texture is read, with nothing between them
-    EXPECT_EQ(sizeof(Vertex2D), 9 * sizeof(float));
+    // two for the place, two for the texture, four for the colour, one
+    // that says whether the texture is read, one for the shape, and two
+    // for the place in the shape, with nothing between them
+    EXPECT_EQ(sizeof(Vertex2D), 12 * sizeof(float));
     EXPECT_EQ(offsetof(Vertex2D, x), 0u);
     EXPECT_EQ(offsetof(Vertex2D, u), 2 * sizeof(float));
     EXPECT_EQ(offsetof(Vertex2D, color), 4 * sizeof(float));
     EXPECT_EQ(offsetof(Vertex2D, textured), 8 * sizeof(float));
+    EXPECT_EQ(offsetof(Vertex2D, shape), 9 * sizeof(float));
+    EXPECT_EQ(offsetof(Vertex2D, local_x), 10 * sizeof(float));
+    EXPECT_EQ(offsetof(Vertex2D, local_y), 11 * sizeof(float));
   }
 
   TEST_F(VkRenderer2DTest, TrianglesAreWellFormedWhenEveryCornerExists)

@@ -132,13 +132,27 @@ namespace neon
   {
     if (const auto found = _values.find(name); found != _values.end()) { return &found->second; }
 
+    // what is asked of the parent in vain is reported by the parent
+    if (_parent != nullptr) { return _parent->Find(name); }
+
     if (_missed.insert(name).second) { _newly_missed.push_back(name); }
     return nullptr;
   }
 
   std::uint64_t UiValues::GetRevision() const
   {
-    return _revision;
+    return _parent != nullptr ? _revision + _parent->GetRevision() : _revision;
+  }
+
+  bool UiValues::Has(const std::string &name) const
+  {
+    return _values.contains(name) || (_parent != nullptr && _parent->Has(name));
+  }
+
+  void UiValues::SetParent(const UiValues *parent)
+  {
+    _parent = parent != this ? parent : nullptr;
+    _revision++;
   }
 
   std::vector<std::string> UiValues::TakeMissed() const

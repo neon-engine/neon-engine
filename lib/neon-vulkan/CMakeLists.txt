@@ -18,6 +18,10 @@ add_library(${TARGET} STATIC
         neon/render/vk-texture.hpp
         neon/render/vk-render-system.cpp
         neon/render/vk-render-system.hpp
+        neon/render/vk-shader-values.cpp
+        neon/render/vk-shader-values.hpp
+        neon/render/vk-render-target.cpp
+        neon/render/vk-render-target.hpp
 )
 
 target_include_directories(${TARGET}
@@ -42,4 +46,6 @@ if (NEON_BUILD_TESTS)
   neon_add_unit_test(${TARGET} neon/render/vk-shader.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/vk-shader-data.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/vk-texture.test.cpp)
+  neon_add_unit_test(${TARGET} neon/render/vk-shader-values.test.cpp)
+  neon_add_unit_test(${TARGET} neon/render/vk-render-target.test.cpp)
 endif ()

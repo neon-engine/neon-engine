@@ -2,6 +2,8 @@
 
 #include <utility>
 
+#include "vk-render-target.hpp"
+
 namespace neon
 {
   VK_Material::VK_Material(
@@ -32,6 +34,20 @@ namespace neon
 
     for (const auto &texture_path : _texture_paths)
     {
+      // what a render target was drawn to is no file, and belongs to the
+      // target
+      if (const std::string surface = VK_RenderTarget::NameOf(texture_path); !surface.empty())
+      {
+        VK_Texture shown;
+        if (!_surface_lookup || !_surface_lookup(surface, shown)) { shown = VK_Texture(); }
+
+        _textures.push_back(shown);
+        _surface_names.push_back(surface);
+        continue;
+      }
+
+      _surface_names.emplace_back();
+
       VK_Texture texture(texture_path, _file_system_context, _device, _logger);
       if (!texture.Initialize())
       {
@@ -52,10 +68,51 @@ namespace neon
 
     while (!_textures.empty())
     {
-      _textures.back().CleanUp();
+      // what a render target was drawn to is released by the target
+      const bool is_surface = _textures.size() <= _surface_names.size() &&
+                              !_surface_names[_textures.size() - 1].empty();
+
+      if (!is_surface) { _textures.back().CleanUp(); }
       _textures.pop_back();
     }
+    _surface_names.clear();
     _initialized = false;
+  }
+
+  void VK_Material::SetSurfaceLookup(const SurfaceLookup &lookup)
+  {
+    _surface_lookup = lookup;
+  }
+
+  bool VK_Material::Shows(const std::string &surface_name) const
+  {
+    for (const auto &name : _surface_names)
+    {
+      if (!name.empty() && name == surface_name) { return true; }
+    }
+    return false;
+  }
+
+  bool VK_Material::ShowsSurfaces() const
+  {
+    for (const auto &name : _surface_names)
+    {
+      if (!name.empty()) { return true; }
+    }
+    return false;
+  }
+
+  void VK_Material::ResolveSurfaces(const VK_Texture &fallback)
+  {
+    for (std::size_t i = 0; i < _textures.size() && i < _surface_names.size(); i++)
+    {
+      if (_surface_names[i].empty()) { continue; }
+
+      VK_Texture shown;
+      if (!_surface_lookup || !_surface_lookup(_surface_names[i], shown)) { shown = fallback; }
+
+      _textures[i] = shown;
+    }
   }
 
   VK_ObjectData VK_Material::GetObjectData(const glm::mat4 &model, const Transform &transform) const

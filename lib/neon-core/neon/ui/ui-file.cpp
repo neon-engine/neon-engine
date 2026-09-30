@@ -12,6 +12,9 @@ namespace neon
   {
     const std::vector<std::string> scale_modes = {"fit", "width", "height", "none"};
 
+    const std::vector<std::string> font_styles = {"normal", "italic"};
+    const std::vector<std::string> font_renderings = {"bitmap", "sdf"};
+
     // in the order a later one wins over an earlier one
     const std::vector<std::string> state_names = {"focus", "hover", "active", "disabled"};
 
@@ -202,6 +205,16 @@ namespace neon
                                    "'weight' of {} is {}, where a number from 1 to 1000 was expected",
                                    font_reader.GetWhere(), weight));
             }
+          }
+
+          if (std::size_t style = 0; font_reader.ReadChoice("style", font_styles, style))
+          {
+            face.options.is_italic = style == 1;
+          }
+
+          if (std::size_t rendering = 0; font_reader.ReadChoice("rendering", font_renderings, rendering))
+          {
+            face.options.rendering = rendering == 1 ? GlyphRendering::DistanceField : GlyphRendering::Bitmap;
           }
 
           if (!has_family && !font_reader.Has("family"))

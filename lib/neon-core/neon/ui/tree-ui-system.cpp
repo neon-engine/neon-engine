@@ -29,13 +29,50 @@ namespace neon
     _logger = logger;
 
     _types.AddEngineElements();
+    _resources.SetDocumentFormat(format);
 
-    for (const auto &[family, weight, path] : _settings.fonts) { _resources.AddFace(family, weight, path); }
+    // the window, which is there from the start
+    auto window = std::make_unique<Surface>();
+    window->id = Ui_Window_Surface;
+    window->name = kWindow_Name;
+    _surfaces.push_back(std::move(window));
+
+    for (const auto &face : _settings.fonts) { _resources.AddFace(face.family, face.weight, face.path, face.options); }
   }
 
   UiElementTypes &Tree_UiSystem::GetElementTypes()
   {
     return _types;
+  }
+
+  void Tree_UiSystem::SetTextShaper(TextShaper *shaper)
+  {
+    _resources.SetTextShaper(shaper);
+  }
+
+  UiResources &Tree_UiSystem::GetResources()
+  {
+    return _resources;
+  }
+
+  void Tree_UiSystem::SetImageDecoder(ImageDecoder *decoder)
+  {
+    _resources.SetImageDecoder(decoder);
+  }
+
+  void Tree_UiSystem::SetVectorImageRasterizer(VectorImageRasterizer *rasterizer)
+  {
+    _resources.SetVectorImageRasterizer(rasterizer);
+  }
+
+  void Tree_UiSystem::AdvanceTime(const double seconds)
+  {
+    if (seconds > 0.0) { _time += seconds; }
+  }
+
+  double Tree_UiSystem::GetTime() const
+  {
+    return _time;
   }
 
   InputContext *Tree_UiSystem::GetGameInput()
@@ -69,6 +106,20 @@ namespace neon
     }
     _documents.clear();
 
+    // every surface but the window, which stays for what is shown next
+    for (std::size_t i = 1; i < _surfaces.size(); i++)
+    {
+      if (_surfaces[i] != nullptr && _surfaces[i]->target != No_Render_Target)
+      {
+        _renderer->DestroyRenderTarget(_surfaces[i]->target);
+      }
+    }
+    _surfaces.resize(1);
+    _surfaces[0]->pressed = nullptr;
+    _surfaces[0]->hovered = nullptr;
+    _input_surface = Ui_Window_Surface;
+    _refused_surfaces.clear();
+
     _focused = nullptr;
     _pressed = nullptr;
     _events.clear();
@@ -77,7 +128,25 @@ namespace neon
 
   int Tree_UiSystem::Load(const std::string &path)
   {
-    _logger->Info("Loading the user interface from {}", path);
+    return LoadOnto(Ui_Window_Surface, path);
+  }
+
+  int Tree_UiSystem::LoadOnto(const int surface, const std::string &path)
+  {
+    const Surface *onto = FindSurface(surface);
+    if (onto == nullptr)
+    {
+      _logger->Error("The user interface {} cannot be shown on surface {}, which does not exist", path, surface);
+      return -1;
+    }
+
+    if (onto->id == Ui_Window_Surface)
+    {
+      _logger->Info("Loading the user interface from {}", path);
+    } else
+    {
+      _logger->Info("Loading the user interface from {} onto the surface '{}'", path, onto->name);
+    }
 
     std::vector<std::string> errors;
     auto document = _file.Read(path, errors);
@@ -93,11 +162,27 @@ namespace neon
     }
 
     document->id = _next_id++;
+    document->surface = surface;
     document->frame.resources = &_resources;
-    document->frame.values = &_values;
 
-    for (const auto &[family, weight, font_path] : document->fonts) { _resources.AddFace(family, weight, font_path); }
-    for (const auto &[name, value] : document->values) { _values.SetDefault(name, value); }
+    // A user interface that has a name has values of its own, which fall
+    // back on those every user interface shares.
+    document->frame.values = document->name.empty() ? &_values : &ValuesOf(document->name);
+
+    for (const auto &face : document->fonts)
+    {
+      _resources.AddFace(face.family, face.weight, face.path, face.options);
+    }
+
+    // What a file starts its values with is shared on the window, where
+    // two files show the same health. A surface in the world keeps it to
+    // itself: what is shown there knows nothing of what is shown
+    // elsewhere. Neither replaces what the game has set there.
+    UiValues &defaults = surface == Ui_Window_Surface || document->name.empty()
+      ? _values
+      : ValuesOf(document->name);
+
+    for (const auto &[name, value] : document->values) { defaults.SetDefault(name, value); }
 
     document->root->CreateLayout(*_layout, &document->frame);
 
@@ -122,6 +207,13 @@ namespace neon
 
     if (DocumentOf(_focused) == found->get()) { _focused = nullptr; }
     if (DocumentOf(_pressed) == found->get()) { _pressed = nullptr; }
+
+    for (const auto &surface : _surfaces)
+    {
+      if (surface == nullptr) { continue; }
+      if (DocumentOf(surface->pressed) == found->get()) { surface->pressed = nullptr; }
+      if (DocumentOf(surface->hovered) == found->get()) { surface->hovered = nullptr; }
+    }
 
     (*found)->root->DestroyLayout(*_layout);
     _documents.erase(found);
@@ -173,16 +265,21 @@ namespace neon
 
   std::size_t Tree_UiSystem::FirstActive() const
   {
+    // Of what is shown on the window. A surface in the world takes no
+    // input away from the game, nor from another surface.
     for (std::size_t i = _documents.size(); i > 0; i--)
     {
-      if (_documents[i - 1]->modal) { return i - 1; }
+      if (_documents[i - 1]->modal && _documents[i - 1]->surface == Ui_Window_Surface) { return i - 1; }
     }
     return 0;
   }
 
   bool Tree_UiSystem::HasModal() const
   {
-    return std::ranges::any_of(_documents, [](const auto &document) { return document->modal; });
+    return std::ranges::any_of(_documents, [](const auto &document)
+    {
+      return document->modal && document->surface == Ui_Window_Surface;
+    });
   }
 
   UiDocument *Tree_UiSystem::DocumentOf(const UiElement *element) const
@@ -202,6 +299,10 @@ namespace neon
   {
     const UiDocument *document = DocumentOf(element);
     if (document == nullptr) { return false; }
+
+    // what is shown on a surface in the world is not in the way of a menu
+    // on the window, and not held back by one
+    if (document->surface != Ui_Window_Surface) { return true; }
 
     for (std::size_t i = FirstActive(); i < _documents.size(); i++)
     {
@@ -288,11 +389,16 @@ namespace neon
 
   void Tree_UiSystem::Arrange()
   {
-    const auto [width, height] = _renderer->GetRenderResolution();
-
     for (const auto &document : _documents)
     {
-      const float scale = document->ScaleFor(width, height);
+      const Surface *surface = FindSurface(document->surface);
+      if (surface == nullptr) { continue; }
+
+      int width = 0;
+      int height = 0;
+      SizeOf(*surface, width, height);
+
+      const float scale = document->ScaleFor(width, height) * surface->scale;
       document->frame.scale = scale;
 
       document->root->Prepare(*_layout, document->frame, false);
@@ -309,16 +415,247 @@ namespace neon
     }
   }
 
-  UiElement *Tree_UiSystem::HitTest(UiElement &element, const float scale, const float x, const float y)
+  Tree_UiSystem::Surface *Tree_UiSystem::FindSurface(const int surface) const
+  {
+    if (surface < 0 || static_cast<std::size_t>(surface) >= _surfaces.size()) { return nullptr; }
+
+    return _surfaces[surface].get();
+  }
+
+  void Tree_UiSystem::SizeOf(const Surface &surface, int &width, int &height) const
+  {
+    if (surface.id == Ui_Window_Surface)
+    {
+      const auto [frame_width, frame_height] = _renderer->GetRenderResolution();
+      width = frame_width;
+      height = frame_height;
+      return;
+    }
+
+    width = surface.width;
+    height = surface.height;
+  }
+
+  UiValues &Tree_UiSystem::ValuesOf(const std::string &interface)
+  {
+    auto &values = _values_of[interface];
+
+    if (values == nullptr)
+    {
+      values = std::make_unique<UiValues>();
+      values->SetParent(&_values);
+    }
+
+    return *values;
+  }
+
+  int Tree_UiSystem::CreateSurface(const std::string &name, const int width, const int height, const float scale)
+  {
+    // what is wrong is said once for a name, and not in every frame
+    const auto refuse = [this, &name](const std::string &reason)
+    {
+      if (std::ranges::find(_refused_surfaces, name) == _refused_surfaces.end())
+      {
+        _refused_surfaces.push_back(name);
+        _logger->Error("The surface '{}' cannot be created: {}", name, reason);
+      }
+      return No_Ui_Surface;
+    };
+
+    if (name.empty()) { return refuse("it has no name"); }
+    if (FindSurface(name) != No_Ui_Surface) { return refuse("there is a surface of that name"); }
+
+    if (width <= 0 || height <= 0)
+    {
+      return refuse(std::format("its size is {} by {}, where both are above 0", width, height));
+    }
+
+    if (scale <= 0.0f) { return refuse(std::format("its scale is {}, where a number above 0 was expected", scale)); }
+
+    const int target = _renderer->CreateRenderTarget(name, width, height);
+    if (target == No_Render_Target) { return refuse("the renderer made no render target for it"); }
+
+    auto surface = std::make_unique<Surface>();
+    surface->name = name;
+    surface->width = width;
+    surface->height = height;
+    surface->scale = scale;
+    surface->target = target;
+
+    // the place of one that was destroyed is taken again
+    for (std::size_t i = 1; i < _surfaces.size(); i++)
+    {
+      if (_surfaces[i] == nullptr)
+      {
+        surface->id = static_cast<int>(i);
+        _surfaces[i] = std::move(surface);
+        return static_cast<int>(i);
+      }
+    }
+
+    surface->id = static_cast<int>(_surfaces.size());
+    _surfaces.push_back(std::move(surface));
+
+    std::erase(_refused_surfaces, name);
+    return static_cast<int>(_surfaces.size()) - 1;
+  }
+
+  void Tree_UiSystem::DestroySurface(const int surface)
+  {
+    const Surface *found = FindSurface(surface);
+    if (found == nullptr || found->id == Ui_Window_Surface) { return; }
+
+    // what is shown on it goes with it
+    std::vector<int> shown;
+    for (const auto &document : _documents)
+    {
+      if (document->surface == surface) { shown.push_back(document->id); }
+    }
+    for (const int document : shown) { Unload(document); }
+
+    _logger->Info("Destroying the surface '{}'", found->name);
+    _renderer->DestroyRenderTarget(found->target);
+
+    if (_input_surface == surface)
+    {
+      _input_surface = Ui_Window_Surface;
+      _focused = nullptr;
+    }
+
+    _surfaces[surface].reset();
+  }
+
+  int Tree_UiSystem::FindSurface(const std::string &name) const
+  {
+    for (const auto &surface : _surfaces)
+    {
+      if (surface != nullptr && surface->name == name) { return surface->id; }
+    }
+    return No_Ui_Surface;
+  }
+
+  int Tree_UiSystem::GetSurfaceTexture(const int surface) const
+  {
+    const Surface *found = FindSurface(surface);
+    if (found == nullptr || found->target == No_Render_Target) { return No_Texture; }
+
+    return _renderer->GetRenderTargetTexture(found->target);
+  }
+
+  void Tree_UiSystem::SetPointer(const int surface, const float x, const float y, const bool is_down)
+  {
+    Surface *found = FindSurface(surface);
+
+    // the window is told by the input
+    if (found == nullptr || found->id == Ui_Window_Surface) { return; }
+
+    found->has_pointer = true;
+    found->pointer_x = x;
+    found->pointer_y = y;
+    found->pointer_is_down = is_down;
+  }
+
+  void Tree_UiSystem::SetPointerUv(const int surface, const float u, const float v, const bool is_down)
+  {
+    const Surface *found = FindSurface(surface);
+    if (found == nullptr) { return; }
+
+    SetPointer(
+      surface, u * static_cast<float>(found->width), v * static_cast<float>(found->height), is_down);
+  }
+
+  void Tree_UiSystem::ClearPointer(const int surface)
+  {
+    Surface *found = FindSurface(surface);
+    if (found == nullptr || found->id == Ui_Window_Surface) { return; }
+
+    found->has_pointer = false;
+    found->pointer_is_down = false;
+  }
+
+  bool Tree_UiSystem::SetInputSurface(const int surface)
+  {
+    if (FindSurface(surface) == nullptr) { return false; }
+    if (_input_surface == surface) { return true; }
+
+    _input_surface = surface;
+
+    // what had the focus is on the surface that has lost the input
+    _focused = nullptr;
+    _accept_was_down = _input->GetInputState()[Action::Ui_Accept];
+    return true;
+  }
+
+  int Tree_UiSystem::GetInputSurface() const
+  {
+    return _input_surface;
+  }
+
+  void Tree_UiSystem::SetNumberOf(const std::string &interface, const std::string &name, const double number)
+  {
+    ValuesOf(interface).Set(name, UiValue::Number(number));
+  }
+
+  void Tree_UiSystem::SetTextOf(const std::string &interface, const std::string &name, const std::string &text)
+  {
+    ValuesOf(interface).Set(name, UiValue::Text(text));
+  }
+
+  void Tree_UiSystem::SetFlagOf(const std::string &interface, const std::string &name, const bool flag)
+  {
+    ValuesOf(interface).Set(name, UiValue::Flag(flag));
+  }
+
+  void Tree_UiSystem::OnClickIn(
+    const std::string &interface,
+    const std::string &element,
+    const std::function<void()> &callback)
+  {
+    if (callback)
+    {
+      _callbacks_in[{interface, element}] = callback;
+    } else
+    {
+      _callbacks_in.erase({interface, element});
+    }
+  }
+
+  bool Tree_UiSystem::WasClickedIn(const std::string &interface, const std::string &element) const
+  {
+    return std::ranges::any_of(_events, [&](const UiEvent &event)
+    {
+      return event.kind == UiEvent::Kind::Click && event.document == interface && event.element == element;
+    });
+  }
+
+  const UiElement *Tree_UiSystem::FindIn(const std::string &interface, const std::string &name) const
+  {
+    if (name.empty()) { return nullptr; }
+
+    for (std::size_t i = _documents.size(); i > 0; i--)
+    {
+      if (_documents[i - 1]->name != interface) { continue; }
+
+      if (UiElement *found = FindByName(*_documents[i - 1]->root, name); found != nullptr) { return found; }
+    }
+    return nullptr;
+  }
+
+  UiElement *Tree_UiSystem::HitTest(UiElement &element, const float scale, float x, float y)
   {
     if (element.IsHidden()) { return nullptr; }
 
+    // The pointer is where the element is drawn. Where that is on the
+    // element itself follows from undoing what moved it, which holds for
+    // what is inside the element as well.
+    if (!element.ToLocal(scale, x, y)) { return nullptr; }
+
     const UiStyle &style = element.GetStyle();
-    const bool inside = ToPixels(element.GetBox(), scale).Contains(x, y);
+    const bool inside = element.Contains(scale, x, y);
 
     // what is cut off cannot be pointed at
     const bool children_can_be_hit =
-      style.overflow != UiOverflow::Hidden || ToPixels(element.GetPaddingBox(), scale).Contains(x, y);
+      style.overflow != UiOverflow::Hidden || element.ContainsInPadding(scale, x, y);
 
     if (children_can_be_hit)
     {
@@ -335,15 +672,66 @@ namespace neon
 
   UiElement *Tree_UiSystem::HitTest(const float x, const float y) const
   {
+    return HitTest(Ui_Window_Surface, x, y);
+  }
+
+  UiElement *Tree_UiSystem::HitTest(const int surface, const float x, const float y) const
+  {
     if (_documents.empty()) { return nullptr; }
 
-    const std::size_t first = FirstActive();
+    // on the window, what lies below a menu cannot be pointed at
+    const std::size_t first = surface == Ui_Window_Surface ? FirstActive() : 0;
+
     for (std::size_t i = _documents.size(); i > first; i--)
     {
       const UiDocument &document = *_documents[i - 1];
+      if (document.surface != surface) { continue; }
+
       if (UiElement *hit = HitTest(*document.root, document.frame.scale, x, y); hit != nullptr) { return hit; }
     }
     return nullptr;
+  }
+
+  void Tree_UiSystem::UpdatePointer(
+    Surface &surface,
+    const bool has_pointer,
+    const float x,
+    const float y,
+    const bool is_down)
+  {
+    if (surface.pressed != nullptr && (!CanBeUsed(surface.pressed) || !TakesInput(surface.pressed)))
+    {
+      surface.pressed = nullptr;
+    }
+
+    surface.hovered = has_pointer ? HitTest(surface.id, x, y) : nullptr;
+
+    const bool pointer_is_down = has_pointer && is_down;
+
+    if (pointer_is_down && !surface.pointer_was_down)
+    {
+      UiElement *hovered = surface.hovered;
+      surface.pressed = hovered != nullptr && hovered->IsClickable() && hovered->IsEnabled() ? hovered : nullptr;
+
+      // what is pressed takes the focus where the keys are
+      if (surface.pressed != nullptr && surface.pressed->IsFocusable() && surface.id == _input_surface)
+      {
+        _focused = surface.pressed;
+      }
+    }
+
+    // what it is over, and what it holds down, which includes the frame
+    // it lets go in
+    surface.uses_pointer = surface.hovered != nullptr || surface.pressed != nullptr;
+
+    if (!pointer_is_down && surface.pointer_was_down)
+    {
+      // a click is a press and a release on the same element
+      if (surface.pressed != nullptr && surface.hovered == surface.pressed) { Click(*surface.pressed); }
+      surface.pressed = nullptr;
+    }
+
+    surface.pointer_was_down = pointer_is_down;
   }
 
   void Tree_UiSystem::Click(const UiElement &element)
@@ -351,14 +739,26 @@ namespace neon
     if (element.GetName().empty()) { return; }
 
     const UiDocument *document = DocumentOf(&element);
-    _events.push_back({UiEvent::Kind::Click, element.GetName(), document != nullptr ? document->name : ""});
+    const Surface *surface = document != nullptr ? FindSurface(document->surface) : nullptr;
+
+    UiEvent event;
+    event.kind = UiEvent::Kind::Click;
+    event.element = element.GetName();
+    event.document = document != nullptr ? document->name : "";
+    event.surface = surface != nullptr ? surface->name : "";
+    _events.push_back(event);
   }
 
   void Tree_UiSystem::MoveFocus(const Direction direction)
   {
+    // of the surface that has the keys and the controller
     std::vector<UiElement *> candidates;
-    for (std::size_t i = FirstActive(); i < _documents.size(); i++)
+    const std::size_t first = _input_surface == Ui_Window_Surface ? FirstActive() : 0;
+
+    for (std::size_t i = first; i < _documents.size(); i++)
     {
+      if (_documents[i]->surface != _input_surface) { continue; }
+
       std::vector<UiElement *> elements;
       Collect(*_documents[i]->root, elements);
 
@@ -450,10 +850,15 @@ namespace neon
       if (each == &element) { is_hovered = true; }
     }
 
+    // what is pressed on the surface the element is on
+    const UiDocument *document = DocumentOf(&element);
+    const Surface *surface = document != nullptr ? FindSurface(document->surface) : nullptr;
+    const UiElement *pressed = surface != nullptr ? surface->pressed : nullptr;
+
     states.hover = takes_input && is_hovered;
     states.focus = takes_input && &element == _focused;
     states.active = takes_input &&
-                    ((&element == _pressed && hovered == _pressed) ||
+                    ((&element == pressed && hovered == pressed) ||
                      (&element == _focused && accept_is_down));
 
     element.SetStates(states);
@@ -467,6 +872,7 @@ namespace neon
   void Tree_UiSystem::Update()
   {
     _events.clear();
+    _resources.BeginFrame();
 
     const InputState &input = _input->GetInputState();
     const bool modal = HasModal();
@@ -477,6 +883,12 @@ namespace neon
       _gate.Refresh({});
       _pointer_was_down = input[Action::Pointer_Primary];
       _accept_was_down = input[Action::Ui_Accept];
+
+      for (const auto &surface : _surfaces)
+      {
+        if (surface != nullptr) { surface->pointer_was_down = surface->pointer_is_down; }
+      }
+      _surfaces[Ui_Window_Surface]->pointer_was_down = _pointer_was_down;
       return;
     }
 
@@ -485,38 +897,49 @@ namespace neon
 
     Arrange();
 
-    // what can no longer be used loses the focus
+    // what can no longer be used loses the focus, and so does what is on a
+    // surface that does not have the keys
     if (_focused != nullptr && (!CanBeUsed(_focused) || !TakesInput(_focused))) { _focused = nullptr; }
-    if (_pressed != nullptr && (!CanBeUsed(_pressed) || !TakesInput(_pressed))) { _pressed = nullptr; }
+
+    if (const UiDocument *document = DocumentOf(_focused);
+      document != nullptr && document->surface != _input_surface)
+    {
+      _focused = nullptr;
+    }
 
     UiConsumed consumed;
     consumed.everything = modal;
 
-    // the pointer
-    UiElement *hovered = nullptr;
-    if (input.HasPointer())
+    // The pointer of every surface. That of the window comes from the
+    // input, and that of every other from whoever knows where the player
+    // points on it.
+    for (const auto &surface : _surfaces)
     {
-      hovered = HitTest(static_cast<float>(input.GetPointer().x), static_cast<float>(input.GetPointer().y));
+      if (surface == nullptr) { continue; }
+
+      if (surface->id == Ui_Window_Surface)
+      {
+        const bool has_pointer = input.HasPointer();
+
+        UpdatePointer(
+          *surface,
+          has_pointer,
+          has_pointer ? static_cast<float>(input.GetPointer().x) : 0.0f,
+          has_pointer ? static_cast<float>(input.GetPointer().y) : 0.0f,
+          input[Action::Pointer_Primary]);
+      } else
+      {
+        UpdatePointer(
+          *surface, surface->has_pointer, surface->pointer_x, surface->pointer_y, surface->pointer_is_down);
+      }
     }
 
-    const bool pointer_is_down = input.HasPointer() && input[Action::Pointer_Primary];
+    const Surface &window = *_surfaces[Ui_Window_Surface];
+    _pressed = window.pressed;
+    _pointer_was_down = window.pointer_was_down;
 
-    if (pointer_is_down && !_pointer_was_down)
-    {
-      _pressed = hovered != nullptr && hovered->IsClickable() && hovered->IsEnabled() ? hovered : nullptr;
-      if (_pressed != nullptr && _pressed->IsFocusable()) { _focused = _pressed; }
-    }
-
-    consumed.pointer = hovered != nullptr || _pressed != nullptr;
-
-    if (!pointer_is_down && _pointer_was_down)
-    {
-      // a click is a press and a release on the same element
-      if (_pressed != nullptr && hovered == _pressed) { Click(*_pressed); }
-      _pressed = nullptr;
-    }
-
-    _pointer_was_down = pointer_is_down;
+    // what the window uses of the pointer is not left for the game
+    consumed.pointer = window.uses_pointer;
 
     // the keys and the controller
     constexpr Action directions[4] = {Action::Ui_Up, Action::Ui_Right, Action::Ui_Down, Action::Ui_Left};
@@ -539,7 +962,11 @@ namespace neon
     const std::size_t first = FirstActive();
     for (std::size_t i = 0; i < _documents.size(); i++)
     {
-      ApplyStates(*_documents[i]->root, hovered, i >= first, accept_is_down);
+      const UiDocument &document = *_documents[i];
+      const Surface *surface = FindSurface(document.surface);
+
+      const bool takes_input = document.surface != Ui_Window_Surface || i >= first;
+      ApplyStates(*document.root, surface != nullptr ? surface->hovered : nullptr, takes_input, accept_is_down);
     }
 
     _gate.Refresh(consumed);
@@ -549,6 +976,14 @@ namespace neon
     const std::vector<UiEvent> events = _events;
     for (const auto &event : events)
     {
+      // the one for the element of one user interface, where there is one
+      if (const auto found = _callbacks_in.find({event.document, event.element}); found != _callbacks_in.end())
+      {
+        const std::function<void()> callback = found->second;
+        callback();
+        continue;
+      }
+
       if (const auto found = _callbacks.find(event.element); found != _callbacks.end())
       {
         const std::function<void()> callback = found->second;
@@ -557,20 +992,63 @@ namespace neon
     }
   }
 
+  void Tree_UiSystem::Paint(const Surface &surface)
+  {
+    int width = 0;
+    int height = 0;
+    SizeOf(surface, width, height);
+
+    _painter.Begin(width, height);
+    _painter.SetTime(static_cast<float>(_time));
+
+    for (const auto &document : _documents)
+    {
+      if (document->surface == surface.id) { document->root->Paint(_painter, document->frame, 1.0f); }
+    }
+
+    _painter.End();
+    _draw_calls += _painter.GetDrawCalls();
+    _quads += _painter.GetQuads();
+  }
+
   void Tree_UiSystem::Draw()
   {
     _draw_calls = 0;
+    _quads = 0;
     if (_documents.empty()) { return; }
 
     // once more, since a state may have changed the size of an element
     Arrange();
 
-    const auto [width, height] = _renderer->GetRenderResolution();
-    _painter.Begin(width, height);
+    // The surfaces in the world first, each into its image, so that they
+    // are finished when the frame is, which shows them.
+    for (std::size_t i = 1; i < _surfaces.size(); i++)
+    {
+      if (_surfaces[i] == nullptr) { continue; }
 
-    for (const auto &document : _documents) { document->root->Paint(_painter, document->frame, 1.0f); }
+      const Surface &surface = *_surfaces[i];
 
-    _painter.End();
-    _draw_calls = _painter.GetDrawCalls();
+      const bool is_shown = std::ranges::any_of(_documents, [&surface](const auto &document)
+      {
+        return document->surface == surface.id;
+      });
+      if (!is_shown) { continue; }
+
+      // see-through where nothing is drawn, so that what shows the
+      // surface decides what is behind it
+      if (!_renderer->BeginRenderTarget(surface.target, {0.0f, 0.0f, 0.0f, 0.0f})) { continue; }
+
+      Paint(surface);
+      _renderer->EndRenderTarget();
+    }
+
+    Paint(*_surfaces[Ui_Window_Surface]);
+
+    // said when it changes, and not in every frame
+    if (_draw_calls != _reported_draw_calls)
+    {
+      _reported_draw_calls = _draw_calls;
+      _logger->Debug("The user interface is drawn with {} draw calls and {} rectangles", _draw_calls, _quads);
+    }
   }
 } // neon

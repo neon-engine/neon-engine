@@ -3,6 +3,8 @@ set(TARGET neon-stb)
 add_library(${TARGET} STATIC
         neon/text/stb-font-rasterizer.cpp
         neon/text/stb-font-rasterizer.hpp
+        neon/image/stb-image-decoder.cpp
+        neon/image/stb-image-decoder.hpp
 )
 
 target_include_directories(${TARGET}
@@ -31,6 +33,36 @@ if (NEON_BUILD_TESTS)
     file(WRITE "${TEST_FONT_HEADER}"
             "// Written by CMake from ${TEST_FONT}\n"
             "inline constexpr unsigned char test_font[] = {${TEST_FONT_BYTES}};\n")
+  endif ()
+
+  target_include_directories(${NEON_UNIT_TEST_TARGET} PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/generated")
+
+  neon_add_unit_test(${TARGET} neon/image/stb-image-decoder.test.cpp)
+
+  # the same for images
+  set(TEST_IMAGES_HEADER "${CMAKE_CURRENT_BINARY_DIR}/generated/test-images.hpp")
+  set(TEST_IMAGE_FILES
+          "${CMAKE_SOURCE_DIR}/app/NeonRuntime/assets/ui/heart.png"
+          "${CMAKE_SOURCE_DIR}/app/NeonRuntime/assets/ui/test-card.jpg"
+  )
+  set(TEST_IMAGE_NAMES png_image jpeg_image)
+
+  set(IS_STALE FALSE)
+  foreach (TEST_IMAGE IN LISTS TEST_IMAGE_FILES)
+    if (NOT EXISTS "${TEST_IMAGES_HEADER}" OR "${TEST_IMAGE}" IS_NEWER_THAN "${TEST_IMAGES_HEADER}")
+      set(IS_STALE TRUE)
+    endif ()
+  endforeach ()
+
+  if (IS_STALE)
+    set(TEST_IMAGES_TEXT "// Written by CMake from the images of the runtime\n")
+    foreach (TEST_IMAGE TEST_IMAGE_NAME IN ZIP_LISTS TEST_IMAGE_FILES TEST_IMAGE_NAMES)
+      file(READ "${TEST_IMAGE}" TEST_IMAGE_BYTES HEX)
+      string(REGEX REPLACE "([0-9a-f][0-9a-f])" "0x\\1," TEST_IMAGE_BYTES "${TEST_IMAGE_BYTES}")
+      string(APPEND TEST_IMAGES_TEXT
+              "inline constexpr unsigned char ${TEST_IMAGE_NAME}[] = {${TEST_IMAGE_BYTES}};\n")
+    endforeach ()
+    file(WRITE "${TEST_IMAGES_HEADER}" "${TEST_IMAGES_TEXT}")
   endif ()
 
   target_include_directories(${NEON_UNIT_TEST_TARGET} PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/generated")

@@ -9,6 +9,7 @@
 #include <neon/render/render-2d-context.hpp>
 #include <neon/text/text-layout.hpp>
 
+#include "ui-paint.hpp"
 #include "ui-resources.hpp"
 
 namespace neon
@@ -59,6 +60,30 @@ namespace neon
       UiRectangle part{0.0f, 0.0f, 1.0f, 1.0f};
       Color color;
       bool textured = false;
+
+      /// How the texture is read, as Vertex2D says. Below 0 stands for
+      /// what `textured` says.
+      float mode = -1.0f;
+
+      /// A colour for each corner, from the left top one around to the
+      /// left bottom one, in place of `color`.
+      bool has_corner_colors = false;
+      Color corners[4];
+
+      /// The shape the rectangle is a part of, or nullptr, and the box of
+      /// the shape.
+      const Shape2D *shape = nullptr;
+      UiRectangle shape_box;
+    };
+
+    /// What a call is drawn with next to its texture. Rectangles share a
+    /// call while it stays the same.
+    struct State
+    {
+      TextureFilter2D filter = TextureFilter2D::Smooth;
+      int material = No_Material;
+      std::vector<MaterialValue2D> material_values;
+      UiRectangle material_box;
     };
 
     Render2DContext *_renderer;
@@ -69,9 +94,25 @@ namespace neon
     std::size_t _draw_calls = 0;
     std::size_t _quads = 0;
 
+    std::vector<UiMatrix> _transforms;
+
+    // For each clip with round corners the number of clips there were
+    // when it was added, so that it ends with the clip it came with.
+    std::vector<std::pair<std::size_t, RoundedClip2D>> _rounded_clips;
+
+    State _state;
+    float _time = 0.0f;
+
     void Add(const Quad &quad, int texture);
 
     void SetClip();
+
+    /// Starts a new call when what it is drawn with has changed.
+    void SetState();
+
+    /// The place of a shape among those of the call, which it joins when
+    /// it is not the one that was added last.
+    [[nodiscard]] float PlaceOf(const Shape2D &shape);
 
   public:
     explicit UiPainter(Render2DContext *renderer);
@@ -118,7 +159,85 @@ namespace neon
     [[nodiscard]] std::size_t GetDrawCalls() const;
 
     [[nodiscard]] std::size_t GetQuads() const;
+
+    /// Seconds since the user interface was started, which shaders that
+    /// move are told.
+    void SetTime(float seconds);
+
+    /// From now on everything is moved by the matrix, and by those that
+    /// were pushed before it.
+    void PushTransform(const UiMatrix &matrix);
+
+    void PopTransform();
+
+    /// What a point is moved by now.
+    [[nodiscard]] const UiMatrix &GetTransform() const;
+
+    /// As PushClip(), and nothing is drawn outside the round corners
+    /// either. One such clip applies at a time, the one that was pushed
+    /// last. Under a transform that turns, the corners are not cut off.
+    void PushRoundedClip(const UiRectangle &rectangle, const float radii[4]);
+
+    void PopRoundedClip();
+
+    /// How textures are read from now on.
+    void SetFilter(TextureFilter2D filter);
+
+    /// From now on everything is drawn with the shader of a material,
+    /// which is told the box of the element it is for. No_Material draws
+    /// with the shader of the renderer again.
+    void SetMaterial(int material, const std::vector<MaterialValue2D> &values, const UiRectangle &box);
+
+    /// A shape over its box. `rectangle` is what is drawn, which is larger
+    /// than the box for a shadow. With an image, the shape is filled with
+    /// the part of the image.
+    void FillShape(
+      const UiRectangle &rectangle,
+      const UiRectangle &box,
+      const Shape2D &shape,
+      const Color &color);
+
+    void FillShape(
+      const UiRectangle &rectangle,
+      const UiRectangle &box,
+      const Shape2D &shape,
+      const UiImage &image,
+      const UiRectangle &part,
+      const Color &tint);
+
+    /// A rectangle with a colour for each corner, from the left top one
+    /// around to the left bottom one.
+    void FillRectangle(const UiRectangle &rectangle, const Color corners[4]);
+
+    /// A glyph from a page of an atlas. `mode` is 1 for a bitmap and 2 for
+    /// distances. `shape` says what is done to a glyph of distances, or is
+    /// nullptr.
+    void DrawGlyph(
+      int texture,
+      const UiRectangle &place,
+      const UiRectangle &part,
+      const Color corners[4],
+      float mode,
+      const Shape2D *shape,
+      const UiRectangle &shape_box);
   };
+
+  /// The shape of a box with round corners, in pixels.
+  [[nodiscard]] Shape2D BoxShape(const UiRectangle &box, const float radii[4], ShapeKind2D kind);
+
+  /// Puts a gradient into a shape.
+  void SetGradient(Shape2D &shape, const UiGradient &gradient, float opacity);
+
+  /// The distance of a point to the outline of a box with round corners,
+  /// below 0 inside. `x` and `y` are counted from the middle of the box.
+  /// It is what the shader works out for every pixel, and what says
+  /// whether a pointer is on an element.
+  [[nodiscard]] float DistanceToRoundedBox(
+    float x,
+    float y,
+    float half_width,
+    float half_height,
+    const float radii[4]);
 } // neon
 
 #endif //UI_PAINTER_HPP

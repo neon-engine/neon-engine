@@ -14,6 +14,13 @@ namespace neon
   /// Stands for no texture.
   constexpr int No_Texture = -1;
 
+  /// Stands for the shader of the renderer itself.
+  constexpr int No_Material = -1;
+
+  /// Stands for the frame, which is what is drawn to when nothing else is
+  /// said.
+  constexpr int No_Render_Target = -1;
+
   /// A corner of a triangle that is drawn in two dimensions.
   struct Vertex2D
   {
@@ -36,7 +43,130 @@ namespace neon
     /// call with shapes that have a texture, such as a panel with its text.
     /// What hands over triangles with a texture and knows nothing of this
     /// leaves it at 1.
+    ///
+    /// 2 reads the alpha of the texture as the distance to an outline, as
+    /// of a glyph that is kept as distances: 0.5 on the outline, more
+    /// inside.
     float textured = 1.0f;
+
+    /// Which of the shapes of the call the corner belongs to, or below 0
+    /// for none. The four corners of a rectangle name the same shape.
+    float shape = -1.0f;
+
+    /// Where the corner is in its shape, in pixels from the middle of the
+    /// box of the shape, to the right and down.
+    float local_x = 0.0f;
+    float local_y = 0.0f;
+  };
+
+  /// What a shape is, which says how the other numbers are read.
+  enum class ShapeKind2D
+  {
+    /// A box with round corners, filled with the colour and the texture of
+    /// its corners, or with a gradient.
+    Fill = 0,
+
+    /// The border of such a box, each side in a colour of its own.
+    Border,
+
+    /// The shadow such a box casts around itself.
+    Shadow,
+
+    /// The shadow that falls into such a box.
+    InsetShadow,
+
+    /// Glyphs that are kept as distances, with a line around them or out
+    /// of focus.
+    Text
+  };
+
+  /// A shape that is worked out for every pixel from the distance to its
+  /// outline, so that it is sharp at every size and needs no texture. The
+  /// edge is smoothed over one pixel.
+  ///
+  /// Every part is four numbers, which is how a shader reads them.
+  struct Shape2D
+  {
+    /// Half the width and half the height of the box in pixels, the kind,
+    /// and nothing.
+    float box[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+
+    /// The radius of the corners in pixels: left top, right top, right
+    /// bottom, left bottom.
+    float radii[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+
+    /// Of a border, its widths: top, right, bottom, left. Of a shadow,
+    /// how far it is moved to the right and down, the deviation of its
+    /// blur, and how much larger than the box it is. Of text, the width
+    /// of the line around a glyph, how far it is out of focus, and the
+    /// pixels of the texture its distances reach over.
+    float widths[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+
+    /// 0 for none, 1 for a linear and 2 for a radial gradient; the angle
+    /// in radians, clockwise from the top; the number of colours; nothing.
+    float gradient[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+
+    /// Of a border, the colours of its sides: top, right, bottom, left. Of
+    /// text, the colour of the line around a glyph. Alpha is not
+    /// multiplied into the colours.
+    float colors[4][4] = {};
+
+    /// Where the colours of the gradient lie, from 0 to 1, and the
+    /// colours.
+    float stop_positions[8] = {};
+    float stop_colors[8][4] = {};
+  };
+
+  /// A value a shader of an element is given, by the name the shader
+  /// declares it under.
+  struct MaterialValue2D
+  {
+    std::string name;
+
+    /// One number, or as many as `count` says: four for a colour.
+    float numbers[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+    int count = 1;
+  };
+
+  /// A box with round corners that nothing is drawn outside of.
+  struct RoundedClip2D
+  {
+    /// The middle of the box in pixels of what is drawn to, and half its
+    /// size.
+    float center_x = 0.0f;
+    float center_y = 0.0f;
+    float half_width = 0.0f;
+    float half_height = 0.0f;
+
+    /// Left top, right top, right bottom, left bottom.
+    float radii[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+
+    bool operator==(const RoundedClip2D &other) const = default;
+  };
+
+  /// How a texture is read where it is drawn at another size than it has.
+  enum class TextureFilter2D
+  {
+    /// Blended from the pixels around, and from its smaller copies when it
+    /// has them.
+    Smooth = 0,
+
+    /// The nearest pixel, which keeps art that is drawn pixel by pixel as
+    /// it is.
+    Pixelated
+  };
+
+  /// How a texture is kept.
+  struct TextureOptions2D
+  {
+    /// Smaller copies, each half the size of the one before, for an image
+    /// that is drawn smaller than it is. They are made with alpha
+    /// multiplied into the colours, so that a pixel that is see-through
+    /// does not darken its neighbours.
+    bool has_smaller_copies = false;
+
+    /// Whether the image starts again past its edge.
+    bool repeats = false;
   };
 
   /// A part of the frame, in pixels from its left top corner.
@@ -72,6 +202,28 @@ namespace neon
     /// Whether nothing is drawn outside `clip`.
     bool clipped = false;
     ClipRectangle clip;
+
+    /// The shapes the corners refer to.
+    std::vector<Shape2D> shapes;
+
+    /// Whether nothing is drawn outside `rounded_clip` either.
+    bool has_rounded_clip = false;
+    RoundedClip2D rounded_clip;
+
+    TextureFilter2D filter = TextureFilter2D::Smooth;
+
+    /// The shader the triangles are drawn with, as CreateMaterial() made
+    /// it, or No_Material, and what it is given.
+    int material = No_Material;
+    std::vector<MaterialValue2D> material_values;
+
+    /// The box the shader of a material is told about: its left top
+    /// corner and its size, in pixels.
+    float material_box[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+
+    /// Seconds since the user interface was started, for shaders that
+    /// move.
+    float time = 0.0f;
   };
 
   /// What a renderer offers for drawing in two dimensions: triangles in
@@ -118,6 +270,93 @@ namespace neon
 
     /// The size of the frame in pixels.
     virtual const RenderResolution &GetRenderResolution() = 0;
+
+    // What follows can be left as it is by a renderer. What asks for it
+    // is told that it is not there, and does without.
+
+    /// Replaces a part of a texture that CreateTexture() made, such as the
+    /// glyphs a font has drawn since. `pixels` holds the part alone, row
+    /// after row. What was drawn with the texture in this frame shows what
+    /// it holds when the frame is finished. Returns false when the texture
+    /// cannot be written to.
+    virtual bool UpdateTexture(
+      const int texture,
+      const int x,
+      const int y,
+      const int width,
+      const int height,
+      const std::vector<unsigned char> &pixels)
+    {
+      return false;
+    }
+
+    /// As CreateTexture(), with a say in how the texture is kept.
+    virtual int CreateTextureWith(
+      const int width,
+      const int height,
+      const std::vector<unsigned char> &pixels,
+      const TextureOptions2D &options)
+    {
+      return CreateTexture(width, height, pixels);
+    }
+
+    /// Makes a shader ready that elements are drawn with. `shader_path` is
+    /// a virtual path without an extension, such as
+    /// `assets://shaders/ui/shine`. Returns what the material is known as,
+    /// or No_Material when the shader cannot be used, which is said once.
+    virtual int CreateMaterial(const std::string &shader_path)
+    {
+      return No_Material;
+    }
+
+    virtual void DestroyMaterial(const int material) {}
+
+    /// Makes an image that is drawn to in place of the frame, and that is
+    /// then drawn with as a texture: in two dimensions with what
+    /// GetRenderTargetTexture() returns, and on a model that names
+    /// `surface://` and the name as one of its textures.
+    ///
+    /// Returns what the target is known as, or No_Render_Target when it
+    /// cannot be made or the name is taken.
+    virtual int CreateRenderTarget(const std::string &name, const int width, const int height)
+    {
+      return No_Render_Target;
+    }
+
+    /// Releases a target. Models that show it show plain white from then
+    /// on.
+    virtual void DestroyRenderTarget(const int target) {}
+
+    /// From now on DrawTriangles() draws into the target, which is cleared
+    /// to `clear` first. Returns false when there is no such target, or
+    /// when one is being drawn to already. A target is drawn to once in a
+    /// frame, and is finished before the frame that shows it.
+    virtual bool BeginRenderTarget(const int target, const Color &clear)
+    {
+      return false;
+    }
+
+    /// From now on DrawTriangles() draws into the frame again.
+    virtual void EndRenderTarget() {}
+
+    /// The texture a target is drawn with in two dimensions, or
+    /// No_Texture.
+    virtual int GetRenderTargetTexture(const int target)
+    {
+      return No_Texture;
+    }
+
+    /// The size of a target in pixels.
+    virtual bool GetRenderTargetSize(const int target, int &width, int &height)
+    {
+      return false;
+    }
+
+    /// The target of a name, or No_Render_Target.
+    virtual int FindRenderTarget(const std::string &name)
+    {
+      return No_Render_Target;
+    }
   };
 } // neon
 

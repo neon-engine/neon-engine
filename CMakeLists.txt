@@ -122,6 +122,8 @@ add_subdirectory(lib/neon-ryml)
 add_subdirectory(lib/neon-miniaudio)
 add_subdirectory(lib/neon-jolt)
 add_subdirectory(lib/neon-stb)
+add_subdirectory(lib/neon-freetype)
+add_subdirectory(lib/neon-lunasvg)
 
 # Load additional cmake
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/CopyAssets.cmake")

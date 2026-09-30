@@ -1,0 +1,41 @@
+# Small text at the sizes a user interface uses, to judge by eye whether
+# the letters are spaced evenly. It is shown with
+#
+#   NeonRuntime --ui assets://ui/text-sizes.ui.yml
+#
+# A unit is a pixel here, so that a size is the size that is drawn.
+
+ui: text-sizes
+version: 1
+
+scale: none
+
+root:
+  type: panel
+  width: 100%
+  height: 100%
+  children:
+    - type: panel
+      position: absolute
+      top: 24
+      left: 24
+      padding: 16
+      gap: 6
+      flex_direction: column
+      background_color: "#101418"
+      children:
+        - type: label
+          text: "11 Resume  Illiterate waffle  AVATAR To. 0123456789"
+          font_size: 11
+        - type: label
+          text: "12 Resume  Illiterate waffle  AVATAR To. 0123456789"
+          font_size: 12
+        - type: label
+          text: "13 Resume  Illiterate waffle  AVATAR To. 0123456789"
+          font_size: 13
+        - type: label
+          text: "14 Resume  Illiterate waffle  AVATAR To. 0123456789"
+          font_size: 14
+        - type: label
+          text: "16 Resume  Illiterate waffle  AVATAR To. 0123456789"
+          font_size: 16

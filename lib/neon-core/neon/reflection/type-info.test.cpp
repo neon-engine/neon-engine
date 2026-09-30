@@ -42,6 +42,9 @@ namespace
     Mood mood = Mood::Calm;
     Armor armor;
 
+    // the width of each of its two stripes
+    std::vector<float> stripes{1.0f, 1.0f};
+
     // kept as radians, seen as degrees
     float turn = 0.0f;
 
@@ -68,6 +71,8 @@ namespace
       armor.Field("thickness", [](Monster &monster) -> float & { return monster.armor.thickness; });
       armor.Field("tint", [](Monster &monster) -> Color & { return monster.armor.tint; });
     }).Describe("What it wears");
+
+    type.Field("stripes", &Monster::stripes).Count(2).Above(0);
 
     type.Field<float>(
       "turn",
@@ -152,7 +157,7 @@ namespace
     for (const auto &field : _type.fields) { names.push_back(field.name); }
 
     EXPECT_THAT(names, ElementsAre(
-                  "alive", "legs", "speed", "name", "home", "skin", "sounds", "mood", "armor", "turn"));
+                  "alive", "legs", "speed", "name", "home", "skin", "sounds", "mood", "armor", "stripes", "turn"));
   }
 
   TEST_F(TypeInfoTest, DeducesWhatAFieldHoldsFromTheMember)
@@ -166,6 +171,7 @@ namespace
     EXPECT_EQ(_type.Find("sounds")->kind, FieldKind::TextList);
     EXPECT_EQ(_type.Find("mood")->kind, FieldKind::Choice);
     EXPECT_EQ(_type.Find("armor")->kind, FieldKind::Group);
+    EXPECT_EQ(_type.Find("stripes")->kind, FieldKind::NumberList);
     EXPECT_EQ(_type.Find("turn")->kind, FieldKind::Number);
   }
 
@@ -180,6 +186,8 @@ namespace
     EXPECT_FALSE(_type.Find("alive")->required);
     EXPECT_TRUE(_type.Find("home")->one_number_for_all);
     EXPECT_TRUE(_type.Find("mood")->always_written);
+    EXPECT_EQ(_type.Find("stripes")->count, 2);
+    EXPECT_FALSE(_type.Find("sounds")->count.has_value());
   }
 
   TEST_F(TypeInfoTest, WhatFollowsAGroupIsAboutTheGroup)
@@ -212,7 +220,7 @@ namespace
   {
     EXPECT_THAT(_type.GetPaths(), ElementsAre(
                   "alive", "legs", "speed", "name", "home", "skin", "sounds", "mood",
-                  "armor.thickness", "armor.tint", "turn"));
+                  "armor.thickness", "armor.tint", "stripes", "turn"));
   }
 
   // reading
@@ -228,6 +236,7 @@ namespace
     _monster.sounds = {"growl", "hiss"};
     _monster.mood = Mood::Angry;
     _monster.armor.thickness = 2.0f;
+    _monster.stripes = {0.5f, 0.25f};
 
     EXPECT_FALSE(Get<bool>("alive"));
     EXPECT_EQ(Get<int>("legs"), 6);
@@ -238,6 +247,7 @@ namespace
     EXPECT_THAT(Get<std::vector<std::string>>("sounds"), ElementsAre("growl", "hiss"));
     EXPECT_EQ(Get<std::string>("mood"), "angry");
     EXPECT_EQ(Get<float>("armor.thickness"), 2.0f);
+    EXPECT_THAT(Get<std::vector<float>>("stripes"), ElementsAre(0.5f, 0.25f));
   }
 
   TEST_F(TypeInfoTest, ReadsAFieldThatIsKeptAsSomethingElse)
@@ -267,6 +277,7 @@ namespace
     Set("sounds", std::vector<std::string>{"roar"});
     Set("mood", std::string("asleep"));
     Set("armor.tint", Color{0.0f, 1.0f, 0.0f, 1.0f});
+    Set("stripes", std::vector{2.0f, 3.0f});
     Set("turn", 180.0f);
 
     EXPECT_FALSE(_monster.alive);
@@ -278,6 +289,7 @@ namespace
     EXPECT_THAT(_monster.sounds, ElementsAre("roar"));
     EXPECT_EQ(_monster.mood, Mood::Asleep);
     EXPECT_EQ(_monster.armor.tint.g, 1.0f);
+    EXPECT_THAT(_monster.stripes, ElementsAre(2.0f, 3.0f));
     EXPECT_FLOAT_EQ(_monster.turn, glm::radians(180.0f));
   }
 
@@ -307,6 +319,20 @@ namespace
     EXPECT_EQ(Check("alive", 1), "'alive' of Monster takes true or false");
     EXPECT_EQ(Check("home", 1.0f), "'home' of Monster takes three numbers");
     EXPECT_EQ(Check("name", FieldValue{}), "'name' of Monster takes text");
+    EXPECT_EQ(Check("stripes", 1.0f), "'stripes' of Monster takes a list of numbers");
+  }
+
+  TEST_F(TypeInfoTest, RefusesAListOfNumbersThatHoldsNotAsManyAsItHasTo)
+  {
+    EXPECT_EQ(Check("stripes", std::vector{1.0f}), "'stripes' of Monster holds 1 number, where 2 were expected");
+    EXPECT_EQ(Check("stripes", std::vector{1.0f, 2.0f, 3.0f}), "'stripes' of Monster holds 3 numbers, where 2 were expected");
+    EXPECT_EQ(Check("stripes", std::vector{1.0f, 2.0f}), "");
+  }
+
+  TEST_F(TypeInfoTest, RefusesAListOfNumbersWhereOneIsNotWhatItHasToBe)
+  {
+    EXPECT_EQ(Check("stripes", std::vector{1.0f, 0.0f}), "'stripes' of Monster has to be above 0");
+    EXPECT_EQ(Check("stripes", std::vector{-1.0f, 1.0f}), "'stripes' of Monster has to be above 0");
   }
 
   TEST_F(TypeInfoTest, RefusesAWordThatIsNotAmongTheChoices)
@@ -384,6 +410,15 @@ namespace
     EXPECT_TRUE(neon::Same(FieldValue{Texts{"a", "b"}}, FieldValue{Texts{"a", "b"}}));
     EXPECT_FALSE(neon::Same(FieldValue{Texts{"a", "b"}}, FieldValue{Texts{"b", "a"}}));
     EXPECT_TRUE(neon::Same(FieldValue{Texts{}}, FieldValue{Texts{}}));
+  }
+
+  TEST(FieldValue, TwoListsAreTheSameWhenTheirNumbersAreInTheSameOrder)
+  {
+    using Numbers = std::vector<float>;
+
+    EXPECT_TRUE(neon::Same(FieldValue{Numbers{1.0f, 2.0f}}, FieldValue{Numbers{1.0f, 2.0f}}));
+    EXPECT_FALSE(neon::Same(FieldValue{Numbers{1.0f, 2.0f}}, FieldValue{Numbers{2.0f, 1.0f}}));
+    EXPECT_FALSE(neon::Same(FieldValue{Numbers{1.0f}}, FieldValue{Numbers{1.0f, 1.0f}}));
   }
 
   TEST(FieldValue, TwoValuesThatHoldNothingAreTheSame)

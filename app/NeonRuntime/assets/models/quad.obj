@@ -1,0 +1,17 @@
+# Made for Neon Engine, under the license of the repository.
+#
+# A flat square of 1 by 1 that faces along +Z, for what shows an image or a
+# surface of a user interface: a monitor, a sign, a mirror. The whole image
+# lies on it once, with its top at the top.
+o Quad
+v -0.5 -0.5 0.0
+v 0.5 -0.5 0.0
+v 0.5 0.5 0.0
+v -0.5 0.5 0.0
+vt 0.0 0.0
+vt 1.0 0.0
+vt 1.0 1.0
+vt 0.0 1.0
+vn 0.0 0.0 1.0
+f 1/1/1 2/2/1 3/3/1
+f 1/1/1 3/3/1 4/4/1

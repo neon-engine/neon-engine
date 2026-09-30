@@ -63,6 +63,7 @@ It is deduced from the member.
 | `glm::vec3` | Vector | `[x, y, z]` |
 | `Color` | Color | `[red, green, blue]`, or with alpha as a fourth |
 | `std::vector<std::string>` | TextList | A list of texts |
+| `std::vector<float>` | NumberList | A list of numbers, such as a size `[width, height]` |
 | An enum, with `Choice()` | Choice | One of its words |
 | Several, with `Group()` | Group | A map |
 
@@ -85,7 +86,8 @@ outside.
 |---|---|
 | `.Describe(text)` | What the field is for. For the editor |
 | `.Required()` | A text that must not be empty |
-| `.Above(n)`, `.AtLeast(n)`, `.AtMost(n)` | What a number may be |
+| `.Above(n)`, `.AtLeast(n)`, `.AtMost(n)` | What a number may be. For a list of numbers, every number |
+| `.Count(n)` | How many numbers a list of numbers holds, when it is always as many |
 | `.OneNumberForAll()` | One number may be written for a vector, as for a scale |
 | `.AlwaysWritten()` | Written even when it holds its default, as the type of a light |
 
@@ -153,7 +155,7 @@ say.
 | Written in C++ by hand, not generated | No step in the build and no tool to keep. C++ gains reflection of its own with C++26, which no compiler of the toolchain offers yet |
 | Next to the type | It is changed when the type is changed, by whoever changes it |
 | A field is reached through functions, not through its place in memory | It works for a member of a member and for a value that is kept as something else. It does not depend on how the compiler lays out a struct |
-| A value is one of eight types | Code that works with any component needs a closed set to handle. A new kind is added in one place |
+| A value is one of nine types | Code that works with any component needs a closed set to handle. A new kind is added in one place |
 | A scene file is the same as before | Descriptions replace how components are read and written, not what is read and written |
 
 One message changed. A renderable that lacks a model or a shader is told which

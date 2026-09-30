@@ -36,13 +36,17 @@ namespace neon
         const glm::vec3 position = transform.world_coordinates[3];
         const auto view = lookAt(position, position + transform.Forward(), camera.up);
 
-        _render_pipeline->SetCameraInfo({
-          camera.target,
-          camera.fov,
-          view,
-          camera.near_plane,
-          camera.far_plane
-        });
+        CameraInfo info;
+        info.target = camera.target;
+        info.fov = camera.fov;
+        info.view = view;
+        info.near = camera.near_plane;
+        info.far = camera.far_plane;
+        info.texture = camera.texture;
+        info.width = camera.texture_width;
+        info.height = camera.texture_height;
+
+        _render_pipeline->SetCameraInfo(info);
       }
     });
 

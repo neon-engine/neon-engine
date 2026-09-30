@@ -35,7 +35,10 @@ namespace neon
 
     /// Fields that belong together under a name of their own, such as the
     /// material of what is drawn. A group holds no value itself.
-    Group
+    Group,
+
+    /// A list of numbers, such as a size in pixels.
+    NumberList
   };
 
   /// The value of a field, whatever the type of the field is in C++.
@@ -51,7 +54,8 @@ namespace neon
     std::string,
     glm::vec3,
     Color,
-    std::vector<std::string>>;
+    std::vector<std::string>,
+    std::vector<float>>;
 
   /// What a kind is called in a message, such as `a number`.
   [[nodiscard]] std::string Describe(FieldKind kind);

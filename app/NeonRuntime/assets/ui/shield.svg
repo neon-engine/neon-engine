@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Made for Neon Engine, under the license of the repository. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="face" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7cc4ff"/>
+      <stop offset="1" stop-color="#2a5bd7"/>
+    </linearGradient>
+  </defs>
+  <path d="M32 4 L56 12 V30 C56 45 46 55 32 60 C18 55 8 45 8 30 V12 Z"
+        fill="url(#face)" stroke="#0e1a33" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M32 12 L49 17.5 V30 C49 41 42 48.5 32 52.5 Z" fill="#ffffff" fill-opacity="0.22"/>
+  <path d="M22 31 L29.5 38.5 L43 24" fill="none" stroke="#ffffff" stroke-width="5"
+        stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

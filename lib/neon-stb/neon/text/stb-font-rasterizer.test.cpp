@@ -237,4 +237,60 @@ namespace
     EXPECT_GT(placed.width, 100);
     EXPECT_LT(placed.width, 140);
   }
+
+  TEST_F(StbFontRasterizerTest, DrawsAGlyphByItsNumberAndByItsCharacterAlike)
+  {
+    unsigned int index = 0;
+    ASSERT_TRUE(_rasterizer.GetGlyph(_font, U'g', index));
+    EXPECT_NE(index, 0u);
+
+    GlyphBitmap by_number;
+    ASSERT_TRUE(_rasterizer.RasterizeGlyph(_font, 32, index, {}, by_number));
+
+    const GlyphBitmap by_character = Draw(U'g');
+    EXPECT_EQ(by_number.width, by_character.width);
+    EXPECT_EQ(by_number.coverage, by_character.coverage);
+    EXPECT_EQ(by_number.advance, by_character.advance);
+
+    unsigned int missing = 0;
+    EXPECT_FALSE(_rasterizer.GetGlyph(_font, 0x4E2D, missing));
+    EXPECT_FALSE(_rasterizer.RasterizeGlyph(_font, 32, 1000000, {}, by_number));
+  }
+
+  TEST_F(StbFontRasterizerTest, MovesAGlyphByAPartOfAPixel)
+  {
+    unsigned int index = 0;
+    ASSERT_TRUE(_rasterizer.GetGlyph(_font, U'l', index));
+
+    neon::GlyphOptions options;
+    options.offset_x = 0.5f;
+
+    GlyphBitmap at_zero;
+    GlyphBitmap moved;
+    ASSERT_TRUE(_rasterizer.RasterizeGlyph(_font, 13, index, {}, at_zero));
+    ASSERT_TRUE(_rasterizer.RasterizeGlyph(_font, 13, index, options, moved));
+
+    EXPECT_EQ(moved.advance, at_zero.advance);
+    EXPECT_NE(moved.coverage, at_zero.coverage);
+  }
+
+  TEST_F(StbFontRasterizerTest, RefusesWhatItCannotDraw)
+  {
+    unsigned int index = 0;
+    ASSERT_TRUE(_rasterizer.GetGlyph(_font, U'A', index));
+
+    GlyphBitmap glyph;
+
+    neon::GlyphOptions distances;
+    distances.rendering = neon::GlyphRendering::DistanceField;
+    EXPECT_FALSE(_rasterizer.RasterizeGlyph(_font, 32, index, distances, glyph));
+
+    neon::GlyphOptions outline;
+    outline.stroke = 2.0f;
+    EXPECT_FALSE(_rasterizer.RasterizeGlyph(_font, 32, index, outline, glyph));
+
+    neon::GlyphOptions leaning;
+    leaning.slant = 0.2f;
+    EXPECT_FALSE(_rasterizer.RasterizeGlyph(_font, 32, index, leaning, glyph));
+  }
 }

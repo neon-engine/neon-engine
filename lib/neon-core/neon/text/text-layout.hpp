@@ -15,7 +15,12 @@ namespace neon
   {
     Left = 0,
     Center,
-    Right
+    Right,
+
+    /// The side a text starts at and the side it ends at, which depend on
+    /// the way it runs.
+    Start,
+    End
   };
 
   struct TextOptions

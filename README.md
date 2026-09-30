@@ -32,6 +32,11 @@ Special thanks to [Akusha](https://vgen.co/Akusha/portfolio) for the logo for th
     - [spdlog](https://github.com/gabime/spdlog)
   - [x] Texture Loading
     - [stb](https://github.com/nothings/stb)
+  - [x] Text
+    - [FreeType](https://freetype.org)
+    - [HarfBuzz](https://harfbuzz.github.io)
+  - [x] Vector Images
+    - [LunaSVG](https://github.com/sammycage/lunasvg)
 - Other features
   - Scripting Engine
     - [ ] LUA Bindings

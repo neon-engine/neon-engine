@@ -70,6 +70,52 @@ namespace
                   "hud.ui.yml:3: the root has no 'type'"));
   }
 
+  TEST(DataReader, ReadsAListOfNumbersOfAnyLength)
+  {
+    std::vector<std::string> errors;
+    auto list = DataValue::List();
+    list.Add(DataValue::Number(512.0f));
+    list.Add(DataValue::Number(384.0f));
+    auto map = DataValue::Map();
+    map.Set("size", list);
+    map.Set("none", DataValue::List());
+    const DataReader reader(map, "hud.ui.yml", "the root", errors);
+
+    std::vector<float> size;
+    EXPECT_TRUE(reader.Read("size", size));
+    EXPECT_THAT(size, ElementsAre(512.0f, 384.0f));
+
+    std::vector<float> none{1.0f};
+    EXPECT_TRUE(reader.Read("none", none));
+    EXPECT_THAT(none, ElementsAre());
+
+    EXPECT_FALSE(reader.Read("missing", size));
+    EXPECT_THAT(errors, ElementsAre());
+  }
+
+  TEST(DataReader, ReportsWhatIsNoNumberInAListOfNumbers)
+  {
+    std::vector<std::string> errors;
+    auto list = DataValue::List();
+    list.Add(DataValue::Number(512.0f));
+    auto word = DataValue::Text("wide");
+    word.SetLine(5);
+    list.Add(word);
+    auto map = DataValue::Map();
+    map.Set("size", list);
+    map.Set("scale", DataValue::Number(2.0f));
+    const DataReader reader(map, "hud.ui.yml", "the root", errors);
+
+    std::vector<float> size{7.0f};
+    EXPECT_FALSE(reader.Read("size", size));
+    EXPECT_FALSE(reader.Read("scale", size));
+
+    EXPECT_THAT(size, ElementsAre(7.0f));
+    EXPECT_THAT(errors, ElementsAre(
+                  "hud.ui.yml:5: 'size' of the root holds text, where a number was expected",
+                  "hud.ui.yml: 'scale' of the root is a number, where a list of numbers was expected"));
+  }
+
   TEST(DataReader, AReaderOfAPartWritesToTheSameErrors)
   {
     std::vector<std::string> errors;

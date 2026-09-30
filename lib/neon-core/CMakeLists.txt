@@ -206,6 +206,36 @@ add_library(${TARGET} STATIC
         neon/world-system/ecs/systems/spectator-movement.hpp
         neon/world-system/ecs/systems/transform-propagation.cpp
         neon/world-system/ecs/systems/transform-propagation.hpp
+
+        # text that is shaped, and what boxes are painted with
+        neon/text/text-shaper.hpp
+        neon/text/glyph-atlas.cpp
+        neon/text/glyph-atlas.hpp
+        neon/text/text-case.cpp
+        neon/text/text-case.hpp
+        neon/text/shaped-text.cpp
+        neon/text/shaped-text.hpp
+        neon/ui/ui-paint.cpp
+        neon/ui/ui-paint.hpp
+        neon/ui/css-functions.cpp
+        neon/ui/css-functions.hpp
+
+        # images
+        neon/image/image-pixels.cpp
+        neon/image/image-pixels.hpp
+        neon/image/image-decoder.hpp
+        neon/image/vector-image-rasterizer.hpp
+        neon/ui/ui-box-paint.cpp
+        neon/ui/ui-box-paint.hpp
+        neon/ui/ui-image-paint.cpp
+        neon/ui/ui-image-paint.hpp
+        neon/world-system/ecs/systems/ui-clock.cpp
+        neon/world-system/ecs/systems/ui-clock.hpp
+
+        # user interfaces on surfaces in the world
+        neon/world-system/ecs/components/ui-surface-view.hpp
+        neon/world-system/ecs/systems/ui-surface-loading.cpp
+        neon/world-system/ecs/systems/ui-surface-loading.hpp
 )
 
 target_include_directories(${TARGET}
@@ -239,6 +269,8 @@ if (NEON_BUILD_TESTS)
           neon/testing/mock-world-system.hpp
           neon/testing/recording-logger.hpp
           neon/testing/temporary-directory.hpp
+          neon/testing/fake-text-shaper.hpp
+          neon/testing/fake-images.hpp
   )
 
   target_link_libraries(neon-testing INTERFACE
@@ -291,4 +323,14 @@ if (NEON_BUILD_TESTS)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/spectator-movement.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/transform-propagation.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/ui-view-loading.test.cpp)
+  neon_add_unit_test(${TARGET} neon/image/image-pixels.test.cpp)
+  neon_add_unit_test(${TARGET} neon/text/glyph-atlas.test.cpp)
+  neon_add_unit_test(${TARGET} neon/text/shaped-text.test.cpp)
+  neon_add_unit_test(${TARGET} neon/text/text-case.test.cpp)
+  neon_add_unit_test(${TARGET} neon/ui/css-functions.test.cpp)
+  neon_add_unit_test(${TARGET} neon/ui/ui-paint.test.cpp)
+  neon_add_unit_test(${TARGET} neon/ui/ui-box-paint.test.cpp)
+  neon_add_unit_test(${TARGET} neon/ui/ui-values-fallback.test.cpp)
+  neon_add_unit_test(${TARGET} neon/render/forward-render-pipeline-cameras.test.cpp)
+  neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/ui-clock.test.cpp)
 endif ()

@@ -275,8 +275,242 @@ namespace neon
     return true;
   }
 
+  bool VK_Texture::InitializeWithLevels(const std::vector<ImagePixels> &levels, const VK_TextureOptions &options)
+  {
+    if (_initialized)
+    {
+      _logger->Warn("Texture {} was already initialized", _texture_path);
+      return true;
+    }
+
+    if (levels.empty() || levels.front().IsEmpty())
+    {
+      _logger->Error("Texture {} has no pixels", _texture_path);
+      return false;
+    }
+
+    const VkDevice device = _device->Device();
+    const auto width = static_cast<uint32_t>(levels.front().width);
+    const auto height = static_cast<uint32_t>(levels.front().height);
+    const auto mip_levels = static_cast<uint32_t>(levels.size());
+
+    VkDeviceSize size = 0;
+    for (const auto &level : levels) { size += level.pixels.size(); }
+
+    VkBuffer staging = VK_NULL_HANDLE;
+    VkDeviceMemory staging_memory = VK_NULL_HANDLE;
+    if (!_device->CreateBuffer(
+      size,
+      VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+      staging,
+      staging_memory))
+    {
+      return false;
+    }
+
+    const auto release_staging = [&]
+    {
+      vkDestroyBuffer(device, staging, nullptr);
+      vkFreeMemory(device, staging_memory, nullptr);
+    };
+
+    void *mapped = nullptr;
+    if (vkMapMemory(device, staging_memory, 0, size, 0, &mapped) != VK_SUCCESS)
+    {
+      release_staging();
+      return false;
+    }
+
+    VkDeviceSize offset = 0;
+    for (const auto &level : levels)
+    {
+      std::memcpy(static_cast<unsigned char *>(mapped) + offset, level.pixels.data(), level.pixels.size());
+      offset += level.pixels.size();
+    }
+    vkUnmapMemory(device, staging_memory);
+
+    if (!_device->CreateImage(
+          width,
+          height,
+          mip_levels,
+          texture_format,
+          VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+          _image,
+          _memory))
+    {
+      release_staging();
+      return false;
+    }
+
+    const VkCommandBuffer commands = _device->BeginCommands();
+    constexpr VkImageAspectFlags color = VK_IMAGE_ASPECT_COLOR_BIT;
+
+    VK_Device::TransitionImage(
+      commands, _image, color, 0, mip_levels,
+      VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+    offset = 0;
+    for (uint32_t level = 0; level < mip_levels; level++)
+    {
+      VkBufferImageCopy region{};
+      region.bufferOffset = offset;
+      region.imageSubresource = {color, level, 0, 1};
+      region.imageExtent = {
+        static_cast<uint32_t>(levels[level].width), static_cast<uint32_t>(levels[level].height), 1};
+
+      vkCmdCopyBufferToImage(commands, staging, _image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+      offset += levels[level].pixels.size();
+    }
+
+    VK_Device::TransitionImage(
+      commands, _image, color, 0, mip_levels,
+      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+    const bool uploaded = _device->EndCommands(commands);
+    release_staging();
+
+    if (!uploaded || !_device->CreateImageView(_image, texture_format, color, mip_levels, _view))
+    {
+      _logger->Error("Could not upload texture {}", _texture_path);
+      CleanUp();
+      return false;
+    }
+
+    VkSamplerCreateInfo sampler{};
+    sampler.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    sampler.magFilter = VK_FILTER_LINEAR;
+    sampler.minFilter = VK_FILTER_LINEAR;
+    sampler.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+
+    const VkSamplerAddressMode address_mode = options.repeat
+      ? VK_SAMPLER_ADDRESS_MODE_REPEAT
+      : VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+
+    sampler.addressModeU = address_mode;
+    sampler.addressModeV = address_mode;
+    sampler.addressModeW = address_mode;
+    sampler.maxAnisotropy = 1.0f;
+    sampler.maxLod = static_cast<float>(mip_levels);
+
+    if (vkCreateSampler(device, &sampler, nullptr, &_sampler) != VK_SUCCESS)
+    {
+      _logger->Error("Could not create the sampler of texture {}", _texture_path);
+      CleanUp();
+      return false;
+    }
+
+    _width = width;
+    _height = height;
+    _mip_levels = mip_levels;
+    _initialized = true;
+    return true;
+  }
+
+  bool VK_Texture::Update(
+    const unsigned char *pixels,
+    const uint32_t x,
+    const uint32_t y,
+    const uint32_t width,
+    const uint32_t height,
+    const bool premultiply_alpha)
+  {
+    if (!_initialized || _is_borrowed || _mip_levels != 1 || pixels == nullptr) { return false; }
+    if (width == 0 || height == 0 || x + width > _width || y + height > _height) { return false; }
+
+    const VkDevice device = _device->Device();
+    const VkDeviceSize size = static_cast<VkDeviceSize>(width) * height * 4;
+
+    VkBuffer staging = VK_NULL_HANDLE;
+    VkDeviceMemory staging_memory = VK_NULL_HANDLE;
+    if (!_device->CreateBuffer(
+      size,
+      VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+      staging,
+      staging_memory))
+    {
+      return false;
+    }
+
+    void *mapped = nullptr;
+    if (vkMapMemory(device, staging_memory, 0, size, 0, &mapped) != VK_SUCCESS)
+    {
+      vkDestroyBuffer(device, staging, nullptr);
+      vkFreeMemory(device, staging_memory, nullptr);
+      return false;
+    }
+
+    std::memcpy(mapped, pixels, size);
+
+    if (premultiply_alpha)
+    {
+      auto *bytes = static_cast<unsigned char *>(mapped);
+      for (VkDeviceSize i = 0; i < size; i += 4)
+      {
+        const unsigned int alpha = bytes[i + 3];
+        for (int channel = 0; channel < 3; channel++)
+        {
+          bytes[i + channel] = static_cast<unsigned char>((bytes[i + channel] * alpha + 127) / 255);
+        }
+      }
+    }
+
+    vkUnmapMemory(device, staging_memory);
+
+    // Run at once, and not with the commands of the frame. What the frame
+    // has drawn with the texture so far reads it when the frame is
+    // finished, and finds what is written here.
+    const VkCommandBuffer commands = _device->BeginCommands();
+    constexpr VkImageAspectFlags color = VK_IMAGE_ASPECT_COLOR_BIT;
+
+    VK_Device::TransitionImage(
+      commands, _image, color, 0, 1,
+      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+    VkBufferImageCopy region{};
+    region.imageSubresource = {color, 0, 0, 1};
+    region.imageOffset = {static_cast<int32_t>(x), static_cast<int32_t>(y), 0};
+    region.imageExtent = {width, height, 1};
+    vkCmdCopyBufferToImage(commands, staging, _image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+
+    VK_Device::TransitionImage(
+      commands, _image, color, 0, 1,
+      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+    const bool updated = _device->EndCommands(commands);
+
+    vkDestroyBuffer(device, staging, nullptr);
+    vkFreeMemory(device, staging_memory, nullptr);
+    return updated;
+  }
+
+  VK_Texture VK_Texture::Borrowed(
+    const VkImageView view,
+    const VkSampler sampler,
+    const uint32_t width,
+    const uint32_t height)
+  {
+    VK_Texture texture;
+    texture._view = view;
+    texture._sampler = sampler;
+    texture._width = width;
+    texture._height = height;
+    texture._is_borrowed = true;
+    texture._initialized = true;
+    return texture;
+  }
+
   void VK_Texture::CleanUp()
   {
+    if (_is_borrowed)
+    {
+      _view = VK_NULL_HANDLE;
+      _sampler = VK_NULL_HANDLE;
+      _initialized = false;
+      return;
+    }
+
     if (_device == nullptr) { return; }
     const VkDevice device = _device->Device();
 

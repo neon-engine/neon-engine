@@ -791,14 +791,15 @@ namespace
         "    weight: 7000\n"
         "  - family: body\n"
         "    src: assets://fonts/regular.ttf\n"
-        "    style: italic\n"
+        "    stretch: wide\n"
         "root:\n"
         "  type: panel\n"),
       ElementsAre(
         "assets://ui/test.ui.yml:2: font 1 has no 'src', where the virtual path of a font was expected",
         "assets://ui/test.ui.yml:3: font 2 has no 'family', where the name it is asked for by was expected",
         "assets://ui/test.ui.yml:4: 'weight' of font 2 is 7000, where a number from 1 to 1000 was expected",
-        "assets://ui/test.ui.yml:7: 'style' is not known to font 3. Known are: family, src, weight"));
+        "assets://ui/test.ui.yml:7: 'stretch' is not known to font 3. Known are: family, src, weight, style, "
+        "rendering"));
   }
 
   TEST_F(UiFileTest, SaysWhatIsWrongWithAValue)
@@ -1009,7 +1010,8 @@ namespace
     },
     WrongProperty{
       "text_align: justify",
-      "'text_align' of button 'start' is 'justify', where one of these was expected: left, center, right"
+      "'text_align' of button 'start' is 'justify', where one of these was expected: left, center, right, "
+      "start, end"
     },
     WrongProperty{
       "background_color: red",

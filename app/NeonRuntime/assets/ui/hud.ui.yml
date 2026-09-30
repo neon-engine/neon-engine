@@ -45,6 +45,7 @@ root:
               text: "Health: {health}"
               font_size: 28
               font_weight: bold
+              text_shadow: "0 2px 4px #000000c0"
         - type: bar
           value: "{health}"
           max: 100
@@ -52,6 +53,8 @@ root:
           height: 12
           background_color: "#00000080"
           accent_color: "#e5484d"
+          border_radius: 6
+          overflow: hidden
         - type: label
           text: "{player}"
           font_size: 16
@@ -78,6 +81,11 @@ root:
           text: Resume
           autofocus: true
           min_width: 160
+          border_radius: 8
+          # a band of light that moves over the button
+          shader: assets://shaders/ui/shine
+          shader_values: { speed: 0.4, width: 0.15, lean: 0.4, tint: "#ffffff50" }
         - type: button
           name: quit
           text: Quit
+          border_radius: 8

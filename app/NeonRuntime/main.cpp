@@ -15,7 +15,10 @@
 #include <neon/layout/flex-layout-engine.hpp>
 #include <neon/render/forward-render-pipeline.hpp>
 #include <neon/render/vk-render-system.hpp>
-#include <neon/text/stb-font-rasterizer.hpp>
+#include <neon/image/luna-vector-image-rasterizer.hpp>
+#include <neon/image/stb-image-decoder.hpp>
+#include <neon/text/ft-font-rasterizer.hpp>
+#include <neon/text/hb-text-shaper.hpp>
 #include <neon/ui/tree-ui-system.hpp>
 #include <neon/window/headless-window-system.hpp>
 #include <neon/window/sdl2-window-system.hpp>
@@ -24,6 +27,8 @@
 #include <neon/world-system/ecs/systems/audio-playback.hpp>
 #include <neon/world-system/ecs/systems/physics-simulation.hpp>
 #include <neon/world-system/ecs/scene-file/ui-view-format.hpp>
+#include <neon/world-system/ecs/systems/ui-clock.hpp>
+#include <neon/world-system/ecs/systems/ui-surface-loading.hpp>
 #include <neon/world-system/ecs/systems/ui-view-loading.hpp>
 #include <neon/world-system/flecs-entity-store.hpp>
 
@@ -146,8 +151,12 @@ int main(const int argc, char *argv[])
   neon::RYML_DocumentFormat yaml;
 
   // The user interface: menus, and what is shown during play. Its text is
-  // drawn with Inter unless a file names another font.
-  neon::STB_FontRasterizer font_rasterizer;
+  // drawn with Inter unless a file names another font. Glyphs are drawn
+  // with FreeType and text is shaped with HarfBuzz. STB_FontRasterizer of
+  // neon-stb stands in for the first where neither is wanted, and draws
+  // text that is not shaped.
+  neon::FT_FontRasterizer font_rasterizer;
+  neon::HB_TextShaper text_shaper;
   neon::Flex_LayoutEngine layout_engine;
 
   neon::Tree_UiSystem ui_system(
@@ -166,6 +175,15 @@ int main(const int argc, char *argv[])
     },
     logging_system.CreateLogger("Tree_UiSystem"));
 
+  ui_system.SetTextShaper(&text_shaper);
+
+  // Images are read with stb_image, and those that are made of shapes are
+  // drawn with LunaSVG at the size they have on the screen.
+  neon::STB_ImageDecoder image_decoder;
+  neon::LUNA_VectorImageRasterizer vector_image_rasterizer;
+  ui_system.SetImageDecoder(&image_decoder);
+  ui_system.SetVectorImageRasterizer(&vector_image_rasterizer);
+
   neon::SceneFile scene(
     &file_system,
     &yaml,
@@ -174,6 +192,9 @@ int main(const int argc, char *argv[])
 
   // a scene names the user interface it comes with as a component
   scene.GetComponentFormats().Add(neon::UiViewFormat());
+
+  // and the user interfaces that are shown on surfaces in the world
+  scene.GetComponentFormats().Add(neon::UiSurfaceFormat());
 
   // the world reads the input less what the user interface has used
   neon::EntityWorld world(
@@ -186,6 +207,8 @@ int main(const int argc, char *argv[])
 
   world.AddSystem(std::make_unique<neon::AudioPlayback>(&audio_system));
   world.AddSystem(std::make_unique<neon::UiViewLoading>(&ui_system));
+  world.AddSystem(std::make_unique<neon::UiClock>(&ui_system));
+  world.AddSystem(std::make_unique<neon::UiSurfaceLoading>(&ui_system));
 
   // The physics. The world steps at a fixed rate, and the system that is
   // added here takes a step of the physics in each. Systems of a game are

@@ -147,6 +147,11 @@ left:
 | Styles that are shared (#40) | A style block with selectors, which is the step towards CSS |
 | Animation, themes, localisation, rich text (#75) | |
 | A library with a language of its own (#78) | RmlUi is the candidate. The interface for drawing in two dimensions takes what it hands over |
+| Text that mixes directions (#74) | The Unicode Bidirectional Algorithm. SheenBidi is the candidate |
+| WebP, colour emoji, variable fonts, fonts as several distances (#76) | Each needs a library, or a font to try it with |
+| `filter`, `backdrop_filter`, opacity of a group (#76) | Built from render targets, which are there |
+| Surfaces that are drawn when something changed | Every surface is drawn in every frame |
+| A ray that finds where the player points on a screen in the world (#73) | The physics |
 
 This is separate from the interface of the editor, which uses Dear ImGui.
 Dear ImGui suits tools. It is not meant for what players see.

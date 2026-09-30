@@ -6,6 +6,7 @@
 #include <format>
 #include <vector>
 
+#include "css-functions.hpp"
 #include "css-values.hpp"
 
 namespace neon
@@ -27,8 +28,16 @@ namespace neon
     };
     const std::vector<std::string> overflows = {"visible", "hidden"};
     const std::vector<std::string> pointer_events = {"auto", "none"};
-    const std::vector<std::string> text_aligns = {"left", "center", "right"};
-    const std::vector<std::string> object_fits = {"fill", "contain", "cover"};
+    const std::vector<std::string> text_aligns = {"left", "center", "right", "start", "end"};
+    const std::vector<std::string> object_fits = {"fill", "contain", "cover", "none", "scale-down"};
+    const std::vector<std::string> text_transforms = {"none", "uppercase", "lowercase", "capitalize"};
+    const std::vector<std::string> white_spaces = {"normal", "nowrap", "pre", "pre-wrap", "pre-line"};
+    const std::vector<std::string> text_overflows = {"clip", "ellipsis"};
+    const std::vector<std::string> font_styles = {"normal", "italic"};
+    const std::vector<std::string> directions = {"ltr", "rtl"};
+    const std::vector<std::string> image_renderings = {"auto", "pixelated"};
+    const std::vector<std::string> background_repeats = {"repeat", "no-repeat", "repeat-x", "repeat-y"};
+    const std::vector<std::string> border_image_repeats = {"stretch", "repeat", "round"};
 
     /// What a value is called in a message: the text itself, or its kind.
     std::string Describe(const DataValue &value)
@@ -431,6 +440,516 @@ namespace neon
         return false;
       }
 
+      /// The text of a value, where a number counts as text as well.
+      static bool AsText(const DataValue &value, std::string &text)
+      {
+        if (float number = 0.0f; value.GetNumber(number))
+        {
+          text = std::format("{}", number);
+          return true;
+        }
+
+        return value.GetText(text);
+      }
+
+      /// A colour, or a gradient in its place.
+      bool ColourOrGradient(const std::string &name, Color &color, std::optional<UiGradient> &gradient) const
+      {
+        const auto *value = _reader.ReadValue(name);
+        if (value == nullptr) { return false; }
+
+        if (std::string text; value->GetText(text))
+        {
+          if (UiGradient read; ParseCssGradient(text, read))
+          {
+            gradient = read;
+
+            // what stands in for the gradient where one colour is asked
+            // for, such as the line under a text
+            color = read.stops.front().color;
+            return true;
+          }
+
+          if (text.find("-gradient(") != std::string::npos)
+          {
+            Expected(
+              name, *value,
+              "a gradient such as linear-gradient(90deg, #f00, #00f) with 2 to 8 colours");
+            return false;
+          }
+        }
+
+        if (!Colour(name, color)) { return false; }
+
+        gradient.reset();
+        return true;
+      }
+
+      bool Spacing(const std::string &name, float &spacing) const
+      {
+        const auto *value = _reader.ReadValue(name);
+        if (value == nullptr) { return false; }
+
+        if (std::string text; value->GetText(text) && text == "normal")
+        {
+          spacing = 0.0f;
+          return true;
+        }
+
+        return Pixels(name, spacing, true);
+      }
+
+      /// `text-decoration` of CSS: which lines, their colour, and how
+      /// thick they are, in any order.
+      bool TextDecoration(UiStyle &style) const
+      {
+        const auto *value = _reader.ReadValue("text_decoration");
+        if (value == nullptr) { return false; }
+
+        const std::string expected =
+          "none, underline, line-through, a colour, and a thickness, such as \"underline #ff8000 2px\"";
+
+        std::string text;
+        if (!value->GetText(text))
+        {
+          Expected("text_decoration", *value, expected);
+          return false;
+        }
+
+        bool underline = false;
+        bool line_through = false;
+        std::optional<Color> color;
+        float thickness = 0.0f;
+
+        const auto parts = SplitCssValues(text);
+        if (parts.empty())
+        {
+          Expected("text_decoration", *value, expected);
+          return false;
+        }
+
+        for (const auto &part : parts)
+        {
+          LayoutLength length;
+          Color read;
+
+          if (part == "none")
+          {
+            underline = false;
+            line_through = false;
+          } else if (part == "underline")
+          {
+            underline = true;
+          } else if (part == "line-through")
+          {
+            line_through = true;
+          } else if (part == "solid" || part == "auto")
+          {
+            // the one style of line there is
+          } else if (ParseCssLength(part, length) && length.unit == LayoutLength::Unit::Pixels && length.value >= 0.0f)
+          {
+            thickness = length.value;
+          } else if (ParseCssColor(part, read))
+          {
+            color = read;
+          } else
+          {
+            Expected("text_decoration", *value, expected);
+            return false;
+          }
+        }
+
+        style.text_underline = underline;
+        style.text_line_through = line_through;
+        style.text_decoration_color = color;
+        style.text_decoration_thickness = thickness;
+        return true;
+      }
+
+      bool TextDecorationLine(UiStyle &style) const
+      {
+        const auto *value = _reader.ReadValue("text_decoration_line");
+        if (value == nullptr) { return false; }
+
+        std::string text;
+        bool underline = false;
+        bool line_through = false;
+        bool read = value->GetText(text) && !text.empty();
+
+        for (const auto &part : SplitCssValues(text))
+        {
+          if (part == "underline") { underline = true; }
+          else if (part == "line-through") { line_through = true; }
+          else if (part != "none") { read = false; }
+        }
+
+        if (!read)
+        {
+          Expected("text_decoration_line", *value, "none, underline, line-through, or both of them");
+          return false;
+        }
+
+        style.text_underline = underline;
+        style.text_line_through = line_through;
+        return true;
+      }
+
+      bool Shadows(const std::string &name, const bool of_text, std::vector<UiShadow> &shadows) const
+      {
+        const auto *value = _reader.ReadValue(name);
+        if (value == nullptr) { return false; }
+
+        // a list holds one shadow in each of its items
+        std::string text;
+        if (value->IsList())
+        {
+          for (const auto &item : value->GetItems())
+          {
+            std::string each;
+            if (!item.GetText(each))
+            {
+              text.clear();
+              break;
+            }
+            text += (text.empty() ? "" : ", ") + each;
+          }
+        } else
+        {
+          (void) value->GetText(text);
+        }
+
+        if (text.empty() || !ParseCssShadows(text, of_text, shadows))
+        {
+          Expected(
+            name, *value,
+            of_text
+              ? "none, or shadows such as \"0 2px 4px #000000\": to the right, down, a blur that is not "
+                "below 0, and a colour"
+              : "none, or shadows such as \"0 4px 12px 0 rgba(0, 0, 0, 0.5)\": inset or not, to the right, "
+                "down, a blur that is not below 0, how much larger, and a colour");
+          return false;
+        }
+
+        return true;
+      }
+
+      bool Gradient(const std::string &name, std::optional<UiGradient> &gradient) const
+      {
+        const auto *value = _reader.ReadValue(name);
+        if (value == nullptr) { return false; }
+
+        std::string text;
+        UiGradient read;
+        if (!value->GetText(text) || !ParseCssGradient(text, read))
+        {
+          Expected(name, *value, "a gradient such as linear-gradient(90deg, #f00, #00f) with 2 to 8 colours");
+          return false;
+        }
+
+        gradient = read;
+        return true;
+      }
+
+      bool Place(const std::string &name, UiPlace &place) const
+      {
+        const auto *value = _reader.ReadValue(name);
+        if (value == nullptr) { return false; }
+
+        std::string text;
+        if (value->IsList())
+        {
+          for (const auto &item : value->GetItems())
+          {
+            std::string each;
+            if (AsText(item, each)) { text += (text.empty() ? "" : " ") + each; }
+          }
+        } else
+        {
+          (void) AsText(*value, text);
+        }
+
+        if (!ParseCssPlace(text, place))
+        {
+          Expected(
+            name, *value,
+            "one or two of left, center, right, top, bottom, a number of pixels, or a percentage");
+          return false;
+        }
+
+        return true;
+      }
+
+      bool BackgroundSize(UiBackgroundSize &size) const
+      {
+        const auto *value = _reader.ReadValue("background_size");
+        if (value == nullptr) { return false; }
+
+        const auto values = Several(*value);
+        std::string keyword;
+
+        if (values.size() == 1 && values[0].GetText(keyword) && (keyword == "cover" || keyword == "contain"))
+        {
+          size.kind = keyword == "cover" ? UiBackgroundSize::Kind::Cover : UiBackgroundSize::Kind::Contain;
+          return true;
+        }
+
+        LayoutLength width;
+        LayoutLength height;
+
+        if (values.empty() || values.size() > 2 || !AsLength(values[0], true, true, width) || width.value < 0.0f ||
+            (values.size() == 2 && (!AsLength(values[1], true, true, height) || height.value < 0.0f)))
+        {
+          Expected(
+            "background_size", *value,
+            "auto, cover, contain, or one to two values, each a number of pixels, a percentage, or auto");
+          return false;
+        }
+
+        if (width.IsAuto() && height.IsAuto())
+        {
+          size.kind = UiBackgroundSize::Kind::Auto;
+          return true;
+        }
+
+        size.kind = UiBackgroundSize::Kind::Lengths;
+        size.width = width;
+        size.height = height;
+        return true;
+      }
+
+      /// One to four values, from the left top corner around to the left
+      /// bottom one, as the shorthand of CSS has them.
+      bool Radii(UiCornerRadii &radii) const
+      {
+        const auto *value = _reader.ReadValue("border_radius");
+        if (value == nullptr) { return false; }
+
+        const auto values = Several(*value);
+        std::vector<LayoutLength> lengths(values.size());
+        bool read = !values.empty() && values.size() <= 4;
+
+        for (std::size_t i = 0; read && i < values.size(); i++)
+        {
+          read = AsLength(values[i], true, false, lengths[i]) && lengths[i].value >= 0.0f;
+        }
+
+        if (!read)
+        {
+          Expected(
+            "border_radius", *value,
+            "one to four values, each a number of pixels or a percentage such as 50%, and none below 0");
+          return false;
+        }
+
+        radii.top_left = lengths[0];
+        radii.top_right = lengths.size() > 1 ? lengths[1] : lengths[0];
+        radii.bottom_right = lengths.size() > 2 ? lengths[2] : lengths[0];
+        radii.bottom_left = lengths.size() > 3 ? lengths[3] : radii.top_right;
+        return true;
+      }
+
+      bool Radius(const std::string &name, LayoutLength &radius) const
+      {
+        const auto *value = _reader.ReadValue(name);
+        if (value == nullptr) { return false; }
+
+        if (!Length(name, radius, true, false)) { return false; }
+
+        if (radius.value < 0.0f)
+        {
+          Expected(name, *value, "a number of pixels or a percentage that is not below 0");
+          radius = LayoutLength::Pixels(0.0f);
+          return false;
+        }
+        return true;
+      }
+
+      /// `border_top` and the like: a width, `solid` or `none`, and a
+      /// colour, for one side.
+      bool BorderSide(const std::string &name, float &width, std::optional<Color> &color) const
+      {
+        const auto *value = _reader.ReadValue(name);
+        if (value == nullptr) { return false; }
+
+        const std::string expected = "a width, solid or none, and a colour, such as \"2px solid #ffffff\"";
+
+        std::string text;
+        if (!AsText(*value, text))
+        {
+          Expected(name, *value, expected);
+          return false;
+        }
+
+        float read_width = 3.0f;
+        bool is_drawn = true;
+        std::optional<Color> read_color;
+
+        const auto parts = SplitCssValues(text);
+        bool read = !parts.empty();
+
+        for (const auto &part : parts)
+        {
+          LayoutLength length;
+          Color each;
+
+          if (part == "solid") { is_drawn = true; }
+          else if (part == "none") { is_drawn = false; }
+          else if (ParseCssLength(part, length) && length.unit == LayoutLength::Unit::Pixels && length.value >= 0.0f)
+          {
+            read_width = length.value;
+          } else if (ParseCssColor(part, each))
+          {
+            read_color = each;
+          } else
+          {
+            read = false;
+          }
+        }
+
+        if (!read)
+        {
+          Expected(name, *value, expected);
+          return false;
+        }
+
+        width = is_drawn ? read_width : 0.0f;
+        if (read_color.has_value()) { color = read_color; }
+        return true;
+      }
+
+      bool Transform(std::vector<UiTransformStep> &steps) const
+      {
+        const auto *value = _reader.ReadValue("transform");
+        if (value == nullptr) { return false; }
+
+        std::string text;
+        if (!value->GetText(text) || !ParseCssTransform(text, steps))
+        {
+          Expected(
+            "transform", *value,
+            "none, or steps such as \"translate(10px, 50%) rotate(45deg) scale(1.5)\"");
+          return false;
+        }
+        return true;
+      }
+
+      /// `background` of CSS, of which a colour, a gradient, or an image
+      /// is read.
+      bool Background(UiStyle &style) const
+      {
+        const auto *value = _reader.ReadValue("background");
+        if (value == nullptr) { return false; }
+
+        std::string text;
+        Color color;
+        UiGradient gradient;
+
+        if (value->GetText(text))
+        {
+          if (text == "none")
+          {
+            style.background_color = {0.0f, 0.0f, 0.0f, 0.0f};
+            style.background_image.clear();
+            style.background_gradient.reset();
+            return true;
+          }
+
+          if (ParseCssGradient(text, gradient))
+          {
+            style.background_gradient = gradient;
+            return true;
+          }
+
+          if (ParseCssColor(text, color))
+          {
+            style.background_color = color;
+            return true;
+          }
+
+          if (text.find("://") != std::string::npos && text.find("-gradient(") == std::string::npos)
+          {
+            style.background_image = text;
+            return true;
+          }
+        }
+
+        Expected(
+          "background", *value,
+          "none, a colour, a gradient such as linear-gradient(90deg, #f00, #00f), or the virtual path of an "
+          "image");
+        return false;
+      }
+
+      /// The values a shader is given: a number, a colour, a list of up to
+      /// four numbers, or the name of a value of the game in brackets.
+      bool ShaderValues(std::vector<UiShaderValue> &values) const
+      {
+        const auto *value = _reader.ReadValue("shader_values");
+        if (value == nullptr) { return false; }
+
+        if (!value->IsMap())
+        {
+          Expected("shader_values", *value, "a map of names and values, such as { intensity: 0.5 }");
+          return false;
+        }
+
+        std::vector<UiShaderValue> read;
+        bool is_read = true;
+
+        for (const auto &[name, written] : value->GetEntries())
+        {
+          UiShaderValue each;
+          each.name = name;
+
+          std::string text;
+          Color color;
+          float number = 0.0f;
+
+          if (written.GetNumber(number))
+          {
+            each.numbers[0] = number;
+          } else if (bool flag = false; written.GetBool(flag))
+          {
+            each.numbers[0] = flag ? 1.0f : 0.0f;
+          } else if (written.IsList() && !written.GetItems().empty() && written.GetItems().size() <= 4)
+          {
+            each.count = written.GetItems().size();
+            for (std::size_t i = 0; i < each.count; i++)
+            {
+              if (!written.GetItems()[i].GetNumber(each.numbers[i])) { is_read = false; }
+            }
+          } else if (written.GetText(text) && text.size() > 2 && text.front() == '{' && text.back() == '}' &&
+                     text.find(' ') == std::string::npos)
+          {
+            each.bound_to = text.substr(1, text.size() - 2);
+          } else if (written.GetText(text) && ParseCssColor(text, color))
+          {
+            each.count = 4;
+            each.numbers[0] = color.r;
+            each.numbers[1] = color.g;
+            each.numbers[2] = color.b;
+            each.numbers[3] = color.a;
+          } else
+          {
+            is_read = false;
+          }
+
+          if (!is_read)
+          {
+            _reader.Report(written, std::format(
+                             "'{}' of 'shader_values' of {} is {}, where a number, a colour, a list of 1 to 4 "
+                             "numbers, or a value such as \"{{charge}}\" was expected",
+                             name, _reader.GetWhere(), Describe(written)));
+            return false;
+          }
+
+          read.push_back(each);
+        }
+
+        values = read;
+        return true;
+      }
+
       bool LineHeight(UiStyle &style) const
       {
         const auto *value = _reader.ReadValue("line_height");
@@ -573,7 +1092,7 @@ namespace neon
       }
     }
 
-    properties.Colour("color", style.color);
+    properties.ColourOrGradient("color", style.color, style.color_gradient);
     reader.Read("font_family", style.font_family);
 
     if (float size = 0.0f; properties.Pixels("font_size", size))
@@ -595,5 +1114,97 @@ namespace neon
 
     properties.Colour("accent_color", style.accent_color);
     properties.Keyword("object_fit", object_fits, style.object_fit);
+
+    // Text
+
+    properties.Spacing("letter_spacing", style.letter_spacing);
+    properties.Spacing("word_spacing", style.word_spacing);
+    properties.Keyword("text_transform", text_transforms, style.text_transform);
+
+    properties.TextDecoration(style);
+    properties.TextDecorationLine(style);
+    if (Color color; properties.Colour("text_decoration_color", color)) { style.text_decoration_color = color; }
+    properties.Pixels("text_decoration_thickness", style.text_decoration_thickness);
+
+    properties.Shadows("text_shadow", true, style.text_shadow);
+    properties.Keyword("white_space", white_spaces, style.white_space);
+    properties.Keyword("text_overflow", text_overflows, style.text_overflow);
+
+    if (std::size_t index = 0; reader.ReadChoice("font_style", font_styles, index)) { style.font_italic = index == 1; }
+
+    properties.Pixels("text_stroke_width", style.text_stroke_width);
+    if (Color color; properties.Colour("text_stroke_color", color)) { style.text_stroke_color = color; }
+
+    properties.Keyword("direction", directions, style.direction);
+
+    // Images
+
+    properties.Keyword("image_rendering", image_renderings, style.image_rendering);
+    properties.Place("object_position", style.object_position);
+
+    properties.Background(style);
+    properties.BackgroundSize(style.background_size);
+    properties.Place("background_position", style.background_position);
+    properties.Keyword("background_repeat", background_repeats, style.background_repeat);
+    properties.Keyword("border_image_repeat", border_image_repeats, style.border_image_repeat);
+
+    // `background_image` holds a gradient as well as an image, as in CSS
+    if (UiGradient gradient; ParseCssGradient(style.background_image, gradient))
+    {
+      style.background_gradient = gradient;
+      style.background_image.clear();
+    } else if (style.background_image.find("-gradient(") != std::string::npos)
+    {
+      if (const auto *value = reader.ReadValue("background_image"); value != nullptr)
+      {
+        reader.Report(*value, std::format(
+                        "'background_image' of {} is {}, where the virtual path of an image, none, or a "
+                        "gradient such as linear-gradient(90deg, #f00, #00f) with 2 to 8 colours was expected",
+                        reader.GetWhere(), Describe(*value)));
+      }
+      style.background_image.clear();
+    }
+
+    // The box
+
+    properties.Radii(style.border_radius);
+    properties.Radius("border_top_left_radius", style.border_radius.top_left);
+    properties.Radius("border_top_right_radius", style.border_radius.top_right);
+    properties.Radius("border_bottom_right_radius", style.border_radius.bottom_right);
+    properties.Radius("border_bottom_left_radius", style.border_radius.bottom_left);
+
+    properties.BorderSide("border_top", layout.border.top, style.border_top_color);
+    properties.BorderSide("border_right", layout.border.right, style.border_right_color);
+    properties.BorderSide("border_bottom", layout.border.bottom, style.border_bottom_color);
+    properties.BorderSide("border_left", layout.border.left, style.border_left_color);
+
+    properties.Pixels("border_top_width", layout.border.top);
+    properties.Pixels("border_right_width", layout.border.right);
+    properties.Pixels("border_bottom_width", layout.border.bottom);
+    properties.Pixels("border_left_width", layout.border.left);
+
+    if (Color color; properties.Colour("border_top_color", color)) { style.border_top_color = color; }
+    if (Color color; properties.Colour("border_right_color", color)) { style.border_right_color = color; }
+    if (Color color; properties.Colour("border_bottom_color", color)) { style.border_bottom_color = color; }
+    if (Color color; properties.Colour("border_left_color", color)) { style.border_left_color = color; }
+
+    properties.Shadows("box_shadow", false, style.box_shadow);
+
+    properties.Transform(style.transform);
+    properties.Place("transform_origin", style.transform_origin);
+
+    if (properties.Path("shader", style.shader))
+    {
+      if (const auto *value = reader.ReadValue("shader"); !style.shader.empty() &&
+                                                         style.shader.find("://") == std::string::npos)
+      {
+        reader.Report(*value, std::format(
+                        "'shader' of {} is '{}', where a virtual path without an extension such as "
+                        "assets://shaders/ui/shine, or none, was expected",
+                        reader.GetWhere(), style.shader));
+        style.shader.clear();
+      }
+    }
+    properties.ShaderValues(style.shader_values);
   }
 } // neon

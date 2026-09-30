@@ -88,13 +88,43 @@ namespace neon
     const char32_t character,
     GlyphBitmap &glyph)
   {
+    unsigned int index = 0;
+    return GetGlyph(font, character, index) && RasterizeGlyph(font, pixel_size, index, {}, glyph);
+  }
+
+  bool STB_FontRasterizer::GetGlyph(const int font, const char32_t character, unsigned int &glyph)
+  {
     const Font *found = Find(font);
-    if (found == nullptr || pixel_size <= 0.0f) { return false; }
+    if (found == nullptr) { return false; }
 
     const int index = stbtt_FindGlyphIndex(&found->info, static_cast<int>(character));
     if (index == 0) { return false; }
 
+    glyph = static_cast<unsigned int>(index);
+    return true;
+  }
+
+  bool STB_FontRasterizer::RasterizeGlyph(
+    const int font,
+    const float pixel_size,
+    const unsigned int glyph,
+    const GlyphOptions &options,
+    GlyphBitmap &bitmap)
+  {
+    const Font *found = Find(font);
+    if (found == nullptr || pixel_size <= 0.0f) { return false; }
+
+    if (options.rendering != GlyphRendering::Bitmap || options.embolden != 0.0f ||
+        options.slant != 0.0f || options.stroke > 0.0f)
+    {
+      return false;
+    }
+
+    if (glyph >= static_cast<unsigned int>(found->info.numGlyphs)) { return false; }
+
+    const auto index = static_cast<int>(glyph);
     const float scale = stbtt_ScaleForMappingEmToPixels(&found->info, pixel_size);
+    const float shift = options.offset_x < 0.0f ? 0.0f : (options.offset_x > 1.0f ? 1.0f : options.offset_x);
 
     int advance = 0;
     int bearing = 0;
@@ -106,22 +136,28 @@ namespace neon
     int top = 0;
     int right = 0;
     int bottom = 0;
-    stbtt_GetGlyphBitmapBox(&found->info, index, scale, scale, &left, &top, &right, &bottom);
+    stbtt_GetGlyphBitmapBoxSubpixel(&found->info, index, scale, scale, shift, 0.0f, &left, &top, &right, &bottom);
 
-    glyph = GlyphBitmap{};
-    glyph.advance = static_cast<float>(advance) * scale;
+    bitmap = GlyphBitmap{};
+    bitmap.advance = static_cast<float>(advance) * scale;
 
     const int width = right - left;
     const int height = bottom - top;
     if (width <= 0 || height <= 0) { return true; }
 
-    glyph.width = width;
-    glyph.height = height;
-    glyph.left = left;
-    glyph.top = -top;
-    glyph.coverage.assign(static_cast<std::size_t>(width) * height, 0);
+    bitmap.width = width;
+    bitmap.height = height;
+    bitmap.left = left;
+    bitmap.top = -top;
+    bitmap.coverage.assign(static_cast<std::size_t>(width) * height, 0);
 
-    stbtt_MakeGlyphBitmap(&found->info, glyph.coverage.data(), width, height, width, scale, scale, index);
+    stbtt_MakeGlyphBitmapSubpixel(
+      &found->info, bitmap.coverage.data(), width, height, width, scale, scale, shift, 0.0f, index);
+    return true;
+  }
+
+  bool STB_FontRasterizer::PlacesAtPartsOfAPixel() const
+  {
     return true;
   }
 } // neon

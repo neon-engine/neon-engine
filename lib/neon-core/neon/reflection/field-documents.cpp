@@ -6,13 +6,16 @@ namespace neon
 {
   namespace
   {
-    DataValue ListOf(const glm::vec3 &vector)
+    DataValue ListOf(const std::vector<float> &numbers)
     {
       auto list = DataValue::List();
-      list.Add(DataValue::Number(vector.x));
-      list.Add(DataValue::Number(vector.y));
-      list.Add(DataValue::Number(vector.z));
+      for (const float number : numbers) { list.Add(DataValue::Number(number)); }
       return list;
+    }
+
+    DataValue ListOf(const glm::vec3 &vector)
+    {
+      return ListOf(std::vector{vector.x, vector.y, vector.z});
     }
 
     /// `a` or `an`, as the word that follows asks for.
@@ -81,6 +84,13 @@ namespace neon
           value = read;
           break;
         }
+        case FieldKind::NumberList:
+        {
+          std::vector<float> read;
+          if (!reader.Read(field.name, read)) { return false; }
+          value = read;
+          break;
+        }
         case FieldKind::Choice:
         {
           std::size_t index = 0;
@@ -140,7 +150,7 @@ namespace neon
 
     if (const auto *color = std::get_if<Color>(&value))
     {
-      auto list = ListOf({color->r, color->g, color->b});
+      auto list = ListOf(std::vector{color->r, color->g, color->b});
 
       // an alpha of 1 is what a color has when none is written
       if (color->a != 1.0f) { list.Add(DataValue::Number(color->a)); }
@@ -153,6 +163,8 @@ namespace neon
       for (const auto &text : *texts) { list.Add(DataValue::Text(text)); }
       return list;
     }
+
+    if (const auto *numbers = std::get_if<std::vector<float>>(&value)) { return ListOf(*numbers); }
 
     return {};
   }

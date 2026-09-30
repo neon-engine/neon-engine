@@ -191,6 +191,37 @@ namespace neon
     return true;
   }
 
+  bool DataReader::Read(const std::string &name, std::vector<float> &value) const
+  {
+    const auto *found = Ask(name);
+    if (found == nullptr) { return false; }
+
+    if (!found->IsList())
+    {
+      Report(*found, std::format(
+               "'{}' of {} is {}, where a list of numbers was expected",
+               name, _where, DataValue::Describe(found->GetKind())));
+      return false;
+    }
+
+    std::vector<float> numbers;
+    for (const auto &item : found->GetItems())
+    {
+      float number = 0.0f;
+      if (!item.GetNumber(number))
+      {
+        Report(item, std::format(
+                 "'{}' of {} holds {}, where a number was expected",
+                 name, _where, DataValue::Describe(item.GetKind())));
+        return false;
+      }
+      numbers.push_back(number);
+    }
+
+    value = numbers;
+    return true;
+  }
+
   bool DataReader::ReadNumbers(
     const std::string &name,
     float *numbers,

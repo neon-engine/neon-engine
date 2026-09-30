@@ -198,6 +198,21 @@ namespace neon
 
     /// Draws the element and everything below it.
     void Paint(UiPainter &painter, const UiFrame &frame, float opacity);
+
+    /// A point in pixels of what the element is drawn to as the point of
+    /// the element it lies on, which undoes the `transform` of the
+    /// element. What is inside the element is asked with the point that
+    /// comes out. Returns false for an element that is flattened to a
+    /// line, which no point lies on.
+    [[nodiscard]] bool ToLocal(float scale, float &x, float &y) const;
+
+    /// Whether a point is on the element, its round corners taken into
+    /// account. The point is one ToLocal() has handed out.
+    [[nodiscard]] bool Contains(float scale, float x, float y) const;
+
+    /// Whether a point is on what is inside the border of the element,
+    /// which is what is left of its children when it cuts them off.
+    [[nodiscard]] bool ContainsInPadding(float scale, float x, float y) const;
   };
 
   /// A rectangle in units of the file as one in pixels of the frame. Every

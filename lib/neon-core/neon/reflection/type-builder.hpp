@@ -49,6 +49,7 @@ namespace neon
       else if constexpr (std::is_same_v<V, glm::vec3>) { return FieldKind::Vector; }
       else if constexpr (std::is_same_v<V, Color>) { return FieldKind::Color; }
       else if constexpr (std::is_same_v<V, std::vector<std::string>>) { return FieldKind::TextList; }
+      else if constexpr (std::is_same_v<V, std::vector<float>>) { return FieldKind::NumberList; }
       else
       {
         // depends on V, so that it is only looked at for a type that gets here
@@ -255,6 +256,13 @@ namespace neon
     TypeBuilder &AtMost(const float number)
     {
       Last().at_most = number;
+      return *this;
+    }
+
+    /// How many numbers a list of numbers holds, when it is always as many.
+    TypeBuilder &Count(const std::size_t count)
+    {
+      Last().count = count;
       return *this;
     }
 

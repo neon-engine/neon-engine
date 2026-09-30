@@ -14,6 +14,7 @@
 #include "vk-device.hpp"
 #include "vk-material.hpp"
 #include "vk-model.hpp"
+#include "vk-render-target.hpp"
 #include "vk-renderer-2d.hpp"
 #include "vk-shader.hpp"
 #include "vk-shader-data.hpp"
@@ -101,6 +102,43 @@ namespace neon
 
     VK_Renderer2D _renderer_2d;
 
+    /// A render target, and what it is known as where it is drawn with in
+    /// two dimensions.
+    struct Target
+    {
+      VK_RenderTarget target;
+      int texture = No_Texture;
+
+      // whether it was drawn to in the frame that is being drawn
+      bool is_drawn = false;
+    };
+
+    static constexpr int kMax_Render_Targets = 64;
+
+    DataBuffer<Target> _targets{kMax_Render_Targets};
+
+    // The commands that draw into render targets. They are run in front of
+    // those of the frame, so that a target is finished before what shows
+    // it is drawn.
+    VkCommandBuffer _target_commands = VK_NULL_HANDLE;
+    bool _target_commands_open = false;
+    int _current_target = No_Render_Target;
+
+    // What waits for the frame to be finished: nothing that the commands
+    // of a frame refer to may change or go while they are not run.
+    std::vector<Target> _targets_to_release;
+    bool _surfaces_changed = false;
+
+    // names that were refused, each said once
+    std::vector<std::string> _refused_targets;
+
+    bool WriteDescriptorSet(const VK_Material &material, VkDescriptorSet set) const;
+
+    [[nodiscard]] bool FindSurface(const std::string &name, VK_Texture &texture) const;
+
+    /// Does what waited for the frame to be finished.
+    void SettleRenderTargets();
+
     bool CreateRenderTarget();
     bool CreateSwapchain();
     bool CreateDescriptors();
@@ -157,6 +195,41 @@ namespace neon
     void DestroyTexture(int texture) override;
 
     void DrawTriangles(const Triangles2D &triangles) override;
+
+    bool UpdateTexture(
+      int texture,
+      int x,
+      int y,
+      int width,
+      int height,
+      const std::vector<unsigned char> &pixels) override;
+
+    int CreateTextureWith(
+      int width,
+      int height,
+      const std::vector<unsigned char> &pixels,
+      const TextureOptions2D &options) override;
+
+    int CreateMaterial(const std::string &shader_path) override;
+
+    void DestroyMaterial(int material) override;
+
+    // Render targets, for what is drawn in two dimensions and for the
+    // models of a scene alike.
+
+    int CreateRenderTarget(const std::string &name, int width, int height) override;
+
+    void DestroyRenderTarget(int target) override;
+
+    bool BeginRenderTarget(int target, const Color &clear) override;
+
+    void EndRenderTarget() override;
+
+    int GetRenderTargetTexture(int target) override;
+
+    bool GetRenderTargetSize(int target, int &width, int &height) override;
+
+    int FindRenderTarget(const std::string &name) override;
   };
 } // neon
 

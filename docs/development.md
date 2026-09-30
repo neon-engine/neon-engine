@@ -58,8 +58,11 @@ The engine's dependencies are git submodules. Fetch the ones the build uses:
 ```bash
 git submodule update --init --recursive \
   external/glm external/sdl2 external/assimp external/jolt-physics \
-  external/spdlog external/rapidyaml external/stb external/googletest
+  external/spdlog external/rapidyaml external/stb external/googletest \
+  external/freetype external/harfbuzz external/lunasvg
 ```
+
+LunaSVG brings PlutoVG as a folder of its own, not as a submodule.
 
 `external/googletest` is only needed for the [tests](#tests).
 
@@ -778,6 +781,18 @@ what it left behind.
 | `tests/` | `user-interface` | 300 | Files of YAML through the whole user interface: every element, every message for a file that is wrong, layout in frames of several sizes, values, input, focus, events, and what is drawn |
 | `tests/` | `physics-with-jolt` | 21 | The physics as an application puts it together, with Flecs, Jolt, and a scene in YAML. The same state after the same steps at every frame rate |
 | `tests/` | `runtime-physics` | 2 | NeonRuntime with the scene of the physics: the same images twice, and at every frame rate |
+| neon-core | `text/glyph-atlas`, `text/shaped-text`, `text/text-case` | 75 | Glyphs that are drawn on demand into pages, parts of a text by font, script, and direction, lines, quarters of a pixel, capitals |
+| neon-core | `ui/css-functions`, `ui/ui-paint`, `ui/ui-box-paint`, `ui/ui-values-fallback` | 69 | Gradients, shadows, and transforms as CSS writes them, the shape of a box, where an image goes, values that fall back on others |
+| neon-core | `image/image-pixels` | 11 | Smaller copies with alpha multiplied in: white next to nothing stays white |
+| neon-core | `render/forward-render-pipeline-cameras` | 11 | Cameras that draw into a texture |
+| neon-core | `world-system/ecs/systems/ui-clock` | 2 | The time of the user interface |
+| neon-freetype | `text/ft-font-rasterizer`, `text/hb-text-shaper` | 30 | Glyphs of Inter and of Noto Sans Arabic, which are compiled into the tests: parts of a pixel, hinting, distances, the line around a glyph, kerning, a ligature, Arabic in its order and joined |
+| neon-lunasvg | `image/luna-vector-image-rasterizer` | 14 | An SVG at several sizes, as sharp at each, and what is refused |
+| neon-stb | `image/stb-image-decoder` | 9 | PNG, JPEG, BMP, TGA, and PSD with 8 and 16 bits |
+| neon-vulkan | `render/vk-shader-values`, `render/vk-render-target` | 19 | The values a compiled shader declares, and what needs no graphics card of a render target |
+| `tests/` | `text-shaping` | 20 | Text with real fonts through the core: kerning, a ligature, Arabic, a second font for what the first does not have, quarters of a pixel, an atlas that grows |
+| `tests/` | `user-interface`, what was added | 211 | The properties of text, boxes, images, shaders of elements, and surfaces: what is handed to the renderer, where the pointer is on round corners and on what is moved and turned, what is wrong in a file |
+| `tests/` | `runtime-surfaces` | 4 | NeonRuntime without a window with the gallery, shaders at two times, and the scene with surfaces in the world |
 
 The headers that only declare an interface or a plain structure have no test
 of their own. There is nothing in them that can be wrong by itself.

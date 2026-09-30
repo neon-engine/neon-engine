@@ -1,0 +1,329 @@
+# What boxes, images, and text can look like, side by side, to judge by eye.
+# It is shown with
+#
+#   NeonRuntime --ui assets://ui/gallery.ui.yml
+#
+# The properties are those of CSS, with an underscore where CSS has a
+# hyphen. They are listed in docs/user-interface.md.
+
+ui: gallery
+version: 1
+
+reference_size: [1920, 1080]
+
+fonts:
+  # the same font kept as distances, which a shader draws at every size
+  - family: title
+    src: assets://fonts/inter/Inter-Bold.ttf
+    weight: 700
+    rendering: sdf
+  - family: arabic
+    src: assets://fonts/noto/NotoSansArabic-Regular.ttf
+
+values:
+  charge: 0.65
+
+root:
+  type: panel
+  box_sizing: border-box
+  width: 100%
+  height: 100%
+  padding: 32
+  gap: 24
+  flex_direction: column
+  background: "linear-gradient(160deg, #1b2030, #0d1017)"
+  children:
+    # boxes
+    - type: panel
+      gap: 32
+      align_items: center
+      flex_shrink: 0
+      children:
+        - type: panel
+          width: 180
+          height: 110
+          border_radius: 16
+          background_color: "#2e3440"
+          border: "2px solid #88c0d0"
+          justify_content: center
+          align_items: center
+          children:
+            - type: label
+              text: radius 16
+              font_size: 14
+
+        - type: panel
+          width: 180
+          height: 110
+          border_radius: "40 8 40 8"
+          background: "linear-gradient(to right, #bf616a, #d08770, #ebcb8b)"
+          justify_content: center
+          align_items: center
+          children:
+            - type: label
+              text: gradient
+              font_size: 14
+              color: "#101418"
+
+        - type: panel
+          width: 180
+          height: 110
+          border_radius: 24
+          background_color: "#2e3440"
+          border_width: "2 6 10 6"
+          border_top_color: "#a3be8c"
+          border_right_color: "#ebcb8b"
+          border_bottom_color: "#bf616a"
+          border_left_color: "#b48ead"
+          justify_content: center
+          align_items: center
+          children:
+            - type: label
+              text: sides
+              font_size: 14
+
+        - type: panel
+          width: 180
+          height: 110
+          border_radius: 16
+          background_color: "#3b4252"
+          box_shadow: "0 12px 32px 4px rgba(0, 0, 0, 0.6)"
+          justify_content: center
+          align_items: center
+          children:
+            - type: label
+              text: shadow
+              font_size: 14
+
+        - type: panel
+          width: 180
+          height: 110
+          border_radius: 16
+          background_color: "#3b4252"
+          box_shadow: "inset 0 4px 16px rgba(0, 0, 0, 0.7), 0 0 24px 2px rgba(136, 192, 208, 0.7)"
+          justify_content: center
+          align_items: center
+          children:
+            - type: label
+              text: inset and glow
+              font_size: 14
+
+        - type: panel
+          width: 110
+          height: 110
+          border_radius: 50%
+          background: "radial-gradient(#ffffff, #88c0d0 40%, #2e3440)"
+          outline_width: 3
+          outline_offset: 4
+          outline_color: "#ffd166"
+
+        - type: panel
+          width: 160
+          height: 90
+          border_radius: 12
+          background_color: "#5e81ac"
+          transform: "rotate(-8deg) scale(1.1)"
+          justify_content: center
+          align_items: center
+          children:
+            - type: label
+              text: turned
+              font_size: 14
+
+    # images
+    - type: panel
+      gap: 32
+      align_items: center
+      flex_shrink: 0
+      children:
+        - type: image
+          src: assets://ui/shield.svg
+          width: 32
+          height: 32
+        - type: image
+          src: assets://ui/shield.svg
+          width: 128
+          height: 128
+        - type: image
+          src:
+            - { src: assets://ui/gem-1x.png, scale: 1 }
+            - { src: assets://ui/gem-2x.png, scale: 2 }
+            - { src: assets://ui/gem-4x.png, scale: 4 }
+        - type: image
+          src: assets://ui/heart.png
+          width: 24
+          height: 24
+        - type: image
+          src: assets://ui/icons.atlas.yml#coin
+          width: 64
+          height: 64
+          image_rendering: pixelated
+        - type: image
+          src: assets://ui/icons.atlas.yml#key
+          width: 64
+          height: 64
+          image_rendering: pixelated
+        - type: image
+          src: assets://ui/icons.atlas.yml#bolt
+          width: 64
+          height: 64
+        - type: image
+          src: assets://ui/test-card.jpg
+          width: 96
+          height: 96
+          border_radius: 24
+          object_fit: cover
+        - type: panel
+          width: 200
+          height: 96
+          border_image_source: assets://ui/frame.png
+          border_image_slice: 8
+          border_image_width: 16
+          border_image_repeat: round
+          image_rendering: pixelated
+        - type: panel
+          width: 160
+          height: 96
+          border_radius: 12
+          overflow: hidden
+          background_image: assets://ui/icons.atlas.yml#heart
+          background_size: "32 32"
+          background_repeat: repeat
+          image_rendering: pixelated
+          children:
+            - type: panel
+              position: absolute
+              left: 100
+              top: 40
+              width: 120
+              height: 120
+              background_color: "#a3be8c"
+
+    # text
+    - type: panel
+      gap: 48
+      flex_shrink: 0
+      children:
+        - type: panel
+          flex_direction: column
+          gap: 6
+          children:
+            - type: label
+              text: "Spaced apart"
+              letter_spacing: 3
+              text_transform: uppercase
+              font_size: 14
+              color: "#88c0d0"
+            - type: label
+              text: "Underlined and struck through"
+              text_decoration: "underline line-through #bf616a"
+              font_size: 18
+            - type: label
+              text: "A shadow behind the text"
+              text_shadow: "0 2px 6px #000000, 0 0 16px rgba(136, 192, 208, 0.9)"
+              font_size: 22
+            - type: label
+              text: "Leaning, though the family has no italic"
+              font_style: italic
+              font_size: 18
+            - type: label
+              text: "A line around every letter"
+              text_stroke_width: 1.5
+              text_stroke_color: "#101418"
+              color: "#ebcb8b"
+              font_size: 26
+              font_weight: bold
+            - type: label
+              text: "Filled with a gradient"
+              color: "linear-gradient(to right, #88c0d0, #b48ead, #bf616a)"
+              font_size: 26
+              font_weight: bold
+            - type: label
+              text: "This line is too long for its box and ends early"
+              white_space: nowrap
+              text_overflow: ellipsis
+              overflow: hidden
+              width: 280
+              font_size: 16
+
+        - type: panel
+          flex_direction: column
+          gap: 10
+          children:
+            - type: label
+              text: "Kept as distances"
+              font_family: title
+              font_size: 20
+            - type: label
+              text: "and drawn at any size"
+              font_family: title
+              font_size: 56
+              color: "linear-gradient(#ffffff, #88c0d0)"
+            - type: label
+              text: "with a line around it"
+              font_family: title
+              font_size: 44
+              color: "#ebcb8b"
+              text_stroke_width: 3
+              text_stroke_color: "#101418"
+              text_shadow: "0 0 12px rgba(235, 203, 139, 0.9)"
+
+        - type: panel
+          flex_direction: column
+          gap: 10
+          children:
+            - type: label
+              text: "مرحبا بالعالم"
+              font_family: "sans-serif, arabic"
+              direction: rtl
+              text_align: start
+              width: 260
+              font_size: 28
+            - type: label
+              text: "Score: 42 نقطة"
+              font_family: "sans-serif, arabic"
+              font_size: 20
+            - type: label
+              text: "fi fl -> => != AVATAR To."
+              font_size: 20
+
+    # shaders of elements
+    - type: panel
+      gap: 32
+      align_items: center
+      flex_shrink: 0
+      children:
+        - type: button
+          name: shine
+          text: A band of light
+          width: 220
+          height: 64
+          border_radius: 12
+          background: "linear-gradient(#5e81ac, #3b4f6e)"
+          shader: assets://shaders/ui/shine
+          shader_values: { speed: 0.5, width: 0.18, lean: 0.35, tint: "#ffffff70" }
+
+        - type: panel
+          width: 220
+          height: 64
+          border_radius: 12
+          background: "linear-gradient(90deg, #a3be8c, #ebcb8b)"
+          justify_content: center
+          align_items: center
+          shader: assets://shaders/ui/dissolve
+          shader_values: { amount: 0.45, grain: 7, edge: "#ff8000" }
+
+        - type: image
+          src: assets://ui/shield.svg
+          width: 64
+          height: 64
+          shader: assets://shaders/ui/cooldown
+          shader_values: { progress: "{charge}", shade: "#000000c0" }
+
+        - type: panel
+          width: 64
+          height: 64
+          border_radius: 50%
+          background_color: "#bf616a"
+          shader: assets://shaders/ui/cooldown
+          shader_values: { progress: 0.3, shade: "#000000c0" }

@@ -35,6 +35,7 @@ namespace
     Fuel fuel = Fuel::Petrol;
     float tire_pressure = 2.2f;
     std::string tire_brand = "none";
+    std::vector<float> gears;
   };
 
   void Describe(TypeBuilder<Car> &type)
@@ -54,6 +55,8 @@ namespace
       tires.Field("pressure", &Car::tire_pressure).Above(0);
       tires.Field("brand", &Car::tire_brand);
     });
+
+    type.Field("gears", &Car::gears).Above(0);
   }
 
   DataValue Numbers(const std::vector<float> &numbers)
@@ -134,6 +137,7 @@ namespace
     map.Set("owners", owners);
     map.Set("fuel", DataValue::Text("electric"));
     map.Set("tires", tires);
+    map.Set("gears", Numbers({3.5f, 2.1f, 1.4f}));
 
     Read(map);
 
@@ -148,6 +152,7 @@ namespace
     EXPECT_EQ(_car.fuel, Fuel::Electric);
     EXPECT_EQ(_car.tire_pressure, 2.5f);
     EXPECT_EQ(_car.tire_brand, "Grip");
+    EXPECT_THAT(_car.gears, ElementsAre(3.5f, 2.1f, 1.4f));
   }
 
   TEST_F(FieldDocumentsTest, WhatIsNotWrittenKeepsItsValue)
@@ -191,7 +196,7 @@ namespace
 
     EXPECT_THAT(_errors, ElementsAre(
                   "cars.yml: 'wings' is not known to Car of entity 'taxi'. Known are: "
-                  "locked, seats, top_speed, plate, size, paint, owners, fuel, tires"));
+                  "locked, seats, top_speed, plate, size, paint, owners, fuel, tires, gears"));
   }
 
   TEST_F(FieldDocumentsTest, ANameInAGroupThatIsNotDescribedIsReported)
@@ -276,6 +281,18 @@ namespace
     Read(map);
 
     EXPECT_THAT(_errors, ElementsAre("cars.yml: 'seats' of Car of entity 'taxi' has to be at least 1"));
+  }
+
+  TEST_F(FieldDocumentsTest, EveryNumberOfAListIsCheckedAndTheListIsLeftAlone)
+  {
+    _car.gears = {1.0f};
+    auto map = Plated();
+    map.Set("gears", Numbers({3.5f, 0.0f}));
+
+    Read(map);
+
+    EXPECT_THAT(_errors, ElementsAre("cars.yml: 'gears' of Car of entity 'taxi' has to be above 0"));
+    EXPECT_THAT(_car.gears, ElementsAre(1.0f));
   }
 
   TEST_F(FieldDocumentsTest, AWordThatIsNotAmongTheChoicesIsReported)
@@ -421,6 +438,7 @@ namespace
     _car.fuel = Fuel::Electric;
     _car.tire_pressure = 3.0f;
     _car.tire_brand = "Grip";
+    _car.gears = {3.5f, 2.1f};
     const auto written = Write();
     const Car before = _car;
 
@@ -438,5 +456,6 @@ namespace
     EXPECT_EQ(_car.fuel, before.fuel);
     EXPECT_EQ(_car.tire_pressure, before.tire_pressure);
     EXPECT_EQ(_car.tire_brand, before.tire_brand);
+    EXPECT_EQ(_car.gears, before.gears);
   }
 }

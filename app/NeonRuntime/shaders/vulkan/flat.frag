@@ -1,20 +1,14 @@
 #version 450
+#extension GL_GOOGLE_include_directive : require
 
-layout (location = 0) in vec2 tex_coord;
-layout (location = 1) in vec4 color;
-layout (location = 2) in float textured;
+// Draws what a user interface is made of: rectangles with a colour or a
+// texture, boxes with round corners, their borders and shadows, gradients,
+// and text. What each of them looks like is in ui-shader.glsl, which the
+// shaders of elements share.
 
-layout (location = 0) out vec4 frag_color;
-
-// alpha is multiplied into its colours
-layout (set = 0, binding = 0) uniform sampler2D image;
+#include "ui-shader.glsl"
 
 void main()
 {
-    // a corner that reads no texture is white where the texture would be
-    vec4 texel = mix(vec4(1.0), texture(image, tex_coord), textured);
-
-    // Alpha is multiplied into the colour here. What is written is then
-    // added to what is behind it, less the part this pixel covers.
-    frag_color = texel * vec4(color.rgb * color.a, color.a);
+    frag_color = ui_base();
 }

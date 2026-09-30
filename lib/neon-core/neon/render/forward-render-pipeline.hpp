@@ -1,5 +1,11 @@
 #ifndef FORWARD_RENDER_PIPELINE_HPP
 #define FORWARD_RENDER_PIPELINE_HPP
+#include <map>
+#include <queue>
+#include <string>
+#include <tuple>
+#include <vector>
+
 #include "render-pipeline.hpp"
 
 namespace neon
@@ -10,6 +16,16 @@ namespace neon
     std::vector<LightSource> _light_sources;
     std::size_t _max_light_sources;
     CameraInfo _camera_info;
+
+    // the cameras of the frame that draw into a texture, and the target
+    // of each texture by its name. -1 for one that could not be made,
+    // which is not tried again
+    std::vector<CameraInfo> _texture_cameras;
+    std::map<std::string, int> _targets;
+    bool _warned_about_name = false;
+
+    /// The target a camera draws into, made when it is first asked for.
+    [[nodiscard]] int TargetOf(const CameraInfo &camera);
 
   public:
     Forward_RenderPipeline(

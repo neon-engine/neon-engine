@@ -44,12 +44,17 @@ namespace neon
     /// for all three. For a scale.
     bool one_number_for_all = false;
 
-    /// What a number has to be above, if anything.
+    /// What a number has to be above, if anything. For a list of numbers,
+    /// every number.
     std::optional<float> above;
 
-    /// The least and the most a number may be, if anything.
+    /// The least and the most a number may be, if anything. For a list of
+    /// numbers, every number.
     std::optional<float> at_least;
     std::optional<float> at_most;
+
+    /// How many numbers a list of numbers holds, if it is always as many.
+    std::optional<std::size_t> count;
 
     /// Reads the field of an object. `object` points to an object of the
     /// type the field belongs to.

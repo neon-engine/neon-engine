@@ -2,7 +2,9 @@
 #define VK_TEXTURE_HPP
 
 #include <string>
+#include <vector>
 #include <neon/filesystem/file-system-context.hpp>
+#include <neon/image/image-pixels.hpp>
 
 #include "vk-device.hpp"
 
@@ -42,6 +44,10 @@ namespace neon
     VkSampler _sampler = VK_NULL_HANDLE;
     uint32_t _width = 0;
     uint32_t _height = 0;
+    uint32_t _mip_levels = 1;
+
+    // whether the image belongs to something else, which releases it
+    bool _is_borrowed = false;
 
     bool Upload(
       const unsigned char *pixels,
@@ -76,6 +82,25 @@ namespace neon
     bool InitializeWithColor(unsigned char red, unsigned char green, unsigned char blue, unsigned char alpha);
 
     void CleanUp();
+
+    /// Makes the texture from an image and its smaller copies, the image
+    /// first, as MakeSmallerCopies() hands them over. Nothing is done to
+    /// the pixels on the way.
+    bool InitializeWithLevels(const std::vector<ImagePixels> &levels, const VK_TextureOptions &options);
+
+    /// Replaces a part of the texture. `pixels` holds the part alone. The
+    /// texture has to be one without smaller copies.
+    bool Update(
+      const unsigned char *pixels,
+      uint32_t x,
+      uint32_t y,
+      uint32_t width,
+      uint32_t height,
+      bool premultiply_alpha);
+
+    /// A texture that reads an image it does not own, such as what a
+    /// render target was drawn to. CleanUp() leaves the image alone.
+    [[nodiscard]] static VK_Texture Borrowed(VkImageView view, VkSampler sampler, uint32_t width, uint32_t height);
 
     [[nodiscard]] VkImageView View() const { return _view; }
     [[nodiscard]] VkSampler Sampler() const { return _sampler; }

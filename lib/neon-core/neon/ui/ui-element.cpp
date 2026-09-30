@@ -3,6 +3,9 @@
 #include <algorithm>
 #include <cmath>
 
+#include "ui-box-paint.hpp"
+#include "ui-image-paint.hpp"
+
 namespace neon
 {
   namespace
@@ -267,20 +270,50 @@ namespace neon
     const UiRectangle border_box = ToPixels(_box, frame.scale);
     const UiRectangle padding_box = ToPixels(GetPaddingBox(), frame.scale);
 
-    painter.FillRectangle(border_box, Faded(style.background_color, opacity));
+    const UiBoxPaint box(style, border_box, padding_box, frame.scale);
 
-    if (!style.background_image.empty())
+    // everything of the element is moved with it, and so is what is
+    // inside it
+    const bool is_moved = !style.transform.empty();
+    if (is_moved) { painter.PushTransform(MatrixOf(style, border_box, frame.scale)); }
+
+    // A shader of its own draws the element itself: its box and its
+    // content. What is inside it is drawn as it would be without.
+    const int material = style.shader.empty() || frame.resources == nullptr
+      ? No_Material
+      : frame.resources->GetMaterial(style.shader, Describe());
+
+    if (material != No_Material)
     {
-      painter.DrawImage(
-        frame.resources->GetImage(style.background_image),
-        border_box,
-        {0.0f, 0.0f, 1.0f, 1.0f},
-        {1.0f, 1.0f, 1.0f, opacity});
+      painter.SetMaterial(material, frame.resources->GetMaterialValues(style, frame.values), border_box);
+    }
+
+    const bool is_plain = box.IsPlain();
+
+    if (is_plain)
+    {
+      painter.FillRectangle(border_box, Faded(style.background_color, opacity));
+    } else
+    {
+      box.PaintBackground(painter, opacity);
+    }
+
+    if (!style.background_image.empty() && frame.resources != nullptr)
+    {
+      PaintBackgroundImage(painter, frame, style, box, border_box, opacity, Describe());
     }
 
     if (!style.border_image_source.empty())
     {
-      const auto &slice = style.border_image_slice;
+      const UiImage image =
+        frame.resources->GetImageFor(style.border_image_source, 0.0f, 0.0f, frame.scale, Describe());
+
+      // how far the corners reach is said by the file, or by the atlas
+      // the image is a part of
+      const bool is_sliced = style.border_image_slice.top > 0.0f || style.border_image_slice.right > 0.0f ||
+                             style.border_image_slice.bottom > 0.0f || style.border_image_slice.left > 0.0f;
+
+      const auto &slice = !is_sliced && image.has_slice ? image.slice : style.border_image_slice;
       const auto &width = style.border_image_width;
 
       // a part that says nothing about its width is as wide as it is in
@@ -292,34 +325,68 @@ namespace neon
         std::round((width.left < 0.0f ? slice.left : width.left) * frame.scale)
       };
 
-      painter.DrawNineSlice(
-        frame.resources->GetImage(style.border_image_source),
-        border_box,
-        slice,
-        widths,
-        {1.0f, 1.0f, 1.0f, opacity});
+      painter.SetFilter(FilterOf(style));
+
+      if (style.border_image_repeat == UiBorderImageRepeat::Stretch)
+      {
+        painter.DrawNineSlice(image, border_box, slice, widths, {1.0f, 1.0f, 1.0f, opacity});
+      } else
+      {
+        PaintNineSlice(
+          painter, image, border_box, slice, widths, style.border_image_repeat, {1.0f, 1.0f, 1.0f, opacity});
+      }
+
+      painter.SetFilter(TextureFilter2D::Smooth);
     }
 
-    // the widths of the border follow from where the padding box landed,
-    // so that the border meets it without a gap
-    painter.FillBorder(
-      border_box,
-      {
-        padding_box.top - border_box.top,
-        border_box.right - padding_box.right,
-        border_box.bottom - padding_box.bottom,
-        padding_box.left - border_box.left
-      },
-      Faded(style.BorderColor(), opacity));
+    if (is_plain)
+    {
+      // the widths of the border follow from where the padding box landed,
+      // so that the border meets it without a gap
+      painter.FillBorder(
+        border_box,
+        {
+          padding_box.top - border_box.top,
+          border_box.right - padding_box.right,
+          border_box.bottom - padding_box.bottom,
+          padding_box.left - border_box.left
+        },
+        Faded(style.BorderColor(), opacity));
+    } else
+    {
+      box.PaintBorder(painter, opacity);
+    }
 
     const bool clips = style.overflow == UiOverflow::Hidden;
-    if (clips) { painter.PushClip(padding_box); }
+    if (clips)
+    {
+      if (box.IsRound())
+      {
+        painter.PushRoundedClip(padding_box, box.GetInnerRadii());
+      } else
+      {
+        painter.PushClip(padding_box);
+      }
+    }
 
+    painter.SetFilter(FilterOf(style));
     PaintContent(painter, frame, ToPixels(GetContentBox(), frame.scale), opacity);
+    painter.SetFilter(TextureFilter2D::Smooth);
+
+    if (material != No_Material) { painter.SetMaterial(No_Material, {}, {}); }
 
     for (UiElement *child : GetChildrenInPaintOrder()) { child->Paint(painter, frame, opacity); }
 
-    if (clips) { painter.PopClip(); }
+    if (clips)
+    {
+      if (box.IsRound())
+      {
+        painter.PopRoundedClip();
+      } else
+      {
+        painter.PopClip();
+      }
+    }
 
     if (style.outline_width > 0.0f)
     {
@@ -327,14 +394,46 @@ namespace neon
       const float offset = std::round(style.outline_offset * frame.scale);
       const float width = std::max(1.0f, std::round(style.outline_width * frame.scale));
 
-      const UiRectangle outer{
-        border_box.left - offset - width,
-        border_box.top - offset - width,
-        border_box.right + offset + width,
-        border_box.bottom + offset + width
-      };
+      if (box.IsRound())
+      {
+        box.PaintOutline(painter, offset, width, Faded(style.OutlineColor(), opacity));
+      } else
+      {
+        const UiRectangle outer{
+          border_box.left - offset - width,
+          border_box.top - offset - width,
+          border_box.right + offset + width,
+          border_box.bottom + offset + width
+        };
 
-      painter.FillBorder(outer, {width, width, width, width}, Faded(style.OutlineColor(), opacity));
+        painter.FillBorder(outer, {width, width, width, width}, Faded(style.OutlineColor(), opacity));
+      }
     }
+
+    if (is_moved) { painter.PopTransform(); }
+  }
+
+  bool UiElement::ToLocal(const float scale, float &x, float &y) const
+  {
+    const UiStyle &style = GetStyle();
+    if (style.transform.empty()) { return true; }
+
+    UiMatrix back;
+    if (!MatrixOf(style, ToPixels(_box, scale), scale).Invert(back)) { return false; }
+
+    back.Apply(x, y);
+    return true;
+  }
+
+  bool UiElement::Contains(const float scale, const float x, const float y) const
+  {
+    const UiBoxPaint box(GetStyle(), ToPixels(_box, scale), ToPixels(GetPaddingBox(), scale), scale);
+    return box.Contains(x, y);
+  }
+
+  bool UiElement::ContainsInPadding(const float scale, const float x, const float y) const
+  {
+    const UiBoxPaint box(GetStyle(), ToPixels(_box, scale), ToPixels(GetPaddingBox(), scale), scale);
+    return box.ContainsInPadding(x, y);
   }
 } // neon

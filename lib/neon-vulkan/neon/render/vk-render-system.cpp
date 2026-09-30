@@ -4,6 +4,7 @@
 #include <array>
 #include <cstddef>
 #include <cstring>
+#include <format>
 #include <stdexcept>
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -85,6 +86,7 @@ namespace neon
     fence.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 
     if (vkAllocateCommandBuffers(_device.Device(), &allocation, &_commands) != VK_SUCCESS ||
+        vkAllocateCommandBuffers(_device.Device(), &allocation, &_target_commands) != VK_SUCCESS ||
         vkCreateFence(_device.Device(), &fence, nullptr, &_frame_done) != VK_SUCCESS)
     {
       throw std::runtime_error("Failed to set up the Vulkan frame");
@@ -529,12 +531,26 @@ namespace neon
       return false;
     }
 
+    WriteDescriptorSet(material, set);
+
+    material.SetDescriptorSet(set);
+    return true;
+  }
+
+  bool VK_RenderSystem::WriteDescriptorSet(const VK_Material &material, const VkDescriptorSet set) const
+  {
     // The first texture is the diffuse one and the second the specular one.
     // A material with a single texture uses it for both. One with none gets
     // plain white.
+    // A render target that is not there is drawn as plain white as well.
     const auto &textures = material.Textures();
-    const VK_Texture &diffuse = textures.empty() ? _white_texture : textures[0];
-    const VK_Texture &specular = textures.size() > 1 ? textures[1] : diffuse;
+    const auto usable = [this](const VK_Texture &texture) -> const VK_Texture &
+    {
+      return texture.View() != VK_NULL_HANDLE ? texture : _white_texture;
+    };
+
+    const VK_Texture &diffuse = textures.empty() ? _white_texture : usable(textures[0]);
+    const VK_Texture &specular = textures.size() > 1 ? usable(textures[1]) : diffuse;
 
     const VkDescriptorBufferInfo scene{_scene_buffer.buffer, 0, sizeof(VK_SceneData)};
     const VkDescriptorBufferInfo object{_object_buffer.buffer, 0, sizeof(VK_ObjectData)};
@@ -561,8 +577,6 @@ namespace neon
     writes[3].pImageInfo = &specular_image;
 
     vkUpdateDescriptorSets(_device.Device(), static_cast<uint32_t>(writes.size()), writes.data(), 0, nullptr);
-
-    material.SetDescriptorSet(set);
     return true;
   }
 
@@ -584,6 +598,17 @@ namespace neon
     {
       if (_material_refs.Contains(id)) { _material_refs.Remove(id).CleanUp(); }
     }
+
+    for (int id = 0; id < _targets.Capacity(); id++)
+    {
+      if (_targets.Contains(id)) { _targets.Remove(id).target.CleanUp(); }
+    }
+    for (auto &target : _targets_to_release) { target.target.CleanUp(); }
+    _targets_to_release.clear();
+    _refused_targets.clear();
+    _current_target = No_Render_Target;
+    _target_commands_open = false;
+    _target_commands = VK_NULL_HANDLE;
 
     _white_texture.CleanUp();
     _renderer_2d.CleanUp();
@@ -636,8 +661,61 @@ namespace neon
     _device.CleanUp();
   }
 
+  bool VK_RenderSystem::FindSurface(const std::string &name, VK_Texture &texture) const
+  {
+    for (int id = 0; id < _targets.Capacity(); id++)
+    {
+      if (!_targets.Contains(id) || _targets[id].target.Name() != name) { continue; }
+
+      const VK_RenderTarget &target = _targets[id].target;
+      texture = VK_Texture::Borrowed(
+        target.View(), target.Sampler(), target.Extent().width, target.Extent().height);
+      return true;
+    }
+    return false;
+  }
+
+  void VK_RenderSystem::SettleRenderTargets()
+  {
+    if (!_surfaces_changed && _targets_to_release.empty()) { return; }
+
+    // the frame before is finished, and nothing refers to what changes
+    vkDeviceWaitIdle(_device.Device());
+
+    if (_surfaces_changed)
+    {
+      for (int id = 0; id < _material_refs.Capacity(); id++)
+      {
+        if (!_material_refs.Contains(id) || !_material_refs[id].ShowsSurfaces()) { continue; }
+
+        VK_Material &material = _material_refs[id];
+        material.ResolveSurfaces(VK_Texture());
+
+        if (material.DescriptorSet() != VK_NULL_HANDLE) { WriteDescriptorSet(material, material.DescriptorSet()); }
+      }
+    }
+
+    for (auto &target : _targets_to_release)
+    {
+      if (target.texture != No_Texture) { _renderer_2d.DestroyTexture(target.texture); }
+      target.target.CleanUp();
+    }
+
+    _targets_to_release.clear();
+    _surfaces_changed = false;
+  }
+
   void VK_RenderSystem::PrepareFrame()
   {
+    SettleRenderTargets();
+
+    for (int id = 0; id < _targets.Capacity(); id++)
+    {
+      if (_targets.Contains(id)) { _targets[id].is_drawn = false; }
+    }
+    _target_commands_open = false;
+    _current_target = No_Render_Target;
+
     _scene_buffer.used = 0;
     _object_buffer.used = 0;
     _has_last_scene = false;
@@ -741,12 +819,27 @@ namespace neon
 
     vkEndCommandBuffer(_commands);
 
+    // a target that was left open is closed, so that its commands can run
+    if (_current_target != No_Render_Target) { EndRenderTarget(); }
+
+    // what draws into render targets runs first, and what shows them after
+    std::array<VkCommandBuffer, 2> buffers{};
+    uint32_t buffer_count = 0;
+
+    if (_target_commands_open)
+    {
+      vkEndCommandBuffer(_target_commands);
+      buffers[buffer_count++] = _target_commands;
+      _target_commands_open = false;
+    }
+    buffers[buffer_count++] = _commands;
+
     constexpr VkPipelineStageFlags wait_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
 
     VkSubmitInfo submit{};
     submit.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    submit.commandBufferCount = 1;
-    submit.pCommandBuffers = &_commands;
+    submit.commandBufferCount = buffer_count;
+    submit.pCommandBuffers = buffers.data();
     if (present)
     {
       submit.waitSemaphoreCount = 1;
@@ -870,6 +963,11 @@ namespace neon
       _logger->Error("Could not initialize model {}", render_info.model_path);
       return -1;
     }
+
+    material.SetSurfaceLookup([this](const std::string &name, VK_Texture &texture)
+    {
+      return FindSurface(name, texture);
+    });
 
     VkPipeline pipeline = VK_NULL_HANDLE;
     if (!material.Initialize() ||
@@ -1002,6 +1100,15 @@ namespace neon
     const auto &model = _model_refs[model_id];
     const auto &material = _material_refs[material_id];
 
+    // What is drawn into a render target cannot show that target, since
+    // an image is not read while it is written. It is left out there.
+    if (_current_target != No_Render_Target && material.Shows(_targets[_current_target].target.Name()))
+    {
+      return;
+    }
+
+    const VkCommandBuffer commands = _current_target != No_Render_Target ? _target_commands : _commands;
+
     // The camera and the lights are handed over with every object, but they
     // rarely change within a frame. They are only stored again when they do.
     const VK_SceneData scene = BuildSceneData(view, projection, lights);
@@ -1041,9 +1148,9 @@ namespace neon
     const std::array offsets{_last_scene_offset, object_offset};
     const VkDescriptorSet set = material.DescriptorSet();
 
-    vkCmdBindPipeline(_commands, VK_PIPELINE_BIND_POINT_GRAPHICS, material.Pipeline());
+    vkCmdBindPipeline(commands, VK_PIPELINE_BIND_POINT_GRAPHICS, material.Pipeline());
     vkCmdBindDescriptorSets(
-      _commands,
+      commands,
       VK_PIPELINE_BIND_POINT_GRAPHICS,
       _pipeline_layout,
       0,
@@ -1098,5 +1205,204 @@ namespace neon
     if (!_frame_open) { return; }
 
     _renderer_2d.Draw(triangles);
+  }
+
+  bool VK_RenderSystem::UpdateTexture(
+    const int texture,
+    const int x,
+    const int y,
+    const int width,
+    const int height,
+    const std::vector<unsigned char> &pixels)
+  {
+    return _renderer_2d.UpdateTexture(texture, x, y, width, height, pixels);
+  }
+
+  int VK_RenderSystem::CreateTextureWith(
+    const int width,
+    const int height,
+    const std::vector<unsigned char> &pixels,
+    const TextureOptions2D &options)
+  {
+    return _renderer_2d.CreateTextureWith(width, height, pixels, options);
+  }
+
+  int VK_RenderSystem::CreateMaterial(const std::string &shader_path)
+  {
+    return _renderer_2d.CreateMaterial(shader_path);
+  }
+
+  void VK_RenderSystem::DestroyMaterial(const int material)
+  {
+    _renderer_2d.DestroyMaterial(material);
+  }
+
+  int VK_RenderSystem::FindRenderTarget(const std::string &name)
+  {
+    for (int id = 0; id < _targets.Capacity(); id++)
+    {
+      if (_targets.Contains(id) && _targets[id].target.Name() == name) { return id; }
+    }
+    return No_Render_Target;
+  }
+
+  int VK_RenderSystem::CreateRenderTarget(const std::string &name, const int width, const int height)
+  {
+    // what is wrong is said once for a name, and not in every frame
+    const auto refuse = [this, &name](const std::string &reason)
+    {
+      if (std::ranges::find(_refused_targets, name) == _refused_targets.end())
+      {
+        _refused_targets.push_back(name);
+        _logger->Error("The render target '{}' cannot be created: {}", name, reason);
+      }
+      return No_Render_Target;
+    };
+
+    constexpr int limit = VK_RenderTarget::kMax_Size;
+
+    if (name.empty()) { return refuse("it has no name"); }
+    if (width <= 0 || height <= 0 || width > limit || height > limit)
+    {
+      return refuse(std::format(
+        "its size is {} by {}, where each side is from 1 to {} pixels", width, height, limit));
+    }
+    if (FindRenderTarget(name) != No_Render_Target) { return refuse("there is one of that name"); }
+    if (_device.Device() == VK_NULL_HANDLE) { return refuse("the renderer is not initialized"); }
+
+    Target kept;
+    kept.target = VK_RenderTarget(name, &_device, _logger);
+
+    if (!kept.target.Initialize(
+      static_cast<uint32_t>(width), static_cast<uint32_t>(height), _render_pass, color_format, _depth_format))
+    {
+      return refuse("its images could not be made");
+    }
+
+    const int id = _targets.Add(kept);
+    if (id < 0)
+    {
+      kept.target.CleanUp();
+      return refuse("there is no room for another render target");
+    }
+
+    _logger->Info("Created the render target '{}' of {} by {}", name, width, height);
+
+    // models that were waiting for it show it from the next frame on
+    _surfaces_changed = true;
+    return id;
+  }
+
+  void VK_RenderSystem::DestroyRenderTarget(const int target)
+  {
+    if (!_targets.Contains(target)) { return; }
+    if (_current_target == target) { EndRenderTarget(); }
+
+    const std::string name = _targets[target].target.Name();
+    _logger->Info("Destroying the render target '{}'", name);
+
+    // The frame that is being drawn may show it. It is released when that
+    // frame is finished, and models that show it are told then.
+    _targets_to_release.push_back(_targets.Remove(target));
+    _surfaces_changed = true;
+
+    std::erase(_refused_targets, name);
+  }
+
+  bool VK_RenderSystem::BeginRenderTarget(const int target, const Color &clear)
+  {
+    if (!_frame_open || !_targets.Contains(target) || _current_target != No_Render_Target) { return false; }
+    if (_targets[target].is_drawn) { return false; }
+
+    if (!_target_commands_open)
+    {
+      vkResetCommandBuffer(_target_commands, 0);
+
+      VkCommandBufferBeginInfo begin{};
+      begin.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+      begin.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+      if (vkBeginCommandBuffer(_target_commands, &begin) != VK_SUCCESS) { return false; }
+      _target_commands_open = true;
+    }
+
+    Target &kept = _targets[target];
+    const VkExtent2D extent = kept.target.Extent();
+
+    std::array<VkClearValue, 2> clears{};
+    clears[0].color = {{clear.r * clear.a, clear.g * clear.a, clear.b * clear.a, clear.a}};
+    clears[1].depthStencil = {1.0f, 0};
+
+    VkRenderPassBeginInfo pass{};
+    pass.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    pass.renderPass = _render_pass;
+    pass.framebuffer = kept.target.Framebuffer();
+    pass.renderArea = {{0, 0}, extent};
+    pass.clearValueCount = static_cast<uint32_t>(clears.size());
+    pass.pClearValues = clears.data();
+
+    vkCmdBeginRenderPass(_target_commands, &pass, VK_SUBPASS_CONTENTS_INLINE);
+
+    // turned the right way up, as the frame is
+    const VkViewport viewport{
+      0.0f,
+      static_cast<float>(extent.height),
+      static_cast<float>(extent.width),
+      -static_cast<float>(extent.height),
+      0.0f,
+      1.0f};
+    const VkRect2D scissor{{0, 0}, extent};
+
+    vkCmdSetViewport(_target_commands, 0, 1, &viewport);
+    vkCmdSetScissor(_target_commands, 0, 1, &scissor);
+
+    kept.is_drawn = true;
+    _current_target = target;
+
+    // the camera and the lights are stored again for what is drawn next
+    _has_last_scene = false;
+
+    _device.SetFrameCommands(_target_commands);
+    _renderer_2d.SetTarget(_target_commands, extent);
+    return true;
+  }
+
+  void VK_RenderSystem::EndRenderTarget()
+  {
+    if (_current_target == No_Render_Target) { return; }
+
+    vkCmdEndRenderPass(_target_commands);
+
+    if (_targets.Contains(_current_target)) { _targets[_current_target].target.Finish(_target_commands); }
+
+    _current_target = No_Render_Target;
+    _has_last_scene = false;
+
+    _device.SetFrameCommands(_frame_open ? _commands : VK_NULL_HANDLE);
+    _renderer_2d.SetTarget(VK_NULL_HANDLE, _extent);
+  }
+
+  int VK_RenderSystem::GetRenderTargetTexture(const int target)
+  {
+    if (!_targets.Contains(target)) { return No_Texture; }
+
+    Target &kept = _targets[target];
+
+    if (kept.texture == No_Texture)
+    {
+      kept.texture = _renderer_2d.KeepBorrowed(
+        kept.target.View(), kept.target.Sampler(), kept.target.Extent().width, kept.target.Extent().height);
+    }
+
+    return kept.texture;
+  }
+
+  bool VK_RenderSystem::GetRenderTargetSize(const int target, int &width, int &height)
+  {
+    if (!_targets.Contains(target)) { return false; }
+
+    width = static_cast<int>(_targets[target].target.Extent().width);
+    height = static_cast<int>(_targets[target].target.Extent().height);
+    return true;
   }
 } // neon

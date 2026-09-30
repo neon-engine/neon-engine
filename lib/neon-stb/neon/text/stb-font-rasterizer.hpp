@@ -42,6 +42,21 @@ namespace neon
     bool HasGlyph(int font, char32_t character) override;
 
     bool Rasterize(int font, float pixel_size, char32_t character, GlyphBitmap &glyph) override;
+
+    bool GetGlyph(int font, char32_t character, unsigned int &glyph) override;
+
+    /// Draws a glyph where it is, or moved by a part of a pixel. Nothing
+    /// else of the options can be done with stb_truetype: a glyph that is
+    /// asked for as distances, bolder, leaning, or as its outline is
+    /// refused.
+    bool RasterizeGlyph(
+      int font,
+      float pixel_size,
+      unsigned int glyph,
+      const GlyphOptions &options,
+      GlyphBitmap &bitmap) override;
+
+    [[nodiscard]] bool PlacesAtPartsOfAPixel() const override;
   };
 } // neon
 

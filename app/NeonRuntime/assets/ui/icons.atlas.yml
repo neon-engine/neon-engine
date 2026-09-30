@@ -1,0 +1,33 @@
+# The icons of the demo, which are drawn pixel by pixel into one image. An
+# element asks for one by its name behind a `#`:
+#
+#   src: assets://ui/icons.atlas.yml#coin
+#
+# What a region holds is listed in docs/user-interface.md.
+
+atlas: icons
+version: 1
+
+image: assets://ui/icons.png
+
+regions:
+  - name: heart
+    x: 0
+    y: 0
+    width: 16
+    height: 16
+  - name: coin
+    x: 16
+    y: 0
+    width: 16
+    height: 16
+  - name: key
+    x: 32
+    y: 0
+    width: 16
+    height: 16
+  - name: bolt
+    x: 48
+    y: 0
+    width: 16
+    height: 16

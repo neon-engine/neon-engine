@@ -85,6 +85,9 @@ namespace neon
 
     bool Read(const std::string &name, std::vector<std::string> &value) const;
 
+    /// A list of numbers, of any length.
+    bool Read(const std::string &name, std::vector<float> &value) const;
+
     /// A list of three numbers.
     bool Read(const std::string &name, glm::vec3 &value) const;
 

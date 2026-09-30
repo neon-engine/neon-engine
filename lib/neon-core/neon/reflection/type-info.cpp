@@ -78,12 +78,25 @@ namespace neon
       return std::format("{} must not be empty", what);
     }
 
-    if (kind == FieldKind::Number || kind == FieldKind::Whole)
-    {
-      const float number = kind == FieldKind::Number
-        ? std::get<float>(value)
-        : static_cast<float>(std::get<int>(value));
+    // the numbers that the limits are about
+    std::vector<float> numbers;
+    if (kind == FieldKind::Number) { numbers.push_back(std::get<float>(value)); }
+    if (kind == FieldKind::Whole) { numbers.push_back(static_cast<float>(std::get<int>(value))); }
 
+    if (kind == FieldKind::NumberList)
+    {
+      numbers = std::get<std::vector<float>>(value);
+
+      if (count.has_value() && numbers.size() != *count)
+      {
+        return std::format(
+          "{} holds {} number{}, where {} were expected",
+          what, numbers.size(), numbers.size() == 1 ? "" : "s", *count);
+      }
+    }
+
+    for (const float number : numbers)
+    {
       if (above.has_value() && !(number > *above))
       {
         return std::format("{} has to be above {}", what, *above);

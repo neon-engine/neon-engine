@@ -77,6 +77,17 @@ namespace neon
     /// The names that were asked for in vain since the last call. Each is
     /// handed out once, so that it is reported once and not in every frame.
     [[nodiscard]] std::vector<std::string> TakeMissed() const;
+
+    /// Where a value is looked for that is not among these. The values of
+    /// one user interface fall back on those every user interface shares.
+    void SetParent(const UiValues *parent);
+
+    /// Whether there is a value of that name, here or where these fall
+    /// back on. Asking is not counted as asking in vain.
+    [[nodiscard]] bool Has(const std::string &name) const;
+
+  private:
+    const UiValues *_parent = nullptr;
   };
 
   /// A text with places for values in it, such as `Health: {health}`.
