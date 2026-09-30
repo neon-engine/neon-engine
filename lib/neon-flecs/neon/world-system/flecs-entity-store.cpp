@@ -1,5 +1,6 @@
 #include "flecs-entity-store.hpp"
 
+#include <algorithm>
 #include <stdexcept>
 
 // the C interface is all that is used
@@ -104,6 +105,9 @@ namespace neon
     scope.name = components_scope_name;
     scope.sep = "";
     _components_scope = ecs_entity_init(_world, &scope);
+
+    _own_entities.clear();
+    _own_entities = GetChildren(No_Entity);
   }
 
   void Flecs_EntityStore::CleanUp()
@@ -127,6 +131,7 @@ namespace neon
     _components_by_name.clear();
     _components.clear();
     _components_scope = No_Entity;
+    _own_entities.clear();
 
     flecs_logger = nullptr;
   }
@@ -259,6 +264,39 @@ namespace neon
     return ecs_get_parent(_world, entity);
   }
 
+  std::vector<Entity> Flecs_EntityStore::GetChildren(const Entity entity)
+  {
+    std::vector<Entity> children;
+    if (entity != No_Entity && !IsAlive(entity)) { return children; }
+
+    auto it = ecs_children(_world, entity);
+    while (ecs_children_next(&it))
+    {
+      for (int32_t i = 0; i < it.count; i++)
+      {
+        const auto child = it.entities[i];
+        if (std::ranges::find(_own_entities, child) != _own_entities.end()) { continue; }
+        children.push_back(child);
+      }
+    }
+
+    // Flecs hands the children over table by table, that is grouped by the
+    // components they carry, and not in the order they were created.
+    //
+    // An id of Flecs has 64 bits. ECS_ENTITY_MASK keeps the lower 32, the
+    // index of the entity, which counts up as entities are created. The 16
+    // bits above count how often that index was used again after an entity
+    // was destroyed, and the highest bits are flags. Sorting by the index
+    // alone lists the children in the order they were created, except that a
+    // child which reuses the index of a destroyed entity takes its place.
+    std::ranges::sort(children, [](const Entity left, const Entity right)
+    {
+      return (left & ECS_ENTITY_MASK) < (right & ECS_ENTITY_MASK);
+    });
+
+    return children;
+  }
+
   void Flecs_EntityStore::SetComponent(const Entity entity, const ComponentId component, const void *value)
   {
     const auto *known = FindComponentById(component);
@@ -315,10 +353,20 @@ namespace neon
       desc.terms[term].inout = EcsIn;
     }
 
+    // Flecs keeps an entity at the top for a query. It is not part of the
+    // world, and would otherwise be handed over among the entities at the
+    // top, and written into every scene that is saved.
+    const auto before = GetChildren(No_Entity);
+
     query.query = ecs_query_init(_world, &desc);
     if (query.query == nullptr)
     {
       throw std::runtime_error("Flecs did not accept a query");
+    }
+
+    for (const auto entity : GetChildren(No_Entity))
+    {
+      if (std::ranges::find(before, entity) == before.end()) { _own_entities.push_back(entity); }
     }
 
     _queries.push_back(query);

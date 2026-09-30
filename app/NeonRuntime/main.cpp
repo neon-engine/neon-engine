@@ -5,6 +5,7 @@
 
 #include <neon/command-line/command-line.hpp>
 #include <neon/command-line/runtime-options.hpp>
+#include <neon/data/ryml-document-format.hpp>
 #include <neon/filesystem/sdl2-file-system.hpp>
 #include <neon/input/headless-input-system.hpp>
 #include <neon/input/sdl2-input-system.hpp>
@@ -13,9 +14,9 @@
 #include <neon/window/headless-window-system.hpp>
 #include <neon/window/sdl2-window-system.hpp>
 #include <neon/world-system/ecs/entity-world.hpp>
+#include <neon/world-system/ecs/scene-file/scene-file.hpp>
 #include <neon/world-system/flecs-entity-store.hpp>
 
-#include "demo-scene.hpp"
 #include "neon-runtime.hpp"
 
 // SDL2 provides the real platform entry point (WinMain on Windows) through
@@ -120,7 +121,13 @@ int main(const int argc, char *argv[])
     logging_system.CreateLogger("Forward_RenderPipeline"));
 
   neon::Flecs_EntityStore entity_store(logging_system.CreateLogger("Flecs_EntityStore"));
-  DemoScene scene;
+  neon::RYML_DocumentFormat yaml;
+
+  neon::SceneFile scene(
+    &file_system,
+    &yaml,
+    settings_config.scene_path,
+    logging_system.CreateLogger("SceneFile"));
 
   neon::EntityWorld world(
     &entity_store,

@@ -1,75 +1,74 @@
-scene:
-  name: "demo"
-  children:
-    - node_type: RenderNode
-      name: "bear"
-      transform:
-        position: [ 0, 0, 0 ]
-        rotation: [ 0.0, 0.0, 0.0 ]
-        scale: [ 1.0, 1.0, 1.0 ]
-      render_info:
-        model_path: "assets://models/bear.obj"
-        shader_path: "assets://shaders/basic-lit"
-        texture_paths:
-          - "assets://textures/concrete.png"
-        material_info:
-          shininess: 32.0
-          color: [ 0.5, 0.5, 0.5 ]
+# The scene NeonRuntime shows when it is started without one.
+#
+# An entity has a name, the components it carries, and the entities below it.
+# What a component leaves out keeps its default. The components and what they
+# hold are listed in docs/scenes.md.
 
-    - node_type: RenderNode
-      name: "sphere"
-      transform:
-        position: [ 1.2, 1.0, -2.0 ]
-        rotation: [ 0.0, 0.0, 0.0 ]
-        scale: [ 0.2, 0.2, 0.2 ]
-      render_info:
-        model_path: "assets://models/sphere.obj"
-        shader_path: "assets://shaders/basic-lit"
-        material_info:
-          shininess: 100.0
-          color: [ 1.0, 1.0, 1.0 ]
+scene: demo
+version: 1
+
+entities:
+  - name: bear
+    components:
+      Transform: Default
+      Renderable:
+        model: assets://models/bear.obj
+        shader: assets://shaders/basic-lit
+        textures:
+          - assets://textures/concrete.png
+        material:
+          shininess: 32
+          color: [1, 0.5, 0.31]
+
+  - name: sphere
+    components:
+      Transform:
+        position: [1.2, 1, -2]
+        scale: 0.2
+      Renderable:
+        model: assets://models/sphere.obj
+        shader: assets://shaders/basic-lit
+        textures:
+          - assets://textures/fire.png
+        material:
+          shininess: 100
+          color: [1, 1, 1]
           use_textures: false
 
-    - node_type: RenderNode
-      name: "floor"
-      transform:
-        position: [ 0.0, -0.55, 0.0 ]
-        rotation: [ 0.0, 0.0, 0.0 ]
-        scale: [ 100.0, 0.1, 100.0 ]
-      render_info:
-        model_path: "assets://models/cube.obj"
-        shader_path: "assets://shaders/basic-lit"
-        texture_paths:
-          - "assets://textures/concrete.png"
+  - name: floor
+    components:
+      Transform:
+        position: [0, -0.55, 0]
+        scale: [100, 0.1, 100]
+      Renderable:
+        model: assets://models/cube.obj
+        shader: assets://shaders/basic-lit
+        textures:
+          - assets://textures/concrete.png
         scale_textures: true
-        material_info:
-          shininess: 32.0
-          color: [ 0.5, 0.5, 0.5 ]
+        material:
+          shininess: 32
+          color: [0.5, 0.5, 0.5]
 
-    - node_type: LightNode
-      name: "direction_light"
-      transform:
-        position: [ 1.2, 1.0, -2.0 ]
-        rotation: [ 0.0, 0.0, 0.0 ]
-        scale: [ 1.0, 1.0, 1.0 ]
-      light_source:
-        id: "direction"
-        light_type: "Direction"
-        direction: [ -0.2, -1.0, -0.3 ]
-        ambient: [ 0.05, 0.05, 0.05 ]
-        diffuse: [ 0.4, 0.4, 0.4 ]
-        specular: [ 0.5, 0.5, 0.5 ]
+  - name: direction
+    components:
+      Transform:
+        position: [1.2, 1, -2]
+      Light:
+        type: direction
+        direction: [-0.2, -1, -0.3]
+        ambient: [0.5, 0.5, 0.5]
+        diffuse: [0.4, 0.4, 0.4]
+        specular: [0.5, 0.5, 0.5]
 
-    - node_type: SpectatorNode
-      name: "player"
-      transform:
-        position: [ 0.0, 0.0, 2.0 ]
-        rotation: [ 0.0, 0.0, 0.0 ]
-        scale: [ 1.0, 1.0, 1.0 ]
-      children:
-        - node_type: CameraNode
-          name: "camera"
-          transform:
-            position: [ 0.0, 0.0, 0.0 ]
-            rotation: [ 0.0, 0.0, 0.0 ]
-            scale: [ 1.0, 1.0, 1.0 ]
+  - name: player
+    components:
+      Transform:
+        position: [0, 0, 2]
+      Spectator: Default
+    children:
+      # the camera sits on the player, and so moves and turns with it
+      - name: camera
+        components:
+          Transform: Default
+          Camera: Default

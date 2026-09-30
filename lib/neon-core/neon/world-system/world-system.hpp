@@ -6,8 +6,6 @@
 #include <neon/render/render-pipeline.hpp>
 #include <neon/window/window-context.hpp>
 
-#include <ryml.hpp>
-
 namespace neon
 {
   class WorldSystem

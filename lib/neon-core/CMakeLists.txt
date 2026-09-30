@@ -20,6 +20,13 @@ add_library(${TARGET} STATIC
         neon/common/data-buffer.hpp
         neon/common/util.hpp
 
+        # data
+        neon/data/data-value.cpp
+        neon/data/data-value.hpp
+        neon/data/document-format.hpp
+        neon/data/data-reader.cpp
+        neon/data/data-reader.hpp
+
         # filesystem
         neon/filesystem/file-system.cpp
         neon/filesystem/file-system.hpp
@@ -86,6 +93,11 @@ add_library(${TARGET} STATIC
         neon/world-system/ecs/entity-store.hpp
         neon/world-system/ecs/entity-system.hpp
         neon/world-system/ecs/scene.hpp
+        neon/world-system/ecs/scene-file/component-format.cpp
+        neon/world-system/ecs/scene-file/component-format.hpp
+        neon/world-system/ecs/scene-file/engine-component-formats.cpp
+        neon/world-system/ecs/scene-file/scene-file.cpp
+        neon/world-system/ecs/scene-file/scene-file.hpp
         neon/world-system/ecs/entity-world.cpp
         neon/world-system/ecs/entity-world.hpp
         neon/world-system/ecs/components/camera.hpp
@@ -108,5 +120,4 @@ target_link_libraries(${TARGET}
         glm::glm
         spdlog::spdlog
         assimp::assimp
-        ryml
 )

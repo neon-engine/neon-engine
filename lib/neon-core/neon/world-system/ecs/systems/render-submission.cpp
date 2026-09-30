@@ -53,8 +53,13 @@ namespace neon
 
       for (std::size_t i = 0; i < block.count; i++)
       {
-        lights[i].source.position = transforms[i].world_coordinates[3];
-        _render_pipeline->EnqueueLightSource(lights[i].source);
+        auto &source = lights[i].source;
+        source.position = transforms[i].world_coordinates[3];
+
+        // the renderer names a light by the entity it belongs to
+        if (source.id.empty()) { source.id = store.GetName(block.entities[i]); }
+
+        _render_pipeline->EnqueueLightSource(source);
       }
     });
 

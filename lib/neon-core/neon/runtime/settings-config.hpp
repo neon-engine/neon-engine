@@ -36,6 +36,9 @@ struct SettingsConfig
   std::string organization = "neon-engine";
   std::string application = "neon-runtime";
 
+  /// Virtual path of the scene the application starts with.
+  std::string scene_path = "assets://scenes/demo.scene.yml";
+
   RenderingApi selected_api;
   WindowMode window_mode = WindowMode::Windowed;
   std::string logpath = "logs/neon-engine.log";

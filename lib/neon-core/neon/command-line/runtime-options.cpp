@@ -10,6 +10,7 @@ namespace neon
 {
   namespace
   {
+    const std::string scene = "scene";
     const std::string renderer = "renderer";
     const std::string frames = "frames";
     const std::string screenshot = "screenshot";
@@ -53,6 +54,12 @@ namespace neon
 
   void RuntimeOptions::Register(CommandLine &command_line)
   {
+    command_line.Add({
+      .name = scene,
+      .value_name = "PATH",
+      .description = "Scene to start with, for example assets://scenes/demo.scene.yml"
+    });
+
     command_line.Add({
       .name = renderer,
       .value_name = "NAME",
@@ -111,6 +118,11 @@ namespace neon
     SettingsConfig &settings,
     std::string &error)
   {
+    if (command_line.IsSet(scene))
+    {
+      settings.scene_path = command_line.GetValue(scene);
+    }
+
     // the parser only lets the accepted values through
     if (command_line.GetValue(renderer) == vulkan)
     {

@@ -1,0 +1,237 @@
+# Scenes
+
+This note records how a scene is kept in a file, why it is kept that way, and
+what is still open.
+
+**Current decision:** a scene is a YAML file that lists entities and their
+components. It is meant to be read and changed by hand. NeonEditor will write
+the same file. A binary form is not needed yet, and has a place to go when it
+is.
+
+## The file
+
+```yaml
+scene: demo
+version: 1
+
+entities:
+  - name: floor
+    components:
+      Transform:
+        position: [0, -0.55, 0]
+        scale: [100, 0.1, 100]
+      Renderable:
+        model: assets://models/cube.obj
+        shader: assets://shaders/basic-lit
+        textures:
+          - assets://textures/concrete.png
+        material:
+          color: [0.5, 0.5, 0.5]
+
+  - name: player
+    components:
+      Transform:
+        position: [0, 0, 2]
+      Spectator: Default
+    children:
+      # the camera sits on the player, and so moves and turns with it
+      - name: camera
+        components:
+          Transform: Default
+          Camera: Default
+```
+
+The scene of the runtime is
+[demo.scene.yml](../app/NeonRuntime/assets/scenes/demo.scene.yml). Another one
+is chosen with `--scene`:
+
+```
+NeonRuntime --scene assets://scenes/other.scene.yml
+```
+
+### At the top
+
+| Name | Holds | When it is left out |
+|---|---|---|
+| `scene` | What the scene is called | It has no name |
+| `version` | The version of this layout, which is 1 | It counts as 1 |
+| `entities` | A list of entities | The scene is empty |
+
+### An entity
+
+| Name | Holds | When it is left out |
+|---|---|---|
+| `name` | What the entity is called. Unique among the entities next to it, and without a `/` | It has no name and cannot be found by one |
+| `components` | The components, each under the name it was registered with | It carries none |
+| `children` | A list of entities below it | It has none |
+
+A child moves, turns, and grows with its parent. It is found by the names from
+the top, such as `player/camera`.
+
+### Components
+
+What a component leaves out keeps its default. A component that keeps all of
+its defaults is written as `Default`, as in `Spectator: Default`. `{}` means
+the same.
+
+**Transform**
+
+| Name | Holds | Default |
+|---|---|---|
+| `position` | `[x, y, z]`, relative to the parent | `[0, 0, 0]` |
+| `rotation` | `[pitch, yaw, roll]` in degrees | `[0, 0, 0]` |
+| `scale` | `[x, y, z]`, or one number for all three | `1` |
+
+**Renderable**
+
+| Name | Holds | Default |
+|---|---|---|
+| `model` | Virtual path of the model | None. It has to be written |
+| `shader` | Virtual path of the shader, without an extension | None. It has to be written |
+| `textures` | A list of virtual paths | None |
+| `scale_textures` | Whether textures repeat as the entity grows | `false` |
+| `material` | `shininess`, `color` as `[red, green, blue]` or with alpha as a fourth, and `use_textures` | `0`, white, `true` |
+
+**Camera**
+
+| Name | Holds | Default |
+|---|---|---|
+| `target` | `window` or `texture` | `window` |
+| `fov` | Vertical field of view in degrees | `45` |
+| `near`, `far` | The distances between which things are visible | `0.1`, `1000` |
+| `up` | The direction that is up | `[0, 1, 0]` |
+
+**Light**
+
+| Name | Holds | Default |
+|---|---|---|
+| `type` | `direction`, `point`, or `spot` | `direction` |
+| `direction` | `[x, y, z]` | `[0, 0, 0]` |
+| `ambient`, `diffuse`, `specular` | `[red, green, blue]` | `[0, 0, 0]` |
+| `constant`, `linear`, `quadratic` | How the light fades with distance | `0` |
+| `cutoff`, `outer_cutoff` | The cone of a spot light | `0` |
+
+The position of a light is that of its `Transform`. The renderer knows a
+light by the name of its entity.
+
+**Spectator**
+
+| Name | Holds | Default |
+|---|---|---|
+| `move_speed` | Units per second | `2.5` |
+| `look_speed` | Degrees per unit the mouse moved | `0.1` |
+
+## Made to be changed by hand
+
+| Decision | Reason |
+|---|---|
+| A name that is not known is an error | `postion` would otherwise be ignored, and the entity would sit at the origin without a word |
+| A message names the file, the line, and what was expected | `demo.scene.yml:5: 'position' of Transform of entity 'a' is text, where a list of 3 numbers was expected` |
+| Every problem of a file is reported, not only the first | A file is corrected in one pass |
+| What is left out keeps its default | A file holds what was decided and nothing else |
+| Paths need no quotes | `assets://models/cube.obj` is plain text to YAML |
+| Comments are allowed | YAML has them. They are lost when the engine writes the file, see the open questions |
+| Anchors, aliases, and tags are refused | They make a file harder to follow, and harder for a tool to write back as it was |
+| Names are written the way the components of the engine are | `Transform` in a file is `Transform` in code |
+
+## When the engine writes
+
+`SceneFile::Save` writes every entity of the store. It is what NeonEditor will
+use.
+
+| Rule | Reason |
+|---|---|
+| A value that is the default is left out | The file stays short and a change to it shows up as one line |
+| Lists of numbers are written on one line | `[0, 0, 2]` |
+| Entities are set apart by a blank line | They are found at a glance |
+| Entities keep the order they were created in | The file does not reorder itself between two saves |
+| A number is written with the digits it needs | `0.31`, not `0.3100000023841858` |
+
+A scene that was saved, loaded, and saved again is the same text.
+
+## How it is built
+
+| Piece | Location | Role |
+|---|---|---|
+| `DataValue` | neon-core | A value of a document: a bool, a number, text, a list, a map, or nothing. It knows the line it was read from |
+| `DocumentFormat` | neon-core | The interface that turns text into values and back |
+| `RYML_DocumentFormat` | neon-ryml | The implementation for YAML, with rapidyaml |
+| `DataReader` | neon-core | Reads the values of a map into variables and collects what is wrong |
+| `ComponentFormat` | neon-core | How one kind of component is read and written |
+| `SceneFile` | neon-core | The `Scene` that reads and writes a file |
+
+Nothing outside neon-ryml includes a header of rapidyaml. The library is
+linked privately. neon-core linked it before and no longer does.
+
+`SceneFile` does not know that the file is YAML. It is handed a
+`DocumentFormat` and reads the file through the file system.
+
+### A component of a game
+
+```cpp
+struct Health
+{
+  int points = 100;
+};
+
+store.Register<Health>("Health");
+
+scene.GetComponentFormats().Add(neon::ComponentFormat::Of<Health>(
+  "Health",
+  [](const neon::DataReader &reader, Health &health)
+  {
+    float points = 100.f;
+    reader.Read("points", points);
+    health.points = static_cast<int>(points);
+  },
+  [](const Health &health, neon::DataValue &map)
+  {
+    map.Set("points", neon::DataValue::Number(health.points));
+  }));
+```
+
+## A binary form
+
+YAML has no binary form of its own. The formats that are close are separate
+formats with the same kinds of values.
+
+| Format | What it is |
+|---|---|
+| [MessagePack](https://msgpack.org) | Maps, lists, numbers, and text in a compact binary form. Small libraries for every language |
+| [CBOR](https://cbor.io) | The same idea as a standard, RFC 8949 |
+| [FlatBuffers](https://flatbuffers.dev) | Read without being parsed. Needs a schema that is compiled ahead of time |
+| A format of our own | The memory of the components as it is, which is the fastest to load and the most work to keep compatible |
+
+None is needed today. The text of a scene is small next to the models and
+textures it names, and those are what loading waits for. How long a large
+scene takes to read has not been measured.
+
+When one is needed, for a scene with many thousands of entities or to keep a
+shipped game from being changed with a text editor, it is a second
+`DocumentFormat`. The scene would be kept as YAML while a game is made, and
+turned into the binary form when the game is exported. `SceneFile` and the
+formats of the components would not change.
+
+## How it was checked
+
+| Check | Result |
+|---|---|
+| The demo scene from the file, and as it was written in code | The same image, byte for byte |
+| 23 checks of reading and writing YAML through the interface | Pass |
+| 30 checks of loading, saving, and what is reported for a wrong file | Pass |
+
+The checks are not part of the repository. They move into the unit tests once
+those exist.
+
+## Open questions
+
+- Comments and the order of names are lost when the engine writes a file that
+  was changed by hand. Keeping them needs the writer to work on the text that
+  is there and not on values.
+- Whether a number that has to be whole, such as a count, is its own kind.
+  Every number is read as one kind today.
+- One scene inside another, such as a tree that is placed a hundred times.
+  Flecs has prefabs for it.
+- An entity that refers to another, such as a door to its switch. Paths such
+  as `player/camera` are the likely answer.
+- What a project is on disk, of which scenes are one part.

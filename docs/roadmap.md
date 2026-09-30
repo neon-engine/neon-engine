@@ -12,7 +12,7 @@ Neon Engine is built as two applications on one engine, in the way Godot is.
 
 | Application | What it is | State |
 |---|---|---|
-| **NeonRuntime** | What gets distributed with a game. It loads a project and runs it. The project's assets ship next to it, not inside it | Exists. Runs a scene that is still written in code |
+| **NeonRuntime** | What gets distributed with a game. It loads a project and runs it. The project's assets ship next to it, not inside it | Exists. Runs a scene from a file |
 | **NeonEditor** | Where games are made. A special kind of runtime, with everything the runtime has plus tools of its own | Not started |
 
 Principles that hold for both:
@@ -37,6 +37,7 @@ Principles that hold for both:
 | Window modes | Windowed, borderless, and fullscreen |
 | Command line | An abstraction with a set of options for each application |
 | Runtime class | The core class an application is built from is `neon::Runtime` |
+| Scenes in files | A scene is a YAML file of entities and components, made to be changed by hand. See [scenes.md](scenes.md) |
 | Entities and components | The world is made of entities, components, and systems, with Flecs behind an interface. See [entity-component-system.md](entity-component-system.md) |
 | Running without a window | `--headless`, `--frames`, and `--screenshot` render a number of frames and save the last one |
 | Screenshots where the caller wants them | `--output-dir` chooses the folder behind `output://` |
@@ -50,7 +51,7 @@ Work that builds directly on what exists.
 
 | Item | Detail |
 |---|---|
-| Load a project | The runtime takes a project to run. Scenes come from files, such as `demo.scene.yml`, which nothing reads yet |
+| Load a project | The runtime takes a project to run. It takes a scene today, with `--scene`. What a project is on disk is open |
 | Vulkan version and capabilities | A setting for the version to ask for, and a way for the engine to learn what the graphics card can do, so that menus only offer what works |
 | Run on Windows | The build works. It has not been run |
 | Log file under `user://` | It is still written relative to the working directory |
@@ -233,7 +234,7 @@ A proposal. Each step builds on the ones before it.
 | 1 | Unit tests, clang-tidy, the TODOs | Small, and they protect everything that follows |
 | 2 | Architecture document | Writing it down exposes what the next steps have to change |
 | 3 | Load a project, and the rest of [Next](#next) | The runtime has to run something other than a scene written in code |
-| 4 | Scenes in files, as entities and components | Done for the world itself. What is left is reading a scene from a file |
+| 4 | Entities and components, and scenes in files | Done |
 | 5 | Physics, then scripting with Lua | With both, a game can be written without touching the engine |
 | 6 | Running without a window, in full | Makes every later feature checkable by a script or an agent |
 | 7 | Sound effects, music, then spatial audio | Independent of rendering |

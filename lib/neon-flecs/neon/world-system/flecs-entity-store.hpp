@@ -50,6 +50,9 @@ namespace neon
 
     std::vector<Query> _queries;
 
+    // what Flecs puts at the top for itself, which is not part of the world
+    std::vector<Entity> _own_entities;
+
     std::shared_ptr<Logger> _logger;
 
     [[nodiscard]] const Component *FindComponentById(ComponentId component) const;
@@ -82,6 +85,8 @@ namespace neon
     void SetParent(Entity entity, Entity parent) override;
 
     Entity GetParent(Entity entity) override;
+
+    std::vector<Entity> GetChildren(Entity entity) override;
 
     void SetComponent(Entity entity, ComponentId component, const void *value) override;
 

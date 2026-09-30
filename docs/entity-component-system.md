@@ -46,7 +46,7 @@ and inspected by an agent.
 | `EntityWorld` | neon-core | Runs the systems every frame. It is the `WorldSystem` of the runtime |
 | Components and systems of the engine | neon-core | Listed below |
 | `Flecs_EntityStore` | neon-flecs | The implementation |
-| `DemoScene` | NeonRuntime | The scene of the runtime, written in code |
+| `SceneFile` | neon-core | The scene that is read from a file. See [scenes.md](scenes.md) |
 
 Nothing outside neon-flecs includes a header of Flecs. The library is linked
 privately, so the compiler refuses it anywhere else.
@@ -150,6 +150,16 @@ or a renderer. The decisions below follow from that.
 | A component can ask to be told when it is removed | `Renderable` refers to what the renderer holds. That is released when the entity is destroyed, without a system having to watch for it |
 | A name with a dot is one name | Paths are written with forward slashes, as everywhere else in the engine: `player/camera` |
 
+### Limits
+
+There is no limit on how many kinds of component a store knows, or on how
+many components one entity carries. A query names between 1 and 8 components,
+which is `EntityBlock::Max_Components`. Flecs itself allows 32.
+
+Flecs looks up the first 256 ids of a world faster than the ones after them.
+The components of `Flecs_EntityStore` are given ordinary ids today, so they do
+not use that faster lookup.
+
 ## Why Flecs
 
 [ecs_benchmark](https://github.com/abeimler/ecs_benchmark) measured Flecs
@@ -191,9 +201,6 @@ is the first step of the [roadmap](roadmap.md#order).
 
 ## Open questions
 
-- Scenes in files. [demo.scene.yml](../app/NeonRuntime/assets/scenes/demo.scene.yml)
-  still describes nodes and nothing reads it. A `Scene` that reads a file
-  needs components to say how they are written and read.
 - The order of systems. There are three fixed places today. A game with many
   systems will want to say what runs before what.
 - Scripts. A component that is declared in Lua fits the interface. How a

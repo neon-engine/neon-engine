@@ -6,6 +6,7 @@
 #include <string>
 #include <typeindex>
 #include <unordered_map>
+#include <vector>
 
 #include "component-info.hpp"
 #include "entity-query.hpp"
@@ -68,6 +69,10 @@ namespace neon
     virtual void SetParent(Entity entity, Entity parent) = 0;
 
     virtual Entity GetParent(Entity entity) = 0;
+
+    /// The children of an entity, in the order they were created. No_Entity
+    /// gives the entities at the top.
+    virtual std::vector<Entity> GetChildren(Entity entity) = 0;
 
     /// Gives the entity the component, or replaces the one it has. `value`
     /// points to a component that is copied.

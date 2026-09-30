@@ -201,6 +201,7 @@ the configure step again.
 Usage: NeonRuntime [options]
 
   --help                    Show this text
+  --scene PATH              Scene to start with, for example assets://scenes/demo.scene.yml
   --renderer vulkan         Renderer to draw with. Default: vulkan
 
 Development:
