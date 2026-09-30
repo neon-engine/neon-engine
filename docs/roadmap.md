@@ -37,6 +37,7 @@ Principles that hold for both:
 | Window modes | Windowed, borderless, and fullscreen |
 | Command line | An abstraction with a set of options for each application |
 | Runtime class | The core class an application is built from is `neon::Runtime` |
+| Entities and components | The world is made of entities, components, and systems, with Flecs behind an interface. See [entity-component-system.md](entity-component-system.md) |
 | Running without a window | `--headless`, `--frames`, and `--screenshot` render a number of frames and save the last one |
 
 ## Next
@@ -71,13 +72,11 @@ These come first, because everything after them is cheaper with them in place.
 
 | Item | Detail |
 |---|---|
-| Entities and components | The world system is rebuilt on an entity component system. The scene graph stays as the way a scene is described. What stores and updates it changes |
 | Physics | Jolt Physics, behind an interface in neon-core. It is in the tree and builds. Nothing uses it yet |
 | Scripting | Lua first. Game code is loaded by the runtime, not compiled into it. Bindings for other languages can follow the same interface |
 
-Entities and components come before physics and scripting. Both attach to
-whatever the world is made of, and would have to be redone if it changed under
-them.
+Both attach to entities and components, which exist. Physics becomes a
+component and a system. A script declares components and systems of its own.
 
 ### Rendering
 
@@ -229,7 +228,7 @@ A proposal. Each step builds on the ones before it.
 | 1 | Unit tests, clang-tidy, the TODOs | Small, and they protect everything that follows |
 | 2 | Architecture document | Writing it down exposes what the next steps have to change |
 | 3 | Load a project, and the rest of [Next](#next) | The runtime has to run something other than a scene written in code |
-| 4 | Entities and components | Physics, scripting, and audio all attach to the world |
+| 4 | Scenes in files, as entities and components | Done for the world itself. What is left is reading a scene from a file |
 | 5 | Physics, then scripting with Lua | With both, a game can be written without touching the engine |
 | 6 | Running without a window, in full | Makes every later feature checkable by a script or an agent |
 | 7 | Sound effects, music, then spatial audio | Independent of rendering |
@@ -252,7 +251,6 @@ A document for each feature is written with the feature, not as a step.
 
 | Where | What |
 |---|---|
-| [scene-manager.cpp](../lib/neon-core/neon/world-system/scene-graph/scene-manager.cpp) | Create nodes through a factory class. Tracked as issue 4. Rebuilding the world on entities and components may replace it |
 | [CMakeLists.txt](../CMakeLists.txt) | Turn on `-Wall`, `-Wextra`, and `-Werror`, once the libraries in `external/` no longer compile as part of the project |
 | [CMakeLists.txt](../CMakeLists.txt) | Set the compiler flags for release builds |
 | [CMakeLists.txt](../CMakeLists.txt) | Consider whether the C++ runtime still has to be linked statically |
@@ -266,7 +264,6 @@ A document for each feature is written with the feature, not as a step.
 | Shaders in GLSL or in Slang | How many shaders there will be. Cheap to change now, expensive later |
 | Which technique for global illumination | What the target hardware is, and whether the web has to be able to run it |
 | Which audio libraries stay | Whether one of them covers effects, music, and spatial audio together |
-| Which library for entities and components | One of our own, or an existing one such as EnTT or Flecs |
 | Which test framework | Catch2, GoogleTest, or doctest |
 | How agents reach the editor | What the editor turns out to be |
 | What a project is on disk | Needed before the runtime can load one |

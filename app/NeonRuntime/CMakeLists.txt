@@ -1,10 +1,12 @@
 set(TARGET NeonRuntime)
 
 add_executable(${TARGET} main.cpp
+        demo-scene.cpp
+        demo-scene.hpp
         neon-runtime.cpp
         neon-runtime.hpp)
 
-target_link_libraries(${TARGET} PRIVATE neon-core neon-vulkan neon-sdl2)
+target_link_libraries(${TARGET} PRIVATE neon-core neon-vulkan neon-sdl2 neon-flecs)
 
 setup_copy_assets(
         ${TARGET}

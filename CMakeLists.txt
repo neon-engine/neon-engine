@@ -85,6 +85,11 @@ set(VOLK_PULL_IN_VULKAN OFF CACHE BOOL "" FORCE)
 add_subdirectory(external/volk)
 target_link_libraries(volk PUBLIC Vulkan::Headers)
 
+# Flecs, the entity component system behind neon-flecs. Only the static
+# library is built.
+set(FLECS_SHARED OFF CACHE BOOL "" FORCE)
+add_subdirectory(external/flecs)
+
 add_subdirectory(external/rapidyaml)
 if(MINGW)
   # c4core only detects MinGW under GCC. Under clang it misses it and rapidyaml
@@ -96,6 +101,7 @@ endif()
 add_subdirectory(lib/neon-core)
 add_subdirectory(lib/neon-vulkan)
 add_subdirectory(lib/neon-sdl2)
+add_subdirectory(lib/neon-flecs)
 
 # Load additional cmake
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/CopyAssets.cmake")

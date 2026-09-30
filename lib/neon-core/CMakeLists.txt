@@ -78,19 +78,24 @@ add_library(${TARGET} STATIC
 
         # world-system
         neon/world-system/world-system.hpp
-        neon/world-system/scene-graph/node/light-node.cpp
-        neon/world-system/scene-graph/node/light-node.hpp
-        neon/world-system/scene-graph/node/node.cpp
-        neon/world-system/scene-graph/node/node.hpp
-        neon/world-system/scene-graph/node/render-node.cpp
-        neon/world-system/scene-graph/node/render-node.hpp
-        neon/world-system/scene-graph/node/camera-node.cpp
-        neon/world-system/scene-graph/node/camera-node.hpp
-        neon/world-system/scene-graph/node/spectator-node.cpp
-        neon/world-system/scene-graph/node/spectator-node.hpp
-        neon/world-system/scene-graph/scene-manager.cpp
-        neon/world-system/scene-graph/scene-manager.hpp
-        neon/world-system/scene-graph/node-factory.hpp
+        neon/world-system/ecs/entity.hpp
+        neon/world-system/ecs/component-info.hpp
+        neon/world-system/ecs/entity-query.hpp
+        neon/world-system/ecs/entity-store.hpp
+        neon/world-system/ecs/entity-system.hpp
+        neon/world-system/ecs/scene.hpp
+        neon/world-system/ecs/entity-world.cpp
+        neon/world-system/ecs/entity-world.hpp
+        neon/world-system/ecs/components/camera.hpp
+        neon/world-system/ecs/components/light.hpp
+        neon/world-system/ecs/components/renderable.hpp
+        neon/world-system/ecs/components/spectator.hpp
+        neon/world-system/ecs/systems/render-submission.cpp
+        neon/world-system/ecs/systems/render-submission.hpp
+        neon/world-system/ecs/systems/spectator-movement.cpp
+        neon/world-system/ecs/systems/spectator-movement.hpp
+        neon/world-system/ecs/systems/transform-propagation.cpp
+        neon/world-system/ecs/systems/transform-propagation.hpp
 )
 
 target_include_directories(${TARGET}

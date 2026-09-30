@@ -12,7 +12,10 @@
 #include <neon/render/vk-render-system.hpp>
 #include <neon/window/headless-window-system.hpp>
 #include <neon/window/sdl2-window-system.hpp>
+#include <neon/world-system/ecs/entity-world.hpp>
+#include <neon/world-system/flecs-entity-store.hpp>
 
+#include "demo-scene.hpp"
 #include "neon-runtime.hpp"
 
 // SDL2 provides the real platform entry point (WinMain on Windows) through
@@ -116,11 +119,16 @@ int main(const int argc, char *argv[])
     settings_config.max_light_sources,
     logging_system.CreateLogger("Forward_RenderPipeline"));
 
-  neon::SceneManager scene_manager(
+  neon::Flecs_EntityStore entity_store(logging_system.CreateLogger("Flecs_EntityStore"));
+  DemoScene scene;
+
+  neon::EntityWorld world(
+    &entity_store,
+    &scene,
     &render_pipeline,
     input_system,
     window_system,
-    logging_system.CreateLogger("SceneManager"));
+    logging_system.CreateLogger("EntityWorld"));
 
   const auto app_logger = logging_system.CreateLogger("NeonRuntime");
 
@@ -131,7 +139,7 @@ int main(const int argc, char *argv[])
     render_system,
     &render_pipeline,
     &logging_system,
-    &scene_manager,
+    &world,
     app_logger);
 
   try

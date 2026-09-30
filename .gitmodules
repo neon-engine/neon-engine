@@ -34,3 +34,6 @@
 [submodule "external/volk"]
 	path = external/volk
 	url = https://github.com/zeux/volk.git
+[submodule "external/flecs"]
+	path = external/flecs
+	url = https://github.com/SanderMertens/flecs.git

@@ -4,7 +4,7 @@
 #include "settings-config.hpp"
 #include "neon/input/input-system.hpp"
 #include "neon/logging/logging-system.hpp"
-#include "neon/world-system/scene-graph/scene-manager.hpp"
+#include "neon/world-system/world-system.hpp"
 #include "neon/render/render-pipeline.hpp"
 #include "neon/render/render-system.hpp"
 #include "neon/window/window-system.hpp"
