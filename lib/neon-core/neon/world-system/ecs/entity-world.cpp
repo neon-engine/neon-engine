@@ -25,7 +25,7 @@ namespace neon
     _scene = scene;
 
     _before.push_back(std::make_unique<SpectatorMovement>(input_context));
-    _after.push_back(std::make_unique<TransformPropagation>());
+    _placing.push_back(std::make_unique<TransformPropagation>());
     _after.push_back(std::make_unique<RenderSubmission>(render_pipeline));
   }
 
@@ -37,6 +37,11 @@ namespace neon
   void EntityWorld::AddSystem(std::unique_ptr<EntitySystem> system)
   {
     _added.push_back(std::move(system));
+  }
+
+  FixedClock &EntityWorld::GetFixedClock()
+  {
+    return _fixed_clock;
   }
 
   void EntityWorld::RegisterComponents() const
@@ -66,6 +71,7 @@ namespace neon
 
     for (const auto &system : _before) { system->Initialize(*_store); }
     for (const auto &system : _added) { system->Initialize(*_store); }
+    for (const auto &system : _placing) { system->Initialize(*_store); }
     for (const auto &system : _after) { system->Initialize(*_store); }
 
     _scene->Populate(*_store);
@@ -79,8 +85,25 @@ namespace neon
   {
     const auto delta_time = _window_context->GetDeltaTime();
 
+    // the steps come first, so that the frame sees what they led to
+    const auto steps = _fixed_clock.Advance(delta_time);
+    const auto fixed_delta_time = _fixed_clock.GetStep();
+
+    for (std::size_t step = 0; step < steps; step++)
+    {
+      for (const auto &system : _before) { system->FixedUpdate(*_store, fixed_delta_time); }
+      for (const auto &system : _added) { system->FixedUpdate(*_store, fixed_delta_time); }
+    }
+
     for (const auto &system : _before) { system->Update(*_store, delta_time); }
     for (const auto &system : _added) { system->Update(*_store, delta_time); }
+    for (const auto &system : _placing) { system->Update(*_store, delta_time); }
+
+    // what is drawn lies between the last two steps
+    const auto blend = _fixed_clock.GetBlend();
+    for (const auto &system : _before) { system->Interpolate(*_store, blend); }
+    for (const auto &system : _added) { system->Interpolate(*_store, blend); }
+
     for (const auto &system : _after) { system->Update(*_store, delta_time); }
 
     _render_pipeline->RenderFrame();

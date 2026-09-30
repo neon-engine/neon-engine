@@ -8,6 +8,7 @@
 
 #include "entity-store.hpp"
 #include "entity-system.hpp"
+#include "fixed-clock.hpp"
 #include "scene.hpp"
 
 namespace neon
@@ -15,11 +16,16 @@ namespace neon
   /// The world as entities, components, and systems.
   ///
   /// Every frame runs in this order:
-  ///   1. the systems of the engine that react to input
-  ///   2. the systems that were added with AddSystem, in the order they were
+  ///   1. the steps of the world that the time of the frame asks for, which
+  ///      can be none. Every step calls FixedUpdate of every system, in the
+  ///      order of 2 and 3
+  ///   2. the systems of the engine that react to input
+  ///   3. the systems that were added with AddSystem, in the order they were
   ///      added
-  ///   3. placing every entity in the world
-  ///   4. handing the camera, the lights, and what is visible to the renderer
+  ///   4. placing every entity in the world
+  ///   5. Interpolate of every system, which places what is drawn between
+  ///      the last two steps
+  ///   6. handing the camera, the lights, and what is visible to the renderer
   ///
   /// So a system that was added sees the input of the frame, and what it
   /// moves is drawn where it moved it to.
@@ -30,7 +36,10 @@ namespace neon
 
     std::vector<std::unique_ptr<EntitySystem>> _before;
     std::vector<std::unique_ptr<EntitySystem>> _added;
+    std::vector<std::unique_ptr<EntitySystem>> _placing;
     std::vector<std::unique_ptr<EntitySystem>> _after;
+
+    FixedClock _fixed_clock;
 
     bool _initialized = false;
 
@@ -51,6 +60,11 @@ namespace neon
 
     /// Adds behaviour of a game. Call it before Initialize.
     void AddSystem(std::unique_ptr<EntitySystem> system);
+
+    /// Decides when the world takes a step. It is where the number of steps
+    /// per second is set, and what a system asks that needs to know about
+    /// the steps.
+    [[nodiscard]] FixedClock &GetFixedClock();
 
     void Initialize() override;
 

@@ -614,7 +614,7 @@ Where the paper and the repository differ, the repository stays as it is:
 | Sources are in a folder named after the project, `neon/` | The same, once for every library: `lib/neon-core/neon/`, `lib/neon-sdl2/neon/`, and so on. The libraries share the `neon` namespace and its include paths |
 | Executables of tests are named after the file they test | Named after the library and the file, such as `neon-core.command-line.test`, since the libraries are built in one project and two of them may have a file of the same name |
 | Says nothing about mocks | Shared mocks and fakes are headers in `lib/neon-core/neon/testing/` |
-| Functional tests are programs in `tests/` | Two of the three are CMake scripts that start NeonRuntime, since that is what they test |
+| Functional tests are programs in `tests/` | Three of the five are CMake scripts that start NeonRuntime, since that is what they test |
 
 ### Building and running
 
@@ -714,6 +714,7 @@ A mock checks what it is asked to do. A fake does the work in a simple way.
 | `mock-entity-store.hpp` | `MockEntityStore` | `EntityStore` |
 | `fake-entity-store.hpp` | `FakeEntityStore`, a store that is as simple as one can be | `EntityStore` |
 | `mock-entity-world.hpp` | `MockEntitySystem`, `MockScene` | `EntitySystem`, `Scene` |
+| `fake-physics-context.hpp` | `FakePhysicsContext`, a physics in which nothing collides, and which writes down what it was asked | `PhysicsContext` |
 | `temporary-directory.hpp` | `TemporaryDirectory`, a folder that is removed with the object | |
 
 `TemporaryDirectory` uses `std::filesystem`, which the engine itself must not.
@@ -727,7 +728,7 @@ what it left behind.
 | neon-core | `command-line/command-line` | 94 | Every way to write an option, every message of the parser, defaults, whole numbers, numbers, the help text |
 | neon-core | `command-line/runtime-options` | 64 | Every option and every message of `Apply`. The help text is compared with the one in this guide |
 | neon-core | `common/data-buffer` | 20 | Ids, capacity, reuse of slots, what is thrown |
-| neon-core | `common/rotation` | 13 | The quaternion of known angles, and the order of the turns |
+| neon-core | `common/rotation` | 21 | The quaternion of known angles, the order of the turns, and the angles of a quaternion |
 | neon-core | `common/transform` | 11 | `Forward` and `Right`. 1 disabled |
 | neon-core | `common/util` | 12 | All four functions |
 | neon-core | `filesystem/file-system` | 158 | Every path rule for reading and writing, letter case, the native path, `output://` without a folder |
@@ -735,6 +736,7 @@ what it left behind.
 | neon-core | `input/headless-input-system` | 7 | Nothing is ever pressed |
 | neon-core | `logging/spd-logger` | 10 | Levels, arguments, what is thrown for a message that cannot be formatted |
 | neon-core | `logging/logging-system` | 11 | The log file, in a temporary folder |
+| neon-core | `physics/model-geometry` | 7 | The points and triangles of a model, moved and sized as the renderer does it |
 | neon-core | `render/forward-render-pipeline` | 24 | What is drawn in which order, the projection, lights and their limit |
 | neon-core | `render/model` | 25 | Loading from a file system in memory, material files, textures, the normalization matrix. 1 disabled |
 | neon-core | `runtime/frame-capture` | 21 | `NumberedPath`, and which frames are saved |
@@ -742,11 +744,15 @@ what it left behind.
 | neon-core | `window/headless-window-system` | 16 | Closing, the time step, the size |
 | neon-core | `world-system/ecs/component-info` | 15 | `ComponentInfo::Of` with a type that owns memory |
 | neon-core | `world-system/ecs/entity-store` | 16 | What the templates of `EntityStore` ask a backend for, and `EntityBlock` |
-| neon-core | `world-system/ecs/entity-world` | 28 | What is initialized in which order, the order of the systems in a frame, what is released |
+| neon-core | `world-system/ecs/entity-world` | 38 | What is initialized in which order, the order of the systems in a frame, the steps of the world, what is released |
+| neon-core | `world-system/ecs/fixed-clock` | 19 | The steps of the time that passed at every frame rate, a frame that took long, the blend |
+| neon-core | `world-system/ecs/scene-file/physics-component-formats` | 43 | Reading and writing the components of the physics, and every message |
+| neon-core | `world-system/ecs/systems/physics-simulation` | 73 | Creating and releasing bodies, shapes of several colliders, entities with a parent, what is handed to the physics and taken back, what is drawn between two steps |
 | neon-core | `world-system/ecs/systems/spectator-movement` | 25 | Moving and turning by the input |
 | neon-core | `world-system/ecs/systems/transform-propagation` | 21 | Parent times child, over several levels |
 | neon-core | `world-system/ecs/systems/render-submission` | 31 | The camera, the lights, render objects. 1 disabled |
-| neon-flecs | `world-system/flecs-entity-store` | 103 | Everything `EntityStore` promises, through that interface |
+| neon-flecs | `world-system/flecs-entity-store` | 104 | Everything `EntityStore` promises, through that interface |
+| neon-jolt | `physics/jolt-physics-system` | 89 | Everything `PhysicsContext` promises, through that interface, with worlds that are small enough to know what has to come out |
 | neon-sdl2 | `filesystem/sdl2-file-system` | 39 | Real files in the three schemes, letter case on a disk that ignores it |
 | neon-vulkan | `render/vk-material` | 27 | What is handed to the shaders, textures that cannot be used |
 | neon-vulkan | `render/vk-mesh` | 6 | A mesh with nothing to draw |
@@ -757,6 +763,8 @@ what it left behind.
 | `tests/` | `world-with-flecs` | 16 | The world as an application puts it together, with the store of Flecs and the forward pipeline |
 | `tests/` | `runtime-command-line` | 11 | NeonRuntime with a command line it refuses: exit code and message |
 | `tests/` | `runtime-headless` | 5 | NeonRuntime without a window: exit code, and the images it saved |
+| `tests/` | `physics-with-jolt` | 21 | The physics as an application puts it together, with Flecs, Jolt, and a scene in YAML. The same state after the same steps at every frame rate |
+| `tests/` | `runtime-physics` | 2 | NeonRuntime with the scene of the physics: the same images twice, and at every frame rate |
 
 The headers that only declare an interface or a plain structure have no test
 of their own. There is nothing in them that can be wrong by itself.

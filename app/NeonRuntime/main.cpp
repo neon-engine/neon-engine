@@ -11,6 +11,7 @@
 #include <neon/filesystem/sdl2-file-system.hpp>
 #include <neon/input/headless-input-system.hpp>
 #include <neon/input/sdl2-input-system.hpp>
+#include <neon/physics/jolt-physics-system.hpp>
 #include <neon/render/forward-render-pipeline.hpp>
 #include <neon/render/vk-render-system.hpp>
 #include <neon/window/headless-window-system.hpp>
@@ -18,6 +19,7 @@
 #include <neon/world-system/ecs/entity-world.hpp>
 #include <neon/world-system/ecs/scene-file/scene-file.hpp>
 #include <neon/world-system/ecs/systems/audio-playback.hpp>
+#include <neon/world-system/ecs/systems/physics-simulation.hpp>
 #include <neon/world-system/flecs-entity-store.hpp>
 
 #include "neon-runtime.hpp"
@@ -151,6 +153,18 @@ int main(const int argc, char *argv[])
     logging_system.CreateLogger("EntityWorld"));
 
   world.AddSystem(std::make_unique<neon::AudioPlayback>(&audio_system));
+  // The physics. The world steps at a fixed rate, and the system that is
+  // added here takes a step of the physics in each. Systems of a game are
+  // added before it, so that what they ask for in a step is part of it.
+  neon::Jolt_PhysicsSystem physics_system(settings_config, logging_system.CreateLogger("Jolt_PhysicsSystem"));
+  physics_system.Initialize();
+
+  world.GetFixedClock().SetStepsPerSecond(settings_config.steps_per_second);
+  world.GetFixedClock().SetMostStepsPerFrame(settings_config.most_steps_per_frame);
+  world.AddSystem(std::make_unique<neon::PhysicsSimulation>(
+    &physics_system,
+    &file_system,
+    logging_system.CreateLogger("PhysicsSimulation")));
 
   const auto app_logger = logging_system.CreateLogger("NeonRuntime");
 
@@ -182,6 +196,7 @@ int main(const int argc, char *argv[])
   // systems shut down before the file system they depend on.
   app.CleanUp();
   audio_system.CleanUp();
+  physics_system.CleanUp();
   file_system.CleanUp();
 
   return failed ? EXIT_FAILURE : EXIT_SUCCESS;

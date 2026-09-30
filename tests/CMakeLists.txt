@@ -5,3 +5,5 @@
 add_subdirectory(world-with-flecs)
 add_subdirectory(runtime-command-line)
 add_subdirectory(runtime-headless)
+add_subdirectory(physics-with-jolt)
+add_subdirectory(runtime-physics)

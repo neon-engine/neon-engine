@@ -294,5 +294,6 @@ namespace neon
     Add(SpectatorFormat());
     Add(SoundSourceFormat());
     Add(SoundListenerFormat());
+    AddPhysicsComponents();
   }
 } // neon

@@ -45,6 +45,7 @@ Principles that hold for both:
 | Screenshots at chosen frames | `--screenshot-at` runs the game forward and saves each frame that is listed |
 | Fixed time step | `--time-step` advances every frame by the same amount of time |
 | Exit codes | The runtime returns a failing exit code when a screenshot could not be written or the run ended with an exception |
+| Physics | Static, kinematic, and dynamic bodies, triggers, and characters that move and slide, with Jolt Physics behind an interface. The world steps at a fixed rate. See [physics.md](physics.md) |
 | Unit tests | GoogleTest, with tests for the four libraries and for the runtime as a whole. See the [development guide](development.md#tests) |
 
 ## Next
@@ -78,11 +79,11 @@ These come first, because everything after them is cheaper with them in place.
 
 | Item | Detail |
 |---|---|
-| Physics | Jolt Physics, behind an interface in neon-core. It is in the tree and builds. Nothing uses it yet |
+| More of the physics | Joints, locked axes, shapes that are cast along a way, and shapes that change while a body lives. See [physics.md](physics.md#limits) |
 | Scripting | Lua first. Game code is loaded by the runtime, not compiled into it. Bindings for other languages can follow the same interface |
 
-Both attach to entities and components, which exist. Physics becomes a
-component and a system. A script declares components and systems of its own.
+Both attach to entities and components, which exist. Physics is components
+and a system. A script declares components and systems of its own.
 
 ### Rendering
 
@@ -233,7 +234,7 @@ A proposal. Each step builds on the ones before it.
 | 2 | Architecture document | Writing it down exposes what the next steps have to change |
 | 3 | Load a project, and the rest of [Next](#next) | The runtime has to run something other than a scene written in code |
 | 4 | Entities and components, and scenes in files | Done |
-| 5 | Physics, then scripting with Lua | With both, a game can be written without touching the engine |
+| 5 | Scripting with Lua | Physics is done. With both, a game can be written without touching the engine |
 | 6 | Running without a window, in full | Makes every later feature checkable by a script or an agent |
 | 7 | Sound effects and music are done. Steam Audio is left | Independent of rendering |
 | 8 | Physically based materials, shadow mapping | The largest gain in how a scene looks |

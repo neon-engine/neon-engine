@@ -14,7 +14,7 @@ before is removed.
 |---|---|
 | Entity | Names one thing in the world. It is a number and holds nothing |
 | Component | Data that an entity carries, such as a `Transform`. It has no behaviour |
-| System | Behaviour. It works on every entity that carries the components it asks for, once per frame |
+| System | Behaviour. It works on every entity that carries the components it asks for, once per frame or once per step of the world |
 
 What an entity is follows from what it carries. The bear of the demo scene is
 an entity with a `Transform` and a `Renderable`. The player is one with a
@@ -60,6 +60,7 @@ privately, so the compiler refuses it anywhere else.
 | `Camera` | Field of view and the distances between which things are visible | same |
 | `Light` | A light source | same |
 | `Spectator` | The speeds the input moves the entity with | same |
+| `RigidBody`, `Collider`, `Trigger`, `CharacterBody` | What the physics needs to know of an entity. See [physics.md](physics.md) | same |
 
 ### Systems
 
@@ -67,13 +68,30 @@ A frame runs them in this order.
 
 | Order | System | Does |
 |---|---|---|
-| 1 | `SpectatorMovement` | Moves and turns entities with a `Spectator` by the input |
-| 2 | Systems a game added | In the order they were added |
-| 3 | `TransformPropagation` | Places every entity in the world, parents before children |
-| 4 | `RenderSubmission` | Hands the camera, the lights, and what is visible to the render pipeline |
+| 1 | `FixedUpdate` of every system | Once for every step of the world that the time of the frame asks for, which can be never |
+| 2 | `SpectatorMovement` | Moves and turns entities with a `Spectator` by the input |
+| 3 | Systems a game added | In the order they were added |
+| 4 | `TransformPropagation` | Places every entity in the world, parents before children |
+| 5 | `Interpolate` of every system | Places what is drawn between the last two steps |
+| 6 | `RenderSubmission` | Hands the camera, the lights, and what is visible to the render pipeline |
 
 A system that a game adds sees the input of the frame, and what it moves is
 drawn where it was moved to.
+
+A system has three functions that the world calls. Only `Update` has to be
+written.
+
+| Function | Called | With | For |
+|---|---|---|---|
+| `Update` | Once per frame | The time the frame took | What belongs to a frame: the input, a camera, what is shown |
+| `FixedUpdate` | Once per step of the world | The length of a step, which is always the same | What the game is decided by: forces, velocities, timers |
+| `Interpolate` | Once per frame, after every entity was placed | How far the frame lies between the last two steps | Placing what is drawn between two steps |
+
+The world takes 60 steps in a second, whatever the frame rate is. Why, and
+what belongs where, is in [physics.md](physics.md#the-time-step).
+
+`PhysicsSimulation` is a system that an application adds, as `main.cpp` of
+the runtime does.
 
 ## Using it
 
@@ -201,7 +219,7 @@ is the first step of the [roadmap](roadmap.md#order).
 
 ## Open questions
 
-- The order of systems. There are three fixed places today. A game with many
+- The order of systems. There are four fixed places today. A game with many
   systems will want to say what runs before what.
 - Scripts. A component that is declared in Lua fits the interface. How a
   script reads a block has to be decided.

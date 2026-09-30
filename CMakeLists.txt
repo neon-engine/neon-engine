@@ -74,7 +74,7 @@ if(APPLE AND TARGET zlibstatic)
   # Predefining the macro as itself makes zlib skip that define.
   target_compile_definitions(zlibstatic PRIVATE fdopen=fdopen)
 endif()
-add_subdirectory(external/jolt-physics/Build)
+include("${CMAKE_CURRENT_LIST_DIR}/cmake/JoltPhysics.cmake")
 add_subdirectory(external/spdlog)
 
 # Vulkan. The engine builds against the headers alone and volk finds the
@@ -120,6 +120,7 @@ add_subdirectory(lib/neon-sdl2)
 add_subdirectory(lib/neon-flecs)
 add_subdirectory(lib/neon-ryml)
 add_subdirectory(lib/neon-miniaudio)
+add_subdirectory(lib/neon-jolt)
 
 # Load additional cmake
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/CopyAssets.cmake")

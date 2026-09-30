@@ -73,8 +73,13 @@ namespace neon
 
     [[nodiscard]] const std::vector<ComponentFormat> &GetAll() const;
 
-    /// Adds the formats of the components of the engine.
+    /// Adds the formats of the components of the engine, those of the
+    /// physics included.
     void AddEngineComponents();
+
+    /// Adds the formats of the components of the physics: RigidBody,
+    /// Trigger, CharacterBody, and Collider.
+    void AddPhysicsComponents();
   };
 } // neon
 

@@ -593,6 +593,21 @@ namespace
     EXPECT_TRUE(_store.IsAlive(enemy));
   }
 
+  TEST_F(FlecsEntityStoreTest, DoesNotCountWhatAQueryNeedsAmongTheEntities)
+  {
+    const Entity player = _store.CreateEntity("player");
+    _store.Set(player, Position{1.0f, 2.0f});
+
+    // Flecs keeps an entity for a query that it looks up faster. It is
+    // not part of the world, and a scene that is saved must not hold it.
+    (void) _store.Query<Position>();
+    (void) _store.Query<Position, Velocity>();
+    (void) _store.Query<Position>(QueryOrder::ParentsFirst);
+    (void) _store.Query<Position, Velocity>(QueryOrder::ParentsFirst);
+
+    EXPECT_THAT(_store.GetChildren(No_Entity), ElementsAre(player));
+  }
+
   TEST_F(FlecsEntityStoreTest, LeavesTheParentWhenAChildIsDestroyed)
   {
     const Entity player = _store.CreateEntity("player");

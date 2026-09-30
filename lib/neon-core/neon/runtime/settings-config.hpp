@@ -78,6 +78,15 @@ struct SettingsConfig
   /// nothing to measure against, and 0 stands for a sixtieth of a second.
   double time_step = 0.0;
 
+  /// Steps the world takes in a second. What a game is decided by, the
+  /// physics first of all, advances in steps of this length, whatever the
+  /// frame rate is.
+  double steps_per_second = 60.0;
+
+  /// The most steps one frame takes. A frame that took longer gives up the
+  /// time above them, and the world runs behind the clock for a moment.
+  std::size_t most_steps_per_frame = 8;
+
   /// Virtual path the last frame is saved to as a PNG image before the
   /// application stops, such as `output://frame.png`. Only used
   /// together with max_frames. Empty saves nothing.

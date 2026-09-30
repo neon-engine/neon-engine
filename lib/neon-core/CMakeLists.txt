@@ -92,6 +92,13 @@ add_library(${TARGET} STATIC
         neon/render/light-source.hpp
         neon/render/material-info.hpp
 
+        # physics
+        neon/physics/model-geometry.cpp
+        neon/physics/model-geometry.hpp
+        neon/physics/physics-context.hpp
+        neon/physics/physics-system.hpp
+        neon/physics/physics-types.hpp
+
         # world-system
         neon/world-system/world-system.hpp
         neon/world-system/ecs/entity.hpp
@@ -99,22 +106,30 @@ add_library(${TARGET} STATIC
         neon/world-system/ecs/entity-query.hpp
         neon/world-system/ecs/entity-store.hpp
         neon/world-system/ecs/entity-system.hpp
+        neon/world-system/ecs/fixed-clock.hpp
         neon/world-system/ecs/scene.hpp
         neon/world-system/ecs/scene-file/component-format.cpp
         neon/world-system/ecs/scene-file/component-format.hpp
         neon/world-system/ecs/scene-file/engine-component-formats.cpp
+        neon/world-system/ecs/scene-file/physics-component-formats.cpp
         neon/world-system/ecs/scene-file/scene-file.cpp
         neon/world-system/ecs/scene-file/scene-file.hpp
         neon/world-system/ecs/entity-world.cpp
         neon/world-system/ecs/entity-world.hpp
         neon/world-system/ecs/components/camera.hpp
+        neon/world-system/ecs/components/character-body.hpp
+        neon/world-system/ecs/components/collider.hpp
         neon/world-system/ecs/components/light.hpp
         neon/world-system/ecs/components/renderable.hpp
+        neon/world-system/ecs/components/rigid-body.hpp
         neon/world-system/ecs/components/spectator.hpp
         neon/world-system/ecs/components/sound-listener.hpp
         neon/world-system/ecs/components/sound-source.hpp
         neon/world-system/ecs/systems/audio-playback.cpp
         neon/world-system/ecs/systems/audio-playback.hpp
+        neon/world-system/ecs/components/trigger.hpp
+        neon/world-system/ecs/systems/physics-simulation.cpp
+        neon/world-system/ecs/systems/physics-simulation.hpp
         neon/world-system/ecs/systems/render-submission.cpp
         neon/world-system/ecs/systems/render-submission.hpp
         neon/world-system/ecs/systems/spectator-movement.cpp
@@ -138,6 +153,7 @@ if (NEON_BUILD_TESTS)
   # every library. They are headers, and are compiled into tests only.
   add_library(neon-testing INTERFACE
           neon/testing/fake-entity-store.hpp
+          neon/testing/fake-physics-context.hpp
           neon/testing/memory-file-system.hpp
           neon/testing/mock-entity-store.hpp
           neon/testing/mock-entity-world.hpp
@@ -169,6 +185,7 @@ if (NEON_BUILD_TESTS)
   neon_add_unit_test(${TARGET} neon/input/input-state.test.cpp)
   neon_add_unit_test(${TARGET} neon/logging/logging-system.test.cpp)
   neon_add_unit_test(${TARGET} neon/logging/spd-logger.test.cpp)
+  neon_add_unit_test(${TARGET} neon/physics/model-geometry.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/forward-render-pipeline.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/model.test.cpp)
   neon_add_unit_test(${TARGET} neon/runtime/frame-capture.test.cpp)
@@ -177,6 +194,9 @@ if (NEON_BUILD_TESTS)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/component-info.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/entity-store.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/entity-world.test.cpp)
+  neon_add_unit_test(${TARGET} neon/world-system/ecs/fixed-clock.test.cpp)
+  neon_add_unit_test(${TARGET} neon/world-system/ecs/scene-file/physics-component-formats.test.cpp)
+  neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/physics-simulation.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/render-submission.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/spectator-movement.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/transform-propagation.test.cpp)

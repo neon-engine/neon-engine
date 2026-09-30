@@ -123,6 +123,51 @@ light by the name of its entity.
 
 **SoundSource** and **SoundListener** are listed in [audio.md](audio.md).
 
+**RigidBody**, **Collider**, **Trigger**, and **CharacterBody** are the
+components of the physics. What they hold is listed in
+[physics.md](physics.md#components).
+
+```yaml
+- name: crate
+  components:
+    Transform:
+      position: [0, 5, 0]
+    RigidBody:
+      kind: dynamic        # static, kinematic, or dynamic
+      mass: 10
+    Collider:
+      shape: box           # box, sphere, capsule, cylinder, tapered_capsule,
+      size: [1, 1, 1]      # tapered_cylinder, plane, convex_hull, or mesh
+
+- name: door-trigger
+  components:
+    Transform:
+      position: [0, 1, -5]
+    Trigger:
+      mask: [1, 2]         # the layers it looks for, from 1 to 32
+    Collider:
+      shape: sphere
+      radius: 2
+
+- name: walker
+  components:
+    Transform:
+      position: [-6, 1, 4]
+    CharacterBody:
+      velocity: [2.5, 0, 0.5]
+    Collider:
+      shape: capsule
+      radius: 0.4
+      height: 1.8
+```
+
+| Component | Short | Names |
+|---|---|---|
+| `RigidBody` | A body that does not move, is moved by code, or is moved by the simulation | `kind`, `mass`, `friction`, `bounce`, `linear_damping`, `angular_damping`, `gravity_scale`, `linear_velocity`, `angular_velocity`, `continuous`, `can_sleep`, `layers`, `mask` |
+| `Collider` | The shape of the body of its entity, or of the nearest entity above it that has one | `shape`, `offset`, `rotation`, and what belongs to the shape: `size`, `radius`, `height`, `top_radius`, `bottom_radius`, `model` |
+| `Trigger` | An area that reports what enters and leaves it | `layers`, `mask` |
+| `CharacterBody` | Something that is moved by a velocity, stops at what is in its way, and slides along it | `velocity`, `fall_velocity`, `gravity_scale`, `max_slope`, `step_height`, `mass`, `push_strength`, `layers`, `mask` |
+
 ## Made to be changed by hand
 
 | Decision | Reason |

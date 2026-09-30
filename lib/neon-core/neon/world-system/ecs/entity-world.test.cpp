@@ -570,4 +570,213 @@ namespace
 
     _world.CleanUp();
   }
+
+  // steps of the world
+
+  /// A system that writes down every call with what it was handed.
+  class SteppingSystem final : public EntitySystem
+  {
+    std::string _name;
+    std::vector<std::string> *_calls;
+
+  public:
+    /// What the system knows of its calls once the world owns it.
+    struct Record
+    {
+      std::vector<double> frame_times;
+      std::vector<double> step_times;
+      std::vector<double> blends;
+    };
+
+    Record *record = nullptr;
+
+    SteppingSystem(const std::string &name, std::vector<std::string> *calls, Record *record = nullptr)
+    {
+      _name = name;
+      _calls = calls;
+      this->record = record;
+    }
+
+    void Initialize(EntityStore &) override {}
+
+    void Update(EntityStore &, const double delta_time) override
+    {
+      _calls->push_back(_name + " updated");
+      if (record != nullptr) { record->frame_times.push_back(delta_time); }
+    }
+
+    void FixedUpdate(EntityStore &, const double fixed_delta_time) override
+    {
+      _calls->push_back(_name + " stepped");
+      if (record != nullptr) { record->step_times.push_back(fixed_delta_time); }
+    }
+
+    void Interpolate(EntityStore &, const double blend) override
+    {
+      _calls->push_back(_name + " interpolated");
+      if (record != nullptr) { record->blends.push_back(blend); }
+    }
+  };
+
+  TEST_F(EntityWorldTest, StepsBeforeTheFrameIsUpdatedAndInterpolatesAfter)
+  {
+    ON_CALL(_window, GetDeltaTime()).WillByDefault(Return(1.0 / 30.0));
+    _world.AddSystem(std::make_unique<SteppingSystem>("first", &_calls));
+    _world.AddSystem(std::make_unique<SteppingSystem>("second", &_calls));
+    _world.Initialize();
+
+    _world.Update();
+
+    EXPECT_THAT(_calls, ElementsAre(
+                  "first stepped", "second stepped",
+                  "first stepped", "second stepped",
+                  "first updated", "second updated",
+                  "first interpolated", "second interpolated"));
+  }
+
+  TEST_F(EntityWorldTest, StepsByTheLengthOfAStepWhateverTheFrameTook)
+  {
+    SteppingSystem::Record record;
+    _world.AddSystem(std::make_unique<SteppingSystem>("game", &_calls, &record));
+    _world.Initialize();
+
+    for (const double frame : {0.001, 0.02, 0.1, 0.0167, 0.05})
+    {
+      ON_CALL(_window, GetDeltaTime()).WillByDefault(Return(frame));
+      _world.Update();
+    }
+
+    EXPECT_THAT(record.frame_times, ElementsAre(0.001, 0.02, 0.1, 0.0167, 0.05));
+    ASSERT_FALSE(record.step_times.empty());
+    for (const double step : record.step_times) { EXPECT_EQ(step, 1.0 / 60.0); }
+  }
+
+  TEST_F(EntityWorldTest, TakesTheStepsOfTheTimeThatPassedAtEveryFrameRate)
+  {
+    for (const int frames_per_second : {30, 60, 144, 1000})
+    {
+      FakeEntityStore store;
+      EntityWorld world{&store, &_scene, &_pipeline, &_input, &_window, _logger};
+      SteppingSystem::Record record;
+      world.AddSystem(std::make_unique<SteppingSystem>("game", &_calls, &record));
+      world.Initialize();
+      ON_CALL(_window, GetDeltaTime()).WillByDefault(Return(1.0 / frames_per_second));
+
+      for (int frame = 0; frame < 2 * frames_per_second; frame++) { world.Update(); }
+
+      EXPECT_EQ(record.step_times.size(), 120u) << frames_per_second << " frames per second";
+      EXPECT_EQ(record.frame_times.size(), static_cast<std::size_t>(2 * frames_per_second));
+      world.CleanUp();
+    }
+  }
+
+  TEST_F(EntityWorldTest, UpdatesAFrameThatTakesNoStep)
+  {
+    ON_CALL(_window, GetDeltaTime()).WillByDefault(Return(0.001));
+    _world.AddSystem(std::make_unique<SteppingSystem>("game", &_calls));
+    _world.Initialize();
+
+    _world.Update();
+
+    EXPECT_THAT(_calls, ElementsAre("game updated", "game interpolated"));
+  }
+
+  TEST_F(EntityWorldTest, TakesNoMoreThanTheMostStepsForAFrameThatTookLong)
+  {
+    ON_CALL(_window, GetDeltaTime()).WillByDefault(Return(10.0));
+    SteppingSystem::Record record;
+    _world.AddSystem(std::make_unique<SteppingSystem>("game", &_calls, &record));
+    _world.Initialize();
+
+    _world.Update();
+
+    EXPECT_EQ(record.step_times.size(), 8u);
+    EXPECT_EQ(record.frame_times.size(), 1u);
+
+    // and the frame after it does not make up for it
+    ON_CALL(_window, GetDeltaTime()).WillByDefault(Return(1.0 / 60.0));
+    _world.Update();
+
+    EXPECT_EQ(record.step_times.size(), 9u);
+  }
+
+  TEST_F(EntityWorldTest, StepsAsOftenAsItsClockIsSetTo)
+  {
+    ON_CALL(_window, GetDeltaTime()).WillByDefault(Return(0.1));
+    SteppingSystem::Record record;
+    _world.AddSystem(std::make_unique<SteppingSystem>("game", &_calls, &record));
+    _world.GetFixedClock().SetStepsPerSecond(30.0);
+    _world.GetFixedClock().SetMostStepsPerFrame(2);
+    _world.Initialize();
+
+    _world.Update();
+
+    EXPECT_THAT(record.step_times, ElementsAre(1.0 / 30.0, 1.0 / 30.0));
+  }
+
+  TEST_F(EntityWorldTest, HandsTheBlendOfItsClockToInterpolate)
+  {
+    SteppingSystem::Record record;
+    _world.AddSystem(std::make_unique<SteppingSystem>("game", &_calls, &record));
+    _world.Initialize();
+
+    ON_CALL(_window, GetDeltaTime()).WillByDefault(Return(0.25 / 60.0));
+    _world.Update();
+    ON_CALL(_window, GetDeltaTime()).WillByDefault(Return(1.0 / 60.0));
+    _world.Update();
+
+    ASSERT_EQ(record.blends.size(), 2u);
+    EXPECT_NEAR(record.blends[0], 0.25, 1e-9);
+    EXPECT_NEAR(record.blends[1], 0.25, 1e-9);
+    EXPECT_EQ(record.blends[1], _world.GetFixedClock().GetBlend());
+  }
+
+  TEST_F(EntityWorldTest, DrawsWhatInterpolatePlaced)
+  {
+    /// Places what is drawn somewhere else than where the entity is.
+    class Placing final : public EntitySystem
+    {
+    public:
+      void Initialize(EntityStore &) override {}
+
+      void Update(EntityStore &, double) override {}
+
+      void Interpolate(EntityStore &store, double) override
+      {
+        store.Get<Transform>(store.FindEntity("cube"))->world_coordinates[3] = {7.0f, 8.0f, 9.0f, 1.0f};
+      }
+    };
+
+    PopulateWith([](EntityStore &store)
+    {
+      const Entity entity = store.CreateEntity("cube");
+      store.Set(entity, Transform{.position = {1.0f, 2.0f, 3.0f}});
+      store.Set(entity, Renderable{});
+    });
+    _world.AddSystem(std::make_unique<Placing>());
+    _world.Initialize();
+    ON_CALL(_pipeline, CreateRenderObject(_)).WillByDefault(Return(4));
+
+    glm::vec3 drawn_at{0.0f};
+    EXPECT_CALL(_pipeline, EnqueueForRendering(4, _)).WillOnce(Invoke([&](int, const Transform &transform)
+    {
+      drawn_at = transform.world_coordinates[3];
+    }));
+    _world.Update();
+
+    EXPECT_EQ(drawn_at, glm::vec3(7.0f, 8.0f, 9.0f));
+    // where the entity is has not changed
+    EXPECT_EQ(_store.Get<Transform>(_store.FindEntity("cube"))->position, glm::vec3(1.0f, 2.0f, 3.0f));
+  }
+
+  TEST_F(EntityWorldTest, LeavesASystemWithoutStepsAsItWas)
+  {
+    ON_CALL(_window, GetDeltaTime()).WillByDefault(Return(1.0 / 30.0));
+    _world.AddSystem(std::make_unique<RecordingSystem>("game", &_calls));
+    _world.Initialize();
+
+    _world.Update();
+
+    EXPECT_THAT(_calls, ElementsAre("game initialized", "game updated"));
+  }
 }
