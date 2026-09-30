@@ -37,6 +37,7 @@ Principles that hold for both:
 | Window modes | Windowed, borderless, and fullscreen |
 | Command line | An abstraction with a set of options for each application |
 | Runtime class | The core class an application is built from is `neon::Runtime` |
+| Sound | Sound effects and music with miniaudio, behind an interface. Sounds have a place in the world. See [audio.md](audio.md) |
 | Scenes in files | A scene is a YAML file of entities and components, made to be changed by hand. See [scenes.md](scenes.md) |
 | Entities and components | The world is made of entities, components, and systems, with Flecs behind an interface. See [entity-component-system.md](entity-component-system.md) |
 | Running without a window | `--headless`, `--frames`, and `--screenshot` render a number of frames and save the last one |
@@ -110,11 +111,8 @@ renderers exist, the more each new technique costs. See [order](#order).
 
 | Item | Detail |
 |---|---|
-| Sound effects and music | Playing, stopping, looping, and mixing, behind an interface in neon-core |
-| Spatial audio | Sounds placed in the world, heard from where the listener is |
-
-SDL_mixer, SoLoud, and Steam Audio are in the tree. Nothing uses them yet, and
-which of them stay is open.
+| Spatial audio with Steam Audio | Sounds that are shaped by the room they are in. Sounds already have a place in the world, with miniaudio |
+| Groups and fading | A volume for music, effects, and voices each. Fading between pieces of music |
 
 ### User interface
 
@@ -237,7 +235,7 @@ A proposal. Each step builds on the ones before it.
 | 4 | Entities and components, and scenes in files | Done |
 | 5 | Physics, then scripting with Lua | With both, a game can be written without touching the engine |
 | 6 | Running without a window, in full | Makes every later feature checkable by a script or an agent |
-| 7 | Sound effects, music, then spatial audio | Independent of rendering |
+| 7 | Sound effects and music are done. Steam Audio is left | Independent of rendering |
 | 8 | Physically based materials, shadow mapping | The largest gain in how a scene looks |
 | 9 | Deferred rendering, compute shaders | What the advanced lighting builds on |
 | 10 | User interface framework | Needs the renderer to be settled enough to draw through |
@@ -269,7 +267,6 @@ A document for each feature is written with the feature, not as a step.
 | Whether WebGPU also serves the desktop | If it does on macOS, the Metal renderer has less to justify it |
 | Shaders in GLSL or in Slang | How many shaders there will be. Cheap to change now, expensive later |
 | Which technique for global illumination | What the target hardware is, and whether the web has to be able to run it |
-| Which audio libraries stay | Whether one of them covers effects, music, and spatial audio together |
 | How agents reach the editor | What the editor turns out to be |
 | What a project is on disk | Needed before the runtime can load one |
 | How game code is loaded | Scripts are decided. Whether libraries loaded at run time are offered as well is open |

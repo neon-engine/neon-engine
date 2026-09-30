@@ -20,6 +20,13 @@ add_library(${TARGET} STATIC
         neon/common/data-buffer.hpp
         neon/common/util.hpp
 
+        # audio
+        neon/audio/audio-context.hpp
+        neon/audio/audio-system.hpp
+        neon/audio/headless-audio-system.cpp
+        neon/audio/headless-audio-system.hpp
+        neon/audio/sound-info.hpp
+
         # data
         neon/data/data-value.cpp
         neon/data/data-value.hpp
@@ -104,6 +111,10 @@ add_library(${TARGET} STATIC
         neon/world-system/ecs/components/light.hpp
         neon/world-system/ecs/components/renderable.hpp
         neon/world-system/ecs/components/spectator.hpp
+        neon/world-system/ecs/components/sound-listener.hpp
+        neon/world-system/ecs/components/sound-source.hpp
+        neon/world-system/ecs/systems/audio-playback.cpp
+        neon/world-system/ecs/systems/audio-playback.hpp
         neon/world-system/ecs/systems/render-submission.cpp
         neon/world-system/ecs/systems/render-submission.hpp
         neon/world-system/ecs/systems/spectator-movement.cpp

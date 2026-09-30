@@ -1,9 +1,11 @@
 #include <cstdlib>
 #include <iostream>
+#include <memory>
 #include <optional>
 #include <string>
 
 #include <neon/command-line/command-line.hpp>
+#include <neon/audio/ma-audio-system.hpp>
 #include <neon/command-line/runtime-options.hpp>
 #include <neon/data/ryml-document-format.hpp>
 #include <neon/filesystem/sdl2-file-system.hpp>
@@ -15,6 +17,7 @@
 #include <neon/window/sdl2-window-system.hpp>
 #include <neon/world-system/ecs/entity-world.hpp>
 #include <neon/world-system/ecs/scene-file/scene-file.hpp>
+#include <neon/world-system/ecs/systems/audio-playback.hpp>
 #include <neon/world-system/flecs-entity-store.hpp>
 
 #include "neon-runtime.hpp"
@@ -65,6 +68,16 @@ int main(const int argc, char *argv[])
   // before the other systems are created
   neon::SDL2_FileSystem file_system(settings_config, logging_system.CreateLogger("SDL2_FileSystem"));
   file_system.Initialize();
+
+  // Without a window there is no one to hear anything. Sounds are still read
+  // and mixed, so that a run without a window finds a sound that is broken.
+  if (settings_config.headless) { settings_config.audio_output = AudioOutput::None; }
+
+  neon::MA_AudioSystem audio_system(
+    settings_config,
+    &file_system,
+    logging_system.CreateLogger("MA_AudioSystem"));
+  audio_system.Initialize();
 
   // Only the systems that were asked for are created. The rest of the engine
   // sees them through their interfaces and cannot tell them apart.
@@ -137,6 +150,8 @@ int main(const int argc, char *argv[])
     window_system,
     logging_system.CreateLogger("EntityWorld"));
 
+  world.AddSystem(std::make_unique<neon::AudioPlayback>(&audio_system));
+
   const auto app_logger = logging_system.CreateLogger("NeonRuntime");
 
   NeonRuntime app(
@@ -166,6 +181,7 @@ int main(const int argc, char *argv[])
   // CleanUp is safe to call more than once. Doing it here guarantees the
   // systems shut down before the file system they depend on.
   app.CleanUp();
+  audio_system.CleanUp();
   file_system.CleanUp();
 
   return failed ? EXIT_FAILURE : EXIT_SUCCESS;

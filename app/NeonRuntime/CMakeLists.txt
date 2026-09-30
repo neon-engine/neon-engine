@@ -4,7 +4,7 @@ add_executable(${TARGET} main.cpp
         neon-runtime.cpp
         neon-runtime.hpp)
 
-target_link_libraries(${TARGET} PRIVATE neon-core neon-vulkan neon-sdl2 neon-flecs neon-ryml)
+target_link_libraries(${TARGET} PRIVATE neon-core neon-vulkan neon-sdl2 neon-flecs neon-ryml neon-miniaudio)
 
 setup_copy_assets(
         ${TARGET}

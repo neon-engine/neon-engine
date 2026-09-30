@@ -121,6 +121,8 @@ light by the name of its entity.
 | `move_speed` | Units per second | `2.5` |
 | `look_speed` | Degrees per unit the mouse moved | `0.1` |
 
+**SoundSource** and **SoundListener** are listed in [audio.md](audio.md).
+
 ## Made to be changed by hand
 
 | Decision | Reason |

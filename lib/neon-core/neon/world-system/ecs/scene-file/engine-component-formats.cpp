@@ -4,6 +4,8 @@
 #include <neon/world-system/ecs/components/camera.hpp>
 #include <neon/world-system/ecs/components/light.hpp>
 #include <neon/world-system/ecs/components/renderable.hpp>
+#include <neon/world-system/ecs/components/sound-listener.hpp>
+#include <neon/world-system/ecs/components/sound-source.hpp>
 #include <neon/world-system/ecs/components/spectator.hpp>
 
 // Every component is written with the values that differ from its defaults,
@@ -225,6 +227,62 @@ namespace neon
           Put(map, "look_speed", spectator.look_speed, standard.look_speed);
         });
     }
+
+    ComponentFormat SoundSourceFormat()
+    {
+      return ComponentFormat::Of<SoundSource>(
+        "SoundSource",
+        [](const DataReader &reader, SoundSource &source)
+        {
+          auto &sound = source.sound;
+          reader.Read("sound", sound.path);
+          reader.Read("playing", source.playing);
+          reader.Read("looping", sound.looping);
+          reader.Read("volume", sound.volume);
+          reader.Read("pitch", sound.pitch);
+          reader.Read("spatial", sound.spatial);
+          reader.Read("min_distance", sound.min_distance);
+          reader.Read("max_distance", sound.max_distance);
+
+          if (sound.path.empty())
+          {
+            reader.Report({}, reader.GetWhere() + " needs a 'sound'");
+          }
+
+          if (sound.pitch <= 0.0f)
+          {
+            reader.Report({}, "'pitch' of " + reader.GetWhere() + " has to be above 0");
+          }
+        },
+        [](const SoundSource &source, DataValue &map)
+        {
+          const SoundSource standard{};
+          const auto &sound = source.sound;
+
+          Put(map, "sound", sound.path, standard.sound.path);
+          Put(map, "playing", source.playing, standard.playing);
+          Put(map, "looping", sound.looping, standard.sound.looping);
+          Put(map, "volume", sound.volume, standard.sound.volume);
+          Put(map, "pitch", sound.pitch, standard.sound.pitch);
+          Put(map, "spatial", sound.spatial, standard.sound.spatial);
+          Put(map, "min_distance", sound.min_distance, standard.sound.min_distance);
+          Put(map, "max_distance", sound.max_distance, standard.sound.max_distance);
+        });
+    }
+
+    ComponentFormat SoundListenerFormat()
+    {
+      return ComponentFormat::Of<SoundListener>(
+        "SoundListener",
+        [](const DataReader &reader, SoundListener &listener)
+        {
+          reader.Read("volume", listener.volume);
+        },
+        [](const SoundListener &listener, DataValue &map)
+        {
+          Put(map, "volume", listener.volume, SoundListener{}.volume);
+        });
+    }
   }
 
   void ComponentFormats::AddEngineComponents()
@@ -234,5 +292,7 @@ namespace neon
     Add(CameraFormat());
     Add(LightFormat());
     Add(SpectatorFormat());
+    Add(SoundSourceFormat());
+    Add(SoundListenerFormat());
   }
 } // neon

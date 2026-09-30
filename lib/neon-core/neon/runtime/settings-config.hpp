@@ -10,6 +10,17 @@ enum class RenderingApi
   Vulkan = 0
 };
 
+enum class AudioOutput
+{
+  /// The sound card the system plays through.
+  Device = 0,
+
+  /// Nowhere. Sounds are read and mixed as they are for a sound card, at the
+  /// pace the application advances and not the pace of a clock. For runs
+  /// without a sound card that still want to know what would be heard.
+  None
+};
+
 enum class WindowMode
 {
   /// A regular window with a title bar and borders, sized by width and height.
@@ -40,6 +51,7 @@ struct SettingsConfig
   std::string scene_path = "assets://scenes/demo.scene.yml";
 
   RenderingApi selected_api;
+  AudioOutput audio_output = AudioOutput::Device;
   WindowMode window_mode = WindowMode::Windowed;
   std::string logpath = "logs/neon-engine.log";
   std::size_t log_max_size = 1048576 * 5;
