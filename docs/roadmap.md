@@ -4,7 +4,12 @@ Where Neon Engine is heading, what is decided, and what is still open. It is
 a plan, not a promise. Items move as they are understood better.
 
 The goal is a complete engine: rendering, physics, audio, scripting, user
-interfaces, and an editor to make games with.
+interfaces, and an editor to make games with. All of it is version 1.0.
+
+Every item here is an issue on the [v1.0 milestone](https://git.traparwave.net/neon-engine/neon-engine/milestone/1), where the
+work is tracked: what is done is a closed issue that names its pull request,
+what is open is an open issue, and what is still to be decided is labelled
+`type: decision`. The tables below name the issue of each item as #N.
 
 ## The shape of the product
 
@@ -31,25 +36,25 @@ Principles that hold for both:
 
 | Area | What exists |
 |---|---|
-| Platforms | Builds on macOS, Linux, and Windows with one toolchain |
-| Renderer | Vulkan, on all three. See [vulkan-renderer.md](vulkan-renderer.md) |
-| File system | Virtual paths with `assets://`, `user://`, and `output://`. See [file-systems.md](file-systems.md) |
-| Window modes | Windowed, borderless, and fullscreen |
-| Command line | An abstraction with a set of options for each application |
-| Runtime class | The core class an application is built from is `neon::Runtime` |
-| Sound | Sound effects and music with miniaudio, behind an interface. Sounds have a place in the world. See [audio.md](audio.md) |
-| Reflection | A component is described once, next to itself. Scene files follow from it, and the editor and scripts will. See [reflection.md](reflection.md) |
-| Scenes in files | A scene is a YAML file of entities and components, made to be changed by hand. See [scenes.md](scenes.md) |
-| Entities and components | The world is made of entities, components, and systems, with Flecs behind an interface. See [entity-component-system.md](entity-component-system.md) |
-| Running without a window | `--headless`, `--frames`, and `--screenshot` render a number of frames and save the last one |
-| Screenshots where the caller wants them | `--output-dir` chooses the folder behind `output://` |
-| Screenshots at chosen frames | `--screenshot-at` runs the game forward and saves each frame that is listed |
-| Fixed time step | `--time-step` advances every frame by the same amount of time |
-| Exit codes | The runtime returns a failing exit code when a screenshot could not be written or the run ended with an exception |
-| Physics | Static, kinematic, and dynamic bodies, triggers, and characters that move and slide, with Jolt Physics behind an interface. The world steps at a fixed rate. See [physics.md](physics.md) |
-| Unit tests | GoogleTest, with tests for the four libraries and for the runtime as a whole. See the [development guide](development.md#tests) |
-| User interface | Menus and what is shown during play, from YAML files with the properties of CSS: layout by flexbox, text, values of the game, input and focus, events. It is the first version. See [user-interface.md](user-interface.md) |
-| Drawing in two dimensions | Triangles in pixels through an interface of the renderer, which is all a user interface needs of it |
+| Platforms (#21) | Builds on macOS, Linux, and Windows with one toolchain |
+| Renderer (#23) | Vulkan, on all three. See [vulkan-renderer.md](vulkan-renderer.md) |
+| File system (#22) | Virtual paths with `assets://`, `user://`, and `output://`. See [file-systems.md](file-systems.md) |
+| Window modes (#22) | Windowed, borderless, and fullscreen |
+| Command line (#24) | An abstraction with a set of options for each application |
+| Runtime class (#25) | The core class an application is built from is `neon::Runtime` |
+| Sound (#33) | Sound effects and music with miniaudio, behind an interface. Sounds have a place in the world. See [audio.md](audio.md) |
+| Reflection (#35) | A component is described once, next to itself. Scene files follow from it, and the editor and scripts will. See [reflection.md](reflection.md) |
+| Scenes in files (#29) | A scene is a YAML file of entities and components, made to be changed by hand. See [scenes.md](scenes.md) |
+| Entities and components (#27) | The world is made of entities, components, and systems, with Flecs behind an interface. See [entity-component-system.md](entity-component-system.md) |
+| Running without a window (#28) | `--headless`, `--frames`, and `--screenshot` render a number of frames and save the last one |
+| Screenshots where the caller wants them (#28) | `--output-dir` chooses the folder behind `output://` |
+| Screenshots at chosen frames (#28) | `--screenshot-at` runs the game forward and saves each frame that is listed |
+| Fixed time step (#28) | `--time-step` advances every frame by the same amount of time |
+| Exit codes (#28) | The runtime returns a failing exit code when a screenshot could not be written or the run ended with an exception |
+| Physics (#34) | Static, kinematic, and dynamic bodies, triggers, and characters that move and slide, with Jolt Physics behind an interface. The world steps at a fixed rate. See [physics.md](physics.md) |
+| Unit tests (#31) | GoogleTest, with tests for the four libraries and for the runtime as a whole. See the [development guide](development.md#tests) |
+| User interface (#37) | Menus and what is shown during play, from YAML files with the properties of CSS: layout by flexbox, text, values of the game, input and focus, events. It is the first version. See [user-interface.md](user-interface.md) |
+| Drawing in two dimensions (#37) | Triangles in pixels through an interface of the renderer, which is all a user interface needs of it |
 
 ## Next
 
@@ -57,10 +62,10 @@ Work that builds directly on what exists.
 
 | Item | Detail |
 |---|---|
-| Load a project | The runtime takes a project to run. It takes a scene today, with `--scene`. What a project is on disk is open |
-| Vulkan version and capabilities | A setting for the version to ask for, and a way for the engine to learn what the graphics card can do, so that menus only offer what works |
-| Run on Windows | The build works. It has not been run |
-| Log file under `user://` | It is still written relative to the working directory |
+| Load a project (#41) | The runtime takes a project to run. It takes a scene today, with `--scene`. What a project is on disk is open |
+| Vulkan version and capabilities (#42) | A setting for the version to ask for, and a way for the engine to learn what the graphics card can do, so that menus only offer what works |
+| Run on Windows (#43) | The build works. It has not been run |
+| Log file under `user://` (#44) | It is still written relative to the working directory |
 
 ## Planned
 
@@ -73,17 +78,23 @@ These come first, because everything after them is cheaper with them in place.
 
 | Item | Detail |
 |---|---|
-| clang-tidy | Checks that code follows the conventions the code base already has, such as naming. Run in the build and in the editor |
-| The TODOs in the repository | Listed [below](#todos-in-the-repository) |
-| Architecture document | How the libraries, interfaces, and applications fit together, and why |
-| A document for each major feature | In the way [file-systems.md](file-systems.md) describes the file system: what it does, how it is used, and what is open |
+| clang-tidy (#30) | Checks that code follows the conventions the code base already has, such as naming. Run in the build and in the editor |
+| The TODOs in the repository (#46) | Listed [below](#todos-in-the-repository) |
+| Architecture document (#45) | How the libraries, interfaces, and applications fit together, and why |
+| A document for each major feature (#45) | In the way [file-systems.md](file-systems.md) describes the file system: what it does, how it is used, and what is open |
 
 ### World
 
 | Item | Detail |
 |---|---|
-| More of the physics | Joints, locked axes, shapes that are cast along a way, and shapes that change while a body lives. See [physics.md](physics.md#limits) |
-| Scripting | Lua first. Game code is loaded by the runtime, not compiled into it. Bindings for other languages can follow the same interface |
+| More of the physics (#56) | Joints, locked axes, shapes that are cast along a way, and shapes that change while a body lives. See [physics.md](physics.md#limits) |
+| Scripting (#57) | Lua first. Game code is loaded by the runtime, not compiled into it. Bindings for other languages can follow the same interface |
+| Lua with almost no overhead (#99) | Components reached without copying, no allocation between engine and script, updates over the store's arrays |
+| Components from Lua (#100) | A script declares a component that takes part in scenes, reflection, and systems |
+| Script everything (#101) | As Godot does, in a design that fits an ECS: the unit is a system over components |
+| Games in C++ and Lua with hot reload (#104) | Other languages after 1.0. C++ reloads as a library, which may need a runtime made for the editor |
+| Meshes with collision, generated (#97) | Geometry built at run time and in the editor, with its collider, for level editing |
+| Scenes and resources serialized to binary and text (#96) | As Godot does with resources, so that saved games are the same machinery. Not decided; to be discussed |
 
 Both attach to entities and components, which exist. Physics is components
 and a system. A script declares components and systems of its own.
@@ -92,14 +103,17 @@ and a system. A script declares components and systems of its own.
 
 | Item | Detail |
 |---|---|
-| Physically based materials | Metalness and roughness, as glTF describes them |
-| Shadow mapping | For directional, point, and spot lights |
-| Deferred rendering | A second pipeline next to the forward one, for scenes with many lights |
-| Compute shaders | Used by the engine, and offered to games through the render interfaces |
-| Light mapping | Lighting computed ahead of time for what does not move. Baked by the editor |
-| Global illumination | Which technique is open. It builds on deferred rendering and compute shaders |
-| Metal renderer | macOS without MoltenVK |
-| WebGPU renderer | The web. Through Dawn or wgpu also the desktop platforms |
+| Physically based materials (#59) | Metalness and roughness, as glTF describes them |
+| Shadow mapping (#60) | For directional, point, and spot lights |
+| Deferred rendering (#61) | A second pipeline next to the forward one, for scenes with many lights |
+| Compute shaders (#62) | Used by the engine, and offered to games through the render interfaces |
+| Light mapping (#63) | Lighting computed ahead of time for what does not move. Baked by the editor |
+| Global illumination (#64) | Which technique is open. It builds on deferred rendering and compute shaders |
+| Metal renderer (#65) | macOS without MoltenVK |
+| WebGPU renderer (#66) | The web. Through Dawn or wgpu also the desktop platforms |
+| Programmable rendering pipeline (#102) | A game describes passes, targets, and order in place of the fixed forward pipeline |
+| Compute in the pipeline (#107) | Compute passes next to draw passes, with shared buffers and images |
+| PBR and an ubershader out of the box (#106) | One shader that covers a traditionally rendered game, chosen by variants |
 
 **Shaders are written once.** They are compiled to SPIR-V, and
 [SPIRV-Cross](https://github.com/KhronosGroup/SPIRV-Cross) turns that into
@@ -115,8 +129,8 @@ renderers exist, the more each new technique costs. See [order](#order).
 
 | Item | Detail |
 |---|---|
-| Spatial audio with Steam Audio | Sounds that are shaped by the room they are in. Sounds already have a place in the world, with miniaudio |
-| Groups and fading | A volume for music, effects, and voices each. Fading between pieces of music |
+| Spatial audio with Steam Audio (#70) | Sounds that are shaped by the room they are in. Sounds already have a place in the world, with miniaudio |
+| Groups and fading (#71) | A volume for music, effects, and voices each. Fading between pieces of music |
 
 ### User interface
 
@@ -125,12 +139,14 @@ left:
 
 | Item | Detail |
 |---|---|
-| Yoga as the layout engine | The engine places elements with an implementation of flexbox of its own. Yoga is tested against the specification by many more users |
-| Scrolling and text input | Lists that are longer than their box, and fields to type into |
-| More elements | Slider, checkbox, list, tabs |
-| Styles that are shared | A style block with selectors, which is the step towards CSS |
-| Animation, themes, localisation, rich text | |
-| A library with a language of its own | RmlUi is the candidate. The interface for drawing in two dimensions takes what it hands over |
+| Text, images, shapes, shaders, and surfaces (#39) | In review as pull request 18 |
+| Style sheets, scrolling, typing, choosing, animation, scripts, hi-DPI (#40) | In review as pull request 20 |
+| Yoga as the layout engine (#77) | The engine places elements with an implementation of flexbox of its own. Yoga is tested against the specification by many more users |
+| Scrolling and text input (#40) | Lists that are longer than their box, and fields to type into |
+| More elements (#40) | Slider, checkbox, list, tabs |
+| Styles that are shared (#40) | A style block with selectors, which is the step towards CSS |
+| Animation, themes, localisation, rich text (#75) | |
+| A library with a language of its own (#78) | RmlUi is the candidate. The interface for drawing in two dimensions takes what it hands over |
 
 This is separate from the interface of the editor, which uses Dear ImGui.
 Dear ImGui suits tools. It is not meant for what players see.
@@ -144,20 +160,22 @@ makes them a supported way to run a game, for automated checks and for agents.
 
 | Item | Detail |
 |---|---|
-| Setting the state of a game | Options to start from a given state, such as a scene, a saved game, or values of the game's own. Waits for scenes that load from files |
-| Fixed random numbers | A seed given on the command line, so that a game that uses random numbers gives the same image on every run. Nothing in the engine draws random numbers yet |
+| Setting the state of a game (#79) | Options to start from a given state, such as a scene, a saved game, or values of the game's own. Waits for scenes that load from files |
+| Fixed random numbers (#80) | A seed given on the command line, so that a game that uses random numbers gives the same image on every run. Nothing in the engine draws random numbers yet |
 
 ### NeonEditor
 
 | Part | Detail |
 |---|---|
-| Interface | Built with [Dear ImGui](https://github.com/ocornut/imgui) |
-| Editing | Scenes, assets, and settings of a project |
-| Running a game from the editor | With options the runtime alone does not have, for debugging |
-| Exporting | Turning a project into something that can be distributed |
-| Compiler tools | The tools that prepare a project are packaged with the editor: compiling shaders, preparing models and textures, and baking light maps |
-| Command line | The options of the runtime, plus a set only the editor has |
-| Agent support | A Model Context Protocol server. See below |
+| Interface (#82) | Built with [Dear ImGui](https://github.com/ocornut/imgui) |
+| Editing (#82) | Scenes, assets, and settings of a project |
+| Running a game from the editor (#82) | With options the runtime alone does not have, for debugging |
+| Exporting (#84) | Turning a project into something that can be distributed |
+| Compiler tools (#83) | The tools that prepare a project are packaged with the editor: compiling shaders, preparing models and textures, and baking light maps |
+| Command line (#24) | The options of the runtime, plus a set only the editor has |
+| Agent support (#85) | A Model Context Protocol server. See below |
+| Import through assimp, run without it (#98) | The editor converts anything assimp reads to glTF or a format of the engine's; the runtime reads only that |
+| Interface beyond Dear ImGui (#103) | A stretch goal: the editor's interface behind an abstraction |
 
 ### Exporting games
 
@@ -167,6 +185,8 @@ The editor can export in two ways.
 |---|---|---|
 | With precompiled runtimes | The editor takes a NeonRuntime that was built ahead of time for the target and puts the project next to it | The normal case. Needs no compiler |
 | By compiling | The editor builds the runtime for the target, inside a container | When the runtime itself was changed |
+| By compiling the game in (#105) | The game and the runtime become one executable, harder to decompile and optimised as a whole | When the developer chooses |
+
 
 **Containers** already build for Linux and cross-compile for Windows. See
 the [development guide](development.md).
@@ -232,8 +252,8 @@ Threads are limited in browsers, which will matter for physics.
 
 | Item | Detail |
 |---|---|
-| Replace assimp | It is temporary. It is large, and a game should load models that were prepared ahead of time |
-| Packed assets | Shipping archives instead of loose files. See [file-systems.md](file-systems.md) |
+| Replace assimp (#69) | It is temporary. It is large, and a game should load models that were prepared ahead of time |
+| Packed assets (#81) | Shipping archives instead of loose files. See [file-systems.md](file-systems.md) |
 
 ## Order
 
@@ -271,14 +291,28 @@ A document for each feature is written with the feature, not as a step.
 | [CMakeLists.txt](../CMakeLists.txt) | Set the compiler flags for release builds |
 | [CMakeLists.txt](../CMakeLists.txt) | Consider whether the C++ runtime still has to be linked statically |
 
+## Known bugs and debts
+
+| What | Issue |
+|---|---|
+| The log file is written relative to the working directory | #44 |
+| Rendering is not gamma-correct | #67 |
+| The swapchain is not recreated when the window is resized | #68 |
+| Sanitizer builds hang at startup on macOS | #54 |
+| clang-tidy findings in the test code, clang-format violations | #52, #53 |
+| The audio and physics components are read and written by hand, not described | #58 |
+| Pointing at a user interface on a surface in the world needs the ray cast | #73 |
+
 ## Open decisions
 
 | Decision | Depends on |
 |---|---|
-| When the Metal and WebGPU renderers are started | How much is to be ported, against how much is to be built three times |
-| Whether WebGPU also serves the desktop | If it does on macOS, the Metal renderer has less to justify it |
-| Shaders in GLSL or in Slang | How many shaders there will be. Cheap to change now, expensive later |
-| Which technique for global illumination | What the target hardware is, and whether the web has to be able to run it |
-| How agents reach the editor | What the editor turns out to be |
-| What a project is on disk | Needed before the runtime can load one |
-| How game code is loaded | Scripts are decided. Whether libraries loaded at run time are offered as well is open |
+| When the Metal and WebGPU renderers are started (#87) | How much is to be ported, against how much is to be built three times |
+| Whether WebGPU also serves the desktop (#88) | If it does on macOS, the Metal renderer has less to justify it |
+| Shaders in GLSL or in Slang (#89) | How many shaders there will be. Cheap to change now, expensive later |
+| Which technique for global illumination (#90) | What the target hardware is, and whether the web has to be able to run it |
+| How agents reach the editor (#91) | What the editor turns out to be |
+| What a project is on disk (#92) | Needed before the runtime can load one |
+| How game code is loaded (#93) | Scripts are decided. Whether libraries loaded at run time are offered as well is open |
+| YAML, JSON, or BSON for scenes and user interfaces (#94) | YAML is used and can be changed by hand; JSON with BSON for shipping was weighed |
+| The license of the engine (#95) | MIT was removed; what replaces it is not decided |
