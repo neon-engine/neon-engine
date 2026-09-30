@@ -12,14 +12,19 @@
 #include <neon/input/headless-input-system.hpp>
 #include <neon/input/sdl2-input-system.hpp>
 #include <neon/physics/jolt-physics-system.hpp>
+#include <neon/layout/flex-layout-engine.hpp>
 #include <neon/render/forward-render-pipeline.hpp>
 #include <neon/render/vk-render-system.hpp>
+#include <neon/text/stb-font-rasterizer.hpp>
+#include <neon/ui/tree-ui-system.hpp>
 #include <neon/window/headless-window-system.hpp>
 #include <neon/window/sdl2-window-system.hpp>
 #include <neon/world-system/ecs/entity-world.hpp>
 #include <neon/world-system/ecs/scene-file/scene-file.hpp>
 #include <neon/world-system/ecs/systems/audio-playback.hpp>
 #include <neon/world-system/ecs/systems/physics-simulation.hpp>
+#include <neon/world-system/ecs/scene-file/ui-view-format.hpp>
+#include <neon/world-system/ecs/systems/ui-view-loading.hpp>
 #include <neon/world-system/flecs-entity-store.hpp>
 
 #include "neon-runtime.hpp"
@@ -92,6 +97,7 @@ int main(const int argc, char *argv[])
   neon::WindowSystem *window_system;
   neon::InputSystem *input_system;
   neon::RenderSystem *render_system;
+  neon::Render2DContext *render_2d_context;
 
   if (settings_config.headless)
   {
@@ -121,6 +127,7 @@ int main(const int argc, char *argv[])
         &file_system,
         settings_config,
         logging_system.CreateLogger("Vulkan_RenderSystem"));
+      render_2d_context = &*vk_render_system;
       break;
     }
     default:
@@ -138,21 +145,48 @@ int main(const int argc, char *argv[])
   neon::Flecs_EntityStore entity_store(logging_system.CreateLogger("Flecs_EntityStore"));
   neon::RYML_DocumentFormat yaml;
 
+  // The user interface: menus, and what is shown during play. Its text is
+  // drawn with Inter unless a file names another font.
+  neon::STB_FontRasterizer font_rasterizer;
+  neon::Flex_LayoutEngine layout_engine;
+
+  neon::Tree_UiSystem ui_system(
+    render_2d_context,
+    &font_rasterizer,
+    &layout_engine,
+    input_system,
+    &file_system,
+    &yaml,
+    neon::UiSettings{
+      .fonts = {
+        {"sans-serif", 400, "assets://fonts/inter/Inter-Regular.ttf"},
+        {"sans-serif", 700, "assets://fonts/inter/Inter-Bold.ttf"}
+      },
+      .start_path = settings_config.ui_path
+    },
+    logging_system.CreateLogger("Tree_UiSystem"));
+
   neon::SceneFile scene(
     &file_system,
     &yaml,
     settings_config.scene_path,
     logging_system.CreateLogger("SceneFile"));
 
+  // a scene names the user interface it comes with as a component
+  scene.GetComponentFormats().Add(neon::UiViewFormat());
+
+  // the world reads the input less what the user interface has used
   neon::EntityWorld world(
     &entity_store,
     &scene,
     &render_pipeline,
-    input_system,
+    ui_system.GetGameInput(),
     window_system,
     logging_system.CreateLogger("EntityWorld"));
 
   world.AddSystem(std::make_unique<neon::AudioPlayback>(&audio_system));
+  world.AddSystem(std::make_unique<neon::UiViewLoading>(&ui_system));
+
   // The physics. The world steps at a fixed rate, and the system that is
   // added here takes a step of the physics in each. Systems of a game are
   // added before it, so that what they ask for in a step is part of it.
@@ -177,6 +211,8 @@ int main(const int argc, char *argv[])
     &logging_system,
     &world,
     app_logger);
+
+  app.SetUiSystem(&ui_system);
 
   // a script that starts the runtime learns from the exit code whether the
   // run did what it was asked to

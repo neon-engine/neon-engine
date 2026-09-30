@@ -25,6 +25,11 @@ namespace neon
     _logger = logger;
   }
 
+  void Runtime::SetUiSystem(UiSystem *ui_system)
+  {
+    _ui_system = ui_system;
+  }
+
   void Runtime::Initialize() const
   {
     // order here matters
@@ -36,6 +41,10 @@ namespace neon
     _input_system->Initialize();
     _render_system->Initialize();
     _render_pipeline->Initialize();
+
+    // in front of the world, whose scene may name a user interface to show
+    if (_ui_system != nullptr) { _ui_system->Initialize(); }
+
     _world_system->Initialize();
   }
 
@@ -45,6 +54,7 @@ namespace neon
     _destroyed = true;
 
     _world_system->CleanUp();
+    if (_ui_system != nullptr) { _ui_system->CleanUp(); }
     _render_pipeline->CleanUp();
     _render_system->CleanUp();
     _input_system->CleanUp();
@@ -71,8 +81,16 @@ namespace neon
     while (_window_system->IsRunning())
     {
       _input_system->ProcessInput();
+
+      // The user interface sees the input first, and takes what it uses
+      // away from the world. It is drawn last, on top of the world.
+      if (_ui_system != nullptr) { _ui_system->Update(); }
+
       _render_system->PrepareFrame();
       _world_system->Update();
+
+      if (_ui_system != nullptr) { _ui_system->Draw(); }
+
       _render_system->FinishFrame();
       frames_rendered++;
 

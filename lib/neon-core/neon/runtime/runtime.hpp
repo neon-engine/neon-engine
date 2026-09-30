@@ -7,6 +7,7 @@
 #include "neon/world-system/world-system.hpp"
 #include "neon/render/render-pipeline.hpp"
 #include "neon/render/render-system.hpp"
+#include "neon/ui/ui-system.hpp"
 #include "neon/window/window-system.hpp"
 
 namespace neon
@@ -24,6 +25,7 @@ namespace neon
     RenderPipeline *_render_pipeline;
     LoggingSystem *_logging_system;
     WorldSystem* _world_system;
+    UiSystem *_ui_system = nullptr;
     std::shared_ptr<Logger> _logger;
 
     Runtime(
@@ -38,6 +40,11 @@ namespace neon
 
   public:
     virtual ~Runtime();
+
+    /// Gives the runtime a user interface, which is then updated before
+    /// the world and drawn on top of it. Call it before Initialize(). A
+    /// runtime without one draws the world alone.
+    void SetUiSystem(UiSystem *ui_system);
 
     virtual void Run();
 

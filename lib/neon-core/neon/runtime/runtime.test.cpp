@@ -9,6 +9,7 @@
 #include <neon/testing/mock-input-system.hpp>
 #include <neon/testing/mock-render-pipeline.hpp>
 #include <neon/testing/mock-render-system.hpp>
+#include <neon/testing/mock-ui-system.hpp>
 #include <neon/testing/mock-window-system.hpp>
 #include <neon/testing/mock-world-system.hpp>
 #include <neon/testing/recording-logger.hpp>
@@ -19,6 +20,7 @@ namespace
   using neon::testing::MockInputSystem;
   using neon::testing::MockRenderPipeline;
   using neon::testing::MockRenderSystem;
+  using neon::testing::MockUiSystem;
   using neon::testing::MockWindowSystem;
   using neon::testing::MockWorldSystem;
   using neon::testing::RecordingLogger;
@@ -63,6 +65,7 @@ namespace
     StrictMock<MockRenderSystem> _render_system{_logger};
     StrictMock<MockRenderPipeline> _render_pipeline{_logger};
     StrictMock<MockWorldSystem> _world_system{_logger};
+    StrictMock<MockUiSystem> _ui_system;
 
     // what the window was told, so that IsRunning can answer like a window
     bool _closed = false;
@@ -117,6 +120,126 @@ namespace
       EXPECT_CALL(_window_system, Update()).Times(frames);
     }
   };
+
+  // with a user interface
+
+  TEST_F(RuntimeTest, TouchesNoUserInterfaceWhenItIsGivenOne)
+  {
+    const auto runtime = Create({});
+    runtime->SetUiSystem(&_ui_system);
+
+    {
+      InSequence in_order;
+      EXPECT_CALL(_world_system, CleanUp());
+      EXPECT_CALL(_ui_system, CleanUp());
+      EXPECT_CALL(_render_pipeline, CleanUp());
+    }
+    EXPECT_CALL(_render_system, CleanUp());
+    EXPECT_CALL(_input_system, CleanUp());
+    EXPECT_CALL(_window_system, CleanUp());
+  }
+
+  TEST_F(RuntimeTest, InitializesTheUserInterfaceBetweenTheRendererAndTheWorld)
+  {
+    const auto runtime = Create({});
+    runtime->SetUiSystem(&_ui_system);
+
+    {
+      InSequence in_order;
+      EXPECT_CALL(_window_system, Initialize());
+      EXPECT_CALL(_input_system, Initialize());
+      EXPECT_CALL(_render_system, Initialize());
+      EXPECT_CALL(_render_pipeline, Initialize());
+      // the renderer is there for its textures, and the scene of the world
+      // may name a user interface to show
+      EXPECT_CALL(_ui_system, Initialize());
+      EXPECT_CALL(_world_system, Initialize());
+    }
+    runtime->Initialize();
+
+    {
+      InSequence in_order;
+      EXPECT_CALL(_world_system, CleanUp());
+      EXPECT_CALL(_ui_system, CleanUp());
+      EXPECT_CALL(_render_pipeline, CleanUp());
+      EXPECT_CALL(_render_system, CleanUp());
+      EXPECT_CALL(_input_system, CleanUp());
+      EXPECT_CALL(_window_system, CleanUp());
+    }
+  }
+
+  TEST_F(RuntimeTest, UpdatesTheUserInterfaceBeforeTheWorldAndDrawsItAfterwards)
+  {
+    const auto runtime = Create({.max_frames = 2});
+    runtime->SetUiSystem(&_ui_system);
+
+    ExpectInitialize();
+    EXPECT_CALL(_ui_system, Initialize());
+    LetTheWindowRunUntilItIsClosed();
+    {
+      InSequence in_order;
+      for (int frame = 0; frame < 2; frame++)
+      {
+        EXPECT_CALL(_input_system, ProcessInput());
+        // it sees the input first, and takes what it uses from the world
+        EXPECT_CALL(_ui_system, Update());
+        EXPECT_CALL(_render_system, PrepareFrame());
+        EXPECT_CALL(_world_system, Update());
+        // on top of the world, and into the frame that is saved
+        EXPECT_CALL(_ui_system, Draw());
+        EXPECT_CALL(_render_system, FinishFrame());
+        EXPECT_CALL(_window_system, Update());
+      }
+    }
+
+    runtime->Run();
+
+    ExpectCleanUp();
+    EXPECT_CALL(_ui_system, CleanUp());
+  }
+
+  TEST_F(RuntimeTest, DrawsTheUserInterfaceIntoTheFrameThatIsSaved)
+  {
+    const auto runtime = Create({.max_frames = 1, .screenshot_path = "output://frame.png"});
+    runtime->SetUiSystem(&_ui_system);
+
+    ExpectInitialize();
+    EXPECT_CALL(_ui_system, Initialize());
+    LetTheWindowRunUntilItIsClosed();
+    EXPECT_CALL(_input_system, ProcessInput());
+    EXPECT_CALL(_ui_system, Update());
+    EXPECT_CALL(_render_system, PrepareFrame());
+    EXPECT_CALL(_world_system, Update());
+    EXPECT_CALL(_window_system, Update());
+    {
+      InSequence in_order;
+      EXPECT_CALL(_ui_system, Draw());
+      EXPECT_CALL(_render_system, FinishFrame());
+      EXPECT_CALL(_render_system, CaptureFrame("output://frame.png")).WillOnce(Return(true));
+    }
+
+    runtime->Run();
+
+    EXPECT_FALSE(runtime->HasFailed());
+    ExpectCleanUp();
+    EXPECT_CALL(_ui_system, CleanUp());
+  }
+
+  TEST_F(RuntimeTest, RunsWithoutAUserInterfaceOnceItIsTakenAway)
+  {
+    const auto runtime = Create({.max_frames = 1});
+    runtime->SetUiSystem(&_ui_system);
+    runtime->SetUiSystem(nullptr);
+
+    // the mock is strict, a call to it fails the test
+    ExpectInitialize();
+    LetTheWindowRunUntilItIsClosed();
+    ExpectFrames(1);
+
+    runtime->Run();
+
+    ExpectCleanUp();
+  }
 
   TEST_F(RuntimeTest, TouchesNoSystemWhenItIsCreated)
   {

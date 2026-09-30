@@ -45,6 +45,59 @@ add_library(${TARGET} STATIC
         neon/reflection/type-info.cpp
         neon/reflection/type-info.hpp
 
+        # layout
+        neon/layout/layout-style.hpp
+        neon/layout/layout-engine.hpp
+        neon/layout/flex-layout-engine.cpp
+        neon/layout/flex-layout-engine.hpp
+
+        # text
+        neon/text/utf8.cpp
+        neon/text/utf8.hpp
+        neon/text/font-rasterizer.hpp
+        neon/text/font-atlas.cpp
+        neon/text/font-atlas.hpp
+        neon/text/text-layout.cpp
+        neon/text/text-layout.hpp
+
+        # user interface
+        neon/ui/css-values.cpp
+        neon/ui/css-values.hpp
+        neon/ui/ui-style.cpp
+        neon/ui/ui-style.hpp
+        neon/ui/ui-values.cpp
+        neon/ui/ui-values.hpp
+        neon/ui/ui-resources.cpp
+        neon/ui/ui-resources.hpp
+        neon/ui/ui-painter.cpp
+        neon/ui/ui-painter.hpp
+        neon/ui/ui-element.cpp
+        neon/ui/ui-element.hpp
+        neon/ui/ui-text.cpp
+        neon/ui/ui-text.hpp
+        neon/ui/elements/ui-panel.cpp
+        neon/ui/elements/ui-panel.hpp
+        neon/ui/elements/ui-label.cpp
+        neon/ui/elements/ui-label.hpp
+        neon/ui/elements/ui-image.cpp
+        neon/ui/elements/ui-image.hpp
+        neon/ui/elements/ui-button.cpp
+        neon/ui/elements/ui-button.hpp
+        neon/ui/elements/ui-bar.cpp
+        neon/ui/elements/ui-bar.hpp
+        neon/ui/ui-element-types.cpp
+        neon/ui/ui-element-types.hpp
+        neon/ui/ui-document.cpp
+        neon/ui/ui-document.hpp
+        neon/ui/ui-file.cpp
+        neon/ui/ui-file.hpp
+        neon/ui/ui-input-gate.cpp
+        neon/ui/ui-input-gate.hpp
+        neon/ui/ui-context.hpp
+        neon/ui/ui-system.hpp
+        neon/ui/tree-ui-system.cpp
+        neon/ui/tree-ui-system.hpp
+
         # filesystem
         neon/filesystem/file-system.cpp
         neon/filesystem/file-system.hpp
@@ -95,6 +148,7 @@ add_library(${TARGET} STATIC
         neon/render/forward-render-pipeline.hpp
         neon/render/render-system.hpp
         neon/render/render-context.hpp
+        neon/render/render-2d-context.hpp
         neon/render/mesh.hpp
         neon/render/model.cpp
         neon/render/model.hpp
@@ -141,6 +195,11 @@ add_library(${TARGET} STATIC
         neon/world-system/ecs/components/trigger.hpp
         neon/world-system/ecs/systems/physics-simulation.cpp
         neon/world-system/ecs/systems/physics-simulation.hpp
+        neon/world-system/ecs/components/ui-view.hpp
+        neon/world-system/ecs/scene-file/ui-view-format.cpp
+        neon/world-system/ecs/scene-file/ui-view-format.hpp
+        neon/world-system/ecs/systems/ui-view-loading.cpp
+        neon/world-system/ecs/systems/ui-view-loading.hpp
         neon/world-system/ecs/systems/render-submission.cpp
         neon/world-system/ecs/systems/render-submission.hpp
         neon/world-system/ecs/systems/spectator-movement.cpp
@@ -165,12 +224,15 @@ if (NEON_BUILD_TESTS)
   add_library(neon-testing INTERFACE
           neon/testing/fake-entity-store.hpp
           neon/testing/fake-physics-context.hpp
+          neon/testing/fake-font-rasterizer.hpp
           neon/testing/memory-file-system.hpp
           neon/testing/mock-entity-store.hpp
           neon/testing/mock-entity-world.hpp
           neon/testing/mock-file-system-context.hpp
           neon/testing/mock-input-system.hpp
+          neon/testing/mock-render-2d-context.hpp
           neon/testing/mock-render-context.hpp
+          neon/testing/mock-ui-system.hpp
           neon/testing/mock-render-pipeline.hpp
           neon/testing/mock-render-system.hpp
           neon/testing/mock-window-system.hpp
@@ -195,9 +257,11 @@ if (NEON_BUILD_TESTS)
   neon_add_unit_test(${TARGET} neon/common/rotation.test.cpp)
   neon_add_unit_test(${TARGET} neon/common/transform.test.cpp)
   neon_add_unit_test(${TARGET} neon/common/util.test.cpp)
+  neon_add_unit_test(${TARGET} neon/data/data-reader.test.cpp)
   neon_add_unit_test(${TARGET} neon/filesystem/file-system.test.cpp)
   neon_add_unit_test(${TARGET} neon/input/headless-input-system.test.cpp)
   neon_add_unit_test(${TARGET} neon/input/input-state.test.cpp)
+  neon_add_unit_test(${TARGET} neon/layout/flex-layout-engine.test.cpp)
   neon_add_unit_test(${TARGET} neon/logging/logging-system.test.cpp)
   neon_add_unit_test(${TARGET} neon/logging/spd-logger.test.cpp)
   neon_add_unit_test(${TARGET} neon/physics/model-geometry.test.cpp)
@@ -205,6 +269,17 @@ if (NEON_BUILD_TESTS)
   neon_add_unit_test(${TARGET} neon/render/model.test.cpp)
   neon_add_unit_test(${TARGET} neon/runtime/frame-capture.test.cpp)
   neon_add_unit_test(${TARGET} neon/runtime/runtime.test.cpp)
+  neon_add_unit_test(${TARGET} neon/text/font-atlas.test.cpp)
+  neon_add_unit_test(${TARGET} neon/text/text-layout.test.cpp)
+  neon_add_unit_test(${TARGET} neon/text/utf8.test.cpp)
+  neon_add_unit_test(${TARGET} neon/ui/css-values.test.cpp)
+  neon_add_unit_test(${TARGET} neon/ui/ui-document.test.cpp)
+  neon_add_unit_test(${TARGET} neon/ui/ui-element-types.test.cpp)
+  neon_add_unit_test(${TARGET} neon/ui/ui-input-gate.test.cpp)
+  neon_add_unit_test(${TARGET} neon/ui/ui-painter.test.cpp)
+  neon_add_unit_test(${TARGET} neon/ui/ui-resources.test.cpp)
+  neon_add_unit_test(${TARGET} neon/ui/ui-style.test.cpp)
+  neon_add_unit_test(${TARGET} neon/ui/ui-values.test.cpp)
   neon_add_unit_test(${TARGET} neon/window/headless-window-system.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/component-info.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/entity-store.test.cpp)
@@ -215,4 +290,5 @@ if (NEON_BUILD_TESTS)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/render-submission.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/spectator-movement.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/transform-propagation.test.cpp)
+  neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/ui-view-loading.test.cpp)
 endif ()

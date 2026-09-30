@@ -26,6 +26,10 @@ namespace neon
     std::string _where;
     std::vector<std::string> *_errors;
 
+    // the line of what was handed in, which is kept when that is no map
+    // and an empty one is read in its place
+    std::size_t _line = 0;
+
     // the names that were asked for, which are the names that are known
     mutable std::vector<std::string> _asked;
 
@@ -50,8 +54,19 @@ namespace neon
 
     [[nodiscard]] const std::string &GetWhere() const;
 
+    /// What the document is called in messages.
+    [[nodiscard]] const std::string &GetDocument() const;
+
+    /// Where the messages are collected, for a reader of a part of the
+    /// same document.
+    [[nodiscard]] std::vector<std::string> &GetErrors() const;
+
     /// Adds a message about a value, with the document and the line.
     void Report(const DataValue &value, const std::string &message) const;
+
+    /// Adds a message about what is read as a whole, with the line it
+    /// starts at. For what is missing, which has no line of its own.
+    void Report(const std::string &message) const;
 
     /// Whether the name is written.
     [[nodiscard]] bool Has(const std::string &name) const;

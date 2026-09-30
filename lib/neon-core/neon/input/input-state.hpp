@@ -23,6 +23,18 @@ namespace neon
 
     Mouse,
 
+    /// Moving through a user interface and choosing in it, with the keys
+    /// or a controller.
+    Ui_Up,
+    Ui_Right,
+    Ui_Down,
+    Ui_Left,
+    Ui_Accept,
+    Ui_Cancel,
+
+    /// The first button of the pointer, for as long as it is held down.
+    Pointer_Primary,
+
     // used only to keep track of the total count of actions
     // ReSharper disable once CppInconsistentNaming
     COUNT
@@ -50,6 +62,8 @@ namespace neon
   {
     std::bitset<kAction_Size> _action_map{};
     std::vector<AxisState> _axis_map{kAxis_Size};
+    bool _has_pointer = false;
+    AxisState _pointer;
     std::shared_ptr<Logger> _logger;
 
   public:
@@ -81,6 +95,42 @@ namespace neon
       }
     }
 
+    /// Releases one action, for what hands the input on after it has
+    /// used a part of it.
+    void ClearAction(Action action)
+    {
+      _action_map.reset(static_cast<size_t>(action));
+    }
+
+    /// Where the pointer is, in pixels of what is drawn to, counted from
+    /// the left top corner. It stays there until it is set again.
+    void SetPointer(const double x_pos, const double y_pos)
+    {
+      _has_pointer = true;
+      _pointer.x = x_pos;
+      _pointer.y = y_pos;
+    }
+
+    /// For when there is no pointer to be seen: without a window, outside
+    /// the window, and while the cursor is hidden.
+    void ClearPointer()
+    {
+      _has_pointer = false;
+    }
+
+    [[nodiscard]] bool HasPointer() const
+    {
+      return _has_pointer;
+    }
+
+    /// Only means something while HasPointer() is true.
+    [[nodiscard]] const AxisState &GetPointer() const
+    {
+      return _pointer;
+    }
+
+    /// Releases every action. Where the pointer is does not change by
+    /// itself, so it is kept.
     void Reset()
     {
       _action_map.reset();

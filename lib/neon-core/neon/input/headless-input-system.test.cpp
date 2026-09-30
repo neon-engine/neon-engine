@@ -30,6 +30,9 @@ namespace
       }
       EXPECT_EQ(state[Axis::Mouse].x, 0.0);
       EXPECT_EQ(state[Axis::Mouse].y, 0.0);
+
+      // without a window there is nothing to point at
+      EXPECT_FALSE(state.HasPointer());
     }
   };
 

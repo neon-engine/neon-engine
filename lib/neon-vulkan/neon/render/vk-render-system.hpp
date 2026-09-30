@@ -8,11 +8,13 @@
 #include <vector>
 #include <neon/runtime/settings-config.hpp>
 #include <neon/logging/logger.hpp>
+#include <neon/render/render-2d-context.hpp>
 #include <neon/render/render-system.hpp>
 
 #include "vk-device.hpp"
 #include "vk-material.hpp"
 #include "vk-model.hpp"
+#include "vk-renderer-2d.hpp"
 #include "vk-shader.hpp"
 #include "vk-shader-data.hpp"
 
@@ -24,8 +26,11 @@ namespace neon
   /// finished image is then copied to the screen. Without one it is left in
   /// place, where CaptureFrame() can read it. Drawing is the same in both
   /// cases.
+  ///
+  /// It draws the models of a scene as a RenderContext, and triangles in
+  /// two dimensions on top of them as a Render2DContext.
   // ReSharper disable once CppInconsistentNaming
-  class VK_RenderSystem final : public RenderSystem
+  class VK_RenderSystem final : public RenderSystem, public Render2DContext
   {
     struct PipelineEntry
     {
@@ -94,6 +99,8 @@ namespace neon
     DataBuffer<VK_Model> _model_refs;
     DataBuffer<VK_Material> _material_refs;
 
+    VK_Renderer2D _renderer_2d;
+
     bool CreateRenderTarget();
     bool CreateSwapchain();
     bool CreateDescriptors();
@@ -140,6 +147,16 @@ namespace neon
       const std::vector<LightSource> &lights) override;
 
     void DestroyRenderObject(int render_object_id) override;
+
+    int CreateTexture(int width, int height, const std::vector<unsigned char> &pixels) override;
+
+    int LoadTexture(const std::string &path) override;
+
+    bool GetTextureSize(int texture, int &width, int &height) override;
+
+    void DestroyTexture(int texture) override;
+
+    void DrawTriangles(const Triangles2D &triangles) override;
   };
 } // neon
 

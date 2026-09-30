@@ -9,6 +9,8 @@ add_library(${TARGET} STATIC
         neon/render/vk-mesh.hpp
         neon/render/vk-model.cpp
         neon/render/vk-model.hpp
+        neon/render/vk-renderer-2d.cpp
+        neon/render/vk-renderer-2d.hpp
         neon/render/vk-shader.cpp
         neon/render/vk-shader.hpp
         neon/render/vk-shader-data.hpp
@@ -36,6 +38,7 @@ if (NEON_BUILD_TESTS)
   neon_add_unit_test(${TARGET} neon/render/vk-material.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/vk-mesh.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/vk-model.test.cpp)
+  neon_add_unit_test(${TARGET} neon/render/vk-renderer-2d.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/vk-shader.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/vk-shader-data.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/vk-texture.test.cpp)

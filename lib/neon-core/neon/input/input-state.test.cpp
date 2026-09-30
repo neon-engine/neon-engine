@@ -23,7 +23,14 @@ namespace
     Action::R_Right,
     Action::R_Down,
     Action::R_Left,
-    Action::Mouse
+    Action::Mouse,
+    Action::Ui_Up,
+    Action::Ui_Right,
+    Action::Ui_Down,
+    Action::Ui_Left,
+    Action::Ui_Accept,
+    Action::Ui_Cancel,
+    Action::Pointer_Primary
   };
 
   class InputStateTest : public ::testing::Test
@@ -130,12 +137,78 @@ namespace
   {
     _state.SetAction(Action::R_Up);
     _state.SetAxisMotion(Axis::Mouse, 4.0, 5.0);
+    _state.SetPointer(640.0, 360.0);
 
     const InputState copy = _state;
     _state.Reset();
+    _state.ClearPointer();
 
     EXPECT_TRUE(copy[Action::R_Up]);
     EXPECT_TRUE(copy[Action::Mouse]);
     EXPECT_EQ(copy[Axis::Mouse].x, 4.0);
+    EXPECT_TRUE(copy.HasPointer());
+    EXPECT_EQ(copy.GetPointer().x, 640.0);
+  }
+
+  TEST_F(InputStateTest, ClearActionReleasesThatActionAndNoOther)
+  {
+    for (const Action cleared : every_action)
+    {
+      InputState state(_logger);
+      for (const Action action : every_action) { state.SetAction(action); }
+
+      state.ClearAction(cleared);
+
+      for (const Action action : every_action) { EXPECT_EQ(state[action], action != cleared); }
+    }
+  }
+
+  TEST_F(InputStateTest, ClearActionLeavesAnActionThatIsNotSetAlone)
+  {
+    _state.ClearAction(Action::Ui_Accept);
+
+    for (const Action action : every_action) { EXPECT_FALSE(_state[action]); }
+  }
+
+  TEST_F(InputStateTest, StartsWithoutAPointer)
+  {
+    EXPECT_FALSE(_state.HasPointer());
+    EXPECT_EQ(_state.GetPointer().x, 0.0);
+    EXPECT_EQ(_state.GetPointer().y, 0.0);
+  }
+
+  TEST_F(InputStateTest, KeepsWhereThePointerIs)
+  {
+    _state.SetPointer(640.5, 360.25);
+
+    EXPECT_TRUE(_state.HasPointer());
+    EXPECT_EQ(_state.GetPointer().x, 640.5);
+    EXPECT_EQ(_state.GetPointer().y, 360.25);
+
+    // the pointer is no action, and the motion of the mouse is not its place
+    for (const Action action : every_action) { EXPECT_FALSE(_state[action]); }
+    EXPECT_EQ(_state[Axis::Mouse].x, 0.0);
+  }
+
+  TEST_F(InputStateTest, ResetKeepsThePointerWhereItIs)
+  {
+    _state.SetPointer(640.0, 360.0);
+    _state.SetAction(Action::Pointer_Primary);
+
+    _state.Reset();
+
+    EXPECT_FALSE(_state[Action::Pointer_Primary]);
+    EXPECT_TRUE(_state.HasPointer());
+    EXPECT_EQ(_state.GetPointer().x, 640.0);
+    EXPECT_EQ(_state.GetPointer().y, 360.0);
+  }
+
+  TEST_F(InputStateTest, ClearPointerTakesThePointerAway)
+  {
+    _state.SetPointer(640.0, 360.0);
+
+    _state.ClearPointer();
+
+    EXPECT_FALSE(_state.HasPointer());
   }
 }

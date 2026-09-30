@@ -32,6 +32,7 @@ namespace neon
     _document = document;
     _where = where;
     _errors = &errors;
+    _line = map.GetLine();
 
     if (!map.IsMap() && !map.IsEmpty())
     {
@@ -45,6 +46,16 @@ namespace neon
     return _where;
   }
 
+  const std::string &DataReader::GetDocument() const
+  {
+    return _document;
+  }
+
+  std::vector<std::string> &DataReader::GetErrors() const
+  {
+    return *_errors;
+  }
+
   void DataReader::Report(const DataValue &value, const std::string &message) const
   {
     if (value.GetLine() > 0)
@@ -54,6 +65,13 @@ namespace neon
     {
       _errors->push_back(std::format("{}: {}", _document, message));
     }
+  }
+
+  void DataReader::Report(const std::string &message) const
+  {
+    DataValue whole;
+    whole.SetLine(_line);
+    Report(whole, message);
   }
 
   const DataValue *DataReader::Ask(const std::string &name) const

@@ -12,6 +12,20 @@ namespace neon
     WindowContext* _context;
     InputState _input_state;
     bool _window_focus = false;
+
+    // While the cursor is hidden, the mouse turns the view and points at
+    // nothing.
+    bool _cursor_hidden = false;
+
+    // the controller that was plugged in first, as SDL_GameController
+    void *_controller = nullptr;
+
+    void ReadKeyboard();
+
+    void ReadPointer();
+
+    void ReadController();
+
   public:
     explicit SDL2_InputSystem(
       const SettingsConfig &settings_config,

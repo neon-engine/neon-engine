@@ -50,6 +50,10 @@ struct SettingsConfig
   /// Virtual path of the scene the application starts with.
   std::string scene_path = "assets://scenes/demo.scene.yml";
 
+  /// Virtual path of a user interface that is shown from the start, on top
+  /// of what the scene shows. Empty shows none.
+  std::string ui_path;
+
   RenderingApi selected_api;
   AudioOutput audio_output = AudioOutput::Device;
   WindowMode window_mode = WindowMode::Windowed;

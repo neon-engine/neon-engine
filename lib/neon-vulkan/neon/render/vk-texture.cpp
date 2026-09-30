@@ -32,6 +32,32 @@ namespace neon
 
   bool VK_Texture::Initialize()
   {
+    return Initialize(VK_TextureOptions{});
+  }
+
+  bool VK_Texture::InitializeWithPixels(
+    const unsigned char *pixels,
+    const uint32_t width,
+    const uint32_t height,
+    const VK_TextureOptions &options)
+  {
+    if (_initialized)
+    {
+      _logger->Warn("Texture {} was already initialized", _texture_path);
+      return true;
+    }
+
+    if (pixels == nullptr || width == 0 || height == 0)
+    {
+      _logger->Error("Texture {} has no pixels", _texture_path);
+      return false;
+    }
+
+    return Upload(pixels, width, height, options);
+  }
+
+  bool VK_Texture::Initialize(const VK_TextureOptions &options)
+  {
     if (_initialized)
     {
       _logger->Warn("Texture {} was already initialized", _texture_path);
@@ -63,7 +89,7 @@ namespace neon
       return false;
     }
 
-    const bool uploaded = Upload(pixels, static_cast<uint32_t>(width), static_cast<uint32_t>(height));
+    const bool uploaded = Upload(pixels, static_cast<uint32_t>(width), static_cast<uint32_t>(height), options);
     stbi_image_free(pixels);
     return uploaded;
   }
@@ -78,7 +104,11 @@ namespace neon
     return Upload(pixel, 1, 1);
   }
 
-  bool VK_Texture::Upload(const unsigned char *pixels, const uint32_t width, const uint32_t height)
+  bool VK_Texture::Upload(
+    const unsigned char *pixels,
+    const uint32_t width,
+    const uint32_t height,
+    const VK_TextureOptions &options)
   {
     const VkDevice device = _device->Device();
     const VkDeviceSize size = static_cast<VkDeviceSize>(width) * height * 4;
@@ -93,7 +123,7 @@ namespace neon
       (format_properties.optimalTilingFeatures & VK_FORMAT_FEATURE_BLIT_SRC_BIT) &&
       (format_properties.optimalTilingFeatures & VK_FORMAT_FEATURE_BLIT_DST_BIT);
 
-    const uint32_t mip_levels = can_scale
+    const uint32_t mip_levels = can_scale && options.mip_levels
       ? static_cast<uint32_t>(std::floor(std::log2(std::max(width, height)))) + 1
       : 1;
 
@@ -122,6 +152,21 @@ namespace neon
       return false;
     }
     std::memcpy(mapped, pixels, size);
+
+    if (options.premultiply_alpha)
+    {
+      auto *bytes = static_cast<unsigned char *>(mapped);
+      for (VkDeviceSize i = 0; i < size; i += 4)
+      {
+        const unsigned int alpha = bytes[i + 3];
+        for (int channel = 0; channel < 3; channel++)
+        {
+          // rounded to the nearest, so that white at full alpha stays white
+          bytes[i + channel] = static_cast<unsigned char>((bytes[i + channel] * alpha + 127) / 255);
+        }
+      }
+    }
+
     vkUnmapMemory(device, staging_memory);
 
     if (!_device->CreateImage(
@@ -204,9 +249,13 @@ namespace neon
     sampler.magFilter = VK_FILTER_LINEAR;
     sampler.minFilter = VK_FILTER_LINEAR;
     sampler.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-    sampler.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    sampler.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    sampler.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    const VkSamplerAddressMode address_mode = options.repeat
+      ? VK_SAMPLER_ADDRESS_MODE_REPEAT
+      : VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+
+    sampler.addressModeU = address_mode;
+    sampler.addressModeV = address_mode;
+    sampler.addressModeW = address_mode;
     sampler.anisotropyEnable = features.samplerAnisotropy;
     sampler.maxAnisotropy = features.samplerAnisotropy
       ? std::min(8.0f, _device->Properties().limits.maxSamplerAnisotropy)
@@ -220,6 +269,8 @@ namespace neon
       return false;
     }
 
+    _width = width;
+    _height = height;
     _initialized = true;
     return true;
   }
@@ -238,6 +289,8 @@ namespace neon
     _view = VK_NULL_HANDLE;
     _image = VK_NULL_HANDLE;
     _memory = VK_NULL_HANDLE;
+    _width = 0;
+    _height = 0;
     _initialized = false;
   }
 } // neon

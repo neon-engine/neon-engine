@@ -7,4 +7,7 @@ neon_add_application_test(runtime-headless NeonRuntime run.cmake
         without-screenshot
         screenshot-for-the-user
         output-folder-cannot-be-used
+        user-interface
+        user-interface-of-a-scene
+        user-interface-that-is-missing
 )

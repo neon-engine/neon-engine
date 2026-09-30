@@ -48,6 +48,8 @@ Principles that hold for both:
 | Exit codes | The runtime returns a failing exit code when a screenshot could not be written or the run ended with an exception |
 | Physics | Static, kinematic, and dynamic bodies, triggers, and characters that move and slide, with Jolt Physics behind an interface. The world steps at a fixed rate. See [physics.md](physics.md) |
 | Unit tests | GoogleTest, with tests for the four libraries and for the runtime as a whole. See the [development guide](development.md#tests) |
+| User interface | Menus and what is shown during play, from YAML files with the properties of CSS: layout by flexbox, text, values of the game, input and focus, events. It is the first version. See [user-interface.md](user-interface.md) |
+| Drawing in two dimensions | Triangles in pixels through an interface of the renderer, which is all a user interface needs of it |
 
 ## Next
 
@@ -118,9 +120,17 @@ renderers exist, the more each new technique costs. See [order](#order).
 
 ### User interface
 
+The framework exists, see [user-interface.md](user-interface.md). What is
+left:
+
 | Item | Detail |
 |---|---|
-| A framework for interfaces in games | Menus and the display shown during play. Layout, text, input, and drawing through the renderer |
+| Yoga as the layout engine | The engine places elements with an implementation of flexbox of its own. Yoga is tested against the specification by many more users |
+| Scrolling and text input | Lists that are longer than their box, and fields to type into |
+| More elements | Slider, checkbox, list, tabs |
+| Styles that are shared | A style block with selectors, which is the step towards CSS |
+| Animation, themes, localisation, rich text | |
+| A library with a language of its own | RmlUi is the candidate. The interface for drawing in two dimensions takes what it hands over |
 
 This is separate from the interface of the editor, which uses Dear ImGui.
 Dear ImGui suits tools. It is not meant for what players see.
@@ -240,7 +250,7 @@ A proposal. Each step builds on the ones before it.
 | 7 | Sound effects and music are done. Steam Audio is left | Independent of rendering |
 | 8 | Physically based materials, shadow mapping | The largest gain in how a scene looks |
 | 9 | Deferred rendering, compute shaders | What the advanced lighting builds on |
-| 10 | User interface framework | Needs the renderer to be settled enough to draw through |
+| 10 | User interface framework | The first version is done. It draws through an interface of its own, which a change to the renderer of scenes leaves alone |
 | 11 | NeonEditor, with its compiler tools and the agent server | Needs most of the above to have something to edit |
 | 12 | Light mapping, global illumination | Light maps are baked by the editor |
 | 13 | Metal and WebGPU renderers, web builds | See below |

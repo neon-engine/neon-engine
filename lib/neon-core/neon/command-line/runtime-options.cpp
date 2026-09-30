@@ -11,6 +11,7 @@ namespace neon
   namespace
   {
     const std::string scene = "scene";
+    const std::string ui = "ui";
     const std::string renderer = "renderer";
     const std::string frames = "frames";
     const std::string screenshot = "screenshot";
@@ -58,6 +59,12 @@ namespace neon
       .name = scene,
       .value_name = "PATH",
       .description = "Scene to start with, for example assets://scenes/demo.scene.yml"
+    });
+
+    command_line.Add({
+      .name = ui,
+      .value_name = "PATH",
+      .description = "User interface to show on top, for example assets://ui/hud.ui.yml"
     });
 
     command_line.Add({
@@ -121,6 +128,11 @@ namespace neon
     if (command_line.IsSet(scene))
     {
       settings.scene_path = command_line.GetValue(scene);
+    }
+
+    if (command_line.IsSet(ui))
+    {
+      settings.ui_path = command_line.GetValue(ui);
     }
 
     // the parser only lets the accepted values through

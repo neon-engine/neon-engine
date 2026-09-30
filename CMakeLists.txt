@@ -121,6 +121,7 @@ add_subdirectory(lib/neon-flecs)
 add_subdirectory(lib/neon-ryml)
 add_subdirectory(lib/neon-miniaudio)
 add_subdirectory(lib/neon-jolt)
+add_subdirectory(lib/neon-stb)
 
 # Load additional cmake
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/CopyAssets.cmake")

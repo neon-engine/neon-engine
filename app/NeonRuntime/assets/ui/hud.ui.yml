@@ -1,0 +1,83 @@
+# What is shown during play over the demo scene. It is shown with
+#
+#   NeonRuntime --ui assets://ui/hud.ui.yml
+#
+# or by a scene that names it, as assets://scenes/hud-demo.scene.yml does.
+#
+# The properties are those of CSS, with an underscore where CSS has a
+# hyphen. What an element leaves out keeps its default. The elements and
+# what they hold are listed in docs/user-interface.md.
+
+ui: hud
+version: 1
+
+# the size this was made for, which everything grows and shrinks from
+reference_size: [1920, 1080]
+
+# what the values are until the game sets them
+values:
+  health: 75
+  player: Ada
+
+root:
+  type: panel
+  width: 100%
+  height: 100%
+  children:
+    # pinned to the left top corner
+    - type: panel
+      position: absolute
+      top: 24
+      left: 24
+      gap: 8
+      flex_direction: column
+      children:
+        - type: panel
+          gap: 12
+          align_items: center
+          children:
+            - type: image
+              src: assets://ui/heart.png
+              width: 32
+              height: 32
+            - type: label
+              name: health
+              text: "Health: {health}"
+              font_size: 28
+              font_weight: bold
+        - type: bar
+          value: "{health}"
+          max: 100
+          width: 240
+          height: 12
+          background_color: "#00000080"
+          accent_color: "#e5484d"
+        - type: label
+          text: "{player}"
+          font_size: 16
+          color: "#ffffffb0"
+
+    # pinned to the right bottom corner, and drawn from an image in nine
+    # parts, so that its corners stay round at every size
+    - type: panel
+      position: absolute
+      bottom: 32
+      right: 32
+      padding: 24
+      gap: 12
+      flex_direction: column
+      border_image_source: assets://ui/panel.png
+      border_image_slice: 16
+      children:
+        - type: label
+          text: Paused
+          font_size: 20
+          text_align: center
+        - type: button
+          name: resume
+          text: Resume
+          autofocus: true
+          min_width: 160
+        - type: button
+          name: quit
+          text: Quit

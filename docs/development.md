@@ -193,6 +193,7 @@ A material names its shader without an extension, such as
 | `basic-lit` | Textured or plain colored surfaces lit by one direction light and up to 64 point and 64 spot lights |
 | `unlit` | The texture as it is, without lighting |
 | `color` | The plain color of the material, without lighting |
+| `flat` | Triangles in pixels, blended by their alpha, for the [user interface](user-interface.md) |
 
 To add one, put its `.vert` and `.frag` files in the sources folder and run
 the configure step again.
@@ -204,6 +205,7 @@ Usage: NeonRuntime [options]
 
   --help                    Show this text
   --scene PATH              Scene to start with, for example assets://scenes/demo.scene.yml
+  --ui PATH                 User interface to show on top, for example assets://ui/hud.ui.yml
   --renderer vulkan         Renderer to draw with. Default: vulkan
 
 Development:
@@ -710,6 +712,9 @@ A mock checks what it is asked to do. A fake does the work in a simple way.
 | `mock-render-context.hpp` | `MockRenderContext` | `RenderContext` |
 | `mock-render-system.hpp` | `MockRenderSystem` | `RenderSystem` |
 | `mock-render-pipeline.hpp` | `MockRenderPipeline` | `RenderPipeline` |
+| `mock-render-2d-context.hpp` | `MockRender2DContext`, and `RecordingRenderer2D`, which keeps what it is asked to draw | `Render2DContext` |
+| `mock-ui-system.hpp` | `MockUiSystem`, `MockUiContext` | `UiSystem`, `UiContext` |
+| `fake-font-rasterizer.hpp` | `FakeFontRasterizer`, a font whose characters are all the same box | `FontRasterizer` |
 | `mock-world-system.hpp` | `MockWorldSystem` | `WorldSystem` |
 | `mock-entity-store.hpp` | `MockEntityStore` | `EntityStore` |
 | `fake-entity-store.hpp` | `FakeEntityStore`, a store that is as simple as one can be | `EntityStore` |
@@ -726,13 +731,13 @@ what it left behind.
 | Library | File | Tests | What is tested |
 |---|---|---|---|
 | neon-core | `command-line/command-line` | 94 | Every way to write an option, every message of the parser, defaults, whole numbers, numbers, the help text |
-| neon-core | `command-line/runtime-options` | 64 | Every option and every message of `Apply`. The help text is compared with the one in this guide |
+| neon-core | `command-line/runtime-options` | 67 | Every option and every message of `Apply`. The help text is compared with the one in this guide |
 | neon-core | `common/data-buffer` | 20 | Ids, capacity, reuse of slots, what is thrown |
 | neon-core | `common/rotation` | 21 | The quaternion of known angles, the order of the turns, and the angles of a quaternion |
 | neon-core | `common/transform` | 11 | `Forward` and `Right`. 1 disabled |
 | neon-core | `common/util` | 12 | All four functions |
 | neon-core | `filesystem/file-system` | 158 | Every path rule for reading and writing, letter case, the native path, `output://` without a folder |
-| neon-core | `input/input-state` | 11 | Actions, the motion of the mouse, `Reset` |
+| neon-core | `input/input-state` | 17 | Actions, the motion of the mouse, the pointer, `Reset` |
 | neon-core | `input/headless-input-system` | 7 | Nothing is ever pressed |
 | neon-core | `logging/spd-logger` | 10 | Levels, arguments, what is thrown for a message that cannot be formatted |
 | neon-core | `logging/logging-system` | 11 | The log file, in a temporary folder |
@@ -740,7 +745,7 @@ what it left behind.
 | neon-core | `render/forward-render-pipeline` | 24 | What is drawn in which order, the projection, lights and their limit |
 | neon-core | `render/model` | 25 | Loading from a file system in memory, material files, textures, the normalization matrix. 1 disabled |
 | neon-core | `runtime/frame-capture` | 21 | `NumberedPath`, and which frames are saved |
-| neon-core | `runtime/runtime` | 19 | The order of `Initialize` and `CleanUp`, the loop, `HasFailed` |
+| neon-core | `runtime/runtime` | 24 | The order of `Initialize` and `CleanUp`, the loop, `HasFailed`, with and without a user interface |
 | neon-core | `window/headless-window-system` | 16 | Closing, the time step, the size |
 | neon-core | `world-system/ecs/component-info` | 15 | `ComponentInfo::Of` with a type that owns memory |
 | neon-core | `world-system/ecs/entity-store` | 16 | What the templates of `EntityStore` ask a backend for, and `EntityBlock` |
@@ -751,6 +756,13 @@ what it left behind.
 | neon-core | `world-system/ecs/systems/spectator-movement` | 25 | Moving and turning by the input |
 | neon-core | `world-system/ecs/systems/transform-propagation` | 21 | Parent times child, over several levels |
 | neon-core | `world-system/ecs/systems/render-submission` | 31 | The camera, the lights, render objects. 1 disabled |
+| neon-core | `layout/flex-layout-engine` | 120 | Flexbox as the specification describes it: growing and shrinking, alignment in both directions, wrapping, gaps, percentages, absolute boxes with every combination of sides, the box model |
+| neon-core | `text/utf8`, `text/font-atlas`, `text/text-layout` | 57 | Reading UTF-8, what is wrong with it, the atlas of a font, where characters go, breaking lines |
+| neon-core | `ui/*` | 151 | Values of CSS, properties, values of a game, batches of draw calls against a mock, fonts and images that are loaded once, what is left of the input |
+| neon-core | `data/data-reader` | 5 | What a reader reports about what it reads as a whole |
+| neon-core | `world-system/ecs/systems/ui-view-loading` | 12 | Showing the user interface of an entity, and taking it away |
+| neon-stb | `text/stb-font-rasterizer` | 17 | Characters of Inter, which is compiled into the test |
+| neon-vulkan | `render/vk-renderer-2d` | 13 | What needs no graphics card |
 | neon-flecs | `world-system/flecs-entity-store` | 104 | Everything `EntityStore` promises, through that interface |
 | neon-jolt | `physics/jolt-physics-system` | 89 | Everything `PhysicsContext` promises, through that interface, with worlds that are small enough to know what has to come out |
 | neon-sdl2 | `filesystem/sdl2-file-system` | 39 | Real files in the three schemes, letter case on a disk that ignores it |
@@ -762,7 +774,8 @@ what it left behind.
 | neon-vulkan | `render/vk-texture` | 7 | Textures that cannot be used |
 | `tests/` | `world-with-flecs` | 16 | The world as an application puts it together, with the store of Flecs and the forward pipeline |
 | `tests/` | `runtime-command-line` | 11 | NeonRuntime with a command line it refuses: exit code and message |
-| `tests/` | `runtime-headless` | 5 | NeonRuntime without a window: exit code, and the images it saved |
+| `tests/` | `runtime-headless` | 8 | NeonRuntime without a window: exit code, and the images it saved, with and without a user interface |
+| `tests/` | `user-interface` | 300 | Files of YAML through the whole user interface: every element, every message for a file that is wrong, layout in frames of several sizes, values, input, focus, events, and what is drawn |
 | `tests/` | `physics-with-jolt` | 21 | The physics as an application puts it together, with Flecs, Jolt, and a scene in YAML. The same state after the same steps at every frame rate |
 | `tests/` | `runtime-physics` | 2 | NeonRuntime with the scene of the physics: the same images twice, and at every frame rate |
 

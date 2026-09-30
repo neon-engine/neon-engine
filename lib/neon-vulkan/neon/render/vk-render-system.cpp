@@ -67,6 +67,8 @@ namespace neon
       throw std::runtime_error("Failed to set up the Vulkan renderer");
     }
 
+    _renderer_2d.Initialize(&_device, _file_system_context, _render_pass, _extent, _logger);
+
     _white_texture = VK_Texture("a plain white texture", _file_system_context, &_device, _logger);
     if (!_white_texture.InitializeWithColor(255, 255, 255, 255))
     {
@@ -584,6 +586,7 @@ namespace neon
     }
 
     _white_texture.CleanUp();
+    _renderer_2d.CleanUp();
 
     for (auto &[path, entry] : _pipelines)
     {
@@ -638,6 +641,7 @@ namespace neon
     _scene_buffer.used = 0;
     _object_buffer.used = 0;
     _has_last_scene = false;
+    _renderer_2d.PrepareFrame();
 
     vkResetCommandBuffer(_commands, 0);
 
@@ -1067,5 +1071,32 @@ namespace neon
 
     model.CleanUp();
     material.CleanUp();
+  }
+
+  int VK_RenderSystem::CreateTexture(const int width, const int height, const std::vector<unsigned char> &pixels)
+  {
+    return _renderer_2d.CreateTexture(width, height, pixels);
+  }
+
+  int VK_RenderSystem::LoadTexture(const std::string &path)
+  {
+    return _renderer_2d.LoadTexture(path);
+  }
+
+  bool VK_RenderSystem::GetTextureSize(const int texture, int &width, int &height)
+  {
+    return _renderer_2d.GetTextureSize(texture, width, height);
+  }
+
+  void VK_RenderSystem::DestroyTexture(const int texture)
+  {
+    _renderer_2d.DestroyTexture(texture);
+  }
+
+  void VK_RenderSystem::DrawTriangles(const Triangles2D &triangles)
+  {
+    if (!_frame_open) { return; }
+
+    _renderer_2d.Draw(triangles);
   }
 } // neon

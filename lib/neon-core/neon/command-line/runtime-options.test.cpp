@@ -61,6 +61,7 @@ namespace
       "\n"
       "  --help                    Show this text\n"
       "  --scene PATH              Scene to start with, for example assets://scenes/demo.scene.yml\n"
+      "  --ui PATH                 User interface to show on top, for example assets://ui/hud.ui.yml\n"
       "  --renderer vulkan         Renderer to draw with. Default: vulkan\n"
       "\n"
       "Development:\n"
@@ -73,6 +74,30 @@ namespace
       "  --time-step SECONDS       Advance the game by this much time in every frame, for example 0.016667, "
       "so that a run gives the same frames every time\n"
       "  --headless                Run without a window\n");
+  }
+
+  TEST_F(RuntimeOptionsTest, UiNamesTheUserInterfaceToShow)
+  {
+    ASSERT_TRUE(Apply({"--ui", "assets://ui/hud.ui.yml"}));
+
+    EXPECT_EQ(_settings.ui_path, "assets://ui/hud.ui.yml");
+    EXPECT_EQ(_error, "");
+  }
+
+  TEST_F(RuntimeOptionsTest, UiCanBeWrittenWithAnEqualsSign)
+  {
+    ASSERT_TRUE(Apply({"--ui=assets://ui/hud.ui.yml"}));
+
+    EXPECT_EQ(_settings.ui_path, "assets://ui/hud.ui.yml");
+  }
+
+  TEST_F(RuntimeOptionsTest, UiLeavesTheSceneAsItIs)
+  {
+    const std::string scene = _settings.scene_path;
+
+    ASSERT_TRUE(Apply({"--ui", "assets://ui/hud.ui.yml"}));
+
+    EXPECT_EQ(_settings.scene_path, scene);
   }
 
   TEST_F(RuntimeOptionsTest, RendererAcceptsVulkan)
@@ -94,8 +119,8 @@ namespace
 
   TEST_F(RuntimeOptionsTest, EveryOptionButHeadlessNeedsAValue)
   {
-    for (const char *option : {"--renderer", "--frames", "--screenshot", "--screenshot-at", "--output-dir",
-                               "--time-step"})
+    for (const char *option : {"--ui", "--renderer", "--frames", "--screenshot", "--screenshot-at",
+                               "--output-dir", "--time-step"})
     {
       EXPECT_FALSE(Parse({option})) << option;
       EXPECT_EQ(_command_line.GetError(), "Option '" + std::string(option) + "' needs a value");
@@ -124,6 +149,7 @@ namespace
     EXPECT_EQ(_settings.time_step, 0.0);
     EXPECT_EQ(_settings.output_directory, "");
     EXPECT_EQ(_settings.screenshot_path, "");
+    EXPECT_EQ(_settings.ui_path, "");
     EXPECT_THAT(_settings.screenshot_frames, IsEmpty());
     EXPECT_EQ(_settings.width, 1920);
     EXPECT_EQ(_settings.height, 1080);

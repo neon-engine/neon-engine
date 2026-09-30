@@ -3,6 +3,7 @@
 # they sit next to the file they test.
 
 add_subdirectory(world-with-flecs)
+add_subdirectory(user-interface)
 add_subdirectory(runtime-command-line)
 add_subdirectory(runtime-headless)
 add_subdirectory(physics-with-jolt)
