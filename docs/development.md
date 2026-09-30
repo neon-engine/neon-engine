@@ -490,6 +490,25 @@ belongs.
 The libraries that were considered and the conditions for moving to a full
 virtual file system are recorded in [file-systems.md](file-systems.md).
 
+## Code style
+
+The conventions of the code are described in the
+[style guide](style-guide.md). Two targets check code against it, and
+neither is part of a normal build:
+
+```bash
+cmake --build build/macos-arm64-debug --target tidy
+cmake --build build/macos-arm64-debug --target format-check
+```
+
+| Target | Does |
+|---|---|
+| `tidy` | Runs clang-tidy with the rules in [.clang-tidy](../.clang-tidy) |
+| `format-check` | Lists what clang-format would change with the rules in [.clang-format](../.clang-format). It changes nothing |
+
+Both tools are part of LLVM 20. The Docker images need `clang-tidy` and
+`clang-format` on `PATH` for the targets to work there.
+
 ## Build notes
 
 A few settings in the top-level [CMakeLists.txt](../CMakeLists.txt) exist only

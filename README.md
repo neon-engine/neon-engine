@@ -42,6 +42,9 @@ Special thanks to [Akusha](https://vgen.co/Akusha/portfolio) for the logo for th
 
 Where the engine is heading is described in the [roadmap](./docs/roadmap.md).
 
+## Style guide
+
+How the code is written is described in the [style guide](./docs/style-guide.md).
 ## Licenses of third parties
 
 The libraries the engine uses, and what their licenses ask for, are listed in

@@ -1,0 +1,122 @@
+# Checks the code against the style guide, docs/style-guide.md.
+#
+# Run it with:
+#   cmake --build build/<preset> --target tidy
+#
+# Groups of checks are switched on as a whole, and single checks are switched
+# off below them. Why each one is off:
+#
+# They fight a convention of the code
+#   modernize-use-trailing-return-type        Return types are written in front
+#   readability-uppercase-literal-suffix      Literals are written 1.0f, not 1.0F
+#   google-readability-namespace-comments     A namespace closes with `} // neon`
+#   google-readability-todo                   A TODO names an issue, not a person
+#   google-runtime-int                        int, long and unsigned int are used as they are
+#   readability-named-parameter               A parameter that is not used has no name
+#   readability-qualified-auto                Pointers are held in a plain `const auto`
+#   *-non-private-member-variables-in-classes Base classes share protected members such as _logger
+#   cppcoreguidelines-prefer-member-initializer
+#                                             Most constructors assign in their body
+#   cppcoreguidelines-special-member-functions
+#                                             Interfaces declare a protected destructor and nothing else
+#
+# They fire on the C interfaces of SDL2, Vulkan, assimp and stb
+#   cppcoreguidelines-pro-bounds-*            Pointers and arrays handed to and from C
+#   cppcoreguidelines-pro-type-union-access   glm vectors are unions
+#   cppcoreguidelines-pro-type-reinterpret-cast
+#   cppcoreguidelines-pro-type-vararg
+#   cppcoreguidelines-owning-memory           Needs the types of the GSL, which is not used
+#   cppcoreguidelines-no-malloc               Memory from SDL2 is released with SDL_free
+#   *-avoid-c-arrays                          argv, and arrays whose layout a shader shares
+#   modernize-use-designated-initializers     Asks for the field names of every Vulkan structure
+#   readability-implicit-bool-conversion      Flags and results of C functions are tested as they are
+#   misc-misplaced-const                      Vulkan handles are pointers behind a type name
+#
+# They report more than a reviewer would
+#   misc-include-cleaner                      Wants a header for every name, also through umbrella headers
+#   *-magic-numbers
+#   readability-identifier-length
+#   bugprone-easily-swappable-parameters
+#   performance-enum-size
+---
+Checks: >
+  -*,
+  bugprone-*,
+  performance-*,
+  modernize-*,
+  readability-*,
+  cppcoreguidelines-*,
+  misc-*,
+  google-*,
+  -modernize-use-trailing-return-type,
+  -readability-uppercase-literal-suffix,
+  -google-readability-namespace-comments,
+  -google-readability-todo,
+  -google-runtime-int,
+  -readability-named-parameter,
+  -readability-qualified-auto,
+  -misc-non-private-member-variables-in-classes,
+  -cppcoreguidelines-non-private-member-variables-in-classes,
+  -cppcoreguidelines-prefer-member-initializer,
+  -cppcoreguidelines-special-member-functions,
+  -cppcoreguidelines-pro-bounds-*,
+  -cppcoreguidelines-pro-type-union-access,
+  -cppcoreguidelines-pro-type-reinterpret-cast,
+  -cppcoreguidelines-pro-type-vararg,
+  -cppcoreguidelines-owning-memory,
+  -cppcoreguidelines-no-malloc,
+  -cppcoreguidelines-avoid-c-arrays,
+  -modernize-avoid-c-arrays,
+  -modernize-use-designated-initializers,
+  -readability-implicit-bool-conversion,
+  -misc-misplaced-const,
+  -misc-include-cleaner,
+  -cppcoreguidelines-avoid-magic-numbers,
+  -readability-magic-numbers,
+  -readability-identifier-length,
+  -bugprone-easily-swappable-parameters,
+  -performance-enum-size
+
+# Only the engine's own code is reported, never external/ or a build folder
+HeaderFilterRegex: '.*/(lib/neon-[^/]+|app)/.*'
+ExcludeHeaderFilterRegex: '.*/(external|build|bin|cmake-build-[^/]*)/.*'
+FormatStyle: file
+
+CheckOptions:
+  # Naming, see the table in docs/style-guide.md
+  readability-identifier-naming.NamespaceCase: lower_case
+
+  # PascalCase. A class that belongs to a backend or is one of several
+  # implementations puts that in front, as in SDL2_WindowSystem
+  readability-identifier-naming.ClassCase: CamelCase
+  readability-identifier-naming.ClassIgnoredRegexp: '^[A-Z][A-Za-z0-9]*_[A-Z][A-Za-z0-9]*$'
+  readability-identifier-naming.StructCase: CamelCase
+  readability-identifier-naming.StructIgnoredRegexp: '^[A-Z][A-Za-z0-9]*_[A-Z][A-Za-z0-9]*$'
+  readability-identifier-naming.TemplateParameterCase: CamelCase
+
+  # PascalCase, with L_Up and the counting entry COUNT as they are in use
+  readability-identifier-naming.EnumCase: CamelCase
+  readability-identifier-naming.EnumConstantCase: CamelCase
+  readability-identifier-naming.EnumConstantIgnoredRegexp: '^([A-Z][A-Za-z0-9]*(_[A-Z][A-Za-z0-9]*)+|COUNT)$'
+
+  # Methods are PascalCase, with World_Forward as it is in use. Functions
+  # outside a class are snake_case
+  readability-identifier-naming.MethodCase: CamelCase
+  readability-identifier-naming.MethodIgnoredRegexp: '^[A-Z][A-Za-z0-9]*(_[A-Z][A-Za-z0-9]*)+$'
+  readability-identifier-naming.FunctionCase: lower_case
+
+  # _snake_case for what is private or protected, snake_case for what is public
+  readability-identifier-naming.PrivateMemberCase: lower_case
+  readability-identifier-naming.PrivateMemberPrefix: '_'
+  readability-identifier-naming.ProtectedMemberCase: lower_case
+  readability-identifier-naming.ProtectedMemberPrefix: '_'
+  readability-identifier-naming.PublicMemberCase: lower_case
+
+  # snake_case, the form most constants have
+  readability-identifier-naming.ClassConstantCase: lower_case
+  readability-identifier-naming.GlobalConstantCase: lower_case
+  readability-identifier-naming.StaticConstantCase: lower_case
+
+  readability-identifier-naming.VariableCase: lower_case
+  readability-identifier-naming.ParameterCase: lower_case
+  readability-identifier-naming.MacroDefinitionCase: UPPER_CASE

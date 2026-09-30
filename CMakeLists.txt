@@ -4,6 +4,10 @@ cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 project(neon-engine)
 set(CMAKE_CXX_STANDARD 20)
 
+# Written to the build folder as compile_commands.json. clang-tidy and editors
+# read from it how each file is compiled.
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # Echo system/build information
 message("system name: ${CMAKE_SYSTEM_NAME}")
 message("architecture: ${CMAKE_SYSTEM_PROCESSOR}")
@@ -127,3 +131,7 @@ foreach (APP IN LISTS APP_TARGETS)
           RUNTIME_OUTPUT_DIRECTORY "${APP_BIN_DIRECTORY}"
   )
 endforeach ()
+
+# Checks against the style guide. They run on request only
+include("${CMAKE_CURRENT_LIST_DIR}/cmake/ClangTools.cmake")
+setup_clang_tools(neon-core neon-vulkan neon-sdl2 ${APP_TARGETS})

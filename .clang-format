@@ -1,0 +1,99 @@
+# Reproduces the layout the code already has, see docs/style-guide.md.
+#
+# Check what it would change, without changing anything:
+#   cmake --build build/<preset> --target format-check
+---
+Language: Cpp
+Standard: c++20
+
+# Lines are kept under 120 characters by hand. 0 makes clang-format keep the
+# line breaks it finds. With a limit it would join and split lines by its own
+# rules, which are not the ones of this code.
+ColumnLimit: 0
+MaxEmptyLinesToKeep: 2
+KeepEmptyLinesAtTheStartOfBlocks: true
+InsertNewlineAtEOF: true
+ReflowComments: false
+
+# Indentation: two spaces, also inside a namespace
+UseTab: Never
+IndentWidth: 2
+ContinuationIndentWidth: 2
+ConstructorInitializerIndentWidth: 2
+NamespaceIndentation: All
+AccessModifierOffset: -2
+IndentCaseLabels: true
+IndentCaseBlocks: false
+IndentPPDirectives: AfterHash
+PPIndentWidth: 2
+LambdaBodyIndentation: OuterScope
+
+# Braces on a line of their own, except that else and catch follow the
+# closing brace
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterCaseLabel: true
+  AfterClass: true
+  AfterControlStatement: Always
+  AfterEnum: true
+  AfterFunction: true
+  AfterNamespace: true
+  AfterStruct: true
+  AfterUnion: true
+  AfterExternBlock: true
+  BeforeCatch: false
+  BeforeElse: false
+  BeforeLambdaBody: true
+  BeforeWhile: false
+  SplitEmptyFunction: false
+  SplitEmptyRecord: false
+  SplitEmptyNamespace: false
+
+# What may stay on one line: `if (x) { return; }`, an empty body, a short
+# function inside a class
+AllowShortBlocksOnASingleLine: Always
+AllowShortIfStatementsOnASingleLine: WithoutElse
+AllowShortLoopsOnASingleLine: true
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortLambdasOnASingleLine: None
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortEnumsOnASingleLine: false
+
+# `Type *name` and `const Type &name`
+PointerAlignment: Right
+ReferenceAlignment: Pointer
+DerivePointerAlignment: false
+
+# Parameters that do not fit go one on each line, indented once, and are not
+# lined up with the opening bracket. Arguments of a call do the same, but
+# the renderer also groups related arguments on a line, which is left alone
+AlignAfterOpenBracket: DontAlign
+BinPackArguments: true
+BinPackParameters: false
+AllowAllArgumentsOnNextLine: false
+AllowAllParametersOfDeclarationOnNextLine: false
+BreakConstructorInitializers: BeforeColon
+PackConstructorInitializers: CurrentLine
+AlignOperands: Align
+BreakBeforeBinaryOperators: None
+
+# `template<typename T>` on a line of its own
+SpaceAfterTemplateKeyword: false
+AlwaysBreakTemplateDeclarations: Yes
+SpacesInAngles: Leave
+
+Cpp11BracedListStyle: true
+AlignTrailingComments:
+  Kind: Leave
+SpacesInLineCommentPrefix:
+  Minimum: 0
+  Maximum: -1
+
+# `} // neon` is written by hand. clang-format would write `} // namespace neon`
+FixNamespaceComments: false
+
+# Includes keep the order and the groups they were written in
+SortIncludes: Never
+IncludeBlocks: Preserve
+SortUsingDeclarations: Never
+...
