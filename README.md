@@ -42,5 +42,10 @@ Special thanks to [Akusha](https://vgen.co/Akusha/portfolio) for the logo for th
 
 Where the engine is heading is described in the [roadmap](./docs/roadmap.md).
 
+## Licenses of third parties
+
+The libraries the engine uses, and what their licenses ask for, are listed in
+[third-party-licenses.md](./docs/third-party-licenses.md).
+
 ## Development
 Review the [docs](./docs) section for how to build and run the project
