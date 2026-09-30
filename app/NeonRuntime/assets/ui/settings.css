@@ -1,0 +1,186 @@
+/* The theme of the settings menu. It is CSS as the engine reads it: the
+   properties listed in docs/user-interface.md, with custom properties,
+   transitions, and keyframes. Sizes are in units of the file, which grow
+   and shrink with the window from the reference size of 1920 by 1080. */
+
+:root {
+  --ink: #e5e9f0;
+  --ink-dim: #e5e9f0a0;
+  --paper: #2e3440;
+  --paper-raised: #3b4252;
+  --paper-hover: #4c566a;
+  --line: #ffffff30;
+  --accent: #88c0d0;
+  --accent-strong: #5e81ac;
+  --danger: #bf616a;
+  --row-gap: 12px;
+}
+
+@keyframes open-window {
+  from { opacity: 0; margin-top: 40px; }
+  to   { opacity: 1; margin-top: 0; }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.backdrop {
+  width: 100%;
+  height: 100%;
+  justify-content: center;
+  align-items: center;
+  background-color: #00000080;
+  animation: fade-in 0.3s ease-out both;
+}
+
+.window {
+  flex-direction: column;
+  width: 720px;
+  max-height: 90vh;
+  padding: 32px;
+  gap: 20px;
+  background-color: var(--paper);
+  border: 1px var(--line);
+  color: var(--ink);
+  animation: open-window 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.title {
+  font-size: 32px;
+  font-weight: bold;
+}
+
+/* the list takes what is left of the window, and scrolls */
+.list {
+  flex-direction: column;
+  flex-grow: 1;
+  flex-shrink: 1;
+  min-height: 120px;
+  gap: var(--row-gap);
+  padding-right: 8px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent) #ffffff10;
+  scroll-behavior: smooth;
+}
+
+.row {
+  align-items: center;
+  gap: 16px;
+  padding: 8px 12px;
+  background-color: var(--paper-raised);
+  transition: background-color 0.15s ease-out;
+}
+
+.row:hover {
+  background-color: var(--paper-hover);
+}
+
+.row-label {
+  width: 180px;
+  flex-shrink: 0;
+  color: var(--ink-dim);
+}
+
+.choices {
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.with-value {
+  flex-grow: 1;
+  align-items: center;
+  gap: 16px;
+}
+
+.with-value slider {
+  flex-grow: 1;
+}
+
+.value {
+  width: 48px;
+  text-align: right;
+}
+
+input, textarea, select {
+  flex-grow: 1;
+  transition: border-color 0.15s ease-out, background-color 0.15s ease-out;
+}
+
+input:focus, textarea:focus, select:focus {
+  border-color: var(--accent);
+  background-color: #ffffff14;
+}
+
+input:invalid {
+  border-color: var(--danger);
+}
+
+input::placeholder, textarea::placeholder {
+  color: var(--ink-dim);
+}
+
+checkbox::mark, radio::mark, slider::fill, toggle::track, select::highlight {
+  background-color: var(--accent-strong);
+}
+
+select::list {
+  background-color: var(--paper-raised);
+  border-color: var(--line);
+}
+
+.actions {
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+button {
+  min-width: 140px;
+  transition: background-color 0.15s ease-out, opacity 0.15s ease-out;
+}
+
+button.primary {
+  background-color: var(--accent-strong);
+}
+
+button.primary:hover {
+  background-color: var(--accent);
+  color: var(--paper);
+}
+
+button.secondary {
+  background-color: var(--paper-raised);
+}
+
+button.secondary:hover {
+  background-color: var(--paper-hover);
+}
+
+/* a narrow window puts the label above what it names */
+@media (max-width: 900px) {
+  .window {
+    width: 90vw;
+    padding: 20px;
+  }
+
+  .row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .row-label {
+    width: auto;
+  }
+}
+
+@media (prefers-reduced-motion) {
+  .backdrop, .window {
+    animation: none;
+  }
+
+  .row, button, input, textarea, select {
+    transition: none;
+  }
+}

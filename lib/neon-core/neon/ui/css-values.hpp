@@ -24,7 +24,8 @@ namespace neon
 
   /// Reads a length: a number of pixels as `12` or `12px`, a percentage as
   /// `50%`, or `auto`. A number without a unit counts as pixels, which CSS
-  /// allows for 0 alone.
+  /// allows for 0 alone. The other units and `calc()` are worked out before
+  /// a length gets here, by ResolveCssValue().
   [[nodiscard]] bool ParseCssLength(const std::string &text, LayoutLength &length);
 
   /// Reads a number, with nothing behind it.

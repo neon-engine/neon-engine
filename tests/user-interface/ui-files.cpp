@@ -747,7 +747,7 @@ namespace
       ProblemsOf("ui: test\nroot:\n  type: panel\nrot: 3\n"),
       ElementsAre(
         "assets://ui/test.ui.yml:4: 'rot' is not known to the user interface. Known are: "
-        "ui, version, modal, scale, reference_size, fonts, values, root"));
+        "ui, version, modal, scale, reference_size, fonts, values, root, styles, templates, cancel"));
   }
 
   TEST_F(UiFileTest, SaysThatTheVersionIsTooNew)
@@ -822,7 +822,7 @@ namespace
       ProblemsUnderRoot("- type: lable\n  name: health\n"),
       ElementsAre(
         "assets://ui/test.ui.yml:4: type 'lable' of lable 'health' is not known. Known are: "
-        "panel, label, image, button, bar"));
+        "input, textarea, checkbox, radio, toggle, slider, select, panel, label, image, button, bar"));
   }
 
   TEST_F(UiFileTest, SaysThatAnElementHasNoKind)
@@ -831,7 +831,7 @@ namespace
       ProblemsUnderRoot("- name: health\n  text: Paused\n"),
       ElementsAre(
         "assets://ui/test.ui.yml:4: element 'health' has no 'type', where one of these was expected: "
-        "panel, label, image, button, bar"));
+        "input, textarea, checkbox, radio, toggle, slider, select, panel, label, image, button, bar"));
   }
 
   TEST_F(UiFileTest, CallsAnElementWithoutANameByItsPlace)
@@ -855,7 +855,7 @@ namespace
       ElementsAre(
         "assets://ui/test.ui.yml:1: the root is text, where a map was expected",
         "assets://ui/test.ui.yml:1: the root has no 'type', where one of these was expected: "
-        "panel, label, image, button, bar"));
+        "input, textarea, checkbox, radio, toggle, slider, select, panel, label, image, button, bar"));
   }
 
   TEST_F(UiFileTest, SaysThatAPropertyIsNotKnown)
@@ -931,8 +931,9 @@ namespace
       "was expected"
     },
     WrongProperty{
-      "width: 12em",
-      "'width' of button 'start' is '12em', where a number of pixels, a percentage such as 50%, or auto "
+      // an `em` is a unit by now, and is read
+      "width: 12ex",
+      "'width' of button 'start' is '12ex', where a number of pixels, a percentage such as 50%, or auto "
       "was expected"
     },
     WrongProperty{
@@ -1005,8 +1006,10 @@ namespace
       "row, row-reverse, column, column-reverse"
     },
     WrongProperty{
-      "overflow: scroll",
-      "'overflow' of button 'start' is 'scroll', where one of these was expected: visible, hidden"
+      // `scroll` and `auto` are read by now
+      "overflow: clip",
+      "'overflow' of button 'start' is 'clip', where one of these was expected: visible, hidden, scroll, "
+      "auto"
     },
     WrongProperty{
       "text_align: justify",
@@ -1266,6 +1269,6 @@ namespace
       ProblemsUnderRoot("- type: compass\n"),
       ElementsAre(
         "assets://ui/test.ui.yml:4: type 'compass' of child 1 of the root is not known. Known are: "
-        "panel, label, image, button, bar, minimap"));
+        "input, textarea, checkbox, radio, toggle, slider, select, panel, label, image, button, bar, minimap"));
   }
 }

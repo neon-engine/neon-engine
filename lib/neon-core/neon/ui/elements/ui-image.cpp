@@ -2,6 +2,7 @@
 
 #include <neon/ui/ui-box-paint.hpp>
 #include <neon/ui/ui-image-paint.hpp>
+#include <neon/ui/ui-fields.hpp>
 
 #include <algorithm>
 #include <cmath>
@@ -9,6 +10,35 @@
 
 namespace neon
 {
+  bool UiImageElement::TellsWhenItChanged() const
+  {
+    return true;
+  }
+
+  bool UiImageElement::GetField(const std::string &name, FieldValue &value) const
+  {
+    if (name != "src") { return false; }
+
+    value = _source;
+    return true;
+  }
+
+  bool UiImageElement::SetField(const std::string &name, const FieldValue &value, std::string &error)
+  {
+    if (name != "src") { return UiElement::SetField(name, value, error); }
+
+    if (!TakeText(value, "'src' of " + Describe(), _source, error)) { return false; }
+
+    // another image may have another size
+    Invalidate(UiDirty::Layout | UiDirty::Paint);
+    return true;
+  }
+
+  std::vector<UiElement::Field> UiImageElement::GetFields() const
+  {
+    return {{"src", FieldKind::Text, "Virtual path of the image", {}}};
+  }
+
   void UiImageElement::ApplyDefaults(UiStyle &style) const
   {
     style.pointer_events = UiPointerEvents::None;

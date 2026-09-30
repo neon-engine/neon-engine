@@ -1,11 +1,61 @@
 #include "ui-bar.hpp"
 
+#include <neon/ui/ui-fields.hpp>
+
 #include <algorithm>
 #include <cmath>
 #include <format>
 
 namespace neon
 {
+  bool UiBar::TellsWhenItChanged() const
+  {
+    return true;
+  }
+
+  bool UiBar::GetField(const std::string &name, FieldValue &value) const
+  {
+    if (name == "value")
+    {
+      value = _shown_value;
+      return true;
+    }
+
+    if (name == "max")
+    {
+      value = _shown_max;
+      return true;
+    }
+
+    return false;
+  }
+
+  bool UiBar::SetField(const std::string &name, const FieldValue &value, std::string &error)
+  {
+    if (name != "value" && name != "max") { return UiElement::SetField(name, value, error); }
+
+    float number = 0.0f;
+    if (!TakeNumber(value, "'" + name + "' of " + Describe(), number, error)) { return false; }
+
+    // what is set holds, and no longer follows a value of the game
+    (name == "value" ? _value : _max) = UiNumber(static_cast<double>(number));
+    (name == "value" ? _shown_value : _shown_max) = number;
+
+    const float filled = _shown_max > 0.0f ? _shown_value / _shown_max : 0.0f;
+    _filled = std::isfinite(filled) ? std::clamp(filled, 0.0f, 1.0f) : 0.0f;
+
+    Invalidate(UiDirty::Paint);
+    return true;
+  }
+
+  std::vector<UiElement::Field> UiBar::GetFields() const
+  {
+    return {
+      {"value", FieldKind::Number, "How much there is", {}},
+      {"max", FieldKind::Number, "How much there is at the most", {}}
+    };
+  }
+
   void UiBar::ApplyDefaults(UiStyle &style) const
   {
     // the size a browser gives a progress bar: 10 by 1 of a font of 16
@@ -41,9 +91,16 @@ namespace neon
     const double max = _max.Get(*frame.values, 1.0);
     const double value = _value.Get(*frame.values, 0.0);
 
+    _shown_value = static_cast<float>(value);
+    _shown_max = static_cast<float>(max);
+
     // a bar of nothing is empty, whatever its value
     const double filled = max > 0.0 ? value / max : 0.0;
+    const float before = _filled;
+
     _filled = std::isfinite(filled) ? static_cast<float>(std::clamp(filled, 0.0, 1.0)) : 0.0f;
+
+    if (_filled != before) { Invalidate(UiDirty::Paint); }
   }
 
   void UiBar::PaintContent(

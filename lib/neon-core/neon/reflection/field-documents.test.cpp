@@ -459,3 +459,191 @@ namespace
     EXPECT_EQ(_car.gears, before.gears);
   }
 }
+
+// Lengths and lists of numbers.
+
+namespace
+{
+  using neon::FieldLength;
+
+  struct Box
+  {
+    FieldLength width;
+    FieldLength height = FieldLength::Pixels(16.0f);
+    std::vector<float> corners;
+  };
+
+  void Describe(TypeBuilder<Box> &type)
+  {
+    type.Named("Box");
+    type.Field("width", &Box::width);
+    type.Field("height", &Box::height);
+    type.Field("corners", &Box::corners);
+  }
+
+  class LengthDocumentsTest : public ::testing::Test
+  {
+  protected:
+    TypeInfo _type = TypeInfo::Of<Box>();
+    std::vector<std::string> _errors;
+    Box _box;
+
+    void Read(const DataValue &map)
+    {
+      const DataReader reader(map, "box.yml", "Box", _errors);
+      neon::ReadFields(_type, reader, &_box);
+      reader.Finish();
+    }
+  };
+
+  TEST_F(LengthDocumentsTest, DeducesTheKindsFromTheMembers)
+  {
+    EXPECT_EQ(_type.Find("width")->kind, neon::FieldKind::Length);
+    EXPECT_EQ(_type.Find("corners")->kind, neon::FieldKind::NumberList);
+  }
+
+  TEST_F(LengthDocumentsTest, ReadsALengthAsANumberAndAsText)
+  {
+    auto map = DataValue::Map();
+    map.Set("width", DataValue::Number(200));
+    map.Set("height", DataValue::Text("50%"));
+    Read(map);
+
+    EXPECT_THAT(_errors, IsEmpty());
+    EXPECT_EQ(_box.width, FieldLength::Pixels(200.0f));
+    EXPECT_EQ(_box.height, FieldLength::Percent(50.0f));
+
+    map.Set("width", DataValue::Text("auto"));
+    map.Set("height", DataValue::Text("calc(100% + -20px)"));
+    Read(map);
+
+    EXPECT_THAT(_errors, IsEmpty());
+    EXPECT_TRUE(_box.width.is_auto);
+    EXPECT_EQ(_box.height, FieldLength::Sum(-20.0f, 100.0f));
+  }
+
+  TEST_F(LengthDocumentsTest, ReadsAListOfNumbers)
+  {
+    auto map = DataValue::Map();
+    map.Set("corners", Numbers({4.0f, 8.0f, 0.5f}));
+    Read(map);
+
+    EXPECT_THAT(_errors, IsEmpty());
+    EXPECT_THAT(_box.corners, ElementsAre(4.0f, 8.0f, 0.5f));
+
+    map.Set("corners", DataValue::List());
+    Read(map);
+    EXPECT_THAT(_box.corners, IsEmpty());
+  }
+
+  TEST_F(LengthDocumentsTest, SaysWhatIsWrongAndLeavesTheFieldAlone)
+  {
+    auto words = DataValue::List();
+    words.Add(DataValue::Number(1));
+    words.Add(DataValue::Text("two"));
+
+    auto wide = DataValue::Text("wide");
+    wide.SetLine(3);
+
+    auto map = DataValue::Map();
+    map.Set("width", wide);
+    map.Set("height", DataValue::Bool(true));
+    map.Set("corners", words);
+    Read(map);
+
+    EXPECT_THAT(
+      _errors,
+      ElementsAre(
+        "box.yml:3: 'width' of Box is 'wide', where a length such as 12, \"12px\", \"50%\", or auto was expected",
+        "box.yml: 'height' of Box is true or false, where a length such as 12, \"12px\", \"50%\", or auto was "
+        "expected",
+        "box.yml: 'corners' of Box holds text, where a number was expected"));
+
+    EXPECT_TRUE(_box.width.is_auto);
+    EXPECT_EQ(_box.height, FieldLength::Pixels(16.0f));
+    EXPECT_THAT(_box.corners, IsEmpty());
+  }
+
+  TEST_F(LengthDocumentsTest, WritesPixelsAsANumberAndEveryOtherLengthAsText)
+  {
+    _box.width = FieldLength::Pixels(200.0f);
+    _box.height = FieldLength::Percent(50.0f);
+    _box.corners = {4.0f, 8.0f};
+
+    const Box standard;
+    auto map = DataValue::Map();
+    neon::WriteFields(_type, &_box, &standard, map);
+
+    EXPECT_THAT(NamesOf(map), ElementsAre("width", "height", "corners"));
+
+    float pixels = 0.0f;
+    ASSERT_TRUE(map.Find("width")->GetNumber(pixels));
+    EXPECT_FLOAT_EQ(pixels, 200.0f);
+
+    std::string text;
+    ASSERT_TRUE(map.Find("height")->GetText(text));
+    EXPECT_EQ(text, "50%");
+
+    EXPECT_THAT(NumbersOf(*map.Find("corners")), ElementsAre(4.0f, 8.0f));
+  }
+
+  TEST_F(LengthDocumentsTest, WritesNothingForWhatHoldsItsDefault)
+  {
+    const Box standard;
+    auto map = DataValue::Map();
+    neon::WriteFields(_type, &_box, &standard, map);
+
+    EXPECT_THAT(NamesOf(map), IsEmpty());
+  }
+
+  TEST_F(LengthDocumentsTest, ReadsBackWhatItWrote)
+  {
+    _box.width = FieldLength::Sum(8.0f, 25.0f);
+    _box.height = FieldLength::Auto();
+    _box.corners = {1.0f, 2.0f, 3.0f, 4.0f};
+
+    const Box standard;
+    auto map = DataValue::Map();
+    neon::WriteFields(_type, &_box, &standard, map);
+
+    const Box written = _box;
+    _box = Box{};
+    Read(map);
+
+    EXPECT_THAT(_errors, IsEmpty());
+    EXPECT_EQ(_box.width, written.width);
+    EXPECT_EQ(_box.height, written.height);
+    EXPECT_EQ(_box.corners, written.corners);
+  }
+
+  TEST(FieldValueKindsTest, KnowsALengthAndAListOfNumbers)
+  {
+    using neon::FieldKind;
+    using neon::FieldValue;
+
+    EXPECT_EQ(neon::Describe(FieldKind::Length), "a length");
+    EXPECT_EQ(neon::Describe(FieldKind::NumberList), "a list of numbers");
+
+    EXPECT_TRUE(neon::Holds(FieldValue{FieldLength::Pixels(1.0f)}, FieldKind::Length));
+    EXPECT_FALSE(neon::Holds(FieldValue{1.0f}, FieldKind::Length));
+    EXPECT_TRUE(neon::Holds(FieldValue{std::vector<float>{1.0f}}, FieldKind::NumberList));
+    EXPECT_FALSE(neon::Holds(FieldValue{std::vector<std::string>{"a"}}, FieldKind::NumberList));
+
+    EXPECT_TRUE(neon::Same(FieldValue{FieldLength::Percent(5.0f)}, FieldValue{FieldLength::Percent(5.0f)}));
+    EXPECT_FALSE(neon::Same(FieldValue{FieldLength::Percent(5.0f)}, FieldValue{FieldLength::Pixels(5.0f)}));
+    EXPECT_FALSE(neon::Same(FieldValue{FieldLength::Auto()}, FieldValue{FieldLength::Pixels(0.0f)}));
+    EXPECT_TRUE(neon::Same(FieldValue{std::vector<float>{1.0f, 2.0f}}, FieldValue{std::vector<float>{1.0f, 2.0f}}));
+    EXPECT_FALSE(neon::Same(FieldValue{std::vector<float>{1.0f, 2.0f}}, FieldValue{std::vector<float>{1.0f}}));
+  }
+
+  TEST(FieldValueKindsTest, ChecksALengthAndAListOfNumbersByTheirKind)
+  {
+    const TypeInfo type = TypeInfo::Of<Box>();
+
+    EXPECT_EQ(type.Find("width")->Check(neon::FieldValue{FieldLength::Pixels(1.0f)}, "'width' of Box"), "");
+    EXPECT_EQ(type.Find("width")->Check(neon::FieldValue{1.0f}, "'width' of Box"), "'width' of Box takes a length");
+    EXPECT_EQ(
+      type.Find("corners")->Check(neon::FieldValue{1.0f}, "'corners' of Box"),
+      "'corners' of Box takes a list of numbers");
+  }
+} // namespace

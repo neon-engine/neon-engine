@@ -9,13 +9,26 @@ standards: the names and the meanings of its properties are those of CSS, so
 that what a property does is said by a specification and not by the engine.
 Elements are placed by the rules of CSS Flexible Box Layout.
 
-It draws, lays out, reacts to input, and is defined in files. It is not a
-complete set of widgets. It is separate from the interface of the editor,
-which will use Dear ImGui.
+This is the second version. It draws, lays out, reacts to input, scrolls,
+takes text, animates, and is defined in files: elements in YAML, and their
+look in style sheets that are CSS. It is separate from the interface of the
+editor, which will use Dear ImGui.
 
 A user interface is shown on a **surface**. The window is one. A screen in
 the world is another, and so is what a camera sees. See
 [surfaces](#surfaces).
+
+| Section | What it covers |
+|---|---|
+| [The file](#the-file) | Elements, properties, states |
+| [Style sheets](#style-sheets) | CSS files, selectors, the cascade, inheritance, units, media queries |
+| [Scrolling](#scrolling) | `overflow`, scrollbars, what scrolls with what |
+| [Typing](#typing) | `input` and `textarea`, the caret, the clipboard, the input method |
+| [Choosing](#choosing) | `checkbox`, `toggle`, `radio`, `slider`, `select` |
+| [Animation](#animation) | Transitions and keyframes |
+| [From code and scripts](#from-code-and-scripts) | Finding, changing, making, and hearing of elements |
+| [Points, pixels, and density](#points-pixels-and-density) | The scale on a display of high density |
+| [Surfaces](#surfaces) | The window, screens in the world, and what a camera sees |
 
 ## The file
 
@@ -59,13 +72,18 @@ root:
         background_color: "#4c566a"
 ```
 
-The user interface of the runtime is
-[hud.ui.yml](../app/NeonRuntime/assets/ui/hud.ui.yml). It is shown in two
+The user interfaces of the runtime are
+[hud.ui.yml](../app/NeonRuntime/assets/ui/hud.ui.yml), what is shown during
+play, and [settings.ui.yml](../app/NeonRuntime/assets/ui/settings.ui.yml)
+with its theme [settings.css](../app/NeonRuntime/assets/ui/settings.css), a
+menu with everything that can be typed and chosen. Each is shown in two
 ways:
 
 ```
 NeonRuntime --ui assets://ui/hud.ui.yml
 NeonRuntime --scene assets://scenes/hud-demo.scene.yml
+NeonRuntime --ui assets://ui/settings.ui.yml
+NeonRuntime --scene assets://scenes/settings-demo.scene.yml
 ```
 
 The second is a scene that names its user interface, as a component:
@@ -100,6 +118,9 @@ whole: `border: "2px solid #4c566a"`.
 |---|---|---|
 | `ui` | What the file calls itself. Events carry it | It has no name |
 | `version` | The version of this layout, which is 1 | It counts as 1 |
+| `styles` | A list of style sheets, as paths next to the file or virtual paths. See [style sheets](#style-sheets) | None |
+| `templates` | Elements by name, which `template` and lists make copies of. See [lists](#lists) | None |
+| `cancel` | What cancel does: `auto`, `close`, `blur`, or `none`. See [input](#input-and-focus) | `auto` |
 | `modal` | Whether the file takes the input away from the game and from the files below it. See [input](#input-and-focus) | `false` |
 | `reference_size` | `[width, height]` of the frame the file was made for. See [scaling](#scaling) | `[1920, 1080]` |
 | `scale` | `fit`, `width`, `height`, or `none` | `fit` |
@@ -113,6 +134,12 @@ whole: `border: "2px solid #4c566a"`.
 |---|---|---|
 | `type` | The kind of element | None. It has to be written |
 | `name` | What the element is called. Events carry it. Given once in a file | It has no name and reports nothing |
+| `class` | Classes a style sheet asks for, with spaces between them: `slot selected` | None |
+| `title` | What a tooltip shows when the pointer rests on the element | No tooltip |
+| `tab_index` | Where the element comes in the order of the tab key: `0` as the file has it, a number above 0 in front of that, `-1` never | `0` |
+| `draggable` | Whether the element can be dragged onto another, which reports `drag_start`, `drag_over`, `drop`, `drag_end` | `false` |
+| `template` | The name of a template the element starts from. What the element writes replaces what the template has | None |
+| `for_each` | A list of the game that the element is repeated for, with the template it is made from. See [lists](#lists) | None |
 | `hidden` | `true`, `false`, or a value such as `"{paused}"` or `"{!paused}"`. It is the attribute `hidden` of HTML | `false` |
 | `hover`, `active`, `focus`, `disabled` | Properties that replace those of the element while it is in the state. See [states](#states) | Nothing changes |
 | The properties | See [properties](#properties) | Each keeps its default |
@@ -126,6 +153,13 @@ whole: `border: "2px solid #4c566a"`.
 | `image` | An image from a file | `img` | `src`, which has to be written | No |
 | `button` | What a player chooses. It reports a click | `button` | `text`, `enabled`, `autofocus` | Yes, in place of `text` |
 | `bar` | How much of something there is | `progress` | `value`, `max` | No |
+| `input` | A text of one line that is typed into. See [typing](#typing) | `input` | `value`, `kind`, `placeholder`, `max_length`, `read_only`, `pattern`, `enabled`, `autofocus` | No |
+| `textarea` | A text of several lines that is typed into | `textarea` | The same but `kind`, and `rows` | No |
+| `checkbox` | A box that is ticked or not. See [choosing](#choosing) | `input type=checkbox` | `checked`, `text`, `enabled`, `autofocus` | No |
+| `toggle` | A checkbox drawn as a switch | `input type=checkbox` with `role=switch` | The same | No |
+| `radio` | One of several, of which one is chosen at a time | `input type=radio` | `group`, `value`, `checked`, `text`, `enabled`, `autofocus` | No |
+| `slider` | A number between two others | `input type=range` | `min`, `max`, `step`, `value`, `enabled`, `autofocus` | No |
+| `select` | One of several, from a list that opens | `select` | `options`, `value`, `placeholder`, `enabled`, `autofocus` | No |
 
 | Name | Of | Holds | Default |
 |---|---|---|---|
@@ -135,6 +169,21 @@ whole: `border: "2px solid #4c566a"`.
 | `autofocus` | `button` | Whether it has the focus when the file is shown | `false` |
 | `value` | `bar` | A number, or a value such as `"{health}"` | `0` |
 | `max` | `bar` | A number, or a value | `1` |
+| `value` | `input`, `textarea` | The text, or a value such as `"{player_name}"`, which typing changes | Empty |
+| `kind` | `input` | `text`, `password`, which shows dots, or `number`, which takes digits, a sign, and a point | `text` |
+| `placeholder` | `input`, `textarea`, `select` | What is shown while nothing is typed or chosen | Empty |
+| `max_length` | `input`, `textarea` | How many characters may be typed, `0` for any number | `0` |
+| `read_only` | `input`, `textarea` | Whether the text can be selected and copied, and not changed | `false` |
+| `pattern` | `input`, `textarea` | What the text has to fit for the element to be `:valid`: `*` for anything, `?` for one character, `[a-z]` for one of a range. An empty text always fits | None |
+| `rows` | `textarea` | How many lines are seen | `2` |
+| `checked` | `checkbox`, `toggle`, `radio` | `true`, `false`, or a value such as `"{fullscreen}"`. A radio is chosen while the value is its own `value` | `false` |
+| `group` | `radio` | Which radios belong together. It has to be written | None |
+| `value` | `radio` | What it stands for, which the value of the game becomes when it is chosen | Empty |
+| `min`, `max`, `step` | `slider` | Numbers. `step` is above 0 | `0`, `100`, `1` |
+| `value` | `slider` | A number, or a value such as `"{volume}"`, which moving the knob changes | `min` |
+| `options` | `select` | A list of texts, or of maps with `value` and `text` | None |
+| `value` | `select` | The value of what is chosen, or a value of the game such as `"{quality}"` | Nothing is chosen |
+| `enabled`, `autofocus` | Every element that takes input | As for `button` | `true`, `false` |
 
 What the engine gives an element when the file says nothing, as the style
 sheet of a browser does for HTML:
@@ -146,6 +195,9 @@ sheet of a browser does for HTML:
 | `image` | `flex_shrink: 0` |
 | `bar` | `width: 160`, `height: 16`, `flex_shrink: 0`, `background_color: "#00000080"`, `accent_color: "#4caf50"` |
 | `button` | `padding: 8 16`, `background_color: "#3b4252"`, `justify_content: center`, `align_items: center`, `text_align: center`. In `hover` the background is `#4c566a`, in `active` `#2e3440`. In `focus` it has an outline of 2 in `#ffd166`. In `disabled` its opacity is 0.5 |
+| `input`, `textarea`, `select` | `padding: 6 10`, `border: 1`, `min_width: 160`, `overflow: hidden` (`auto` along the height of a `textarea`), `background_color: "#ffffff14"`, `border_color: "#ffffff4d"`, `cursor: text` (`pointer` for `select`). In `focus` the border is `#ffd166`. In `disabled` the opacity is 0.5 |
+| `checkbox`, `toggle`, `radio` | `padding: 4`, `align_items: center`, `cursor: pointer`. In `focus` an outline of 2 in `#ffd166`. The box is 18 by 18, the switch 36 by 20 |
+| `slider` | `min_width: 160`, `padding: 4 0`, `flex_shrink: 0`, `cursor: pointer`. The knob is 16, the track 4 high |
 
 ### Properties
 
@@ -181,7 +233,9 @@ does nothing.
 | `top`, `right`, `bottom`, `left` | A length, a percentage, or `auto` | `auto` |
 | `z_index` | A whole number. Higher is drawn later, among the elements next to it | `0` |
 | `display` | `flex` or `none` | `flex` |
-| `overflow` | `visible` or `hidden`, which cuts off at the padding box | `visible` |
+| `visibility` | `visible` or `hidden`, which keeps the room and draws nothing. Inherited | `visible` |
+| `overflow` | `visible`, `hidden`, `scroll`, or `auto`, for both sides. See [scrolling](#scrolling) | `visible` |
+| `overflow_x`, `overflow_y` | The same for one side. `visible` next to another value counts as `auto`, as in CSS | `visible` |
 
 An element that is pinned to a corner is `position: absolute` with two sides:
 
@@ -250,6 +304,37 @@ the middle is stretched both ways.
 | `color` | A colour | `"#ffffff"` |
 | `text_align` | `left`, `center`, `right` | `left` |
 | `line_height` | `normal`, a multiple of the size such as `1.5`, a percentage, or pixels as `"24px"` | `normal` |
+| `caret_color` | The colour of the caret of a text that is typed. Inherited | That of the text |
+
+**Behaviour.** [CSS Overflow](https://www.w3.org/TR/css-overflow-3/),
+[CSS Scrollbars Styling](https://www.w3.org/TR/css-scrollbars-1/),
+[CSSOM View on scroll-behavior](https://www.w3.org/TR/cssom-view-1/#smooth-scrolling),
+[CSS Basic User Interface on cursor](https://www.w3.org/TR/css-ui-4/#cursor).
+
+| Property | Holds | Default |
+|---|---|---|
+| `scrollbar_width` | `auto`, which is 12 units, `thin`, which is 8, or `none` | `auto` |
+| `scrollbar_color` | `auto`, or two colours: what is dragged, and what it is dragged along. Inherited | `auto`, which is the colour of the text at half and at an eighth of its alpha |
+| `scroll_behavior` | `auto`, or `smooth`, which moves what the keys, the wheel, and the game scroll to over a quarter of a second | `auto` |
+| `scroll_drag` | `none`, `auto`, which drags what is inside with the pointer and lets it run on, or `inertia`, the same with the pointer alone. Not in CSS | `none` |
+| `cursor` | `auto`, `default`, `pointer`, `text`, `move`, `grab`, `grabbing`, `crosshair`, `not-allowed`, `wait`, `progress`, `ns-resize`, `ew-resize`, `nesw-resize`, `nwse-resize`, `none`. Inherited. The window is told the shape when it changes | `auto` |
+
+**Transitions and animations.** See [animation](#animation).
+
+| Property | Holds | Default |
+|---|---|---|
+| `transition_property` | `none`, `all`, or names of properties with commas between them | `all` |
+| `transition_duration`, `transition_delay` | Times with a unit, `0.2s` or `200ms`, one for each property | `0s` |
+| `transition_timing_function` | `ease`, `linear`, `ease-in`, `ease-out`, `ease-in-out`, `step-start`, `step-end`, `steps(n, position)`, `cubic-bezier(x1, y1, x2, y2)` | `ease` |
+| `transition` | For each property: its name, a duration, a timing function, a delay, in the order of CSS | None |
+| `animation_name` | Names of `@keyframes`, or `none` | `none` |
+| `animation_duration`, `animation_delay` | Times with a unit | `0s` |
+| `animation_timing_function` | As for a transition | `ease` |
+| `animation_iteration_count` | A number, or `infinite` | `1` |
+| `animation_direction` | `normal`, `reverse`, `alternate`, `alternate-reverse` | `normal` |
+| `animation_fill_mode` | `none`, `forwards`, `backwards`, `both` | `none` |
+| `animation_play_state` | `running` or `paused` | `running` |
+| `animation` | For each animation, its parts in any order but that the first time is the duration and the second the delay | None |
 
 More of what text looks like. [CSS Text](https://www.w3.org/TR/css-text-3/),
 [CSS Text Decoration](https://www.w3.org/TR/css-text-decor-3/),
@@ -328,6 +413,9 @@ A state is named as its pseudo-class in CSS and holds properties.
 | `focus` | While it has the focus |
 | `disabled` | While it cannot be used. No other state applies then |
 
+A style sheet asks for these and for more, as pseudo-classes. See
+[selectors](#selectors).
+
 Several states apply together. Where two write the same property, the later
 of `focus`, `hover`, `active` wins. Every element has states, not only
 buttons. An element that is to be in `hover` has to take the pointer, which
@@ -342,28 +430,39 @@ the file writes a `hover` for it.
 
 | CSS | Here |
 |---|---|
-| Selectors, style sheets, and the cascade between rules | None. Properties are written on the element. The one part of the cascade that exists is that the file wins over the defaults of the engine |
-| Inheritance: `color` and the font of an element reach what is inside it | None. Every element starts from the defaults |
-| Units | `px` and `%`. A number without a unit counts as pixels, which CSS allows for 0 alone. No `em`, `rem`, `vw`, `vh`, `calc()` |
 | A pixel of CSS | A unit of the file, which is as many pixels of the frame as the [scale](#scaling) says |
+| Units | `px`, `%`, `em`, `rem`, `vw`, `vh`, `vmin`, `vmax`, and `calc()` of those, in style sheets. A file of YAML takes `px` and `%`. A number without a unit counts as pixels, which CSS allows for 0 alone. No `ch`, `ex`, `cm`, `in`, `pt` |
 | `display` | `flex` and `none`. Every element is a flex container. No `block`, `inline`, `grid` |
 | `position` | `relative` and `absolute`. It starts as `relative` and not as `static`, so an absolute element is always placed against its parent. No `fixed`, `sticky` |
 | `min-width: auto` of a flex item is the size of its content | It is 0. An element shrinks below its content unless `min_width` says otherwise. Yoga does the same |
-| `align-items: baseline`, `order`, `visibility` | Not read |
+| `align-items: baseline`, `order` | Not read |
 | `gap` in percent | Pixels only |
 | `z-index` orders within a stacking context | It orders an element among the elements next to it |
 | `opacity` draws an element with what is inside it as one picture | It is multiplied into the alpha of everything below. Two elements inside that overlap show through each other |
-| `overflow: scroll`, `auto` | Not read. Nothing scrolls |
+| `overflow: clip` | Not read. `hidden` cuts off and does not scroll by the pointer, which is what `clip` does in CSS; a script can still scroll it |
+| A scrollbar takes room in the layout for `scroll` and, when it is shown, for `auto` | The same for `scroll`. For `auto` the bar is drawn over the padding at the right and the bottom, and takes no room |
+| `scrollbar-gutter`, `scroll-snap-*`, `overscroll-behavior` | Not read |
 | `background-image` repeats at its own size | It is stretched over the border box, as `background-size: 100% 100%` |
 | `border-image-slice` keeps the middle out unless `fill` is written | The middle is always drawn |
 | `border-image-width` starts as the width of the border | It starts as the width the parts have in the image |
-| `border-style` | `solid` and `none` |
-| Colours | The notations with `#`, `rgb()`, `rgba()`, and the names `transparent`, `black`, `white`. No other names, no `hsl()` |
-| `white-space: normal` joins spaces and line feeds | They are kept. Lines are broken at spaces, as `pre-wrap` |
-| `pointer-events` is inherited and starts as `auto` | It is not inherited, and starts as `none` for everything but a button |
-| A shorthand and the property it stands for apply in the order they are written | The shorthand is read first, wherever it is written |
-| `:hover` and the other pseudo-classes have the order of the style sheet | The order is `focus`, `hover`, `active` |
+| `border-style` | `solid` and `none`. All four sides have one colour |
+| Colours | The notations with `#`, `rgb()`, `rgba()`, `hsl()`, `hsla()`, and the 148 names, in style sheets. A file of YAML takes `#`, `rgb()`, `rgba()`, and `transparent`, `black`, `white`. No `color()`, `lab()`, `oklch()` |
+| `white-space: normal` joins spaces and line feeds | They are kept. Lines are broken at spaces, as `pre-wrap`. A `textarea` breaks a word that is wider than a line, as `overflow-wrap: anywhere` |
+| `pointer-events` is inherited | It is not inherited. It starts as `none` for everything but what takes input: a button, and what is typed into and chosen |
+| A shorthand and the property it stands for apply in the order they are written | In a file of YAML the shorthand is read first, wherever it is written. In a style sheet the order holds |
+| `:hover` and the other pseudo-classes have the order of the style sheet | In a file of YAML the order of its states is `focus`, `hover`, `active`. In a style sheet the order holds |
 | `disabled` and `hidden` of HTML | `enabled`, since `disabled` names the state. `hidden` is as in HTML |
+| The cascade: origins, layers, `@scope`, `@container`, `@supports`, `@property` | The origins are the defaults of the engine, style sheets, and the element. No layers and no other at-rules than those listed under [style sheets](#style-sheets) |
+| Selectors: `:nth-of-type()`, `:has()`, `:lang()`, `:target`, `:visited`, `::before`, `::after` | Not read. Pseudo-elements name the parts of elements |
+| Media queries see the viewport in CSS pixels | They see the window in points, and `resolution` as its density: `(max-width: 900px)` matches a window narrower than 900 points, whatever the scale of the file. `orientation`, `aspect-ratio`, and `prefers-reduced-motion` are read; `hover`, `pointer`, `prefers-color-scheme` are not |
+| `@font-face` | `font-family`, `src: url()`, `font-weight`. No `font-style`, `unicode-range`, formats |
+| `inherit`, `initial`, `unset` | As in CSS. No `revert`, `revert-layer` |
+| `transition-behavior: allow-discrete` | A property that is not interpolated switches halfway, as `allow-discrete` does. There is no keyword |
+| `animation-timeline`, `animation-composition`, `animation-range` | Not read |
+| `scroll-behavior: smooth` is the choice of the browser in its length | A quarter of a second, eased out |
+| `cursor: url()` | Not read. The shapes of the system only |
+| `caret-shape`, `::selection` on other than what is typed into | Not read. `::selection` styles the selection of an input and a textarea |
+| `pointer-events` is inherited and starts as `auto` | It is not inherited, and starts as `none` for everything but a button |
 | `border-radius` in percent is of the width for the corner from side to side, and of the height from top to bottom, which gives a corner that is part of an ellipse | It is of the shorter side, and a corner is part of a circle. `50%` makes the short sides of a box half circles |
 | `border-radius` with two radii for a corner, as `10px / 20px` | One radius for a corner |
 | The inside of a border whose sides differ in width is round by what is left of the radius on each side | The same, worked out to a pixel near the outline and less exactly far from it |
@@ -403,6 +502,125 @@ the file writes a `hover` for it.
 | A file that is wrong is not shown at all | Half a menu is worse than none |
 | What is left out keeps its default | A file holds what was decided and nothing else |
 | Anchors, aliases, and tags are refused | As in scenes |
+
+## Style sheets
+
+A file names its style sheets at the top, and they are CSS as it is written
+anywhere. What an element writes on itself in YAML still wins over a sheet,
+as the attribute `style` of HTML does.
+
+```yaml
+ui: settings
+styles: [settings.css, assets://ui/common.css]
+```
+
+```css
+:root {
+  --accent: #88c0d0;
+  --row-gap: 12px;
+}
+
+@import "colours.css";
+
+@font-face {
+  font-family: Title;
+  src: url("assets://fonts/title.ttf");
+  font-weight: 700;
+}
+
+.row { gap: var(--row-gap); padding: 8px 12px; transition: background-color 0.15s ease-out; }
+.row:hover { background-color: #4c566a; }
+.row > label.name { width: 180px; color: var(--accent); }
+button.primary:focus { outline: 2px solid #ffd166; }
+input:invalid { border-color: #bf616a !important; }
+select::list { background-color: #3b4252; }
+
+@media (max-width: 900px) {
+  .row { flex-direction: column; }
+}
+
+@media (prefers-reduced-motion) {
+  .row { transition: none; }
+}
+```
+
+| | |
+|---|---|
+| Where a sheet is | A path without a scheme is next to the file that names it. `@import` is next to the sheet it is written in. A virtual path is taken as it is |
+| What is read | [CSS Syntax](https://www.w3.org/TR/css-syntax-3/): rules, declarations, comments, `!important`, strings, escapes, and `@charset`, `@import`, `@font-face`, `@keyframes`, `@media`. Any other at-rule is skipped with a warning |
+| Names of properties | As in CSS, with hyphens. The same properties as in a file of YAML, and each keeps its meaning |
+| What is wrong | A declaration that cannot be read is skipped and logged once as a warning, as `settings.css:14: 'colour' is not a property that is known`. A selector that cannot be read skips its rule. A sheet that cannot be read at all fails the file, as a file of YAML that is wrong does |
+| Changing a sheet while the game runs | `UiContext::ReloadStyles()` reads the sheets again and keeps everything else. The runtime does not watch files |
+
+### Selectors
+
+[Selectors Level 4](https://www.w3.org/TR/selectors-4/).
+
+| Selector | Matches |
+|---|---|
+| `button`, `*` | The kind of the element, or any |
+| `.slot` | An element with the class |
+| `#health` | The element with the name. A name is an id here |
+| `[enabled=false]`, `[text]`, `[class~=slot]`, `[name^=slot-]`, `[name$=-3]`, `[name*=lot]`, `[lang|=en]` | A field of the element, as text. What an element has next to its properties, and `name`, `class`, `title`, `draggable` |
+| `a b`, `a > b`, `a + b`, `a ~ b` | Inside, directly inside, right after, after |
+| `:hover`, `:active`, `:focus`, `:focus-visible`, `:focus-within`, `:disabled`, `:enabled`, `:checked`, `:valid`, `:invalid` | The states. `:focus-visible` is `:focus` |
+| `:first-child`, `:last-child`, `:only-child`, `:nth-child(2n+1)`, `:nth-last-child(2)`, `:empty` | Where the element is among the elements next to it. `odd` and `even` are read |
+| `:root`, `:scope` | The root of the file, and what a query started from |
+| `:not(...)`, `:is(...)`, `:where(...)` | As in CSS, with lists inside |
+| `::placeholder`, `::selection`, `::tooltip`, `::scrollbar-thumb`, `::scrollbar-track`, `::box`, `::mark`, `::track`, `::thumb`, `::fill`, `::list`, `::option`, `::highlight`, `::arrow` | The parts of elements, which take a background and a colour of their own. A part is asked for with its element: `select::highlight`. `::-webkit-scrollbar-thumb` is read as `::scrollbar-thumb` |
+
+Specificity counts ids, classes with attributes and pseudo-classes, and
+types with pseudo-elements, as the specification says. `:where()` counts
+nothing; `:is()` and `:not()` count their most specific argument.
+
+### The cascade
+
+What an element ends up with is decided in this order, the later winning:
+
+| Origin | Order within it |
+|---|---|
+| The defaults of the engine for the kind of element, and for its state | As listed under [elements](#elements) |
+| Style sheets, without `!important` | By specificity, then by the order of the sheets and of the rules in them |
+| What the file of YAML writes on the element, and its states | As before: `focus`, `hover`, `active` |
+| What a script set with `Set()` | The last value set |
+| Style sheets, with `!important` | By specificity, then by order |
+
+Elements are matched against selectors when something they are matched by
+changed: a state, a class, a field, an element next to them, or a sheet.
+A frame in which nothing changed matches nothing.
+
+### Inheritance
+
+Whether a property reaches what is inside an element is one word in the
+table of properties, `inherited`, as the specification has it for each.
+These are inherited: `color`, `font_family`, `font_size`, `font_weight`,
+`line_height`, `text_align`, `visibility`, `cursor`, `caret_color`,
+`scrollbar_color`. Everything else is not.
+
+`inherit`, `initial`, and `unset` are read for every property, and custom
+properties are inherited as in CSS.
+
+### Units
+
+| Unit | Stands for |
+|---|---|
+| `px`, or a number | A unit of the file |
+| `%` | Of the parent, or of what the property refers to |
+| `em` | The `font_size` of the element, or of its parent for `font_size` itself |
+| `rem` | The `font_size` of the root |
+| `vw`, `vh`, `vmin`, `vmax` | A hundredth of the width and the height of the file in its units |
+| `calc()` | `+`, `-`, `*`, `/`, brackets, and `var()`. A percentage next to pixels is kept as both and settled in the layout |
+
+### Media queries
+
+[Media Queries Level 4](https://www.w3.org/TR/mediaqueries-4/). `width`,
+`height`, `aspect-ratio`, `orientation`, `resolution`, and
+`prefers-reduced-motion`, with `min-`, `max-`, the range syntax
+`(400px <= width <= 900px)`, `and`, `not`, `only`, and lists. The width and
+the height are the window in points, as they are on the screen. The
+resolution is its density, in `dppx`, `dpi`, `dpcm`, or `x`. Reduced
+motion is what the game set with `SetReducedMotion()`, since the engine
+does not ask the operating system.
 
 ## Layout
 
@@ -448,6 +666,68 @@ the ratio of device pixels is on the web.
 
 A frame of another shape has more units along one side. What is pinned to a
 corner stays at its corner, and what is sized in percent follows.
+
+### Points, pixels, and density
+
+A window has three sizes, and `WindowContext::GetMetrics()` gives them:
+its size in **points**, which is what the operating system lays it out in;
+its size in **pixels**, which is what is drawn to; and the **density**,
+pixels for each point, which is 2 on a display that Apple calls Retina and
+1.5 or 2 on Windows at 150 or 200 percent. SDL2 opens the window with
+`SDL_WINDOW_ALLOW_HIGHDPI` and the hint for the scaling of Windows, so that
+the pixels are the real ones. The pointer arrives in points and is scaled
+to pixels by the backend, along each side by itself, since the two can
+differ by a pixel.
+
+The scale of a file is one rule:
+
+```
+scale = density × user scale × fit(points of the window / reference size)
+```
+
+where `fit` is the [scale mode](#scaling) of the file, and 1 for `none`.
+The user scale is what the player asked for, `--ui-scale` or
+`SetUserScale()`, and starts as 1.
+
+| Window | Density | User scale | Scale of a file for 1920 by 1080 | What 100 units are |
+|---|---|---|---|---|
+| 1920 by 1080 points, 1920 by 1080 pixels | 1 | 1 | 1 | 100 pixels |
+| 1920 by 1080 points, 3840 by 2160 pixels | 2 | 1 | 2 | 200 pixels, the same size on the screen |
+| 1280 by 720 points, 2560 by 1440 pixels | 2 | 1 | 2 × 0.667 = 1.333 | 133 pixels: the file is fitted to the smaller window, and drawn sharp |
+| 1280 by 720 points, 2560 by 1440 pixels | 2 | 1.5 | 2.0 | 200 pixels |
+| 3440 by 1440 points, density 1 | 1 | 1 | 1.333, by the height | 133 pixels |
+
+Text is rasterised at `font_size` × scale, rounded to a whole pixel, so
+that it is sharp at every density. When the window is resized or moved to
+a display of another density, every file is laid out again and its text
+is rasterised anew; the atlases of the old size are released, so that
+moving back and forth does not pile them up.
+
+| Option of the runtime | Does |
+|---|---|
+| `--window-size WxH` | A window of that many points, in place of one that covers the display |
+| `--render-scale N` | Without a window: N pixels for each point, as a display of that density gives. `--window-size 1280x720 --render-scale 2` renders 2560 by 1440 |
+| `--ui-scale N` | The user scale |
+
+Media queries see the window in points and the density as `resolution`,
+so that a sheet can say what a narrow window and a dense display get.
+
+**For the owner, on a real display.** These were not tried on a window
+with a display, and are what to look at:
+
+- On a Mac with a Retina display, and on Windows at 150 percent: text is
+  sharp and the HUD is the size it is at 1920 by 1080 on a display of
+  density 1.
+- Moving the window between a display of density 1 and one of density 2:
+  the interface changes size once, without a frame in which it is drawn
+  at the wrong size, and `GetFontCount()` stays where it was.
+- Resizing the window: the layout follows in the same frame. The Vulkan
+  renderer does not make its swapchain again on resize, so the window is
+  kept from being resized until it does.
+- Clicking exactly on the edge of a button at density 2: the pointer is
+  scaled to pixels along each side by itself.
+- On Windows, that `SDL_HINT_WINDOWS_DPI_SCALING` gives the real pixels
+  and not a bitmap that Windows stretches.
 
 Every edge is drawn at a whole pixel. Two boxes that touch share an edge.
 
@@ -873,6 +1153,181 @@ is the work of the physics, and is not part of this.
 | Without a window | The same |
 | Every surface is drawn in every frame | Whether something changed or not. See [left for later](#left-for-later) |
 
+## Scrolling
+
+[CSS Overflow](https://www.w3.org/TR/css-overflow-3/),
+[CSSOM View](https://www.w3.org/TR/cssom-view-1/).
+
+```yaml
+- type: panel
+  name: list
+  overflow_y: auto
+  scroll_behavior: smooth
+  height: 400
+```
+
+| What scrolls it | By |
+|---|---|
+| The wheel, and two fingers on a trackpad | A notch is 60 units. A trackpad gives its own distance |
+| Dragging the thumb of the scrollbar, and pressing its track | The thumb follows the pointer. The track moves a page |
+| Arrow keys, page up and down, home and end, while nothing that takes them has the focus | 40 units, nine tenths of the box, and the ends |
+| The right stick of a controller | 1200 units a second at full deflection |
+| Dragging what is inside, with `scroll_drag: auto` or `inertia` | After the pointer moved 6 units. When let go it runs on and slows down |
+| The focus moving to what is out of sight | What has the focus is brought into view |
+| The game | `SetScroll()`, `GetScroll()`, `ScrollIntoView()` |
+
+| Rule | |
+|---|---|
+| `scroll` reserves the room of the bar, `auto` draws the bar over the padding when there is something to scroll | As HTML does with a classic scrollbar for `scroll`. See the [deviations](#deviations-from-css) |
+| `hidden` cuts off, and only the game scrolls it | As `overflow: clip` with `scrollTo()` in a browser |
+| What is inside a box that scrolls along an axis is as large as it asks to be along it | `flex_shrink: 0` for that axis, so that a column of rows is not squeezed into the box |
+| Nested boxes | The innermost that can move in that direction takes the wheel; when it is at its end the next one outside takes over |
+| Only what can be seen is drawn | Elements that are outside of every box that cuts them off are skipped, and are not hit by the pointer |
+| `scroll_behavior: smooth` | A quarter of a second, eased out, for the keys, the wheel, and `SetScroll()`. The thumb and dragging are always direct |
+
+The scrollbar is drawn by the engine and styled as in
+[CSS Scrollbars Styling](https://www.w3.org/TR/css-scrollbars-1/):
+`scrollbar_width`, `scrollbar_color`, and the parts `::scrollbar-thumb` and
+`::scrollbar-track`. The bar is 12 units wide, 8 for `thin`, and the thumb
+is at least 24 long.
+
+An element that scrolled reports `scroll`, with where it is now.
+
+## Typing
+
+`input` and `textarea` take text.
+[HTML on input](https://html.spec.whatwg.org/multipage/input.html),
+[on textarea](https://html.spec.whatwg.org/multipage/form-elements.html#the-textarea-element).
+
+```yaml
+- type: input
+  name: player-name
+  value: "{player_name}"
+  placeholder: Your name
+  max_length: 24
+  pattern: "[A-Za-z]*"
+```
+
+| Input | Does |
+|---|---|
+| A click | Puts the caret between characters, nearest to the pointer. Two clicks select the word, three the line. With shift held, selects from the caret |
+| Dragging | Selects |
+| Typing | Inserts at the caret, in place of the selection |
+| Left, right | Move by a character. With the word key, by a word. With shift, select |
+| Up, down | Move between lines, remembering where the caret wanted to be. In a text of one line, to its ends |
+| Home, end | To the ends of the line. With the shortcut key, of the text |
+| Backspace, delete | Take a character. With the word key, a word |
+| Return | Submits an `input`, and breaks the line in a `textarea`, which the shortcut key and return submit |
+| Escape | Cancel, which takes the focus away. Backspace deletes and does not cancel here |
+| Tab | Moves the focus on |
+| The shortcut key with A, C, X, V, Z, Y, and shift Z | Select all, copy, cut, paste, undo, redo, redo |
+| A controller | The directions move the caret as the arrows do, and accept does nothing |
+
+The shortcut key is command on a Mac and control elsewhere; the word key
+is option on a Mac and control elsewhere. The backend says which, so that
+the engine does not ask what platform it is on.
+
+| Rule | |
+|---|---|
+| Characters | A character is what the caret moves over: a code point with the marks that combine with it, a carriage return with its line feed, and a pair of regional indicators. It is what `max_length` counts. There is no library for it, and the joiners of emoji are not read |
+| Undo | A word typed letter by letter is one step, and so is the space that ends it. 200 steps are kept |
+| The clipboard | Through `ClipboardContext`, which SDL2 implements with the clipboard of the system. An input takes a text of one line: line breaks are left out, as HTML does |
+| An input method | What it puts together is shown underlined at the caret, and is not in the text until it is done. The platform is told where the caret is, so that it shows its candidates there, and a keyboard on the screen where there is one |
+| The keys | While a text is typed, the keys type: the game sees none of them, and neither do the directions of the interface. A controller still moves the game |
+| `kind: password` | Shows a dot for every character. `number` takes digits, a sign, and a point |
+| `pattern` | `*`, `?`, `[a-z]`, and `\` before a character. An empty text fits every pattern. The text is `:invalid` while it does not fit, and the field `valid` says so |
+| `value: "{name}"` | The field shows the value of the game and sets it as it is typed, both ways. A game reads it with `GetValue()`, or hears `changed` |
+| The caret | Blinks twice a second while the field has the focus, in `caret_color`. It is kept in view: an input moves its text sideways, a textarea scrolls |
+
+An `input` reports `changed` with the text as it is typed, `submitted` on
+return, and `focused` and `blurred`. What measures text is `UiTextMeasure`,
+an interface with one implementation over the atlas, so that shaping can
+replace it: where the caret is at a byte, and which byte is at a place.
+
+## Choosing
+
+| Element | The pointer | The keys and a controller |
+|---|---|---|
+| `checkbox`, `toggle` | A click ticks it, or takes the tick away | Accept does the same. Left and right move a `toggle` off and on |
+| `radio` | A click chooses it, and lets go of the others of its `group` in the file | Accept chooses it |
+| `slider` | A press puts the knob where the pointer is, and dragging moves it | Left and right move it a `step`, page up and down ten, home and end to the ends. The wheel moves it a step |
+| `select` | A click opens the list, and a click on a choice takes it. A click anywhere else closes it | Accept opens it, up and down move through it, accept takes the choice, cancel closes it. While it is closed, up and down change the choice right away, as in HTML. Home and end go to the ends of an open list |
+
+Each reports `changed`: `true` or `false`, the number, or the value. A
+radio that is let go of reports `changed` with `false`, in the order of the
+file. Each follows a value of the game when it is given one in brackets,
+and sets it when it is chosen. The list of a `select` is drawn on top of
+everything, eight rows at a time, and takes the pointer before what lies
+under it.
+
+Each is drawn from parts a style sheet reaches: `::box` and `::mark` of a
+checkbox and a radio, `::track` and `::thumb` of a toggle, `::track`,
+`::fill`, and `::thumb` of a slider, `::list`, `::option`, `::highlight`,
+`::arrow`, and `::placeholder` of a select. What is ticked and chosen
+matches `:checked`.
+
+## Lists
+
+A file makes elements for the rows of a list the game hands it, from a
+template.
+
+```yaml
+templates:
+  row:
+    type: button
+    name: "item-${index}"
+    class: row
+    text: "${number}. ${name} x${count}"
+
+root:
+  type: panel
+  children:
+    - type: panel
+      name: list
+      for_each: "{items}"
+      template: row
+```
+
+```cpp
+ui.SetList("items", {
+  {{"name", "Sword"}, {"count", "1"}},
+  {{"name", "Arrow"}, {"count", "40"}}
+});
+```
+
+`${name}` in a template is a field of the row, `${index}` counts from 0
+and `${number}` from 1. The elements are made again when the list is set,
+and kept while it is not. A template is also what `template` on an element
+and `CreateFromTemplate()` start from.
+
+## Animation
+
+[CSS Transitions](https://www.w3.org/TR/css-transitions-1/),
+[CSS Animations](https://www.w3.org/TR/css-animations-1/),
+[CSS Easing](https://www.w3.org/TR/css-easing-1/).
+
+```css
+.row { transition: background-color 0.15s ease-out, opacity 0.3s; }
+
+@keyframes open-window {
+  from { opacity: 0; margin-top: 40px; }
+  to   { opacity: 1; margin-top: 0; }
+}
+
+.window { animation: open-window 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+```
+
+| Rule | |
+|---|---|
+| What is animated | Every property of the table. A number, a length, a colour, and edges are interpolated; a colour with its alpha multiplied in, as the specification asks. A keyword, a text, and an image switch halfway |
+| A transition | Starts when the computed value of a property changes and the property is named in `transition_property`. One that is reversed while it runs is shortened, as the specification asks. What an element starts with is not a change |
+| An animation | Runs from its first keyframe to its last, with the keyframes' own timing functions, `animation_direction`, `animation_fill_mode`, `animation_iteration_count`, and `animation_play_state`. A keyframe that is missing is the value of the element |
+| Time | Every frame advances by the time of the window, or by `Advance(seconds)` when the runtime says so, as it does with `--time-step`. `SetTimeScale()` slows and pauses the user interface apart from the game. The same steps give the same frames |
+| Layout | A property that moves boxes lays out again what changed, and a colour or an opacity only draws again |
+| From code | `StartAnimation(element, "shake", "1s linear")` and `StopAnimation(element)` run keyframes by name |
+| Reduced motion | `SetReducedMotion(true)` makes `@media (prefers-reduced-motion)` match. The engine does not ask the operating system |
+| Events | `transition_ended` and `animation_ended`, with the name of the property or the animation in `value` |
+
 ## Values from the game
 
 A game sets values by name. A file refers to them. The game never reaches for
@@ -905,21 +1360,27 @@ ui.SetFlag("paused", true);
 
 | Input | Does |
 |---|---|
-| The pointer over an element that takes it | The element is in `hover` |
-| The button of the pointer, pressed and released on the same button | A click |
-| Up, down, left, right | Moves the focus to the nearest button in that direction. What lies straight ahead is preferred. At the edge the focus stays |
+| The pointer over an element that takes it | The element is in `hover`. After it rested for 0.6 seconds the `title` of the element is shown under it, styled as `::tooltip` |
+| The button of the pointer, pressed and released on the same element | A click. Two within 0.4 seconds are a `double_click` as well |
+| Up, down, left, right | Moves the focus to the nearest element in that direction that takes it, unless what has the focus uses the direction itself: a slider its left and right, a text its arrows. What lies straight ahead is preferred. At the edge the focus stays. A modal file keeps the focus inside |
+| Tab, shift and tab | Moves the focus in the order of the file, around again at the end. `tab_index` puts elements in front, and `-1` leaves one out |
 | Accept | A click on what has the focus |
+| Cancel | What the file on top says: `close` takes it away and the focus returns to where it was before the file was shown; `blur` takes the focus away; `none` does nothing; `auto` closes a modal file and blurs otherwise. What has something open closes it first, as a select its list. The game hears `cancel` in every case |
+| The wheel, the right stick | Scroll. See [scrolling](#scrolling) |
+| Keys and text | Go to what has the focus. See [typing](#typing) |
 
 | Action | Keys | Controller |
 |---|---|---|
 | `Ui_Up`, `Ui_Right`, `Ui_Down`, `Ui_Left` | Arrow keys | Pad, left stick |
 | `Ui_Accept` | Return, space | The lower button |
-| `Ui_Cancel` | Backspace | The right button. Nothing in the engine reacts to it yet |
+| `Ui_Cancel` | Backspace, escape | The right button |
 | `Pointer_Primary` | | The first button of the mouse |
 
-Something has the focus when a button writes `autofocus: true`, when a file
-is modal, when the pointer presses a button, when a direction is pressed, or
-when the game calls `Focus(name)`.
+Something has the focus when an element writes `autofocus: true`, when a
+file is modal, when the pointer presses an element that takes the focus,
+when a direction or tab is pressed, or when the game calls `Focus(name)`.
+The cursor takes the shape `cursor` of what it is over, and the window is
+told when it changes.
 
 ### What is left for the game
 
@@ -931,6 +1392,8 @@ without what it has used. `main.cpp` gives the world
 |---|---|---|
 | The pointer | It is over an element that takes it, or a press began on a button | Where the pointer is, and its button |
 | The keys of the user interface | Something has the focus | `Ui_Up` to `Ui_Cancel` |
+| The keyboard | A text is typed | Every action a key gives, the keys, and the text. A controller is still seen |
+| The wheel and the right stick | Something under the pointer, or what has the focus, scrolled by them | The wheel, the right stick |
 | Everything | A file is modal | Any action, the pointer, the motion of the mouse |
 
 Moving with W, A, S, and D is never used by a user interface that is not
@@ -963,6 +1426,89 @@ for (const neon::UiEvent &event : ui.GetEvents()) { /* event.element, event.docu
 | Callbacks are called last, from a copy of the events | A callback is free to load and unload files |
 | A name has one callback | The second replaces the first. No function takes it away |
 | An element without a name reports nothing | There is nothing to tell it by |
+
+Elements report more than clicks, to listeners on the element and on every
+element. See [from code and scripts](#from-code-and-scripts).
+
+| Event | When | Bubbles up |
+|---|---|---|
+| `click`, `double_click` | A click, and a second one within 0.4 seconds | Yes |
+| `pointer_down`, `pointer_up`, `pointer_enter`, `pointer_leave` | The pointer's button, and the pointer coming and going. Enter and leave are told to each element on the way | Down and up |
+| `wheel`, `scroll` | The wheel turned over the element, and the element scrolled | Wheel |
+| `focused`, `blurred` | The focus came and went | No |
+| `key_down`, `key_up` | A key, with its name in `value`, to what has the focus | Yes |
+| `changed`, `submitted` | What is typed or chosen changed, and return in an input, with the value in `value` | Yes |
+| `cancel` | Cancel was pressed, to what has the focus or to the root of the file on top | Yes |
+| `drag_start`, `drag_over`, `drop`, `drag_end` | A `draggable` element is dragged, is over another, is let go on it, and is done | Yes |
+| `transition_ended`, `animation_ended` | With the name of the property or the animation | No |
+
+A game makes its sounds from these: a tick on `focused`, a clack on
+`click`, a switch on `changed`, and one for `cancel`.
+
+## From code and scripts
+
+A game reaches elements through `UiContext`, by handles that never dangle:
+a handle of an element that is gone finds nothing, and `IsAlive()` says
+so. Nothing here needs a name in the file, though a name is the easiest way
+to find something.
+
+```cpp
+neon::UiHandle sword = ui.FindByName("sword");
+for (neon::UiHandle slot : ui.Query(".slot:not(.selected)")) { ui.AddClass(slot, "dim"); }
+
+ui.Set(sword, "background-color", "#334");        // as a style sheet would, on the element
+std::string colour = ui.GetComputed(sword, "background-color");  // "rgb(51, 51, 68)"
+ui.SetField(sword, "text", std::string("Sword of Ada"));
+ui.SetVisible(sword, false);
+ui.FocusElement(sword);
+ui.ScrollIntoView(sword);
+
+neon::UiHandle made = ui.Create("{type: button, text: New}", ui.FindByName("slots"));
+neon::UiHandle row = ui.CreateFromTemplate("row", ui.FindByName("list"), {{"name", "Bow"}});
+ui.Move(made, ui.FindByName("actions"), 0);
+ui.Remove(made);
+
+int listening = ui.On(sword, "click", [](const neon::UiElementEvent &event) { /* event.target, .x, .y */ });
+ui.OnAny("changed", [](const neon::UiElementEvent &event) { /* every element */ });
+ui.Off(listening);
+
+ui.StartAnimation(sword, "shake", "0.5s linear");
+```
+
+| Group | Functions |
+|---|---|
+| Finding | `FindByName`, `FindByClass`, `FindByType`, `Query(selector)`, `QueryFirst`, `Matches`, `GetRoot`, `GetParent`, `GetChildren`, `GetNextSibling`, `GetPreviousSibling`, `GetElementType`, `GetElementName`, `IsAlive` |
+| Styling | `Set`, `GetComputed`, `AddClass`, `RemoveClass`, `ToggleClass`, `HasClass`, `GetClasses`, `ReloadStyles` |
+| Fields | `SetField`, `GetField`, `SetElementText`, `GetElementText`, `SetVisible`, `IsVisible`, and `style.<property>` as a field |
+| Focus and scrolling | `FocusElement`, `GetFocusedElement`, `Blur`, `GetScroll`, `SetScroll`, `ScrollIntoView`, `GetBox` |
+| Making | `Create` from YAML, `CreateFrom` a document, `CreateFromTemplate`, `Remove`, `Move`, `SetList` |
+| Events | `On`, `OnAny`, `Off`, `GetElementEvents`. An event bubbles from its target up to the root unless a listener sets `stop`, or the table of [events](#events) says it does not |
+| Animation | `StartAnimation`, `StopAnimation` |
+| The display | `SetUserScale`, `SetReducedMotion`, `SetTimeScale` |
+| Describing | `GetElementTypeNames`, `DescribeElement(type, TypeInfo &)`, which gives every field of a kind with what it holds and what it is for, and the style as a group, through the reflection of the engine. It is what an inspector and a binding for scripts are made from |
+
+What a binding for Lua might read as, from the same functions:
+
+```lua
+local sword = ui.find("sword")
+sword.text = "Sword of Ada"
+sword.style.background_color = "#334"
+sword:add_class("dim")
+
+for _, slot in ipairs(ui.query(".slot")) do
+  slot:on("click", function(event)
+    ui.set_text("selected", slot.name)
+    event.stop = true
+  end)
+end
+
+local row = ui.list:create_from_template("row", { name = "Bow", count = 2 })
+ui.on_any("changed", function(event) sound.play("switch") end)
+```
+
+Every field a script sets goes through `SetField` and is checked as the
+description says, so that a script that writes `sword.tex` or gives `rows`
+a text is told what is wrong.
 
 ## How it is drawn
 
@@ -1075,9 +1621,19 @@ nothing of them draws rectangles where shapes would be.
 | `UiSystem` | neon-core | What the runtime sees: `Update`, `Draw`, and the input for the game |
 | `Tree_UiSystem` | neon-core | The implementation |
 | `UiFile`, `UiDocument` | neon-core | Reads a file into a tree of elements |
-| `UiElement`, and the five kinds | neon-core | An element. What is the same for every kind is in the base class |
+| `UiElement`, and the twelve kinds | neon-core | An element. What is the same for every kind is in the base class, and every kind is in `ui/elements` |
 | `UiElementTypes` | neon-core | The kinds by name |
 | `UiStyle`, `css-values` | neon-core | The properties, and values as CSS writes them |
+| `UiProperties` | neon-core | The one table of properties: names, kinds, whether inherited, whether layout, how read and written |
+| `css/css-style-sheet`, `css-selector`, `css-media`, `css-expression` | neon-core | Reading a sheet, matching selectors, media queries, and values with `var()`, units, and `calc()` |
+| `UiStyleSheets`, `UiCascade`, `ui-declarations` | neon-core | The sheets of a file, what an element ends up with, and a declaration turned into a property |
+| `UiAnimator`, `UiTimingFunction` | neon-core | Transitions and keyframes over time |
+| `UiElementHost`, `UiDirty`, `UiDrawCache` | neon-core | What is dirty, and what was drawn last frame |
+| `UiTextEditor`, `UiTextBoundaries`, `UiTextMeasure` | neon-core | Editing text, the characters of it, and where the caret is |
+| `UiScrollbars` | neon-core | Where a scrollbar and its thumb are |
+| `ClipboardContext`, `SDL2_Clipboard` | neon-core, neon-sdl2 | The clipboard of the system, behind an interface |
+| `InputScript` | neon-core | Input from a script, for a run without a window |
+| `WindowMetrics`, `CursorShape` | neon-core | Points, pixels, and density of the window, and what the cursor looks like |
 | `UiValues`, `UiTemplate` | neon-core | The values of the game, and text that refers to them |
 | `UiInputGate` | neon-core | The input less what was used |
 | `UiPainter`, `UiResources` | neon-core | Batches, and the fonts and images that are loaded once |
@@ -1214,6 +1770,25 @@ engine.
 | The terminal in the world | The right way up and the right way around: its red corner is at the left top, its green one at the right top, its blue one at the left bottom. Its colours are those of the file |
 | What the second camera sees | Is shown on the second monitor. The terminal is seen from behind there, and is mirrored, as a sheet of glass is |
 | Arabic | Joined, and from right to left. Next to English in one line, each in its order |
+| 704 checks of the user interface with files of YAML and style sheets: styles, dirtiness, scrolling, scripting, animation, typing, choosing, describing, the display, navigation | Pass |
+| The settings menu at 1920 by 1080, without a window, looked at | The window opens by its animation, the list, the fields, the switch, the sliders, the dropdowns, and the buttons are drawn as the theme says, the focus is on Apply |
+| The settings menu at 800 by 600, at 1280 by 720 with a render scale of 2, and at 1920 by 1080 with a user scale of 1.5 | At 800 by 600 the rows go under their labels by the media query and the list scrolls with a thin bar. At the render scale of 2 the image is 2560 by 1440 and sharp. At 1.5 everything is half as large again and still fits |
+| The settings menu driven by `--input`: a click into the name, typing, and a click on the dropdown | The name reads what was typed, the dropdown is open on top of the rows under it with its choice highlighted, the border of the field that has the focus is the accent colour |
+| The demo scene without a user interface, 1920 by 1080, without a window, after all of this | Still SHA-256 `9244e048a6839d08` |
+| 2703 tests in all, in 64 programs | Pass, 3 disabled as before |
+
+| Frame of the user interface, measured | HUD, 11 elements | A list of 500 rows, 2003 elements |
+|---|---|---|
+| Nothing changed: drawn again from the cache | 4 µs | 12 µs |
+| One value changed that a text shows, and the text measures the same | 6 µs | 480 µs, which is drawing 2003 elements again |
+| One value changed that changes a size | 30 µs | |
+| The pointer moved to another row | 7 µs | 90 µs |
+| Everything laid out and drawn, as every frame was before | 210 µs | 12 600 µs |
+
+The numbers are from `user-interface.benchmark`, built by its target name
+and not a test, on the machine this was made on in a debug build. Before,
+every frame was the last line. Drawing is still done as a whole when
+anything changed; drawing only what changed is left for later.
 
 | What was seen and is not right | |
 |---|---|
@@ -1226,20 +1801,20 @@ engine.
 | Not checked | Why |
 |---|---|
 | Linux and Windows | They cannot be built on the machine this was made on |
-| A controller | None was plugged in. The code compiles and follows the documentation of SDL |
-| The pointer and the keys with a window | The mapping is in the SDL2 backend, which needs a display. What the user interface does with the input is tested |
-| A display of high density | The pointer is scaled to the pixels that are drawn to, which was not tried |
+| A controller | None was plugged in. The code compiles and follows the documentation of SDL, and the SDL2 backend is tested with a virtual joystick on the dummy driver |
+| The pointer and the keys with a window | The SDL2 backend is tested with the dummy video driver of SDL, by pushing its events. A real window was not looked at |
+| A display of high density | The scale and the pointer are worked out from the metrics of the window and tested with numbers. See the checklist under [points, pixels, and density](#points-pixels-and-density) |
+| An input method | Composition is tested through the events SDL gives. Typing Japanese with a real input method was not tried |
+| The clipboard of the system | `SDL2_Clipboard` is tested on the dummy driver, which keeps its own text |
 
 ## Left for later
 
 | | |
 |---|---|
 | Yoga | See [layout](#layout) |
-| Scrolling | `overflow: scroll`, and a wheel in the input |
-| Text input | A field to type into, and text from the input system |
-| More elements | Slider, checkbox, list, tabs |
-| Animation | `transition` of CSS |
-| Themes | Styles that are shared by files |
+| More elements | Tabs, a tree, a table, a colour picker |
+| Drawing only what changed | A frame draws everything again when anything changed. The cache replays it when nothing did |
+| Shaping | `UiTextMeasure` is the seam. Kerning, ligatures, and right to left are the work of a shaper behind it |
 | Localisation | Text by key, and fonts for other scripts |
 | Rich text | Several styles in one text |
 | Surfaces that are drawn when something changed | Every surface is drawn in every frame. What decides whether a user interface has changed is the work of another branch |
@@ -1249,7 +1824,10 @@ engine.
 | Opacity of an element with what is inside it as one picture | The same |
 | Fonts for other scripts in the runtime | Noto Sans Arabic is there to show that it works. A game brings the fonts of the languages it is translated into |
 | Writing a file | `UiFile` reads. The editor will write |
-| An option for the size of the frame | `--size 1280x720` |
+| Watching files | `ReloadStyles()` reads sheets again when the game asks. Nothing watches the disk |
+| The clipboard for more than text | Images and files |
+| A scrollbar with buttons, and `scrollbar-gutter` | The bar is a track and a thumb |
+| Roles for accessibility | Named as in WAI-ARIA |
 
 ## Open questions
 
@@ -1271,6 +1849,7 @@ Standards to consider next:
 - **A style block with selectors**, in the file or in one of its own. It is
   the step from properties on the element to CSS, and brings the cascade and
   inheritance with it.
+- **SVG** for images and icons that stay sharp at every scale.
 - **Roles for accessibility**, named as in WAI-ARIA, so that a screen reader
   can say what an element is.
 - **RmlUi**, as the alternative of taking over a whole stack of standards in
@@ -1281,13 +1860,14 @@ Others:
 - Whether Yoga replaces the layout engine of the engine, or stands next to it.
 - Whether values should have a scope, such as one set for each player in a
   game on a split screen.
-- Whether `Ui_Cancel` closes the modal file on top by itself.
 - Whether the focus should wrap around at the edge.
-- Layout is worked out twice in every frame. For large trees it should be
-  worked out when something changed.
 - Image decoding for models is in neon-vulkan. For the user interface it is
   behind `ImageDecoder`, which models could use as well.
 - Whether what a file of the window starts its values with should be the
   values of that file, as it is on every other surface.
 - Whether a surface in the world should be lit by the scene, or glow by
   itself as the demo does with the shader `unlit`.
+- Whether media queries should see the file in its units in place of the
+  window in points, so that a sheet is written in one measure throughout.
+- Whether `scroll_drag` should be on by default where there is a touch
+  screen, which the engine cannot tell yet.

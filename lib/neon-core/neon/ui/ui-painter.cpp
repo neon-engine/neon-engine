@@ -38,6 +38,7 @@ namespace neon
     _frame_height = frame_height;
     _draw_calls = 0;
     _quads = 0;
+    _materials = 0;
     _transforms.clear();
     _rounded_clips.clear();
     _state = State{};
@@ -494,6 +495,13 @@ namespace neon
     _state.material = material;
     _state.material_values = values;
     _state.material_box = box;
+
+    if (material != No_Material) { _materials++; }
+  }
+
+  bool UiPainter::UsedMaterials() const
+  {
+    return _materials > 0;
   }
 
   void UiPainter::FillShape(

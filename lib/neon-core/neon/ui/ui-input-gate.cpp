@@ -16,8 +16,13 @@ namespace neon
     {
       _state.Reset();
       _state.ClearPointer();
+      _state.SetComposition({});
       return;
     }
+
+    if (consumed.keyboard) { _state.ClearKeyboard(); }
+    if (consumed.wheel) { _state.ClearWheel(); }
+    if (consumed.right_stick) { _state.SetRightStick(0.0, 0.0); }
 
     if (consumed.pointer)
     {
@@ -74,5 +79,15 @@ namespace neon
   {
     _game_hides_cursor = false;
     ApplyCursor();
+  }
+
+  void UiInputGate::StartTextInput(const TextInputArea &caret)
+  {
+    _source->StartTextInput(caret);
+  }
+
+  void UiInputGate::StopTextInput()
+  {
+    _source->StopTextInput();
   }
 } // neon

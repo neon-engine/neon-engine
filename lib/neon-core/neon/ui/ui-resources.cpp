@@ -12,6 +12,71 @@
 
 namespace neon
 {
+  std::size_t UiResources::ReleaseFonts()
+  {
+    std::size_t destroyed = 0;
+
+    for (const auto &[key, font] : _fonts)
+    {
+      if (font != nullptr && font->texture != No_Texture)
+      {
+        _renderer->DestroyTexture(font->texture);
+        destroyed++;
+      }
+    }
+    _fonts.clear();
+
+    // the fonts whose glyphs are drawn on demand, page by page
+    for (const auto &[key, font] : _glyph_fonts)
+    {
+      for (const int texture : font->textures)
+      {
+        if (texture != No_Texture)
+        {
+          _renderer->DestroyTexture(texture);
+          destroyed++;
+        }
+      }
+    }
+    _glyph_fonts.clear();
+
+    // what refers to the glyph fonts goes with them
+    _text_fonts.clear();
+    _fonts_revision++;
+
+    return destroyed;
+  }
+
+  std::size_t UiResources::GetFontCount() const
+  {
+    std::size_t count = 0;
+    for (const auto &[key, font] : _fonts)
+    {
+      if (font != nullptr && font->texture != No_Texture) { count++; }
+    }
+
+    for (const auto &[key, font] : _glyph_fonts)
+    {
+      const bool has_texture = std::ranges::any_of(font->textures, [](const int texture)
+      {
+        return texture != No_Texture;
+      });
+      if (has_texture) { count++; }
+    }
+    return count;
+  }
+
+  bool UiResources::IsSettling() const
+  {
+    if (_waits_for_surface) { return true; }
+
+    return std::ranges::any_of(_vector_images, [](const auto &entry)
+    {
+      // a size was asked for that is not drawn yet
+      return entry.second.wanted_for > 0;
+    });
+  }
+
   UiResources::UiResources(
     Render2DContext *renderer,
     FontRasterizer *rasterizer,
@@ -450,6 +515,7 @@ namespace neon
   void UiResources::BeginFrame()
   {
     _frame++;
+    _waits_for_surface = false;
 
     for (const int texture : _released) { _renderer->DestroyTexture(texture); }
     _released.clear();
@@ -494,6 +560,9 @@ namespace neon
         WarnOnce(
           "surface " + name,
           std::format("There is no surface '{}', {} is drawn without it until there is", name, asked));
+
+        // looked for again in the next frame
+        _waits_for_surface = true;
         return {};
       }
 

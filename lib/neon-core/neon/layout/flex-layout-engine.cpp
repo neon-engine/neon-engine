@@ -35,6 +35,8 @@ namespace neon
       {
         case LayoutLength::Unit::Pixels: return length.value;
         case LayoutLength::Unit::Percent: return IsDefined(base) ? base * length.value / 100.0f : undefined;
+        case LayoutLength::Unit::Sum:
+          return IsDefined(base) ? length.value + base * length.percent / 100.0f : undefined;
         default: return undefined;
       }
     }

@@ -2,6 +2,8 @@
 
 #include <format>
 
+#include "field-text.hpp"
+
 namespace neon
 {
   namespace
@@ -98,6 +100,31 @@ namespace neon
           value = field.choices[index];
           break;
         }
+        case FieldKind::Length:
+        {
+          const auto *written = reader.ReadValue(field.name);
+          if (written == nullptr) { return false; }
+
+          // pixels as a number, and everything else as text
+          FieldLength read;
+          std::string text;
+          std::string error;
+
+          if (float pixels = 0.0f; written->GetNumber(pixels))
+          {
+            read = FieldLength::Pixels(pixels);
+          } else if (!written->GetText(text) || !ParseFieldLength(text, read))
+          {
+            reader.Report(*written, std::format(
+                            "'{}' of {} is {}, where a length such as 12, \"12px\", \"50%\", or auto was expected",
+                            field.name, reader.GetWhere(),
+                            written->GetText(text) ? "'" + text + "'" : DataValue::Describe(written->GetKind())));
+            return false;
+          }
+
+          value = read;
+          break;
+        }
         case FieldKind::Group:
         {
           bool found = false;
@@ -162,6 +189,13 @@ namespace neon
       auto list = DataValue::List();
       for (const auto &text : *texts) { list.Add(DataValue::Text(text)); }
       return list;
+    }
+
+    if (const auto *length = std::get_if<FieldLength>(&value))
+    {
+      // pixels are a number, as they are written without a unit
+      if (!length->is_auto && length->percent == 0.0f) { return DataValue::Number(length->pixels); }
+      return DataValue::Text(FormatFieldLength(*length));
     }
 
     if (const auto *numbers = std::get_if<std::vector<float>>(&value)) { return ListOf(*numbers); }

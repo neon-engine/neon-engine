@@ -245,6 +245,10 @@ namespace neon
     std::uint64_t _frame = 1;
     std::size_t _vector_pictures_drawn = 0;
 
+    // whether an image of a surface was asked for in this frame that
+    // there is no surface for yet
+    bool _waits_for_surface = false;
+
     [[nodiscard]] UiImage GetVectorImage(
       const std::string &path,
       float width,
@@ -277,6 +281,23 @@ namespace neon
     /// shapes is drawn at it, so that one that is growing is not drawn
     /// again in every frame.
     static constexpr int kSettle_Frames = 3;
+    /// Gives up the fonts at the sizes they were drawn at, with their
+    /// textures. The files of the fonts stay loaded. Called when the scale
+    /// of the user interface changed, since text is then drawn at other
+    /// sizes and the old ones would be kept for nothing. Returns how many
+    /// textures were destroyed.
+    std::size_t ReleaseFonts();
+
+    /// How many fonts are kept at a size, which is how many textures they
+    /// hold.
+    [[nodiscard]] std::size_t GetFontCount() const;
+
+    /// Whether something asked for in this frame is not there yet and may
+    /// be in the next: an image of shapes at a size it is not drawn at,
+    /// which is drawn once the size has been asked for in a few frames in
+    /// a row, or an image of a surface that does not exist yet.
+    [[nodiscard]] bool IsSettling() const;
+
     UiResources(
       Render2DContext *renderer,
       FontRasterizer *rasterizer,

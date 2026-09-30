@@ -18,6 +18,23 @@ namespace neon
     }
   }
 
+  bool UiText::Set(const std::string &text, std::string &error)
+  {
+    UiTemplate read;
+    if (!UiTemplate::Parse(text, read, error)) { return false; }
+
+    _template = read;
+    _written = text;
+    _has_text = true;
+    _is_made = false;
+    return true;
+  }
+
+  const std::string &UiText::GetWritten() const
+  {
+    return _written;
+  }
+
   void UiText::Read(const DataReader &reader)
   {
     const auto *value = reader.ReadValue("text");
@@ -42,6 +59,7 @@ namespace neon
       return;
     }
 
+    _written = text;
     _has_text = true;
     _is_made = false;
   }

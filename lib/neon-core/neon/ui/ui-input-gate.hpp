@@ -19,6 +19,17 @@ namespace neon
 
     /// The actions that move through a user interface and choose in it.
     bool navigation = false;
+
+    /// The keyboard, while a text is typed: the keys, the text, and the
+    /// actions that only a key holds down. Moving with W, A, S, and D
+    /// would otherwise follow every word that has one of them in it.
+    bool keyboard = false;
+
+    /// The wheel, when something was scrolled with it or could have been.
+    bool wheel = false;
+
+    /// The right stick of a controller, when something was scrolled with it.
+    bool right_stick = false;
   };
 
   /// Stands between the input and the game. The game reads the input
@@ -54,6 +65,10 @@ namespace neon
     void CenterAndHideCursor() override;
 
     void ShowCursor() override;
+
+    void StartTextInput(const TextInputArea &caret) override;
+
+    void StopTextInput() override;
   };
 } // neon
 

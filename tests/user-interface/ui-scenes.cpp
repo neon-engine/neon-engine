@@ -158,7 +158,7 @@ namespace
     EXPECT_TRUE(_logger->Contains(
       LogLevel::Error,
       "assets://ui/broken.ui.yml:2: type 'lable' of the root is not known. Known are: "
-      "panel, label, image, button, bar"));
+      "input, textarea, checkbox, radio, toggle, slider, select, panel, label, image, button, bar"));
   }
 
   TEST_F(UiSceneTest, SaysThatTheComponentNamesNoFile)

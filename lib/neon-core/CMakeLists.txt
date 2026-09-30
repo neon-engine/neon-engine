@@ -1,6 +1,67 @@
 set(TARGET neon-core)
 
 add_library(${TARGET} STATIC
+        # the behaviour of the user interface, and what it needs of the input
+        # and of the window. New files are listed in this block
+        neon/command-line/display-options.cpp
+        neon/command-line/display-options.hpp
+        neon/input/clipboard-context.hpp
+        neon/reflection/field-text.cpp
+        neon/reflection/field-text.hpp
+        neon/input/input-script.cpp
+        neon/input/input-script.hpp
+        neon/input/key.hpp
+        neon/ui/tree-ui-system-describe.cpp
+        neon/ui/elements/ui-binding.hpp
+        neon/ui/elements/ui-checkbox.cpp
+        neon/ui/elements/ui-checkbox.hpp
+        neon/ui/elements/ui-radio.cpp
+        neon/ui/elements/ui-radio.hpp
+        neon/ui/elements/ui-select.cpp
+        neon/ui/elements/ui-select.hpp
+        neon/ui/elements/ui-slider.cpp
+        neon/ui/elements/ui-slider.hpp
+        neon/ui/elements/ui-text-field.cpp
+        neon/ui/elements/ui-text-field.hpp
+        neon/ui/css/css-expression.cpp
+        neon/ui/css/css-expression.hpp
+        neon/ui/css/css-media.cpp
+        neon/ui/css/css-media.hpp
+        neon/ui/css/css-selector.cpp
+        neon/ui/css/css-selector.hpp
+        neon/ui/css/css-style-sheet.cpp
+        neon/ui/css/css-style-sheet.hpp
+        neon/ui/tree-ui-system-animation.cpp
+        neon/ui/tree-ui-system-elements.cpp
+        neon/ui/tree-ui-system-events.cpp
+        neon/ui/tree-ui-system-host.cpp
+        neon/ui/tree-ui-system-input.cpp
+        neon/ui/tree-ui-system-scroll.cpp
+        neon/ui/ui-animator.cpp
+        neon/ui/ui-animator.hpp
+        neon/ui/ui-cascade.cpp
+        neon/ui/ui-cascade.hpp
+        neon/ui/ui-declarations.cpp
+        neon/ui/ui-declarations.hpp
+        neon/ui/ui-draw-cache.hpp
+        neon/ui/ui-element-host.hpp
+        neon/ui/ui-fields.hpp
+        neon/ui/ui-handle.hpp
+        neon/ui/ui-properties.cpp
+        neon/ui/ui-properties.hpp
+        neon/ui/ui-scrollbars.cpp
+        neon/ui/ui-scrollbars.hpp
+        neon/ui/ui-style-behaviour.cpp
+        neon/ui/ui-style-sheets.cpp
+        neon/ui/ui-style-sheets.hpp
+        neon/ui/ui-text-editor.cpp
+        neon/ui/ui-text-editor.hpp
+        neon/ui/ui-text-measure.cpp
+        neon/ui/ui-text-measure.hpp
+        neon/ui/ui-timing.cpp
+        neon/ui/ui-timing.hpp
+        neon/window/window-metrics.hpp
+
         # runtime
         neon/runtime/runtime.cpp
         neon/runtime/runtime.hpp
@@ -279,6 +340,21 @@ if (NEON_BUILD_TESTS)
   )
 
   # Unit tests. Each one sits next to the file it tests.
+  neon_add_unit_test(${TARGET} neon/ui/ui-cascade.test.cpp)
+neon_add_unit_test(${TARGET} neon/ui/ui-text-measure.test.cpp)
+neon_add_unit_test(${TARGET} neon/command-line/display-options.test.cpp)
+  neon_add_unit_test(${TARGET} neon/input/input-script.test.cpp)
+  neon_add_unit_test(${TARGET} neon/reflection/field-text.test.cpp)
+  neon_add_unit_test(${TARGET} neon/ui/css/css-expression.test.cpp)
+  neon_add_unit_test(${TARGET} neon/ui/css/css-media.test.cpp)
+  neon_add_unit_test(${TARGET} neon/ui/css/css-selector.test.cpp)
+  neon_add_unit_test(${TARGET} neon/ui/css/css-style-sheet.test.cpp)
+  neon_add_unit_test(${TARGET} neon/ui/ui-properties.test.cpp)
+  neon_add_unit_test(${TARGET} neon/ui/ui-style-behaviour.test.cpp)
+  neon_add_unit_test(${TARGET} neon/ui/ui-style-sheets.test.cpp)
+  neon_add_unit_test(${TARGET} neon/ui/ui-text-editor.test.cpp)
+  neon_add_unit_test(${TARGET} neon/ui/ui-timing.test.cpp)
+  neon_add_unit_test(${TARGET} neon/window/window-metrics.test.cpp)
   neon_add_unit_test(${TARGET} neon/command-line/command-line.test.cpp)
   neon_add_unit_test(${TARGET} neon/reflection/entity-fields.test.cpp)
   neon_add_unit_test(${TARGET} neon/reflection/field-documents.test.cpp)

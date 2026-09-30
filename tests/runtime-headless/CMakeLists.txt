@@ -2,6 +2,9 @@
 # tests are skipped, they do not fail.
 neon_add_application_test(runtime-headless NeonRuntime run.cmake
         CASES
+        window-size-and-render-scale
+        settings-menu-with-input
+        ui-scale
         last-frame
         listed-frames
         without-screenshot

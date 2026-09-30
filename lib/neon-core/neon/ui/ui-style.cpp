@@ -26,7 +26,30 @@ namespace neon
     const std::vector<std::string> align_contents = {
       "stretch", "flex-start", "flex-end", "center", "space-between", "space-around", "space-evenly"
     };
-    const std::vector<std::string> overflows = {"visible", "hidden"};
+    const std::vector<std::string> overflows = {"visible", "hidden", "scroll", "auto"};
+
+    /// Reads the properties of behaviour where the function it is created
+    /// in ends. They are then asked for behind the properties that were
+    /// there before them, and a message that lists what is known lists them
+    /// last. `overflow` is also read in front of `overflow_x` and
+    /// `overflow_y` that way, as a shorthand is.
+    class BehaviourAtTheEnd
+    {
+      const DataReader &_reader;
+      UiStyle &_style;
+
+    public:
+      BehaviourAtTheEnd(const DataReader &reader, UiStyle &style) : _reader(reader), _style(style) {}
+
+      BehaviourAtTheEnd(const BehaviourAtTheEnd &) = delete;
+
+      BehaviourAtTheEnd &operator=(const BehaviourAtTheEnd &) = delete;
+
+      ~BehaviourAtTheEnd()
+      {
+        ReadUiBehaviourStyle(_reader, _style);
+      }
+    };
     const std::vector<std::string> pointer_events = {"auto", "none"};
     const std::vector<std::string> text_aligns = {"left", "center", "right", "start", "end"};
     const std::vector<std::string> object_fits = {"fill", "contain", "cover", "none", "scale-down"};
@@ -84,7 +107,7 @@ namespace neon
           return false;
         }
 
-        if (read.unit == LayoutLength::Unit::Percent && !allows_percent) { return false; }
+        if (read.HasPercent() && !allows_percent) { return false; }
         if (read.IsAuto() && !allows_auto) { return false; }
 
         length = read;
@@ -994,6 +1017,8 @@ namespace neon
 
   void ReadUiStyle(const DataReader &reader, UiStyle &style)
   {
+    const BehaviourAtTheEnd behaviour(reader, style);
+
     const Properties properties(reader);
     LayoutStyle &layout = style.layout;
 

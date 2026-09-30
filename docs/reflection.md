@@ -66,6 +66,7 @@ It is deduced from the member.
 | `std::vector<float>` | NumberList | A list of numbers, such as a size `[width, height]` |
 | An enum, with `Choice()` | Choice | One of its words |
 | Several, with `Group()` | Group | A map |
+| `FieldLength` | Length | A number of pixels, or text as a style sheet writes a length: `"50%"`, `auto`, `"calc(100% + -20px)"` |
 
 ### Ways to describe a field
 
@@ -96,6 +97,24 @@ outside.
 A member that is not described is not seen from outside. That is how what the
 engine keeps for itself stays out of a scene file: the id the renderer knows
 an entity by, and where a `Transform` puts an entity in the world.
+
+### Values as text
+
+An inspector shows a value in a box that is typed into, and a script may know
+a field by its name alone. `FormatField` and `ParseField` of
+`neon/reflection/field-text.hpp` turn the value of every kind into text and
+back.
+
+| Kind | As text |
+|---|---|
+| Bool | `true`, `false` |
+| Whole, Number | `12`, `0.5` |
+| Text, Choice | The text itself |
+| Vector | `1 2 3` |
+| Color | In the notation of CSS: `#ff8000`, `#ff800080`. `rgb()` and `rgba()` are read as well |
+| TextList | `one, two` |
+| Length | `12px`, `50%`, `auto` |
+| NumberList | `1 2 3 4` |
 
 ## Reaching a field by name
 
@@ -133,6 +152,7 @@ be built on. Neither exists yet.
 | `TypeBuilder` | `neon/reflection/type-builder.hpp` | Writes a description |
 | `FieldValue`, `FieldKind` | `neon/reflection/field-value.hpp` | The value of a field, whatever its type is in C++ |
 | `ReadFields`, `WriteFields` | `neon/reflection/field-documents.hpp` | Reads and writes described fields from and to a document |
+| `FormatField`, `ParseField` | `neon/reflection/field-text.hpp` | The value of a field as text, and back |
 | `GetField`, `SetField` | `neon/reflection/entity-fields.hpp` | Reaches a field of a component of an entity by name |
 | `ComponentFormat::Of<T>()` | `neon/world-system/ecs/scene-file/` | The format of a described component |
 
@@ -155,7 +175,7 @@ say.
 | Written in C++ by hand, not generated | No step in the build and no tool to keep. C++ gains reflection of its own with C++26, which no compiler of the toolchain offers yet |
 | Next to the type | It is changed when the type is changed, by whoever changes it |
 | A field is reached through functions, not through its place in memory | It works for a member of a member and for a value that is kept as something else. It does not depend on how the compiler lays out a struct |
-| A value is one of nine types | Code that works with any component needs a closed set to handle. A new kind is added in one place |
+| A value is one of ten types | Code that works with any component needs a closed set to handle. A new kind is added in one place |
 | A scene file is the same as before | Descriptions replace how components are read and written, not what is read and written |
 
 One message changed. A renderable that lacks a model or a shader is told which
@@ -175,7 +195,7 @@ of the two it lacks. Before, it was told that it needs both.
 
 - References to other entities, such as a door to its switch. A kind of its
   own, written as a path.
-- Lists of more than texts, such as a list of numbers or of groups.
+- Lists of groups. Lists of texts and of numbers exist.
 - A quaternion as a kind, once a rotation is kept as one.
 - What else the editor wants to know: a step for a slider, a unit, whether a
   text is a path to a file and of which kind.

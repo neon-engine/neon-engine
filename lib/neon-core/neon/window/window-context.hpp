@@ -1,8 +1,11 @@
 #ifndef SDL_2_WINDOW_CONTEXT_HPP
 #define SDL_2_WINDOW_CONTEXT_HPP
 
+#include <cstdint>
 #include <string>
 #include <vector>
+
+#include "window-metrics.hpp"
 
 namespace neon
 {
@@ -44,6 +47,33 @@ namespace neon
     /// A later renderer would add its own pair of hooks next to these.
     /// Returns false when there is no window to draw to, or on failure.
     virtual bool CreateVulkanSurface(void *instance, void *surface) = 0;
+
+    /// The size of the window in points, which is what the platform counts
+    /// a window and the pointer in. Without a display of high density it is
+    /// the size of what is drawn to.
+    virtual WindowSize GetWindowSize()
+    {
+      return GetDrawableSize();
+    }
+
+    /// The window in points and in pixels, from which the density follows.
+    virtual WindowMetrics GetMetrics()
+    {
+      const WindowSize points = GetWindowSize();
+      const WindowSize pixels = GetDrawableSize();
+      return {points.width, points.height, pixels.width, pixels.height};
+    }
+
+    /// Goes up whenever the size of the window or its density changes: when
+    /// it is resized, and when it is moved to a display of another density.
+    /// What depends on either keeps the number it last saw.
+    [[nodiscard]] virtual std::uint64_t GetMetricsRevision()
+    {
+      return 0;
+    }
+
+    /// Shows the cursor in a shape. A window without a cursor does nothing.
+    virtual void SetCursorShape(CursorShape shape) {}
   };
 }
 

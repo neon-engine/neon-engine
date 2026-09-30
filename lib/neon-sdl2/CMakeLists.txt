@@ -1,6 +1,8 @@
 set(TARGET neon-sdl2)
 
 add_library(${TARGET} STATIC
+        neon/input/sdl2-clipboard.cpp
+        neon/input/sdl2-clipboard.hpp
         neon/filesystem/sdl2-file-system.cpp
         neon/filesystem/sdl2-file-system.hpp
         neon/window/sdl2-window-system.cpp
@@ -20,6 +22,12 @@ target_link_libraries(${TARGET}
 )
 
 if (NEON_BUILD_TESTS)
+  # these start SDL with its video driver that draws nowhere, and are
+  # skipped where SDL was built without it
+  neon_add_unit_test(${TARGET} neon/input/sdl2-input-system.test.cpp)
+  neon_add_unit_test(${TARGET} neon/input/sdl2-clipboard.test.cpp)
+  neon_add_unit_test(${TARGET} neon/window/sdl2-window-system.test.cpp)
+
   neon_add_unit_test(${TARGET} neon/filesystem/sdl2-file-system.test.cpp)
 
   # assets:// is the folder `assets` next to the executable, which for a test

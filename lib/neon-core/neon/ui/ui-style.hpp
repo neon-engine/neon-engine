@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+#include "ui-timing.hpp"
+
 #include <neon/common/color.hpp>
 #include <neon/data/data-reader.hpp>
 #include <neon/layout/layout-style.hpp>
@@ -15,11 +17,163 @@
 
 namespace neon
 {
+  /// `visibility` of CSS. What is hidden keeps its room and is not drawn.
+  enum class UiVisibility
+  {
+    Visible = 0,
+    Hidden
+  };
+
+  /// `cursor` of CSS: the shape of the cursor over an element.
+  enum class UiCursor
+  {
+    /// What the element asks for by itself: a bar over a text that is
+    /// typed, and an arrow over everything else.
+    Auto = 0,
+    Default,
+    Pointer,
+    Text,
+    Wait,
+    Progress,
+    Crosshair,
+    Move,
+    NotAllowed,
+    EwResize,
+    NsResize,
+    NeswResize,
+    NwseResize,
+    Grab,
+    Grabbing,
+    None
+  };
+
+  /// `scrollbar-width` of CSS.
+  enum class UiScrollbarWidth
+  {
+    Auto = 0,
+    Thin,
+
+    /// No scrollbar is drawn. What is inside still scrolls.
+    None
+  };
+
+  /// `scroll-behavior` of CSS.
+  enum class UiScrollBehavior
+  {
+    /// At once.
+    Auto = 0,
+
+    /// Over a short time.
+    Smooth
+  };
+
+  /// `scroll_drag`, which CSS does not have: whether what is inside is
+  /// moved by dragging it, as on a screen that is touched.
+  enum class UiScrollDrag
+  {
+    None = 0,
+
+    /// It is dragged, and goes on for a while when it is let go.
+    Inertia
+  };
+
+  /// `animation-direction` of CSS.
+  enum class UiAnimationDirection
+  {
+    Normal = 0,
+    Reverse,
+    Alternate,
+    AlternateReverse
+  };
+
+  /// `animation-fill-mode` of CSS.
+  enum class UiAnimationFillMode
+  {
+    None = 0,
+    Forwards,
+    Backwards,
+    Both
+  };
+
+  /// `animation-play-state` of CSS.
+  enum class UiAnimationPlayState
+  {
+    Running = 0,
+    Paused
+  };
+
+  /// The properties of CSS that say how a change takes its time:
+  /// `transition_property`, `transition_duration`, `transition_delay`, and
+  /// `transition_timing_function`. Each holds a list. The first names the
+  /// properties, and the others are gone through again from their start
+  /// when they are shorter, as CSS says.
+  struct UiTransitions
+  {
+    /// As CSS names them, with hyphens. `all` stands for every property
+    /// and `none` for no property.
+    std::vector<std::string> properties{"all"};
+
+    /// In seconds.
+    std::vector<float> durations{0.0f};
+    std::vector<float> delays{0.0f};
+
+    std::vector<UiTimingFunction> timing_functions{UiTimingFunction::Ease()};
+
+    /// Whether any change takes time at all.
+    [[nodiscard]] bool IsUsed() const
+    {
+      for (const float duration : durations)
+      {
+        if (duration > 0.0f) { return true; }
+      }
+
+      for (const float delay : delays)
+      {
+        if (delay > 0.0f) { return true; }
+      }
+
+      return false;
+    }
+
+    bool operator==(const UiTransitions &other) const = default;
+  };
+
+  /// The properties of CSS that say which animations run:
+  /// `animation_name`, `animation_duration`, and so on. Each holds a list,
+  /// with the names in the first.
+  struct UiAnimations
+  {
+    /// The names of `@keyframes`. `none` stands for no animation.
+    std::vector<std::string> names;
+
+    /// In seconds.
+    std::vector<float> durations{0.0f};
+    std::vector<float> delays{0.0f};
+
+    /// Below 0 stands for `infinite`.
+    std::vector<float> iteration_counts{1.0f};
+
+    std::vector<UiAnimationDirection> directions{UiAnimationDirection::Normal};
+    std::vector<UiAnimationFillMode> fill_modes{UiAnimationFillMode::None};
+    std::vector<UiAnimationPlayState> play_states{UiAnimationPlayState::Running};
+    std::vector<UiTimingFunction> timing_functions{UiTimingFunction::Ease()};
+
+    bool operator==(const UiAnimations &other) const = default;
+  };
+
   /// `overflow` of CSS.
   enum class UiOverflow
   {
     Visible = 0,
-    Hidden
+    Hidden,
+
+    /// What does not fit is cut off and can be scrolled to. The room for
+    /// a scrollbar is kept whether there is something to scroll or not.
+    Scroll,
+
+    /// The same, with a scrollbar only while there is something to
+    /// scroll, which lies on top of what is inside.
+    Auto
   };
 
   /// `pointer-events` of CSS.
@@ -51,6 +205,79 @@ namespace neon
   /// to an element, such as `font_size` to an image, does nothing.
   struct UiStyle
   {
+    // The properties of behaviour: what is scrolled, animated, and
+    // pointed at. They are read by ReadUiBehaviourStyle().
+
+    /// It is inherited, as in CSS.
+    UiVisibility visibility = UiVisibility::Visible;
+
+    /// It is inherited, as in CSS.
+    UiCursor cursor = UiCursor::Auto;
+
+    /// `overflow_x` and `overflow_y`. `overflow` stands for both.
+    UiOverflow overflow_x = UiOverflow::Visible;
+    UiOverflow overflow_y = UiOverflow::Visible;
+
+    UiScrollbarWidth scrollbar_width = UiScrollbarWidth::Auto;
+
+    /// `scrollbar_color` holds the two: what is dragged, and what it is
+    /// dragged along. Without them, they follow from the colour of the
+    /// text.
+    std::optional<Color> scrollbar_thumb_color;
+    std::optional<Color> scrollbar_track_color;
+
+    UiScrollBehavior scroll_behavior = UiScrollBehavior::Auto;
+    UiScrollDrag scroll_drag = UiScrollDrag::None;
+
+    /// The colour of the caret of a text that is typed. Without one, it
+    /// has the colour of the text.
+    std::optional<Color> caret_color;
+
+    UiTransitions transitions;
+    UiAnimations animations;
+
+    [[nodiscard]] Color CaretColor() const
+    {
+      return caret_color.value_or(color);
+    }
+
+    /// What `overflow_x` and `overflow_y` come to. As CSS says, a side
+    /// that is `visible` next to one that is not counts as `auto`: what is
+    /// cut off along one side is cut off along both.
+    [[nodiscard]] UiOverflow OverflowX() const
+    {
+      if (overflow_x == UiOverflow::Visible && overflow_y != UiOverflow::Visible) { return UiOverflow::Auto; }
+      return overflow_x;
+    }
+
+    [[nodiscard]] UiOverflow OverflowY() const
+    {
+      if (overflow_y == UiOverflow::Visible && overflow_x != UiOverflow::Visible) { return UiOverflow::Auto; }
+      return overflow_y;
+    }
+
+    /// Whether what does not fit is cut off along a side.
+    [[nodiscard]] bool ClipsX() const
+    {
+      return OverflowX() != UiOverflow::Visible;
+    }
+
+    [[nodiscard]] bool ClipsY() const
+    {
+      return OverflowY() != UiOverflow::Visible;
+    }
+
+    /// Whether what is inside can be scrolled along a side.
+    [[nodiscard]] bool ScrollsX() const
+    {
+      return OverflowX() == UiOverflow::Scroll || OverflowX() == UiOverflow::Auto;
+    }
+
+    [[nodiscard]] bool ScrollsY() const
+    {
+      return OverflowY() == UiOverflow::Scroll || OverflowY() == UiOverflow::Auto;
+    }
+
     LayoutStyle layout;
 
     Color background_color{0.0f, 0.0f, 0.0f, 0.0f};
@@ -203,6 +430,11 @@ namespace neon
       return line_height_is_multiple ? line_height * font_size : line_height;
     }
   };
+
+  /// Reads the properties of behaviour that are written into `style`: what
+  /// is scrolled, animated, and pointed at. ReadUiStyle() calls it, so
+  /// nothing else has to.
+  void ReadUiBehaviourStyle(const DataReader &reader, UiStyle &style);
 
   /// Reads the properties that are written into `style`, and leaves the
   /// others as they are. What is written and cannot be read is reported,

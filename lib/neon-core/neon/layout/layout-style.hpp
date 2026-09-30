@@ -14,11 +14,32 @@ namespace neon
     {
       Auto = 0,
       Pixels,
-      Percent
+      Percent,
+
+      /// Pixels and a percentage added up, which is what `calc()` of CSS
+      /// comes to when it holds both: `calc(100% - 20px)`.
+      Sum
     };
 
     Unit unit = Unit::Auto;
+
+    /// The pixels, or the percentage. For a sum, the pixels.
     float value = 0.0f;
+
+    /// The percentage of a sum.
+    float percent = 0.0f;
+
+    static LayoutLength Sum(const float pixels, const float percent)
+    {
+      return {Unit::Sum, pixels, percent};
+    }
+
+    /// Whether the length holds a percentage, which needs something to be
+    /// a percentage of.
+    [[nodiscard]] bool HasPercent() const
+    {
+      return unit == Unit::Percent || unit == Unit::Sum;
+    }
 
     static LayoutLength Auto()
     {

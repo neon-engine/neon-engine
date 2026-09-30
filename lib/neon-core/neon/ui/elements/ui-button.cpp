@@ -1,9 +1,88 @@
 #include "ui-button.hpp"
 
+#include <neon/ui/ui-fields.hpp>
+
 #include <format>
 
 namespace neon
 {
+  bool UiButton::TellsWhenItChanged() const
+  {
+    return true;
+  }
+
+  bool UiButton::GetField(const std::string &name, FieldValue &value) const
+  {
+    if (name == "text")
+    {
+      if (!_text.IsWritten()) { return false; }
+
+      value = _text.Get();
+      return true;
+    }
+
+    if (name == "enabled")
+    {
+      value = _is_enabled;
+      return true;
+    }
+
+    if (name == "autofocus")
+    {
+      value = _autofocus;
+      return true;
+    }
+
+    return false;
+  }
+
+  bool UiButton::SetField(const std::string &name, const FieldValue &value, std::string &error)
+  {
+    const std::string what = "'" + name + "' of " + Describe();
+
+    if (name == "text")
+    {
+      std::string text;
+      if (!TakeText(value, what, text, error)) { return false; }
+
+      if (std::string problem; !_text.Set(text, problem))
+      {
+        error = what + " cannot be read: " + problem;
+        return false;
+      }
+
+      Invalidate(UiDirty::Layout | UiDirty::Paint);
+      return true;
+    }
+
+    if (name == "enabled")
+    {
+      bool flag = false;
+      if (!TakeFlag(value, what, flag, error)) { return false; }
+
+      // what is set holds, and no longer follows a value of the game
+      _enabled = UiFlag(flag);
+      _is_enabled = flag;
+      return true;
+    }
+
+    if (name == "autofocus")
+    {
+      return TakeFlag(value, what, _autofocus, error);
+    }
+
+    return UiElement::SetField(name, value, error);
+  }
+
+  std::vector<UiElement::Field> UiButton::GetFields() const
+  {
+    return {
+      {"text", FieldKind::Text, "What is written on it, which may refer to values of the game as {name}", {}},
+      {"enabled", FieldKind::Bool, "Whether it can be chosen", {}},
+      {"autofocus", FieldKind::Bool, "Whether it has the focus when its file is shown", {}}
+    };
+  }
+
   void UiButton::ApplyDefaults(UiStyle &style) const
   {
     style.layout.padding = {
@@ -94,7 +173,11 @@ namespace neon
 
   void UiButton::Update(const UiFrame &frame)
   {
+    const std::string before = _text.Get();
     _text.Update(frame);
+
+    if (_text.Get() != before) { Invalidate(UiDirty::Layout | UiDirty::Paint); }
+
     _is_enabled = _enabled.Get(*frame.values, true);
   }
 

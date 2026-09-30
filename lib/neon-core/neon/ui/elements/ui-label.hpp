@@ -17,6 +17,15 @@ namespace neon
     UiText _text;
 
   public:
+    /// It says when what it shows changed.
+    [[nodiscard]] bool TellsWhenItChanged() const override;
+
+    [[nodiscard]] bool GetField(const std::string &name, FieldValue &value) const override;
+
+    bool SetField(const std::string &name, const FieldValue &value, std::string &error) override;
+
+    [[nodiscard]] std::vector<Field> GetFields() const override;
+
     static constexpr const char *kType = "label";
 
     void ApplyDefaults(UiStyle &style) const override;

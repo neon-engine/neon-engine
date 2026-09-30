@@ -17,6 +17,7 @@ namespace neon
   class UiText
   {
     UiTemplate _template;
+    std::string _written;
     std::string _text;
     std::u32string _characters;
     bool _has_text = false;
@@ -78,6 +79,14 @@ namespace neon
       const PlacingOptions &options) const;
 
   public:
+    /// Takes another text, which may refer to values as the text of a file
+    /// may. Returns false, keeps the text it has, and says why when the
+    /// text cannot be read.
+    bool Set(const std::string &text, std::string &error);
+
+    /// The text as it is written, with the names of values in it.
+    [[nodiscard]] const std::string &GetWritten() const;
+
     /// Reads `text` of the element. Text that is left out is empty.
     void Read(const DataReader &reader);
 

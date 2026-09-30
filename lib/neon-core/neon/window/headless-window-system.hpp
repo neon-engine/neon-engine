@@ -18,6 +18,7 @@ namespace neon
   class Headless_WindowSystem final : public WindowSystem
   {
     bool _should_close = false;
+    CursorShape _cursor_shape = CursorShape::Default;
 
   protected:
     void ConfigureWindowForRenderer() override;
@@ -46,7 +47,18 @@ namespace neon
 
     void SetWindowFocus(bool focus) override;
 
+    /// The size of the settings times their render scale, which stands in
+    /// for the density of a display.
     WindowSize GetDrawableSize() override;
+
+    /// The size of the settings.
+    WindowSize GetWindowSize() override;
+
+    /// The shape that was asked for last. There is no cursor to show, so
+    /// this is for tests and for tools.
+    void SetCursorShape(CursorShape shape) override;
+
+    [[nodiscard]] CursorShape GetCursorShape() const;
 
     std::vector<std::string> GetVulkanInstanceExtensions() override;
 

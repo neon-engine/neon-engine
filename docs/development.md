@@ -218,6 +218,13 @@ Development:
   --output-dir DIR          Folder of this machine that output:// stands for. Created when missing
   --time-step SECONDS       Advance the game by this much time in every frame, for example 0.016667, so that a run gives the same frames every time
   --headless                Run without a window
+  --input SCRIPT            Input in place of devices, for example "1: pointer 640 360; 2: click". Needs --headless
+  --input-script PATH       The same from a file, for example assets://input/menu.input. Needs --headless
+
+Display:
+  --window-size WxH         Size of the window in points, for example 1280x720. Shows a window of that size in place of one that covers the display
+  --render-scale NUMBER     Pixels that are drawn for each point, for example 2 for what a display of high density shows. Needs --headless, a window takes the density of its display
+  --ui-scale NUMBER         Makes the user interface larger or smaller, for example 1.5
 ```
 
 A switch is written as `--name`. An option with a value is written as
@@ -242,6 +249,11 @@ This writes `/some/where/frame.png`.
 | `--screenshot PATH` | Saves the last frame as a PNG image at a virtual path, under the exact name given |
 | `--screenshot-at N[,N...]` | Saves the listed frames instead of the last one. Frames are counted from 1 |
 | `--time-step SECONDS` | Every frame advances the game by this much time, whatever time the frame took |
+| `--input SCRIPT` | Input from a script in place of devices. A step is `frame: command`, with `;` or a line break between steps: `pointer X Y` or `pointer none`, `down`, `up`, `click`, `key NAME [shift] [control] [alt] [shortcut] [word]`, `text WHAT`, `compose WHAT`, `wheel X Y [precise]`, `hold ACTION [N]`, `stick X Y [N]`. A step of a frame that was skipped is applied in the next |
+| `--input-script PATH` | The same from a file at a virtual path |
+| `--window-size WxH` | The size in points |
+| `--render-scale N` | N pixels for each point, as a display of that density gives. `--window-size 1280x720 --render-scale 2` renders 2560 by 1440 |
+| `--ui-scale N` | Makes the user interface larger or smaller, on top of the density |
 
 `--output-dir` is the only place a native path is accepted. Everything else
 names files by virtual paths. A screenshot can also go to `user://`, and the
@@ -633,6 +645,10 @@ Where the paper and the repository differ, the repository stays as it is:
 | `ctest --preset <preset> -L integration` | Runs the functional tests only |
 | `ctest --preset <preset> -R FileSystem` | Runs the tests whose name holds `FileSystem` |
 | `<test> --gtest_filter='CommandLine*'` | Runs some tests of one executable. `--help` lists the other options |
+| `cmake --build --preset <preset> --target user-interface.benchmark` | Builds the benchmark of the user interface, which is not a test. It is run from `build/<preset>/tests/user-interface.benchmark/` and prints how long a frame takes |
+
+There are 2703 tests in 64 programs: 1936 unit tests and 767 functional
+tests, of which 704 are of the user interface.
 
 `<preset>` is `macos-arm64-debug` or `linux-x64-debug`.
 

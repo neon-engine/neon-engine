@@ -1,5 +1,11 @@
 #include "ui-element-types.hpp"
 
+#include "elements/ui-checkbox.hpp"
+#include "elements/ui-radio.hpp"
+#include "elements/ui-select.hpp"
+#include "elements/ui-slider.hpp"
+#include "elements/ui-text-field.hpp"
+
 #include "elements/ui-bar.hpp"
 #include "elements/ui-button.hpp"
 #include "elements/ui-image.hpp"
@@ -40,6 +46,13 @@ namespace neon
 
   void UiElementTypes::AddEngineElements()
   {
+    Add<UiInput>(UiInput::kType);
+    Add<UiTextArea>(UiTextArea::kType);
+    Add<UiCheckbox>(UiCheckbox::kType);
+    Add<UiRadio>(UiRadio::kType);
+    Add<UiToggle>(UiToggle::kType);
+    Add<UiSlider>(UiSlider::kType);
+    Add<UiSelect>(UiSelect::kType);
     Add<UiPanel>(UiPanel::kType);
     Add<UiLabel>(UiLabel::kType);
     Add<UiImageElement>(UiImageElement::kType);

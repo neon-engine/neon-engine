@@ -202,6 +202,31 @@ namespace neon
 
     float number = 0.0f;
 
+    // what calc() comes to when it holds a percentage and pixels, as
+    // ResolveCssValue() writes it: calc(100% + -20px)
+    if (value.starts_with("calc(") && value.back() == ')')
+    {
+      const std::string inside = value.substr(5, value.size() - 6);
+      const std::size_t plus = inside.find(" + ");
+      if (plus == std::string::npos) { return false; }
+
+      const std::string percent = Trimmed(inside.substr(0, plus));
+      const std::string pixels = Trimmed(inside.substr(plus + 3));
+
+      float percent_number = 0.0f;
+      float pixel_number = 0.0f;
+
+      if (percent.empty() || percent.back() != '%' || !pixels.ends_with("px") ||
+          !ParseCssNumber(percent.substr(0, percent.size() - 1), percent_number) ||
+          !ParseCssNumber(pixels.substr(0, pixels.size() - 2), pixel_number))
+      {
+        return false;
+      }
+
+      length = LayoutLength::Sum(pixel_number, percent_number);
+      return true;
+    }
+
     if (value.back() == '%')
     {
       if (!ParseCssNumber(value.substr(0, value.size() - 1), number)) { return false; }

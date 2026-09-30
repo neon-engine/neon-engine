@@ -16,7 +16,22 @@ namespace neon::testing
   public:
     InputState state;
 
+    /// Whether a text is typed, and where the caret was said to be.
+    bool is_text_input_started = false;
+    TextInputArea text_input_area;
+
     explicit FakeInputContext(const std::shared_ptr<Logger> &logger) : state(logger) {}
+
+    void StartTextInput(const TextInputArea &caret) override
+    {
+      is_text_input_started = true;
+      text_input_area = caret;
+    }
+
+    void StopTextInput() override
+    {
+      is_text_input_started = false;
+    }
 
     const InputState &GetInputState() override
     {

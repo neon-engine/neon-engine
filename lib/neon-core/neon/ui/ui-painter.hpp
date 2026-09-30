@@ -94,6 +94,10 @@ namespace neon
     std::size_t _draw_calls = 0;
     std::size_t _quads = 0;
 
+    // how often a material was set since Begin(), which says whether a
+    // shader drew anything
+    std::size_t _materials = 0;
+
     std::vector<UiMatrix> _transforms;
 
     // For each clip with round corners the number of clips there were
@@ -159,6 +163,11 @@ namespace neon
     [[nodiscard]] std::size_t GetDrawCalls() const;
 
     [[nodiscard]] std::size_t GetQuads() const;
+
+    /// Whether anything was drawn with a shader of its own since Begin().
+    /// What a shader draws may change with time or with the values of the
+    /// game, and is drawn again in every frame.
+    [[nodiscard]] bool UsedMaterials() const;
 
     /// Seconds since the user interface was started, which shaders that
     /// move are told.

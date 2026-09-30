@@ -4,6 +4,16 @@
 # are all the same box, so that nothing here needs a graphics card.
 neon_add_functional_test(user-interface
         SOURCES
+        ui-navigation.cpp
+        ui-display.cpp
+        ui-describing.cpp
+        ui-choices.cpp
+        ui-text-input.cpp
+        ui-animation.cpp
+        ui-dirty.cpp
+        ui-scripting.cpp
+        ui-scrolling.cpp
+        ui-styles.cpp
         ui-fixture.hpp
         ui-binding.cpp
         ui-drawing.cpp
@@ -20,3 +30,5 @@ neon_add_functional_test(user-interface
         ui-text-rendering.cpp
         LIBRARIES neon-core neon-ryml
 )
+
+add_subdirectory(benchmark)

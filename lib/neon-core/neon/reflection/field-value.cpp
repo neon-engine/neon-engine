@@ -15,6 +15,7 @@ namespace neon
       case FieldKind::TextList: return "a list of texts";
       case FieldKind::Choice: return "one of a few words";
       case FieldKind::Group: return "a group";
+      case FieldKind::Length: return "a length";
       case FieldKind::NumberList: return "a list of numbers";
     }
     return "unknown";
@@ -33,6 +34,7 @@ namespace neon
       case FieldKind::TextList: return std::holds_alternative<std::vector<std::string>>(value);
       case FieldKind::Choice: return std::holds_alternative<std::string>(value);
       case FieldKind::Group: return false;
+      case FieldKind::Length: return std::holds_alternative<FieldLength>(value);
       case FieldKind::NumberList: return std::holds_alternative<std::vector<float>>(value);
     }
     return false;
@@ -62,6 +64,8 @@ namespace neon
     {
       return *texts == std::get<std::vector<std::string>>(right);
     }
+
+    if (const auto *length = std::get_if<FieldLength>(&left)) { return *length == std::get<FieldLength>(right); }
 
     if (const auto *numbers = std::get_if<std::vector<float>>(&left))
     {

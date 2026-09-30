@@ -21,9 +21,22 @@ namespace neon
     UiNumber _max{1.0};
     float _filled = 0.0f;
 
+    // what the two came to when the values of the game were last followed
+    float _shown_value = 0.0f;
+    float _shown_max = 1.0f;
+
     static void ReadNumber(const DataReader &reader, const std::string &name, UiNumber &number);
 
   public:
+    /// It says when what it shows changed.
+    [[nodiscard]] bool TellsWhenItChanged() const override;
+
+    [[nodiscard]] bool GetField(const std::string &name, FieldValue &value) const override;
+
+    bool SetField(const std::string &name, const FieldValue &value, std::string &error) override;
+
+    [[nodiscard]] std::vector<Field> GetFields() const override;
+
     static constexpr const char *kType = "bar";
 
     void ApplyDefaults(UiStyle &style) const override;

@@ -1,0 +1,137 @@
+# A settings menu, which shows what a user interface can do besides a
+# HUD: a list that scrolls, text that is typed, boxes that are ticked, a
+# slider, a dropdown, and buttons, with a theme in a style sheet. It is
+# shown with
+#
+#   NeonRuntime --ui assets://ui/settings.ui.yml
+#
+# or by the scene assets://scenes/settings-demo.scene.yml. The look is in
+# settings.css; this file says what there is.
+
+ui: settings
+version: 1
+
+reference_size: [1920, 1080]
+
+# the file is closed when it is cancelled with escape or a controller
+cancel: close
+
+styles:
+  - settings.css
+
+values:
+  player_name: Ada
+  fullscreen: false
+  vsync: true
+  volume: 80
+  music: 60
+  quality: high
+  difficulty: normal
+  notes: ""
+
+root:
+  type: panel
+  name: backdrop
+  class: backdrop
+  children:
+    - type: panel
+      name: window
+      class: window
+      children:
+        - type: label
+          class: title
+          text: Settings
+
+        # everything that can be changed, in a list that scrolls
+        - type: panel
+          name: list
+          class: list
+          children:
+            - type: panel
+              class: row
+              children:
+                - {type: label, class: row-label, text: Player name}
+                - type: input
+                  name: player-name
+                  value: "{player_name}"
+                  placeholder: Your name
+                  max_length: 24
+
+            - type: panel
+              class: row
+              children:
+                - {type: label, class: row-label, text: Display}
+                - type: panel
+                  class: choices
+                  children:
+                    - {type: checkbox, name: fullscreen, text: Full screen, checked: "{fullscreen}"}
+                    - {type: toggle, name: vsync, text: V-Sync, checked: "{vsync}"}
+
+            - type: panel
+              class: row
+              children:
+                - {type: label, class: row-label, text: Quality}
+                - type: select
+                  name: quality
+                  value: "{quality}"
+                  options:
+                    - {value: low, text: Low}
+                    - {value: medium, text: Medium}
+                    - {value: high, text: High}
+                    - {value: ultra, text: Ultra}
+
+            - type: panel
+              class: row
+              children:
+                - {type: label, class: row-label, text: Volume}
+                - type: panel
+                  class: with-value
+                  children:
+                    - {type: slider, name: volume, min: 0, max: 100, step: 5, value: "{volume}"}
+                    - {type: label, class: value, text: "{volume}"}
+
+            - type: panel
+              class: row
+              children:
+                - {type: label, class: row-label, text: Music}
+                - type: panel
+                  class: with-value
+                  children:
+                    - {type: slider, name: music, min: 0, max: 100, step: 5, value: "{music}"}
+                    - {type: label, class: value, text: "{music}"}
+
+            - type: panel
+              class: row
+              children:
+                - {type: label, class: row-label, text: Difficulty}
+                - type: panel
+                  class: choices
+                  children:
+                    - {type: radio, name: easy, group: difficulty, value: easy, text: Easy, checked: "{difficulty}"}
+                    - {type: radio, name: normal, group: difficulty, value: normal, text: Normal, checked: "{difficulty}"}
+                    - {type: radio, name: hard, group: difficulty, value: hard, text: Hard, checked: "{difficulty}"}
+
+            - type: panel
+              class: row
+              children:
+                - {type: label, class: row-label, text: Notes}
+                - type: textarea
+                  name: notes
+                  value: "{notes}"
+                  placeholder: Anything to remember
+                  rows: 3
+
+            - type: panel
+              class: row
+              children:
+                - {type: label, class: row-label, text: Language}
+                - type: select
+                  name: language
+                  options: [English, Deutsch, Español, Français, Italiano, 日本語, Português, Русский, 中文]
+                  value: English
+
+        - type: panel
+          class: actions
+          children:
+            - {type: button, name: back, class: secondary, text: Back, title: Back to the game}
+            - {type: button, name: apply, class: primary, text: Apply, autofocus: true, title: Keep these settings}

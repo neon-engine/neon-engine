@@ -1,7 +1,44 @@
 #include "ui-label.hpp"
 
+#include <neon/ui/ui-fields.hpp>
+
 namespace neon
 {
+  bool UiLabel::TellsWhenItChanged() const
+  {
+    return true;
+  }
+
+  bool UiLabel::GetField(const std::string &name, FieldValue &value) const
+  {
+    if (name != "text") { return false; }
+
+    value = _text.Get();
+    return true;
+  }
+
+  bool UiLabel::SetField(const std::string &name, const FieldValue &value, std::string &error)
+  {
+    if (name != "text") { return UiElement::SetField(name, value, error); }
+
+    std::string text;
+    if (!TakeText(value, "'text' of " + Describe(), text, error)) { return false; }
+
+    if (std::string problem; !_text.Set(text, problem))
+    {
+      error = "'text' of " + Describe() + " cannot be read: " + problem;
+      return false;
+    }
+
+    Invalidate(UiDirty::Layout | UiDirty::Paint);
+    return true;
+  }
+
+  std::vector<UiElement::Field> UiLabel::GetFields() const
+  {
+    return {{"text", FieldKind::Text, "What is shown, which may refer to values of the game as {name}", {}}};
+  }
+
   void UiLabel::ApplyDefaults(UiStyle &style) const
   {
     style.pointer_events = UiPointerEvents::None;
@@ -24,7 +61,12 @@ namespace neon
 
   void UiLabel::Update(const UiFrame &frame)
   {
+    const std::string before = _text.Get();
     _text.Update(frame);
+
+    // a text that changed may be as long as it was, and is drawn again
+    // either way
+    if (_text.Get() != before) { Invalidate(UiDirty::Layout | UiDirty::Paint); }
   }
 
   void UiLabel::PaintContent(

@@ -19,6 +19,11 @@ namespace neon
   public:
     virtual void Initialize() = 0;
 
+    /// Says how much time passes in the frame, in seconds. Called in front
+    /// of Update(). It is what animations move by and a caret blinks by.
+    /// A user interface that is never told stands still.
+    virtual void Advance(double seconds) {}
+
     /// Reacts to the input, and decides what of it is left for the game.
     virtual void Update() = 0;
 

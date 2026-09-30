@@ -54,6 +54,23 @@ struct SettingsConfig
   /// of what the scene shows. Empty shows none.
   std::string ui_path;
 
+  /// Pixels that are drawn for each point of the window, for a run without
+  /// a window. It stands in for the density of a display: 2 draws what a
+  /// Retina display would show. With a window the density is that of the
+  /// display, and this is not used.
+  double render_scale = 1.0;
+
+  /// What the user interface is made larger or smaller by, on top of what
+  /// the display and its files ask for. It is the setting a player who
+  /// reads with difficulty turns up.
+  double ui_scale = 1.0;
+
+  /// Input that is written down in place of devices, for a run without a
+  /// window: the script itself, and the virtual path of a file that holds
+  /// one. See InputScript. Empty uses none.
+  std::string input_script;
+  std::string input_script_path;
+
   RenderingApi selected_api;
   AudioOutput audio_output = AudioOutput::Device;
   WindowMode window_mode = WindowMode::Windowed;

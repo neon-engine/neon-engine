@@ -6,10 +6,13 @@
 
 #include <neon/command-line/command-line.hpp>
 #include <neon/audio/ma-audio-system.hpp>
+#include <neon/command-line/display-options.hpp>
 #include <neon/command-line/runtime-options.hpp>
 #include <neon/data/ryml-document-format.hpp>
 #include <neon/filesystem/sdl2-file-system.hpp>
 #include <neon/input/headless-input-system.hpp>
+#include <neon/input/input-script.hpp>
+#include <neon/input/sdl2-clipboard.hpp>
 #include <neon/input/sdl2-input-system.hpp>
 #include <neon/physics/jolt-physics-system.hpp>
 #include <neon/layout/flex-layout-engine.hpp>
@@ -47,6 +50,9 @@ int main(const int argc, char *argv[])
   neon::RuntimeOptions runtime_options;
   runtime_options.Register(command_line);
 
+  neon::DisplayOptions display_options;
+  display_options.Register(command_line);
+
   if (!command_line.Parse(argc, argv))
   {
     std::cerr << command_line.GetError() << "\n\n" << command_line.GetHelp();
@@ -66,7 +72,8 @@ int main(const int argc, char *argv[])
     .window_mode = WindowMode::Borderless
   };
 
-  if (std::string error; !runtime_options.Apply(command_line, settings_config, error))
+  if (std::string error; !runtime_options.Apply(command_line, settings_config, error) ||
+                         !display_options.Apply(command_line, settings_config, error))
   {
     std::cerr << error << "\n\n" << command_line.GetHelp();
     return EXIT_FAILURE;
@@ -112,6 +119,34 @@ int main(const int argc, char *argv[])
     input_system = &headless_input_system.emplace(
       settings_config,
       logging_system.CreateLogger("Headless_InputSystem"));
+
+    // input that is written down, in place of the devices a run without a
+    // window does not have
+    std::string script_text = settings_config.input_script;
+    std::string script_name = "--input";
+
+    if (!settings_config.input_script_path.empty())
+    {
+      script_name = settings_config.input_script_path;
+      if (!file_system.ReadText(settings_config.input_script_path, script_text))
+      {
+        std::cerr << "The script of input " << script_name << " cannot be read\n";
+        file_system.CleanUp();
+        return EXIT_FAILURE;
+      }
+    }
+
+    if (!script_text.empty())
+    {
+      neon::InputScript script;
+      if (std::vector<std::string> errors; !neon::InputScript::Parse(script_text, script_name, script, errors))
+      {
+        for (const auto &error : errors) { std::cerr << error << "\n"; }
+        file_system.CleanUp();
+        return EXIT_FAILURE;
+      }
+      headless_input_system->SetScript(script);
+    }
   } else
   {
     window_system = &sdl2_window_system.emplace(
@@ -183,6 +218,13 @@ int main(const int argc, char *argv[])
   neon::LUNA_VectorImageRasterizer vector_image_rasterizer;
   ui_system.SetImageDecoder(&image_decoder);
   ui_system.SetVectorImageRasterizer(&vector_image_rasterizer);
+  // The user interface follows the window for its size and density, and
+  // scales by what the player asked for on top. Text is cut and pasted
+  // through the clipboard of the platform where there is one.
+  neon::SDL2_Clipboard sdl2_clipboard;
+  ui_system.SetWindow(window_system);
+  if (!settings_config.headless) { ui_system.SetClipboard(&sdl2_clipboard); }
+  ui_system.SetUserScale(static_cast<float>(settings_config.ui_scale));
 
   neon::SceneFile scene(
     &file_system,

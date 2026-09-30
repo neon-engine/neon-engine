@@ -56,6 +56,8 @@ namespace neon
 
     static void ReadTop(const DataReader &reader, UiDocument &document);
 
+    void ReadStylesAndTemplates(const DataReader &reader, UiDocument &document, Reading &reading) const;
+
   public:
     /// The version of the layout of the file, and the highest that is
     /// read.
@@ -67,6 +69,27 @@ namespace neon
     /// cannot be read or something in it is wrong, with a message for
     /// every problem in `errors`. Each names the file and the line.
     [[nodiscard]] std::unique_ptr<UiDocument> Read(const std::string &path, std::vector<std::string> &errors) const;
+
+    /// Makes an element, with what is inside it, from what describes it:
+    /// the values a file holds for an element. `document` is what the
+    /// description is called in messages. Returns nullptr when something in
+    /// it is wrong, with a message for every problem in `errors`.
+    [[nodiscard]] std::unique_ptr<UiElement> CreateElement(
+      const DataValue &description,
+      const std::string &document,
+      std::vector<std::string> &errors) const;
+
+    /// The same from text in the format of the files, such as
+    /// `{type: label, text: Hello}`.
+    [[nodiscard]] std::unique_ptr<UiElement> CreateElementFromText(
+      const std::string &text,
+      const std::string &document,
+      std::vector<std::string> &errors) const;
+
+    /// Reads the style sheets a document names again, in place of those it
+    /// holds. Returns false and leaves the document as it is when a sheet
+    /// cannot be read.
+    bool ReloadStyles(UiDocument &document, std::vector<std::string> &errors) const;
   };
 } // neon
 

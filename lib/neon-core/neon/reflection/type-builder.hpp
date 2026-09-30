@@ -49,6 +49,7 @@ namespace neon
       else if constexpr (std::is_same_v<V, glm::vec3>) { return FieldKind::Vector; }
       else if constexpr (std::is_same_v<V, Color>) { return FieldKind::Color; }
       else if constexpr (std::is_same_v<V, std::vector<std::string>>) { return FieldKind::TextList; }
+      else if constexpr (std::is_same_v<V, FieldLength>) { return FieldKind::Length; }
       else if constexpr (std::is_same_v<V, std::vector<float>>) { return FieldKind::NumberList; }
       else
       {

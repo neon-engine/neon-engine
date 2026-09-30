@@ -215,3 +215,80 @@ namespace
     _gate.SetNeedsPointer(false);
   }
 }
+
+// The keyboard while a text is typed, the wheel, and the right stick.
+
+namespace
+{
+  using neon::Key;
+
+  TEST_F(UiInputGateTest, TakesTheKeyboardAwayWhileATextIsTyped)
+  {
+    _input.state.SetKeyboardAction(Action::L_Up);
+    _input.state.SetKeyboardAction(Action::Ui_Cancel);
+    _input.state.SetAction(Action::L_Left);
+    _input.state.AddKeyEvent({Key::Backspace, true, false, {}});
+    _input.state.AddText("w");
+
+    _gate.Refresh({.keyboard = true});
+
+    const auto &state = _gate.GetInputState();
+    EXPECT_FALSE(state[Action::L_Up]);
+    EXPECT_FALSE(state[Action::Ui_Cancel]);
+    EXPECT_TRUE(state.GetKeyEvents().empty());
+    EXPECT_TRUE(state.GetText().empty());
+
+    // a controller still moves
+    EXPECT_TRUE(state[Action::L_Left]);
+  }
+
+  TEST_F(UiInputGateTest, HandsTheKeyboardOnWhenNoTextIsTyped)
+  {
+    _input.state.SetKeyboardAction(Action::L_Up);
+    _input.state.AddKeyEvent({Key::A, true, false, {}});
+    _input.state.AddText("a");
+
+    _gate.Refresh({});
+
+    EXPECT_TRUE(_gate.GetInputState()[Action::L_Up]);
+    EXPECT_EQ(_gate.GetInputState().GetKeyEvents().size(), 1u);
+    EXPECT_EQ(_gate.GetInputState().GetText(), "a");
+  }
+
+  TEST_F(UiInputGateTest, TakesTheWheelAwayWhenItWasUsed)
+  {
+    _input.state.AddWheel(0.0, 2.0, false);
+
+    _gate.Refresh({});
+    EXPECT_EQ(_gate.GetInputState().GetWheel().y, 2.0);
+
+    _gate.Refresh({.wheel = true});
+    EXPECT_EQ(_gate.GetInputState().GetWheel().y, 0.0);
+  }
+
+  TEST_F(UiInputGateTest, TakesTheRightStickAwayWhenItWasUsed)
+  {
+    _input.state.SetRightStick(0.0, 1.0);
+
+    _gate.Refresh({});
+    EXPECT_EQ(_gate.GetInputState().GetRightStick().y, 1.0);
+
+    _gate.Refresh({.right_stick = true});
+    EXPECT_EQ(_gate.GetInputState().GetRightStick().y, 0.0);
+  }
+
+  TEST_F(UiInputGateTest, TakesEverythingOfTheKeyboardAndTheWheelAwayAsWell)
+  {
+    _input.state.AddKeyEvent({Key::A, true, false, {}});
+    _input.state.AddText("a");
+    _input.state.AddWheel(1.0, 1.0, false);
+    _input.state.SetComposition({"ni", 0, 0});
+
+    _gate.Refresh({.everything = true});
+
+    EXPECT_TRUE(_gate.GetInputState().GetKeyEvents().empty());
+    EXPECT_TRUE(_gate.GetInputState().GetText().empty());
+    EXPECT_EQ(_gate.GetInputState().GetWheel().y, 0.0);
+    EXPECT_TRUE(_gate.GetInputState().GetComposition().text.empty());
+  }
+} // namespace

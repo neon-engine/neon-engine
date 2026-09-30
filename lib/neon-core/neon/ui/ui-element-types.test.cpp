@@ -33,7 +33,9 @@ namespace
     UiElementTypes types;
     types.AddEngineElements();
 
-    EXPECT_EQ(types.GetNames(), (std::vector<std::string>{"panel", "label", "image", "button", "bar"}));
+    EXPECT_EQ(types.GetNames(), (std::vector<std::string>{
+      "input", "textarea", "checkbox", "radio", "toggle", "slider", "select", "panel", "label", "image", "button", "bar"
+    }));
 
     EXPECT_NE(dynamic_cast<neon::UiPanel *>(types.CreateElement("panel").get()), nullptr);
     EXPECT_NE(dynamic_cast<neon::UiLabel *>(types.CreateElement("label").get()), nullptr);
@@ -72,7 +74,7 @@ namespace
 
     EXPECT_NE(dynamic_cast<Minimap *>(types.CreateElement("minimap").get()), nullptr);
     EXPECT_EQ(types.GetNames().back(), "minimap");
-    EXPECT_EQ(types.GetNames().size(), 6u);
+    EXPECT_EQ(types.GetNames().size(), 13u);
   }
 
   TEST(UiElementTypes, ReplaceAKindOfTheSameName)
@@ -91,7 +93,7 @@ namespace
     types.AddEngineElements();
     types.AddEngineElements();
 
-    EXPECT_EQ(types.GetNames().size(), 5u);
+    EXPECT_EQ(types.GetNames().size(), 12u);
   }
 
   TEST(UiElementTypes, TakeAFunctionThatCreates)

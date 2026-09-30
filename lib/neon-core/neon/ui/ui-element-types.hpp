@@ -39,7 +39,8 @@ namespace neon
 
     [[nodiscard]] std::vector<std::string> GetNames() const;
 
-    /// Adds the kinds of the engine: panel, label, image, button, and bar.
+    /// Adds the kinds of the engine: input, textarea, checkbox, radio,
+    /// toggle, slider, select, panel, label, image, button, and bar.
     void AddEngineElements();
   };
 } // neon

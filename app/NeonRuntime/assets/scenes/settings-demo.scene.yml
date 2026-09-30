@@ -1,0 +1,64 @@
+# The demo scene with the settings menu over it:
+#
+#   NeonRuntime --scene assets://scenes/settings-demo.scene.yml
+#
+# The menu is a component of an entity, as the HUD of hud-demo is. Escape
+# and a controller's cancel close it, as its file says.
+
+scene: settings-demo
+version: 1
+
+entities:
+  - name: settings
+    components:
+      Ui:
+        file: assets://ui/settings.ui.yml
+
+  - name: bear
+    components:
+      Transform: {}
+      Renderable:
+        model: assets://models/bear.obj
+        shader: assets://shaders/basic-lit
+        textures:
+          - assets://textures/concrete.png
+        material:
+          shininess: 32
+          color: [1, 0.5, 0.31]
+
+  - name: floor
+    components:
+      Transform:
+        position: [0, -0.55, 0]
+        scale: [100, 0.1, 100]
+      Renderable:
+        model: assets://models/cube.obj
+        shader: assets://shaders/basic-lit
+        textures:
+          - assets://textures/concrete.png
+        scale_textures: true
+        material:
+          shininess: 32
+          color: [0.5, 0.5, 0.5]
+
+  - name: direction
+    components:
+      Transform:
+        position: [1.2, 1, -2]
+      Light:
+        type: direction
+        direction: [-0.2, -1, -0.3]
+        ambient: [0.5, 0.5, 0.5]
+        diffuse: [0.4, 0.4, 0.4]
+        specular: [0.5, 0.5, 0.5]
+
+  - name: player
+    components:
+      Transform:
+        position: [0, 0, 2]
+      Spectator: {}
+    children:
+      - name: camera
+        components:
+          Transform: {}
+          Camera: {}
