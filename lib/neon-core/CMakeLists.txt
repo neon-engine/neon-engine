@@ -34,6 +34,17 @@ add_library(${TARGET} STATIC
         neon/data/data-reader.cpp
         neon/data/data-reader.hpp
 
+        # reflection
+        neon/reflection/entity-fields.cpp
+        neon/reflection/entity-fields.hpp
+        neon/reflection/field-documents.cpp
+        neon/reflection/field-documents.hpp
+        neon/reflection/field-value.cpp
+        neon/reflection/field-value.hpp
+        neon/reflection/type-builder.hpp
+        neon/reflection/type-info.cpp
+        neon/reflection/type-info.hpp
+
         # filesystem
         neon/filesystem/file-system.cpp
         neon/filesystem/file-system.hpp
@@ -175,6 +186,10 @@ if (NEON_BUILD_TESTS)
 
   # Unit tests. Each one sits next to the file it tests.
   neon_add_unit_test(${TARGET} neon/command-line/command-line.test.cpp)
+  neon_add_unit_test(${TARGET} neon/reflection/entity-fields.test.cpp)
+  neon_add_unit_test(${TARGET} neon/reflection/field-documents.test.cpp)
+  neon_add_unit_test(${TARGET} neon/reflection/type-info.test.cpp)
+  neon_add_unit_test(${TARGET} neon/world-system/ecs/scene-file/engine-component-formats.test.cpp)
   neon_add_unit_test(${TARGET} neon/command-line/runtime-options.test.cpp)
   neon_add_unit_test(${TARGET} neon/common/data-buffer.test.cpp)
   neon_add_unit_test(${TARGET} neon/common/rotation.test.cpp)

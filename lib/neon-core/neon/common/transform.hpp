@@ -3,6 +3,8 @@
 
 #include <glm/glm.hpp>
 
+#include <neon/reflection/type-builder.hpp>
+
 #include "rotation.hpp"
 
 namespace neon
@@ -20,6 +22,34 @@ namespace neon
     static glm::vec3 World_Forward() { return {0.0f, 0.0f, -1.0f}; }
     static glm::vec3 World_Up() { return {0.0f, 1.0f, 0.0f}; }
   };
+
+  /// Where a Transform puts an entity in the world is worked out every
+  /// frame, so it is not described.
+  inline void Describe(TypeBuilder<Transform> &type)
+  {
+    type.Named("Transform", "Where an entity is, how it is turned, and how large it is");
+
+    type.Field("position", &Transform::position)
+        .Describe("Relative to the parent");
+
+    type.Field<glm::vec3>(
+          "rotation",
+          [](const Transform &transform)
+          {
+            return glm::vec3{transform.rotation.pitch, transform.rotation.yaw, transform.rotation.roll};
+          },
+          [](Transform &transform, const glm::vec3 &rotation)
+          {
+            transform.rotation.pitch = rotation.x;
+            transform.rotation.yaw = rotation.y;
+            transform.rotation.roll = rotation.z;
+          })
+        .Describe("Pitch, yaw, and roll in degrees");
+
+    type.Field("scale", &Transform::scale)
+        .OneNumberForAll()
+        .Describe("One number stands for all three directions");
+  }
 } // neon
 
 #endif //TRANSFORM_HPP

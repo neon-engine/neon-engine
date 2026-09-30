@@ -63,6 +63,9 @@ namespace neon
 
     bool Read(const std::string &name, float &value) const;
 
+    /// A number without a fraction.
+    bool Read(const std::string &name, int &value) const;
+
     bool Read(const std::string &name, std::string &value) const;
 
     bool Read(const std::string &name, std::vector<std::string> &value) const;

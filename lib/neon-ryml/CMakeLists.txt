@@ -15,3 +15,7 @@ target_link_libraries(${TARGET}
         PUBLIC neon-core
         PRIVATE ryml
 )
+
+if (NEON_BUILD_TESTS)
+  neon_add_unit_test(${TARGET} neon/data/ryml-document-format.test.cpp)
+endif ()

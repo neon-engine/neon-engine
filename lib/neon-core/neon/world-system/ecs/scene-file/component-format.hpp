@@ -2,11 +2,14 @@
 #define COMPONENT_FORMAT_HPP
 
 #include <functional>
+#include <memory>
 #include <string>
 #include <vector>
 
 #include <neon/data/data-reader.hpp>
 #include <neon/data/data-value.hpp>
+#include <neon/reflection/field-documents.hpp>
+#include <neon/reflection/type-info.hpp>
 #include <neon/world-system/ecs/entity-store.hpp>
 
 namespace neon
@@ -25,7 +28,44 @@ namespace neon
     /// the entity carries none.
     std::function<bool(EntityStore &store, Entity entity, DataValue &value)> write;
 
-    /// The format of a C++ type. `read` fills in a component that starts
+    /// The description of the component, when the format was made from one.
+    /// It is what tells the editor and a script which fields there are.
+    std::shared_ptr<const TypeInfo> type;
+
+    /// The format of a C++ type that is described. How it is read and
+    /// written follows from the description, see TypeBuilder.
+    template<typename T>
+    static ComponentFormat Of()
+    {
+      const auto type = std::make_shared<const TypeInfo>(TypeInfo::Of<T>());
+
+      ComponentFormat format;
+      format.name = type->name;
+      format.type = type;
+
+      format.read = [type](const DataReader &reader, EntityStore &store, const Entity entity)
+      {
+        T component{};
+        ReadFields(*type, reader, &component);
+        store.Set(entity, component);
+      };
+
+      format.write = [type](EntityStore &store, const Entity entity, DataValue &value)
+      {
+        const T *component = store.Get<T>(entity);
+        if (component == nullptr) { return false; }
+
+        const T standard{};
+        value = DataValue::Map();
+        WriteFields(*type, component, &standard, value);
+        return true;
+      };
+
+      return format;
+    }
+
+    /// The format of a C++ type that is read and written by hand, for what
+    /// a description cannot say. `read` fills in a component that starts
     /// with its defaults, so that what a file leaves out keeps them. `write`
     /// adds to a map.
     template<typename T>

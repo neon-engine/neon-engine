@@ -1,6 +1,7 @@
 #include "data-reader.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <format>
 
 namespace neon
@@ -97,6 +98,32 @@ namespace neon
                name, _where, DataValue::Describe(found->GetKind())));
       return false;
     }
+    return true;
+  }
+
+  bool DataReader::Read(const std::string &name, int &value) const
+  {
+    const auto *found = Ask(name);
+    if (found == nullptr) { return false; }
+
+    double number = 0.0;
+    if (!found->GetNumber(number))
+    {
+      Report(*found, std::format(
+               "'{}' of {} is {}, where a whole number was expected",
+               name, _where, DataValue::Describe(found->GetKind())));
+      return false;
+    }
+
+    if (number != std::floor(number) || std::fabs(number) > 2147483647.0)
+    {
+      Report(*found, std::format(
+               "'{}' of {} is {}, where a whole number was expected",
+               name, _where, number));
+      return false;
+    }
+
+    value = static_cast<int>(number);
     return true;
   }
 

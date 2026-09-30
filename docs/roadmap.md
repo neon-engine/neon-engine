@@ -38,6 +38,7 @@ Principles that hold for both:
 | Command line | An abstraction with a set of options for each application |
 | Runtime class | The core class an application is built from is `neon::Runtime` |
 | Sound | Sound effects and music with miniaudio, behind an interface. Sounds have a place in the world. See [audio.md](audio.md) |
+| Reflection | A component is described once, next to itself. Scene files follow from it, and the editor and scripts will. See [reflection.md](reflection.md) |
 | Scenes in files | A scene is a YAML file of entities and components, made to be changed by hand. See [scenes.md](scenes.md) |
 | Entities and components | The world is made of entities, components, and systems, with Flecs behind an interface. See [entity-component-system.md](entity-component-system.md) |
 | Running without a window | `--headless`, `--frames`, and `--screenshot` render a number of frames and save the last one |

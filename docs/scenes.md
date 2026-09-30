@@ -204,7 +204,7 @@ A scene that was saved, loaded, and saved again is the same text.
 | `DocumentFormat` | neon-core | The interface that turns text into values and back |
 | `RYML_DocumentFormat` | neon-ryml | The implementation for YAML, with rapidyaml |
 | `DataReader` | neon-core | Reads the values of a map into variables and collects what is wrong |
-| `ComponentFormat` | neon-core | How one kind of component is read and written |
+| `ComponentFormat` | neon-core | How one kind of component is read and written. It follows from the description of the component |
 | `SceneFile` | neon-core | The `Scene` that reads and writes a file |
 
 Nothing outside neon-ryml includes a header of rapidyaml. The library is
@@ -215,26 +215,23 @@ linked privately. neon-core linked it before and no longer does.
 
 ### A component of a game
 
+A component is described next to itself, and its format follows from the
+description. See [reflection.md](reflection.md).
+
 ```cpp
 struct Health
 {
   int points = 100;
 };
 
-store.Register<Health>("Health");
+inline void Describe(neon::TypeBuilder<Health> &type)
+{
+  type.Named("Health");
+  type.Field("points", &Health::points).AtLeast(0);
+}
 
-scene.GetComponentFormats().Add(neon::ComponentFormat::Of<Health>(
-  "Health",
-  [](const neon::DataReader &reader, Health &health)
-  {
-    float points = 100.f;
-    reader.Read("points", points);
-    health.points = static_cast<int>(points);
-  },
-  [](const Health &health, neon::DataValue &map)
-  {
-    map.Set("points", neon::DataValue::Number(health.points));
-  }));
+store.Register<Health>("Health");
+scene.GetComponentFormats().Add(neon::ComponentFormat::Of<Health>());
 ```
 
 ## A binary form

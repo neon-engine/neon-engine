@@ -145,10 +145,10 @@ namespace neon
         if (format == nullptr)
         {
           std::string known;
-          for (const auto &[known_name, read, write] : _component_formats.GetAll())
+          for (const auto &known_format : _component_formats.GetAll())
           {
             if (!known.empty()) { known += ", "; }
-            known += known_name;
+            known += known_format.name;
           }
 
           components.Report(component, std::format(
@@ -215,15 +215,15 @@ namespace neon
     }
 
     auto components = DataValue::Map();
-    for (const auto &[name, read, write] : _component_formats.GetAll())
+    for (const auto &format : _component_formats.GetAll())
     {
       // a format of a component that no one registered has nothing to write
-      if (store.FindComponent(name) == No_Component) { continue; }
+      if (store.FindComponent(format.name) == No_Component) { continue; }
 
-      if (DataValue component; write(store, entity, component))
+      if (DataValue component; format.write(store, entity, component))
       {
         if (component.IsMap() && component.GetEntries().empty()) { component = DataValue::Text(all_defaults); }
-        components.Set(name, component);
+        components.Set(format.name, component);
       }
     }
     value.Set("components", components);

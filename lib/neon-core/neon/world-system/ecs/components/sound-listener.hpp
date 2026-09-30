@@ -2,6 +2,7 @@
 #define SOUND_LISTENER_HPP
 
 #include <glm/glm.hpp>
+#include <neon/reflection/type-builder.hpp>
 
 namespace neon
 {
@@ -17,6 +18,15 @@ namespace neon
     glm::vec3 last_position{0.0f};
     bool has_last_position = false;
   };
+
+  inline void Describe(TypeBuilder<SoundListener> &type)
+  {
+    type.Named("SoundListener", "Makes an entity the point the world is heard from");
+
+    type.Field("volume", &SoundListener::volume)
+        .AtLeast(0)
+        .Describe("The loudness of everything that is heard");
+  }
 } // neon
 
 #endif //SOUND_LISTENER_HPP
