@@ -137,6 +137,7 @@ They could be backends of their own, which the interface allows.
 | A sound that cannot be created is tried once | Trying every frame would read the file and report it every frame |
 | The world tells the audio how far it advanced | Audio without a sound card has no clock of its own |
 | A source releases its sound when it leaves the world | Through the hook of the component, as `Renderable` does |
+| Sounds are placed after the entities are | A sound is heard where its entity is drawn. Before, it was heard where it was a frame ago, and in the first frame from the origin, which made it loud at the start |
 
 ## How it was checked
 
@@ -170,7 +171,5 @@ against a mock of the audio.
 - Sounds that are played once and forgotten, such as a shot, without an entity
   for each.
 - Fading in and out, and from one piece of music to another.
-- Where the sound is a frame behind. The system runs before entities are
-  placed in the world, so a source is heard where it was a frame ago.
 - An option to run without audio, and one to choose the sound card.
 - The web. miniaudio has a backend for it, which was not tried.

@@ -39,6 +39,11 @@ namespace neon
     _added.push_back(std::move(system));
   }
 
+  void EntityWorld::AddSystemAfterPlacing(std::unique_ptr<EntitySystem> system)
+  {
+    _added_after_placing.push_back(std::move(system));
+  }
+
   FixedClock &EntityWorld::GetFixedClock()
   {
     return _fixed_clock;
@@ -73,6 +78,7 @@ namespace neon
     for (const auto &system : _added) { system->Initialize(*_store); }
     for (const auto &system : _placing) { system->Initialize(*_store); }
     for (const auto &system : _after) { system->Initialize(*_store); }
+    for (const auto &system : _added_after_placing) { system->Initialize(*_store); }
 
     _scene->Populate(*_store);
     _initialized = true;
@@ -101,6 +107,7 @@ namespace neon
       // what is there is drawn as it was
       for (const auto &system : _placing) { system->Update(*_store, 0.0); }
       for (const auto &system : _after) { system->Update(*_store, 0.0); }
+      for (const auto &system : _added_after_placing) { system->Update(*_store, 0.0); }
       _render_pipeline->RenderFrame();
       return;
     }
@@ -125,6 +132,7 @@ namespace neon
     for (const auto &system : _added) { system->Interpolate(*_store, blend); }
 
     for (const auto &system : _after) { system->Update(*_store, delta_time); }
+    for (const auto &system : _added_after_placing) { system->Update(*_store, delta_time); }
 
     _render_pipeline->RenderFrame();
   }

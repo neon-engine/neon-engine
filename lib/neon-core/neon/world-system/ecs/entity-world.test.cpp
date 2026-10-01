@@ -197,6 +197,18 @@ namespace
     EXPECT_THAT(_calls, ElementsAre("first initialized", "second initialized", "scene populated"));
   }
 
+  TEST_F(EntityWorldTest, InitializesASystemAddedAfterPlacingBeforeTheSceneIsPopulated)
+  {
+    _world.AddSystem(std::make_unique<RecordingSystem>("game", &_calls));
+    _world.AddSystemAfterPlacing(std::make_unique<RecordingSystem>("after placing", &_calls));
+    PopulateWith([&](EntityStore &) { _calls.emplace_back("scene populated"); });
+
+    _world.Initialize();
+
+    // it can register its components, as the scene may use them
+    EXPECT_THAT(_calls, ElementsAre("game initialized", "after placing initialized", "scene populated"));
+  }
+
   TEST_F(EntityWorldTest, InitializesASystemOfTheGameWithTheStoreAndTheComponentsOfTheEngine)
   {
     auto system = std::make_unique<StrictMock<MockEntitySystem>>();
@@ -233,6 +245,23 @@ namespace
     _world.SetPaused(false);
     _world.Update();
     EXPECT_EQ(_calls, std::vector<std::string>{"game updated"});
+  }
+
+  TEST_F(EntityWorldTest, UpdatesASystemAddedAfterPlacingWhilePausedWithNoTimePassing)
+  {
+    std::vector<double> times;
+    _world.AddSystemAfterPlacing(std::make_unique<RecordingSystem>("after placing", &_calls, [&](EntityStore &, const double delta_time)
+    {
+      times.push_back(delta_time);
+    }));
+    _world.Initialize();
+
+    _world.SetPaused(true);
+    _world.Update();
+    _world.SetPaused(false);
+    _world.Update();
+
+    EXPECT_THAT(times, ElementsAre(0.0, 0.5));
   }
 
   TEST_F(EntityWorldTest, HidesTheCursorWhenTheWorldIsThere)
@@ -364,6 +393,43 @@ namespace
     EXPECT_EQ(seen, glm::mat4(1.0f));
     const auto &transform = *_store.Get<Transform>(_store.FindEntity("cube"));
     EXPECT_EQ(glm::vec3(transform.world_coordinates[3]), glm::vec3(5.0f, 0.0f, 0.0f));
+  }
+
+  TEST_F(EntityWorldTest, UpdatesTheSystemsAddedAfterPlacingAfterTheSystemsOfTheGame)
+  {
+    // added first, and still updated last
+    _world.AddSystemAfterPlacing(std::make_unique<RecordingSystem>("first after placing", &_calls));
+    _world.AddSystemAfterPlacing(std::make_unique<RecordingSystem>("second after placing", &_calls));
+    _world.AddSystem(std::make_unique<RecordingSystem>("game", &_calls));
+    _world.Initialize();
+    _calls.clear();
+
+    _world.Update();
+
+    EXPECT_THAT(_calls, ElementsAre("game updated", "first after placing updated", "second after placing updated"));
+  }
+
+  TEST_F(EntityWorldTest, ShowsASystemAddedAfterPlacingEveryEntityWhereItIsInTheFirstFrame)
+  {
+    PopulateWith([](EntityStore &store)
+    {
+      const Entity parent = store.CreateEntity("player");
+      store.Set(parent, Transform{.position = {0.0f, 0.0f, 2.0f}});
+      const Entity child = store.CreateEntity("camera", parent);
+      store.Set(child, Transform{.position = {0.0f, 1.0f, 0.0f}});
+    });
+    glm::vec3 seen{0.0f};
+    _world.AddSystemAfterPlacing(std::make_unique<RecordingSystem>("after placing", &_calls, [&](EntityStore &store, double)
+    {
+      seen = store.Get<Transform>(store.FindEntity("player/camera"))->world_coordinates[3];
+    }));
+    _world.Initialize();
+
+    _world.Update();
+
+    // a system of the game would still see the camera at the origin here,
+    // which is where a sound was heard in the first frame
+    EXPECT_EQ(seen, glm::vec3(0.0f, 1.0f, 2.0f));
   }
 
   TEST_F(EntityWorldTest, DrawsAnEntityWhereASystemOfTheGameMovedItTo)

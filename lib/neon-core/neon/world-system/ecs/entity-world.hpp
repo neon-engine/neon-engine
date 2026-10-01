@@ -26,9 +26,12 @@ namespace neon
   ///   5. Interpolate of every system, which places what is drawn between
   ///      the last two steps
   ///   6. handing the camera, the lights, and what is visible to the renderer
+  ///   7. the systems that were added with AddSystemAfterPlacing, in the
+  ///      order they were added
   ///
   /// So a system that was added sees the input of the frame, and what it
-  /// moves is drawn where it moved it to.
+  /// moves is drawn where it moved it to. A system that was added after
+  /// placing sees every entity where it is drawn in this frame.
   class EntityWorld final : public WorldSystem
   {
     EntityStore *_store;
@@ -38,6 +41,7 @@ namespace neon
     std::vector<std::unique_ptr<EntitySystem>> _added;
     std::vector<std::unique_ptr<EntitySystem>> _placing;
     std::vector<std::unique_ptr<EntitySystem>> _after;
+    std::vector<std::unique_ptr<EntitySystem>> _added_after_placing;
 
     FixedClock _fixed_clock;
 
@@ -61,6 +65,13 @@ namespace neon
 
     /// Adds behaviour of a game. Call it before Initialize.
     void AddSystem(std::unique_ptr<EntitySystem> system);
+
+    /// Adds a system that needs every entity where it is drawn, such as
+    /// one that plays sounds where their entities are. It moves nothing,
+    /// since nothing would be placed again before the frame is drawn. It is
+    /// updated while the world is paused too, with no time passing. Call it
+    /// before Initialize.
+    void AddSystemAfterPlacing(std::unique_ptr<EntitySystem> system);
 
     /// Decides when the world takes a step. It is where the number of steps
     /// per second is set, and what a system asks that needs to know about
