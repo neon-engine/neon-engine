@@ -316,6 +316,7 @@ if (NEON_BUILD_TESTS)
   # every library. They are headers, and are compiled into tests only.
   add_library(neon-testing INTERFACE
           neon/testing/fake-entity-store.hpp
+          neon/testing/mock-audio-context.hpp
           neon/testing/fake-physics-context.hpp
           neon/testing/fake-font-rasterizer.hpp
           neon/testing/memory-file-system.hpp
@@ -372,6 +373,7 @@ neon_add_unit_test(${TARGET} neon/command-line/display-options.test.cpp)
   neon_add_unit_test(${TARGET} neon/input/headless-input-system.test.cpp)
   neon_add_unit_test(${TARGET} neon/input/input-state.test.cpp)
   neon_add_unit_test(${TARGET} neon/layout/flex-layout-engine.test.cpp)
+  neon_add_unit_test(${TARGET} neon/audio/headless-audio-system.test.cpp)
   neon_add_unit_test(${TARGET} neon/logging/logging-system.test.cpp)
   neon_add_unit_test(${TARGET} neon/logging/spd-logger.test.cpp)
   neon_add_unit_test(${TARGET} neon/physics/model-geometry.test.cpp)
@@ -396,6 +398,7 @@ neon_add_unit_test(${TARGET} neon/command-line/display-options.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/entity-world.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/fixed-clock.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/scene-file/physics-component-formats.test.cpp)
+  neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/audio-playback.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/physics-simulation.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/render-submission.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/spectator-movement.test.cpp)

@@ -28,3 +28,9 @@ if (UNIX AND NOT APPLE)
   find_package(Threads REQUIRED)
   target_link_libraries(${TARGET} PRIVATE Threads::Threads ${CMAKE_DL_LIBS} m)
 endif ()
+
+if (NEON_BUILD_TESTS)
+  # The audio is mixed without a sound card, so the tests run anywhere and
+  # measure what would be heard.
+  neon_add_unit_test(${TARGET} neon/audio/ma-audio-system.test.cpp)
+endif ()

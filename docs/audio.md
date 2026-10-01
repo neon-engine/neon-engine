@@ -150,8 +150,11 @@ They could be backends of their own, which the interface allows.
 Not checked: MP3, for lack of a file to try. How it sounds, since none of this
 was listened to. Linux and Windows.
 
-The checks are not part of the repository. They move into the unit tests once
-those are merged.
+The checks are unit tests now (#72). `ma-audio-system.test.cpp` mixes without
+a sound card and measures the level of what would be heard,
+`headless-audio-system.test.cpp` covers the audio that plays nothing, and
+`audio-playback.test.cpp` covers the system that plays the sounds of the world,
+against a mock of the audio.
 
 ## Open questions
 
