@@ -64,6 +64,7 @@ Work that builds directly on what exists.
 | Item | Detail |
 |---|---|
 | Load a project (#41) | The runtime takes a project to run. It takes a scene today, with `--scene`. What a project is on disk is open |
+| Settings from `settings.yml` (#125) | The runtime reads its settings from `assets://settings.yml`, then what the player changed from `user://settings.yml`, then the command line. Today they are defaults in code and command-line options. The file names the folder of `user://`, which is fixed at `neon-engine/neon-runtime` today |
 | Vulkan version and capabilities (#42) | A setting for the version to ask for, and a way for the engine to learn what the graphics card can do, so that menus only offer what works |
 | Run on Windows (#43) | The build works. It has not been run |
 
