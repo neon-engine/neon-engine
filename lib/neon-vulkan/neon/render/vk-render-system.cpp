@@ -55,9 +55,16 @@ namespace neon
     const auto [width, height] = _window_context->GetDrawableSize();
     _extent = {static_cast<uint32_t>(width), static_cast<uint32_t>(height)};
 
-    if (_device.Surface() != VK_NULL_HANDLE && !CreateSwapchain())
+    if (_device.Surface() != VK_NULL_HANDLE)
     {
-      throw std::runtime_error("Failed to create the Vulkan swapchain");
+      if (!CreateSwapchain(_extent))
+      {
+        throw std::runtime_error("Failed to create the Vulkan swapchain");
+      }
+
+      // the frame is drawn at the size of the window
+      _extent = _swapchain_extent;
+      _window_size = {width, height};
     }
 
     _logger->Info("Render resolution: {}x{}", _extent.width, _extent.height);
@@ -93,7 +100,7 @@ namespace neon
     }
   }
 
-  bool VK_RenderSystem::CreateSwapchain()
+  bool VK_RenderSystem::CreateSwapchain(const VkExtent2D wanted)
   {
     const VkPhysicalDevice physical_device = _device.PhysicalDevice();
     const VkSurfaceKHR surface = _device.Surface();
@@ -145,18 +152,10 @@ namespace neon
       }
     }
 
-    // the window usually dictates the size
-    if (capabilities.currentExtent.width != UINT32_MAX)
-    {
-      _extent = capabilities.currentExtent;
-    } else
-    {
-      _extent.width = std::clamp(
-        _extent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
-      _extent.height = std::clamp(
-        _extent.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
-    }
-    _swapchain_extent = _extent;
+    // The window usually dictates the size. A minimized one can have none,
+    // and keeps the swapchain it has until it is shown again.
+    const VkExtent2D extent = VK_SwapchainSizing::ExtentOf(capabilities, wanted);
+    if (extent.width == 0 || extent.height == 0) { return false; }
 
     uint32_t image_count = capabilities.minImageCount + 1;
     if (capabilities.maxImageCount > 0) { image_count = std::min(image_count, capabilities.maxImageCount); }
@@ -167,7 +166,7 @@ namespace neon
     info.minImageCount = image_count;
     info.imageFormat = format.format;
     info.imageColorSpace = format.colorSpace;
-    info.imageExtent = _swapchain_extent;
+    info.imageExtent = extent;
     info.imageArrayLayers = 1;
     info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
     info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
@@ -175,16 +174,30 @@ namespace neon
     info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
     info.presentMode = mode;
     info.clipped = VK_TRUE;
+    // a swapchain that is made again can take over from the one before
+    info.oldSwapchain = _swapchain;
 
-    if (vkCreateSwapchainKHR(_device.Device(), &info, nullptr, &_swapchain) != VK_SUCCESS)
+    VkSwapchainKHR swapchain = VK_NULL_HANDLE;
+    if (vkCreateSwapchainKHR(_device.Device(), &info, nullptr, &swapchain) != VK_SUCCESS)
     {
       _logger->Critical("Could not create the Vulkan swapchain");
+
+      // the one before is retired all the same, and cannot be drawn to
+      if (_swapchain != VK_NULL_HANDLE) { vkDestroySwapchainKHR(_device.Device(), _swapchain, nullptr); }
+      _swapchain = VK_NULL_HANDLE;
       return false;
     }
+
+    if (_swapchain != VK_NULL_HANDLE) { vkDestroySwapchainKHR(_device.Device(), _swapchain, nullptr); }
+    _swapchain = swapchain;
+    _swapchain_extent = extent;
 
     vkGetSwapchainImagesKHR(_device.Device(), _swapchain, &count, nullptr);
     _swapchain_images.resize(count);
     vkGetSwapchainImagesKHR(_device.Device(), _swapchain, &count, _swapchain_images.data());
+
+    // the semaphores stay when the swapchain is made again
+    if (_image_available != VK_NULL_HANDLE) { return true; }
 
     VkSemaphoreCreateInfo semaphore{};
     semaphore.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -210,20 +223,6 @@ namespace neon
     if (_depth_format == VK_FORMAT_UNDEFINED)
     {
       _logger->Critical("The graphics card offers no depth format");
-      return false;
-    }
-
-    if (!_device.CreateImage(
-          _extent.width, _extent.height, 1, color_format,
-          VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
-          _color_image, _color_memory) ||
-        !_device.CreateImageView(_color_image, color_format, VK_IMAGE_ASPECT_COLOR_BIT, 1, _color_view) ||
-        !_device.CreateImage(
-          _extent.width, _extent.height, 1, _depth_format,
-          VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-          _depth_image, _depth_memory) ||
-        !_device.CreateImageView(_depth_image, _depth_format, VK_IMAGE_ASPECT_DEPTH_BIT, 1, _depth_view))
-    {
       return false;
     }
 
@@ -290,6 +289,25 @@ namespace neon
       return false;
     }
 
+    return CreateFrameImages();
+  }
+
+  bool VK_RenderSystem::CreateFrameImages()
+  {
+    if (!_device.CreateImage(
+          _extent.width, _extent.height, 1, color_format,
+          VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+          _color_image, _color_memory) ||
+        !_device.CreateImageView(_color_image, color_format, VK_IMAGE_ASPECT_COLOR_BIT, 1, _color_view) ||
+        !_device.CreateImage(
+          _extent.width, _extent.height, 1, _depth_format,
+          VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+          _depth_image, _depth_memory) ||
+        !_device.CreateImageView(_depth_image, _depth_format, VK_IMAGE_ASPECT_DEPTH_BIT, 1, _depth_view))
+    {
+      return false;
+    }
+
     const std::array views{_color_view, _depth_view};
 
     VkFramebufferCreateInfo framebuffer{};
@@ -307,6 +325,27 @@ namespace neon
       return false;
     }
     return true;
+  }
+
+  void VK_RenderSystem::DestroyFrameImages()
+  {
+    const VkDevice device = _device.Device();
+
+    if (_framebuffer != VK_NULL_HANDLE) { vkDestroyFramebuffer(device, _framebuffer, nullptr); }
+    if (_depth_view != VK_NULL_HANDLE) { vkDestroyImageView(device, _depth_view, nullptr); }
+    if (_depth_image != VK_NULL_HANDLE) { vkDestroyImage(device, _depth_image, nullptr); }
+    if (_depth_memory != VK_NULL_HANDLE) { vkFreeMemory(device, _depth_memory, nullptr); }
+    if (_color_view != VK_NULL_HANDLE) { vkDestroyImageView(device, _color_view, nullptr); }
+    if (_color_image != VK_NULL_HANDLE) { vkDestroyImage(device, _color_image, nullptr); }
+    if (_color_memory != VK_NULL_HANDLE) { vkFreeMemory(device, _color_memory, nullptr); }
+
+    _framebuffer = VK_NULL_HANDLE;
+    _depth_view = VK_NULL_HANDLE;
+    _depth_image = VK_NULL_HANDLE;
+    _depth_memory = VK_NULL_HANDLE;
+    _color_view = VK_NULL_HANDLE;
+    _color_image = VK_NULL_HANDLE;
+    _color_memory = VK_NULL_HANDLE;
   }
 
   bool VK_RenderSystem::CreateFrameBuffer(
@@ -632,14 +671,8 @@ namespace neon
     if (_render_finished != VK_NULL_HANDLE) { vkDestroySemaphore(device, _render_finished, nullptr); }
     if (_swapchain != VK_NULL_HANDLE) { vkDestroySwapchainKHR(device, _swapchain, nullptr); }
 
-    if (_framebuffer != VK_NULL_HANDLE) { vkDestroyFramebuffer(device, _framebuffer, nullptr); }
+    DestroyFrameImages();
     if (_render_pass != VK_NULL_HANDLE) { vkDestroyRenderPass(device, _render_pass, nullptr); }
-    if (_depth_view != VK_NULL_HANDLE) { vkDestroyImageView(device, _depth_view, nullptr); }
-    if (_depth_image != VK_NULL_HANDLE) { vkDestroyImage(device, _depth_image, nullptr); }
-    if (_depth_memory != VK_NULL_HANDLE) { vkFreeMemory(device, _depth_memory, nullptr); }
-    if (_color_view != VK_NULL_HANDLE) { vkDestroyImageView(device, _color_view, nullptr); }
-    if (_color_image != VK_NULL_HANDLE) { vkDestroyImage(device, _color_image, nullptr); }
-    if (_color_memory != VK_NULL_HANDLE) { vkFreeMemory(device, _color_memory, nullptr); }
 
     _descriptor_pool = VK_NULL_HANDLE;
     _pipeline_layout = VK_NULL_HANDLE;
@@ -648,14 +681,7 @@ namespace neon
     _image_available = VK_NULL_HANDLE;
     _render_finished = VK_NULL_HANDLE;
     _swapchain = VK_NULL_HANDLE;
-    _framebuffer = VK_NULL_HANDLE;
     _render_pass = VK_NULL_HANDLE;
-    _depth_view = VK_NULL_HANDLE;
-    _depth_image = VK_NULL_HANDLE;
-    _depth_memory = VK_NULL_HANDLE;
-    _color_view = VK_NULL_HANDLE;
-    _color_image = VK_NULL_HANDLE;
-    _color_memory = VK_NULL_HANDLE;
     _commands = VK_NULL_HANDLE;
 
     _device.CleanUp();
@@ -705,9 +731,62 @@ namespace neon
     _surfaces_changed = false;
   }
 
+  bool VK_RenderSystem::FitWindow()
+  {
+    const WindowSize window = _window_context->GetDrawableSize();
+
+    switch (VK_SwapchainSizing::Decide(window, _window_size, _swapchain_stale))
+    {
+      case VK_FrameSizing::Draw: return true;
+      case VK_FrameSizing::Skip: return false;
+      case VK_FrameSizing::Recreate: break;
+    }
+
+    // nothing that is made again may still be in use
+    vkDeviceWaitIdle(_device.Device());
+
+    if (!CreateSwapchain({static_cast<uint32_t>(window.width), static_cast<uint32_t>(window.height)}))
+    {
+      // tried again in the next frame
+      _swapchain_stale = true;
+      return false;
+    }
+    _swapchain_stale = false;
+    _window_size = window;
+
+    // The frame is drawn at the size of the window, so that the projection
+    // of the camera and what is drawn in two dimensions follow it.
+    if (_framebuffer == VK_NULL_HANDLE ||
+        _swapchain_extent.width != _extent.width ||
+        _swapchain_extent.height != _extent.height)
+    {
+      DestroyFrameImages();
+      _extent = _swapchain_extent;
+
+      // the frame that was finished went with its image
+      _frame_finished = false;
+
+      if (!CreateFrameImages())
+      {
+        _logger->Critical("Could not resize the frame to {}x{}", _extent.width, _extent.height);
+        DestroyFrameImages();
+        _swapchain_stale = true;
+        return false;
+      }
+
+      _logger->Info("Render resolution: {}x{}", _extent.width, _extent.height);
+      _render_resolution.emplace(static_cast<int>(_extent.width), static_cast<int>(_extent.height));
+      _renderer_2d.Resize(_extent);
+    }
+    return true;
+  }
+
   void VK_RenderSystem::PrepareFrame()
   {
     SettleRenderTargets();
+
+    // a window that changed its size, or has no area to draw to
+    if (_device.Surface() != VK_NULL_HANDLE && !FitWindow()) { return; }
 
     for (int id = 0; id < _targets.Capacity(); id++)
     {
@@ -806,11 +885,14 @@ namespace neon
       const VkResult acquired = vkAcquireNextImageKHR(
         _device.Device(), _swapchain, UINT64_MAX, _image_available, VK_NULL_HANDLE, &image_index);
 
+      // the swapchain is made again before the next frame
+      if (VK_SwapchainSizing::IsStale(acquired)) { _swapchain_stale = true; }
+
       present = acquired == VK_SUCCESS || acquired == VK_SUBOPTIMAL_KHR;
       if (present)
       {
         CopyToWindow(_commands, image_index);
-      } else
+      } else if (acquired != VK_ERROR_OUT_OF_DATE_KHR)
       {
         const int code = acquired;
         _logger->Warn("Could not get an image of the window to draw to, error {}", code);
@@ -863,7 +945,7 @@ namespace neon
         info.swapchainCount = 1;
         info.pSwapchains = &_swapchain;
         info.pImageIndices = &image_index;
-        vkQueuePresentKHR(_device.Queue(), &info);
+        if (VK_SwapchainSizing::IsStale(vkQueuePresentKHR(_device.Queue(), &info))) { _swapchain_stale = true; }
       }
 
       // One frame at a time. The frame is done before the next one starts,

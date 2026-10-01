@@ -43,6 +43,17 @@ namespace
     EXPECT_NE(fullscreen & SDL_WINDOW_FULLSCREEN_DESKTOP, SDL_WINDOW_FULLSCREEN_DESKTOP);
   }
 
+  TEST(SDL2WindowSystemTest, LetsAWindowBeResizedOnlyWhenItDoesNotCoverTheDisplay)
+  {
+    const int windowed = SDL2_WindowSystem::WindowFlagsOf(SettingsConfig{.window_mode = WindowMode::Windowed});
+    const int borderless = SDL2_WindowSystem::WindowFlagsOf(SettingsConfig{.window_mode = WindowMode::Borderless});
+    const int fullscreen = SDL2_WindowSystem::WindowFlagsOf(SettingsConfig{.window_mode = WindowMode::Fullscreen});
+
+    EXPECT_NE(windowed & SDL_WINDOW_RESIZABLE, 0);
+    EXPECT_EQ(borderless & SDL_WINDOW_RESIZABLE, 0);
+    EXPECT_EQ(fullscreen & SDL_WINDOW_RESIZABLE, 0);
+  }
+
   TEST(SDL2WindowSystemTest, DeclaresTheProcessAwareOfTheDensityOfEveryMonitor)
   {
     SDL2_WindowSystem::SetHints();

@@ -180,6 +180,9 @@ namespace neon
 
     void CleanUp();
 
+    /// The frame was given another size, as when the window was resized.
+    void Resize(VkExtent2D extent);
+
     /// Called once before anything is drawn in a frame.
     void PrepareFrame();
 

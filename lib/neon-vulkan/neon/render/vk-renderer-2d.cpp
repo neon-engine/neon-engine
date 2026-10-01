@@ -33,6 +33,11 @@ namespace neon
     _logger = logger;
   }
 
+  void VK_Renderer2D::Resize(const VkExtent2D extent)
+  {
+    _extent = extent;
+  }
+
   bool VK_Renderer2D::IsWellFormed(const Triangles2D &triangles)
   {
     if (triangles.indices.size() % 3 != 0) { return false; }

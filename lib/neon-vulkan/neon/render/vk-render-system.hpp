@@ -18,6 +18,7 @@
 #include "vk-renderer-2d.hpp"
 #include "vk-shader.hpp"
 #include "vk-shader-data.hpp"
+#include "vk-swapchain-sizing.hpp"
 
 namespace neon
 {
@@ -76,6 +77,11 @@ namespace neon
     std::vector<VkImage> _swapchain_images;
     VkSemaphore _image_available = VK_NULL_HANDLE;
     VkSemaphore _render_finished = VK_NULL_HANDLE;
+
+    // The size of the window the swapchain was made for, and whether Vulkan
+    // said since that it no longer fits. Either makes it again.
+    WindowSize _window_size{};
+    bool _swapchain_stale = false;
 
     VkCommandBuffer _commands = VK_NULL_HANDLE;
     VkFence _frame_done = VK_NULL_HANDLE;
@@ -140,7 +146,14 @@ namespace neon
     void SettleRenderTargets();
 
     bool CreateRenderTarget();
-    bool CreateSwapchain();
+    bool CreateFrameImages();
+    void DestroyFrameImages();
+    bool CreateSwapchain(VkExtent2D wanted);
+
+    /// Makes the swapchain again when the window changed its size, and
+    /// with it everything that has the size of the frame. Returns false
+    /// when there is nothing to draw to, as while the window is minimized.
+    bool FitWindow();
     bool CreateDescriptors();
     bool CreateFrameBuffer(FrameBuffer &buffer, VkDeviceSize entry_size, uint32_t capacity) const;
     void DestroyFrameBuffer(FrameBuffer &buffer) const;

@@ -22,6 +22,8 @@ add_library(${TARGET} STATIC
         neon/render/vk-shader-values.hpp
         neon/render/vk-render-target.cpp
         neon/render/vk-render-target.hpp
+        neon/render/vk-swapchain-sizing.cpp
+        neon/render/vk-swapchain-sizing.hpp
 )
 
 target_include_directories(${TARGET}
@@ -48,4 +50,5 @@ if (NEON_BUILD_TESTS)
   neon_add_unit_test(${TARGET} neon/render/vk-texture.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/vk-shader-values.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/vk-render-target.test.cpp)
+  neon_add_unit_test(${TARGET} neon/render/vk-swapchain-sizing.test.cpp)
 endif ()

@@ -121,6 +121,8 @@ namespace neon
         flags |= SDL_WINDOW_FULLSCREEN;
         break;
       default:
+        // the renderer follows a window that is given another size
+        flags |= SDL_WINDOW_RESIZABLE;
         break;
     }
 
