@@ -41,6 +41,7 @@ namespace neon
   /// | TextList | The texts with a comma and a space between them |
   /// | Length | `12px`, `50%`, `auto` |
   /// | NumberList | `1 2 3 4` |
+  /// | Layers | `1 3` |
   [[nodiscard]] std::string FormatField(const FieldValue &value);
 
   /// Reads the value of a field from text, as the kind of the field asks

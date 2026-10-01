@@ -4,6 +4,7 @@
 #include <cstdint>
 
 #include <neon/physics/physics-types.hpp>
+#include <neon/reflection/type-builder.hpp>
 
 namespace neon
 {
@@ -31,6 +32,19 @@ namespace neon
     /// tried again.
     bool failed = false;
   };
+
+  /// What the engine keeps, how many bodies are inside and the body of the
+  /// trigger, is not described.
+  inline void Describe(TypeBuilder<Trigger> &type)
+  {
+    type.Named("Trigger", "Makes an entity an area that reports what enters and leaves it");
+
+    type.Layers("layers", &Trigger::layers)
+        .Describe("The layers the trigger is in, which only queries look at");
+
+    type.Layers("mask", &Trigger::mask)
+        .Describe("The layers the trigger looks for");
+  }
 } // neon
 
 #endif //TRIGGER_HPP

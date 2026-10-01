@@ -1,5 +1,7 @@
 #include "type-info.hpp"
 
+#include <algorithm>
+#include <cmath>
 #include <format>
 
 namespace neon
@@ -15,6 +17,55 @@ namespace neon
         joined += word;
       }
       return joined;
+    }
+
+    /// A value as a message shows it: `0.5`, and `[1, 0, 1]` for more than
+    /// one number.
+    std::string Written(const FieldKind kind, const std::vector<float> &numbers)
+    {
+      if (kind == FieldKind::Number || kind == FieldKind::Whole) { return std::format("{}", numbers.front()); }
+
+      std::string written;
+      for (const float number : numbers)
+      {
+        if (!written.empty()) { written += ", "; }
+        written += std::format("{}", number);
+      }
+      return "[" + written + "]";
+    }
+
+    /// What a field may hold, as a message says it: `a number above 0 was
+    /// expected`, `numbers from 0 to 1 were expected`, or with a unit,
+    /// `degrees from 0 to 90 were expected`. It is how the engine says it
+    /// wherever it reads a file.
+    std::string Expected(const FieldInfo &field)
+    {
+      std::vector<std::string> limits;
+      if (field.above.has_value()) { limits.push_back(std::format("above {}", *field.above)); }
+
+      if (field.at_least.has_value() && field.at_most.has_value())
+      {
+        limits.push_back(std::format("from {} to {}", *field.at_least, *field.at_most));
+      } else if (field.at_least.has_value())
+      {
+        limits.push_back(std::format("of {} or above", *field.at_least));
+      } else if (field.at_most.has_value())
+      {
+        limits.push_back(std::format("of {} or below", *field.at_most));
+      }
+
+      std::string range;
+      for (const auto &limit : limits)
+      {
+        if (!range.empty()) { range += " and "; }
+        range += limit;
+      }
+
+      const bool one = field.kind == FieldKind::Number || field.kind == FieldKind::Whole;
+
+      if (!field.unit.empty()) { return std::format("{} {} were expected", field.unit, range); }
+      if (one) { return std::format("a number {} was expected", range); }
+      return std::format("numbers {} were expected", range);
     }
 
     const FieldInfo *FindIn(const std::vector<FieldInfo> &fields, const std::string &path)
@@ -51,6 +102,11 @@ namespace neon
     }
   }
 
+  bool IsLayer(const float number)
+  {
+    return number >= 1.0f && number <= 32.0f && number == std::floor(number);
+  }
+
   std::string FieldInfo::Check(const FieldValue &value, const std::string &what) const
   {
     if (kind == FieldKind::Group)
@@ -78,10 +134,28 @@ namespace neon
       return std::format("{} must not be empty", what);
     }
 
+    if (kind == FieldKind::Layers)
+    {
+      for (const float number : std::get<std::vector<float>>(value))
+      {
+        if (!IsLayer(number))
+        {
+          return std::format("{} holds {}, where a layer from 1 to 32 was expected", what, number);
+        }
+      }
+      return {};
+    }
+
     // the numbers that the limits are about
     std::vector<float> numbers;
     if (kind == FieldKind::Number) { numbers.push_back(std::get<float>(value)); }
     if (kind == FieldKind::Whole) { numbers.push_back(static_cast<float>(std::get<int>(value))); }
+
+    if (kind == FieldKind::Vector)
+    {
+      const auto &vector = std::get<glm::vec3>(value);
+      numbers = {vector.x, vector.y, vector.z};
+    }
 
     if (kind == FieldKind::NumberList)
     {
@@ -97,21 +171,26 @@ namespace neon
 
     for (const float number : numbers)
     {
-      if (above.has_value() && !(number > *above))
-      {
-        return std::format("{} has to be above {}", what, *above);
-      }
-      if (at_least.has_value() && number < *at_least)
-      {
-        return std::format("{} has to be at least {}", what, *at_least);
-      }
-      if (at_most.has_value() && number > *at_most)
-      {
-        return std::format("{} has to be at most {}", what, *at_most);
-      }
+      // written so that what is not a number is refused as well
+      const bool fits = (!above.has_value() || number > *above)
+                        && (!at_least.has_value() || number >= *at_least)
+                        && (!at_most.has_value() || number <= *at_most);
+
+      if (!fits) { return std::format("{} is {}, where {}", what, Written(kind, numbers), Expected(*this)); }
     }
 
     return {};
+  }
+
+  bool TypeInfo::Belongs(const FieldInfo &field, const void *object) const
+  {
+    if (!field.only_when.has_value()) { return true; }
+
+    const auto *choice = Find(field.only_when->choice);
+    if (choice == nullptr) { return false; }
+
+    const auto word = std::get<std::string>(choice->get(object));
+    return std::ranges::find(field.only_when->words, word) != field.only_when->words.end();
   }
 
   const FieldInfo *TypeInfo::Find(const std::string &path) const

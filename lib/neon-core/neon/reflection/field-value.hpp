@@ -42,7 +42,12 @@ namespace neon
     Length,
 
     /// A list of numbers.
-    NumberList
+    NumberList,
+
+    /// Some of the 32 layers, such as those a body of the physics is in.
+    /// Held as the numbers of the layers, from 1 to 32, and kept as one bit
+    /// for each.
+    Layers
   };
 
   /// A length as a style sheet writes one: pixels, a percentage of

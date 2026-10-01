@@ -13,6 +13,18 @@ namespace neon
   template<typename T>
   class TypeBuilder;
 
+  /// Whether a number is that of one of the 32 layers.
+  [[nodiscard]] bool IsLayer(float number);
+
+  /// A choice, and the words of it for which a field belongs to an object.
+  struct FieldCondition
+  {
+    /// The name of the choice. It is a field of the same type or group.
+    std::string choice;
+
+    std::vector<std::string> words;
+  };
+
   /// Describes one field of a type: what it is called, what it holds, and
   /// how it is read and changed.
   struct FieldInfo
@@ -44,17 +56,27 @@ namespace neon
     /// for all three. For a scale.
     bool one_number_for_all = false;
 
-    /// What a number has to be above, if anything. For a list of numbers,
-    /// every number.
+    /// What a number has to be above, if anything. For a vector and a list
+    /// of numbers, every number.
     std::optional<float> above;
 
-    /// The least and the most a number may be, if anything. For a list of
-    /// numbers, every number.
+    /// The least and the most a number may be, if anything. For a vector
+    /// and a list of numbers, every number.
     std::optional<float> at_least;
     std::optional<float> at_most;
 
+    /// What a number counts, in the plural, such as `degrees`. Empty for a
+    /// plain number. It is what a message names instead of a number.
+    std::string unit;
+
     /// How many numbers a list of numbers holds, if it is always as many.
     std::optional<std::size_t> count;
+
+    /// When the field belongs to an object, if not always. The radius of a
+    /// shape, for one, belongs to a sphere and not to a box. A field that
+    /// does not belong is neither read nor written, so a file that gives it
+    /// anyway is told that the name is not known.
+    std::optional<FieldCondition> only_when;
 
     /// Reads the field of an object. `object` points to an object of the
     /// type the field belongs to.
@@ -68,6 +90,19 @@ namespace neon
     /// can be set. `what` is how the field is called in the message, such as
     /// `'fov' of Camera`.
     [[nodiscard]] std::string Check(const FieldValue &value, const std::string &what) const;
+  };
+
+  /// What the fields of a type have to be together, which none of them can
+  /// say alone, such as a capsule that is at least as high as it is wide.
+  struct TypeRule
+  {
+    /// The field a problem is reported at, with its line when it is
+    /// written. Empty for a rule that is about no one field.
+    std::string field;
+
+    /// Says what is wrong with an object, or nothing. `where` is what the
+    /// object is called in the message, such as `Collider of entity 'box'`.
+    std::function<std::string(const void *object, const std::string &where)> check;
   };
 
   /// Describes a type: what it is called and the fields it has.
@@ -84,9 +119,16 @@ namespace neon
 
     std::vector<FieldInfo> fields;
 
+    /// Checked once the fields of an object were read from a document.
+    std::vector<TypeRule> rules;
+
     /// The field of a name, or nullptr. A field of a group is named with
     /// the group in front and a dot between, such as `material.color`.
     [[nodiscard]] const FieldInfo *Find(const std::string &path) const;
+
+    /// Whether a field of this type belongs to an object, as its condition
+    /// says. One without a condition always does.
+    [[nodiscard]] bool Belongs(const FieldInfo &field, const void *object) const;
 
     /// Every field that holds a value, with the name it is found by. Groups
     /// are left out, their fields are not.

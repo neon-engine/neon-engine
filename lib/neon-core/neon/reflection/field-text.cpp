@@ -425,6 +425,23 @@ namespace neon
         return true;
       }
 
+      case FieldKind::Layers:
+      {
+        std::vector<float> layers;
+
+        for (const auto &word : Words(text))
+        {
+          float layer = 0.0f;
+          if (!ParseNumber(word, layer)) { return refuse("the numbers of layers, such as 1 3"); }
+
+          layers.push_back(layer);
+        }
+
+        // which numbers are layers is looked at by Check()
+        value = layers;
+        return true;
+      }
+
       case FieldKind::Group:
         error = std::format("{} is a group and holds no value of its own", what);
         return false;

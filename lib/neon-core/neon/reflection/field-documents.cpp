@@ -27,6 +27,23 @@ namespace neon
       return std::format("{} '{}'", vowel ? "an" : "a", name);
     }
 
+    /// Reports what breaks a rule of the type.
+    void CheckRules(const TypeInfo &type, const DataReader &reader, const void *object)
+    {
+      for (const auto &rule : type.rules)
+      {
+        const auto problem = rule.check(object, reader.GetWhere());
+        if (problem.empty()) { continue; }
+
+        // a field that does not belong is not asked for, which would make it
+        // known
+        const auto *field = rule.field.empty() ? nullptr : type.Find(rule.field);
+        const auto *written = field != nullptr && type.Belongs(*field, object) ? reader.ReadValue(rule.field) : nullptr;
+
+        reader.Report(written == nullptr ? DataValue{} : *written, problem);
+      }
+    }
+
     /// Reads one field. Returns whether a value was written for it.
     bool ReadField(const FieldInfo &field, const DataReader &reader, void *object)
     {
@@ -125,6 +142,49 @@ namespace neon
           value = read;
           break;
         }
+        case FieldKind::Layers:
+        {
+          const auto *written = reader.ReadValue(field.name);
+          if (written == nullptr) { return false; }
+
+          // one layer, or a list of them, where an empty list is none
+          std::vector<DataValue> items;
+          if (written->IsList())
+          {
+            items = written->GetItems();
+          } else if (float number = 0.0f; written->GetNumber(number))
+          {
+            items.push_back(*written);
+          } else
+          {
+            reader.Report(*written, std::format(
+                            "'{}' of {} is {}, where a layer from 1 to 32 or a list of layers was expected",
+                            field.name, reader.GetWhere(), DataValue::Describe(written->GetKind())));
+            return false;
+          }
+
+          // each is reported at its own line
+          std::vector<float> layers;
+          for (const auto &item : items)
+          {
+            float number = 0.0f;
+            if (!item.GetNumber(number) || !IsLayer(number))
+            {
+              const auto held = item.GetNumber(number)
+                ? std::format("{}", number)
+                : DataValue::Describe(item.GetKind());
+
+              reader.Report(item, std::format(
+                              "'{}' of {} holds {}, where a layer from 1 to 32 was expected",
+                              field.name, reader.GetWhere(), held));
+              return false;
+            }
+            layers.push_back(number);
+          }
+
+          value = layers;
+          break;
+        }
         case FieldKind::Group:
         {
           bool found = false;
@@ -155,16 +215,31 @@ namespace neon
   {
     for (const auto &field : type.fields)
     {
+      // what does not belong is not asked for, so it is reported as not
+      // known when it is written
+      if (!type.Belongs(field, object)) { continue; }
+
       ReadField(field, reader, object);
 
       if (!field.required || field.kind != FieldKind::Text) { continue; }
 
       // the value may come from the file or from the defaults of the type
-      if (std::get<std::string>(field.get(object)).empty())
+      if (!std::get<std::string>(field.get(object)).empty()) { continue; }
+
+      if (field.only_when.has_value())
+      {
+        // it is needed because of what the choice holds, which is said
+        const auto word = std::get<std::string>(type.Find(field.only_when->choice)->get(object));
+        reader.Report({}, std::format(
+                        "{} needs {} for the {} {}",
+                        reader.GetWhere(), WithArticle(field.name), field.only_when->choice, word));
+      } else
       {
         reader.Report({}, std::format("{} needs {}", reader.GetWhere(), WithArticle(field.name)));
       }
     }
+
+    CheckRules(type, reader, object);
   }
 
   DataValue ToDataValue(const FieldValue &value)
@@ -207,6 +282,9 @@ namespace neon
   {
     for (const auto &field : type.fields)
     {
+      // what does not belong would be refused when the map is read
+      if (!type.Belongs(field, object)) { continue; }
+
       if (field.kind == FieldKind::Group)
       {
         TypeInfo fields;

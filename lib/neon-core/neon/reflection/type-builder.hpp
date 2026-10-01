@@ -1,6 +1,8 @@
 #ifndef TYPE_BUILDER_HPP
 #define TYPE_BUILDER_HPP
 
+#include <algorithm>
+#include <cstdint>
 #include <functional>
 #include <stdexcept>
 #include <string>
@@ -203,6 +205,50 @@ namespace neon
       return Choice(name, [member](T &object) -> E & { return object.*member; }, choices);
     }
 
+    /// A field that holds some of the 32 layers, one bit for each, the
+    /// lowest for layer 1. It is seen as the numbers of its layers, so that
+    /// layers 1 and 3 are `[1, 3]`.
+    template<typename Reach>
+      requires std::is_invocable_v<Reach, T &>
+    TypeBuilder &Layers(const std::string &name, Reach reach)
+    {
+      static_assert(
+        std::is_same_v<std::invoke_result_t<Reach, T &>, std::uint32_t &>,
+        "Layers are kept in a std::uint32_t");
+
+      auto &field = Add(name, FieldKind::Layers);
+
+      field.get = [reach](const void *object)
+      {
+        const std::uint32_t bits = reach(*const_cast<T *>(static_cast<const T *>(object)));
+
+        std::vector<float> layers;
+        for (int layer = 1; layer <= 32; layer++)
+        {
+          if ((bits & (1u << (layer - 1))) != 0) { layers.push_back(static_cast<float>(layer)); }
+        }
+        return FieldValue{layers};
+      };
+
+      field.set = [reach](void *object, const FieldValue &value)
+      {
+        std::uint32_t bits = 0;
+        for (const float layer : std::get<std::vector<float>>(value))
+        {
+          bits |= 1u << (static_cast<int>(layer) - 1);
+        }
+        reach(*static_cast<T *>(object)) = bits;
+      };
+
+      return *this;
+    }
+
+    /// A field that holds some of the 32 layers and is a member.
+    TypeBuilder &Layers(const std::string &name, std::uint32_t T::*member)
+    {
+      return Layers(name, [member](T &object) -> std::uint32_t & { return object.*member; });
+    }
+
     /// Fields that belong together under a name. `describe` adds them.
     TypeBuilder &Group(const std::string &name, const std::function<void(TypeBuilder &)> &describe)
     {
@@ -214,6 +260,33 @@ namespace neon
 
       // adding to a list moves what is in it, so the group is looked up again
       _last = &_open.back()->back();
+      return *this;
+    }
+
+    /// What the fields have to be together. `check` says what is wrong with
+    /// an object, or returns nothing, and is called once the fields of an
+    /// object were read from a document. `where` is what the object is
+    /// called in a message. What breaks a rule is kept as it was read.
+    TypeBuilder &Rule(const std::function<std::string(const T &object, const std::string &where)> &check)
+    {
+      return Rule("", check);
+    }
+
+    /// A rule whose problem is reported at a field, with its line when the
+    /// field is written.
+    TypeBuilder &Rule(
+      const std::string &field,
+      const std::function<std::string(const T &object, const std::string &where)> &check)
+    {
+      if (_open.size() != 1) { throw std::logic_error("A rule is about the whole type, not about a group"); }
+
+      _type.rules.push_back({field, [check](const void *object, const std::string &where)
+      {
+        return check(*static_cast<const T *>(object), where);
+      }});
+
+      // what follows a rule is about no field
+      _last = nullptr;
       return *this;
     }
 
@@ -257,6 +330,44 @@ namespace neon
     TypeBuilder &AtMost(const float number)
     {
       Last().at_most = number;
+      return *this;
+    }
+
+    /// What a number counts, in the plural, such as `degrees`.
+    TypeBuilder &Unit(const std::string &unit)
+    {
+      Last().unit = unit;
+      return *this;
+    }
+
+    /// The field belongs to an object only while a choice holds one of the
+    /// words. The choice is described before, in the same type or group,
+    /// and it is read first.
+    TypeBuilder &OnlyWhen(const std::string &choice, const std::vector<std::string> &words)
+    {
+      auto &field = Last();
+
+      const FieldInfo *found = nullptr;
+      for (const auto &known : *_open.back())
+      {
+        if (known.name == choice && known.kind == FieldKind::Choice) { found = &known; }
+      }
+
+      if (found == nullptr)
+      {
+        throw std::logic_error(
+          "'" + field.name + "' depends on '" + choice + "', which is no choice described before it");
+      }
+
+      for (const auto &word : words)
+      {
+        if (std::ranges::find(found->choices, word) == found->choices.end())
+        {
+          throw std::logic_error("'" + word + "' is not a word of the choice '" + choice + "'");
+        }
+      }
+
+      field.only_when = FieldCondition{choice, words};
       return *this;
     }
 

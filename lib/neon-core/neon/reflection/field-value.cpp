@@ -17,6 +17,7 @@ namespace neon
       case FieldKind::Group: return "a group";
       case FieldKind::Length: return "a length";
       case FieldKind::NumberList: return "a list of numbers";
+      case FieldKind::Layers: return "a list of layers";
     }
     return "unknown";
   }
@@ -36,6 +37,7 @@ namespace neon
       case FieldKind::Group: return false;
       case FieldKind::Length: return std::holds_alternative<FieldLength>(value);
       case FieldKind::NumberList: return std::holds_alternative<std::vector<float>>(value);
+      case FieldKind::Layers: return std::holds_alternative<std::vector<float>>(value);
     }
     return false;
   }

@@ -292,6 +292,18 @@ namespace
     EXPECT_EQ(
       ProblemOf("1 two 3", FieldKind::NumberList),
       "'field' of Thing is '1 two 3', where numbers, such as 1 2 3 4 was expected");
+    EXPECT_EQ(
+      ProblemOf("1 ground", FieldKind::Layers),
+      "'field' of Thing is '1 ground', where the numbers of layers, such as 1 3 was expected");
     EXPECT_EQ(ProblemOf("anything", FieldKind::Group), "'field' of Thing is a group and holds no value of its own");
+  }
+
+  TEST(FieldTextTest, WritesAndReadsLayersAsTheirNumbers)
+  {
+    const FieldValue layers = std::vector{1.0f, 3.0f, 32.0f};
+
+    EXPECT_EQ(neon::FormatField(layers), "1 3 32");
+    EXPECT_TRUE(neon::Same(Read("1, 3 32", FieldKind::Layers), layers));
+    EXPECT_TRUE(neon::Same(Read("", FieldKind::Layers), FieldValue{std::vector<float>{}}));
   }
 } // namespace

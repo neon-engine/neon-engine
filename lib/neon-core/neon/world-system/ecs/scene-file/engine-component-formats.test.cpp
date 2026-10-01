@@ -642,7 +642,8 @@ namespace
 
     Read("SoundSource", map);
 
-    EXPECT_THAT(_errors, ElementsAre("scene.yml: 'pitch' of SoundSource of entity 'thing' has to be above 0"));
+    EXPECT_THAT(_errors, ElementsAre(
+                  "scene.yml: 'pitch' of SoundSource of entity 'thing' is 0, where a number above 0 was expected"));
   }
 
   TEST_F(EngineComponentFormatsTest, WritesASoundSourceWithoutWhatTheEngineKeepsForItself)

@@ -65,6 +65,7 @@ It is deduced from the member.
 | `std::vector<std::string>` | TextList | A list of texts |
 | `std::vector<float>` | NumberList | A list of numbers, such as a size `[width, height]` |
 | An enum, with `Choice()` | Choice | One of its words |
+| `std::uint32_t`, with `Layers()` | Layers | One layer from 1 to 32, or a list of them. `[]` is none |
 | Several, with `Group()` | Group | A map |
 | `FieldLength` | Length | A number of pixels, or text as a style sheet writes a length: `"50%"`, `auto`, `"calc(100% + -20px)"` |
 
@@ -77,6 +78,8 @@ It is deduced from the member.
 | `Field<V>(name, get, set)` | What is kept as something else than it is seen as | The rotation of a `Transform`, which is seen as three numbers |
 | `Choice(name, member, words)` | An enum | `type.Choice("target", &Camera::target, {"window", "texture"})` |
 | `Group(name, function)` | Fields under a name of their own | The material of a `Renderable` |
+| `Layers(name, member)` | One bit for each of 32 layers, seen as the numbers of the layers | `type.Layers("mask", &RigidBody::mask)` |
+| `Rule(field, function)`, `Rule(function)` | What the fields have to be together. See [rules](#rules) | A capsule at least as high as it is wide |
 
 A name need not be that of the member. `Camera::near_plane` is `near` from
 outside.
@@ -87,10 +90,67 @@ outside.
 |---|---|
 | `.Describe(text)` | What the field is for. For the editor |
 | `.Required()` | A text that must not be empty |
-| `.Above(n)`, `.AtLeast(n)`, `.AtMost(n)` | What a number may be. For a list of numbers, every number |
+| `.Above(n)`, `.AtLeast(n)`, `.AtMost(n)` | What a number may be. For a vector and a list of numbers, every number |
+| `.Unit(text)` | What a number counts, in the plural, such as `degrees`. A message names it instead of a number |
+| `.OnlyWhen(choice, words)` | The field belongs only while a choice holds one of the words, such as the radius of a sphere. See below |
 | `.Count(n)` | How many numbers a list of numbers holds, when it is always as many |
 | `.OneNumberForAll()` | One number may be written for a vector, as for a scale |
 | `.AlwaysWritten()` | Written even when it holds its default, as the type of a light |
+
+A number that is refused is told what was written and what was expected, as
+everything else that reads a file says it:
+
+```
+physics.scene.yml:12: 'mass' of RigidBody of entity 'crate' is 0, where a number above 0 was expected
+physics.scene.yml:14: 'max_slope' of CharacterBody of entity 'player' is 120, where degrees from 0 to 90 were expected
+```
+
+### What belongs to what a choice holds
+
+```cpp
+type.Choice("shape", &Collider::shape, {"box", "sphere", ...}).AlwaysWritten();
+
+type.Field("size", &Collider::size)
+    .OnlyWhen("shape", {"box"});
+
+type.Field("radius", &Collider::radius)
+    .Above(0)
+    .OnlyWhen("shape", {"sphere", "capsule", "cylinder"});
+```
+
+The choice is described before the field, in the same type or group, so it is
+read first. A field that does not belong is neither read nor written. A file
+that gives a radius to a box is told that the name is not known, instead of
+the radius being taken without a word. A field that is required and belongs
+says what it is needed for: `Collider of entity 'rock' needs a 'model' for
+the shape mesh`.
+
+`TypeInfo::Belongs()` tells whether a field belongs to an object, which is
+what an editor would hide a field by.
+
+### Rules
+
+Some of what is wrong lies in no one field. A rule says it:
+
+```cpp
+type.Rule([](const Collider &collider, const std::string &where) -> std::string
+{
+  if (collider.shape != ShapeKind::Capsule || collider.height >= 2.0f * collider.radius) { return {}; }
+
+  return std::format(
+    "'height' of {} is {}, which is less than twice its 'radius' of {}",
+    where, collider.height, collider.radius);
+});
+```
+
+A rule returns what is wrong, or nothing. It is checked once the fields of an
+object were read from a document. A rule that names a field, as
+`Rule("top_radius", ...)`, is reported at the line of that field. What breaks
+a rule is kept as it was read, since no one field is to blame for it.
+
+A rule is also how a limit that depends on a choice is said. The radii of a
+tapered cylinder may be 0, and those of a tapered capsule may not, so the
+field says `AtLeast(0)` and a rule says the rest.
 
 ### What is left out
 
@@ -115,6 +175,7 @@ back.
 | TextList | `one, two` |
 | Length | `12px`, `50%`, `auto` |
 | NumberList | `1 2 3 4` |
+| Layers | `1 3` |
 
 ## Reaching a field by name
 
@@ -158,10 +219,15 @@ be built on. Neither exists yet.
 
 All of it is in neon-core and depends on no library.
 
-`Transform`, `Renderable`, `Camera`, `Light`, `Spectator`, `SoundSource`, and
-`SoundListener` are described.
-The functions that read and wrote them by hand are removed, which took 232
-lines out and put 149 in.
+`Transform`, `Renderable`, `Camera`, `Light`, `Spectator`, `SoundSource`,
+`SoundListener`, `RigidBody`, `Trigger`, `CharacterBody`, and `Collider` are
+described. Every component of the engine is.
+The functions that read and wrote them by hand are removed. For the first
+seven that took 232 lines out and put 149 in. For the four of the physics it
+took 409 out and put 238 in, the descriptions included.
+
+What is left of `physics-component-formats.cpp` is what sets the components of
+the physics apart: a world without physics is told that a component needs it.
 
 A format can still be written by hand, with
 `ComponentFormat::Of<T>(name, read, write)`, for what a description cannot
@@ -177,9 +243,17 @@ say.
 | A field is reached through functions, not through its place in memory | It works for a member of a member and for a value that is kept as something else. It does not depend on how the compiler lays out a struct |
 | A value is one of ten types | Code that works with any component needs a closed set to handle. A new kind is added in one place |
 | A scene file is the same as before | Descriptions replace how components are read and written, not what is read and written |
+| A refused number is told as the rest of the engine tells it | `is 0, where a number above 0 was expected` says what was written. `has to be above 0`, which descriptions said at first, did not, and the physics said it the first way |
+| Layers are a kind of their own | One layer may be written without a list, and a message names layers. A list of numbers with limits could say neither |
+| What breaks a rule is kept | No one field is to blame, so none is set back to its default |
 
 One message changed. A renderable that lacks a model or a shader is told which
 of the two it lacks. Before, it was told that it needs both.
+
+When the physics was described, the messages of every limit changed to what
+the physics said: `'pitch' of SoundSource of entity 'hum' is 0, where a number
+above 0 was expected`, where it was `has to be above 0`. The messages of the
+physics did not change.
 
 ## How it was checked
 
@@ -190,6 +264,16 @@ of the two it lacks. Before, it was told that it needs both.
 | Tests of descriptions, of reading and writing fields, and of reaching them by name | 69 pass |
 | Tests of the document format for YAML and of scenes in files | 98 pass. They were checks outside of the repository before |
 | All tests | 1077 pass |
+
+When the physics was described:
+
+| Check | Result |
+|---|---|
+| Tests of how the components of the physics are read and written, written against the code by hand | 43 pass, without a change |
+| The physics demo, 120 steps without a window | The same image as before, byte for byte |
+| Every scene of the runtime | Loads without a message |
+| Tests of limits on vectors, units, fields that belong to a choice, rules, and layers | 25 new, and pass |
+| All tests | 3674 pass |
 
 ## Open questions
 
@@ -204,5 +288,8 @@ of the two it lacks. Before, it was told that it needs both.
   script says what it declares is open.
 - Whether `EntityStore::Register` should take the name from the description,
   so that it is written once.
-- The components of physics are still read and written by hand, in
-  `physics-component-formats.cpp`. Describing them is the next step.
+- Rules are checked when a document is read. `SetField` checks a field on
+  its own, so it can set a radius that leaves a capsule lower than it is
+  wide.
+- Whether `ComponentFormat::Of<T>()` should tell every world that lacks a
+  component so, as the physics does now for its own.

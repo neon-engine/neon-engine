@@ -1,3 +1,4 @@
+#include <cstdint>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -80,6 +81,30 @@ namespace
       [](Monster &monster, const float &degrees) { monster.turn = glm::radians(degrees); });
   }
 
+  struct Ramp
+  {
+    glm::vec3 size{1.0f};
+    float slope = 10.0f;
+  };
+
+  void Describe(TypeBuilder<Ramp> &type)
+  {
+    type.Named("Ramp");
+    type.Field("size", &Ramp::size).Above(0);
+    type.Field("slope", &Ramp::slope).AtLeast(0).AtMost(90).Unit("degrees");
+  }
+
+  struct Lamp
+  {
+    std::uint32_t lights = 1;
+  };
+
+  void Describe(TypeBuilder<Lamp> &type)
+  {
+    type.Named("Lamp");
+    type.Layers("lights", &Lamp::lights);
+  }
+
   struct Nameless
   {
     float value = 0.0f;
@@ -111,6 +136,51 @@ namespace
   {
     type.Named("Early");
     type.Required();
+  }
+
+  struct Unsure
+  {
+    float value = 0.0f;
+  };
+
+  void Describe(TypeBuilder<Unsure> &type)
+  {
+    type.Named("Unsure");
+    type.Field("value", &Unsure::value).OnlyWhen("kind", {"one"});
+  }
+
+  enum class Size
+  {
+    Small = 0,
+    Large
+  };
+
+  struct Misworded
+  {
+    Size size = Size::Small;
+    float value = 0.0f;
+  };
+
+  void Describe(TypeBuilder<Misworded> &type)
+  {
+    type.Named("Misworded");
+    type.Choice("size", &Misworded::size, {"small", "large"});
+    type.Field("value", &Misworded::value).OnlyWhen("size", {"huge"});
+  }
+
+  struct Grouped
+  {
+    float value = 0.0f;
+  };
+
+  void Describe(TypeBuilder<Grouped> &type)
+  {
+    type.Named("Grouped");
+    type.Group("group", [](TypeBuilder<Grouped> &group)
+    {
+      group.Field("value", &Grouped::value);
+      group.Rule([](const Grouped &, const std::string &) { return std::string(); });
+    });
   }
 
   class TypeInfoTest : public ::testing::Test
@@ -331,8 +401,12 @@ namespace
 
   TEST_F(TypeInfoTest, RefusesAListOfNumbersWhereOneIsNotWhatItHasToBe)
   {
-    EXPECT_EQ(Check("stripes", std::vector{1.0f, 0.0f}), "'stripes' of Monster has to be above 0");
-    EXPECT_EQ(Check("stripes", std::vector{-1.0f, 1.0f}), "'stripes' of Monster has to be above 0");
+    EXPECT_EQ(
+      Check("stripes", std::vector{1.0f, 0.0f}),
+      "'stripes' of Monster is [1, 0], where numbers above 0 were expected");
+    EXPECT_EQ(
+      Check("stripes", std::vector{-1.0f, 1.0f}),
+      "'stripes' of Monster is [-1, 1], where numbers above 0 were expected");
   }
 
   TEST_F(TypeInfoTest, RefusesAWordThatIsNotAmongTheChoices)
@@ -344,22 +418,77 @@ namespace
 
   TEST_F(TypeInfoTest, RefusesANumberThatIsNotAboveWhatItHasToBeAbove)
   {
-    EXPECT_EQ(Check("speed", 0.0f), "'speed' of Monster has to be above 0");
-    EXPECT_EQ(Check("speed", -1.0f), "'speed' of Monster has to be above 0");
+    EXPECT_EQ(Check("speed", 0.0f), "'speed' of Monster is 0, where a number above 0 was expected");
+    EXPECT_EQ(Check("speed", -1.0f), "'speed' of Monster is -1, where a number above 0 was expected");
     EXPECT_EQ(Check("speed", 0.001f), "");
   }
 
   TEST_F(TypeInfoTest, RefusesANumberThatIsNotANumber)
   {
-    EXPECT_EQ(Check("speed", std::nanf("")), "'speed' of Monster has to be above 0");
+    EXPECT_EQ(Check("speed", std::nanf("")), "'speed' of Monster is nan, where a number above 0 was expected");
   }
 
   TEST_F(TypeInfoTest, RefusesAWholeNumberOutsideOfWhatItMayBe)
   {
-    EXPECT_EQ(Check("legs", -1), "'legs' of Monster has to be at least 0");
-    EXPECT_EQ(Check("legs", 101), "'legs' of Monster has to be at most 100");
+    EXPECT_EQ(Check("legs", -1), "'legs' of Monster is -1, where a number from 0 to 100 was expected");
+    EXPECT_EQ(Check("legs", 101), "'legs' of Monster is 101, where a number from 0 to 100 was expected");
     EXPECT_EQ(Check("legs", 0), "");
     EXPECT_EQ(Check("legs", 100), "");
+  }
+
+  TEST(TypeInfo, RefusesAVectorWhereOneNumberIsNotWhatItHasToBe)
+  {
+    const auto type = TypeInfo::Of<Ramp>();
+    const auto *size = type.Find("size");
+
+    EXPECT_EQ(
+      size->Check(glm::vec3{1.0f, 0.0f, 1.0f}, "'size' of Ramp"),
+      "'size' of Ramp is [1, 0, 1], where numbers above 0 were expected");
+    EXPECT_EQ(size->Check(glm::vec3{0.5f}, "'size' of Ramp"), "");
+  }
+
+  TEST(TypeInfo, NamesWhatANumberCountsWhenItRefusesIt)
+  {
+    const auto type = TypeInfo::Of<Ramp>();
+    const auto *slope = type.Find("slope");
+
+    EXPECT_EQ(slope->unit, "degrees");
+    EXPECT_EQ(
+      slope->Check(120.0f, "'slope' of Ramp"),
+      "'slope' of Ramp is 120, where degrees from 0 to 90 were expected");
+    EXPECT_EQ(slope->Check(90.0f, "'slope' of Ramp"), "");
+  }
+
+  TEST(TypeInfo, SeesLayersAsTheirNumbers)
+  {
+    const auto type = TypeInfo::Of<Lamp>();
+    const auto *lights = type.Find("lights");
+    Lamp lamp;
+    lamp.lights = 0x80000005u;
+
+    EXPECT_EQ(lights->kind, FieldKind::Layers);
+    EXPECT_THAT(std::get<std::vector<float>>(lights->get(&lamp)), ElementsAre(1.0f, 3.0f, 32.0f));
+
+    lights->set(&lamp, std::vector{2.0f, 4.0f});
+    EXPECT_EQ(lamp.lights, 0b1010u);
+
+    lights->set(&lamp, std::vector<float>{});
+    EXPECT_EQ(lamp.lights, 0u);
+  }
+
+  TEST(TypeInfo, RefusesANumberThatIsNoLayer)
+  {
+    const auto type = TypeInfo::Of<Lamp>();
+    const auto *lights = type.Find("lights");
+
+    EXPECT_EQ(lights->Check(std::vector{1.0f, 33.0f}, "'lights' of Lamp"),
+              "'lights' of Lamp holds 33, where a layer from 1 to 32 was expected");
+    EXPECT_EQ(lights->Check(std::vector{0.0f}, "'lights' of Lamp"),
+              "'lights' of Lamp holds 0, where a layer from 1 to 32 was expected");
+    EXPECT_EQ(lights->Check(std::vector{1.5f}, "'lights' of Lamp"),
+              "'lights' of Lamp holds 1.5, where a layer from 1 to 32 was expected");
+    EXPECT_EQ(lights->Check(2.0f, "'lights' of Lamp"), "'lights' of Lamp takes a list of layers");
+    EXPECT_EQ(lights->Check(std::vector{1.0f, 32.0f}, "'lights' of Lamp"), "");
   }
 
   TEST_F(TypeInfoTest, RefusesAnEmptyTextWhereOneIsRequired)
@@ -387,6 +516,21 @@ namespace
   TEST(TypeBuilder, RefusesWhatIsAboutAFieldBeforeThereIsOne)
   {
     EXPECT_THROW((void) TypeInfo::Of<Early>(), std::logic_error);
+  }
+
+  TEST(TypeBuilder, RefusesAConditionOnWhatIsNoChoiceDescribedBefore)
+  {
+    EXPECT_THROW((void) TypeInfo::Of<Unsure>(), std::logic_error);
+  }
+
+  TEST(TypeBuilder, RefusesAConditionOnAWordTheChoiceDoesNotHave)
+  {
+    EXPECT_THROW((void) TypeInfo::Of<Misworded>(), std::logic_error);
+  }
+
+  TEST(TypeBuilder, RefusesARuleInAGroup)
+  {
+    EXPECT_THROW((void) TypeInfo::Of<Grouped>(), std::logic_error);
   }
 
   // values

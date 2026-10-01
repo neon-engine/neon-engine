@@ -13,12 +13,15 @@ namespace neon
   ///
   /// A field that is not written keeps the value the object has. What is
   /// written and cannot be taken is reported through the reader, and so is a
-  /// field that is required and has no value afterwards.
+  /// field that is required and has no value afterwards. A field that does
+  /// not belong to the object, as its condition says, is not read. Once
+  /// the fields are read, what breaks a rule of the type is reported.
   void ReadFields(const TypeInfo &type, const DataReader &reader, void *object);
 
   /// Writes the fields of an object into a map. A field that holds the same
   /// as it does in `standard` is left out, unless it is always written.
-  /// `standard` is an object with the defaults of the type.
+  /// `standard` is an object with the defaults of the type. A field that
+  /// does not belong to the object is not written.
   void WriteFields(const TypeInfo &type, const void *object, const void *standard, DataValue &map);
 
   /// A value of a field as a value of a document.

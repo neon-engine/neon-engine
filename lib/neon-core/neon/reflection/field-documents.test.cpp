@@ -1,3 +1,5 @@
+#include <format>
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -256,7 +258,8 @@ namespace
 
     Read(map);
 
-    EXPECT_THAT(_errors, ElementsAre("cars.yml: 'top_speed' of Car of entity 'taxi' has to be above 0"));
+    EXPECT_THAT(_errors, ElementsAre(
+                  "cars.yml: 'top_speed' of Car of entity 'taxi' is 0, where a number above 0 was expected"));
     EXPECT_EQ(_car.top_speed, 180.0f);
   }
 
@@ -270,7 +273,7 @@ namespace
     Read(map);
 
     EXPECT_THAT(_errors, ElementsAre(
-                  "cars.yml: 'pressure' of 'tires' of Car of entity 'taxi' has to be above 0"));
+                  "cars.yml: 'pressure' of 'tires' of Car of entity 'taxi' is -1, where a number above 0 was expected"));
   }
 
   TEST_F(FieldDocumentsTest, AWholeNumberBelowWhatItMayBeIsReported)
@@ -280,7 +283,8 @@ namespace
 
     Read(map);
 
-    EXPECT_THAT(_errors, ElementsAre("cars.yml: 'seats' of Car of entity 'taxi' has to be at least 1"));
+    EXPECT_THAT(_errors, ElementsAre(
+                  "cars.yml: 'seats' of Car of entity 'taxi' is 0, where a number of 1 or above was expected"));
   }
 
   TEST_F(FieldDocumentsTest, EveryNumberOfAListIsCheckedAndTheListIsLeftAlone)
@@ -291,7 +295,8 @@ namespace
 
     Read(map);
 
-    EXPECT_THAT(_errors, ElementsAre("cars.yml: 'gears' of Car of entity 'taxi' has to be above 0"));
+    EXPECT_THAT(_errors, ElementsAre(
+                  "cars.yml: 'gears' of Car of entity 'taxi' is [3.5, 0], where numbers above 0 were expected"));
     EXPECT_THAT(_car.gears, ElementsAre(1.0f));
   }
 
@@ -370,7 +375,8 @@ namespace
 
     Read(map);
 
-    EXPECT_THAT(_errors, ElementsAre("cars.yml:7: 'top_speed' of Car of entity 'taxi' has to be above 0"));
+    EXPECT_THAT(_errors, ElementsAre(
+                  "cars.yml:7: 'top_speed' of Car of entity 'taxi' is -5, where a number above 0 was expected"));
   }
 
   // writing
@@ -457,6 +463,348 @@ namespace
     EXPECT_EQ(_car.tire_pressure, before.tire_pressure);
     EXPECT_EQ(_car.tire_brand, before.tire_brand);
     EXPECT_EQ(_car.gears, before.gears);
+  }
+}
+
+// Fields that belong to an object only while a choice holds one of a few
+// words.
+
+namespace
+{
+  enum class Form
+  {
+    Square = 0,
+    Circle,
+    Picture
+  };
+
+  struct Shape
+  {
+    Form form = Form::Square;
+    float side = 1.0f;
+    float radius = 0.5f;
+    std::string image;
+  };
+
+  void Describe(TypeBuilder<Shape> &type)
+  {
+    type.Named("Shape");
+    type.Choice("form", &Shape::form, {"square", "circle", "picture"}).AlwaysWritten();
+    type.Field("side", &Shape::side).OnlyWhen("form", {"square", "picture"});
+    type.Field("radius", &Shape::radius).Above(0).OnlyWhen("form", {"circle"});
+    type.Field("image", &Shape::image).Required().AlwaysWritten().OnlyWhen("form", {"picture"});
+  }
+
+  class ShapeDocumentsTest : public ::testing::Test
+  {
+  protected:
+    TypeInfo _type = TypeInfo::Of<Shape>();
+    std::vector<std::string> _errors;
+    Shape _shape;
+
+    void Read(const DataValue &map)
+    {
+      const DataReader reader(map, "shape.yml", "Shape", _errors);
+      neon::ReadFields(_type, reader, &_shape);
+      reader.Finish();
+    }
+
+    DataValue Write() const
+    {
+      const Shape standard;
+      auto map = DataValue::Map();
+      neon::WriteFields(_type, &_shape, &standard, map);
+      return map;
+    }
+
+    static DataValue Of(const std::string &form)
+    {
+      auto map = DataValue::Map();
+      map.Set("form", DataValue::Text(form));
+      return map;
+    }
+  };
+
+  TEST_F(ShapeDocumentsTest, ReadsTheFieldsThatBelongToWhatTheChoiceHolds)
+  {
+    auto map = Of("circle");
+    map.Set("radius", DataValue::Number(2.0f));
+
+    Read(map);
+
+    EXPECT_THAT(_errors, IsEmpty());
+    EXPECT_EQ(_shape.form, Form::Circle);
+    EXPECT_EQ(_shape.radius, 2.0f);
+  }
+
+  TEST_F(ShapeDocumentsTest, SaysThatAFieldThatDoesNotBelongIsNotKnown)
+  {
+    auto map = Of("square");
+    auto radius = DataValue::Number(2.0f);
+    radius.SetLine(3);
+    map.Set("radius", radius);
+
+    Read(map);
+
+    EXPECT_THAT(_errors, ElementsAre("shape.yml:3: 'radius' is not known to Shape. Known are: form, side"));
+    EXPECT_EQ(_shape.radius, 0.5f);
+  }
+
+  TEST_F(ShapeDocumentsTest, ChecksAFieldThatBelongsAsAnyOther)
+  {
+    auto map = Of("circle");
+    map.Set("radius", DataValue::Number(0.0f));
+
+    Read(map);
+
+    EXPECT_THAT(_errors, ElementsAre("shape.yml: 'radius' of Shape is 0, where a number above 0 was expected"));
+  }
+
+  TEST_F(ShapeDocumentsTest, SaysWhatARequiredFieldIsNeededFor)
+  {
+    Read(Of("picture"));
+
+    EXPECT_THAT(_errors, ElementsAre("shape.yml: Shape needs an 'image' for the form picture"));
+  }
+
+  TEST_F(ShapeDocumentsTest, DoesNotNeedARequiredFieldThatDoesNotBelong)
+  {
+    Read(Of("circle"));
+
+    EXPECT_THAT(_errors, IsEmpty());
+  }
+
+  TEST_F(ShapeDocumentsTest, WritesOnlyTheFieldsThatBelong)
+  {
+    _shape.side = 2.0f;
+    _shape.radius = 3.0f;
+    _shape.image = "assets://images/cat.png";
+
+    _shape.form = Form::Square;
+    EXPECT_THAT(NamesOf(Write()), ElementsAre("form", "side"));
+
+    _shape.form = Form::Circle;
+    EXPECT_THAT(NamesOf(Write()), ElementsAre("form", "radius"));
+
+    _shape.form = Form::Picture;
+    EXPECT_THAT(NamesOf(Write()), ElementsAre("form", "side", "image"));
+  }
+
+  TEST_F(ShapeDocumentsTest, KnowsWhetherAFieldBelongsToAnObject)
+  {
+    _shape.form = Form::Circle;
+
+    EXPECT_TRUE(_type.Belongs(*_type.Find("form"), &_shape));
+    EXPECT_TRUE(_type.Belongs(*_type.Find("radius"), &_shape));
+    EXPECT_FALSE(_type.Belongs(*_type.Find("side"), &_shape));
+  }
+}
+
+// Rules that the fields of a type have to follow together.
+
+namespace
+{
+  struct Frame
+  {
+    float inner = 1.0f;
+    float outer = 2.0f;
+    bool hollow = true;
+  };
+
+  void Describe(TypeBuilder<Frame> &type)
+  {
+    type.Named("Frame");
+    type.Field("inner", &Frame::inner);
+    type.Field("outer", &Frame::outer);
+    type.Field("hollow", &Frame::hollow);
+
+    type.Rule("inner", [](const Frame &frame, const std::string &where) -> std::string
+    {
+      if (frame.inner < frame.outer) { return {}; }
+      return std::format("'inner' of {} is {}, which is not less than its 'outer'", where, frame.inner);
+    });
+
+    type.Rule([](const Frame &frame, const std::string &where) -> std::string
+    {
+      if (frame.hollow || frame.inner == 0.0f) { return {}; }
+      return std::format("{} is not hollow and has an inside", where);
+    });
+  }
+
+  class FrameDocumentsTest : public ::testing::Test
+  {
+  protected:
+    TypeInfo _type = TypeInfo::Of<Frame>();
+    std::vector<std::string> _errors;
+    Frame _frame;
+
+    void Read(const DataValue &map)
+    {
+      const DataReader reader(map, "frame.yml", "Frame", _errors);
+      neon::ReadFields(_type, reader, &_frame);
+      reader.Finish();
+    }
+  };
+
+  TEST_F(FrameDocumentsTest, ReportsARuleThatIsBrokenAtTheLineOfItsField)
+  {
+    auto inner = DataValue::Number(3.0f);
+    inner.SetLine(4);
+    auto map = DataValue::Map();
+    map.Set("inner", inner);
+
+    Read(map);
+
+    EXPECT_THAT(_errors, ElementsAre("frame.yml:4: 'inner' of Frame is 3, which is not less than its 'outer'"));
+  }
+
+  TEST_F(FrameDocumentsTest, KeepsWhatWasReadWhenARuleIsBroken)
+  {
+    auto map = DataValue::Map();
+    map.Set("inner", DataValue::Number(3.0f));
+
+    Read(map);
+
+    EXPECT_EQ(_frame.inner, 3.0f);
+  }
+
+  TEST_F(FrameDocumentsTest, ReportsARuleThatIsAboutNoOneFieldWithoutALine)
+  {
+    auto hollow = DataValue::Bool(false);
+    hollow.SetLine(5);
+    auto map = DataValue::Map();
+    map.Set("hollow", hollow);
+
+    Read(map);
+
+    EXPECT_THAT(_errors, ElementsAre("frame.yml: Frame is not hollow and has an inside"));
+  }
+
+  TEST_F(FrameDocumentsTest, ChecksTheRulesWithWhatTheFileLeavesOut)
+  {
+    _frame.outer = 0.5f;
+
+    Read(DataValue::Map());
+
+    EXPECT_THAT(_errors, ElementsAre("frame.yml: 'inner' of Frame is 1, which is not less than its 'outer'"));
+  }
+
+  TEST_F(FrameDocumentsTest, ReportsNothingWhenEveryRuleIsFollowed)
+  {
+    auto map = DataValue::Map();
+    map.Set("inner", DataValue::Number(0.0f));
+    map.Set("hollow", DataValue::Bool(false));
+
+    Read(map);
+
+    EXPECT_THAT(_errors, IsEmpty());
+    EXPECT_EQ(_type.rules.size(), 2u);
+  }
+}
+
+// Layers.
+
+namespace
+{
+  struct Lamp
+  {
+    std::uint32_t lights = 1;
+  };
+
+  void Describe(TypeBuilder<Lamp> &type)
+  {
+    type.Named("Lamp");
+    type.Layers("lights", &Lamp::lights);
+  }
+
+  class LayerDocumentsTest : public ::testing::Test
+  {
+  protected:
+    TypeInfo _type = TypeInfo::Of<Lamp>();
+    std::vector<std::string> _errors;
+    Lamp _lamp;
+
+    void Read(const DataValue &value)
+    {
+      auto map = DataValue::Map();
+      map.Set("lights", value);
+
+      const DataReader reader(map, "lamp.yml", "Lamp", _errors);
+      neon::ReadFields(_type, reader, &_lamp);
+      reader.Finish();
+    }
+
+    DataValue Write() const
+    {
+      const Lamp standard;
+      auto map = DataValue::Map();
+      neon::WriteFields(_type, &_lamp, &standard, map);
+      return map;
+    }
+
+    static DataValue At(const std::size_t line, DataValue value)
+    {
+      value.SetLine(line);
+      return value;
+    }
+  };
+
+  TEST_F(LayerDocumentsTest, ReadsAListOfLayers)
+  {
+    Read(Numbers({2.0f, 3.0f, 32.0f}));
+
+    EXPECT_THAT(_errors, IsEmpty());
+    EXPECT_EQ(_lamp.lights, 0x80000006u);
+  }
+
+  TEST_F(LayerDocumentsTest, ReadsOneLayerWithoutAList)
+  {
+    Read(DataValue::Number(3.0f));
+
+    EXPECT_THAT(_errors, IsEmpty());
+    EXPECT_EQ(_lamp.lights, 0b100u);
+  }
+
+  TEST_F(LayerDocumentsTest, ReadsAnEmptyListAsNoLayer)
+  {
+    Read(DataValue::List());
+
+    EXPECT_THAT(_errors, IsEmpty());
+    EXPECT_EQ(_lamp.lights, 0u);
+  }
+
+  TEST_F(LayerDocumentsTest, SaysWhatIsNoLayerAndKeepsWhatWasThere)
+  {
+    Read(At(3, DataValue::Text("walls")));
+    Read(At(4, DataValue::Number(0.0f)));
+    Read(At(5, DataValue::Number(1.5f)));
+
+    auto mixed = At(6, DataValue::List());
+    mixed.Add(At(7, DataValue::Number(1.0f)));
+    mixed.Add(At(8, DataValue::Text("two")));
+    mixed.Add(At(9, DataValue::Number(40.0f)));
+    Read(mixed);
+
+    EXPECT_THAT(_errors, ElementsAre(
+                  "lamp.yml:3: 'lights' of Lamp is text, where a layer from 1 to 32 or a list of layers was expected",
+                  "lamp.yml:4: 'lights' of Lamp holds 0, where a layer from 1 to 32 was expected",
+                  "lamp.yml:5: 'lights' of Lamp holds 1.5, where a layer from 1 to 32 was expected",
+                  "lamp.yml:8: 'lights' of Lamp holds text, where a layer from 1 to 32 was expected"));
+    EXPECT_EQ(_lamp.lights, 1u);
+  }
+
+  TEST_F(LayerDocumentsTest, WritesLayersAsTheirNumbersAndNoneAsAnEmptyList)
+  {
+    EXPECT_THAT(NamesOf(Write()), IsEmpty());
+
+    _lamp.lights = 0b101u;
+    ASSERT_NE(Write().Find("lights"), nullptr);
+    EXPECT_THAT(NumbersOf(*Write().Find("lights")), ElementsAre(1.0f, 3.0f));
+
+    _lamp.lights = 0u;
+    ASSERT_NE(Write().Find("lights"), nullptr);
+    EXPECT_TRUE(Write().Find("lights")->IsList());
+    EXPECT_THAT(NumbersOf(*Write().Find("lights")), IsEmpty());
   }
 }
 

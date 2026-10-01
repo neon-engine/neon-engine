@@ -6,6 +6,7 @@
 #include <glm/glm.hpp>
 
 #include <neon/physics/physics-types.hpp>
+#include <neon/reflection/type-builder.hpp>
 #include <neon/world-system/ecs/entity.hpp>
 
 namespace neon
@@ -65,6 +66,46 @@ namespace neon
     /// tried again.
     bool failed = false;
   };
+
+  /// What the last step led to, and what the physics knows the entity as,
+  /// are written by the engine and not described.
+  inline void Describe(TypeBuilder<CharacterBody> &type)
+  {
+    type.Named("CharacterBody", "Makes an entity something that is moved by code and stops at what is in its way");
+
+    type.Field("velocity", &CharacterBody::velocity)
+        .Describe("Units per second the entity is meant to move with");
+
+    type.Field("fall_velocity", &CharacterBody::fall_velocity)
+        .Describe("What falling has added to the velocity. Written to jump");
+
+    type.Field("gravity_scale", &CharacterBody::gravity_scale)
+        .Describe("0 for an entity that does not fall");
+
+    type.Field("max_slope", &CharacterBody::max_slope)
+        .AtLeast(0)
+        .AtMost(90)
+        .Unit("degrees")
+        .Describe("Steeper ground than this is a wall");
+
+    type.Field("step_height", &CharacterBody::step_height)
+        .AtLeast(0)
+        .Describe("A step up to this height is walked up as if it were a ramp");
+
+    type.Field("mass", &CharacterBody::mass)
+        .Above(0)
+        .Describe("What dynamic bodies feel of the entity");
+
+    type.Field("push_strength", &CharacterBody::push_strength)
+        .AtLeast(0)
+        .Describe("The most force the entity pushes dynamic bodies with");
+
+    type.Layers("layers", &CharacterBody::layers)
+        .Describe("The layers the entity is in");
+
+    type.Layers("mask", &CharacterBody::mask)
+        .Describe("The layers the entity looks for");
+  }
 } // neon
 
 #endif //CHARACTER_BODY_HPP

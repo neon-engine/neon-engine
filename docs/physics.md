@@ -57,6 +57,14 @@ What a component leaves out keeps its default. A value that is wrong is
 reported with the file and the line, as for every component of a
 [scene](scenes.md).
 
+Each component is described next to itself, in its header, and how it is
+read and written follows from the description, as for every component of the
+engine. So the editor and a script know its fields by name as well. The
+fields of a `Collider` that belong to some shapes alone say so with
+`OnlyWhen()`, and what the fields have to be together, such as a capsule that
+is at least as high as it is wide, is a rule of the description. See
+[reflection.md](reflection.md).
+
 **RigidBody**
 
 | Name | Holds | Default |

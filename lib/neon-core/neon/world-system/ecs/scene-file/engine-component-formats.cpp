@@ -22,7 +22,7 @@ namespace neon
     Add(ComponentFormat::Of<SoundSource>());
     Add(ComponentFormat::Of<SoundListener>());
 
-    // the physics is still read and written by hand
+    // described as well, and told apart by needing the physics
     AddPhysicsComponents();
   }
 } // neon

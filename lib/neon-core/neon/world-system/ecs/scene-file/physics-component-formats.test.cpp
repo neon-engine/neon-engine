@@ -159,6 +159,23 @@ namespace
     EXPECT_NE(formats.Find("Collider"), nullptr);
   }
 
+  TEST_F(PhysicsComponentFormatsTest, AreMadeFromTheDescriptionsOfTheComponents)
+  {
+    for (const std::string name : {"RigidBody", "Trigger", "CharacterBody", "Collider"})
+    {
+      const auto *format = _formats.Find(name);
+      ASSERT_NE(format, nullptr);
+      ASSERT_NE(format->type, nullptr) << name;
+      EXPECT_EQ(format->type->name, name);
+    }
+
+    EXPECT_THAT(_formats.Find("Collider")->type->GetPaths(), ElementsAre(
+                  "shape", "size", "radius", "height", "top_radius", "bottom_radius", "model", "offset",
+                  "rotation"));
+    EXPECT_EQ(_formats.Find("RigidBody")->type->Find("layers")->kind, neon::FieldKind::Layers);
+    EXPECT_EQ(_formats.Find("CharacterBody")->type->Find("max_slope")->unit, "degrees");
+  }
+
   TEST_F(PhysicsComponentFormatsTest, SaysThatAWorldWithoutPhysicsCannotHoldThem)
   {
     FakeEntityStore store;
