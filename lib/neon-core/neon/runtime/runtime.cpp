@@ -71,6 +71,43 @@ namespace neon
     CleanUp();
   }
 
+  void Runtime::UpdatePauseMenu()
+  {
+    if (_ui_system == nullptr || _settings_config.pause_menu.empty()) { return; }
+
+    // the menu closes itself as well: on cancel, as its file says
+    const bool was_shown = _pause_document >= 0;
+    if (was_shown && !_ui_system->IsShown(_pause_document)) { _pause_document = -1; }
+
+    if (_pause_document >= 0)
+    {
+      if (_ui_system->WasClicked("resume"))
+      {
+        _ui_system->Unload(_pause_document);
+        _pause_document = -1;
+      } else if (_ui_system->WasClicked("quit"))
+      {
+        _logger->Info("Quit was chosen in the pause menu");
+        _window_system->SignalToClose();
+      }
+    }
+
+    // Pressed, not held: the key that closed the menu is still down in the
+    // frame after, and must not open it again. The menu itself takes the
+    // press that closes it, so what the game is left is looked at as well.
+    const bool is_down = _input_system->GetInputState()[Action::Pause];
+    const bool is_pressed = is_down && !_pause_was_down;
+    _pause_was_down = is_down;
+
+    if (is_pressed && !was_shown && _ui_system->GetGameInput()->GetInputState()[Action::Pause])
+    {
+      _pause_document = _ui_system->Load(_settings_config.pause_menu);
+      if (_pause_document < 0) { _logger->Error("The pause menu {} cannot be shown", _settings_config.pause_menu); }
+    }
+
+    _world_system->SetPaused(_pause_document >= 0);
+  }
+
   void Runtime::Run()
   {
     Initialize();
@@ -85,6 +122,7 @@ namespace neon
       // The user interface sees the input first, and takes what it uses
       // away from the world. It is drawn last, on top of the world.
       if (_ui_system != nullptr) { _ui_system->Update(); }
+      UpdatePauseMenu();
 
       _render_system->PrepareFrame();
       _world_system->Update();

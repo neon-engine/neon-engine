@@ -23,6 +23,7 @@ namespace neon
       {Action::Ui_Left, "ui-left"},
       {Action::Ui_Accept, "ui-accept"},
       {Action::Ui_Cancel, "ui-cancel"},
+      {Action::Pause, "pause"},
       {Action::Pointer_Primary, "pointer-primary"}
     };
 
@@ -330,10 +331,31 @@ namespace neon
             rest));
           continue;
         }
+      } else if (command == "look")
+      {
+        step.kind = Kind::Look;
+
+        if (words.size() != 2 || !ReadNumber(words[0], step.x) || !ReadNumber(words[1], step.y))
+        {
+          report(std::format("'look' is followed by '{}', where two numbers were expected", rest));
+          continue;
+        }
+      } else if (command == "device")
+      {
+        step.kind = Kind::Device;
+
+        if (words.size() == 1 && words[0] == "keyboard") { step.device = InputDevice::KeyboardAndMouse; }
+        else if (words.size() == 1 && words[0] == "gamepad") { step.device = InputDevice::Gamepad; }
+        else
+        {
+          report(std::format("'device' is followed by '{}', where keyboard or gamepad was expected", rest));
+          continue;
+        }
       } else
       {
         report(std::format(
-          "'{}' is not known. Known are: pointer, down, up, click, key, text, compose, wheel, hold, stick",
+          "'{}' is not known. Known are: pointer, down, up, click, key, text, compose, wheel, hold, stick, device, "
+          "look",
           command));
         continue;
       }
@@ -438,10 +460,21 @@ namespace neon
           _stick_y = step.y;
           _stick_until = step.frame + step.frames - 1;
           break;
+        case Kind::Device:
+          _device = step.device;
+          break;
+        case Kind::Look:
+          if (is_now)
+          {
+            state.SetAction(Action::Mouse);
+            state.SetAxisMotion(Axis::Mouse, step.x, step.y);
+          }
+          break;
       }
     }
 
     _applied = frame;
+    state.SetDevice(_device);
 
     if (_up_at != 0 && frame >= _up_at)
     {

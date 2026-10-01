@@ -6,6 +6,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <neon/input/input-state.hpp>
 #include <neon/testing/mock-input-system.hpp>
 #include <neon/testing/mock-render-pipeline.hpp>
 #include <neon/testing/mock-render-system.hpp>
@@ -16,6 +17,9 @@
 
 namespace
 {
+  using neon::Action;
+  using neon::InputState;
+  using neon::testing::FakeInputContext;
   using neon::testing::LogLevel;
   using neon::testing::MockInputSystem;
   using neon::testing::MockRenderPipeline;
@@ -30,6 +34,7 @@ namespace
   using ::testing::Invoke;
   using ::testing::NiceMock;
   using ::testing::Return;
+  using ::testing::ReturnRef;
   using ::testing::StrictMock;
 
   /// Runtime is meant to be derived from, its constructor is protected.
@@ -513,6 +518,158 @@ namespace
     runtime->Run();
 
     EXPECT_TRUE(runtime->HasFailed());
+    ExpectCleanUp();
+  }
+
+  // the pause menu
+
+  class PauseMenuTest : public RuntimeTest
+  {
+  protected:
+    static constexpr const char *menu = "assets://ui/pause.ui.yml";
+
+    // what the devices say, and what the user interface leaves of it
+    InputState _raw{_logger};
+    NiceMock<FakeInputContext> _game{_logger};
+    int _frame = 0;
+
+    /// What each frame presses: the pause key as the devices see it, and
+    /// whether the user interface let it through.
+    std::function<void(int frame)> _press;
+
+    std::unique_ptr<TestRuntime> CreateWithMenu(const int frames)
+    {
+      auto runtime = Create({.pause_menu = menu, .max_frames = static_cast<std::size_t>(frames)});
+      runtime->SetUiSystem(&_ui_system);
+
+      ExpectInitialize();
+      EXPECT_CALL(_ui_system, Initialize());
+      EXPECT_CALL(_ui_system, CleanUp());
+      LetTheWindowRunUntilItIsClosed();
+
+      EXPECT_CALL(_input_system, ProcessInput()).WillRepeatedly(Invoke([this]
+      {
+        _frame++;
+        _raw.Reset();
+        _game.state.Reset();
+        if (_press) { _press(_frame); }
+      }));
+      EXPECT_CALL(_input_system, GetInputState()).WillRepeatedly(ReturnRef(_raw));
+      EXPECT_CALL(_ui_system, GetGameInput()).WillRepeatedly(Return(&_game));
+      EXPECT_CALL(_ui_system, Update()).Times(AnyNumber());
+      EXPECT_CALL(_ui_system, Draw()).Times(AnyNumber());
+      EXPECT_CALL(_ui_system, WasClicked(_)).WillRepeatedly(Return(false));
+      EXPECT_CALL(_render_system, PrepareFrame()).Times(AnyNumber());
+      EXPECT_CALL(_render_system, FinishFrame()).Times(AnyNumber());
+      EXPECT_CALL(_world_system, Update()).Times(AnyNumber());
+      EXPECT_CALL(_window_system, Update()).Times(AnyNumber());
+      return runtime;
+    }
+
+    void PressPause()
+    {
+      _raw.SetAction(Action::Pause);
+      _game.state.SetAction(Action::Pause);
+    }
+  };
+
+  TEST_F(PauseMenuTest, ShowsTheMenuWhenPauseIsPressedAndHoldsTheWorldStill)
+  {
+    const auto runtime = CreateWithMenu(3);
+    _press = [this](const int frame) { if (frame == 2) { PressPause(); } };
+
+    EXPECT_CALL(_ui_system, Load(menu)).WillOnce(Return(7));
+    EXPECT_CALL(_ui_system, IsShown(7)).WillRepeatedly(Return(true));
+    {
+      InSequence in_order;
+      EXPECT_CALL(_world_system, SetPaused(false));
+      EXPECT_CALL(_world_system, SetPaused(true)).Times(2);
+    }
+
+    runtime->Run();
+    ExpectCleanUp();
+  }
+
+  TEST_F(PauseMenuTest, TakesTheMenuAwayWhenResumeIsChosen)
+  {
+    const auto runtime = CreateWithMenu(3);
+    _press = [this](const int frame) { if (frame == 1) { PressPause(); } };
+
+    EXPECT_CALL(_ui_system, Load(menu)).WillOnce(Return(7));
+    EXPECT_CALL(_ui_system, IsShown(7)).WillRepeatedly(Return(true));
+    EXPECT_CALL(_ui_system, WasClicked("resume")).WillOnce(Return(true)).WillRepeatedly(Return(false));
+    EXPECT_CALL(_ui_system, Unload(7));
+    {
+      InSequence in_order;
+      EXPECT_CALL(_world_system, SetPaused(true));
+      EXPECT_CALL(_world_system, SetPaused(false)).Times(2);
+    }
+
+    runtime->Run();
+    ExpectCleanUp();
+  }
+
+  TEST_F(PauseMenuTest, ClosesTheWindowWhenQuitIsChosen)
+  {
+    const auto runtime = CreateWithMenu(10);
+    _press = [this](const int frame) { if (frame == 1) { PressPause(); } };
+
+    EXPECT_CALL(_ui_system, Load(menu)).WillOnce(Return(7));
+    EXPECT_CALL(_ui_system, IsShown(7)).WillRepeatedly(Return(true));
+    EXPECT_CALL(_ui_system, WasClicked("quit")).WillOnce(Return(true));
+    EXPECT_CALL(_world_system, SetPaused(true)).Times(2);
+
+    runtime->Run();
+
+    EXPECT_EQ(_frame, 2);
+    EXPECT_TRUE(_logger->Contains(LogLevel::Info, "Quit was chosen in the pause menu"));
+    ExpectCleanUp();
+  }
+
+  TEST_F(PauseMenuTest, DoesNotShowTheMenuAgainWhileTheKeyThatClosedItIsStillHeld)
+  {
+    const auto runtime = CreateWithMenu(5);
+    _press = [this](const int frame)
+    {
+      // pressed, and the menu closes itself on the second press, which it
+      // takes: the game does not see it. Held on, let go, pressed again
+      if (frame == 1) { PressPause(); }
+      if (frame == 2 || frame == 3) { _raw.SetAction(Action::Pause); }
+      if (frame == 5) { PressPause(); }
+    };
+
+    EXPECT_CALL(_ui_system, Load(menu)).WillOnce(Return(7)).WillOnce(Return(8));
+    EXPECT_CALL(_ui_system, IsShown(7)).WillOnce(Return(false));
+    EXPECT_CALL(_ui_system, IsShown(8)).WillRepeatedly(Return(true));
+    EXPECT_CALL(_world_system, SetPaused(_)).Times(AnyNumber());
+
+    runtime->Run();
+    ExpectCleanUp();
+  }
+
+  TEST_F(PauseMenuTest, LeavesAPressAloneThatTheUserInterfaceUsed)
+  {
+    const auto runtime = CreateWithMenu(2);
+    _press = [this](const int frame) { if (frame == 1) { _raw.SetAction(Action::Pause); } };
+
+    EXPECT_CALL(_ui_system, Load(_)).Times(0);
+    EXPECT_CALL(_world_system, SetPaused(false)).Times(2);
+
+    runtime->Run();
+    ExpectCleanUp();
+  }
+
+  TEST_F(PauseMenuTest, SaysWhenTheMenuCannotBeShown)
+  {
+    const auto runtime = CreateWithMenu(2);
+    _press = [this](const int frame) { if (frame == 1) { PressPause(); } };
+
+    EXPECT_CALL(_ui_system, Load(menu)).WillOnce(Return(-1));
+    EXPECT_CALL(_world_system, SetPaused(false)).Times(2);
+
+    runtime->Run();
+
+    EXPECT_TRUE(_logger->Contains(LogLevel::Error, "The pause menu assets://ui/pause.ui.yml cannot be shown"));
     ExpectCleanUp();
   }
 

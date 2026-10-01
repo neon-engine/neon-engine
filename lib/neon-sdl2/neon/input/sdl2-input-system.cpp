@@ -164,6 +164,7 @@ namespace neon
       {
         if (event.motion.which == SDL_TOUCH_MOUSEID) { break; }
 
+        if (event.motion.xrel != 0 || event.motion.yrel != 0) { _device = InputDevice::KeyboardAndMouse; }
         _pointer_inside = true;
         _pointer_x = event.motion.x;
         _pointer_y = event.motion.y;
@@ -183,6 +184,7 @@ namespace neon
       {
         if (event.button.which == SDL_TOUCH_MOUSEID) { break; }
 
+        _device = InputDevice::KeyboardAndMouse;
         _pointer_inside = true;
         _pointer_x = event.button.x;
         _pointer_y = event.button.y;
@@ -213,6 +215,7 @@ namespace neon
         const bool is_down = event.type == SDL_KEYDOWN;
         const auto scancode = static_cast<std::size_t>(event.key.keysym.scancode);
         if (scancode < key_count) { _keys[scancode] = is_down; }
+        if (is_down) { _device = InputDevice::KeyboardAndMouse; }
 
         if (const Key key = KeyOf(event.key.keysym); key != Key::Unknown)
         {
@@ -260,6 +263,19 @@ namespace neon
         break;
       }
 
+      case SDL_CONTROLLERBUTTONDOWN:
+      {
+        _device = InputDevice::Gamepad;
+        break;
+      }
+
+      case SDL_CONTROLLERAXISMOTION:
+      {
+        // a stick that rests near its middle says nothing
+        if (std::abs(static_cast<int>(event.caxis.value)) > stick_threshold) { _device = InputDevice::Gamepad; }
+        break;
+      }
+
       case SDL_CONTROLLERDEVICEADDED:
       {
         if (_controller == nullptr)
@@ -300,6 +316,7 @@ namespace neon
 
     while (SDL_PollEvent(&event)) { HandleEvent(event); }
 
+    _input_state.SetDevice(_device);
     ReadKeyboard();
     ReadPointer();
     ReadController();
@@ -311,10 +328,20 @@ namespace neon
   {
     const auto &state = _keys;
 
-    // we want to be able to handle input events contextually, will create an input handler later on
+    // Escape cancels in a user interface and asks the game to pause. With
+    // shift it closes the window whatever the game does, for when the game
+    // has stopped listening.
     if (state[SDL_SCANCODE_ESCAPE])
     {
-      _context->SignalToClose();
+      if (state[SDL_SCANCODE_LSHIFT] || state[SDL_SCANCODE_RSHIFT])
+      {
+        _logger->Info("Shift and escape were pressed, closing the window");
+        _context->SignalToClose();
+      } else
+      {
+        _input_state.SetKeyboardAction(Action::Ui_Cancel);
+        _input_state.SetKeyboardAction(Action::Pause);
+      }
     }
 
     if (state[SDL_SCANCODE_W])
@@ -413,6 +440,7 @@ namespace neon
     // named by where the button is, which is the lower one and the right one
     if (pressed(SDL_CONTROLLER_BUTTON_A)) { _input_state.SetAction(Action::Ui_Accept); }
     if (pressed(SDL_CONTROLLER_BUTTON_B)) { _input_state.SetAction(Action::Ui_Cancel); }
+    if (pressed(SDL_CONTROLLER_BUTTON_START)) { _input_state.SetAction(Action::Pause); }
 
     // the right stick scrolls what is under the focus
     _input_state.SetRightStick(

@@ -13,4 +13,5 @@ neon_add_application_test(runtime-headless NeonRuntime run.cmake
         user-interface
         user-interface-of-a-scene
         user-interface-that-is-missing
+        pause-menu
 )

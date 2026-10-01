@@ -677,6 +677,17 @@ namespace neon
     const InputState &input = _input->GetInputState();
     const bool modal = HasModal();
 
+    // What the player used last, for the hints a file shows: a controller
+    // is not told to click. Said as values every file sees.
+    const bool uses_gamepad = input.GetDevice() == InputDevice::Gamepad;
+    if (!_has_device || uses_gamepad != _uses_gamepad)
+    {
+      _has_device = true;
+      _uses_gamepad = uses_gamepad;
+      _values.Set("input_device", UiValue::Text(uses_gamepad ? "gamepad" : "keyboard"));
+      _values.Set("gamepad", UiValue::Flag(uses_gamepad));
+    }
+
     if (_documents.empty())
     {
       _gate.SetNeedsPointer(false);
@@ -696,8 +707,9 @@ namespace neon
       return;
     }
 
-    // the cursor is shown before the pointer is asked for
-    _gate.SetNeedsPointer(modal);
+    // the cursor is shown before the pointer is asked for, unless the
+    // player holds a controller, which has no use for it
+    _gate.SetNeedsPointer(modal && !uses_gamepad);
 
     // Time is what the user interface was told, and what the window says
     // without that. It runs by itself, whatever the world does.

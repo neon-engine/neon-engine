@@ -11,6 +11,7 @@
 namespace
 {
   using neon::Action;
+  using neon::Axis;
   using neon::Headless_InputSystem;
   using neon::InputScript;
   using neon::InputState;
@@ -207,6 +208,37 @@ namespace
     EXPECT_EQ(Frame(3).GetRightStick().y, 0.0);
   }
 
+  TEST_F(InputScriptTest, SaysWhichDeviceIsUsedFromAFrameOn)
+  {
+    Read("2: device gamepad\n4: device keyboard");
+
+    EXPECT_EQ(Frame(1).GetDevice(), neon::InputDevice::KeyboardAndMouse);
+    EXPECT_EQ(Frame(2).GetDevice(), neon::InputDevice::Gamepad);
+    EXPECT_EQ(Frame(3).GetDevice(), neon::InputDevice::Gamepad);
+    EXPECT_EQ(Frame(4).GetDevice(), neon::InputDevice::KeyboardAndMouse);
+  }
+
+  TEST_F(InputScriptTest, TurnsTheViewWithTheMouseInOneFrame)
+  {
+    Read("2: look 12 -3");
+
+    EXPECT_FALSE(Frame(1)[Action::Mouse]);
+
+    const InputState looked = Frame(2);
+    EXPECT_TRUE(looked[Action::Mouse]);
+    EXPECT_EQ(looked[Axis::Mouse].x, 12.0);
+    EXPECT_EQ(looked[Axis::Mouse].y, -3.0);
+
+    EXPECT_FALSE(Frame(3)[Action::Mouse]);
+  }
+
+  TEST_F(InputScriptTest, RefusesADeviceItDoesNotKnow)
+  {
+    EXPECT_EQ(
+      ProblemsOf("1: device wheel"),
+      std::vector<std::string>{"script:1: 'device' is followed by 'wheel', where keyboard or gamepad was expected"});
+  }
+
   TEST_F(InputScriptTest, TakesALineWithoutAFrameForTheFrameBefore)
   {
     Read("3: pointer 1 2\nclick\ntext a");
@@ -250,7 +282,7 @@ namespace
       ElementsAre(
         "script:1: 'pointer' is followed by 'here', where two numbers or none was expected",
         "script:2: 'jump' is not known. Known are: pointer, down, up, click, key, text, compose, wheel, hold, "
-        "stick",
+        "stick, device, look",
         "script:4: the frame is '0', where a whole number above 0 was expected",
         "script:5: 'key' is followed by 'f13', where the name of a key was expected, such as left, enter, or a",
         "script:6: 'hyper' is held with the key, where shift, control, alt, super, shortcut, or word was "

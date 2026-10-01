@@ -42,6 +42,7 @@ namespace neon
     FixedClock _fixed_clock;
 
     bool _initialized = false;
+    bool _paused = false;
 
     void RegisterComponents() const;
 
@@ -69,6 +70,10 @@ namespace neon
     void Initialize() override;
 
     void Update() override;
+
+    void SetPaused(bool paused) override;
+
+    [[nodiscard]] bool IsPaused() const override;
 
     void CleanUp() override;
   };

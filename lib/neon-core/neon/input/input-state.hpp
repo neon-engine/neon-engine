@@ -34,6 +34,10 @@ namespace neon
     Ui_Accept,
     Ui_Cancel,
 
+    /// Asks for the game to be paused: escape, or the start button of a
+    /// controller. What it does is up to the application.
+    Pause,
+
     /// The first button of the pointer, for as long as it is held down.
     Pointer_Primary,
 
@@ -49,6 +53,14 @@ namespace neon
     // used only to keep track of the total count of axis
     // ReSharper disable once CppInconsistentNaming
     COUNT
+  };
+
+  /// What the player used last. A user interface shows the hints and the
+  /// cursor that suit it.
+  enum class InputDevice
+  {
+    KeyboardAndMouse = 0,
+    Gamepad
   };
 
   struct AxisState
@@ -97,6 +109,9 @@ namespace neon
     AxisState _wheel;
     bool _wheel_is_precise = false;
     AxisState _right_stick;
+
+    // kept from frame to frame, as where the pointer is
+    InputDevice _device = InputDevice::KeyboardAndMouse;
 
   public:
     explicit InputState(const std::shared_ptr<Logger> &logger)
@@ -266,10 +281,22 @@ namespace neon
       return _pointer;
     }
 
+    /// What the player used last. It stays what it was until another
+    /// device is used.
+    void SetDevice(const InputDevice device)
+    {
+      _device = device;
+    }
+
+    [[nodiscard]] InputDevice GetDevice() const
+    {
+      return _device;
+    }
+
     /// Releases every action, and forgets what happened in the frame: the
     /// keys, the text, and the wheel. Where the pointer is does not change
-    /// by itself, so it is kept, and so is what an input method is putting
-    /// together.
+    /// by itself, so it is kept, and so are what an input method is putting
+    /// together and the device that was used last.
     void Reset()
     {
       _action_map.reset();

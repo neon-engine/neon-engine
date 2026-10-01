@@ -81,9 +81,29 @@ namespace neon
     _input_context->CenterAndHideCursor();
   }
 
+  void EntityWorld::SetPaused(const bool paused)
+  {
+    _paused = paused;
+  }
+
+  bool EntityWorld::IsPaused() const
+  {
+    return _paused;
+  }
+
   void EntityWorld::Update()
   {
     const auto delta_time = _window_context->GetDeltaTime();
+
+    if (_paused)
+    {
+      // nothing moves and no time passes, not for the steps either, and
+      // what is there is drawn as it was
+      for (const auto &system : _placing) { system->Update(*_store, 0.0); }
+      for (const auto &system : _after) { system->Update(*_store, 0.0); }
+      _render_pipeline->RenderFrame();
+      return;
+    }
 
     // the steps come first, so that the frame sees what they led to
     const auto steps = _fixed_clock.Advance(delta_time);

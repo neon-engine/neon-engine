@@ -79,6 +79,13 @@ namespace neon
     /// Stops showing what Load() returned.
     virtual void Unload(int document) = 0;
 
+    /// Whether a file that Load() returned is still shown. It is not once
+    /// it was unloaded, by the game or by cancel.
+    [[nodiscard]] virtual bool IsShown(const int document) const
+    {
+      return false;
+    }
+
     // What follows has a body that does nothing, so that what stands in
     // for a user interface in a test has to know of none of it.
 

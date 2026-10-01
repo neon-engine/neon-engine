@@ -37,6 +37,15 @@ namespace neon
 
     virtual void CleanUp() = 0;
 
+    /// Holds the world still while a menu is shown: nothing moves and no
+    /// time passes for it, and it is still drawn. It goes on with false.
+    virtual void SetPaused(bool paused) {}
+
+    [[nodiscard]] virtual bool IsPaused() const
+    {
+      return false;
+    }
+
     virtual void LoadScene(const std::string &file_path)
     {
     }

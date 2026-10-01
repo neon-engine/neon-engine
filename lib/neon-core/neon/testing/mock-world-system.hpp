@@ -25,6 +25,8 @@ namespace neon::testing
 
     MOCK_METHOD(void, Update, (), (override));
 
+    MOCK_METHOD(void, SetPaused, (bool paused), (override));
+
     MOCK_METHOD(void, CleanUp, (), (override));
   };
 } // neon::testing

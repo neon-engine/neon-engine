@@ -47,6 +47,9 @@ namespace neon
     TextComposition _composition;
     bool _text_input_active = false;
 
+    // what the player touched last, told by the events
+    InputDevice _device = InputDevice::KeyboardAndMouse;
+
     void ReadKeyboard();
 
     void ReadPointer();

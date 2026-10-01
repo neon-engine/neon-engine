@@ -54,6 +54,11 @@ struct SettingsConfig
   /// of what the scene shows. Empty shows none.
   std::string ui_path;
 
+  /// Virtual path of the menu that is shown when the player pauses, with
+  /// escape or the start button of a controller. The world stands still
+  /// while it is shown. Empty shows none, and pause does nothing.
+  std::string pause_menu;
+
   /// Pixels that are drawn for each point of the window, for a run without
   /// a window. It stands in for the density of a display: 2 draws what a
   /// Retina display would show. With a window the density is that of the

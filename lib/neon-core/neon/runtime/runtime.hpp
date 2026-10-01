@@ -28,6 +28,16 @@ namespace neon
     UiSystem *_ui_system = nullptr;
     std::shared_ptr<Logger> _logger;
 
+    // the pause menu while it is shown, and whether pause was held in the
+    // frame before, to tell when it is pressed
+    int _pause_document = -1;
+    bool _pause_was_down = false;
+
+    /// Shows the pause menu when pause is pressed, takes it away when
+    /// resume is chosen, closes the window on quit, and holds the world
+    /// still while the menu is shown.
+    void UpdatePauseMenu();
+
     Runtime(
       const SettingsConfig &settings_config,
       WindowSystem *window_system,

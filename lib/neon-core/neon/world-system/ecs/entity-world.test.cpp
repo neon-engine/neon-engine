@@ -210,6 +210,31 @@ namespace
     _world.Initialize();
   }
 
+  TEST_F(EntityWorldTest, IsNotPausedToBeginWith)
+  {
+    EXPECT_FALSE(_world.IsPaused());
+  }
+
+  TEST_F(EntityWorldTest, HoldsTheSystemsOfTheGameStillWhilePausedAndStillDraws)
+  {
+    _world.AddSystem(std::make_unique<RecordingSystem>("game", &_calls));
+    _world.Initialize();
+    _calls.clear();
+
+    // drawn while paused, and drawn again afterwards
+    EXPECT_CALL(_pipeline, RenderFrame()).Times(2);
+
+    _world.SetPaused(true);
+    EXPECT_TRUE(_world.IsPaused());
+    _world.Update();
+
+    EXPECT_TRUE(_calls.empty()) << ::testing::PrintToString(_calls);
+
+    _world.SetPaused(false);
+    _world.Update();
+    EXPECT_EQ(_calls, std::vector<std::string>{"game updated"});
+  }
+
   TEST_F(EntityWorldTest, HidesTheCursorWhenTheWorldIsThere)
   {
     EXPECT_CALL(_input, CenterAndHideCursor()).Times(1);

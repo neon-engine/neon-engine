@@ -57,6 +57,7 @@ namespace neon
 
   ComponentFormat UiSurfaceFormat()
   {
+
     return ComponentFormat::Of<UiSurfaceView>(
       UiSurfaceLoading::kComponent_Name,
       [](const DataReader &reader, UiSurfaceView &view)
@@ -96,6 +97,14 @@ namespace neon
           }
         }
 
+        if (reader.Read("reach", view.reach) && view.reach < 0.0f)
+        {
+          reader.Report(*reader.ReadValue("reach"), std::format(
+                          "'reach' of {} is {}, where a number of 0 or above was expected",
+                          reader.GetWhere(), view.reach));
+          view.reach = UiSurfaceView{}.reach;
+        }
+
         if (reader.Read("scale", view.scale) && view.scale <= 0.0f)
         {
           reader.Report(*reader.ReadValue("scale"), std::format(
@@ -120,6 +129,7 @@ namespace neon
         }
 
         if (view.scale != standard.scale) { map.Set("scale", DataValue::Number(view.scale)); }
+        if (view.reach != standard.reach) { map.Set("reach", DataValue::Number(view.reach)); }
       });
   }
 } // neon

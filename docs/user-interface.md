@@ -1134,9 +1134,26 @@ knows of the other.
 | A modal file on the window | Takes the input away from the game and from the files below it on the window. A surface in the world is not held back by it |
 | A modal file on a surface in the world | Takes nothing away from the game |
 
-Where the player points on a screen in the world is found by casting a ray
-at the model that shows it, which hands over the place on its texture. That
-is the work of the physics, and is not part of this.
+### Pointing at a screen in the world
+
+`UiSurfacePointing` is the system that finds where the player points. A
+ray starts at the camera that draws the window and goes where it looks,
+which is where the dot in the middle of the HUD is. A screen is the square
+of 1 by 1 of its entity, facing +Z as `quad.obj` does, so the ray meets it
+by the entity's transform alone and needs no collider. The nearest screen
+the ray hits from its front, within the `reach` of its `UiSurface`, gets
+the pointer: `SetPointerUv` with the button of the pointer or accept as the
+press. A screen with a `reach` of 0 is pointed at from anywhere.
+
+| | |
+|---|---|
+| `reach` of `UiSurface` | How near the camera has to be, in units of the world. 3 unless the scene says otherwise |
+| The flag `pointing` | Set by the system on the window's values while a screen is pointed at. The HUD turns its dot into a ring with `hidden: "{!pointing}"` |
+| The keys and the controller | Stay with the window. A controller presses with accept, which is the press of the pointer on the screen, so nothing on the screen needs the focus |
+
+`NeonRuntime` adds the system after `UiSurfaceLoading`, with the input as
+the game sees it. The surface demo's terminal shows it: walk up to the
+monitor, look at Unlock, press.
 
 ### How surfaces are drawn
 
@@ -1374,6 +1391,7 @@ ui.SetFlag("paused", true);
 | `Ui_Up`, `Ui_Right`, `Ui_Down`, `Ui_Left` | Arrow keys | Pad, left stick |
 | `Ui_Accept` | Return, space | The lower button |
 | `Ui_Cancel` | Backspace, escape | The right button |
+| `Pause` | Escape | Start. See [the pause menu](#the-pause-menu) |
 | `Pointer_Primary` | | The first button of the mouse |
 
 Something has the focus when an element writes `autofocus: true`, when a
@@ -1381,6 +1399,27 @@ file is modal, when the pointer presses an element that takes the focus,
 when a direction or tab is pressed, or when the game calls `Focus(name)`.
 The cursor takes the shape `cursor` of what it is over, and the window is
 told when it changes.
+
+### The pause menu
+
+`NeonRuntime` names a file in its settings, `assets://ui/pause.ui.yml`, and
+the runtime shows it when `Pause` is pressed and the user interface did not
+use the press. The file is modal with `cancel: close`, so escape or the
+right button of a controller take it away again, and so does its button
+`resume`; its button `quit` closes the window. While it is shown the world
+stands still: no system of the game runs, no time passes for the physics,
+and what is there is drawn as it was. A key that closed the menu and is
+still held does not open it again. Shift and escape close the window
+whatever the game does, for when the game has stopped listening.
+
+### Which device the player uses
+
+The user interface sets two values on the window from what the player
+touched last, so that a file shows the hints that suit it: `input_device`
+is `keyboard` or `gamepad`, and `gamepad` is the flag of it. The pause menu
+hides one of two hint labels with `hidden: "{gamepad}"` and
+`hidden: "{!gamepad}"`. While a controller is used the cursor stays hidden
+in a modal file. An input script says `device gamepad` to try it.
 
 ### What is left for the game
 
@@ -1818,7 +1857,7 @@ anything changed; drawing only what changed is left for later.
 | Localisation | Text by key, and fonts for other scripts |
 | Rich text | Several styles in one text |
 | Surfaces that are drawn when something changed | Every surface is drawn in every frame. What decides whether a user interface has changed is the work of another branch |
-| A ray that finds where the player points on a screen in the world | The physics. It calls `SetPointerUv` |
+| A ray that finds where the player points on a screen in the world | Done, without the physics: the ray meets the square of the entity. See [pointing](#pointing-at-a-screen-in-the-world) |
 | Atlases of TexturePacker and Aseprite | See [atlases](#atlases) |
 | `filter` and `backdrop_filter` | Both need what is behind an element, or the element itself, as an image of its own. Render targets are what they would be built from |
 | Opacity of an element with what is inside it as one picture | The same |

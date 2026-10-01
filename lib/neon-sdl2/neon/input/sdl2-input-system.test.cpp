@@ -141,11 +141,68 @@ namespace
     EXPECT_TRUE(Frame()[Action::Ui_Cancel]);
   }
 
-  TEST_F(SDL2InputSystemTest, TellsTheWindowToCloseOnEscape)
+  TEST_F(SDL2InputSystemTest, CancelsAndAsksToPauseOnEscape)
   {
     PushKey(true, SDL_SCANCODE_ESCAPE);
-    Frame();
+    const InputState &state = Frame();
+
+    EXPECT_TRUE(state[Action::Ui_Cancel]);
+    EXPECT_TRUE(state[Action::Pause]);
+    EXPECT_FALSE(state.IsHeldByOtherThanKeyboard(Action::Pause));
+    EXPECT_FALSE(_context.was_told_to_close);
+  }
+
+  TEST_F(SDL2InputSystemTest, TellsTheWindowToCloseOnShiftAndEscape)
+  {
+    PushKey(true, SDL_SCANCODE_LSHIFT, KMOD_LSHIFT);
+    PushKey(true, SDL_SCANCODE_ESCAPE, KMOD_LSHIFT);
+    const InputState &state = Frame();
+
     EXPECT_TRUE(_context.was_told_to_close);
+    EXPECT_FALSE(state[Action::Pause]);
+  }
+
+  TEST_F(SDL2InputSystemTest, StartsWithTheKeyboardAndTheMouseAsTheDevice)
+  {
+    EXPECT_EQ(Frame().GetDevice(), neon::InputDevice::KeyboardAndMouse);
+  }
+
+  TEST_F(SDL2InputSystemTest, TellsWhenAControllerWasUsedLastAndWhenTheMouseWas)
+  {
+    SDL_Event button{};
+    button.type = SDL_CONTROLLERBUTTONDOWN;
+    button.cbutton.button = SDL_CONTROLLER_BUTTON_A;
+    Push(button);
+    EXPECT_EQ(Frame().GetDevice(), neon::InputDevice::Gamepad);
+
+    // it stays until another device is used
+    EXPECT_EQ(Frame().GetDevice(), neon::InputDevice::Gamepad);
+
+    SDL_Event motion{};
+    motion.type = SDL_MOUSEMOTION;
+    motion.motion.xrel = 3;
+    Push(motion);
+    EXPECT_EQ(Frame().GetDevice(), neon::InputDevice::KeyboardAndMouse);
+
+    SDL_Event axis{};
+    axis.type = SDL_CONTROLLERAXISMOTION;
+    axis.caxis.axis = SDL_CONTROLLER_AXIS_LEFTX;
+    axis.caxis.value = 20000;
+    Push(axis);
+    EXPECT_EQ(Frame().GetDevice(), neon::InputDevice::Gamepad);
+
+    PushKey(true, SDL_SCANCODE_W);
+    EXPECT_EQ(Frame().GetDevice(), neon::InputDevice::KeyboardAndMouse);
+  }
+
+  TEST_F(SDL2InputSystemTest, LeavesTheDeviceAloneForAStickThatRests)
+  {
+    SDL_Event axis{};
+    axis.type = SDL_CONTROLLERAXISMOTION;
+    axis.caxis.axis = SDL_CONTROLLER_AXIS_LEFTX;
+    axis.caxis.value = 500;
+    Push(axis);
+    EXPECT_EQ(Frame().GetDevice(), neon::InputDevice::KeyboardAndMouse);
   }
 
   TEST_F(SDL2InputSystemTest, TellsTheWindowToCloseWhenSdlQuits)

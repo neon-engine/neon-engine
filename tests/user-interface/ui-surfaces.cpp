@@ -1074,7 +1074,7 @@ namespace
         std::string("assets://scenes/test.scene.yml:7: 'scale' of UiSurface of entity 'monitor' is 0, where a "
           "number above 0 was expected"),
         std::string("assets://scenes/test.scene.yml:8: 'colour' is not known to UiSurface of entity 'monitor'. "
-          "Known are: ui, name, size, scale")
+          "Known are: ui, name, size, reach, scale")
       })) << _logger->Messages(LogLevel::Error);
   }
 }

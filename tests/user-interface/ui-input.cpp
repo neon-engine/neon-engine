@@ -868,6 +868,51 @@ namespace
     Frame();
   }
 
+  TEST_F(UiInputTest, TheCursorStaysHiddenWhileAModalFileIsUsedWithAController)
+  {
+    EXPECT_CALL(_input, CenterAndHideCursor()).Times(1);
+    EXPECT_CALL(_input, ShowCursor()).Times(0);
+
+    _ui->GetGameInput()->CenterAndHideCursor();
+    _input.state.SetDevice(neon::InputDevice::Gamepad);
+    Frame();
+
+    const int menu = Show("modal: true\nroot:\n  type: button\n  name: resume\n  text: a\n");
+    ASSERT_GE(menu, 0);
+    Frame();
+    Frame();
+  }
+
+  TEST_F(UiInputTest, TheCursorComesOutWhenTheMouseIsTakenUpAgainInAModalFile)
+  {
+    {
+      ::testing::InSequence in_order;
+      EXPECT_CALL(_input, CenterAndHideCursor());
+      EXPECT_CALL(_input, ShowCursor());
+    }
+
+    _ui->GetGameInput()->CenterAndHideCursor();
+    _input.state.SetDevice(neon::InputDevice::Gamepad);
+    const int menu = Show("modal: true\nroot:\n  type: button\n  name: resume\n  text: a\n");
+    ASSERT_GE(menu, 0);
+    Frame();
+
+    _input.state.SetDevice(neon::InputDevice::KeyboardAndMouse);
+    Frame();
+  }
+
+  TEST_F(UiInputTest, SaysWhichDeviceThePlayerUsedLast)
+  {
+    Frame();
+    EXPECT_EQ(_ui->GetValue("input_device", nullptr), "keyboard");
+    EXPECT_EQ(_ui->GetValue("gamepad", nullptr), "false");
+
+    _input.state.SetDevice(neon::InputDevice::Gamepad);
+    Frame();
+    EXPECT_EQ(_ui->GetValue("input_device", nullptr), "gamepad");
+    EXPECT_EQ(_ui->GetValue("gamepad", nullptr), "true");
+  }
+
   TEST_F(UiInputTest, TheCursorStaysShownForAGameThatNeverHidIt)
   {
     EXPECT_CALL(_input, CenterAndHideCursor()).Times(0);

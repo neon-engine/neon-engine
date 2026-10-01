@@ -249,7 +249,7 @@ This writes `/some/where/frame.png`.
 | `--screenshot PATH` | Saves the last frame as a PNG image at a virtual path, under the exact name given |
 | `--screenshot-at N[,N...]` | Saves the listed frames instead of the last one. Frames are counted from 1 |
 | `--time-step SECONDS` | Every frame advances the game by this much time, whatever time the frame took |
-| `--input SCRIPT` | Input from a script in place of devices. A step is `frame: command`, with `;` or a line break between steps: `pointer X Y` or `pointer none`, `down`, `up`, `click`, `key NAME [shift] [control] [alt] [shortcut] [word]`, `text WHAT`, `compose WHAT`, `wheel X Y [precise]`, `hold ACTION [N]`, `stick X Y [N]`. A step of a frame that was skipped is applied in the next |
+| `--input SCRIPT` | Input from a script in place of devices. A step is `frame: command`, with `;` or a line break between steps: `pointer X Y` or `pointer none`, `down`, `up`, `click`, `key NAME [shift] [control] [alt] [shortcut] [word]`, `text WHAT`, `compose WHAT`, `wheel X Y [precise]`, `hold ACTION [N]`, `stick X Y [N]`, `device keyboard` or `device gamepad`, `look X Y`. A step of a frame that was skipped is applied in the next |
 | `--input-script PATH` | The same from a file at a virtual path |
 | `--window-size WxH` | The size in points |
 | `--render-scale N` | N pixels for each point, as a display of that density gives. `--window-size 1280x720 --render-scale 2` renders 2560 by 1440 |

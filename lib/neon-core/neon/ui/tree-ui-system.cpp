@@ -242,6 +242,11 @@ namespace neon
     _needs_paint = true;
   }
 
+  bool Tree_UiSystem::IsShown(const int document) const
+  {
+    return std::ranges::any_of(_documents, [document](const auto &each) { return each->id == document; });
+  }
+
   void Tree_UiSystem::SetNumber(const std::string &name, const double number)
   {
     _values.Set(name, UiValue::Number(number));

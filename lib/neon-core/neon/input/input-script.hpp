@@ -37,6 +37,8 @@ namespace neon
   /// | `wheel X Y [precise]` | Turns the wheel, in notches to the right and down |
   /// | `hold ACTION [FRAMES]` | Holds an action down, such as `ui-accept`, for one frame or more |
   /// | `stick X Y [FRAMES]` | Pushes the right stick, from -1 to 1 |
+  /// | `device keyboard` or `device gamepad` | What the player uses from now on, which a user interface shows hints for |
+  /// | `look X Y` | Moves the mouse by so much in one frame while the view is turned with it, to the right and down |
   class InputScript
   {
   public:
@@ -52,7 +54,9 @@ namespace neon
       Compose,
       Wheel,
       Hold,
-      Stick
+      Stick,
+      Device,
+      Look
     };
 
     struct Step
@@ -66,6 +70,7 @@ namespace neon
       std::string text;
       Action action = Action::Ui_Accept;
       std::size_t frames = 1;
+      InputDevice device = InputDevice::KeyboardAndMouse;
     };
 
   private:
@@ -89,6 +94,7 @@ namespace neon
     double _stick_y = 0.0;
     std::size_t _stick_until = 0;
     TextComposition _composition;
+    InputDevice _device = InputDevice::KeyboardAndMouse;
 
   public:
     /// Reads a script. `name` is what it is called in messages. Returns

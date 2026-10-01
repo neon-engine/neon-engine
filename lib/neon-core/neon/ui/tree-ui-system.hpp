@@ -133,6 +133,11 @@ namespace neon
     std::vector<UiElement *> _in_state;
     UiElement *_hovered = nullptr;
 
+    // what the player used last, as the values `input_device` and
+    // `gamepad` tell every file
+    bool _uses_gamepad = false;
+    bool _has_device = false;
+
     // what the frame was when it was last drawn
     int _painted_width = 0;
     int _painted_height = 0;
@@ -588,6 +593,8 @@ namespace neon
     int Load(const std::string &path) override;
 
     void Unload(int document) override;
+
+    [[nodiscard]] bool IsShown(int document) const override;
 
     void SetNumber(const std::string &name, double number) override;
 

@@ -8,4 +8,5 @@ neon_add_application_test(runtime-surfaces NeonRuntime run.cmake
         shaders-move-with-time
         surfaces-of-a-scene
         small-text
+        pointing-at-a-screen
 )

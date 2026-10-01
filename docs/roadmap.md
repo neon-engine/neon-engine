@@ -151,7 +151,7 @@ left:
 | WebP, colour emoji, variable fonts, fonts as several distances (#76) | Each needs a library, or a font to try it with |
 | `filter`, `backdrop_filter`, opacity of a group (#76) | Built from render targets, which are there |
 | Surfaces that are drawn when something changed | Every surface is drawn in every frame |
-| A ray that finds where the player points on a screen in the world (#73) | The physics |
+| A ray that finds where the player points on a screen in the world (#73) | Done. The ray meets the square of the entity, and needs no collider |
 
 This is separate from the interface of the editor, which uses Dear ImGui.
 Dear ImGui suits tools. It is not meant for what players see.

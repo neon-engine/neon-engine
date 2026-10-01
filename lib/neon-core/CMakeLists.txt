@@ -297,6 +297,8 @@ add_library(${TARGET} STATIC
         neon/world-system/ecs/components/ui-surface-view.hpp
         neon/world-system/ecs/systems/ui-surface-loading.cpp
         neon/world-system/ecs/systems/ui-surface-loading.hpp
+        neon/world-system/ecs/systems/ui-surface-pointing.cpp
+        neon/world-system/ecs/systems/ui-surface-pointing.hpp
 )
 
 target_include_directories(${TARGET}
@@ -399,6 +401,7 @@ neon_add_unit_test(${TARGET} neon/command-line/display-options.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/spectator-movement.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/transform-propagation.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/ui-view-loading.test.cpp)
+  neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/ui-surface-pointing.test.cpp)
   neon_add_unit_test(${TARGET} neon/image/image-pixels.test.cpp)
   neon_add_unit_test(${TARGET} neon/text/glyph-atlas.test.cpp)
   neon_add_unit_test(${TARGET} neon/text/shaped-text.test.cpp)

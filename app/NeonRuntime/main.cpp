@@ -32,6 +32,7 @@
 #include <neon/world-system/ecs/scene-file/ui-view-format.hpp>
 #include <neon/world-system/ecs/systems/ui-clock.hpp>
 #include <neon/world-system/ecs/systems/ui-surface-loading.hpp>
+#include <neon/world-system/ecs/systems/ui-surface-pointing.hpp>
 #include <neon/world-system/ecs/systems/ui-view-loading.hpp>
 #include <neon/world-system/flecs-entity-store.hpp>
 
@@ -68,6 +69,7 @@ int main(const int argc, char *argv[])
   auto settings_config = SettingsConfig{
     .width = 1920,
     .height = 1080,
+    .pause_menu = "assets://ui/pause.ui.yml",
     .selected_api = RenderingApi::Vulkan,
     .window_mode = WindowMode::Borderless
   };
@@ -251,6 +253,7 @@ int main(const int argc, char *argv[])
   world.AddSystem(std::make_unique<neon::UiViewLoading>(&ui_system));
   world.AddSystem(std::make_unique<neon::UiClock>(&ui_system));
   world.AddSystem(std::make_unique<neon::UiSurfaceLoading>(&ui_system));
+  world.AddSystem(std::make_unique<neon::UiSurfacePointing>(&ui_system, ui_system.GetGameInput()));
 
   // The physics. The world steps at a fixed rate, and the system that is
   // added here takes a step of the physics in each. Systems of a game are

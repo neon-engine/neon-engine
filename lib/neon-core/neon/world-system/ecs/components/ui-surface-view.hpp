@@ -32,6 +32,10 @@ namespace neon
     /// How much larger everything on the surface is drawn.
     float scale = 1.0f;
 
+    /// How near the player has to be to point at it, in units of the
+    /// world. 0 lets it be pointed at from anywhere.
+    float reach = 3.0f;
+
     /// What the user interface knows the surface and the file as once they
     /// are shown. -1 before that.
     int surface = -1;

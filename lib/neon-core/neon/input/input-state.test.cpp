@@ -30,6 +30,7 @@ namespace
     Action::Ui_Left,
     Action::Ui_Accept,
     Action::Ui_Cancel,
+    Action::Pause,
     Action::Pointer_Primary
   };
 
@@ -46,6 +47,19 @@ namespace
 
     EXPECT_EQ(_state[Axis::Mouse].x, 0.0);
     EXPECT_EQ(_state[Axis::Mouse].y, 0.0);
+  }
+
+  TEST_F(InputStateTest, StartsWithTheKeyboardAndTheMouseAsTheDevice)
+  {
+    EXPECT_EQ(_state.GetDevice(), neon::InputDevice::KeyboardAndMouse);
+  }
+
+  TEST_F(InputStateTest, KeepsTheDeviceThatWasUsedLastAcrossAReset)
+  {
+    _state.SetDevice(neon::InputDevice::Gamepad);
+    _state.Reset();
+
+    EXPECT_EQ(_state.GetDevice(), neon::InputDevice::Gamepad);
   }
 
   TEST_F(InputStateTest, KnowsEveryAction)

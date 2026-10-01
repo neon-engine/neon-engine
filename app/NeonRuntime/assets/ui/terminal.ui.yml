@@ -96,6 +96,9 @@ root:
           border_radius: 12
           background_color: "#2fd6c4"
           color: "#06141a"
+          # pointed at from the world, and pressed
+          hover: { background_color: "#7ff0e3" }
+          active: { background_color: "#1a9a8c", color: "#ffffff" }
         - type: button
           name: alarm
           text: Alarm
@@ -103,3 +106,5 @@ root:
           padding: "16 40"
           border_radius: 12
           background_color: "#bf616a"
+          hover: { background_color: "#d98b92" }
+          active: { background_color: "#8f3f47", color: "#ffffff" }

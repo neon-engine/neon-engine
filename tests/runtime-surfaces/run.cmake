@@ -28,6 +28,12 @@ elseif (CASE STREQUAL "surfaces-of-a-scene")
           --scene assets://scenes/surface-demo.scene.yml)
 elseif (CASE STREQUAL "small-text")
   run_headless(--frames 2 --output-dir shots --screenshot output://frame.png --ui assets://ui/text-sizes.ui.yml)
+elseif (CASE STREQUAL "pointing-at-a-screen")
+  # the player walks up to the terminal, looks at its Unlock button, and
+  # presses it
+  set(SCRIPT "1: hold l-up 15\n2: look -290 35\n40: hold pointer-primary 3")
+  run_headless(--output-dir shots --screenshot output://frame.png --screenshot-at 2,30,41
+          --scene assets://scenes/surface-demo.scene.yml --input "${SCRIPT}")
 else ()
   message(FATAL_ERROR "There is no case '${CASE}'")
 endif ()
@@ -84,4 +90,20 @@ elseif (CASE STREQUAL "surfaces-of-a-scene")
 elseif (CASE STREQUAL "small-text")
   expect_output("Loaded the font assets://fonts/inter/Inter-Regular.ttf")
   expect_image("shots/frame.png")
+elseif (CASE STREQUAL "pointing-at-a-screen")
+  expect_image("shots/frame-0002.png")
+  expect_image("shots/frame-0030.png")
+  expect_image("shots/frame-0041.png")
+
+  # the button is under the dot in the middle: it shows that it is pointed
+  # at, and then that it is pressed
+  file(SHA256 "${DIRECTORY}/shots/frame-0002.png" BEFORE)
+  file(SHA256 "${DIRECTORY}/shots/frame-0030.png" POINTED)
+  file(SHA256 "${DIRECTORY}/shots/frame-0041.png" PRESSED)
+  if (BEFORE STREQUAL POINTED)
+    fail("Expected looking at the terminal to change the frame")
+  endif ()
+  if (POINTED STREQUAL PRESSED)
+    fail("Expected pressing the button of the terminal to change the frame")
+  endif ()
 endif ()
