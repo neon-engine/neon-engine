@@ -24,6 +24,8 @@ add_library(${TARGET} STATIC
         neon/render/vk-render-target.hpp
         neon/render/vk-swapchain-sizing.cpp
         neon/render/vk-swapchain-sizing.hpp
+        neon/render/vk-culling.cpp
+        neon/render/vk-culling.hpp
         neon/render/vk-draw-order.cpp
         neon/render/vk-draw-order.hpp
         neon/render/vk-frame-stages.cpp
@@ -61,6 +63,7 @@ if (NEON_BUILD_TESTS)
   neon_add_unit_test(${TARGET} neon/render/vk-shader-values.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/vk-render-target.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/vk-swapchain-sizing.test.cpp)
+  neon_add_unit_test(${TARGET} neon/render/vk-culling.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/vk-draw-order.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/vk-frame-stages.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/vk-surface-format.test.cpp)

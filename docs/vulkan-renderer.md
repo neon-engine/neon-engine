@@ -124,7 +124,7 @@ what a screenshot shows is what a window would show.
 | Stage | Drawn into | What happens |
 |---|---|---|
 | Render targets | Each target, in the order they are drawn | Each goes through the stages below on its own: a camera that draws into a texture lights a scene in a scene image of the target, a user interface on a surface draws on top. A target that shows only a user interface has no scene image |
-| Scene | The scene image, `R16G16B16A16_SFLOAT`, and its depth | Opaque models as they come, then see-through ones from the farthest to the nearest, tested against depth but not writing it. Lighting and blending are in linear light |
+| Scene | The scene image, `R16G16B16A16_SFLOAT`, and its depth | Opaque models as they come, then see-through ones from the farthest to the nearest, tested against depth but not writing it. The back of every triangle is left out unless the material is double-sided. Lighting and blending are in linear light |
 | Resolve | The image that is shown, `R8G8B8A8_UNORM` | A triangle that covers it reads the scene image pixel by pixel, clamps it, and writes it in sRGB. The one place where light becomes the colours of a screen |
 | On top | The same image | What is drawn in two dimensions: user interfaces, blended in sRGB as CSS blends them |
 | Copy | The window, or a file | Byte for byte. The bytes are sRGB already |
@@ -133,6 +133,13 @@ The first model of a frame begins the scene, and the first triangle drawn in
 two dimensions resolves it. A model that comes after that would cover what is
 on top, and is left out with a warning. The runtime draws the world before
 its user interfaces, so this does not happen.
+
+Which side of a triangle is the front is part of a pipeline, and a model
+whose transform mirrors it turns its triangles round. Every material that
+is not double-sided has a second pipeline for that, with the other side as
+its front, and the draw picks it by the sign of the determinant of the
+model's transform. `VK_Culling` holds these rules, apart from the graphics
+card, so that they are tested.
 
 The resolve is where what changes how light looks on a screen goes. Light
 that bleeds around what is bright is added to the scene image just before
@@ -230,7 +237,6 @@ right before may want weaker `ambient` and `diffuse` values.
 | Limit | Detail |
 |---|---|
 | One frame at a time | The renderer waits for a frame to finish before starting the next. Simple and correct, but it leaves speed on the table |
-| The size is fixed at start | Resizing the window is not handled, which matches the rest of the engine |
 | Buffers live in memory the processor writes to | Fine for the sizes in use. Copying to memory owned by the graphics card is the next step if a profile asks for it |
 | No validation layers | They need the Vulkan SDK. See open questions |
 | Image decoding lives in the backend | stb_image is compiled into neon-vulkan. It belongs in neon-core, where a second renderer could share it |

@@ -199,7 +199,8 @@ namespace neon
     bool CreateDescriptors();
     bool CreateFrameBuffer(FrameBuffer &buffer, VkDeviceSize entry_size, uint32_t capacity) const;
     void DestroyFrameBuffer(FrameBuffer &buffer) const;
-    bool GetPipeline(const std::string &shader_path, AlphaMode alpha_mode, VkPipeline &pipeline);
+    bool GetPipeline(
+      const std::string &shader_path, AlphaMode alpha_mode, bool double_sided, bool mirrored, VkPipeline &pipeline);
 
     /// Draws the see-through models that were kept, from the farthest to
     /// the nearest, and forgets them.

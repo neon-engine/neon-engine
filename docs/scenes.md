@@ -90,7 +90,7 @@ the same.
 | `shader` | Virtual path of the shader, without an extension | None. It has to be written |
 | `textures` | A list of virtual paths | None |
 | `scale_textures` | Whether textures repeat as the entity grows | `false` |
-| `material` | `shininess`, `color` as `[red, green, blue]` or with alpha as a fourth, `use_textures`, and `alpha_mode` | `0`, white, `true`, `opaque` |
+| `material` | `shininess`, `color` as `[red, green, blue]` or with alpha as a fourth, `use_textures`, `alpha_mode`, and `double_sided` | `0`, white, `true`, `opaque`, `false` |
 
 `color` is written as a screen shows it, in sRGB, like the colours of an
 image. The first texture holds colours, the second how much each part of a
@@ -98,6 +98,14 @@ surface shines. `alpha_mode` is `opaque`, which covers what is behind, or
 `blend`, where the alpha of the colour, or of the texture, lets what is
 behind show through. See-through surfaces are drawn after the opaque ones,
 from the farthest to the nearest.
+
+The back of every triangle is left out, since most surfaces are seen from
+one side only: the outside of a closed model. The front is the side whose
+corners go round anticlockwise, as models are made. `double_sided: true`
+draws the back as well, for a leaf, a flag, or a pane of glass that is seen
+from both sides. As `doubleSided` in the materials of glTF. An entity whose
+`scale` mirrors it, with one or three of its axes below 0, is still drawn
+from the front.
 
 **Camera**
 

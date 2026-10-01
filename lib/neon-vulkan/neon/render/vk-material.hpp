@@ -31,6 +31,7 @@ namespace neon
     std::shared_ptr<Logger> _logger;
 
     VkPipeline _pipeline = VK_NULL_HANDLE;
+    VkPipeline _mirrored_pipeline = VK_NULL_HANDLE;
     VkDescriptorSet _descriptor_set = VK_NULL_HANDLE;
 
     static glm::vec2 GetMaxPositiveComponents(const glm::vec3 &vector);
@@ -92,10 +93,20 @@ namespace neon
     [[nodiscard]] AlphaMode GetAlphaMode() const { return _material_info.alpha_mode; }
     [[nodiscard]] const std::vector<VK_Texture> &Textures() const { return _textures; }
 
-    [[nodiscard]] VkPipeline Pipeline() const { return _pipeline; }
+    /// The pipeline that draws an object with this material. A mirrored
+    /// object, one whose transform turns it inside out, takes the other one,
+    /// which knows that its triangles go round the other way.
+    [[nodiscard]] VkPipeline Pipeline(const bool mirrored = false) const
+    {
+      return mirrored ? _mirrored_pipeline : _pipeline;
+    }
     [[nodiscard]] VkDescriptorSet DescriptorSet() const { return _descriptor_set; }
 
-    void SetPipeline(const VkPipeline pipeline) { _pipeline = pipeline; }
+    void SetPipelines(const VkPipeline pipeline, const VkPipeline mirrored_pipeline)
+    {
+      _pipeline = pipeline;
+      _mirrored_pipeline = mirrored_pipeline;
+    }
     void SetDescriptorSet(const VkDescriptorSet descriptor_set) { _descriptor_set = descriptor_set; }
   };
 } // neon

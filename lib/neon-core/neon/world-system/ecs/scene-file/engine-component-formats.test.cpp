@@ -328,6 +328,24 @@ namespace
     EXPECT_THAT(_errors, IsEmpty());
   }
 
+  TEST_F(EngineComponentFormatsTest, AMaterialDrawsOneSideUnlessItSaysItIsDoubleSided)
+  {
+    auto map = DataValue::Map();
+    map.Set("model", DataValue::Text("m"));
+    map.Set("shader", DataValue::Text("s"));
+
+    Read("Renderable", map);
+    EXPECT_FALSE(_store.Get<Renderable>(_entity)->render_info.material_info.double_sided);
+
+    auto material = DataValue::Map();
+    material.Set("double_sided", DataValue::Bool(true));
+    map.Set("material", material);
+
+    Read("Renderable", map);
+    EXPECT_TRUE(_store.Get<Renderable>(_entity)->render_info.material_info.double_sided);
+    EXPECT_THAT(_errors, IsEmpty());
+  }
+
   TEST_F(EngineComponentFormatsTest, ARenderableWithoutAModelIsReported)
   {
     auto map = DataValue::Map();
@@ -361,7 +379,7 @@ namespace
 
     EXPECT_THAT(_errors, ElementsAre(
                   "scene.yml: 'shine' is not known to 'material' of Renderable of entity 'thing'. "
-                  "Known are: shininess, color, use_textures, alpha_mode"));
+                  "Known are: shininess, color, use_textures, alpha_mode, double_sided"));
   }
 
   TEST_F(EngineComponentFormatsTest, ATextureThatIsNotTextIsReported)

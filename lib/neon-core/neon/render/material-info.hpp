@@ -22,6 +22,13 @@ namespace neon
     Color color;
     bool use_textures = true;
     AlphaMode alpha_mode = AlphaMode::Opaque;
+
+    /// Whether both sides of every triangle are drawn. Most surfaces are
+    /// seen from one side only, the outside of a closed model, so the back
+    /// is left out and the graphics card skips it. A leaf, a flag, or a sheet
+    /// of glass that is seen from both sides draws both. As `doubleSided` in
+    /// the materials of glTF.
+    bool double_sided = false;
   };
 } // neon
 

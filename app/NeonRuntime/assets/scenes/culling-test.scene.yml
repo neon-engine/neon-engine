@@ -1,0 +1,80 @@
+# A scene for checking which side of a surface is drawn, which tests read
+# pixel by pixel:
+#
+#   NeonRuntime --scene assets://scenes/culling-test.scene.yml
+#
+# The back of a triangle is left out unless the material is double-sided.
+# A transform that scales one axis below 0 mirrors what it places, which
+# turns its triangles round; it is still drawn from the front. Every quad
+# is in a plain colour, and what is left out shows the black behind it.
+
+scene: culling-test
+version: 1
+
+entities:
+  - name: camera
+    components:
+      Transform:
+        position: [0, 0, 5]
+      Camera: {}
+
+  # seen from the front, so drawn
+  - name: front
+    components:
+      Transform:
+        position: [-3, 0.8, 0]
+      Renderable:
+        model: assets://models/quad.obj
+        shader: assets://shaders/color
+        material:
+          color: [0, 1, 0]
+
+  # seen from the back, so left out
+  - name: back
+    components:
+      Transform:
+        position: [-1, 0.8, 0]
+        rotation: [0, 180, 0]
+      Renderable:
+        model: assets://models/quad.obj
+        shader: assets://shaders/color
+        material:
+          color: [1, 0, 0]
+
+  # seen from the back, and drawn, since the material is double-sided
+  - name: double-sided
+    components:
+      Transform:
+        position: [1, 0.8, 0]
+        rotation: [0, 180, 0]
+      Renderable:
+        model: assets://models/quad.obj
+        shader: assets://shaders/color
+        material:
+          color: [0, 0, 1]
+          double_sided: true
+
+  # mirrored and seen from the front, so drawn
+  - name: mirrored
+    components:
+      Transform:
+        position: [3, 0.8, 0]
+        scale: [-1, 1, 1]
+      Renderable:
+        model: assets://models/quad.obj
+        shader: assets://shaders/color
+        material:
+          color: [1, 1, 0]
+
+  # mirrored and seen from the back, so left out
+  - name: mirrored-back
+    components:
+      Transform:
+        position: [0, -1.2, 0]
+        rotation: [0, 180, 0]
+        scale: [-1, 1, 1]
+      Renderable:
+        model: assets://models/quad.obj
+        shader: assets://shaders/color
+        material:
+          color: [1, 0, 1]

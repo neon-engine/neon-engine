@@ -9,6 +9,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <neon/common/color-space.hpp>
 
+#include "vk-culling.hpp"
 #include "vk-surface-format.hpp"
 
 // kept private to this file, so that another library can carry its own copy
@@ -498,12 +499,18 @@ namespace neon
     return true;
   }
 
-  bool VK_RenderSystem::GetPipeline(const std::string &shader_path, const AlphaMode alpha_mode, VkPipeline &pipeline)
+  bool VK_RenderSystem::GetPipeline(
+    const std::string &shader_path,
+    const AlphaMode alpha_mode,
+    const bool double_sided,
+    const bool mirrored,
+    VkPipeline &pipeline)
   {
     const bool blends = alpha_mode == AlphaMode::Blend;
 
-    // materials that name the same shader and cover alike share a pipeline
-    const std::string key = blends ? shader_path + " blended" : shader_path;
+    // materials that name the same shader, and cover and are culled alike,
+    // share a pipeline
+    const std::string key = VK_Culling::PipelineKey(shader_path, alpha_mode, double_sided, mirrored);
     if (const auto existing = _pipelines.find(key); existing != _pipelines.end())
     {
       pipeline = existing->second.pipeline;
@@ -548,12 +555,13 @@ namespace neon
     viewport.viewportCount = 1;
     viewport.scissorCount = 1;
 
-    // both sides of a triangle are drawn
+    // the back of a triangle is left out, unless the material is drawn
+    // from both sides
     VkPipelineRasterizationStateCreateInfo rasterization{};
     rasterization.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
     rasterization.polygonMode = VK_POLYGON_MODE_FILL;
-    rasterization.cullMode = VK_CULL_MODE_NONE;
-    rasterization.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+    rasterization.cullMode = VK_Culling::CullModeFor(double_sided);
+    rasterization.frontFace = VK_Culling::FrontFaceFor(mirrored);
     rasterization.lineWidth = 1.0f;
 
     VkPipelineMultisampleStateCreateInfo multisample{};
@@ -1266,9 +1274,15 @@ namespace neon
       return FindSurface(name, texture);
     });
 
+    // a mirrored object turns its triangles round, and is drawn with the
+    // opposite front
+    const MaterialInfo &material_info = render_info.material_info;
     VkPipeline pipeline = VK_NULL_HANDLE;
+    VkPipeline mirrored_pipeline = VK_NULL_HANDLE;
     if (!material.Initialize() ||
-        !GetPipeline(render_info.shader_path, render_info.material_info.alpha_mode, pipeline) ||
+        !GetPipeline(render_info.shader_path, material_info.alpha_mode, material_info.double_sided, false, pipeline) ||
+        !GetPipeline(
+          render_info.shader_path, material_info.alpha_mode, material_info.double_sided, true, mirrored_pipeline) ||
         !CreateDescriptorSet(material))
     {
       _logger->Error("Could not initialize material with shader {}", render_info.shader_path);
@@ -1276,7 +1290,7 @@ namespace neon
       material.CleanUp();
       return -1;
     }
-    material.SetPipeline(pipeline);
+    material.SetPipelines(pipeline, mirrored_pipeline);
 
     const auto model_id = _model_refs.Add(model);
     const auto material_id = _material_refs.Add(material);
@@ -1442,6 +1456,7 @@ namespace neon
 
     const glm::mat4 model_matrix = transform.world_coordinates * model.GetNormalizedModelMatrix();
     const VK_ObjectData object = material.GetObjectData(model_matrix, transform);
+    const VkPipeline pipeline = material.Pipeline(VK_Culling::IsMirrored(model_matrix));
 
     const auto object_offset = static_cast<uint32_t>(_object_buffer.used * _object_buffer.entry_size);
     std::memcpy(_object_buffer.mapped + object_offset, &object, sizeof(VK_ObjectData));
@@ -1456,7 +1471,7 @@ namespace neon
     {
       auto &kept = _current_target != No_Render_Target ? _targets[_current_target].see_through : _see_through;
       kept.push_back({
-        .pipeline = material.Pipeline(),
+        .pipeline = pipeline,
         .set = set,
         .scene_offset = _last_scene_offset,
         .object_offset = object_offset,
@@ -1466,7 +1481,7 @@ namespace neon
       return;
     }
 
-    vkCmdBindPipeline(commands, VK_PIPELINE_BIND_POINT_GRAPHICS, material.Pipeline());
+    vkCmdBindPipeline(commands, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
     vkCmdBindDescriptorSets(
       commands,
       VK_PIPELINE_BIND_POINT_GRAPHICS,

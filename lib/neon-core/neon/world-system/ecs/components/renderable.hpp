@@ -57,6 +57,11 @@ namespace neon
             [](Renderable &renderable) -> AlphaMode & { return renderable.render_info.material_info.alpha_mode; },
             {"opaque", "blend"})
           .Describe("Whether the alpha of the colour lets what is behind show through");
+
+      material.Field(
+            "double_sided",
+            [](Renderable &renderable) -> bool & { return renderable.render_info.material_info.double_sided; })
+          .Describe("Whether the back of every triangle is drawn too. Off leaves it out");
     });
   }
 } // neon
