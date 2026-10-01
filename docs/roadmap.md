@@ -95,6 +95,9 @@ These come first, because everything after them is cheaper with them in place.
 | Games in C++ and Lua with hot reload (#104) | Other languages after 1.0. C++ reloads as a library, which may need a runtime made for the editor |
 | Meshes with collision, generated (#97) | Geometry built at run time and in the editor, with its collider, for level editing |
 | Scenes and resources serialized to binary and text (#96) | As Godot does with resources, so that saved games are the same machinery. Not decided; to be discussed |
+| A scene manager (#118) | Changes between whole scenes, with a loading screen and what carries over |
+| Assets streamed by distance (#114) | Loaded as the player comes near and released as the player leaves, in the background |
+| Input maps with states (#117) | Named actions bound by a project, and maps for walking, driving, swimming, a menu |
 
 Both attach to entities and components, which exist. Physics is components
 and a system. A script declares components and systems of its own.
@@ -114,6 +117,7 @@ and a system. A script declares components and systems of its own.
 | Programmable rendering pipeline (#102) | A game describes passes, targets, and order in place of the fixed forward pipeline |
 | Compute in the pipeline (#107) | Compute passes next to draw passes, with shared buffers and images |
 | PBR and an ubershader out of the box (#106) | One shader that covers a traditionally rendered game, chosen by variants |
+| Frustum and occlusion culling (#115) | Draw what the camera sees: bounds against the frustum, and occlusion by occluder volumes or a hierarchical depth buffer |
 
 **Shaders are written once.** They are compiled to SPIR-V, and
 [SPIRV-Cross](https://github.com/KhronosGroup/SPIRV-Cross) turns that into
@@ -167,6 +171,7 @@ makes them a supported way to run a game, for automated checks and for agents.
 |---|---|
 | Setting the state of a game (#79) | Options to start from a given state, such as a scene, a saved game, or values of the game's own. Waits for scenes that load from files |
 | Fixed random numbers (#80) | A seed given on the command line, so that a game that uses random numbers gives the same image on every run. Nothing in the engine draws random numbers yet |
+| A debug mode of the runtime (#116) | The loop as a function that is stepped, and a terminal or a file of commands: step, send input, take a screenshot, read values |
 
 ### NeonEditor
 
@@ -295,6 +300,14 @@ A document for each feature is written with the feature, not as a step.
 | [CMakeLists.txt](../CMakeLists.txt) | Turn on `-Wall`, `-Wextra`, and `-Werror`, once the libraries in `external/` no longer compile as part of the project |
 | [CMakeLists.txt](../CMakeLists.txt) | Set the compiler flags for release builds |
 | [CMakeLists.txt](../CMakeLists.txt) | Consider whether the C++ runtime still has to be linked statically |
+
+## Backlog
+
+Wanted, and not for 1.0.
+
+| Item | Detail |
+|---|---|
+| Virtual coordinates with a floating origin (#113) | The world is loaded and unloaded around the player and shifted back to the origin without the player noticing, for worlds that may as well be endless |
 
 ## Known bugs and debts
 
