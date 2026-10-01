@@ -1,6 +1,8 @@
 #ifndef AUDIO_CONTEXT_HPP
 #define AUDIO_CONTEXT_HPP
 
+#include <string>
+
 #include "sound-info.hpp"
 
 namespace neon
@@ -19,7 +21,8 @@ namespace neon
 
   public:
     /// Creates a sound. It does not play yet. Returns -1 when the file
-    /// cannot be read or is not a sound, and logs why.
+    /// cannot be read or is not a sound, and logs why. A sound of a group
+    /// that is not there is reported and put among the effects.
     virtual int CreateSound(const SoundInfo &sound_info) = 0;
 
     virtual void DestroySound(int sound_id) = 0;
@@ -33,6 +36,29 @@ namespace neon
     /// Whether a sound is playing. It is not any more once it has ended.
     virtual bool IsPlaying(int sound_id) = 0;
 
+    /// Plays a sound from its start, rising from silence to its volume over
+    /// `seconds`.
+    virtual void FadeIn(int sound_id, double seconds) = 0;
+
+    /// Fades a sound from how loud it is now to `volume` over `seconds`. The
+    /// fade is on top of the volume of the sound, which SetVolume() sets and
+    /// which it leaves as it is: 1 is the volume of the sound, 0 is silence.
+    /// A sound that fades to silence keeps playing. Play() and FadeIn() start
+    /// a sound at 1 again, and a fade puts off a fade out that was under way.
+    virtual void FadeTo(int sound_id, float volume, double seconds) = 0;
+
+    /// Fades a sound out over `seconds`, and stops it then. It is playing
+    /// until then.
+    virtual void FadeOut(int sound_id, double seconds) = 0;
+
+    /// Fades one sound out while another fades in, as from one piece of music
+    /// to the next. The first is stopped once it is silent.
+    void Crossfade(const int from_sound_id, const int to_sound_id, const double seconds)
+    {
+      FadeOut(from_sound_id, seconds);
+      FadeIn(to_sound_id, seconds);
+    }
+
     virtual void SetVolume(int sound_id, float volume) = 0;
 
     virtual void SetPitch(int sound_id, float pitch) = 0;
@@ -45,8 +71,20 @@ namespace neon
 
     virtual void SetListener(const ListenerInfo &listener_info) = 0;
 
-    /// The loudness of everything. 1 leaves it as it is, 0 is silence.
+    /// The loudness of everything. 1 leaves it as it is, 0 is silence. It is
+    /// on top of the volumes of the groups.
     virtual void SetMasterVolume(float volume) = 0;
+
+    /// Adds a group of sounds, at a volume of 1. Music, effects, and voices
+    /// are there from the start. Adding a group that is there does nothing.
+    virtual void AddGroup(const std::string &group) = 0;
+
+    /// The loudness of every sound of a group. 1 leaves them as they are, 0
+    /// is silence. A group that is not there is reported and left alone.
+    virtual void SetGroupVolume(const std::string &group, float volume) = 0;
+
+    /// The volume of a group, or 0 for a group that is not there.
+    virtual float GetGroupVolume(const std::string &group) = 0;
 
     /// Tells the audio how much time the application advanced by, in
     /// seconds. Called once per frame. Audio that goes to a sound card keeps

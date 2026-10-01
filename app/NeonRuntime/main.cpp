@@ -30,6 +30,9 @@
 #include <neon/world-system/ecs/systems/audio-playback.hpp>
 #include <neon/world-system/ecs/systems/physics-simulation.hpp>
 #include <neon/world-system/ecs/scene-file/ui-view-format.hpp>
+#include <neon/world-system/ecs/components/ui-sound-switch.hpp>
+#include <neon/world-system/ecs/components/ui-volume.hpp>
+#include <neon/world-system/ecs/systems/ui-audio.hpp>
 #include <neon/world-system/ecs/systems/ui-clock.hpp>
 #include <neon/world-system/ecs/systems/ui-surface-loading.hpp>
 #include <neon/world-system/ecs/systems/ui-surface-pointing.hpp>
@@ -70,6 +73,7 @@ int main(const int argc, char *argv[])
     .width = 1920,
     .height = 1080,
     .pause_menu = "assets://ui/pause.ui.yml",
+    .settings_menu = "assets://ui/settings.ui.yml",
     .selected_api = RenderingApi::Vulkan,
     .window_mode = WindowMode::Borderless
   };
@@ -245,6 +249,10 @@ int main(const int argc, char *argv[])
   // and the user interfaces that are shown on surfaces in the world
   scene.GetComponentFormats().Add(neon::UiSurfaceFormat());
 
+  // and what values of user interfaces do to what is heard
+  scene.GetComponentFormats().Add(neon::ComponentFormat::Of<neon::UiVolume>());
+  scene.GetComponentFormats().Add(neon::ComponentFormat::Of<neon::UiSoundSwitch>());
+
   // the world reads the input less what the user interface has used
   neon::EntityWorld world(
     &entity_store,
@@ -260,6 +268,7 @@ int main(const int argc, char *argv[])
   world.AddSystemAfterPlacing(std::make_unique<neon::AudioPlayback>(&audio_system));
   world.AddSystem(std::make_unique<neon::UiViewLoading>(&ui_system));
   world.AddSystem(std::make_unique<neon::UiClock>(&ui_system));
+  world.AddSystem(std::make_unique<neon::UiAudio>(&ui_system, &audio_system));
   world.AddSystem(std::make_unique<neon::UiSurfaceLoading>(&ui_system));
   world.AddSystem(std::make_unique<neon::UiSurfacePointing>(&ui_system, ui_system.GetGameInput()));
 

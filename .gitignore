@@ -13,3 +13,8 @@ logs/
 
 # Working trees for branches that are worked on side by side
 .worktrees/
+
+# What macOS leaves in folders: Finder's settings, and the custom icon of a
+# folder, a file named Icon that downloaded sound packs come with
+.DS_Store
+**/sounds/**/Icon*

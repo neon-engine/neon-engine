@@ -296,6 +296,10 @@ namespace neon
     /// Whether it reports a click.
     [[nodiscard]] virtual bool IsClickable() const;
 
+    /// Whether choosing it closes the file it is in, after the click is
+    /// reported, as a button that says `action: close` does.
+    [[nodiscard]] virtual bool ClosesItsFile() const;
+
     /// Whether it has the focus when its file is loaded.
     [[nodiscard]] virtual bool WantsFocus() const;
 

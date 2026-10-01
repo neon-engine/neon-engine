@@ -83,6 +83,41 @@ namespace
     EXPECT_EQ(_ui->GetDocuments().size(), 0u);
   }
 
+  TEST_F(UiNavigationTest, AButtonThatClosesItsFileClosesItWhenChosen)
+  {
+    ShowMenu("menu", "modal: true\n", "- {type: button, name: back, text: Back, autofocus: true, action: close}\n");
+
+    Release();
+    _input.state.SetAction(Action::Ui_Accept);
+    Frame();
+
+    EXPECT_TRUE(_ui->WasClicked("back")) << "the game hears of the click all the same";
+    EXPECT_EQ(_ui->GetDocuments().size(), 0u);
+  }
+
+  TEST_F(UiNavigationTest, AButtonLeavesItsFileOpenUnlessItSaysItClosesIt)
+  {
+    ShowMenu("menu", "modal: true\n", "- {type: button, name: apply, text: Apply, autofocus: true}\n");
+
+    Release();
+    _input.state.SetAction(Action::Ui_Accept);
+    Frame();
+
+    EXPECT_TRUE(_ui->WasClicked("apply"));
+    EXPECT_EQ(_ui->GetDocuments().size(), 1u);
+  }
+
+  TEST_F(UiNavigationTest, AButtonThatClosesItsFileClosesOnlyItsOwn)
+  {
+    ShowMenu("below", "", "- {type: button, name: a, text: A}\n");
+    ShowMenu("above", "modal: true\n", "- {type: button, name: back, text: Back, autofocus: true, action: close}\n");
+
+    Press(Action::Ui_Accept);
+
+    ASSERT_EQ(_ui->GetDocuments().size(), 1u);
+    EXPECT_EQ(_ui->GetDocuments().front()->name, "below");
+  }
+
   TEST_F(UiNavigationTest, AFileSaysWhatCancelDoes)
   {
     ShowMenu("stays", "cancel: none\n", "- {type: button, name: a, text: A, autofocus: true}\n");

@@ -1066,6 +1066,10 @@ namespace
       "'text' of button 'start' cannot be read: a '{' is never closed. Write '{{' for the bracket itself"
     },
     WrongProperty{
+      "action: jump",
+      "'action' of button 'start' is 'jump', where one of these was expected: none, close"
+    },
+    WrongProperty{
       "enabled: maybe",
       "'enabled' of button 'start' is 'maybe', where true, false, or a value such as \"{can_start}\" "
       "was expected"

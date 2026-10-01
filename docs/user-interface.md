@@ -151,7 +151,7 @@ whole: `border: "2px solid #4c566a"`.
 | `panel` | A box, with a background and a border if it has them | `div` | Nothing | Yes |
 | `label` | A text | `span` | `text` | No |
 | `image` | An image from a file | `img` | `src`, which has to be written | No |
-| `button` | What a player chooses. It reports a click | `button` | `text`, `enabled`, `autofocus` | Yes, in place of `text` |
+| `button` | What a player chooses. It reports a click. With `action: close` it also closes its file, as the Back button of a menu | `button` | `text`, `enabled`, `autofocus`, `action` | Yes, in place of `text` |
 | `bar` | How much of something there is | `progress` | `value`, `max` | No |
 | `input` | A text of one line that is typed into. See [typing](#typing) | `input` | `value`, `kind`, `placeholder`, `max_length`, `read_only`, `pattern`, `enabled`, `autofocus` | No |
 | `textarea` | A text of several lines that is typed into | `textarea` | The same but `kind`, and `rows` | No |
@@ -1411,6 +1411,14 @@ stands still: no system of the game runs, no time passes for the physics,
 and what is there is drawn as it was. A key that closed the menu and is
 still held does not open it again. Shift and escape close the window
 whatever the game does, for when the game has stopped listening.
+
+Its button `settings` shows the settings menu in its place,
+`assets://ui/settings.ui.yml`, which `NeonRuntime` names in its settings as
+well. The world stays still while it is shown. It is modal, so the cursor is
+there to use it, and its buttons Back and Apply close it with
+`action: close`, as cancel does. Then the pause menu is back. A modal file
+shows the cursor while it is shown, and the game has the mouse back once it
+is closed, so a menu that takes the mouse writes `modal: true`.
 
 ### Which device the player uses
 

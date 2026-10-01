@@ -101,6 +101,11 @@ namespace neon
     return false;
   }
 
+  bool UiElement::ClosesItsFile() const
+  {
+    return false;
+  }
+
   bool UiElement::WantsFocus() const
   {
     return false;

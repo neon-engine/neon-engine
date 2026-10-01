@@ -16,6 +16,14 @@ namespace neon
   {
     constexpr ma_uint32 channels = 2;
 
+    /// The length of a fade in samples, which is what miniaudio counts in.
+    /// Fades go by the samples that are mixed, so that without a sound card
+    /// they follow the time Advance() is told.
+    ma_uint64 Samples(const double seconds)
+    {
+      return static_cast<ma_uint64>(std::llround(std::max(seconds, 0.0) * MA_AudioSystem::sample_rate));
+    }
+
     using FileContents = std::vector<unsigned char>;
 
     struct Sound
@@ -25,6 +33,14 @@ namespace neon
       std::shared_ptr<FileContents> file;
       ma_decoder decoder{};
       ma_sound sound{};
+    };
+
+    struct Group
+    {
+      float volume = 1.0f;
+
+      // made when the engine is, as it is a part of it
+      std::unique_ptr<ma_sound_group> group;
     };
   }
 
@@ -51,10 +67,44 @@ namespace neon
 
     std::map<std::string, std::weak_ptr<FileContents>> files;
 
+    std::map<std::string, Group> groups;
+
+    State()
+    {
+      for (const auto *name : {sound_group::music, sound_group::effects, sound_group::voices})
+      {
+        groups.try_emplace(name);
+      }
+    }
+
     Sound *Find(const int sound_id)
     {
       const auto it = sounds.find(sound_id);
       return it == sounds.end() ? nullptr : it->second.get();
+    }
+
+    /// Makes the sound group of miniaudio for a group, once the engine is
+    /// there.
+    ma_result Make(Group &group)
+    {
+      group.group = std::make_unique<ma_sound_group>();
+
+      // the group is not a place in the world. Its sounds are placed each
+      // for itself, and would be placed twice otherwise
+      const auto result = ma_sound_group_init(
+        &engine,
+        MA_SOUND_FLAG_NO_SPATIALIZATION,
+        nullptr,
+        group.group.get());
+
+      if (result != MA_SUCCESS)
+      {
+        group.group.reset();
+        return result;
+      }
+
+      ma_sound_group_set_volume(group.group.get(), group.volume);
+      return MA_SUCCESS;
     }
 
     static void OnProcess(void *user_data, float *frames, const ma_uint64 frame_count)
@@ -129,6 +179,15 @@ namespace neon
       _logger->Info("Playing through {}", name);
     }
 
+    for (auto &[name, group] : _state->groups)
+    {
+      if (const auto made = _state->Make(group); made != MA_SUCCESS)
+      {
+        const std::string reason = ma_result_description(made);
+        _logger->Error("Group {} could not be made, its sounds go straight to the output: {}", name, reason);
+      }
+    }
+
     _state->unmixed_seconds = 0.0;
     _state->output_level.store(0.0f);
     _state->initialized = true;
@@ -165,6 +224,14 @@ namespace neon
     while (!_state->sounds.empty())
     {
       DestroySound(_state->sounds.begin()->first);
+    }
+
+    // after the sounds, which are mixed into them
+    for (auto &[name, group] : _state->groups)
+    {
+      if (group.group == nullptr) { continue; }
+      ma_sound_group_uninit(group.group.get());
+      group.group.reset();
     }
 
     ma_engine_uninit(&_state->engine);
@@ -215,9 +282,24 @@ namespace neon
       return -1;
     }
 
+    auto group = _state->groups.find(sound_info.group);
+    if (group == _state->groups.end())
+    {
+      _logger->Warn(
+        "Sound {} is of group {}, which is not there. It is put among the effects",
+        sound_info.path,
+        sound_info.group);
+      group = _state->groups.find(sound_group::effects);
+    }
+
     const ma_uint32 flags = sound_info.spatial ? 0 : MA_SOUND_FLAG_NO_SPATIALIZATION;
 
-    result = ma_sound_init_from_data_source(&_state->engine, &sound->decoder, flags, nullptr, &sound->sound);
+    result = ma_sound_init_from_data_source(
+      &_state->engine,
+      &sound->decoder,
+      flags,
+      group->second.group.get(),
+      &sound->sound);
     if (result != MA_SUCCESS)
     {
       ma_decoder_uninit(&sound->decoder);
@@ -258,6 +340,11 @@ namespace neon
     auto *sound = _state->Find(sound_id);
     if (sound == nullptr) { return; }
 
+    // a fade out that is under way would stop the sound again, and a sound
+    // that faded to silence would not be heard
+    ma_sound_reset_stop_time(&sound->sound);
+    ma_sound_set_fade_in_pcm_frames(&sound->sound, 1.0f, 1.0f, 0);
+
     ma_sound_seek_to_pcm_frame(&sound->sound, 0);
 
     if (const auto result = ma_sound_start(&sound->sound); result != MA_SUCCESS)
@@ -279,6 +366,39 @@ namespace neon
   {
     auto *sound = _state->Find(sound_id);
     return sound != nullptr && ma_sound_is_playing(&sound->sound) == MA_TRUE;
+  }
+
+  void MA_AudioSystem::FadeIn(const int sound_id, const double seconds)
+  {
+    auto *sound = _state->Find(sound_id);
+    if (sound == nullptr) { return; }
+
+    Play(sound_id);
+
+    // miniaudio takes up the fade where the sound is mixed, which is after
+    // it was started
+    ma_sound_set_fade_in_pcm_frames(&sound->sound, 0.0f, 1.0f, Samples(seconds));
+  }
+
+  void MA_AudioSystem::FadeTo(const int sound_id, const float volume, const double seconds)
+  {
+    auto *sound = _state->Find(sound_id);
+    if (sound == nullptr) { return; }
+
+    // a sound that has stopped is past its time to stop, and putting that
+    // time off would play it again
+    if (ma_sound_is_playing(&sound->sound) == MA_TRUE) { ma_sound_reset_stop_time(&sound->sound); }
+
+    // a volume below 0 tells miniaudio to begin where the fade is now
+    ma_sound_set_fade_in_pcm_frames(&sound->sound, -1.0f, std::max(volume, 0.0f), Samples(seconds));
+  }
+
+  void MA_AudioSystem::FadeOut(const int sound_id, const double seconds)
+  {
+    auto *sound = _state->Find(sound_id);
+    if (sound == nullptr || ma_sound_is_playing(&sound->sound) == MA_FALSE) { return; }
+
+    ma_sound_stop_with_fade_in_pcm_frames(&sound->sound, Samples(seconds));
   }
 
   void MA_AudioSystem::SetVolume(const int sound_id, const float volume)
@@ -330,6 +450,37 @@ namespace neon
   {
     if (!_state->initialized) { return; }
     ma_engine_set_volume(&_state->engine, std::max(volume, 0.0f));
+  }
+
+  void MA_AudioSystem::AddGroup(const std::string &group)
+  {
+    const auto [it, added] = _state->groups.try_emplace(group);
+    if (!added || !_state->initialized) { return; }
+
+    if (const auto made = _state->Make(it->second); made != MA_SUCCESS)
+    {
+      const std::string reason = ma_result_description(made);
+      _logger->Error("Group {} could not be made, its sounds go straight to the output: {}", group, reason);
+    }
+  }
+
+  void MA_AudioSystem::SetGroupVolume(const std::string &group, const float volume)
+  {
+    const auto it = _state->groups.find(group);
+    if (it == _state->groups.end())
+    {
+      _logger->Warn("The volume of group {} cannot be set, as there is no such group", group);
+      return;
+    }
+
+    it->second.volume = std::max(volume, 0.0f);
+    if (it->second.group != nullptr) { ma_sound_group_set_volume(it->second.group.get(), it->second.volume); }
+  }
+
+  float MA_AudioSystem::GetGroupVolume(const std::string &group)
+  {
+    const auto it = _state->groups.find(group);
+    return it == _state->groups.end() ? 0.0f : it->second.volume;
   }
 
   float MA_AudioSystem::GetOutputLevel()

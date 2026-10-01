@@ -17,6 +17,10 @@ namespace neon
   ///
   /// A file is read once through the file system and kept in memory, however
   /// many sounds are created from it. It is decoded while it plays.
+  ///
+  /// Every group is a sound group of miniaudio, which the sounds of the group
+  /// are mixed into. The groups and their volumes are kept when the system
+  /// is cleaned up, as what a player chose in the settings is.
   // ReSharper disable once CppInconsistentNaming
   class MA_AudioSystem final : public AudioSystem
   {
@@ -51,6 +55,12 @@ namespace neon
 
     bool IsPlaying(int sound_id) override;
 
+    void FadeIn(int sound_id, double seconds) override;
+
+    void FadeTo(int sound_id, float volume, double seconds) override;
+
+    void FadeOut(int sound_id, double seconds) override;
+
     void SetVolume(int sound_id, float volume) override;
 
     void SetPitch(int sound_id, float pitch) override;
@@ -62,6 +72,12 @@ namespace neon
     void SetListener(const ListenerInfo &listener_info) override;
 
     void SetMasterVolume(float volume) override;
+
+    void AddGroup(const std::string &group) override;
+
+    void SetGroupVolume(const std::string &group, float volume) override;
+
+    float GetGroupVolume(const std::string &group) override;
 
     float GetOutputLevel() override;
   };

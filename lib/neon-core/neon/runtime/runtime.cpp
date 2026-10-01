@@ -75,9 +75,17 @@ namespace neon
   {
     if (_ui_system == nullptr || _settings_config.pause_menu.empty()) { return; }
 
+    // The settings menu closes itself, through its buttons or on cancel,
+    // and then the pause menu is back, as it was before settings was chosen
+    if (_settings_document >= 0 && !_ui_system->IsShown(_settings_document))
+    {
+      _settings_document = -1;
+      ShowPauseMenu();
+    }
+
     // the menu closes itself as well: on cancel, as its file says
-    const bool was_shown = _pause_document >= 0;
-    if (was_shown && !_ui_system->IsShown(_pause_document)) { _pause_document = -1; }
+    const bool was_shown = _pause_document >= 0 || _settings_document >= 0;
+    if (_pause_document >= 0 && !_ui_system->IsShown(_pause_document)) { _pause_document = -1; }
 
     if (_pause_document >= 0)
     {
@@ -89,6 +97,18 @@ namespace neon
       {
         _logger->Info("Quit was chosen in the pause menu");
         _window_system->SignalToClose();
+      } else if (!_settings_config.settings_menu.empty() && _ui_system->WasClicked("settings"))
+      {
+        // in place of the pause menu, which is shown again afterwards
+        _ui_system->Unload(_pause_document);
+        _pause_document = -1;
+
+        _settings_document = _ui_system->Load(_settings_config.settings_menu);
+        if (_settings_document < 0)
+        {
+          _logger->Error("The settings menu {} cannot be shown", _settings_config.settings_menu);
+          ShowPauseMenu();
+        }
       }
     }
 
@@ -99,13 +119,15 @@ namespace neon
     const bool is_pressed = is_down && !_pause_was_down;
     _pause_was_down = is_down;
 
-    if (is_pressed && !was_shown && _ui_system->GetGameInput()->GetInputState()[Action::Pause])
-    {
-      _pause_document = _ui_system->Load(_settings_config.pause_menu);
-      if (_pause_document < 0) { _logger->Error("The pause menu {} cannot be shown", _settings_config.pause_menu); }
-    }
+    if (is_pressed && !was_shown && _ui_system->GetGameInput()->GetInputState()[Action::Pause]) { ShowPauseMenu(); }
 
-    _world_system->SetPaused(_pause_document >= 0);
+    _world_system->SetPaused(_pause_document >= 0 || _settings_document >= 0);
+  }
+
+  void Runtime::ShowPauseMenu()
+  {
+    _pause_document = _ui_system->Load(_settings_config.pause_menu);
+    if (_pause_document < 0) { _logger->Error("The pause menu {} cannot be shown", _settings_config.pause_menu); }
   }
 
   void Runtime::Run()

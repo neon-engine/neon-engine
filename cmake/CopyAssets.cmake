@@ -7,15 +7,20 @@ function(setup_copy_assets TARGET_NAME SOURCE_ASSETS_DIR OUTPUT_ASSETS_DIR)
             TARGET ${TARGET_NAME}_copy_assets
             PRE_BUILD
             COMMAND ${CMAKE_COMMAND}
-            -DSOURCE_ASSETS_DIR="${SOURCE_ASSETS_DIR}"
-            -DOUTPUT_ASSETS_DIR="${OUTPUT_ASSETS_DIR}"
+            "-DSOURCE_ASSETS_DIR=${SOURCE_ASSETS_DIR}"
+            "-DOUTPUT_ASSETS_DIR=${OUTPUT_ASSETS_DIR}"
             -P "${CMAKE_SOURCE_DIR}/cmake/scripts/RemoveOrphans.cmake"
+            VERBATIM
     )
 
     file(GLOB_RECURSE SOURCE_FILES
             "${SOURCE_ASSETS_DIR}/*"
     )
     list(FILTER SOURCE_FILES EXCLUDE REGEX "\\.gitignore$")
+    # what macOS leaves in folders, which no game reads: Finder's settings,
+    # and the icon of a folder, whose name ends in a carriage return that
+    # breaks the commands of the build
+    list(FILTER SOURCE_FILES EXCLUDE REGEX "/(\\.DS_Store|Icon\r)$")
 
     foreach (SRC_FILE IN LISTS SOURCE_FILES)
         file(RELATIVE_PATH REL_PATH "${SOURCE_ASSETS_DIR}" "${SRC_FILE}")
@@ -29,11 +34,15 @@ function(setup_copy_assets TARGET_NAME SOURCE_ASSETS_DIR OUTPUT_ASSETS_DIR)
                 "${OUTPUT_ASSETS_DIR}/${REL_DIR}"
 
                 COMMAND ${CMAKE_COMMAND}
-                -DSRC="${SRC_FILE}"
-                -DDST="${DEST_FILE}"
+                "-DSRC=${SRC_FILE}"
+                "-DDST=${DEST_FILE}"
                 -P "${CMAKE_SOURCE_DIR}/cmake/scripts/CheckAndCopy.cmake"
 
                 DEPENDS "${SRC_FILE}"
+
+                # every argument reaches the command as it is, so that a
+                # name with spaces or parentheses is one argument
+                VERBATIM
         )
     endforeach ()
 

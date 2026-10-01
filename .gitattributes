@@ -1,1 +1,75 @@
-app/NeonRuntime/assets/models/** binary
+# Normalize EOL for all files that Git considers text files.
+* text=auto eol=lf
+
+# Video Files
+*.mp4 binary
+*.mov binary
+*.avi binary
+*.webm binary
+*.mkv binary
+*.bk2 binary
+
+# Audio Files
+*.wav binary
+*.mp3 binary
+*.ogg binary
+*.flac binary
+*.m4a binary
+*.mod binary
+*.it binary
+*.s3m binary
+*.xm binary
+*.aiff binary
+*.aif binary
+*.bank binary
+
+# 3D models
+*.fbx binary
+*.obj binary
+*.mtl binary
+*.gltf binary
+*.glb binary
+*.dae binary
+*.3ds binary
+*.c4d binary
+*.blend binary
+*.stl binary
+*.abc binary
+
+# 2D images
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.bmp binary
+*.tga binary
+*.webp binary
+*.svg binary
+*.exr binary
+*.dds binary
+*.psd binary
+*.xcf binary
+*.kra binary
+*.ico binary
+icon.svg text
+icon.png binary
+
+# Textures for the graphics card, and light of a high range
+*.ktx binary
+*.ktx2 binary
+*.hdr binary
+
+# Fonts
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary
+
+# Binaries
+*.bin binary
+*.dat binary
+*.blob binary
+*.res binary
+*.exe binary
+*.dll binary
+*.rcc binary

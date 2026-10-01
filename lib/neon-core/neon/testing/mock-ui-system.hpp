@@ -26,6 +26,8 @@ namespace neon::testing
 
     MOCK_METHOD(void, SetFlag, (const std::string &name, bool flag), (override));
 
+    MOCK_METHOD(std::string, GetValue, (const std::string &name, bool *is_set), (const, override));
+
     MOCK_METHOD(void, OnClick, (const std::string &element, const std::function<void()> &callback), (override));
 
     MOCK_METHOD(const std::vector<UiEvent> &, GetEvents, (), (const, override));

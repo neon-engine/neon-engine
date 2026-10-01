@@ -33,6 +33,12 @@ namespace neon
       return true;
     }
 
+    if (name == "action")
+    {
+      value = std::string(_closes ? "close" : "none");
+      return true;
+    }
+
     return false;
   }
 
@@ -71,6 +77,21 @@ namespace neon
       return TakeFlag(value, what, _autofocus, error);
     }
 
+    if (name == "action")
+    {
+      std::string action;
+      if (!TakeText(value, what, action, error)) { return false; }
+
+      if (action != "none" && action != "close")
+      {
+        error = std::format("{} is '{}', where none or close was expected", what, action);
+        return false;
+      }
+
+      _closes = action == "close";
+      return true;
+    }
+
     return UiElement::SetField(name, value, error);
   }
 
@@ -79,7 +100,8 @@ namespace neon
     return {
       {"text", FieldKind::Text, "What is written on it, which may refer to values of the game as {name}", {}},
       {"enabled", FieldKind::Bool, "Whether it can be chosen", {}},
-      {"autofocus", FieldKind::Bool, "Whether it has the focus when its file is shown", {}}
+      {"autofocus", FieldKind::Bool, "Whether it has the focus when its file is shown", {}},
+      {"action", FieldKind::Choice, "What choosing it does besides reporting a click: close closes its file", {"none", "close"}}
     };
   }
 
@@ -126,6 +148,8 @@ namespace neon
     _text.Read(reader);
     reader.Read("autofocus", _autofocus);
 
+    if (std::size_t action = 0; reader.ReadChoice("action", {"none", "close"}, action)) { _closes = action == 1; }
+
     if (const auto *value = reader.ReadValue("enabled"); value != nullptr && !UiFlag::Read(*value, _enabled))
     {
       std::string text;
@@ -134,6 +158,11 @@ namespace neon
                       reader.GetWhere(),
                       value->GetText(text) ? "'" + text + "'" : DataValue::Describe(value->GetKind())));
     }
+  }
+
+  bool UiButton::ClosesItsFile() const
+  {
+    return _closes;
   }
 
   bool UiButton::TakesChildren() const

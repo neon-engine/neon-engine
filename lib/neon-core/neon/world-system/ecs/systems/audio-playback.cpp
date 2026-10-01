@@ -84,7 +84,11 @@ namespace neon
       {
         auto &source = sources[i];
 
-        if (source.sound_id == failed_sound) { continue; }
+        if (source.sound_id == failed_sound)
+        {
+          source.fade.reset();
+          continue;
+        }
 
         if (source.sound_id < 0)
         {
@@ -95,6 +99,7 @@ namespace neon
             // read the file and say it again every frame
             source.sound_id = failed_sound;
             source.playing = false;
+            source.fade.reset();
             continue;
           }
         }
@@ -114,6 +119,14 @@ namespace neon
             Velocity(position, source.last_position, source.has_last_position, delta_time));
         }
 
+        // a fade in plays the sound as Play() would, from silence
+        if (source.fade.has_value() && source.fade->kind == SoundFade::Kind::In && source.playing)
+        {
+          _audio_context->FadeIn(id, source.fade->seconds);
+          source.fade.reset();
+          source.was_playing = true;
+        }
+
         if (source.playing && !source.was_playing)
         {
           _audio_context->Play(id);
@@ -122,9 +135,22 @@ namespace neon
           _audio_context->Stop(id);
         } else if (source.playing && !_audio_context->IsPlaying(id))
         {
-          // it has ended
+          // it has ended, or faded out
           source.playing = false;
         }
+
+        // after the sound was played, which starts it at the volume it has
+        if (source.fade.has_value() && source.playing)
+        {
+          if (source.fade->kind == SoundFade::Kind::Out)
+          {
+            _audio_context->FadeOut(id, source.fade->seconds);
+          } else
+          {
+            _audio_context->FadeTo(id, source.fade->volume, source.fade->seconds);
+          }
+        }
+        source.fade.reset();
 
         source.was_playing = source.playing;
       }

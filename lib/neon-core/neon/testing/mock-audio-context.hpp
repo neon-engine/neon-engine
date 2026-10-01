@@ -20,6 +20,12 @@ namespace neon::testing
 
     MOCK_METHOD(bool, IsPlaying, (int sound_id), (override));
 
+    MOCK_METHOD(void, FadeIn, (int sound_id, double seconds), (override));
+
+    MOCK_METHOD(void, FadeTo, (int sound_id, float volume, double seconds), (override));
+
+    MOCK_METHOD(void, FadeOut, (int sound_id, double seconds), (override));
+
     MOCK_METHOD(void, SetVolume, (int sound_id, float volume), (override));
 
     MOCK_METHOD(void, SetPitch, (int sound_id, float pitch), (override));
@@ -31,6 +37,12 @@ namespace neon::testing
     MOCK_METHOD(void, SetListener, (const ListenerInfo &listener_info), (override));
 
     MOCK_METHOD(void, SetMasterVolume, (float volume), (override));
+
+    MOCK_METHOD(void, AddGroup, (const std::string &group), (override));
+
+    MOCK_METHOD(void, SetGroupVolume, (const std::string &group, float volume), (override));
+
+    MOCK_METHOD(float, GetGroupVolume, (const std::string &group), (override));
 
     MOCK_METHOD(void, Advance, (double delta_time), (override));
 

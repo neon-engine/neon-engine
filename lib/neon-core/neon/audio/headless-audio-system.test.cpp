@@ -118,6 +118,9 @@ namespace
       _audio.SetPitch(unknown, 2.0f);
       _audio.SetLooping(unknown, true);
       _audio.SetPosition(unknown, glm::vec3{1.0f}, glm::vec3{0.0f});
+      _audio.FadeIn(unknown, 1.0);
+      _audio.FadeTo(unknown, 0.5f, 1.0);
+      _audio.FadeOut(unknown, 1.0);
       _audio.DestroySound(unknown);
     });
     EXPECT_FALSE(_audio.IsPlaying(unknown));
@@ -130,6 +133,143 @@ namespace
     _audio.Advance(0.5);
 
     EXPECT_EQ(_audio.GetOutputLevel(), 0.0f);
+  }
+
+  // Fading
+
+  TEST_F(HeadlessAudioSystemTest, PlaysASoundThatFadesIn)
+  {
+    const int sound = _audio.CreateSound({.path = "assets://sounds/theme.ogg", .looping = true});
+
+    _audio.FadeIn(sound, 2.0);
+
+    EXPECT_TRUE(_audio.IsPlaying(sound));
+  }
+
+  TEST_F(HeadlessAudioSystemTest, StopsASoundWhenItHasFadedOut)
+  {
+    const int sound = _audio.CreateSound({.path = "assets://sounds/theme.ogg", .looping = true});
+    _audio.Play(sound);
+
+    _audio.FadeOut(sound, 0.5);
+    _audio.Advance(0.25);
+    EXPECT_TRUE(_audio.IsPlaying(sound));
+
+    _audio.Advance(0.25);
+    EXPECT_FALSE(_audio.IsPlaying(sound));
+  }
+
+  TEST_F(HeadlessAudioSystemTest, StopsASoundThatFadesOutInNoTimeAtOnce)
+  {
+    const int sound = _audio.CreateSound({.path = "assets://sounds/theme.ogg", .looping = true});
+    _audio.Play(sound);
+
+    _audio.FadeOut(sound, 0.0);
+
+    EXPECT_FALSE(_audio.IsPlaying(sound));
+  }
+
+  TEST_F(HeadlessAudioSystemTest, KeepsPlayingASoundThatFadesToSilence)
+  {
+    const int sound = _audio.CreateSound({.path = "assets://sounds/theme.ogg", .looping = true});
+    _audio.Play(sound);
+
+    _audio.FadeTo(sound, 0.0f, 0.5);
+    _audio.Advance(1.0);
+
+    EXPECT_TRUE(_audio.IsPlaying(sound));
+  }
+
+  TEST_F(HeadlessAudioSystemTest, PutsOffAFadeOutWhenTheSoundIsPlayedOrFadedAgain)
+  {
+    const int played = _audio.CreateSound({.path = "assets://sounds/theme.ogg", .looping = true});
+    const int faded = _audio.CreateSound({.path = "assets://sounds/theme.ogg", .looping = true});
+    _audio.Play(played);
+    _audio.Play(faded);
+    _audio.FadeOut(played, 0.5);
+    _audio.FadeOut(faded, 0.5);
+
+    _audio.Play(played);
+    _audio.FadeTo(faded, 1.0f, 0.5);
+    _audio.Advance(1.0);
+
+    EXPECT_TRUE(_audio.IsPlaying(played));
+    EXPECT_TRUE(_audio.IsPlaying(faded));
+  }
+
+  TEST_F(HeadlessAudioSystemTest, CrossfadesFromOneSoundToAnother)
+  {
+    const int first = _audio.CreateSound({.path = "assets://sounds/first.ogg", .looping = true});
+    const int second = _audio.CreateSound({.path = "assets://sounds/second.ogg", .looping = true});
+    _audio.Play(first);
+
+    _audio.Crossfade(first, second, 1.0);
+    EXPECT_TRUE(_audio.IsPlaying(first));
+    EXPECT_TRUE(_audio.IsPlaying(second));
+
+    _audio.Advance(1.0);
+    EXPECT_FALSE(_audio.IsPlaying(first));
+    EXPECT_TRUE(_audio.IsPlaying(second));
+  }
+
+  // Groups
+
+  TEST_F(HeadlessAudioSystemTest, HasMusicEffectsAndVoicesFromTheStart)
+  {
+    EXPECT_EQ(_audio.GetGroupVolume(neon::sound_group::music), 1.0f);
+    EXPECT_EQ(_audio.GetGroupVolume(neon::sound_group::effects), 1.0f);
+    EXPECT_EQ(_audio.GetGroupVolume(neon::sound_group::voices), 1.0f);
+  }
+
+  TEST_F(HeadlessAudioSystemTest, KeepsTheVolumeOfAGroup)
+  {
+    _audio.SetGroupVolume(neon::sound_group::music, 0.25f);
+
+    EXPECT_EQ(_audio.GetGroupVolume(neon::sound_group::music), 0.25f);
+    EXPECT_EQ(_audio.GetGroupVolume(neon::sound_group::effects), 1.0f);
+  }
+
+  TEST_F(HeadlessAudioSystemTest, TakesNoVolumeOfAGroupBelowSilence)
+  {
+    _audio.SetGroupVolume(neon::sound_group::voices, -1.0f);
+
+    EXPECT_EQ(_audio.GetGroupVolume(neon::sound_group::voices), 0.0f);
+  }
+
+  TEST_F(HeadlessAudioSystemTest, AddsAGroupOfAGame)
+  {
+    _audio.AddGroup("ambience");
+    EXPECT_EQ(_audio.GetGroupVolume("ambience"), 1.0f);
+
+    _audio.SetGroupVolume("ambience", 0.5f);
+    _audio.AddGroup("ambience");
+    EXPECT_EQ(_audio.GetGroupVolume("ambience"), 0.5f);
+  }
+
+  TEST_F(HeadlessAudioSystemTest, ReportsTheVolumeOfAGroupThatIsNotThere)
+  {
+    _audio.SetGroupVolume("musik", 0.5f);
+
+    EXPECT_EQ(_audio.GetGroupVolume("musik"), 0.0f);
+    EXPECT_TRUE(_logger->Contains(LogLevel::Warn, "The volume of group musik cannot be set"));
+  }
+
+  TEST_F(HeadlessAudioSystemTest, ReportsASoundOfAGroupThatIsNotThere)
+  {
+    EXPECT_GE(_audio.CreateSound({.path = "assets://sounds/theme.ogg", .group = "musik"}), 0);
+    EXPECT_TRUE(_logger->Contains(LogLevel::Warn, "Sound assets://sounds/theme.ogg is of group musik, which is not there"));
+  }
+
+  TEST_F(HeadlessAudioSystemTest, KeepsTheVolumesOfTheGroupsWhenCleanedUp)
+  {
+    _audio.AddGroup("ambience");
+    _audio.SetGroupVolume(neon::sound_group::music, 0.25f);
+
+    _audio.CleanUp();
+    _audio.Initialize();
+
+    EXPECT_EQ(_audio.GetGroupVolume(neon::sound_group::music), 0.25f);
+    EXPECT_EQ(_audio.GetGroupVolume("ambience"), 1.0f);
   }
 
   TEST_F(HeadlessAudioSystemTest, ForgetsEverySoundWhenCleanedUp)

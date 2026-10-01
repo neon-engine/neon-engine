@@ -8,8 +8,9 @@ namespace neon
 {
   /// Plays the sounds of the world. It creates a sound for every entity that
   /// carries a SoundSource, starts and stops it as the component says, and
-  /// keeps it where the entity is. What is heard is heard from the entity
-  /// that carries a SoundListener.
+  /// keeps it where the entity is. It hands on the fades that a game asks a
+  /// source for. What is heard is heard from the entity that carries a
+  /// SoundListener.
   ///
   /// It registers both components, so that a world without it knows neither.
   class AudioPlayback final : public EntitySystem

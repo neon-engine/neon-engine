@@ -4,8 +4,14 @@
     - https://opengameart.org/content/prototyping-textures
     - License: https://creativecommons.org/licenses/by/4.0/
 
-- Sounds in `sounds/`
-    - Made for Neon Engine by a script, from sine waves. They are part of the engine and under its license.
+- `sounds/hum.wav`
+    - Made for Neon Engine by a script, from sine waves. It is part of the engine and under its license.
+
+- Music and sounds in `sounds/Electronic/` and `sounds/Sci-Fi/`, by Ovani Sound
+    - Proprietary. Licensed to the owner of this repository, not to anyone who gets a copy of it.
+    - They may not be passed on in their raw form, as the files are here. They may be passed on once they
+      are converted to another binary format and built into a game.
+    - Terms: https://ovanisound.com/policies/terms-of-service
 
 - Inter, Regular and Bold, by The Inter Project Authors
     - https://github.com/rsms/inter/releases/tag/v4.1

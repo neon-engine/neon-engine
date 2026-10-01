@@ -527,6 +527,7 @@ namespace
   {
   protected:
     static constexpr const char *menu = "assets://ui/pause.ui.yml";
+    static constexpr const char *settings = "assets://ui/settings.ui.yml";
 
     // what the devices say, and what the user interface leaves of it
     InputState _raw{_logger};
@@ -539,7 +540,11 @@ namespace
 
     std::unique_ptr<TestRuntime> CreateWithMenu(const int frames)
     {
-      auto runtime = Create({.pause_menu = menu, .max_frames = static_cast<std::size_t>(frames)});
+      auto runtime = Create({
+        .pause_menu = menu,
+        .settings_menu = settings,
+        .max_frames = static_cast<std::size_t>(frames)
+      });
       runtime->SetUiSystem(&_ui_system);
 
       ExpectInitialize();
@@ -607,6 +612,67 @@ namespace
 
     runtime->Run();
     ExpectCleanUp();
+  }
+
+  TEST_F(PauseMenuTest, ShowsTheSettingsMenuInPlaceOfThePauseMenuAndKeepsTheWorldStill)
+  {
+    const auto runtime = CreateWithMenu(3);
+    _press = [this](const int frame) { if (frame == 1) { PressPause(); } };
+
+    EXPECT_CALL(_ui_system, Load(menu)).WillOnce(Return(7));
+    EXPECT_CALL(_ui_system, IsShown(7)).WillRepeatedly(Return(true));
+    EXPECT_CALL(_ui_system, WasClicked("settings")).WillOnce(Return(true));
+    {
+      InSequence in_order;
+      EXPECT_CALL(_ui_system, Unload(7));
+      EXPECT_CALL(_ui_system, Load(settings)).WillOnce(Return(8));
+    }
+    EXPECT_CALL(_ui_system, IsShown(8)).WillRepeatedly(Return(true));
+    EXPECT_CALL(_world_system, SetPaused(true)).Times(3);
+
+    runtime->Run();
+    ExpectCleanUp();
+  }
+
+  TEST_F(PauseMenuTest, ShowsThePauseMenuAgainWhenTheSettingsMenuIsClosed)
+  {
+    const auto runtime = CreateWithMenu(4);
+    _press = [this](const int frame) { if (frame == 1) { PressPause(); } };
+
+    EXPECT_CALL(_ui_system, Load(menu)).WillOnce(Return(7)).WillOnce(Return(9));
+    EXPECT_CALL(_ui_system, IsShown(7)).WillRepeatedly(Return(true));
+    EXPECT_CALL(_ui_system, IsShown(9)).WillRepeatedly(Return(true));
+    EXPECT_CALL(_ui_system, WasClicked("settings")).WillOnce(Return(true)).WillRepeatedly(Return(false));
+    EXPECT_CALL(_ui_system, Unload(7));
+    EXPECT_CALL(_ui_system, Load(settings)).WillOnce(Return(8));
+
+    // closed by its own Back, or by cancel, in the frame after it was shown
+    EXPECT_CALL(_ui_system, IsShown(8)).WillOnce(Return(false));
+    EXPECT_CALL(_ui_system, Unload(8)).Times(0);
+
+    EXPECT_CALL(_world_system, SetPaused(true)).Times(4);
+
+    runtime->Run();
+    ExpectCleanUp();
+  }
+
+  TEST_F(PauseMenuTest, KeepsThePauseMenuWhenTheSettingsMenuCannotBeShown)
+  {
+    const auto runtime = CreateWithMenu(3);
+    _press = [this](const int frame) { if (frame == 1) { PressPause(); } };
+
+    EXPECT_CALL(_ui_system, Load(menu)).WillOnce(Return(7)).WillOnce(Return(9));
+    EXPECT_CALL(_ui_system, IsShown(7)).WillRepeatedly(Return(true));
+    EXPECT_CALL(_ui_system, IsShown(9)).WillRepeatedly(Return(true));
+    EXPECT_CALL(_ui_system, WasClicked("settings")).WillOnce(Return(true)).WillRepeatedly(Return(false));
+    EXPECT_CALL(_ui_system, Unload(7));
+    EXPECT_CALL(_ui_system, Load(settings)).WillOnce(Return(-1));
+    EXPECT_CALL(_world_system, SetPaused(true)).Times(3);
+
+    runtime->Run();
+    ExpectCleanUp();
+
+    EXPECT_TRUE(_logger->Contains(LogLevel::Error, "The settings menu assets://ui/settings.ui.yml cannot be shown"));
   }
 
   TEST_F(PauseMenuTest, ClosesTheWindowWhenQuitIsChosen)

@@ -782,9 +782,12 @@ namespace neon
     event.clicks = _press_count;
     Emit(element, "click", event);
 
-    if (element.GetName().empty()) { return; }
-
+    // a button that closes its file does so once the click is told, when
+    // what cancel closes is closed
     const UiDocument *document = DocumentOf(&element);
+    if (element.ClosesItsFile() && document != nullptr) { _documents_to_close.push_back(document->id); }
+
+    if (element.GetName().empty()) { return; }
     const Surface *surface = document != nullptr ? FindSurface(document->surface) : nullptr;
 
     UiEvent clicked;

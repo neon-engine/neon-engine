@@ -256,6 +256,8 @@ add_library(${TARGET} STATIC
         neon/world-system/ecs/components/spectator.hpp
         neon/world-system/ecs/components/sound-listener.hpp
         neon/world-system/ecs/components/sound-source.hpp
+        neon/world-system/ecs/components/ui-sound-switch.hpp
+        neon/world-system/ecs/components/ui-volume.hpp
         neon/world-system/ecs/systems/audio-playback.cpp
         neon/world-system/ecs/systems/audio-playback.hpp
         neon/world-system/ecs/components/trigger.hpp
@@ -295,6 +297,8 @@ add_library(${TARGET} STATIC
         neon/ui/ui-box-paint.hpp
         neon/ui/ui-image-paint.cpp
         neon/ui/ui-image-paint.hpp
+        neon/world-system/ecs/systems/ui-audio.cpp
+        neon/world-system/ecs/systems/ui-audio.hpp
         neon/world-system/ecs/systems/ui-clock.cpp
         neon/world-system/ecs/systems/ui-clock.hpp
 
@@ -421,5 +425,6 @@ neon_add_unit_test(${TARGET} neon/command-line/display-options.test.cpp)
   neon_add_unit_test(${TARGET} neon/ui/ui-box-paint.test.cpp)
   neon_add_unit_test(${TARGET} neon/ui/ui-values-fallback.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/forward-render-pipeline-cameras.test.cpp)
+  neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/ui-audio.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/ui-clock.test.cpp)
 endif ()

@@ -97,6 +97,17 @@ namespace
     _system.Update(_store, 0.016);
   }
 
+  TEST_F(AudioPlaybackTest, CreatesTheSoundOfASourceInItsGroup)
+  {
+    auto source = Source("assets://sounds/theme.ogg");
+    source.sound.group = neon::sound_group::music;
+    CreateSource(source);
+
+    EXPECT_CALL(_audio, CreateSound(Field(&SoundInfo::group, "music"))).WillOnce(Return(sound_id));
+
+    _system.Update(_store, 0.016);
+  }
+
   TEST_F(AudioPlaybackTest, CreatesTheSoundOfASourceOnce)
   {
     CreateSource(Source());
@@ -294,6 +305,137 @@ namespace
     EXPECT_CALL(_audio, DestroySound(_)).Times(0);
 
     _store.DestroyEntity(entity);
+  }
+
+  // Fading
+
+  TEST_F(AudioPlaybackTest, FadesInASourceInPlaceOfPlayingIt)
+  {
+    auto source = Source();
+    source.playing = false;
+    const Entity entity = CreateSource(source);
+    _system.Update(_store, 0.016);
+
+    EXPECT_CALL(_audio, FadeIn(sound_id, 2.0)).Times(1);
+    EXPECT_CALL(_audio, Play(_)).Times(0);
+
+    SourceOf(entity).FadeIn(2.0);
+    _system.Update(_store, 0.016);
+    _system.Update(_store, 0.016);
+
+    EXPECT_TRUE(SourceOf(entity).playing);
+    EXPECT_FALSE(SourceOf(entity).fade.has_value());
+  }
+
+  TEST_F(AudioPlaybackTest, FadesInASourceThatJoinsTheWorld)
+  {
+    auto source = Source();
+    source.FadeIn(2.0);
+    CreateSource(source);
+
+    EXPECT_CALL(_audio, FadeIn(sound_id, 2.0)).Times(1);
+    EXPECT_CALL(_audio, Play(_)).Times(0);
+
+    _system.Update(_store, 0.016);
+  }
+
+  TEST_F(AudioPlaybackTest, FadesASourceThatPlaysToAVolume)
+  {
+    const Entity entity = CreateSource(Source());
+    _system.Update(_store, 0.016);
+
+    EXPECT_CALL(_audio, FadeTo(sound_id, 0.25f, 1.5)).Times(1);
+
+    SourceOf(entity).FadeTo(0.25f, 1.5);
+    _system.Update(_store, 0.016);
+    _system.Update(_store, 0.016);
+  }
+
+  TEST_F(AudioPlaybackTest, FadesASourceAfterPlayingItInTheSameFrame)
+  {
+    auto source = Source();
+    source.FadeTo(0.5f, 1.0);
+    CreateSource(source);
+
+    // playing starts a sound at the volume it has, which would undo a fade
+    // that came first
+    ::testing::InSequence in_order;
+    EXPECT_CALL(_audio, Play(sound_id));
+    EXPECT_CALL(_audio, FadeTo(sound_id, 0.5f, 1.0));
+
+    _system.Update(_store, 0.016);
+  }
+
+  TEST_F(AudioPlaybackTest, FadesASourceOutAndSaysItStoppedOnceItHas)
+  {
+    const Entity entity = CreateSource(Source());
+    _system.Update(_store, 0.016);
+
+    EXPECT_CALL(_audio, FadeOut(sound_id, 1.0)).Times(1);
+    EXPECT_CALL(_audio, Stop(_)).Times(0);
+
+    // it plays on while it fades
+    SourceOf(entity).FadeOut(1.0);
+    _system.Update(_store, 0.016);
+    EXPECT_TRUE(SourceOf(entity).playing);
+
+    ON_CALL(_audio, IsPlaying(sound_id)).WillByDefault(Return(false));
+    _system.Update(_store, 0.016);
+    EXPECT_FALSE(SourceOf(entity).playing);
+  }
+
+  TEST_F(AudioPlaybackTest, LeavesASourceThatDoesNotPlayAloneWhenToldToFade)
+  {
+    auto source = Source();
+    source.playing = false;
+    const Entity entity = CreateSource(source);
+    _system.Update(_store, 0.016);
+
+    EXPECT_CALL(_audio, FadeOut(_, _)).Times(0);
+    EXPECT_CALL(_audio, FadeTo(_, _, _)).Times(0);
+
+    SourceOf(entity).FadeOut(1.0);
+    _system.Update(_store, 0.016);
+    SourceOf(entity).FadeTo(0.5f, 1.0);
+    _system.Update(_store, 0.016);
+
+    EXPECT_FALSE(SourceOf(entity).fade.has_value());
+  }
+
+  TEST_F(AudioPlaybackTest, CrossfadesFromOneSourceToAnother)
+  {
+    constexpr int first_id = 1;
+    constexpr int second_id = 2;
+    ON_CALL(_audio, CreateSound(Field(&SoundInfo::path, "assets://sounds/first.ogg"))).WillByDefault(Return(first_id));
+    ON_CALL(_audio, CreateSound(Field(&SoundInfo::path, "assets://sounds/second.ogg"))).WillByDefault(Return(second_id));
+
+    const Entity first = CreateSource(Source("assets://sounds/first.ogg"));
+    auto waiting = Source("assets://sounds/second.ogg");
+    waiting.playing = false;
+    const Entity second = CreateSource(waiting);
+    _system.Update(_store, 0.016);
+
+    EXPECT_CALL(_audio, FadeOut(first_id, 3.0)).Times(1);
+    EXPECT_CALL(_audio, FadeIn(second_id, 3.0)).Times(1);
+
+    neon::Crossfade(SourceOf(first), SourceOf(second), 3.0);
+    _system.Update(_store, 0.016);
+
+    EXPECT_TRUE(SourceOf(second).playing);
+  }
+
+  TEST_F(AudioPlaybackTest, ForgetsTheFadeOfASoundThatCannotBeCreated)
+  {
+    ON_CALL(_audio, CreateSound(_)).WillByDefault(Return(-1));
+    auto source = Source("assets://sounds/missing.wav");
+    source.FadeIn(1.0);
+    const Entity entity = CreateSource(source);
+
+    EXPECT_CALL(_audio, FadeIn(_, _)).Times(0);
+
+    _system.Update(_store, 0.016);
+
+    EXPECT_FALSE(SourceOf(entity).fade.has_value());
   }
 
   // Listener

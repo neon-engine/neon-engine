@@ -59,6 +59,12 @@ struct SettingsConfig
   /// while it is shown. Empty shows none, and pause does nothing.
   std::string pause_menu;
 
+  /// Virtual path of the settings menu, which the button `settings` of the
+  /// pause menu opens in its place. The world stays still while it is
+  /// shown, and the pause menu comes back when it is closed. Empty leaves
+  /// the button without effect.
+  std::string settings_menu;
+
   /// Pixels that are drawn for each point of the window, for a run without
   /// a window. It stands in for the density of a display: 2 draws what a
   /// Retina display would show. With a window the density is that of the

@@ -588,6 +588,7 @@ namespace
     map.Set("spatial", DataValue::Bool(true));
     map.Set("min_distance", DataValue::Number(2.0f));
     map.Set("max_distance", DataValue::Number(30.0f));
+    map.Set("group", DataValue::Text("music"));
 
     Read("SoundSource", map);
 
@@ -601,8 +602,29 @@ namespace
     EXPECT_TRUE(source->sound.spatial);
     EXPECT_EQ(source->sound.min_distance, 2.0f);
     EXPECT_EQ(source->sound.max_distance, 30.0f);
+    EXPECT_EQ(source->sound.group, "music");
     EXPECT_EQ(source->sound_id, -1);
     EXPECT_THAT(_errors, IsEmpty());
+  }
+
+  TEST_F(EngineComponentFormatsTest, PutsASoundSourceAmongTheEffectsUnlessItSaysOtherwise)
+  {
+    auto map = DataValue::Map();
+    map.Set("sound", DataValue::Text("assets://sounds/step.wav"));
+
+    Read("SoundSource", map);
+
+    EXPECT_EQ(_store.Get<SoundSource>(_entity)->sound.group, "effects");
+  }
+
+  TEST_F(EngineComponentFormatsTest, WritesTheGroupOfASoundSourceOnlyWhenItIsNotTheEffects)
+  {
+    SoundSource source;
+    source.sound.path = "assets://sounds/theme.ogg";
+    source.sound.group = "music";
+    _store.Set(_entity, source);
+
+    EXPECT_THAT(NamesOf(Write("SoundSource")), ElementsAre("sound", "group"));
   }
 
   TEST_F(EngineComponentFormatsTest, ASoundSourceWithoutASoundIsReported)

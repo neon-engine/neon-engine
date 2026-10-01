@@ -103,6 +103,34 @@ namespace
       _audio.Play(sound);
       return sound;
     }
+
+    /// The level of every frame, for as many frames as fit in the time.
+    std::vector<float> LevelsOver(const double seconds)
+    {
+      std::vector<float> levels;
+      for (int i = 0; i < static_cast<int>(std::lround(seconds / frame)); i++) { levels.push_back(LevelAfter(frame)); }
+      return levels;
+    }
+
+    /// Whether every level is at most a little above the one before.
+    static bool Falls(const std::vector<float> &levels)
+    {
+      for (std::size_t i = 1; i < levels.size(); i++)
+      {
+        if (levels[i] > levels[i - 1] + 0.01f) { return false; }
+      }
+      return true;
+    }
+
+    /// Whether every level is at least a little below the one before.
+    static bool Rises(const std::vector<float> &levels)
+    {
+      for (std::size_t i = 1; i < levels.size(); i++)
+      {
+        if (levels[i] < levels[i - 1] - 0.01f) { return false; }
+      }
+      return true;
+    }
   };
 
   // Initialize
@@ -215,6 +243,247 @@ namespace
 
     EXPECT_NEAR(one, 0.25f, 0.02f);
     EXPECT_NEAR(two, 0.5f, 0.04f);
+  }
+
+  // Fading
+
+  TEST_F(MaAudioSystemTest, FadesASoundToAVolumeOverTime)
+  {
+    const int sound = Playing({.path = "assets://sounds/tone.wav", .looping = true});
+    LevelAfter(0.1);
+
+    _audio.FadeTo(sound, 0.5f, 0.5);
+    const auto levels = LevelsOver(0.5);
+
+    // from 0.5 to half of that, which it reaches as the fade ends
+    EXPECT_TRUE(Falls(levels));
+    EXPECT_GT(levels.front(), 0.45f);
+    EXPECT_NEAR(levels[levels.size() / 2], 0.375f, 0.03f);
+    EXPECT_NEAR(levels.back(), 0.25f, 0.02f);
+
+    // and where it stays
+    EXPECT_NEAR(LevelAfter(0.5), 0.25f, 0.02f);
+    EXPECT_TRUE(_audio.IsPlaying(sound));
+  }
+
+  TEST_F(MaAudioSystemTest, FadesASoundOnTopOfItsVolume)
+  {
+    const int sound = Playing({.path = "assets://sounds/tone.wav", .looping = true});
+
+    _audio.FadeTo(sound, 0.5f, 0.0);
+    _audio.SetVolume(sound, 0.5f);
+
+    EXPECT_NEAR(LevelAfter(0.1), 0.125f, 0.01f);
+  }
+
+  TEST_F(MaAudioSystemTest, KeepsPlayingASoundThatFadedToSilence)
+  {
+    const int sound = Playing({.path = "assets://sounds/tone.wav", .looping = true});
+
+    _audio.FadeTo(sound, 0.0f, 0.25);
+    LevelAfter(0.5);
+
+    EXPECT_EQ(LevelAfter(0.1), 0.0f);
+    EXPECT_TRUE(_audio.IsPlaying(sound));
+  }
+
+  TEST_F(MaAudioSystemTest, PlaysASoundThatFadedToSilenceAtItsVolumeAgain)
+  {
+    const int sound = Playing({.path = "assets://sounds/tone.wav", .looping = true});
+    _audio.FadeTo(sound, 0.0f, 0.0);
+    LevelAfter(0.1);
+
+    _audio.Play(sound);
+
+    EXPECT_NEAR(LevelAfter(0.1), 0.5f, 0.02f);
+  }
+
+  TEST_F(MaAudioSystemTest, FadesASoundOutAndStopsIt)
+  {
+    const int sound = Playing({.path = "assets://sounds/tone.wav", .looping = true});
+    LevelAfter(0.1);
+
+    _audio.FadeOut(sound, 0.5);
+    const auto levels = LevelsOver(0.45);
+
+    EXPECT_TRUE(Falls(levels));
+    EXPECT_GT(levels.front(), 0.45f);
+    EXPECT_LT(levels.back(), 0.1f);
+    EXPECT_TRUE(_audio.IsPlaying(sound));
+
+    // the time the fade takes is that which Advance() is told
+    LevelAfter(0.06);
+    EXPECT_FALSE(_audio.IsPlaying(sound));
+    EXPECT_EQ(LevelAfter(0.1), 0.0f);
+  }
+
+  TEST_F(MaAudioSystemTest, PlaysASoundThatFadedOutAgain)
+  {
+    const int sound = Playing({.path = "assets://sounds/tone.wav", .looping = true});
+    _audio.FadeOut(sound, 0.1);
+    LevelAfter(0.2);
+
+    _audio.Play(sound);
+
+    EXPECT_NEAR(LevelAfter(0.1), 0.5f, 0.02f);
+    EXPECT_TRUE(_audio.IsPlaying(sound));
+  }
+
+  TEST_F(MaAudioSystemTest, PutsOffAFadeOutWhenTheSoundIsFadedAgain)
+  {
+    const int sound = Playing({.path = "assets://sounds/tone.wav", .looping = true});
+    _audio.FadeOut(sound, 0.5);
+    LevelAfter(0.25);
+
+    _audio.FadeTo(sound, 1.0f, 0.25);
+    LevelAfter(0.5);
+
+    EXPECT_TRUE(_audio.IsPlaying(sound));
+    EXPECT_NEAR(LevelAfter(0.1), 0.5f, 0.02f);
+  }
+
+  TEST_F(MaAudioSystemTest, FadesASoundInFromSilence)
+  {
+    const int sound = _audio.CreateSound({.path = "assets://sounds/tone.wav", .looping = true});
+
+    _audio.FadeIn(sound, 0.5);
+    const auto levels = LevelsOver(0.5);
+
+    EXPECT_TRUE(Rises(levels));
+    EXPECT_LT(levels.front(), 0.05f);
+    EXPECT_NEAR(levels[levels.size() / 2], 0.25f, 0.03f);
+    EXPECT_NEAR(LevelAfter(0.1), 0.5f, 0.02f);
+  }
+
+  TEST_F(MaAudioSystemTest, CrossfadesFromOnePieceOfMusicToAnother)
+  {
+    // the two are mixed into one level, so each is measured on its own with
+    // the group of the other silent. Runs mix the same, which makes the two
+    // runs one crossfade heard twice
+    const auto run = [this](const std::string &silent_group)
+    {
+      _audio.CleanUp();
+      _audio.Initialize();
+      _audio.AddGroup("first");
+      _audio.AddGroup("second");
+      _audio.SetGroupVolume("first", 1.0f);
+      _audio.SetGroupVolume("second", 1.0f);
+      _audio.SetGroupVolume(silent_group, 0.0f);
+
+      const int first = Playing({.path = "assets://sounds/tone.wav", .looping = true, .group = "first"});
+      const int second = _audio.CreateSound({.path = "assets://sounds/tone.wav", .looping = true, .group = "second"});
+      LevelAfter(0.1);
+
+      _audio.Crossfade(first, second, 1.0);
+      auto levels = LevelsOver(1.0);
+      LevelAfter(0.05);
+
+      EXPECT_FALSE(_audio.IsPlaying(first));
+      EXPECT_TRUE(_audio.IsPlaying(second));
+      return levels;
+    };
+
+    const auto first = run("second");
+    const auto second = run("first");
+
+    EXPECT_TRUE(Falls(first));
+    EXPECT_GT(first.front(), 0.45f);
+    EXPECT_LT(first.back(), 0.05f);
+
+    EXPECT_TRUE(Rises(second));
+    EXPECT_LT(second.front(), 0.05f);
+    EXPECT_GT(second.back(), 0.45f);
+
+    // halfway, both are heard at half
+    EXPECT_NEAR(first[first.size() / 2], 0.25f, 0.03f);
+    EXPECT_NEAR(second[second.size() / 2], 0.25f, 0.03f);
+  }
+
+  TEST_F(MaAudioSystemTest, GivesTheSameLevelsOfAFadeInEveryRun)
+  {
+    const auto run = [this]
+    {
+      _audio.CleanUp();
+      _audio.Initialize();
+
+      const int sound = Playing({.path = "assets://sounds/tone.wav", .looping = true});
+      _audio.FadeOut(sound, 0.4);
+      return LevelsOver(0.5);
+    };
+
+    EXPECT_EQ(run(), run());
+  }
+
+  // Groups
+
+  TEST_F(MaAudioSystemTest, PlaysASoundAtTheVolumeOfItsGroup)
+  {
+    Playing({.path = "assets://sounds/tone.wav", .group = neon::sound_group::music});
+
+    _audio.SetGroupVolume(neon::sound_group::music, 0.5f);
+
+    EXPECT_NEAR(LevelAfter(0.1), 0.25f, 0.02f);
+  }
+
+  TEST_F(MaAudioSystemTest, PutsASoundAmongTheEffectsUnlessItSaysOtherwise)
+  {
+    Playing({.path = "assets://sounds/tone.wav"});
+
+    _audio.SetGroupVolume(neon::sound_group::effects, 0.0f);
+
+    EXPECT_EQ(LevelAfter(0.1), 0.0f);
+  }
+
+  TEST_F(MaAudioSystemTest, LeavesTheSoundsOfTheOtherGroupsAsTheyAre)
+  {
+    Playing({.path = "assets://sounds/tone.wav", .group = neon::sound_group::voices});
+
+    _audio.SetGroupVolume(neon::sound_group::music, 0.0f);
+    _audio.SetGroupVolume(neon::sound_group::effects, 0.0f);
+
+    EXPECT_NEAR(LevelAfter(0.1), 0.5f, 0.02f);
+  }
+
+  TEST_F(MaAudioSystemTest, PutsTheVolumeOfEverythingOnTopOfThatOfTheGroup)
+  {
+    Playing({.path = "assets://sounds/tone.wav", .group = neon::sound_group::music});
+
+    _audio.SetGroupVolume(neon::sound_group::music, 0.5f);
+    _audio.SetMasterVolume(0.5f);
+
+    EXPECT_NEAR(LevelAfter(0.1), 0.125f, 0.01f);
+  }
+
+  TEST_F(MaAudioSystemTest, PlaysASoundOfAGroupOfAGame)
+  {
+    _audio.AddGroup("ambience");
+    Playing({.path = "assets://sounds/tone.wav", .group = "ambience"});
+
+    _audio.SetGroupVolume("ambience", 0.5f);
+
+    EXPECT_NEAR(LevelAfter(0.1), 0.25f, 0.02f);
+  }
+
+  TEST_F(MaAudioSystemTest, PutsASoundOfAGroupThatIsNotThereAmongTheEffects)
+  {
+    Playing({.path = "assets://sounds/tone.wav", .group = "musik"});
+
+    _audio.SetGroupVolume(neon::sound_group::effects, 0.5f);
+
+    EXPECT_NEAR(LevelAfter(0.1), 0.25f, 0.02f);
+    EXPECT_TRUE(_logger->Contains(LogLevel::Warn, "Sound assets://sounds/tone.wav is of group musik, which is not there"));
+  }
+
+  TEST_F(MaAudioSystemTest, KeepsTheVolumeOfAGroupWhenInitializedAgain)
+  {
+    _audio.SetGroupVolume(neon::sound_group::music, 0.5f);
+
+    _audio.CleanUp();
+    _audio.Initialize();
+    Playing({.path = "assets://sounds/tone.wav", .group = neon::sound_group::music});
+
+    EXPECT_EQ(_audio.GetGroupVolume(neon::sound_group::music), 0.5f);
+    EXPECT_NEAR(LevelAfter(0.1), 0.25f, 0.02f);
   }
 
   // Playing and ending
@@ -421,6 +690,9 @@ namespace
       _audio.SetPitch(unknown, 2.0f);
       _audio.SetLooping(unknown, true);
       _audio.SetPosition(unknown, glm::vec3{1.0f}, glm::vec3{0.0f});
+      _audio.FadeIn(unknown, 1.0);
+      _audio.FadeTo(unknown, 0.5f, 1.0);
+      _audio.FadeOut(unknown, 1.0);
       _audio.DestroySound(unknown);
     });
     EXPECT_FALSE(_audio.IsPlaying(unknown));

@@ -4,7 +4,8 @@
 # still.
 #
 # Resume takes it away, and so does cancel: escape, or the right button of
-# a controller. Quit closes the window. The hint at the bottom follows
+# a controller. Settings shows the settings menu in its place, and the pause
+# menu comes back when that is closed. Quit closes the window. The hint at the bottom follows
 # what the player used last, which the user interface says in the values
 # `input_device` and `gamepad`.
 
@@ -49,6 +50,10 @@ root:
           # a band of light that moves over the button
           shader: assets://shaders/ui/shine
           shader_values: { speed: 0.4, width: 0.15, lean: 0.4, tint: "#ffffff50" }
+        - type: button
+          name: settings
+          text: Settings
+          border_radius: 8
         - type: button
           name: quit
           text: Quit

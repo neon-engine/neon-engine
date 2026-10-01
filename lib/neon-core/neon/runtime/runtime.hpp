@@ -33,10 +33,17 @@ namespace neon
     int _pause_document = -1;
     bool _pause_was_down = false;
 
+    // the settings menu while the pause menu has it shown in its place
+    int _settings_document = -1;
+
     /// Shows the pause menu when pause is pressed, takes it away when
-    /// resume is chosen, closes the window on quit, and holds the world
-    /// still while the menu is shown.
+    /// resume is chosen, closes the window on quit, opens the settings menu
+    /// in its place when settings is chosen and shows it again when that is
+    /// closed, and holds the world still while either is shown.
     void UpdatePauseMenu();
+
+    /// Loads the pause menu, and says when it cannot be shown.
+    void ShowPauseMenu();
 
     Runtime(
       const SettingsConfig &settings_config,

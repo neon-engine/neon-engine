@@ -1,16 +1,37 @@
 #ifndef SOUND_SOURCE_HPP
 #define SOUND_SOURCE_HPP
 
+#include <optional>
+
 #include <neon/audio/sound-info.hpp>
 #include <neon/reflection/type-builder.hpp>
 
 namespace neon
 {
+  /// A fade that a game asked a SoundSource for.
+  struct SoundFade
+  {
+    enum class Kind
+    {
+      /// Plays the sound from its start, rising from silence.
+      In,
+      /// Takes the sound from how loud it is to `volume`.
+      To,
+      /// Takes the sound to silence and stops it.
+      Out
+    };
+
+    Kind kind = Kind::To;
+    float volume = 1.0f;
+    double seconds = 0.0;
+  };
+
   /// Makes an entity a source of sound. With a place, the sound comes from
   /// where the Transform of the entity puts it.
   ///
   /// `playing` is how a game starts and stops the sound. It is set to false
-  /// by the engine when a sound that does not loop has ended.
+  /// by the engine when a sound that does not loop has ended, and when one
+  /// that faded out has stopped.
   struct SoundSource
   {
     SoundInfo sound;
@@ -18,6 +39,10 @@ namespace neon
     /// Whether the sound is to play. True plays it as soon as the entity
     /// joins the world.
     bool playing = true;
+
+    /// A fade that is handed to the audio in the next frame, and forgotten
+    /// then. Set through the functions below.
+    std::optional<SoundFade> fade;
 
     /// What the audio system knows the sound as. Filled in by the engine.
     /// -1 until then, and -2 when the sound could not be created.
@@ -27,10 +52,42 @@ namespace neon
     bool was_playing = false;
     glm::vec3 last_position{0.0f};
     bool has_last_position = false;
+
+    /// Plays the sound from its start, rising from silence to its volume
+    /// over `seconds`.
+    void FadeIn(const double seconds)
+    {
+      playing = true;
+      fade = SoundFade{.kind = SoundFade::Kind::In, .seconds = seconds};
+    }
+
+    /// Takes the sound from how loud it is to `volume` over `seconds`, on
+    /// top of the volume of the sound. It keeps playing at silence. A sound
+    /// that does not play is left alone.
+    void FadeTo(const float volume, const double seconds)
+    {
+      fade = SoundFade{.kind = SoundFade::Kind::To, .volume = volume, .seconds = seconds};
+    }
+
+    /// Takes the sound to silence over `seconds` and stops it then, which
+    /// sets `playing` to false. A sound that does not play is left alone.
+    void FadeOut(const double seconds)
+    {
+      fade = SoundFade{.kind = SoundFade::Kind::Out, .volume = 0.0f, .seconds = seconds};
+    }
   };
 
+  /// Fades one source out while another fades in, as from one piece of music
+  /// to the next.
+  inline void Crossfade(SoundSource &from, SoundSource &to, const double seconds)
+  {
+    from.FadeOut(seconds);
+    to.FadeIn(seconds);
+  }
+
   /// What the engine keeps for itself, the id of the sound and what it last
-  /// told the audio system, is not described.
+  /// told the audio system, is not described, and neither is a fade, which
+  /// a game asks for while it runs.
   inline void Describe(TypeBuilder<SoundSource> &type)
   {
     type.Named("SoundSource", "Makes an entity a source of sound");
@@ -63,6 +120,11 @@ namespace neon
     type.Field("max_distance", [](SoundSource &source) -> float & { return source.sound.max_distance; })
         .AtLeast(0)
         .Describe("From this distance on it does not get quieter");
+
+    // a game can add groups, so a name is not checked here. The audio says
+    // when a sound is of a group that is not there
+    type.Field("group", [](SoundSource &source) -> std::string & { return source.sound.group; })
+        .Describe("The group whose volume the sound is played at: music, effects, voices, or one of the game");
   }
 } // neon
 

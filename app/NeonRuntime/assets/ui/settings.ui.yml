@@ -13,7 +13,10 @@ version: 1
 
 reference_size: [1920, 1080]
 
-# the file is closed when it is cancelled with escape or a controller
+# It takes the input while it is shown, so the cursor is there to use it,
+# and the game has the mouse back once it is closed: with escape or a
+# controller's cancel, or with Back or Apply
+modal: true
 cancel: close
 
 styles:
@@ -25,6 +28,7 @@ values:
   vsync: true
   volume: 80
   music: 60
+  track: chilled
   quality: high
   difficulty: normal
   notes: ""
@@ -83,7 +87,7 @@ root:
             - type: panel
               class: row
               children:
-                - {type: label, class: row-label, text: Volume}
+                - {type: label, class: row-label, text: Effects}
                 - type: panel
                   class: with-value
                   children:
@@ -99,6 +103,19 @@ root:
                   children:
                     - {type: slider, name: music, min: 0, max: 100, step: 5, value: "{music}"}
                     - {type: label, class: value, text: "{music}"}
+
+            # which piece of music plays: the scene fades from one to the
+            # next when another is chosen
+            - type: panel
+              class: row
+              children:
+                - {type: label, class: row-label, text: Track}
+                - type: panel
+                  class: choices
+                  children:
+                    - {type: radio, name: chilled, group: track, value: chilled, text: Chilled, checked: "{track}"}
+                    - {type: radio, name: fight, group: track, value: fight, text: Fight, checked: "{track}"}
+                    - {type: radio, name: hollow, group: track, value: hollow, text: Hollow, checked: "{track}"}
 
             - type: panel
               class: row
@@ -133,5 +150,5 @@ root:
         - type: panel
           class: actions
           children:
-            - {type: button, name: back, class: secondary, text: Back, title: Back to the game}
-            - {type: button, name: apply, class: primary, text: Apply, autofocus: true, title: Keep these settings}
+            - {type: button, name: back, class: secondary, text: Back, action: close, title: Back to the game}
+            - {type: button, name: apply, class: primary, text: Apply, action: close, autofocus: true, title: Keep these settings}

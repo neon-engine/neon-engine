@@ -4,6 +4,14 @@
 #
 # The menu is a component of an entity, as the HUD of hud-demo is. Escape
 # and a controller's cancel close it, as its file says.
+#
+# The menu sets what is heard. The Effects and Music sliders are the volumes
+# of those groups of sounds, through UiVolume, and choosing a track fades
+# from one piece of music to another, through UiSoundSwitch. The reactor
+# hums by the bear, among the effects.
+#
+# The music and the reactor come from a paid Humble Bundle, which is kept in
+# Git LFS and may not be passed on as it is.
 
 scene: settings-demo
 version: 1
@@ -62,3 +70,66 @@ entities:
         components:
           Transform: {}
           Camera: {}
+          SoundListener: {}
+
+  # the sliders of the menu are the volumes of two groups, from 0 to 100
+  - name: effects volume
+    components:
+      UiVolume:
+        value: volume
+        group: effects
+
+  - name: music volume
+    components:
+      UiVolume:
+        value: music
+        group: music
+
+  # one entity for each piece of music. The one the menu chooses plays, and
+  # a new choice fades from it to the next over two seconds
+  - name: chilled
+    components:
+      Transform: {}
+      SoundSource:
+        sound: assets://sounds/Electronic/Chilled (RT 3.428)/Electronic Chilled main.wav
+        group: music
+        looping: true
+      UiSoundSwitch:
+        value: track
+        equals: chilled
+        fade: 2
+
+  - name: fight
+    components:
+      Transform: {}
+      SoundSource:
+        sound: assets://sounds/Electronic/Fight (RT 2.5)/Electronic Fight main.wav
+        group: music
+        looping: true
+      UiSoundSwitch:
+        value: track
+        equals: fight
+        fade: 2
+
+  - name: hollow
+    components:
+      Transform: {}
+      SoundSource:
+        sound: assets://sounds/Electronic/Hollow (RT 5)/Electronic Hollow main.wav
+        group: music
+        looping: true
+      UiSoundSwitch:
+        value: track
+        equals: hollow
+        fade: 2
+
+  # an effect with a place: louder close to the bear, and heard from the
+  # side it is on
+  - name: reactor
+    components:
+      Transform: {}
+      SoundSource:
+        sound: assets://sounds/Sci-Fi/Ambience/Reactor Room.wav
+        looping: true
+        spatial: true
+        max_distance: 20

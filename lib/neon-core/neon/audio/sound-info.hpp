@@ -7,6 +7,16 @@
 
 namespace neon
 {
+  /// The groups every audio system has. Each has a volume of its own, which
+  /// is what a settings menu changes. A game adds more with
+  /// AudioContext::AddGroup().
+  namespace sound_group
+  {
+    constexpr auto music = "music";
+    constexpr auto effects = "effects";
+    constexpr auto voices = "voices";
+  }
+
   /// What a sound is created from.
   struct SoundInfo
   {
@@ -34,6 +44,10 @@ namespace neon
 
     /// From this distance on, it does not get any quieter.
     float max_distance = 100.0f;
+
+    /// The group the sound belongs to, whose volume it is played at on top
+    /// of its own.
+    std::string group = sound_group::effects;
   };
 
   /// Where the world is heard from.
