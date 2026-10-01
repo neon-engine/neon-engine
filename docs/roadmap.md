@@ -117,6 +117,11 @@ and a system. A script declares components and systems of its own.
 | Programmable rendering pipeline (#102) | A game describes passes, targets, and order in place of the fixed forward pipeline |
 | Compute in the pipeline (#107) | Compute passes next to draw passes, with shared buffers and images |
 | PBR and an ubershader out of the box (#106) | One shader that covers a traditionally rendered game, chosen by variants |
+| Emissive materials (#129) | Screens and holograms that glow. A screen shows a render target and makes it emissive; a CRT look is a material shader |
+| Bloom (#130) | What is brighter than white bleeds into a soft glow. The first post-processing step |
+| Tonemapping and exposure (#131) | Light above white mapped into what a screen shows, in place of clipping. The user interface is drawn after it and keeps its colours |
+| Light cast by screens (#132) | A screen can light what is around it with the average colour of its picture, if a game chooses so. A hologram only glows |
+| Projected and area lights (#133) | Lights that throw a picture, and lights from a rectangle, such as a screen or a window |
 | Frustum and occlusion culling (#115) | Draw what the camera sees: bounds against the frustum, and occlusion by occluder volumes or a hierarchical depth buffer |
 
 **Shaders are written once.** They are compiled to SPIR-V, and
