@@ -18,6 +18,7 @@
 
 namespace
 {
+  using neon::AlphaMode;
   using neon::Camera;
   using neon::ComponentFormats;
   using neon::DataReader;
@@ -309,6 +310,24 @@ namespace
     EXPECT_THAT(_errors, IsEmpty());
   }
 
+  TEST_F(EngineComponentFormatsTest, AMaterialIsOpaqueUnlessItSaysItBlends)
+  {
+    auto map = DataValue::Map();
+    map.Set("model", DataValue::Text("m"));
+    map.Set("shader", DataValue::Text("s"));
+
+    Read("Renderable", map);
+    EXPECT_EQ(_store.Get<Renderable>(_entity)->render_info.material_info.alpha_mode, AlphaMode::Opaque);
+
+    auto material = DataValue::Map();
+    material.Set("alpha_mode", DataValue::Text("blend"));
+    map.Set("material", material);
+
+    Read("Renderable", map);
+    EXPECT_EQ(_store.Get<Renderable>(_entity)->render_info.material_info.alpha_mode, AlphaMode::Blend);
+    EXPECT_THAT(_errors, IsEmpty());
+  }
+
   TEST_F(EngineComponentFormatsTest, ARenderableWithoutAModelIsReported)
   {
     auto map = DataValue::Map();
@@ -342,7 +361,7 @@ namespace
 
     EXPECT_THAT(_errors, ElementsAre(
                   "scene.yml: 'shine' is not known to 'material' of Renderable of entity 'thing'. "
-                  "Known are: shininess, color, use_textures"));
+                  "Known are: shininess, color, use_textures, alpha_mode"));
   }
 
   TEST_F(EngineComponentFormatsTest, ATextureThatIsNotTextIsReported)

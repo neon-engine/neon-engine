@@ -71,7 +71,8 @@ namespace neon
     glm::vec4 color{1.0f};
     // x and y scale the texture coordinates
     glm::vec4 texture_scale{1.0f};
-    // x shininess, y is 1 when textures are used and 0 when only the color is
+    // x shininess, y is 1 when textures are used and 0 when only the color is,
+    // z is 1 when the object is see-through and 0 when it is opaque
     glm::vec4 material{0.0f};
   };
 

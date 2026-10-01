@@ -194,6 +194,8 @@ add_library(${TARGET} STATIC
 
         # common
         neon/common/color.hpp
+        neon/common/color-space.cpp
+        neon/common/color-space.hpp
         neon/common/transform.hpp
         neon/common/rotation.hpp
 
@@ -364,6 +366,7 @@ neon_add_unit_test(${TARGET} neon/command-line/display-options.test.cpp)
   neon_add_unit_test(${TARGET} neon/reflection/type-info.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/scene-file/engine-component-formats.test.cpp)
   neon_add_unit_test(${TARGET} neon/command-line/runtime-options.test.cpp)
+  neon_add_unit_test(${TARGET} neon/common/color-space.test.cpp)
   neon_add_unit_test(${TARGET} neon/common/data-buffer.test.cpp)
   neon_add_unit_test(${TARGET} neon/common/rotation.test.cpp)
   neon_add_unit_test(${TARGET} neon/common/transform.test.cpp)

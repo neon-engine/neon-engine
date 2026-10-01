@@ -339,10 +339,12 @@ namespace neon
     const VkFormat format,
     const VkImageUsageFlags usage,
     VkImage &image,
-    VkDeviceMemory &memory) const
+    VkDeviceMemory &memory,
+    const VkImageCreateFlags flags) const
   {
     VkImageCreateInfo info{};
     info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    info.flags = flags;
     info.imageType = VK_IMAGE_TYPE_2D;
     info.format = format;
     info.extent = {width, height, 1};

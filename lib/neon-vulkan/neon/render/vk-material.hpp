@@ -84,7 +84,12 @@ namespace neon
     /// this material.
     [[nodiscard]] VK_ObjectData GetObjectData(const glm::mat4 &model, const Transform &transform) const;
 
+    /// How the texture at a place in the list of a material is kept: the
+    /// first as colours, the others as numbers.
+    [[nodiscard]] static VK_TextureOptions TextureOptionsFor(std::size_t index);
+
     [[nodiscard]] const std::string &ShaderPath() const { return _shader_path; }
+    [[nodiscard]] AlphaMode GetAlphaMode() const { return _material_info.alpha_mode; }
     [[nodiscard]] const std::vector<VK_Texture> &Textures() const { return _textures; }
 
     [[nodiscard]] VkPipeline Pipeline() const { return _pipeline; }

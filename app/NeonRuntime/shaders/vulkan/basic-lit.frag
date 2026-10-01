@@ -97,5 +97,5 @@ void main()
             Attenuation(light.attenuation, light.position.xyz) * intensity);
     }
 
-    frag_color = object.color * vec4(result, 1.0);
+    frag_color = vec4(object.color.rgb * result, object_alpha(object.color.a));
 }

@@ -12,10 +12,14 @@
 #include <neon/render/render-system.hpp>
 
 #include "vk-device.hpp"
+#include "vk-draw-order.hpp"
+#include "vk-frame-stages.hpp"
 #include "vk-material.hpp"
 #include "vk-model.hpp"
 #include "vk-render-target.hpp"
 #include "vk-renderer-2d.hpp"
+#include "vk-resolve.hpp"
+#include "vk-scene-image.hpp"
 #include "vk-shader.hpp"
 #include "vk-shader-data.hpp"
 #include "vk-swapchain-sizing.hpp"
@@ -28,6 +32,11 @@ namespace neon
   /// finished image is then copied to the screen. Without one it is left in
   /// place, where CaptureFrame() can read it. Drawing is the same in both
   /// cases.
+  ///
+  /// The models of a scene are lit in a scene image of linear light. The
+  /// resolve step turns that into the sRGB colours of the image that is
+  /// shown, and what is drawn in two dimensions goes on top of it. A render
+  /// target is drawn the same way.
   ///
   /// It draws the models of a scene as a RenderContext, and triangles in
   /// two dimensions on top of them as a Render2DContext.
@@ -60,16 +69,24 @@ namespace neon
     std::optional<RenderResolution> _render_resolution;
     VkExtent2D _extent{};
 
-    // the image every frame is drawn into
+    // The scene of every frame is lit in the scene image, which the resolve
+    // step draws into the image that is shown.
     VkFormat _depth_format = VK_FORMAT_UNDEFINED;
+    VkRenderPass _scene_pass = VK_NULL_HANDLE;
+    VK_SceneImage _scene;
+    VkDescriptorSet _scene_set = VK_NULL_HANDLE;
+    VK_Resolve _resolve;
+
+    // the image that is shown, which every frame is drawn into
     VkImage _color_image = VK_NULL_HANDLE;
     VkDeviceMemory _color_memory = VK_NULL_HANDLE;
     VkImageView _color_view = VK_NULL_HANDLE;
-    VkImage _depth_image = VK_NULL_HANDLE;
-    VkDeviceMemory _depth_memory = VK_NULL_HANDLE;
-    VkImageView _depth_view = VK_NULL_HANDLE;
-    VkRenderPass _render_pass = VK_NULL_HANDLE;
+    VkRenderPass _frame_pass = VK_NULL_HANDLE;
     VkFramebuffer _framebuffer = VK_NULL_HANDLE;
+    VK_FrameStage _frame_stage = VK_FrameStage::Nothing;
+
+    // see-through models of the frame, drawn when its scene is finished
+    std::vector<VK_SeeThroughDraw> _see_through;
 
     // the window, when there is one
     VkSwapchainKHR _swapchain = VK_NULL_HANDLE;
@@ -100,6 +117,8 @@ namespace neon
     uint32_t _last_scene_offset = 0;
     bool _warned_about_lights = false;
     bool _warned_about_capacity = false;
+    bool _warned_about_order = false;
+    bool _warned_about_window_format = false;
 
     VK_Texture _white_texture;
 
@@ -117,6 +136,15 @@ namespace neon
 
       // whether it was drawn to in the frame that is being drawn
       bool is_drawn = false;
+
+      // what it is cleared to, and how far its drawing got in this frame
+      Color clear;
+      VK_FrameStage stage = VK_FrameStage::Nothing;
+      std::vector<VK_SeeThroughDraw> see_through;
+
+      // what the resolve step reads its scene image through, once it has
+      // one
+      VkDescriptorSet scene_set = VK_NULL_HANDLE;
     };
 
     static constexpr int kMax_Render_Targets = 64;
@@ -145,7 +173,21 @@ namespace neon
     /// Does what waited for the frame to be finished.
     void SettleRenderTargets();
 
-    bool CreateRenderTarget();
+    void ReleaseTarget(Target &target) const;
+
+    /// Gets the frame, or the render target that is drawn to, to the stage
+    /// that draws models of the scene. Returns false when they cannot be
+    /// drawn any more.
+    bool EnterScene();
+
+    /// Gets it to the stage that draws on top of the scene, which resolves
+    /// the scene on the way.
+    void EnterOverlay();
+
+    /// Finishes what the frame, or the render target, draws to.
+    void LeaveCanvas();
+
+    bool CreateRenderPasses();
     bool CreateFrameImages();
     void DestroyFrameImages();
     bool CreateSwapchain(VkExtent2D wanted);
@@ -157,7 +199,11 @@ namespace neon
     bool CreateDescriptors();
     bool CreateFrameBuffer(FrameBuffer &buffer, VkDeviceSize entry_size, uint32_t capacity) const;
     void DestroyFrameBuffer(FrameBuffer &buffer) const;
-    bool GetPipeline(const std::string &shader_path, VkPipeline &pipeline);
+    bool GetPipeline(const std::string &shader_path, AlphaMode alpha_mode, VkPipeline &pipeline);
+
+    /// Draws the see-through models that were kept, from the farthest to
+    /// the nearest, and forgets them.
+    void DrawSeeThrough(VkCommandBuffer commands, std::vector<VK_SeeThroughDraw> &draws);
     bool CreateDescriptorSet(VK_Material &material) const;
     void CopyToWindow(VkCommandBuffer commands, uint32_t image_index) const;
 

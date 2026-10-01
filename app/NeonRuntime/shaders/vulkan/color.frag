@@ -7,5 +7,5 @@ layout (location = 0) out vec4 frag_color;
 
 void main()
 {
-    frag_color = vec4(object.color.rgb, 1.0);
+    frag_color = vec4(object.color.rgb, object_alpha(object.color.a));
 }

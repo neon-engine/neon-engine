@@ -110,11 +110,58 @@ A library of its own, `neon-vulkan`.
 | `VK_Texture` | Image, view, and sampler |
 | `VK_Shader` | Shader modules from SPIR-V |
 | `VK_Material` | Pipeline, descriptor sets, and per-object data |
+| `VK_SceneImage` | The image of linear light a scene is lit in, with its depth |
+| `VK_Resolve` | The resolve step, which turns a scene image into the colours of the image that is shown |
+| `VK_RenderTarget` | An image that is drawn to like the frame, and read as a texture |
 
 **Render to an image first, always.** Every frame is drawn into an offscreen
 image. With a window, that image is then copied to the swapchain. Headless,
 it is simply left there to be captured. Both modes share all drawing code, so
 what a screenshot shows is what a window would show.
+
+## The order of a frame
+
+| Stage | Drawn into | What happens |
+|---|---|---|
+| Render targets | Each target, in the order they are drawn | Each goes through the stages below on its own: a camera that draws into a texture lights a scene in a scene image of the target, a user interface on a surface draws on top. A target that shows only a user interface has no scene image |
+| Scene | The scene image, `R16G16B16A16_SFLOAT`, and its depth | Opaque models as they come, then see-through ones from the farthest to the nearest, tested against depth but not writing it. Lighting and blending are in linear light |
+| Resolve | The image that is shown, `R8G8B8A8_UNORM` | A triangle that covers it reads the scene image pixel by pixel, clamps it, and writes it in sRGB. The one place where light becomes the colours of a screen |
+| On top | The same image | What is drawn in two dimensions: user interfaces, blended in sRGB as CSS blends them |
+| Copy | The window, or a file | Byte for byte. The bytes are sRGB already |
+
+The first model of a frame begins the scene, and the first triangle drawn in
+two dimensions resolves it. A model that comes after that would cover what is
+on top, and is left out with a warning. The runtime draws the world before
+its user interfaces, so this does not happen.
+
+The resolve is where what changes how light looks on a screen goes. Light
+that bleeds around what is bright is added to the scene image just before
+it. A curve for light brighter than white replaces the clamp in
+`resolve.frag`. The scene image keeps such light until then.
+
+## Colour spaces
+
+Colours are written the way a screen shows them, in sRGB: in image files, in
+scene files, and in the style sheets of a user interface. Light adds up and
+blends in linear terms, where 0.5 is half the light of 1. In sRGB, 0.5 is
+about a fifth of it. The scene is therefore lit in linear light, and user
+interfaces are drawn in sRGB, which is what CSS blends in.
+
+| What | How it is read |
+|---|---|
+| The first texture of a material | An sRGB format, read as linear light. Its smaller copies are made by the graphics card in linear light |
+| The second texture of a material | Plain bytes. It says how much a surface shines, which is a number and not a colour |
+| The `color` of a material, the colour a camera clears its texture to | Turned into linear light before the shaders see it |
+| `ambient`, `diffuse`, and `specular` of a light | Amounts of light, handed over as they are. 0.5 is half the light |
+| Images, glyphs, and colours of a user interface | Plain bytes and sRGB numbers, blended as they are, as before and as CSS does |
+| A render target | Holds sRGB colours as bytes. A model reads it through an sRGB view, as linear light. A user interface reads it through a view of plain bytes |
+| The window | A format of plain bytes. A format that converts to sRGB would convert the frame a second time, and is taken only when there is nothing else, with a warning |
+| A saved frame | Copied byte for byte, and sRGB |
+
+The scene `gamma-test.scene.yml` and the tests `runtime-colours` check this
+pixel by pixel: half of red over black is 188, the light of half of red, and
+not 128, while half of black over white in a user interface is 127, as in a
+browser.
 
 ## The command line
 
@@ -173,6 +220,11 @@ different from how they did.
 | Highlights of the direction light | Set under the name `dirLight.specular`, which the shader does not have. They stay black | Set |
 | Number of lights | 16 point and 16 spot lights, the most that fit Apple's uniform limit | 64 of each, held in a uniform buffer |
 
+Later, lighting moved to linear light (see colour spaces above). A lit
+surface turned brighter in its middle tones, and light falls off more
+softly, which is what light does. Scenes whose lights were set to look
+right before may want weaker `ambient` and `diffuse` values.
+
 ## Known limits
 
 | Limit | Detail |
@@ -182,6 +234,8 @@ different from how they did.
 | Buffers live in memory the processor writes to | Fine for the sizes in use. Copying to memory owned by the graphics card is the next step if a profile asks for it |
 | No validation layers | They need the Vulkan SDK. See open questions |
 | Image decoding lives in the backend | stb_image is compiled into neon-vulkan. It belongs in neon-core, where a second renderer could share it |
+| What a camera draws into a texture is clamped | Its scene is resolved into the bytes of the target, so light brighter than white, and what is later done with it, stays in the frame |
+| Shaders of models write alpha 1 when opaque | A shader of its own has to do the same through `object_alpha()` in `scene-data.glsl`, or its alpha comes out in the resolve |
 
 ## Order of work
 

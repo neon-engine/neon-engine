@@ -42,8 +42,7 @@ namespace neon
     const uint32_t width,
     const uint32_t height,
     const VkRenderPass render_pass,
-    const VkFormat color_format,
-    const VkFormat depth_format)
+    const VkFormat color_format)
   {
     if (_device == nullptr || _device->Device() == VK_NULL_HANDLE || render_pass == VK_NULL_HANDLE)
     {
@@ -53,10 +52,12 @@ namespace neon
 
     const VkDevice device = _device->Device();
 
-    // Smaller copies are made by scaling, which the graphics card has to
-    // be able to do with this format.
+    // The image is made in the sRGB format, so that its smaller copies are
+    // the mean of the light, and may be seen through views of either
+    // format. Scaling has to work with it.
+    const VkFormat sampled_format = SampledFormatOf(color_format);
     VkFormatProperties properties;
-    vkGetPhysicalDeviceFormatProperties(_device->PhysicalDevice(), color_format, &properties);
+    vkGetPhysicalDeviceFormatProperties(_device->PhysicalDevice(), sampled_format, &properties);
     const bool can_scale =
       (properties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT) &&
       (properties.optimalTilingFeatures & VK_FORMAT_FEATURE_BLIT_SRC_BIT) &&
@@ -68,30 +69,24 @@ namespace neon
     constexpr VkImageAspectFlags color = VK_IMAGE_ASPECT_COLOR_BIT;
 
     if (!_device->CreateImage(
-          width, height, _mip_levels, color_format,
+          width, height, _mip_levels, sampled_format,
           VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT |
           VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
-          _color_image, _color_memory) ||
+          _color_image, _color_memory, VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT) ||
         !_device->CreateImageView(_color_image, color_format, color, 1, _attachment_view) ||
-        !_device->CreateImageView(_color_image, color_format, color, _mip_levels, _view) ||
-        !_device->CreateImage(
-          width, height, 1, depth_format,
-          VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-          _depth_image, _depth_memory) ||
-        !_device->CreateImageView(_depth_image, depth_format, VK_IMAGE_ASPECT_DEPTH_BIT, 1, _depth_view))
+        !_device->CreateImageView(_color_image, sampled_format, color, _mip_levels, _view) ||
+        !_device->CreateImageView(_color_image, color_format, color, _mip_levels, _bytes_view))
     {
       _logger->Error("Could not create the images of the render target '{}'", _name);
       CleanUp();
       return false;
     }
 
-    const std::array views{_attachment_view, _depth_view};
-
     VkFramebufferCreateInfo framebuffer{};
     framebuffer.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
     framebuffer.renderPass = render_pass;
-    framebuffer.attachmentCount = static_cast<uint32_t>(views.size());
-    framebuffer.pAttachments = views.data();
+    framebuffer.attachmentCount = 1;
+    framebuffer.pAttachments = &_attachment_view;
     framebuffer.width = width;
     framebuffer.height = height;
     framebuffer.layers = 1;
@@ -153,6 +148,28 @@ namespace neon
     return true;
   }
 
+  bool VK_RenderTarget::PrepareScene(const VkRenderPass scene_pass, const VkFormat depth_format)
+  {
+    if (_scene.IsReady()) { return true; }
+
+    if (!_scene.Initialize(_device, _extent.width, _extent.height, scene_pass, depth_format))
+    {
+      _logger->Error("Could not create the scene image of the render target '{}'", _name);
+      return false;
+    }
+    return true;
+  }
+
+  VkFormat VK_RenderTarget::SampledFormatOf(const VkFormat format)
+  {
+    switch (format)
+    {
+      case VK_FORMAT_R8G8B8A8_UNORM: return VK_FORMAT_R8G8B8A8_SRGB;
+      case VK_FORMAT_B8G8R8A8_UNORM: return VK_FORMAT_B8G8R8A8_SRGB;
+      default: return format;
+    }
+  }
+
   void VK_RenderTarget::Finish(const VkCommandBuffer commands) const
   {
     constexpr VkImageAspectFlags color = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -208,20 +225,17 @@ namespace neon
 
     if (_sampler != VK_NULL_HANDLE) { vkDestroySampler(device, _sampler, nullptr); }
     if (_framebuffer != VK_NULL_HANDLE) { vkDestroyFramebuffer(device, _framebuffer, nullptr); }
-    if (_depth_view != VK_NULL_HANDLE) { vkDestroyImageView(device, _depth_view, nullptr); }
-    if (_depth_image != VK_NULL_HANDLE) { vkDestroyImage(device, _depth_image, nullptr); }
-    if (_depth_memory != VK_NULL_HANDLE) { vkFreeMemory(device, _depth_memory, nullptr); }
+    _scene.CleanUp();
     if (_view != VK_NULL_HANDLE) { vkDestroyImageView(device, _view, nullptr); }
+    if (_bytes_view != VK_NULL_HANDLE) { vkDestroyImageView(device, _bytes_view, nullptr); }
     if (_attachment_view != VK_NULL_HANDLE) { vkDestroyImageView(device, _attachment_view, nullptr); }
     if (_color_image != VK_NULL_HANDLE) { vkDestroyImage(device, _color_image, nullptr); }
     if (_color_memory != VK_NULL_HANDLE) { vkFreeMemory(device, _color_memory, nullptr); }
 
     _sampler = VK_NULL_HANDLE;
     _framebuffer = VK_NULL_HANDLE;
-    _depth_view = VK_NULL_HANDLE;
-    _depth_image = VK_NULL_HANDLE;
-    _depth_memory = VK_NULL_HANDLE;
     _view = VK_NULL_HANDLE;
+    _bytes_view = VK_NULL_HANDLE;
     _attachment_view = VK_NULL_HANDLE;
     _color_image = VK_NULL_HANDLE;
     _color_memory = VK_NULL_HANDLE;

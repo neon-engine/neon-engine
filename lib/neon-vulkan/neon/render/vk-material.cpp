@@ -1,6 +1,7 @@
 #include "vk-material.hpp"
 
 #include <utility>
+#include <neon/common/color-space.hpp>
 
 #include "vk-render-target.hpp"
 
@@ -32,8 +33,10 @@ namespace neon
       return true;
     }
 
-    for (const auto &texture_path : _texture_paths)
+    for (std::size_t i = 0; i < _texture_paths.size(); i++)
     {
+      const std::string &texture_path = _texture_paths[i];
+
       // what a render target was drawn to is no file, and belongs to the
       // target
       if (const std::string surface = VK_RenderTarget::NameOf(texture_path); !surface.empty())
@@ -49,7 +52,7 @@ namespace neon
       _surface_names.emplace_back();
 
       VK_Texture texture(texture_path, _file_system_context, _device, _logger);
-      if (!texture.Initialize())
+      if (!texture.Initialize(TextureOptionsFor(i)))
       {
         _logger->Error("Could not initialize texture");
         CleanUp();
@@ -60,6 +63,15 @@ namespace neon
 
     _initialized = true;
     return true;
+  }
+
+  VK_TextureOptions VK_Material::TextureOptionsFor(const std::size_t index)
+  {
+    // The first texture holds the colours of the surface. The second says
+    // how much each part of it shines, which is a number and not a colour.
+    VK_TextureOptions options;
+    options.is_color = index == 0;
+    return options;
   }
 
   void VK_Material::CleanUp()
@@ -117,7 +129,8 @@ namespace neon
 
   VK_ObjectData VK_Material::GetObjectData(const glm::mat4 &model, const Transform &transform) const
   {
-    const auto [red, green, blue, alpha] = _material_info.color;
+    // the colour is written as a screen shows it, and lit in linear light
+    const auto [red, green, blue, alpha] = SrgbToLinear(_material_info.color);
 
     VK_ObjectData data;
     data.model = model;
@@ -126,7 +139,11 @@ namespace neon
     data.texture_scale = _scale_textures
       ? glm::vec4(GetMaxPositiveComponents(transform.scale), 0.0f, 0.0f)
       : glm::vec4(1.0f, 1.0f, 0.0f, 0.0f);
-    data.material = {_material_info.shininess, _material_info.use_textures ? 1.0f : 0.0f, 0.0f, 0.0f};
+    data.material = {
+      _material_info.shininess,
+      _material_info.use_textures ? 1.0f : 0.0f,
+      _material_info.alpha_mode == AlphaMode::Blend ? 1.0f : 0.0f,
+      0.0f};
     return data;
   }
 

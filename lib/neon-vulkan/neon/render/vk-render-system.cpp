@@ -7,6 +7,9 @@
 #include <format>
 #include <stdexcept>
 #include <glm/gtc/matrix_transform.hpp>
+#include <neon/common/color-space.hpp>
+
+#include "vk-surface-format.hpp"
 
 // kept private to this file, so that another library can carry its own copy
 #define STB_IMAGE_WRITE_STATIC
@@ -17,9 +20,13 @@ namespace neon
 {
   namespace
   {
-    // Plain colours, with no conversion on the way in or out. Textures are
-    // read the same way, so a colour in an image file is the colour drawn.
+    // The image that is shown holds sRGB colours as bytes: what the resolve
+    // step writes, and what is drawn on top of it. It is copied as it is to
+    // the window and to a file.
     constexpr VkFormat color_format = VK_FORMAT_R8G8B8A8_UNORM;
+
+    // a frame has a scene image, and so may every render target
+    constexpr uint32_t max_scene_images = 1 + 64;
 
     // The core builds its projection with glm's defaults, where depth runs
     // from -1 to 1. Vulkan expects 0 to 1. This moves one range onto the
@@ -70,12 +77,16 @@ namespace neon
     _logger->Info("Render resolution: {}x{}", _extent.width, _extent.height);
     _render_resolution.emplace(static_cast<int>(_extent.width), static_cast<int>(_extent.height));
 
-    if (!CreateRenderTarget() || !CreateDescriptors())
+    if (!CreateRenderPasses() ||
+        !_resolve.Initialize(&_device, _file_system_context, _frame_pass, max_scene_images, _logger) ||
+        !CreateFrameImages() ||
+        !CreateDescriptors())
     {
       throw std::runtime_error("Failed to set up the Vulkan renderer");
     }
 
-    _renderer_2d.Initialize(&_device, _file_system_context, _render_pass, _extent, _logger);
+    // drawn on top of the resolved scene, in the sRGB colours CSS blends in
+    _renderer_2d.Initialize(&_device, _file_system_context, _frame_pass, _extent, _logger);
 
     _white_texture = VK_Texture("a plain white texture", _file_system_context, &_device, _logger);
     if (!_white_texture.InitializeWithColor(255, 255, 255, 255))
@@ -129,15 +140,12 @@ namespace neon
       return false;
     }
 
-    // plain colours, to show exactly what was drawn
-    VkSurfaceFormatKHR format = formats[0];
-    for (const auto &candidate : formats)
+    // the frame is copied as it is, and its bytes are sRGB already
+    const VkSurfaceFormatKHR format = ChooseSurfaceFormat(formats);
+    if (IsSrgbFormat(format.format) && !_warned_about_window_format)
     {
-      if (candidate.format == VK_FORMAT_B8G8R8A8_UNORM || candidate.format == VK_FORMAT_R8G8B8A8_UNORM)
-      {
-        format = candidate;
-        break;
-      }
+      _warned_about_window_format = true;
+      _logger->Warn("The window offers only formats that convert to sRGB, frames are shown too light");
     }
 
     // Show frames as soon as they are done. Waiting for the screen is the
@@ -206,7 +214,7 @@ namespace neon
            vkCreateSemaphore(_device.Device(), &semaphore, nullptr, &_render_finished) == VK_SUCCESS;
   }
 
-  bool VK_RenderSystem::CreateRenderTarget()
+  bool VK_RenderSystem::CreateRenderPasses()
   {
     for (const VkFormat candidate :
          {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT})
@@ -226,16 +234,17 @@ namespace neon
       return false;
     }
 
+    // The scene: linear light and depth. The light is read by the resolve
+    // step afterwards, and the depth is needed no longer.
     std::array<VkAttachmentDescription, 2> attachments{};
-    attachments[0].format = color_format;
+    attachments[0].format = VK_SceneImage::kFormat;
     attachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
     attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
     attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     attachments[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    // a finished frame is only ever copied from, to the window or to a file
-    attachments[0].finalLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+    attachments[0].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
     attachments[1].format = _depth_format;
     attachments[1].samples = VK_SAMPLE_COUNT_1_BIT;
@@ -255,24 +264,25 @@ namespace neon
     subpass.pColorAttachments = &color_reference;
     subpass.pDepthStencilAttachment = &depth_reference;
 
-    // what came before has to be done before drawing starts, and drawing has
-    // to be done before the frame is copied
+    // the resolve of the frame before has read the image before it is
+    // drawn to again, and the scene is drawn before the resolve reads it
     std::array<VkSubpassDependency, 2> dependencies{};
     dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
     dependencies[0].dstSubpass = 0;
-    dependencies[0].srcStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT;
+    dependencies[0].srcStageMask =
+      VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
     dependencies[0].dstStageMask =
       VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-    dependencies[0].srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+    dependencies[0].srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
     dependencies[0].dstAccessMask =
       VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
     dependencies[1].srcSubpass = 0;
     dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
     dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    dependencies[1].dstStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT;
+    dependencies[1].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
     dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-    dependencies[1].dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+    dependencies[1].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
     VkRenderPassCreateInfo pass{};
     pass.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
@@ -283,13 +293,61 @@ namespace neon
     pass.dependencyCount = static_cast<uint32_t>(dependencies.size());
     pass.pDependencies = dependencies.data();
 
-    if (vkCreateRenderPass(_device.Device(), &pass, nullptr, &_render_pass) != VK_SUCCESS)
+    if (vkCreateRenderPass(_device.Device(), &pass, nullptr, &_scene_pass) != VK_SUCCESS)
     {
-      _logger->Critical("Could not create the Vulkan render pass");
+      _logger->Critical("Could not create the render pass of the scene");
       return false;
     }
 
-    return CreateFrameImages();
+    // The image that is shown: the resolve step covers it, or it is cleared
+    // where no scene was drawn. A finished one is only ever copied from: to
+    // the window, to a file, or into the smaller copies of a render target.
+    VkAttachmentDescription shown{};
+    shown.format = color_format;
+    shown.samples = VK_SAMPLE_COUNT_1_BIT;
+    shown.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    shown.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    shown.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    shown.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    shown.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    shown.finalLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+
+    VkSubpassDescription shown_subpass{};
+    shown_subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    shown_subpass.colorAttachmentCount = 1;
+    shown_subpass.pColorAttachments = &color_reference;
+
+    // What came before has to be done before drawing starts: the copy of
+    // the frame before, and what read a render target. Drawing has to be
+    // done before the image is copied.
+    std::array<VkSubpassDependency, 2> shown_dependencies{};
+    shown_dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
+    shown_dependencies[0].dstSubpass = 0;
+    shown_dependencies[0].srcStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+    shown_dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    shown_dependencies[0].srcAccessMask = 0;
+    shown_dependencies[0].dstAccessMask =
+      VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+    shown_dependencies[1].srcSubpass = 0;
+    shown_dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
+    shown_dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    shown_dependencies[1].dstStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT;
+    shown_dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    shown_dependencies[1].dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+
+    pass.attachmentCount = 1;
+    pass.pAttachments = &shown;
+    pass.pSubpasses = &shown_subpass;
+    pass.dependencyCount = static_cast<uint32_t>(shown_dependencies.size());
+    pass.pDependencies = shown_dependencies.data();
+
+    if (vkCreateRenderPass(_device.Device(), &pass, nullptr, &_frame_pass) != VK_SUCCESS)
+    {
+      _logger->Critical("Could not create the render pass of the frame");
+      return false;
+    }
+    return true;
   }
 
   bool VK_RenderSystem::CreateFrameImages()
@@ -299,22 +357,19 @@ namespace neon
           VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
           _color_image, _color_memory) ||
         !_device.CreateImageView(_color_image, color_format, VK_IMAGE_ASPECT_COLOR_BIT, 1, _color_view) ||
-        !_device.CreateImage(
-          _extent.width, _extent.height, 1, _depth_format,
-          VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-          _depth_image, _depth_memory) ||
-        !_device.CreateImageView(_depth_image, _depth_format, VK_IMAGE_ASPECT_DEPTH_BIT, 1, _depth_view))
+        !_scene.Initialize(&_device, _extent.width, _extent.height, _scene_pass, _depth_format))
     {
       return false;
     }
 
-    const std::array views{_color_view, _depth_view};
+    _scene_set = _resolve.Keep(_scene.View());
+    if (_scene_set == VK_NULL_HANDLE) { return false; }
 
     VkFramebufferCreateInfo framebuffer{};
     framebuffer.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-    framebuffer.renderPass = _render_pass;
-    framebuffer.attachmentCount = static_cast<uint32_t>(views.size());
-    framebuffer.pAttachments = views.data();
+    framebuffer.renderPass = _frame_pass;
+    framebuffer.attachmentCount = 1;
+    framebuffer.pAttachments = &_color_view;
     framebuffer.width = _extent.width;
     framebuffer.height = _extent.height;
     framebuffer.layers = 1;
@@ -332,17 +387,14 @@ namespace neon
     const VkDevice device = _device.Device();
 
     if (_framebuffer != VK_NULL_HANDLE) { vkDestroyFramebuffer(device, _framebuffer, nullptr); }
-    if (_depth_view != VK_NULL_HANDLE) { vkDestroyImageView(device, _depth_view, nullptr); }
-    if (_depth_image != VK_NULL_HANDLE) { vkDestroyImage(device, _depth_image, nullptr); }
-    if (_depth_memory != VK_NULL_HANDLE) { vkFreeMemory(device, _depth_memory, nullptr); }
+    _resolve.Release(_scene_set);
+    _scene.CleanUp();
     if (_color_view != VK_NULL_HANDLE) { vkDestroyImageView(device, _color_view, nullptr); }
     if (_color_image != VK_NULL_HANDLE) { vkDestroyImage(device, _color_image, nullptr); }
     if (_color_memory != VK_NULL_HANDLE) { vkFreeMemory(device, _color_memory, nullptr); }
 
     _framebuffer = VK_NULL_HANDLE;
-    _depth_view = VK_NULL_HANDLE;
-    _depth_image = VK_NULL_HANDLE;
-    _depth_memory = VK_NULL_HANDLE;
+    _scene_set = VK_NULL_HANDLE;
     _color_view = VK_NULL_HANDLE;
     _color_image = VK_NULL_HANDLE;
     _color_memory = VK_NULL_HANDLE;
@@ -446,10 +498,13 @@ namespace neon
     return true;
   }
 
-  bool VK_RenderSystem::GetPipeline(const std::string &shader_path, VkPipeline &pipeline)
+  bool VK_RenderSystem::GetPipeline(const std::string &shader_path, const AlphaMode alpha_mode, VkPipeline &pipeline)
   {
-    // materials that name the same shader share one pipeline
-    if (const auto existing = _pipelines.find(shader_path); existing != _pipelines.end())
+    const bool blends = alpha_mode == AlphaMode::Blend;
+
+    // materials that name the same shader and cover alike share a pipeline
+    const std::string key = blends ? shader_path + " blended" : shader_path;
+    if (const auto existing = _pipelines.find(key); existing != _pipelines.end())
     {
       pipeline = existing->second.pipeline;
       return true;
@@ -505,13 +560,25 @@ namespace neon
     multisample.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
     multisample.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
+    // What is see-through is hidden by what is opaque in front of it, but
+    // hides nothing itself, so that what is drawn after it still shows.
     VkPipelineDepthStencilStateCreateInfo depth{};
     depth.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
     depth.depthTestEnable = VK_TRUE;
-    depth.depthWriteEnable = VK_TRUE;
+    depth.depthWriteEnable = blends ? VK_FALSE : VK_TRUE;
     depth.depthCompareOp = VK_COMPARE_OP_LESS;
 
+    // A see-through colour is blended over what is behind it, in the
+    // linear light of the scene image. Its alpha is multiplied into the
+    // colour, and the scene image keeps alpha multiplied in.
     VkPipelineColorBlendAttachmentState blend_attachment{};
+    blend_attachment.blendEnable = blends ? VK_TRUE : VK_FALSE;
+    blend_attachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+    blend_attachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+    blend_attachment.colorBlendOp = VK_BLEND_OP_ADD;
+    blend_attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+    blend_attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+    blend_attachment.alphaBlendOp = VK_BLEND_OP_ADD;
     blend_attachment.colorWriteMask =
       VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 
@@ -539,7 +606,7 @@ namespace neon
     info.pColorBlendState = &blend;
     info.pDynamicState = &dynamic;
     info.layout = _pipeline_layout;
-    info.renderPass = _render_pass;
+    info.renderPass = _scene_pass;
     info.subpass = 0;
 
     if (vkCreateGraphicsPipelines(
@@ -551,7 +618,7 @@ namespace neon
     }
 
     pipeline = entry.pipeline;
-    _pipelines.emplace(shader_path, entry);
+    _pipelines.emplace(key, entry);
     return true;
   }
 
@@ -640,9 +707,12 @@ namespace neon
 
     for (int id = 0; id < _targets.Capacity(); id++)
     {
-      if (_targets.Contains(id)) { _targets.Remove(id).target.CleanUp(); }
+      if (!_targets.Contains(id)) { continue; }
+
+      Target removed = _targets.Remove(id);
+      ReleaseTarget(removed);
     }
-    for (auto &target : _targets_to_release) { target.target.CleanUp(); }
+    for (auto &target : _targets_to_release) { ReleaseTarget(target); }
     _targets_to_release.clear();
     _refused_targets.clear();
     _current_target = No_Render_Target;
@@ -672,7 +742,9 @@ namespace neon
     if (_swapchain != VK_NULL_HANDLE) { vkDestroySwapchainKHR(device, _swapchain, nullptr); }
 
     DestroyFrameImages();
-    if (_render_pass != VK_NULL_HANDLE) { vkDestroyRenderPass(device, _render_pass, nullptr); }
+    _resolve.CleanUp();
+    if (_scene_pass != VK_NULL_HANDLE) { vkDestroyRenderPass(device, _scene_pass, nullptr); }
+    if (_frame_pass != VK_NULL_HANDLE) { vkDestroyRenderPass(device, _frame_pass, nullptr); }
 
     _descriptor_pool = VK_NULL_HANDLE;
     _pipeline_layout = VK_NULL_HANDLE;
@@ -681,7 +753,8 @@ namespace neon
     _image_available = VK_NULL_HANDLE;
     _render_finished = VK_NULL_HANDLE;
     _swapchain = VK_NULL_HANDLE;
-    _render_pass = VK_NULL_HANDLE;
+    _scene_pass = VK_NULL_HANDLE;
+    _frame_pass = VK_NULL_HANDLE;
     _commands = VK_NULL_HANDLE;
 
     _device.CleanUp();
@@ -724,11 +797,18 @@ namespace neon
     for (auto &target : _targets_to_release)
     {
       if (target.texture != No_Texture) { _renderer_2d.DestroyTexture(target.texture); }
-      target.target.CleanUp();
+      ReleaseTarget(target);
     }
 
     _targets_to_release.clear();
     _surfaces_changed = false;
+  }
+
+  void VK_RenderSystem::ReleaseTarget(Target &target) const
+  {
+    _resolve.Release(target.scene_set);
+    target.scene_set = VK_NULL_HANDLE;
+    target.target.CleanUp();
   }
 
   bool VK_RenderSystem::FitWindow()
@@ -807,37 +887,172 @@ namespace neon
     begin.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
     vkBeginCommandBuffer(_commands, &begin);
 
-    std::array<VkClearValue, 2> clear{};
-    clear[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
-    clear[1].depthStencil = {1.0f, 0};
+    // a render pass is begun by what is drawn first
+    _frame_stage = VK_FrameStage::Nothing;
+    _see_through.clear();
+
+    _device.SetFrameCommands(_commands);
+    _frame_open = true;
+  }
+
+  bool VK_RenderSystem::EnterScene()
+  {
+    const bool is_target = _current_target != No_Render_Target;
+    VK_FrameStage &stage = is_target ? _targets[_current_target].stage : _frame_stage;
+    const VK_StageSteps steps = VK_FrameStages::ToScene(stage);
+
+    if (steps.refuse)
+    {
+      if (!_warned_about_order)
+      {
+        _warned_about_order = true;
+        _logger->Warn("A model was drawn after what is drawn on top of the scene, and is left out");
+      }
+      return false;
+    }
+    if (!steps.begin_scene) { return true; }
+
+    VkCommandBuffer commands = _commands;
+    VkFramebuffer framebuffer = _scene.Framebuffer();
+    VkExtent2D extent = _extent;
+    Color clear{0.0f, 0.0f, 0.0f, 1.0f};
+
+    if (is_target)
+    {
+      Target &kept = _targets[_current_target];
+      if (!kept.target.PrepareScene(_scene_pass, _depth_format)) { return false; }
+
+      if (kept.scene_set == VK_NULL_HANDLE) { kept.scene_set = _resolve.Keep(kept.target.Scene().View()); }
+      if (kept.scene_set == VK_NULL_HANDLE) { return false; }
+
+      commands = _target_commands;
+      framebuffer = kept.target.Scene().Framebuffer();
+      extent = kept.target.Extent();
+
+      // the colour asked for is sRGB, and the scene image holds light
+      clear = SrgbToLinear(kept.clear);
+    }
+
+    std::array<VkClearValue, 2> clears{};
+    clears[0].color = {{clear.r * clear.a, clear.g * clear.a, clear.b * clear.a, clear.a}};
+    clears[1].depthStencil = {1.0f, 0};
 
     VkRenderPassBeginInfo pass{};
     pass.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    pass.renderPass = _render_pass;
-    pass.framebuffer = _framebuffer;
-    pass.renderArea = {{0, 0}, _extent};
-    pass.clearValueCount = static_cast<uint32_t>(clear.size());
-    pass.pClearValues = clear.data();
+    pass.renderPass = _scene_pass;
+    pass.framebuffer = framebuffer;
+    pass.renderArea = {{0, 0}, extent};
+    pass.clearValueCount = static_cast<uint32_t>(clears.size());
+    pass.pClearValues = clears.data();
 
-    vkCmdBeginRenderPass(_commands, &pass, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBeginRenderPass(commands, &pass, VK_SUBPASS_CONTENTS_INLINE);
 
     // Vulkan counts rows from the top, while the projection of the core
     // assumes they are counted from the bottom. A viewport of negative
     // height, starting at the bottom, turns the picture the right way up.
     const VkViewport viewport{
       0.0f,
-      static_cast<float>(_extent.height),
-      static_cast<float>(_extent.width),
-      -static_cast<float>(_extent.height),
+      static_cast<float>(extent.height),
+      static_cast<float>(extent.width),
+      -static_cast<float>(extent.height),
       0.0f,
       1.0f};
-    const VkRect2D scissor{{0, 0}, _extent};
+    const VkRect2D scissor{{0, 0}, extent};
 
-    vkCmdSetViewport(_commands, 0, 1, &viewport);
-    vkCmdSetScissor(_commands, 0, 1, &scissor);
+    vkCmdSetViewport(commands, 0, 1, &viewport);
+    vkCmdSetScissor(commands, 0, 1, &scissor);
 
-    _device.SetFrameCommands(_commands);
-    _frame_open = true;
+    stage = VK_FrameStage::Scene;
+    return true;
+  }
+
+  void VK_RenderSystem::EnterOverlay()
+  {
+    const bool is_target = _current_target != No_Render_Target;
+    VK_FrameStage &stage = is_target ? _targets[_current_target].stage : _frame_stage;
+    const VK_StageSteps steps = VK_FrameStages::ToOverlay(stage);
+
+    VkCommandBuffer commands = _commands;
+    VkFramebuffer framebuffer = _framebuffer;
+    VkDescriptorSet scene_set = _scene_set;
+    VkExtent2D extent = _extent;
+    Color clear{0.0f, 0.0f, 0.0f, 1.0f};
+
+    if (is_target)
+    {
+      const Target &kept = _targets[_current_target];
+      commands = _target_commands;
+      framebuffer = kept.target.Framebuffer();
+      scene_set = kept.scene_set;
+      extent = kept.target.Extent();
+      clear = kept.clear;
+    }
+
+    if (steps.end_scene)
+    {
+      DrawSeeThrough(commands, is_target ? _targets[_current_target].see_through : _see_through);
+      vkCmdEndRenderPass(commands);
+    }
+
+    if (steps.begin_overlay)
+    {
+      // where a scene was drawn the resolve covers what is cleared here
+      VkClearValue clear_value{};
+      clear_value.color = {{clear.r * clear.a, clear.g * clear.a, clear.b * clear.a, clear.a}};
+
+      VkRenderPassBeginInfo pass{};
+      pass.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+      pass.renderPass = _frame_pass;
+      pass.framebuffer = framebuffer;
+      pass.renderArea = {{0, 0}, extent};
+      pass.clearValueCount = 1;
+      pass.pClearValues = &clear_value;
+
+      vkCmdBeginRenderPass(commands, &pass, VK_SUBPASS_CONTENTS_INLINE);
+    }
+
+    if (steps.resolve) { _resolve.Draw(commands, scene_set, extent); }
+
+    stage = VK_FrameStage::Overlay;
+  }
+
+  void VK_RenderSystem::DrawSeeThrough(const VkCommandBuffer commands, std::vector<VK_SeeThroughDraw> &draws)
+  {
+    VK_DrawOrder::BackToFront(draws);
+
+    for (const auto &draw : draws)
+    {
+      // a model that was destroyed since is left out
+      if (!_model_refs.Contains(draw.model_id)) { continue; }
+
+      const std::array offsets{draw.scene_offset, draw.object_offset};
+
+      vkCmdBindPipeline(commands, VK_PIPELINE_BIND_POINT_GRAPHICS, draw.pipeline);
+      vkCmdBindDescriptorSets(
+        commands,
+        VK_PIPELINE_BIND_POINT_GRAPHICS,
+        _pipeline_layout,
+        0,
+        1,
+        &draw.set,
+        static_cast<uint32_t>(offsets.size()),
+        offsets.data());
+
+      _model_refs[draw.model_id].Use();
+    }
+
+    draws.clear();
+  }
+
+  void VK_RenderSystem::LeaveCanvas()
+  {
+    const bool is_target = _current_target != No_Render_Target;
+
+    EnterOverlay();
+    vkCmdEndRenderPass(is_target ? _target_commands : _commands);
+
+    VK_FrameStage &stage = is_target ? _targets[_current_target].stage : _frame_stage;
+    stage = VK_FrameStage::Nothing;
   }
 
   void VK_RenderSystem::CopyToWindow(const VkCommandBuffer commands, const uint32_t image_index) const
@@ -875,7 +1090,10 @@ namespace neon
   {
     if (!_frame_open) { return; }
 
-    vkCmdEndRenderPass(_commands);
+    // a target that was left open is closed, so that its commands can run
+    if (_current_target != No_Render_Target) { EndRenderTarget(); }
+
+    LeaveCanvas();
 
     uint32_t image_index = 0;
     bool present = false;
@@ -900,9 +1118,6 @@ namespace neon
     }
 
     vkEndCommandBuffer(_commands);
-
-    // a target that was left open is closed, so that its commands can run
-    if (_current_target != No_Render_Target) { EndRenderTarget(); }
 
     // what draws into render targets runs first, and what shows them after
     std::array<VkCommandBuffer, 2> buffers{};
@@ -1053,7 +1268,7 @@ namespace neon
 
     VkPipeline pipeline = VK_NULL_HANDLE;
     if (!material.Initialize() ||
-        !GetPipeline(render_info.shader_path, pipeline) ||
+        !GetPipeline(render_info.shader_path, render_info.material_info.alpha_mode, pipeline) ||
         !CreateDescriptorSet(material))
     {
       _logger->Error("Could not initialize material with shader {}", render_info.shader_path);
@@ -1106,6 +1321,10 @@ namespace neon
     int spot_lights = 0;
     bool dropped = false;
 
+    // The parts of a light are amounts of light that the shaders add up,
+    // and are handed over as they are. A colour of a material is written
+    // as a screen shows it and is turned into light, but 0.5 here means
+    // half the light, as it says.
     for (const auto &light : lights)
     {
       switch (light.light_type)
@@ -1190,6 +1409,7 @@ namespace neon
     }
 
     const VkCommandBuffer commands = _current_target != No_Render_Target ? _target_commands : _commands;
+    if (!EnterScene()) { return; }
 
     // The camera and the lights are handed over with every object, but they
     // rarely change within a frame. They are only stored again when they do.
@@ -1229,6 +1449,22 @@ namespace neon
 
     const std::array offsets{_last_scene_offset, object_offset};
     const VkDescriptorSet set = material.DescriptorSet();
+
+    // what is see-through is drawn when the scene is finished, over what
+    // is opaque, from the farthest to the nearest
+    if (material.GetAlphaMode() == AlphaMode::Blend)
+    {
+      auto &kept = _current_target != No_Render_Target ? _targets[_current_target].see_through : _see_through;
+      kept.push_back({
+        .pipeline = material.Pipeline(),
+        .set = set,
+        .scene_offset = _last_scene_offset,
+        .object_offset = object_offset,
+        .model_id = model_id,
+        .distance = VK_DrawOrder::DistanceOf(view, glm::vec3(model_matrix[3]))
+      });
+      return;
+    }
 
     vkCmdBindPipeline(commands, VK_PIPELINE_BIND_POINT_GRAPHICS, material.Pipeline());
     vkCmdBindDescriptorSets(
@@ -1286,6 +1522,7 @@ namespace neon
   {
     if (!_frame_open) { return; }
 
+    EnterOverlay();
     _renderer_2d.Draw(triangles);
   }
 
@@ -1356,7 +1593,7 @@ namespace neon
     kept.target = VK_RenderTarget(name, &_device, _logger);
 
     if (!kept.target.Initialize(
-      static_cast<uint32_t>(width), static_cast<uint32_t>(height), _render_pass, color_format, _depth_format))
+      static_cast<uint32_t>(width), static_cast<uint32_t>(height), _frame_pass, color_format))
     {
       return refuse("its images could not be made");
     }
@@ -1411,33 +1648,10 @@ namespace neon
     Target &kept = _targets[target];
     const VkExtent2D extent = kept.target.Extent();
 
-    std::array<VkClearValue, 2> clears{};
-    clears[0].color = {{clear.r * clear.a, clear.g * clear.a, clear.b * clear.a, clear.a}};
-    clears[1].depthStencil = {1.0f, 0};
-
-    VkRenderPassBeginInfo pass{};
-    pass.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    pass.renderPass = _render_pass;
-    pass.framebuffer = kept.target.Framebuffer();
-    pass.renderArea = {{0, 0}, extent};
-    pass.clearValueCount = static_cast<uint32_t>(clears.size());
-    pass.pClearValues = clears.data();
-
-    vkCmdBeginRenderPass(_target_commands, &pass, VK_SUBPASS_CONTENTS_INLINE);
-
-    // turned the right way up, as the frame is
-    const VkViewport viewport{
-      0.0f,
-      static_cast<float>(extent.height),
-      static_cast<float>(extent.width),
-      -static_cast<float>(extent.height),
-      0.0f,
-      1.0f};
-    const VkRect2D scissor{{0, 0}, extent};
-
-    vkCmdSetViewport(_target_commands, 0, 1, &viewport);
-    vkCmdSetScissor(_target_commands, 0, 1, &scissor);
-
+    // a render pass is begun by what is drawn first, as in the frame
+    kept.clear = clear;
+    kept.stage = VK_FrameStage::Nothing;
+    kept.see_through.clear();
     kept.is_drawn = true;
     _current_target = target;
 
@@ -1453,7 +1667,7 @@ namespace neon
   {
     if (_current_target == No_Render_Target) { return; }
 
-    vkCmdEndRenderPass(_target_commands);
+    LeaveCanvas();
 
     if (_targets.Contains(_current_target)) { _targets[_current_target].target.Finish(_target_commands); }
 
@@ -1473,7 +1687,7 @@ namespace neon
     if (kept.texture == No_Texture)
     {
       kept.texture = _renderer_2d.KeepBorrowed(
-        kept.target.View(), kept.target.Sampler(), kept.target.Extent().width, kept.target.Extent().height);
+        kept.target.BytesView(), kept.target.Sampler(), kept.target.Extent().width, kept.target.Extent().height);
     }
 
     return kept.texture;

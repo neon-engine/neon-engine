@@ -51,6 +51,12 @@ namespace neon
       material.Field(
         "use_textures",
         [](Renderable &renderable) -> bool & { return renderable.render_info.material_info.use_textures; });
+
+      material.Choice(
+            "alpha_mode",
+            [](Renderable &renderable) -> AlphaMode & { return renderable.render_info.material_info.alpha_mode; },
+            {"opaque", "blend"})
+          .Describe("Whether the alpha of the colour lets what is behind show through");
     });
   }
 } // neon

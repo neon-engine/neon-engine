@@ -6,6 +6,7 @@
 #include <neon/logging/logger.hpp>
 
 #include "vk-device.hpp"
+#include "vk-scene-image.hpp"
 
 namespace neon
 {
@@ -14,9 +15,11 @@ namespace neon
   /// world that carries it on its surface.
   ///
   /// It has the formats of the frame, so that everything that draws into
-  /// the frame draws into it as well, with the same pipelines. It has
-  /// smaller copies, which are made again whenever it was drawn to, since a
-  /// surface in the world is seen from afar and from the side.
+  /// the frame draws into it as well, with the same pipelines: models of a
+  /// scene into a scene image of its own, which is resolved into the
+  /// target, and what is drawn in two dimensions on top. It has smaller
+  /// copies, which are made again whenever it was drawn to, since a surface
+  /// in the world is seen from afar and from the side.
   ///
   /// Between two frames the image is ready to be read by a shader.
   // ReSharper disable once CppInconsistentNaming
@@ -32,14 +35,16 @@ namespace neon
     VkImage _color_image = VK_NULL_HANDLE;
     VkDeviceMemory _color_memory = VK_NULL_HANDLE;
 
-    // what is drawn to, which is the image without its smaller copies, and
-    // what is read, which is the image with them
+    // What is drawn to, which is the image without its smaller copies, and
+    // what is read, which is the image with them. The image holds sRGB
+    // colours as bytes. A model reads them as linear light, and what is
+    // drawn in two dimensions reads them as the bytes they are.
     VkImageView _attachment_view = VK_NULL_HANDLE;
     VkImageView _view = VK_NULL_HANDLE;
+    VkImageView _bytes_view = VK_NULL_HANDLE;
 
-    VkImage _depth_image = VK_NULL_HANDLE;
-    VkDeviceMemory _depth_memory = VK_NULL_HANDLE;
-    VkImageView _depth_view = VK_NULL_HANDLE;
+    // where models are lit, made when the first is drawn into the target
+    VK_SceneImage _scene;
 
     VkFramebuffer _framebuffer = VK_NULL_HANDLE;
     VkSampler _sampler = VK_NULL_HANDLE;
@@ -56,14 +61,18 @@ namespace neon
 
     VK_RenderTarget(const std::string &name, VK_Device *device, const std::shared_ptr<Logger> &logger);
 
-    /// Creates the images for a render pass with the formats given. The
-    /// image is black and see-through until it is drawn to.
+    /// Creates the image for a render pass that writes it, of the format
+    /// given, which holds sRGB colours as bytes. The image is black and
+    /// see-through until it is drawn to.
     bool Initialize(
       uint32_t width,
       uint32_t height,
       VkRenderPass render_pass,
-      VkFormat color_format,
-      VkFormat depth_format);
+      VkFormat color_format);
+
+    /// Makes the scene image of the target, unless it has one. A target
+    /// that only shows what is drawn in two dimensions needs none.
+    bool PrepareScene(VkRenderPass scene_pass, VkFormat depth_format);
 
     void CleanUp();
 
@@ -71,6 +80,11 @@ namespace neon
     /// ready to be read. Call it behind the render pass that drew to the
     /// target, which leaves the image ready to be copied from.
     void Finish(VkCommandBuffer commands) const;
+
+    /// The format a model reads a target of `format` through, so that its
+    /// sRGB colours are turned into linear light: the sRGB format of the
+    /// same bytes.
+    [[nodiscard]] static VkFormat SampledFormatOf(VkFormat format);
 
     /// How many smaller copies an image of a size has, itself included.
     [[nodiscard]] static uint32_t LevelsFor(uint32_t width, uint32_t height);
@@ -82,8 +96,13 @@ namespace neon
     [[nodiscard]] const std::string &Name() const { return _name; }
     [[nodiscard]] VkExtent2D Extent() const { return _extent; }
     [[nodiscard]] VkFramebuffer Framebuffer() const { return _framebuffer; }
+    /// What a model reads, as linear light.
     [[nodiscard]] VkImageView View() const { return _view; }
+
+    /// What is drawn in two dimensions reads, as the bytes they are.
+    [[nodiscard]] VkImageView BytesView() const { return _bytes_view; }
     [[nodiscard]] VkSampler Sampler() const { return _sampler; }
+    [[nodiscard]] const VK_SceneImage &Scene() const { return _scene; }
   };
 } // neon
 

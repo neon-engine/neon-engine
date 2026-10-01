@@ -12,12 +12,6 @@
 
 namespace neon
 {
-  namespace
-  {
-    // plain colours, see color_format in vk-render-system.cpp
-    constexpr VkFormat texture_format = VK_FORMAT_R8G8B8A8_UNORM;
-  }
-
   VK_Texture::VK_Texture(
     const std::string &texture_path,
     FileSystemContext *file_system_context,
@@ -112,6 +106,7 @@ namespace neon
   {
     const VkDevice device = _device->Device();
     const VkDeviceSize size = static_cast<VkDeviceSize>(width) * height * 4;
+    const VkFormat texture_format = FormatFor(options.is_color);
 
     // Smaller copies of the image are made for when it is seen from afar,
     // each half the size of the one before. That needs the graphics card to
@@ -293,6 +288,7 @@ namespace neon
     const auto width = static_cast<uint32_t>(levels.front().width);
     const auto height = static_cast<uint32_t>(levels.front().height);
     const auto mip_levels = static_cast<uint32_t>(levels.size());
+    const VkFormat texture_format = FormatFor(options.is_color);
 
     VkDeviceSize size = 0;
     for (const auto &level : levels) { size += level.pixels.size(); }
@@ -499,6 +495,11 @@ namespace neon
     texture._is_borrowed = true;
     texture._initialized = true;
     return texture;
+  }
+
+  VkFormat VK_Texture::FormatFor(const bool is_color)
+  {
+    return is_color ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8A8_UNORM;
   }
 
   void VK_Texture::CleanUp()

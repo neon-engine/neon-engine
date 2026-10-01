@@ -1,0 +1,38 @@
+# What the surface of the scene gamma-test.scene.yml shows: see-through
+# boxes over white and over black. A user interface is blended as CSS
+# blends it, in sRGB, also on a surface in the world, so half red over
+# white is 255 127 127, and half white over black is 128.
+
+ui: gamma-test-surface
+version: 1
+
+reference_size: [400, 300]
+
+root:
+  type: panel
+  width: 100%
+  height: 100%
+  background_color: "#ffffff"
+  children:
+    - type: panel
+      name: red-over-white
+      position: absolute
+      left: 40
+      top: 40
+      width: 140
+      height: 220
+      background_color: "#ff000080"
+    - type: panel
+      name: black
+      position: absolute
+      left: 220
+      top: 40
+      width: 140
+      height: 220
+      background_color: "#000000"
+      children:
+        - type: panel
+          name: white-over-black
+          width: 100%
+          height: 100%
+          background_color: "#ffffff80"

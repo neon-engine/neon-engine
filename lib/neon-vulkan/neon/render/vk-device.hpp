@@ -73,7 +73,8 @@ namespace neon
       VkFormat format,
       VkImageUsageFlags usage,
       VkImage &image,
-      VkDeviceMemory &memory) const;
+      VkDeviceMemory &memory,
+      VkImageCreateFlags flags = 0) const;
 
     bool CreateImageView(
       VkImage image,

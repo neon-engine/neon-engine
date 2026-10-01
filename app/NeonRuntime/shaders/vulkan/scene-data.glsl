@@ -51,6 +51,14 @@ layout (std140, set = 0, binding = 1) uniform ObjectData {
     vec4 color;
     // x and y scale the texture coordinates
     vec4 texture_scale;
-    // x shininess, y is 1 when textures are used and 0 when only the color is
+    // x shininess, y is 1 when textures are used and 0 when only the color is,
+    // z is 1 when the object is see-through and 0 when it is opaque
     vec4 material;
 } object;
+
+// The alpha an object writes. An opaque one covers what is behind it
+// whatever its alpha says, and writes 1.
+float object_alpha(float alpha)
+{
+    return object.material.z > 0.5 ? alpha : 1.0;
+}

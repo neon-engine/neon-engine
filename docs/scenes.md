@@ -90,7 +90,14 @@ the same.
 | `shader` | Virtual path of the shader, without an extension | None. It has to be written |
 | `textures` | A list of virtual paths | None |
 | `scale_textures` | Whether textures repeat as the entity grows | `false` |
-| `material` | `shininess`, `color` as `[red, green, blue]` or with alpha as a fourth, and `use_textures` | `0`, white, `true` |
+| `material` | `shininess`, `color` as `[red, green, blue]` or with alpha as a fourth, `use_textures`, and `alpha_mode` | `0`, white, `true`, `opaque` |
+
+`color` is written as a screen shows it, in sRGB, like the colours of an
+image. The first texture holds colours, the second how much each part of a
+surface shines. `alpha_mode` is `opaque`, which covers what is behind, or
+`blend`, where the alpha of the colour, or of the texture, lets what is
+behind show through. See-through surfaces are drawn after the opaque ones,
+from the farthest to the nearest.
 
 **Camera**
 
@@ -107,7 +114,7 @@ the same.
 |---|---|---|
 | `type` | `direction`, `point`, or `spot` | `direction` |
 | `direction` | `[x, y, z]` | `[0, 0, 0]` |
-| `ambient`, `diffuse`, `specular` | `[red, green, blue]` | `[0, 0, 0]` |
+| `ambient`, `diffuse`, `specular` | `[red, green, blue]`, amounts of light: 0.5 is half the light of 1 | `[0, 0, 0]` |
 | `constant`, `linear`, `quadratic` | How the light fades with distance | `0` |
 | `cutoff`, `outer_cutoff` | The cone of a spot light | `0` |
 

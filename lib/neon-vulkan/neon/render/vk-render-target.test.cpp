@@ -48,6 +48,14 @@ namespace
     EXPECT_EQ(VK_RenderTarget::LevelsFor(1000, 10), 10u);
   }
 
+  TEST(VkRenderTargetTest, IsReadByModelsThroughTheSrgbFormatOfItsBytes)
+  {
+    // what a user interface drew is sRGB, and a model lights linear light
+    EXPECT_EQ(VK_RenderTarget::SampledFormatOf(VK_FORMAT_R8G8B8A8_UNORM), VK_FORMAT_R8G8B8A8_SRGB);
+    EXPECT_EQ(VK_RenderTarget::SampledFormatOf(VK_FORMAT_B8G8R8A8_UNORM), VK_FORMAT_B8G8R8A8_SRGB);
+    EXPECT_EQ(VK_RenderTarget::SampledFormatOf(VK_FORMAT_R16G16B16A16_SFLOAT), VK_FORMAT_R16G16B16A16_SFLOAT);
+  }
+
   TEST(VkRenderTargetTest, FailsAndSaysSoWithoutARenderer)
   {
     const auto logger = std::make_shared<RecordingLogger>();
@@ -56,7 +64,7 @@ namespace
     VK_Device device;
     VK_RenderTarget target("terminal", &device, logger);
 
-    EXPECT_FALSE(target.Initialize(64, 64, VK_NULL_HANDLE, VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_D32_SFLOAT));
+    EXPECT_FALSE(target.Initialize(64, 64, VK_NULL_HANDLE, VK_FORMAT_R8G8B8A8_UNORM));
     EXPECT_TRUE(logger->Contains(
       LogLevel::Error, "The render target 'terminal' needs a renderer that is initialized"));
 

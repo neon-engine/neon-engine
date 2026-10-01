@@ -1,0 +1,114 @@
+# A scene for checking colours, which tests read pixel by pixel:
+#
+#   NeonRuntime --scene assets://scenes/gamma-test.scene.yml
+#
+# The world is lit and blended in linear light, so half of red over black
+# is half the light of red, which sRGB writes as 188, and not 128. The
+# planes are drawn in plain colours, or with their texture as it is, so
+# that what comes out can be worked out. What a user interface draws is
+# blended as CSS blends it, in sRGB, on the screen and on a surface in the
+# world alike.
+
+scene: gamma-test
+version: 1
+
+entities:
+  - name: screen
+    components:
+      Ui:
+        file: assets://ui/gamma-test-screen.ui.yml
+
+  - name: camera
+    components:
+      Transform:
+        position: [0, 0, 5]
+      Camera: {}
+
+  # black on the left and white on the right
+  - name: black
+    components:
+      Transform:
+        position: [-1.8, 0.9, 0]
+        scale: [3.4, 1.6, 1]
+      Renderable:
+        model: assets://models/quad.obj
+        shader: assets://shaders/color
+        material:
+          color: [0, 0, 0]
+
+  - name: white
+    components:
+      Transform:
+        position: [1.8, 0.9, 0]
+        scale: [3.4, 1.6, 1]
+      Renderable:
+        model: assets://models/quad.obj
+        shader: assets://shaders/color
+        material:
+          color: [1, 1, 1]
+
+  # half of red over black
+  - name: red
+    components:
+      Transform:
+        position: [-2.6, 0.9, 0.5]
+      Renderable:
+        model: assets://models/quad.obj
+        shader: assets://shaders/color
+        material:
+          color: [1, 0.0, 0.0, 0.5]
+          alpha_mode: blend
+
+  # Two see-through planes over white, the nearer one written first, so
+  # that it is the order they are drawn in that puts the blue one behind.
+  - name: orange
+    components:
+      Transform:
+        position: [1.9, 0.9, 1]
+        scale: 1.2
+      Renderable:
+        model: assets://models/quad.obj
+        shader: assets://shaders/color
+        material:
+          color: [1, 0.5, 0, 0.5]
+          alpha_mode: blend
+
+  - name: blue
+    components:
+      Transform:
+        position: [1.3, 0.9, 0.5]
+        scale: 1.2
+      Renderable:
+        model: assets://models/quad.obj
+        shader: assets://shaders/color
+        material:
+          color: [0, 0, 1, 0.5]
+          alpha_mode: blend
+
+  # four colours, one in each quarter, shown as they are in the file
+  - name: textured
+    components:
+      Transform:
+        position: [-1.8, -1.1, 0]
+        scale: 1.6
+      Renderable:
+        model: assets://models/quad.obj
+        shader: assets://shaders/unlit
+        textures:
+          - assets://textures/gamma-test.png
+
+  # a surface in the world that shows a user interface
+  - name: surface
+    components:
+      Transform:
+        position: [1.8, -1.1, 0]
+        scale: [2, 1.5, 1]
+      Renderable:
+        model: assets://models/quad.obj
+        shader: assets://shaders/unlit
+        textures:
+          - surface://gamma-test
+      UiSurface:
+        ui: assets://ui/gamma-test-surface.ui.yml
+        name: gamma-test
+        size: [400, 300]

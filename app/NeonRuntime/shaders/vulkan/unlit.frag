@@ -11,5 +11,6 @@ layout (set = 0, binding = 2) uniform sampler2D diffuse_texture;
 
 void main()
 {
-    frag_color = texture(diffuse_texture, tex_coord);
+    vec4 texel = texture(diffuse_texture, tex_coord);
+    frag_color = vec4(texel.rgb, object_alpha(texel.a));
 }

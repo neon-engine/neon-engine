@@ -11,11 +11,13 @@ namespace neon
   {
     // A user interface is drawn at the size of its images, and a text must
     // not show what is next to a character in its atlas. Smaller copies and
-    // an image that starts again would do that.
+    // an image that starts again would do that. Its colours are blended as
+    // CSS blends them, in sRGB, so they are read as they are.
     constexpr VK_TextureOptions texture_options{
       .mip_levels = false,
       .repeat = false,
-      .premultiply_alpha = true
+      .premultiply_alpha = true,
+      .is_color = false
     };
   }
 
@@ -602,6 +604,7 @@ namespace neon
     kept.mip_levels = options.has_smaller_copies;
     kept.repeat = options.repeats;
     kept.premultiply_alpha = false;
+    kept.is_color = false;
 
     VK_Texture texture("a texture from memory", _file_system_context, _device, _logger);
     if (!texture.InitializeWithLevels(levels, kept)) { return No_Texture; }
@@ -985,19 +988,6 @@ namespace neon
     _used_vertices += vertex_count;
     _used_indices += index_count;
     _used_shapes += shape_count;
-
-    // what the models of a scene are drawn with, in case one follows
-    const VkViewport scene_viewport{
-      0.0f,
-      static_cast<float>(extent.height),
-      static_cast<float>(extent.width),
-      -static_cast<float>(extent.height),
-      0.0f,
-      1.0f};
-    const VkRect2D whole_frame{{0, 0}, extent};
-
-    vkCmdSetViewport(commands, 0, 1, &scene_viewport);
-    vkCmdSetScissor(commands, 0, 1, &whole_frame);
   }
 
   void VK_Renderer2D::CleanUp()

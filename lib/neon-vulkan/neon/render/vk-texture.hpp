@@ -27,6 +27,14 @@ namespace neon
     /// that is see-through then adds no colour of its own to its
     /// neighbours when the image is scaled.
     bool premultiply_alpha = false;
+
+    /// Whether the image holds colours, which an image file keeps in sRGB.
+    /// The graphics card turns them into linear light as they are read,
+    /// and makes its smaller copies in linear light, which is what lighting
+    /// works in. An image that holds numbers instead, such as how shiny
+    /// each part of a surface is, is read as it is. So is an image of a
+    /// user interface, which is drawn in sRGB as CSS draws it.
+    bool is_color = true;
   };
 
   // ReSharper disable once CppInconsistentNaming
@@ -101,6 +109,10 @@ namespace neon
     /// A texture that reads an image it does not own, such as what a
     /// render target was drawn to. CleanUp() leaves the image alone.
     [[nodiscard]] static VK_Texture Borrowed(VkImageView view, VkSampler sampler, uint32_t width, uint32_t height);
+
+    /// The format a texture is kept in: sRGB for colours, so that they are
+    /// read as linear light, and plain bytes for anything else.
+    [[nodiscard]] static VkFormat FormatFor(bool is_color);
 
     [[nodiscard]] VkImageView View() const { return _view; }
     [[nodiscard]] VkSampler Sampler() const { return _sampler; }

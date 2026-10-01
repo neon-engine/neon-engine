@@ -103,7 +103,7 @@ function(neon_add_functional_test NAME)
   )
 endfunction()
 
-# neon_add_application_test(<name> <application> <script.cmake> [CASES <case>...])
+# neon_add_application_test(<name> <application> <script.cmake> [TOOLS <target>...] [CASES <case>...])
 #
 # Declares tests that start an application as a user would, and look at what
 # it printed, what it wrote, and the exit code. The script is run by CMake,
@@ -111,6 +111,8 @@ endfunction()
 #   APPLICATION  the executable
 #   DIRECTORY    a folder for what the run writes, empty at the start
 #   CASE         the name of the case
+# and for each of the TOOLS, the executable under its name in capitals with
+# underscores, as PIXEL_PROBE for pixel-probe.
 #
 # A script that prints a line starting with `SKIPPED:` marks its test as
 # skipped, for a machine that cannot do what the test needs.
@@ -118,9 +120,16 @@ endfunction()
 # Nothing is declared when cross-compiling, since the application cannot be
 # started on the machine that built it.
 function(neon_add_application_test NAME APPLICATION SCRIPT)
-  cmake_parse_arguments(PARSE_ARGV 3 TEST "" "" "CASES")
+  cmake_parse_arguments(PARSE_ARGV 3 TEST "" "" "CASES;TOOLS")
 
   add_dependencies(neon-tests ${APPLICATION})
+
+  set(TOOL_DEFINITIONS)
+  foreach (TOOL IN LISTS TEST_TOOLS)
+    string(TOUPPER "${TOOL}" TOOL_VARIABLE)
+    string(REPLACE "-" "_" TOOL_VARIABLE "${TOOL_VARIABLE}")
+    list(APPEND TOOL_DEFINITIONS "-D${TOOL_VARIABLE}=$<TARGET_FILE:${TOOL}>")
+  endforeach ()
 
   if (CMAKE_CROSSCOMPILING)
     return()
@@ -133,6 +142,7 @@ function(neon_add_application_test NAME APPLICATION SCRIPT)
             "-DAPPLICATION=$<TARGET_FILE:${APPLICATION}>"
             "-DDIRECTORY=${NEON_TESTS_DIRECTORY}/${NAME}/${CASE}"
             "-DCASE=${CASE}"
+            ${TOOL_DEFINITIONS}
             -P "${CMAKE_CURRENT_SOURCE_DIR}/${SCRIPT}"
     )
 

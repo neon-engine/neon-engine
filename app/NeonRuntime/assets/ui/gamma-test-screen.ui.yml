@@ -1,0 +1,31 @@
+# What the scene gamma-test.scene.yml shows on top of its world:
+# see-through boxes over its white and black backdrops. A user interface
+# is blended as CSS blends it, in sRGB, so half black over white is 127,
+# and a quarter of white over black is 64.
+
+ui: gamma-test-screen
+version: 1
+
+reference_size: [1920, 1080]
+
+root:
+  type: panel
+  width: 100%
+  height: 100%
+  children:
+    - type: panel
+      name: dim-over-white
+      position: absolute
+      left: 1000
+      top: 120
+      width: 140
+      height: 80
+      background_color: "#00000080"
+    - type: panel
+      name: light-over-black
+      position: absolute
+      left: 450
+      top: 150
+      width: 200
+      height: 100
+      background_color: "#ffffff40"

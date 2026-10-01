@@ -22,6 +22,7 @@ Under the license of the repository.
 
 - `ui/heart.png` and `ui/panel.png`, the images of the demo user interface
 - `models/quad.obj`, a flat square for what shows an image or a surface
+- `textures/gamma-test.png`, four colours for the scene `gamma-test.scene.yml`, written by a program
 - `ui/shield.svg`, `ui/gem-1x.png`, `ui/gem-2x.png`, `ui/gem-4x.png`, `ui/icons.png`, `ui/frame.png`, and
   `ui/test-card.jpg`, the images of the gallery. They were drawn by programs that were written for it
 

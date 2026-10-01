@@ -111,4 +111,19 @@ namespace
 
     EXPECT_EQ(texture.View(), VK_NULL_HANDLE);
   }
+
+  TEST(VkTextureFormatTest, KeepsColoursInSrgbSoThatTheyAreReadAsLinearLight)
+  {
+    EXPECT_EQ(VK_Texture::FormatFor(true), VK_FORMAT_R8G8B8A8_SRGB);
+  }
+
+  TEST(VkTextureFormatTest, KeepsNumbersAsTheyAre)
+  {
+    EXPECT_EQ(VK_Texture::FormatFor(false), VK_FORMAT_R8G8B8A8_UNORM);
+  }
+
+  TEST(VkTextureFormatTest, TakesATextureForColoursUnlessToldOtherwise)
+  {
+    EXPECT_TRUE(neon::VK_TextureOptions{}.is_color);
+  }
 }

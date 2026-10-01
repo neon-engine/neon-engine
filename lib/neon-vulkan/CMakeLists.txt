@@ -24,6 +24,16 @@ add_library(${TARGET} STATIC
         neon/render/vk-render-target.hpp
         neon/render/vk-swapchain-sizing.cpp
         neon/render/vk-swapchain-sizing.hpp
+        neon/render/vk-draw-order.cpp
+        neon/render/vk-draw-order.hpp
+        neon/render/vk-frame-stages.cpp
+        neon/render/vk-frame-stages.hpp
+        neon/render/vk-resolve.cpp
+        neon/render/vk-resolve.hpp
+        neon/render/vk-scene-image.cpp
+        neon/render/vk-scene-image.hpp
+        neon/render/vk-surface-format.cpp
+        neon/render/vk-surface-format.hpp
 )
 
 target_include_directories(${TARGET}
@@ -51,4 +61,7 @@ if (NEON_BUILD_TESTS)
   neon_add_unit_test(${TARGET} neon/render/vk-shader-values.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/vk-render-target.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/vk-swapchain-sizing.test.cpp)
+  neon_add_unit_test(${TARGET} neon/render/vk-draw-order.test.cpp)
+  neon_add_unit_test(${TARGET} neon/render/vk-frame-stages.test.cpp)
+  neon_add_unit_test(${TARGET} neon/render/vk-surface-format.test.cpp)
 endif ()

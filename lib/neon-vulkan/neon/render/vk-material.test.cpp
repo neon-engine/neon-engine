@@ -121,15 +121,29 @@ namespace
     EXPECT_NEAR(dot(along, normal), 0.0f, 1e-5f);
   }
 
-  TEST_F(VkMaterialTest, HandsTheColorToTheShaders)
+  TEST_F(VkMaterialTest, HandsTheColorToTheShadersAsLinearLight)
   {
+    // written in sRGB, as a screen shows it, and lit as the light it stands
+    // for: 0.5 is about a fifth of the light of 1. Alpha is no light.
     MaterialInfo info;
-    info.color = {.r = 0.1f, .g = 0.2f, .b = 0.3f, .a = 0.4f};
+    info.color = {.r = 1.0f, .g = 0.5f, .b = 0.0f, .a = 0.4f};
     const VK_Material material = Create(info, false);
 
     const VK_ObjectData data = material.GetObjectData(glm::mat4(1.0f), Transform{});
 
-    EXPECT_EQ(data.color, glm::vec4(0.1f, 0.2f, 0.3f, 0.4f));
+    EXPECT_FLOAT_EQ(data.color.r, 1.0f);
+    EXPECT_NEAR(data.color.g, 0.214041f, 1e-4f);
+    EXPECT_FLOAT_EQ(data.color.b, 0.0f);
+    EXPECT_FLOAT_EQ(data.color.a, 0.4f);
+  }
+
+  TEST_F(VkMaterialTest, ReadsItsFirstTextureAsColoursAndTheOthersAsNumbers)
+  {
+    // the first is what the surface looks like, the second how much it
+    // shines, which is no colour
+    EXPECT_TRUE(VK_Material::TextureOptionsFor(0).is_color);
+    EXPECT_FALSE(VK_Material::TextureOptionsFor(1).is_color);
+    EXPECT_FALSE(VK_Material::TextureOptionsFor(2).is_color);
   }
 
   TEST_F(VkMaterialTest, HandsShininessAndWhetherTexturesAreUsedToTheShaders)
@@ -147,6 +161,15 @@ namespace
     EXPECT_EQ(
       Create(without_textures, false).GetObjectData(glm::mat4(1.0f), Transform{}).material,
       glm::vec4(8.0f, 0.0f, 0.0f, 0.0f));
+  }
+
+  TEST_F(VkMaterialTest, TellsTheShadersWhetherTheObjectIsSeeThrough)
+  {
+    MaterialInfo info;
+    EXPECT_EQ(Create(info, false).GetObjectData(glm::mat4(1.0f), Transform{}).material.z, 0.0f);
+
+    info.alpha_mode = neon::AlphaMode::Blend;
+    EXPECT_EQ(Create(info, false).GetObjectData(glm::mat4(1.0f), Transform{}).material.z, 1.0f);
   }
 
   TEST_F(VkMaterialTest, LeavesTexturesAtTheirSizeUnlessToldToScaleThem)
