@@ -579,9 +579,12 @@ The file system is created and initialized in `main.cpp` right after logging,
 before any system that loads files. It is cleaned up last, after the
 application has shut its systems down.
 
-The log file path in `SettingsConfig` is still relative to the working
-directory and does not go through the file system yet. `user://` is where it
-belongs.
+The log file is `user://logs/neon-engine.log`, the `logpath` in
+`SettingsConfig`. Logging starts before the file system, so the file is only
+opened once the file system has started, with `FileSystem::PlaceLogFile`.
+Until then everything goes to the console, and is held back for the file,
+which gets it first. Where the log file is on each platform, and why, is in
+[file-systems.md](file-systems.md#the-log-file).
 
 The libraries that were considered and the conditions for moving to a full
 virtual file system are recorded in [file-systems.md](file-systems.md).
@@ -755,11 +758,12 @@ what it left behind.
 | neon-core | `common/rotation` | 21 | The quaternion of known angles, the order of the turns, and the angles of a quaternion |
 | neon-core | `common/transform` | 11 | `Forward` and `Right`. 1 disabled |
 | neon-core | `common/util` | 12 | All four functions |
-| neon-core | `filesystem/file-system` | 158 | Every path rule for reading and writing, letter case, the native path, `output://` without a folder |
+| neon-core | `filesystem/file-system` | 164 | Every path rule for reading and writing, letter case, the native path, `output://` without a folder, where the log file is placed |
 | neon-core | `input/input-state` | 17 | Actions, the motion of the mouse, the pointer, `Reset` |
 | neon-core | `input/headless-input-system` | 7 | Nothing is ever pressed |
 | neon-core | `logging/spd-logger` | 10 | Levels, arguments, what is thrown for a message that cannot be formatted |
-| neon-core | `logging/logging-system` | 11 | The log file, in a temporary folder |
+| neon-core | `logging/deferred-file-sink` | 9 | What is held back until the file is opened, the limit, a file that cannot be opened |
+| neon-core | `logging/logging-system` | 15 | The log file, in a temporary folder, what was logged before it was opened, the console when it cannot be |
 | neon-core | `physics/model-geometry` | 7 | The points and triangles of a model, moved and sized as the renderer does it |
 | neon-core | `render/forward-render-pipeline` | 24 | What is drawn in which order, the projection, lights and their limit |
 | neon-core | `render/model` | 25 | Loading from a file system in memory, material files, textures, the normalization matrix. 1 disabled |
@@ -784,7 +788,7 @@ what it left behind.
 | neon-vulkan | `render/vk-renderer-2d` | 13 | What needs no graphics card |
 | neon-flecs | `world-system/flecs-entity-store` | 104 | Everything `EntityStore` promises, through that interface |
 | neon-jolt | `physics/jolt-physics-system` | 89 | Everything `PhysicsContext` promises, through that interface, with worlds that are small enough to know what has to come out |
-| neon-sdl2 | `filesystem/sdl2-file-system` | 39 | Real files in the three schemes, letter case on a disk that ignores it |
+| neon-sdl2 | `filesystem/sdl2-file-system` | 41 | Real files in the three schemes, letter case on a disk that ignores it, the log file in `user://` |
 | neon-vulkan | `render/vk-material` | 27 | What is handed to the shaders, textures that cannot be used |
 | neon-vulkan | `render/vk-mesh` | 6 | A mesh with nothing to draw |
 | neon-vulkan | `render/vk-model` | 4 | A model that cannot be used |
@@ -833,7 +837,6 @@ what is open. `ctest` lists them as not run.
 | `SDL2_FileSystem` on Windows | Windows is asked for the folder of the user directly and takes no hint, so the tests would write into the real one. They are skipped there | Handing the folder behind `user://` to the file system through the settings, as `output_directory` is |
 | An output folder that is relative to the working directory | The test would have to change the working directory of its process | |
 | `LoggingSystem::CreateLogger()` before `Initialize()` | It uses a logger that does not exist yet and ends the process | Creating the sinks in the constructor, or returning a logger that holds back what it is told |
-| `LoggingSystem` writing to the standard output | The sink is created inside `Initialize()` | Handing the sinks in from outside |
 | `Logger::CreateChildLogger` | It is protected and nothing calls it | |
 | An `EntityWorld` that goes away before its store, without `CleanUp()` | The store tells a `Renderable` that it is removed through a function that belongs to the world. Called after the world is gone, it reads memory that was released. Applications call `CleanUp()` first, as `main.cpp` does | The world cleaning up in its destructor, as `Runtime` does |
 | `app/` | It is put together in `main()` | It is covered from the outside by the tests in `tests/` |

@@ -87,6 +87,36 @@ the folder instead.
 | The folder is created when it is missing | A script does not have to prepare it |
 | Without a folder, `output://` paths are rejected | Picking a default would write files to a place nobody asked for |
 
+### The log file
+
+The log file is `user://logs/neon-engine.log`. It used to be relative to the
+working directory, so it landed wherever the application happened to be
+started from, and a run from an IDE, a shell, or a script each left a
+`logs` folder in a different place.
+
+| Platform | Log file of `NeonRuntime` |
+|---|---|
+| macOS | `~/Library/Application Support/neon-engine/neon-runtime/logs/neon-engine.log` |
+| Linux | `~/.local/share/neon-engine/neon-runtime/logs/neon-engine.log` |
+| Windows | `%APPDATA%\neon-engine\neon-runtime\logs\neon-engine.log` |
+
+The folder follows the `organization` and `application` names in
+`SettingsConfig`, as everything else in `user://` does. The log says where
+it is, in its line `Logging to ...`.
+
+| Decision | Reason |
+|---|---|
+| The log file goes under `user://` | It is the folder the application writes to, it is the same however the application was started, and it does not need write access to the working directory |
+| Logging starts before the file system and writes to the console at once | The file system logs too, and a problem while it starts has to be seen |
+| What is logged before the file is opened is held back and written into it first, with the times it was logged at | The start-up is where most problems show, and a log file without it would leave them out |
+| At most 4096 messages are held, and the file says how many are missing | A run whose file is never opened does not grow forever. A start-up logs far fewer |
+| `FileSystem::PlaceLogFile` hands the native path straight to the logging system | spdlog opens and rotates its file itself, so it needs a native path. The caller never sees it, which keeps the interface free of native paths, as with `output://` |
+| It is on `FileSystem`, not on `FileSystemContext` | Only `main.cpp` places the log file, and it holds the backend. Code that reads files does not need it |
+| When the file cannot be placed or opened, logging goes on without it on the console, and says why | A log file is not worth stopping the application for |
+
+A backend serving archives would still have a real folder behind `user://`,
+since writing needs one. PhysFS names exactly one such folder.
+
 ### How letter case is enforced
 
 The operating system cannot be asked whether a file exists, because on
@@ -115,8 +145,8 @@ Trade-offs that were accepted:
 
 ### How it is wired
 
-`main.cpp` creates `SDL2_FileSystem` right after logging and passes it to the
-render system as a `FileSystemContext`. The render system hands it to each
+`main.cpp` creates `SDL2_FileSystem` right after logging, places the log file
+with it, and passes it to the render system as a `FileSystemContext`. The render system hands it to each
 loader it constructs. It is cleaned up last, after the systems that depend on
 it have shut down.
 
@@ -249,8 +279,6 @@ The first two are the point at which PhysFS pays for itself.
 - `user://` is per application, placed by the `organization` and
   `application` names in `SettingsConfig`. Is a second, shared scheme needed
   for settings that belong to the engine?
-- Should the log file move under `user://`? It is currently relative to the
-  working directory.
 - Is a custom archive format needed at all, or is zip enough?
 - Should editor builds read loose files while shipped builds read archives?
 - Should the build reject an assets folder that holds two names differing

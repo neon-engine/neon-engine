@@ -261,4 +261,17 @@ namespace neon
   {
     return WriteBytes(path, {contents.begin(), contents.end()});
   }
+
+  bool FileSystem::PlaceLogFile(const std::string &path, LogFileTarget &target)
+  {
+    std::string native_path;
+    if (!LocateForWriting(path, native_path))
+    {
+      _logger->Error("The log file cannot be placed at '{}'", path);
+      target.GoWithoutLogFile();
+      return false;
+    }
+
+    return target.OpenLogFile(native_path);
+  }
 } // neon

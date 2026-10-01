@@ -668,4 +668,96 @@ namespace
     EXPECT_TRUE(_file_system.WriteText("user://save.dat", "a save"));
     EXPECT_EQ(_logger->Count(LogLevel::Error), 0u) << _logger->Messages(LogLevel::Error);
   }
+
+  // the log file
+
+  /// Writes down where it was told to put its log file.
+  class RecordingLogFileTarget final : public neon::LogFileTarget
+  {
+  public:
+    std::vector<std::string> opened;
+    int gone_without = 0;
+    bool can_open = true;
+
+    bool OpenLogFile(const std::string &native_path) override
+    {
+      opened.push_back(native_path);
+      return can_open;
+    }
+
+    void GoWithoutLogFile() override
+    {
+      gone_without++;
+    }
+  };
+
+  TEST_F(FileSystemTest, PlacesTheLogFileBelowTheFolderOfUser)
+  {
+    RecordingLogFileTarget target;
+
+    EXPECT_TRUE(_file_system.PlaceLogFile("user://logs/neon-engine.log", target));
+
+    EXPECT_THAT(target.opened, ElementsAre("/user/logs/neon-engine.log"));
+    EXPECT_EQ(target.gone_without, 0);
+    EXPECT_THAT(_file_system.MadeDirectories(), ElementsAre("/user/logs"));
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 0u) << _logger->Messages(LogLevel::Error);
+  }
+
+  TEST_F(FileSystemTest, PlacesTheLogFileWithTheSeparatorOfThePlatform)
+  {
+    MemoryFileSystem file_system(SettingsConfig{}, _logger, '\\');
+    file_system.Initialize();
+    RecordingLogFileTarget target;
+
+    EXPECT_TRUE(file_system.PlaceLogFile("user://logs/neon-engine.log", target));
+
+    EXPECT_THAT(target.opened, ElementsAre("\\user\\logs\\neon-engine.log"));
+  }
+
+  TEST_F(FileSystemTest, SaysWhenTheTargetCannotOpenTheLogFile)
+  {
+    RecordingLogFileTarget target;
+    target.can_open = false;
+
+    EXPECT_FALSE(_file_system.PlaceLogFile("user://logs/neon-engine.log", target));
+
+    EXPECT_THAT(target.opened, ElementsAre("/user/logs/neon-engine.log"));
+  }
+
+  TEST_F(FileSystemTest, TellsTheTargetToGoWithoutALogFileInAFolderThatCannotBeCreated)
+  {
+    _file_system.fail_to_make_directories = true;
+    RecordingLogFileTarget target;
+
+    EXPECT_FALSE(_file_system.PlaceLogFile("user://logs/neon-engine.log", target));
+
+    EXPECT_THAT(target.opened, IsEmpty());
+    EXPECT_EQ(target.gone_without, 1);
+    EXPECT_TRUE(_logger->Contains(LogLevel::Error, "The log file cannot be placed at 'user://logs/neon-engine.log'"))
+      << _logger->Messages(LogLevel::Error);
+    EXPECT_TRUE(_logger->Contains(LogLevel::Error, "a folder on the way to it cannot be created"))
+      << _logger->Messages(LogLevel::Error);
+  }
+
+  TEST_F(FileSystemTest, TellsTheTargetToGoWithoutALogFileInAReadOnlyScheme)
+  {
+    RecordingLogFileTarget target;
+
+    EXPECT_FALSE(_file_system.PlaceLogFile("assets://neon-engine.log", target));
+
+    EXPECT_THAT(target.opened, IsEmpty());
+    EXPECT_EQ(target.gone_without, 1);
+    EXPECT_TRUE(_logger->Contains(LogLevel::Error, read_only)) << _logger->Messages(LogLevel::Error);
+  }
+
+  TEST_F(FileSystemTest, TellsTheTargetToGoWithoutALogFileAtAPathThatBreaksARule)
+  {
+    RecordingLogFileTarget target;
+
+    EXPECT_FALSE(_file_system.PlaceLogFile("logs/neon-engine.log", target));
+
+    EXPECT_THAT(target.opened, IsEmpty());
+    EXPECT_EQ(target.gone_without, 1);
+    EXPECT_TRUE(_logger->Contains(LogLevel::Error, unknown_scheme)) << _logger->Messages(LogLevel::Error);
+  }
 }

@@ -8,6 +8,7 @@
 
 #include "file-system-context.hpp"
 #include "neon/runtime/settings-config.hpp"
+#include "neon/logging/log-file-target.hpp"
 #include "neon/logging/logger.hpp"
 
 namespace neon
@@ -93,6 +94,18 @@ namespace neon
     bool ReadText(const std::string &path, std::string &contents) override;
 
     bool WriteText(const std::string &path, const std::string &contents) override;
+
+    /// Tells a log file target where its file goes, at a virtual path in a
+    /// writable scheme such as `user://logs/neon-engine.log`. The folders
+    /// that lead to it are created. Call after Initialize().
+    ///
+    /// The logging library opens the file itself, so it needs a native path.
+    /// The path goes from here straight to the target and is never returned,
+    /// which keeps native paths out of the rest of the engine.
+    ///
+    /// Returns false if the path cannot be written to, or the target cannot
+    /// open the file. Both say why, and the target goes on without a file.
+    bool PlaceLogFile(const std::string &path, LogFileTarget &target);
 
   private:
     /// Splits a virtual path into the native folder of its scheme and the

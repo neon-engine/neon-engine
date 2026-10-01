@@ -1,7 +1,8 @@
 #include "logging-system.hpp"
 
+#include <exception>
+
 #include "spd-logger.hpp"
-#include "spdlog/sinks/rotating_file_sink.h"
 #include "spdlog/sinks/stdout_color_sinks-inl.h"
 
 namespace neon
@@ -13,12 +14,11 @@ namespace neon
 
   void LoggingSystem::Initialize()
   {
+    // Every logger shares the same sinks, so a file that is opened later
+    // reaches the loggers that were created before it.
+    _file_sink = std::make_shared<DeferredFileSink>(_settings_config.log_max_size, _settings_config.log_max_files);
     _sinks.push_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
-    _sinks.push_back(
-      std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
-        _settings_config.logpath,
-        _settings_config.log_max_size,
-        _settings_config.log_max_files));
+    _sinks.push_back(_file_sink);
     _logger = std::make_shared<spdlog::logger>("LoggingSystem", begin(_sinks), end(_sinks));
     _logger->set_level(spdlog::level::debug);
     _logger->info("LoggingSystem initialized");
@@ -35,5 +35,27 @@ namespace neon
     const auto logger = std::make_shared<spdlog::logger>(name, begin(_sinks), end(_sinks));
     logger->set_level(spdlog::level::debug);
     return std::make_shared<Spd_Logger>(logger, this);
+  }
+
+  bool LoggingSystem::OpenLogFile(const std::string &native_path)
+  {
+    try
+    {
+      _file_sink->Open(native_path);
+    } catch (const std::exception &exception)
+    {
+      // the sink has stopped holding messages, so this reaches the console only
+      _logger->error("The log file cannot be opened, logging goes on without one: {}", exception.what());
+      return false;
+    }
+
+    _logger->info("Logging to {}", native_path);
+    return true;
+  }
+
+  void LoggingSystem::GoWithoutLogFile()
+  {
+    _file_sink->GoWithout();
+    _logger->warn("Logging goes on without a log file");
   }
 } // neon

@@ -79,7 +79,11 @@ struct SettingsConfig
   RenderingApi selected_api;
   AudioOutput audio_output = AudioOutput::Device;
   WindowMode window_mode = WindowMode::Windowed;
-  std::string logpath = "logs/neon-engine.log";
+
+  /// Virtual path of the log file. The log file is opened once the file
+  /// system has started, see FileSystem::PlaceLogFile. What is logged before
+  /// then is written into it first.
+  std::string logpath = "user://logs/neon-engine.log";
   std::size_t log_max_size = 1048576 * 5;
   std::size_t log_max_files = 1;
   std::size_t max_light_sources = 1024;

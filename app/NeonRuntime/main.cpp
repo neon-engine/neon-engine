@@ -90,6 +90,11 @@ int main(const int argc, char *argv[])
   neon::SDL2_FileSystem file_system(settings_config, logging_system.CreateLogger("SDL2_FileSystem"));
   file_system.Initialize();
 
+  // The log file belongs under user://, and only the file system knows where
+  // that is. Until now everything went to the console, and was held back for
+  // the file, which gets it first.
+  file_system.PlaceLogFile(settings_config.logpath, logging_system);
+
   // Without a window there is no one to hear anything. Sounds are still read
   // and mixed, so that a run without a window finds a sound that is broken.
   if (settings_config.headless) { settings_config.audio_output = AudioOutput::None; }

@@ -191,6 +191,9 @@ add_library(${TARGET} STATIC
         neon/logging/spd-logger.cpp
         neon/logging/spd-logger.hpp
         neon/logging/logging-context.hpp
+        neon/logging/log-file-target.hpp
+        neon/logging/deferred-file-sink.cpp
+        neon/logging/deferred-file-sink.hpp
 
         # common
         neon/common/color.hpp
@@ -378,6 +381,7 @@ neon_add_unit_test(${TARGET} neon/command-line/display-options.test.cpp)
   neon_add_unit_test(${TARGET} neon/layout/flex-layout-engine.test.cpp)
   neon_add_unit_test(${TARGET} neon/audio/headless-audio-system.test.cpp)
   neon_add_unit_test(${TARGET} neon/logging/logging-system.test.cpp)
+  neon_add_unit_test(${TARGET} neon/logging/deferred-file-sink.test.cpp)
   neon_add_unit_test(${TARGET} neon/logging/spd-logger.test.cpp)
   neon_add_unit_test(${TARGET} neon/physics/model-geometry.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/forward-render-pipeline.test.cpp)

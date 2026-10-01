@@ -39,6 +39,7 @@ Principles that hold for both:
 | Platforms (#21) | Builds on macOS, Linux, and Windows with one toolchain |
 | Renderer (#23) | Vulkan, on all three. See [vulkan-renderer.md](vulkan-renderer.md) |
 | File system (#22) | Virtual paths with `assets://`, `user://`, and `output://`. See [file-systems.md](file-systems.md) |
+| Log file (#44) | Written to `user://logs/neon-engine.log`, with what was logged before the file system started. See [file-systems.md](file-systems.md#the-log-file) |
 | Window modes (#22) | Windowed, borderless, and fullscreen |
 | Command line (#24) | An abstraction with a set of options for each application |
 | Runtime class (#25) | The core class an application is built from is `neon::Runtime` |
@@ -65,7 +66,6 @@ Work that builds directly on what exists.
 | Load a project (#41) | The runtime takes a project to run. It takes a scene today, with `--scene`. What a project is on disk is open |
 | Vulkan version and capabilities (#42) | A setting for the version to ask for, and a way for the engine to learn what the graphics card can do, so that menus only offer what works |
 | Run on Windows (#43) | The build works. It has not been run |
-| Log file under `user://` (#44) | It is still written relative to the working directory |
 
 ## Planned
 
@@ -318,7 +318,6 @@ Wanted, and not for 1.0.
 
 | What | Issue |
 |---|---|
-| The log file is written relative to the working directory | #44 |
 | Rendering is not gamma-correct | #67 |
 | The swapchain is not recreated when the window is resized | #68 |
 | Sanitizer builds hang at startup on macOS | #54 |

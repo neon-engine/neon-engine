@@ -8,6 +8,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <neon/logging/logging-system.hpp>
 #include <neon/testing/recording-logger.hpp>
 #include <neon/testing/temporary-directory.hpp>
 
@@ -551,7 +552,37 @@ namespace
     ExpectNoErrors();
   }
 
-  // stopping
+  // the log file
+
+  TEST_F(Sdl2FileSystemTest, PutsTheLogFileInUserWithWhatWasLoggedBeforeTheFileSystemStarted)
+  {
+    {
+      neon::LoggingSystem logging_system(SettingsConfig{});
+      logging_system.Initialize();
+      logging_system.CreateLogger("Early")->Info("before the file system knew where");
+
+      ASSERT_TRUE(_file_system->PlaceLogFile("user://logs/neon-engine.log", logging_system));
+      logging_system.CreateLogger("Late")->Info("after it");
+    }
+
+    const std::string log = _directory.Read(_user + "logs/neon-engine.log");
+    EXPECT_THAT(log, ::testing::HasSubstr("[Early] [info] before the file system knew where"));
+    EXPECT_THAT(log, ::testing::HasSubstr("[Late] [info] after it"));
+    ExpectNoErrors();
+  }
+
+  TEST_F(Sdl2FileSystemTest, GoesWithoutALogFileWhenAFileIsWhereItsFolderWouldBe)
+  {
+    ASSERT_TRUE(_file_system->WriteText("user://logs", "in the way"));
+
+    neon::LoggingSystem logging_system(SettingsConfig{});
+    logging_system.Initialize();
+
+    EXPECT_FALSE(_file_system->PlaceLogFile("user://logs/neon-engine.log", logging_system));
+    ExpectError("The log file cannot be placed at 'user://logs/neon-engine.log'");
+    EXPECT_EQ(_directory.Read(_user + "logs"), "in the way");
+  }
+
 
   TEST_F(Sdl2FileSystemTest, CanBeCleanedUpTwiceAndStartedAgain)
   {
