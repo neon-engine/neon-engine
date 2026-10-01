@@ -38,6 +38,10 @@ Principles that hold for both:
 |---|---|
 | Platforms (#21) | Builds on macOS, Linux, and Windows with one toolchain |
 | Renderer (#23) | Vulkan, on all three. See [vulkan-renderer.md](vulkan-renderer.md) |
+| Resizing the window (#68) | The swapchain, and everything of the size of the frame, is made again when the window changes size |
+| Linear light (#67) | The world is lit and blended in linear light in a floating-point scene image, and a resolve step turns it into the colours of the screen. User interfaces blend in sRGB, as CSS does. See [vulkan-renderer.md](vulkan-renderer.md#colour-spaces) |
+| See-through materials (#67) | `alpha_mode: blend`, drawn after what is opaque, from the farthest to the nearest. The first of the alpha modes of #106 |
+| Back faces left out (#136) | The back of every triangle is left out unless a material is `double_sided`, and what is mirrored is still drawn from the front |
 | File system (#22) | Virtual paths with `assets://`, `user://`, and `output://`. See [file-systems.md](file-systems.md) |
 | Log file (#44) | Written to `user://logs/neon-engine.log`, with what was logged before the file system started. See [file-systems.md](file-systems.md#the-log-file) |
 | Window modes (#22) | Windowed, borderless, and fullscreen |
@@ -319,8 +323,6 @@ Wanted, and not for 1.0.
 
 | What | Issue |
 |---|---|
-| Rendering is not gamma-correct | #67 |
-| The swapchain is not recreated when the window is resized | #68 |
 | Sanitizer builds hang at startup on macOS | #54 |
 | clang-tidy findings in the test code, clang-format violations | #52, #53 |
 | The audio and physics components are read and written by hand, not described | #58 |
