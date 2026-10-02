@@ -856,6 +856,67 @@ namespace
     EXPECT_TRUE(_physics.created_joints[0].has_limits);
   }
 
+  TEST_F(PhysicsSimulationTest, HandsOnWhetherTheBodiesOfAJointCollide)
+  {
+    Create("frame", At(3.0f, 0.0f, 0.0f), RigidBody{.kind = BodyKind::Static});
+    const Entity door = Create("door", At(4.0f, 1.0f, 0.0f), RigidBody{});
+    const Entity bob = Create("bob", At(0.0f, 1.0f, 0.0f), RigidBody{});
+    _store.Set(door, Joint{.type = JointKind::Hinge, .other = "frame", .axis = {0.0f, 1.0f, 0.0f}});
+    _store.Set(bob, Joint{.type = JointKind::Point, .other = "frame"});
+
+    Step();
+
+    ASSERT_EQ(_physics.created_joints.size(), 2u);
+    EXPECT_FALSE(_physics.created_joints[0].collide_with_other);
+    EXPECT_TRUE(_physics.created_joints[1].collide_with_other);
+  }
+
+  TEST_F(PhysicsSimulationTest, HandsOnTheMotorOfAHingeInRadiansPerSecondAndOfASliderInUnits)
+  {
+    const Entity door = Create("door", At(4.0f, 1.0f, 0.0f), RigidBody{});
+    const Entity sled = Create("sled", At(0.0f, 1.0f, 0.0f), RigidBody{});
+    _store.Set(door, Joint{
+                 .type = JointKind::Hinge,
+                 .axis = {0.0f, 1.0f, 0.0f},
+                 .motor_velocity = 90.0f,
+                 .motor_strength = 20.0f,
+               });
+    _store.Set(sled, Joint{
+                 .type = JointKind::Slider,
+                 .axis = {1.0f, 0.0f, 0.0f},
+                 .motor_velocity = 3.0f,
+                 .motor_strength = 50.0f,
+                 .spring_stiffness = 0.0f,
+                 .spring_damping = 0.0f,
+               });
+
+    Step();
+
+    ASSERT_EQ(_physics.created_joints.size(), 2u);
+    EXPECT_NEAR(_physics.created_joints[0].motor_velocity, glm::half_pi<float>(), tolerance);
+    EXPECT_EQ(_physics.created_joints[0].motor_strength, 20.0f);
+    EXPECT_EQ(_physics.created_joints[1].motor_velocity, 3.0f);
+    EXPECT_EQ(_physics.created_joints[1].motor_strength, 50.0f);
+  }
+
+  TEST_F(PhysicsSimulationTest, HandsOnTheSpringOfAJoint)
+  {
+    const Entity door = Create("door", At(4.0f, 1.0f, 0.0f), RigidBody{});
+    _store.Set(door, Joint{
+                 .type = JointKind::Hinge,
+                 .axis = {0.0f, 1.0f, 0.0f},
+                 .spring_stiffness = 12.0f,
+                 .spring_damping = 1.5f,
+               });
+
+    Step();
+
+    ASSERT_EQ(_physics.created_joints.size(), 1u);
+    EXPECT_EQ(_physics.created_joints[0].spring_stiffness, 12.0f);
+    EXPECT_EQ(_physics.created_joints[0].spring_damping, 1.5f);
+    EXPECT_EQ(_physics.created_joints[0].motor_strength, 0.0f);
+  }
+
   TEST_F(PhysicsSimulationTest, JoinsABodyToTheWorldWhenTheJointNamesNothing)
   {
     const Entity bob = Create("bob", At(0.0f, 3.0f, 0.0f), RigidBody{});

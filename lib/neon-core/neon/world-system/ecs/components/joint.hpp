@@ -3,6 +3,7 @@
 
 #include <cstddef>
 #include <format>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -42,12 +43,43 @@ namespace neon
     /// when the joint is made. Empty for no limit.
     std::vector<float> limits;
 
+    /// Whether the body collides with the other body. Left out, a fixed
+    /// joint and a hinge do not, so a door can hang at its frame, and a
+    /// slider and a point joint do. See CollidesWithOther().
+    std::optional<bool> collide_with_other;
+
+    /// Of a hinge or a slider, a motor that drives it: how fast, in degrees
+    /// per second around the axis or units per second along it, and with
+    /// how much at most, in newton metres or newtons. There is no motor
+    /// while the strength is 0. A motor with a velocity of 0 holds the
+    /// joint where it is, as far as its strength reaches.
+    float motor_velocity = 0.0f;
+    float motor_strength = 0.0f;
+
+    /// Of a hinge or a slider, a spring that pulls it back to where it was
+    /// made, as `spring: {stiffness, damping}`. The stiffness is the torque
+    /// in newton metres for every radian it is turned, or the force in
+    /// newtons for every unit it is moved. The damping is the same against
+    /// its speed. There is no spring while the stiffness is 0. A joint has
+    /// a motor or a spring, not both.
+    float spring_stiffness = 0.0f;
+    float spring_damping = 0.0f;
+
     /// What the physics knows the joint as. Filled in by the engine.
     JointId joint = No_Joint;
 
     /// Set by the engine when the joint could not be made, which was said in
     /// the log. It is not tried again.
     bool failed = false;
+
+    /// Whether the two bodies collide with each other: what
+    /// `collide_with_other` says, or when it is left out, what the type
+    /// needs. A fixed joint and a hinge keep them apart.
+    [[nodiscard]] bool CollidesWithOther() const
+    {
+      if (collide_with_other.has_value()) { return *collide_with_other; }
+      return type != JointKind::Fixed && type != JointKind::Hinge;
+    }
   };
 
   /// What the engine fills in, the joint and whether it failed, is not
@@ -75,6 +107,39 @@ namespace neon
     type.Field("limits", &Joint::limits)
         .OnlyWhen("type", {"hinge", "slider"})
         .Describe("The least and the most, as [least, most]: degrees for a hinge, units for a slider. Empty for none");
+
+    // Seen as what it comes to, so that a recipe reads true or false, and
+    // a fixed joint and a hinge come to false when it is left out. What it
+    // comes to depends on the type, so it is always written: a slider that
+    // was told not to collide would otherwise read as one that was not
+    type.Field<bool>(
+            "collide_with_other",
+            [](const Joint &joint) { return joint.CollidesWithOther(); },
+            [](Joint &joint, const bool &value) { joint.collide_with_other = value; })
+        .AlwaysWritten()
+        .Describe("Whether the body collides with the other body. Left out, a fixed joint and a hinge do not");
+
+    type.Field("motor_velocity", &Joint::motor_velocity)
+        .OnlyWhen("type", {"hinge", "slider"})
+        .Describe("How fast the motor drives the joint: degrees per second for a hinge, units per second for a slider");
+
+    type.Field("motor_strength", &Joint::motor_strength)
+        .AtLeast(0.0f)
+        .OnlyWhen("type", {"hinge", "slider"})
+        .Describe("The most the motor puts in: newton metres for a hinge, newtons for a slider. 0 for no motor");
+
+    type.Group("spring", [](TypeBuilder<Joint> &spring)
+    {
+      spring.Field("stiffness", &Joint::spring_stiffness)
+          .AtLeast(0.0f)
+          .Describe("How hard the spring pulls the joint back to where it was made, for every radian or unit. 0 for no spring");
+
+      spring.Field("damping", &Joint::spring_damping)
+          .AtLeast(0.0f)
+          .Describe("How hard the spring holds against the speed of the joint, for every radian or unit per second");
+    })
+        .OnlyWhen("type", {"hinge", "slider"})
+        .Describe("A spring that pulls a hinge or a slider back to where it was made");
 
     type.Rule("axis", [](const Joint &joint, const std::string &where) -> std::string
     {
@@ -114,6 +179,19 @@ namespace neon
           where, least, most);
       }
       return {};
+    });
+
+    type.Rule("spring", [](const Joint &joint, const std::string &where) -> std::string
+    {
+      if ((joint.type != JointKind::Hinge && joint.type != JointKind::Slider)
+          || joint.motor_strength <= 0.0f || joint.spring_stiffness <= 0.0f)
+      {
+        return {};
+      }
+
+      return std::format(
+        "'spring' of {} is set along with 'motor_strength', where a joint has a motor or a spring, not both",
+        where);
     });
   }
 } // neon

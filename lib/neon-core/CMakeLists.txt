@@ -279,6 +279,7 @@ add_library(${TARGET} STATIC
         # physics
         neon/physics/joint-info.hpp
         neon/physics/joint-kind.hpp
+        neon/physics/joint-state.hpp
         neon/physics/model-geometry.cpp
         neon/physics/model-geometry.hpp
         neon/physics/physics-context.hpp

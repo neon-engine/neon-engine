@@ -1,5 +1,6 @@
 #include "component-format.hpp"
 
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -74,6 +75,15 @@ namespace
     std::vector<std::string> names;
     for (const auto &[name, value] : map.GetEntries()) { names.push_back(name); }
     return names;
+  }
+
+  bool BoolOf(const DataValue &map, const std::string &name)
+  {
+    bool flag = false;
+    const auto *value = map.Find(name);
+    EXPECT_NE(value, nullptr) << name;
+    if (value != nullptr) { EXPECT_TRUE(value->GetBool(flag)) << name; }
+    return flag;
   }
 
   double NumberOf(const DataValue &map, const std::string &name)
@@ -215,7 +225,9 @@ namespace
                   "rotation"));
     EXPECT_EQ(_formats.Find("RigidBody")->type->Find("layers")->kind, neon::FieldKind::Layers);
     EXPECT_EQ(_formats.Find("CharacterBody")->type->Find("max_slope")->unit, "degrees");
-    EXPECT_THAT(_formats.Find("Joint")->type->GetPaths(), ElementsAre("type", "other", "anchor", "axis", "limits"));
+    EXPECT_THAT(_formats.Find("Joint")->type->GetPaths(), ElementsAre(
+                  "type", "other", "anchor", "axis", "limits", "collide_with_other", "motor_velocity",
+                  "motor_strength", "spring.stiffness", "spring.damping"));
   }
 
   TEST_F(PhysicsComponentFormatsTest, SaysThatAWorldWithoutPhysicsCannotHoldThem)
@@ -1175,8 +1187,36 @@ namespace
     EXPECT_EQ(joint->anchor, glm::vec3(0.0f));
     EXPECT_EQ(joint->axis, glm::vec3(0.0f, 1.0f, 0.0f));
     EXPECT_THAT(joint->limits, IsEmpty());
+    EXPECT_FALSE(joint->collide_with_other.has_value());
+    EXPECT_FALSE(joint->CollidesWithOther());
+    EXPECT_EQ(joint->motor_velocity, 0.0f);
+    EXPECT_EQ(joint->motor_strength, 0.0f);
+    EXPECT_EQ(joint->spring_stiffness, 0.0f);
+    EXPECT_EQ(joint->spring_damping, 0.0f);
     EXPECT_EQ(joint->joint, neon::No_Joint);
     EXPECT_FALSE(joint->failed);
+  }
+
+  TEST_F(PhysicsComponentFormatsTest, KeepsAFixedJointAndAHingeFromCollidingUnlessTold)
+  {
+    const auto collides = [this](const std::string &type, const std::optional<bool> told)
+    {
+      Clear("Joint");
+      auto map = DataValue::Map();
+      map.Set("type", DataValue::Text(type));
+      if (told.has_value()) { map.Set("collide_with_other", DataValue::Bool(*told)); }
+      Read("Joint", map);
+      return _store.Get<Joint>(_entity)->CollidesWithOther();
+    };
+
+    EXPECT_FALSE(collides("fixed", std::nullopt));
+    EXPECT_FALSE(collides("hinge", std::nullopt));
+    EXPECT_TRUE(collides("slider", std::nullopt));
+    EXPECT_TRUE(collides("point", std::nullopt));
+
+    EXPECT_TRUE(collides("hinge", true));
+    EXPECT_FALSE(collides("point", false));
+    EXPECT_THAT(_errors, IsEmpty());
   }
 
   TEST_F(PhysicsComponentFormatsTest, ReadsEveryValueOfAJoint)
@@ -1187,6 +1227,9 @@ namespace
     map.Set("anchor", Numbers({-0.8, 0.0, 0.0}));
     map.Set("axis", Numbers({0.0, 0.0, 1.0}));
     map.Set("limits", Numbers({-90.0, 10.0}));
+    map.Set("collide_with_other", DataValue::Bool(true));
+    map.Set("motor_velocity", DataValue::Number(45.0));
+    map.Set("motor_strength", DataValue::Number(20.0));
 
     Read("Joint", map);
 
@@ -1198,6 +1241,27 @@ namespace
     EXPECT_EQ(joint->anchor, glm::vec3(-0.8f, 0.0f, 0.0f));
     EXPECT_EQ(joint->axis, glm::vec3(0.0f, 0.0f, 1.0f));
     EXPECT_THAT(joint->limits, ElementsAre(-90.0f, 10.0f));
+    EXPECT_EQ(joint->collide_with_other, std::optional(true));
+    EXPECT_EQ(joint->motor_velocity, 45.0f);
+    EXPECT_EQ(joint->motor_strength, 20.0f);
+  }
+
+  TEST_F(PhysicsComponentFormatsTest, ReadsTheSpringOfAJoint)
+  {
+    auto map = DataValue::Map();
+    map.Set("type", DataValue::Text("slider"));
+    auto spring = DataValue::Map();
+    spring.Set("stiffness", DataValue::Number(50.0));
+    spring.Set("damping", DataValue::Number(2.0));
+    map.Set("spring", spring);
+
+    Read("Joint", map);
+
+    const auto *joint = _store.Get<Joint>(_entity);
+    ASSERT_NE(joint, nullptr);
+    EXPECT_THAT(_errors, IsEmpty());
+    EXPECT_EQ(joint->spring_stiffness, 50.0f);
+    EXPECT_EQ(joint->spring_damping, 2.0f);
   }
 
   TEST_F(PhysicsComponentFormatsTest, ReadsEveryTypeOfJoint)
@@ -1262,6 +1326,61 @@ namespace
     EXPECT_EQ(problem("hinge", "limits", Numbers({})), "0 problems");
   }
 
+  TEST_F(PhysicsComponentFormatsTest, SaysWhatIsWrongWithTheMotorAndTheSpringOfAJoint)
+  {
+    const auto problem = [this](const std::string &type, const std::string &name, const DataValue &value)
+    {
+      _errors.clear();
+      Clear("Joint");
+      auto map = DataValue::Map();
+      map.Set("type", DataValue::Text(type));
+      map.Set(name, At(9, value));
+      Read("Joint", map);
+      return _errors.size() == 1 ? _errors.front() : std::to_string(_errors.size()) + " problems";
+    };
+    const std::string where = "test.scene.yml:9: ";
+    const std::string of = " of Joint of entity 'crate' ";
+
+    EXPECT_EQ(problem("hinge", "motor_strength", DataValue::Number(-1.0)),
+              where + "'motor_strength'" + of + "is -1, where a number of 0 or above was expected");
+    EXPECT_EQ(problem("hinge", "motor_velocity", DataValue::Number(-90.0)), "0 problems");
+
+    auto spring = DataValue::Map();
+    spring.Set("stiffness", At(9, DataValue::Number(-5.0)));
+    EXPECT_EQ(problem("slider", "spring", spring),
+              where + "'stiffness' of 'spring'" + of + "is -5, where a number of 0 or above was expected");
+
+    // a motor and a spring on one joint
+    _errors.clear();
+    Clear("Joint");
+    auto map = DataValue::Map();
+    map.Set("type", DataValue::Text("hinge"));
+    map.Set("motor_strength", DataValue::Number(10.0));
+    auto both = DataValue::Map();
+    both.Set("stiffness", DataValue::Number(5.0));
+    map.Set("spring", At(12, both));
+    Read("Joint", map);
+    EXPECT_THAT(_errors, ElementsAre(
+                  "test.scene.yml:12: 'spring' of Joint of entity 'crate' is set along with 'motor_strength', "
+                  "where a joint has a motor or a spring, not both"));
+  }
+
+  TEST_F(PhysicsComponentFormatsTest, SaysThatTheMotorAndTheSpringBelongToAHingeAndASlider)
+  {
+    auto map = DataValue::Map();
+    map.Set("type", DataValue::Text("fixed"));
+    map.Set("motor_velocity", At(5, DataValue::Number(1.0)));
+    map.Set("spring", At(6, DataValue::Map()));
+
+    Read("Joint", map);
+
+    EXPECT_THAT(_errors, ElementsAre(
+                  "test.scene.yml:5: 'motor_velocity' is not known to Joint of entity 'crate'. Known are: type, "
+                  "other, anchor, collide_with_other",
+                  "test.scene.yml:6: 'spring' is not known to Joint of entity 'crate'. Known are: type, other, "
+                  "anchor, collide_with_other"));
+  }
+
   TEST_F(PhysicsComponentFormatsTest, SaysThatTheAxisAndTheLimitsBelongToAHingeAndASlider)
   {
     auto map = DataValue::Map();
@@ -1272,9 +1391,10 @@ namespace
     Read("Joint", map);
 
     EXPECT_THAT(_errors, ElementsAre(
-                  "test.scene.yml:5: 'axis' is not known to Joint of entity 'crate'. Known are: type, other, anchor",
+                  "test.scene.yml:5: 'axis' is not known to Joint of entity 'crate'. Known are: type, other, anchor, "
+                  "collide_with_other",
                   "test.scene.yml:6: 'limits' is not known to Joint of entity 'crate'. Known are: type, other, "
-                  "anchor"));
+                  "anchor, collide_with_other"));
   }
 
   TEST_F(PhysicsComponentFormatsTest, WritesOnlyTheTypeOfAJointWithDefaults)
@@ -1283,8 +1403,26 @@ namespace
 
     const auto map = Write("Joint");
 
-    EXPECT_THAT(NamesOf(map), ElementsAre("type"));
+    // whether the bodies collide comes from the type when it is left out,
+    // so it is written whatever it is
+    EXPECT_THAT(NamesOf(map), ElementsAre("type", "collide_with_other"));
     EXPECT_EQ(TextOf(map, "type"), "fixed");
+    EXPECT_EQ(BoolOf(map, "collide_with_other"), false);
+  }
+
+  TEST_F(PhysicsComponentFormatsTest, WritesWhetherAJointCollidesAsItComesTo)
+  {
+    _store.Set(_entity, Joint{.type = JointKind::Point});
+    EXPECT_EQ(BoolOf(Write("Joint"), "collide_with_other"), true);
+
+    _store.Set(_entity, Joint{.type = JointKind::Point, .collide_with_other = false});
+    EXPECT_EQ(BoolOf(Write("Joint"), "collide_with_other"), false);
+
+    _store.Set(_entity, Joint{.type = JointKind::Hinge});
+    EXPECT_EQ(BoolOf(Write("Joint"), "collide_with_other"), false);
+
+    _store.Set(_entity, Joint{.type = JointKind::Hinge, .collide_with_other = true});
+    EXPECT_EQ(BoolOf(Write("Joint"), "collide_with_other"), true);
   }
 
   TEST_F(PhysicsComponentFormatsTest, WritesAJointAndReadsItBack)
@@ -1295,14 +1433,19 @@ namespace
     joint.anchor = {0.0f, -0.5f, 0.0f};
     joint.axis = {1.0f, 0.0f, 0.0f};
     joint.limits = {-3.0f, 3.0f};
+    joint.collide_with_other = false;
+    joint.motor_velocity = 2.0f;
+    joint.motor_strength = 100.0f;
     joint.joint = 7;
     joint.failed = true;
     _store.Set(_entity, joint);
 
     const auto map = Write("Joint");
-    EXPECT_THAT(NamesOf(map), ElementsAre("type", "other", "anchor", "axis", "limits"));
+    EXPECT_THAT(NamesOf(map), ElementsAre("type", "other", "anchor", "axis", "limits", "collide_with_other",
+                                          "motor_velocity", "motor_strength"));
     EXPECT_EQ(TextOf(map, "other"), "rail");
     EXPECT_THAT(NumbersOf(map, "limits"), ElementsAre(-3.0, 3.0));
+    EXPECT_EQ(NumberOf(map, "motor_velocity"), 2.0);
 
     _store.Set(_entity, Joint{});
     Read("Joint", map);
@@ -1314,7 +1457,29 @@ namespace
     EXPECT_EQ(read->anchor, glm::vec3(0.0f, -0.5f, 0.0f));
     EXPECT_EQ(read->axis, glm::vec3(1.0f, 0.0f, 0.0f));
     EXPECT_THAT(read->limits, ElementsAre(-3.0f, 3.0f));
+    EXPECT_FALSE(read->CollidesWithOther());
+    EXPECT_EQ(read->motor_velocity, 2.0f);
+    EXPECT_EQ(read->motor_strength, 100.0f);
     EXPECT_EQ(read->joint, neon::No_Joint);
     EXPECT_FALSE(read->failed);
+  }
+
+  TEST_F(PhysicsComponentFormatsTest, WritesTheSpringOfAJointAndReadsItBack)
+  {
+    _store.Set(_entity, Joint{.type = JointKind::Hinge, .spring_stiffness = 8.0f, .spring_damping = 0.5f});
+
+    const auto map = Write("Joint");
+    EXPECT_THAT(NamesOf(map), ElementsAre("type", "collide_with_other", "spring"));
+    const auto *spring = map.Find("spring");
+    ASSERT_NE(spring, nullptr);
+    EXPECT_THAT(NamesOf(*spring), ElementsAre("stiffness", "damping"));
+
+    _store.Set(_entity, Joint{});
+    Read("Joint", map);
+
+    const auto *read = _store.Get<Joint>(_entity);
+    EXPECT_THAT(_errors, IsEmpty());
+    EXPECT_EQ(read->spring_stiffness, 8.0f);
+    EXPECT_EQ(read->spring_damping, 0.5f);
   }
 }

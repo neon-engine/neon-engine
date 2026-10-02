@@ -705,6 +705,15 @@ namespace neon
           info.limit_min = in_degrees ? glm::radians(joint.limits[0]) : joint.limits[0];
           info.limit_max = in_degrees ? glm::radians(joint.limits[1]) : joint.limits[1];
         }
+        info.collide_with_other = joint.CollidesWithOther();
+
+        // a hinge is driven in degrees per second in a recipe, and in
+        // radians per second by the physics
+        const bool turns = joint.type == JointKind::Hinge;
+        info.motor_velocity = turns ? glm::radians(joint.motor_velocity) : joint.motor_velocity;
+        info.motor_strength = joint.motor_strength;
+        info.spring_stiffness = joint.spring_stiffness;
+        info.spring_damping = joint.spring_damping;
 
         JointId made = No_Joint;
         std::string error;

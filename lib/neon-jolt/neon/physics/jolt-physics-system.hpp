@@ -96,6 +96,8 @@ namespace neon
 
     [[nodiscard]] std::size_t GetJointCount() override;
 
+    bool GetJointState(JointId joint, JointState &state) override;
+
     void Step(double seconds) override;
 
     bool CastRay(const Ray &ray, const QueryFilter &filter, RayHit &hit) override;

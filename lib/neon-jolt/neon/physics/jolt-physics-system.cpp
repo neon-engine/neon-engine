@@ -11,6 +11,7 @@
 #include <format>
 #include <map>
 #include <mutex>
+#include <set>
 #include <thread>
 #include <unordered_map>
 #include <utility>
@@ -29,7 +30,9 @@
 #include <Jolt/Physics/Collision/CastResult.h>
 #include <Jolt/Physics/Collision/CollideShape.h>
 #include <Jolt/Physics/Collision/CollisionCollectorImpl.h>
+#include <Jolt/Physics/Collision/CollisionGroup.h>
 #include <Jolt/Physics/Collision/ContactListener.h>
+#include <Jolt/Physics/Collision/GroupFilter.h>
 #include <Jolt/Physics/Collision/ObjectLayer.h>
 #include <Jolt/Physics/Collision/RayCast.h>
 #include <Jolt/Physics/Collision/ShapeCast.h>
@@ -46,8 +49,10 @@
 #include <Jolt/Physics/Collision/Shape/TaperedCylinderShape.h>
 #include <Jolt/Physics/Constraints/FixedConstraint.h>
 #include <Jolt/Physics/Constraints/HingeConstraint.h>
+#include <Jolt/Physics/Constraints/MotorSettings.h>
 #include <Jolt/Physics/Constraints/PointConstraint.h>
 #include <Jolt/Physics/Constraints/SliderConstraint.h>
+#include <Jolt/Physics/Constraints/SpringSettings.h>
 #include <Jolt/Physics/Constraints/TwoBodyConstraint.h>
 #include <Jolt/Physics/PhysicsSystem.h>
 #include <Jolt/RegisterTypes.h>
@@ -334,8 +339,59 @@ namespace neon
     struct JointRecord
     {
       JPH::Ref<JPH::TwoBodyConstraint> constraint;
+      JointKind kind = JointKind::Fixed;
       BodyId body = No_Body;
       BodyId other = No_Body;
+
+      /// Whether the two bodies were kept from colliding with each other.
+      bool apart = false;
+
+      /// The axis of a hinge or a slider, on the body that holds, which is
+      /// the world when there is no other.
+      JPH::Vec3 axis_on_held = JPH::Vec3::sAxisY();
+
+      /// Whether it was said that the joint has no state to read.
+      bool warned = false;
+    };
+
+    /// Keeps the two bodies of a joint from colliding with each other,
+    /// when the joint asks for it. Jolt asks a group filter whether two
+    /// bodies may collide. Every body a joint keeps apart is given this
+    /// one, with the number the physics knows the body by as its group, and
+    /// the pairs that are kept apart are written down here.
+    ///
+    /// Jolt asks from several threads at once during a step. Pairs are
+    /// added and taken away between steps alone.
+    class JointFilter final : public JPH::GroupFilter
+    {
+      using Pair = std::pair<JPH::CollisionGroup::GroupID, JPH::CollisionGroup::GroupID>;
+
+      // how many joints keep each pair apart
+      std::map<Pair, int> _apart;
+
+      static Pair PairOf(const BodyId first, const BodyId second)
+      {
+        return {std::min(first, second), std::max(first, second)};
+      }
+
+    public:
+      void KeepApart(const BodyId first, const BodyId second) { _apart[PairOf(first, second)]++; }
+
+      void LetTouch(const BodyId first, const BodyId second)
+      {
+        const auto it = _apart.find(PairOf(first, second));
+        if (it == _apart.end()) { return; }
+        if (--it->second <= 0) { _apart.erase(it); }
+      }
+
+      bool CanCollide(const JPH::CollisionGroup &first, const JPH::CollisionGroup &second) const override
+      {
+        const auto a = first.GetGroupID();
+        const auto b = second.GetGroupID();
+        if (a == JPH::CollisionGroup::cInvalidGroup || b == JPH::CollisionGroup::cInvalidGroup) { return true; }
+
+        return !_apart.contains(PairOf(a, b));
+      }
     };
 
     std::string Name(const JointKind kind)
@@ -528,6 +584,10 @@ namespace neon
     std::map<CharacterId, CharacterRecord> characters;
     std::map<JointId, JointRecord> joints;
 
+    // what keeps joined bodies apart. Jolt counts references to it, and
+    // the state marks it as embedded so that Jolt never deletes it
+    JointFilter joint_filter;
+
     // by the two numbers Jolt knows the bodies as
     std::map<std::pair<std::uint32_t, std::uint32_t>, Touch> touches;
 
@@ -575,6 +635,8 @@ namespace neon
 
     std::vector<PhysicsEvent> ReadContacts();
 
+    State() { joint_filter.SetEmbedded(); }
+
     /// Takes a joint apart. What it held wakes up, since what was held
     /// up may now fall.
     void RemoveJoint(const JointRecord &record);
@@ -586,6 +648,7 @@ namespace neon
   void Jolt_PhysicsSystem::State::RemoveJoint(const JointRecord &record)
   {
     physics.RemoveConstraint(record.constraint);
+    if (record.apart) { joint_filter.LetTouch(record.body, record.other); }
 
     auto &interface = physics.GetBodyInterface();
     for (const auto body : {record.body, record.other})
@@ -1788,6 +1851,27 @@ namespace neon
       return false;
     }
 
+    if (!std::isfinite(info.motor_velocity) || !std::isfinite(info.motor_strength)
+        || !std::isfinite(info.spring_stiffness) || !std::isfinite(info.spring_damping))
+    {
+      error = "the motor or the spring is no number";
+      return false;
+    }
+
+    if (info.motor_strength < 0.0f || info.spring_stiffness < 0.0f || info.spring_damping < 0.0f)
+    {
+      error = "the strength of the motor, the stiffness of the spring, and its damping are 0 or above";
+      return false;
+    }
+
+    const bool has_motor = has_axis && info.motor_strength > 0.0f;
+    const bool has_spring = has_axis && info.spring_stiffness > 0.0f;
+    if (has_motor && has_spring)
+    {
+      error = "the joint has a motor and a spring, where it has one or the other";
+      return false;
+    }
+
     const auto anchor = ToJolt(info.anchor);
     const auto axis = has_axis ? ToJolt(normalize(info.axis)) : JPH::Vec3::sAxisY();
     const auto normal = axis.GetNormalizedPerpendicular();
@@ -1807,6 +1891,21 @@ namespace neon
     }
 
     JPH::Ref<JPH::TwoBodyConstraint> constraint;
+
+    // A motor drives the joint at a velocity, with at most the strength.
+    // A spring is a motor that drives it to where it was made, with the
+    // torque or the force of the spring equation.
+    JPH::MotorSettings motor;
+    if (has_motor)
+    {
+      motor.SetTorqueLimit(info.motor_strength);
+      motor.SetForceLimit(info.motor_strength);
+    }
+    if (has_spring)
+    {
+      motor.mSpringSettings = JPH::SpringSettings(
+        JPH::ESpringMode::StiffnessAndDamping, info.spring_stiffness, info.spring_damping);
+    }
 
     switch (info.kind)
     {
@@ -1845,7 +1944,19 @@ namespace neon
           settings.mLimitsMin = std::clamp(info.limit_min, -JPH::JPH_PI, 0.0f);
           settings.mLimitsMax = std::clamp(info.limit_max, 0.0f, JPH::JPH_PI);
         }
+        settings.mMotorSettings = motor;
         constraint = settings.Create(*held, *holding);
+
+        auto *hinge = static_cast<JPH::HingeConstraint *>(constraint.GetPtr());
+        if (has_motor)
+        {
+          hinge->SetMotorState(JPH::EMotorState::Velocity);
+          hinge->SetTargetAngularVelocity(info.motor_velocity);
+        } else if (has_spring)
+        {
+          hinge->SetMotorState(JPH::EMotorState::Position);
+          hinge->SetTargetAngle(0.0f);
+        }
         break;
       }
 
@@ -1865,7 +1976,19 @@ namespace neon
           settings.mLimitsMin = std::min(info.limit_min, 0.0f);
           settings.mLimitsMax = std::max(info.limit_max, 0.0f);
         }
+        settings.mMotorSettings = motor;
         constraint = settings.Create(*held, *holding);
+
+        auto *slider = static_cast<JPH::SliderConstraint *>(constraint.GetPtr());
+        if (has_motor)
+        {
+          slider->SetMotorState(JPH::EMotorState::Velocity);
+          slider->SetTargetVelocity(info.motor_velocity);
+        } else if (has_spring)
+        {
+          slider->SetMotorState(JPH::EMotorState::Position);
+          slider->SetTargetPosition(0.0f);
+        }
         break;
       }
     }
@@ -1879,8 +2002,80 @@ namespace neon
 
     _state->physics.AddConstraint(constraint);
 
+    JointRecord record{.constraint = constraint, .kind = info.kind, .body = info.body, .other = info.other};
+    record.axis_on_held = held->GetRotation().Conjugated() * axis;
+
+    // The two bodies are kept apart by the group filter, which each is
+    // given once, with its own number as its group. Nothing collides with
+    // the world itself, so there is nothing to keep apart from it.
+    if (!info.collide_with_other && second != nullptr)
+    {
+      for (const auto &[body, id] : {std::pair{holding, info.body}, std::pair{held, info.other}})
+      {
+        if (body->GetCollisionGroup().GetGroupFilter() == nullptr)
+        {
+          body->SetCollisionGroup(
+            JPH::CollisionGroup(&_state->joint_filter, id, JPH::CollisionGroup::cInvalidSubGroup));
+        }
+      }
+      _state->joint_filter.KeepApart(info.body, info.other);
+      record.apart = true;
+    }
+
+    // what is driven does not sleep through it
+    if (has_motor || has_spring)
+    {
+      auto &interface = _state->physics.GetBodyInterfaceNoLock();
+      if (first_dynamic) { interface.ActivateBody(holding->GetID()); }
+      if (second_dynamic) { interface.ActivateBody(held->GetID()); }
+    }
+
     joint = _state->next_joint++;
-    _state->joints[joint] = JointRecord{.constraint = constraint, .body = info.body, .other = info.other};
+    _state->joints[joint] = record;
+    return true;
+  }
+
+  bool Jolt_PhysicsSystem::GetJointState(const JointId joint, JointState &state)
+  {
+    state = JointState{};
+    if (_state == nullptr) { return false; }
+
+    const auto it = _state->joints.find(joint);
+    if (it == _state->joints.end()) { return false; }
+
+    auto &record = it->second;
+    if (record.kind != JointKind::Hinge && record.kind != JointKind::Slider)
+    {
+      if (!record.warned)
+      {
+        record.warned = true;
+        const auto name = Name(record.kind);
+        _logger->Warn(
+          "The state of joint {} was asked for, and a {} joint has none. Only a hinge has an angle and a slider "
+          "a position, which read as 0 here",
+          joint, name);
+      }
+      return true;
+    }
+
+    // Jolt measures the second body against the first, which holds, as
+    // the limits and the motor do
+    const auto *held = record.constraint->GetBody1();
+    const auto *holding = record.constraint->GetBody2();
+    const auto axis = held->GetRotation() * record.axis_on_held;
+
+    if (record.kind == JointKind::Hinge)
+    {
+      const auto *hinge = static_cast<const JPH::HingeConstraint *>(record.constraint.GetPtr());
+      state.position = hinge->GetCurrentAngle();
+      state.velocity = (holding->GetAngularVelocity() - held->GetAngularVelocity()).Dot(axis);
+    } else
+    {
+      const auto *slider = static_cast<const JPH::SliderConstraint *>(record.constraint.GetPtr());
+      const auto point = holding->GetCenterOfMassPosition();
+      state.position = slider->GetCurrentPosition();
+      state.velocity = (holding->GetPointVelocity(point) - held->GetPointVelocity(point)).Dot(axis);
+    }
     return true;
   }
 

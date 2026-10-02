@@ -53,8 +53,9 @@ NeonRuntime --scene assets://scenes/physics.scene.yml
 ```
 
 The scene [joints.scene.yml](../app/NeonRuntime/assets/scenes/joints.scene.yml)
-shows every kind of joint: a door on a hinge, a pendulum on a point, a sled
-on a slider, and two crates glued together.
+shows every kind of joint: a door on a hinge, which a spring pulls shut
+again, a pendulum on a point, a sled on a slider, and two crates glued
+together.
 
 ## Components
 
@@ -197,15 +198,20 @@ runtime does. A character that the input drives is the [player](#the-player).
 | `anchor` | `[x, y, z]`, where the joint sits on the entity. Sized by the `scale` of the `Transform`, as the `offset` of a `Collider` is, so `[-0.5, 0, 0]` is the left edge of a scaled cube | `[0, 0, 0]` | Every type |
 | `axis` | `[x, y, z]` on the entity: what a hinge turns around, or a slider moves along. A direction, which the scale does not change | `[0, 1, 0]` | `hinge`, `slider` |
 | `limits` | `[least, most]`, how far the body may go from where it is when the joint is made: degrees around the axis for a hinge, from -180 to 180, or units along it for a slider. The least is 0 or below, the most 0 or above. `[]` for no limit | `[]` | `hinge`, `slider` |
+| `collide_with_other` | Whether the body collides with the other body. `false` keeps the two apart, so a door can hang at its frame | `false` for `fixed` and `hinge`, `true` for `slider` and `point` | Every type |
+| `motor_velocity` | How fast a motor drives the joint: degrees per second around the axis for a hinge, units per second along it for a slider. Against the limits, the motor pushes and the limit holds. `0` with a strength holds the joint where it is, as a brake does | `0` | `hinge`, `slider` |
+| `motor_strength` | The most the motor puts in: newton metres of torque for a hinge, newtons of force for a slider. `0` is no motor. What pushes harder than the strength wins | `0` | `hinge`, `slider` |
+| `spring` | A spring that pulls the joint back to where it was made, with `stiffness` and `damping`. The stiffness is the torque in newton metres for every radian a hinge is turned, or the force in newtons for every unit a slider is moved. The damping is the torque or the force against every radian or unit per second of its speed. A stiffness of `0` is no spring. A joint has a motor or a spring, not both | `{stiffness: 0, damping: 0}` | `hinge`, `slider` |
 
 In code it has `joint`, the id the physics knows the joint by, and `failed`,
-as a `RigidBody` has.
+as a `RigidBody` has. `CollidesWithOther()` says what `collide_with_other`
+comes to when it is left out.
 
 ```yaml
 - name: door
   components:
     Transform:
-      position: [-6, 1.1, 0]
+      position: [-6.1, 1.12, 0]
       scale: [1.6, 2.2, 0.1]
     RigidBody:
       mass: 5
@@ -217,6 +223,9 @@ as a `RigidBody` has.
       anchor: [-0.5, 0, 0]
       axis: [0, 1, 0]
       limits: [-100, 100]
+      spring:
+        stiffness: 20
+        damping: 4
 ```
 
 The entity needs a `RigidBody`, and so does the entity `other` names. A
@@ -452,6 +461,81 @@ edge has its anchor at `[-0.5, 0, 0]`, whatever way the door faces. The
 limits count from there: a hinge with `limits: [-100, 100]` turns 100 degrees
 either way from where the door hung.
 
+### Bodies that are joined
+
+Two bodies that are joined still collide with each other, unless
+`collide_with_other` is `false`. A fixed joint and a hinge keep them apart
+when it is left out: what is glued on sits on what it is glued to, and a door
+hangs at its frame, with its hinge in the frame, where the two would push
+each other apart otherwise. A slider and a point joint let them collide when
+it is left out, since what hangs on a point or moves along a rail is apart
+from it anyway, and the sled is to stop at the end of its rail. Both are
+still hit by everything else: a ball that rolls into the door swings it
+open. The joint takes the two bodies apart, and when it is gone, they touch
+again.
+
+### Motors and springs
+
+A hinge and a slider can be driven. A **motor** turns or moves the joint at
+`motor_velocity`, with at most `motor_strength` of torque or force. Where
+the motor pushes against a limit, the limit holds. A motor whose velocity is
+`0` is a brake: it holds the joint where it is, as far as its strength
+reaches, and what pushes harder wins. A wheel is a hinge with a motor, and a
+lift is a slider with one.
+
+A **spring** pulls the joint back to where it was made: a door that swings
+shut by itself, a drawer that slides back in. Its `stiffness` is how hard it
+pulls for every radian or unit the joint is away, and its `damping` is how
+hard it holds against the speed of the joint. Little damping swings back and
+forth before it comes to rest, much damping creeps back without a swing. In
+the spring equation, the torque is `-stiffness * angle - damping * speed`,
+and the force the same with the position.
+
+```yaml
+Joint:
+  type: hinge
+  other: cart
+  axis: [1, 0, 0]
+  motor_velocity: 360
+  motor_strength: 50
+
+Joint:
+  type: slider
+  axis: [0, 0, 1]
+  limits: [0, 0.4]
+  spring:
+    stiffness: 200
+    damping: 20
+```
+
+A joint has a motor or a spring, not both. A recipe that writes both is
+refused at the spring, and says so. The bodies of a joint that is driven are
+awake when it is made, so a motor drives a body that rested.
+
+### The state of a joint
+
+A game asks the physics where a joint is through `GetJointState`, which
+fills a `JointState`: for a hinge, `position` is the angle in radians it
+turned from where it was made, and `velocity` is radians per second; for a
+slider, `position` is units along the axis, and `velocity` is units per
+second. Both count the way the limits and the motor do, from the body of
+the joint against the other, so a door that was turned 90 degrees reads
+`1.5708`, and one that was turned back past where it hung reads below 0.
+
+```cpp
+neon::JointState state;
+if (_physics->GetJointState(door.joint, state) && state.position > glm::radians(80.0f))
+{
+  // the door is open
+}
+```
+
+A fixed joint and a point joint have no angle and no position. Asking reads
+zeros, and the log says so, once for the joint. A joint that is not known,
+or that is gone with one of its bodies, returns false.
+
+### Errors and the interface
+
 What goes wrong is said in the log, once, and `failed` of the component is
 set:
 
@@ -472,6 +556,7 @@ In code, through `PhysicsContext`:
 | `DestroyJoint` | Takes a joint apart. What it held wakes up, so that what was held up falls |
 | `HasJoint` | Whether a joint still holds. It stops holding when one of its bodies is destroyed |
 | `GetJointCount` | How many hold |
+| `GetJointState` | Where a hinge or a slider is, and how fast that changes. Zeros for the others, which is said once |
 
 | Decision | Reason |
 |---|---|
@@ -481,7 +566,12 @@ In code, through `PhysicsContext`:
 | The limits of a hinge are in degrees | Every angle a scene recipe holds is. The interface takes radians, as it takes the angular velocity |
 | The world is the other body when `other` is empty | A pendulum hangs from a point in the air. A static body to hang it from would be an entity for nothing |
 | The joint goes with either body, and comes back with it | Jolt cannot hold a body that is gone. The component stays, so the game need not know when a body was replaced |
-| The joined bodies still collide with each other | Jolt lets two joined bodies collide unless they are put in a group that does not. A door swings clear of its frame when the hinge sits a little off it, as in the scenes. Keeping joined bodies apart is a limit for now |
+| `collide_with_other` is `false` for a fixed joint and a hinge, and `true` for a slider and a point joint, when it is left out | What is glued on and what hangs on a hinge sits at what holds it, and would be pushed off otherwise. What hangs on a point or moves along a rail is apart from it, and a sled is to stop at the end of its rail. It is written whatever it is, since what it comes to depends on the type |
+| Joined bodies are kept apart by a group filter of Jolt, which is asked about the pair | Jolt asks a body's group filter whether it collides with another. A table of groups would hold a bit for every pair of bodies in a group, which a world of many bodies cannot afford. A filter that is asked about the pair keeps the pairs that are apart alone, and a body is given it only when a joint keeps it apart from something |
+| A motor is on while `motor_strength` is above 0, and a spring while `stiffness` is | A number that says how much is also what says whether, and nothing else has to be written. A motor of no velocity but some strength is a brake, which is wanted |
+| A spring is a motor of Jolt that drives to the position it was made at | Jolt has no spring on a hinge or a slider other than a soft limit, which pulls at the limits alone. Its position motor is a spring to a target, with a stiffness and a damping, and the target is where the joint was made. So a joint has a motor or a spring, since Jolt has one motor |
+| The stiffness of a hinge is per radian | The spring equation is written per radian wherever it is written, and a stiffness per degree would be 57 times smaller than the one in every book. The velocity of the motor is in degrees per second, since every rate a recipe holds is |
+| `GetJointState` returns false for a joint that is not known, and zeros with a warning for one that has no state | Not known is a mistake of the caller, which the return says. A fixed joint has no angle, which a game reads as 0 without a crash, and is told once |
 
 ## Layers and masks
 
@@ -862,7 +952,9 @@ Jolt Physics is a submodule in `external/jolt-physics`. Its options are set in
 | A character | Stays upright. Its shape is not turned with its entity |
 | The shapes of a body | Follow its `Collider` components. The `Transform` of an entity below the body, and the `scale` of the body, are read when it is created |
 | The shape of a character | Is read when it is created. A `Collider` that changes is said once, and changes nothing |
-| Joints | `fixed`, `hinge`, `slider`, and `point`, with limits on a hinge and a slider. Not there: motors that drive a joint, springs, a cone or a swing-twist joint, a distance joint, a joint that breaks under a force, and keeping two joined bodies from colliding with each other |
+| Joints | `fixed`, `hinge`, `slider`, and `point`, with limits, a motor, and a spring on a hinge and a slider, and joined bodies kept apart. Not there: a cone or a swing-twist joint, a distance joint, a joint that breaks under a force, a motor that drives to an angle or a position, and a spring whose rest is somewhere else than where the joint was made |
+| A joint | Has a motor or a spring, not both. A motor and a spring of a joint are read when it is made, as the limits are, and do not follow the component after that |
+| The state of a joint | Is read for a hinge and a slider. A fixed joint and a point joint read as zeros |
 | A hinge | Turns at most 180 degrees either way from where it was made, which is what Jolt holds |
 | Locking an axis | On a dynamic body, along and around the axes of the world. Not around an axis that turns with the body |
 | Height fields, soft bodies, vehicles | Jolt has them. The interface does not |
@@ -872,13 +964,13 @@ Jolt Physics is a submodule in `external/jolt-physics`. Its options are set in
 
 | Check | Result |
 |---|---|
-| 121 checks of `Jolt_PhysicsSystem` through the interface | Pass. A box falls and comes to rest, a sphere rolls down a slope, a character stops at a wall and slides along it and is not pushed by a body of 500 kg, a trigger reports enter and leave once each and changes nothing of what passes, layers and masks, rays and overlaps, a mesh is refused on a dynamic body, bodies are released, a crate with its rotation locked slides upright where a free one falls over, a cast box meets a post a ray down its middle misses, a body that grows touches what it did not and keeps its mass, a door turns on its hinge and stops at its limits, a pendulum swings on a point, a sled moves along its slider alone, a glued pair moves as one, a joint goes with either of its bodies, two bodies that name one model at one scale hold one shape and let it go with the last of them |
+| 135 checks of `Jolt_PhysicsSystem` through the interface | Pass. A box falls and comes to rest, a sphere rolls down a slope, a character stops at a wall and slides along it and is not pushed by a body of 500 kg, a trigger reports enter and leave once each and changes nothing of what passes, layers and masks, rays and overlaps, a mesh is refused on a dynamic body, bodies are released, a crate with its rotation locked slides upright where a free one falls over, a cast box meets a post a ray down its middle misses, a body that grows touches what it did not and keeps its mass, a door turns on its hinge and stops at its limits, a pendulum swings on a point, a sled moves along its slider alone, a glued pair moves as one, a joint goes with either of its bodies, a door hangs at its frame without being pushed out of it and still touches a ball and the floor, a motor turns a door at its velocity and stops at a limit and a brake holds it, a spring pulls a door and a sled back to rest, a motored sled moves at its velocity, the angle of a turning hinge and the position of a slider read true and change sign with the way, and a point joint reads as zeros with one warning |
 | The same world twice, with 21 bodies, a mesh, a trigger, and a character, for 300 steps | The same state down to the last bit, and the same events in the same order |
 | The same pendulum twice, for 200 steps | The same state down to the last bit |
-| 91 checks of `PhysicsSimulation` with a physics that is a fake | Pass |
+| 99 checks of `PhysicsSimulation` with a physics that is a fake | Pass |
 | 28 checks of `PlayerMovement` with an input that is a fake, and 6 of the format of `Player` | Pass. Walking the way the body faces at the walking and the running speed, turning the body and pitching the camera within the clamp, the camera at the eyes, jumping from the ground once per press and not in the air, and what is no player left alone |
 | The prototype level, with W held for a second without a window | The player stands in the doorway, with the lintel above it where the black behind the walls was, and the first frame is the same byte for byte as before the player could walk |
-| 54 checks of the formats of the components | Pass. Reading, writing, reading what was written, and every message |
+| 62 checks of the formats of the components | Pass. Reading, writing, reading what was written, and every message |
 | 21 checks of `Rotation` | Pass |
 | 19 checks of `FixedClock` | Pass |
 | 25 checks of the world with Flecs, Jolt, and a scene recipe | Pass. Among them a ball that swings a door open on its hinge in a scene, with the hinge still at the frame, and a crate whose `Collider` grows while it rests and is lifted out of the lift |
@@ -907,8 +999,10 @@ It was built and run on macOS. **It was not built on Linux and Windows.**
   Unity. It is a warning today.
 - A scale that changes while a body lives, and the `Transform` of a
   `Collider` below a body that moves. Both are read when the body is created.
-- Joints that are driven: a motor that opens a door, a spring that pulls it
-  shut. And keeping two joined bodies from colliding with each other.
+- A motor that drives a joint to an angle or a position, and a spring whose
+  rest is written. Both are a target of the motor of Jolt.
+- Whether a motor and a spring follow the component while the joint holds,
+  so that a game turns a motor on and off by writing the component.
 - A character that changes its shape, as for crouching. The player has no
   crouch for that reason.
 - What the player still lacks: a binding of `run` on a controller, a view

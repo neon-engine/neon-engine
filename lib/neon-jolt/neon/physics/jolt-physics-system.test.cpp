@@ -1,6 +1,7 @@
 #include "jolt-physics-system.hpp"
 
 #include <cmath>
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
@@ -27,6 +28,7 @@ namespace
   using neon::JointId;
   using neon::JointInfo;
   using neon::JointKind;
+  using neon::JointState;
   using neon::Jolt_PhysicsSystem;
   using neon::No_Body;
   using neon::No_Character;
@@ -210,7 +212,7 @@ namespace
     /// A door of 1.6 by 2 that hangs on a post at the origin, with its
     /// hinge a little off its left edge, so that the door swings clear of
     /// the post. Gravity does not pull it.
-    BodyId CreateDoor(const std::vector<float> &limits = {})
+    BodyId CreateDoor(const std::vector<float> &limits = {}, const std::function<void(JointInfo &)> &change = {})
     {
       const auto frame = CreateBody(wall_entity, BodyKind::Static, Box({0.2f, 2.0f, 0.2f}), {0.0f, 1.0f, 0.0f});
       const auto door = CreateBody(crate_entity, BodyKind::Dynamic, Box({1.6f, 2.0f, 0.1f}), {1.05f, 1.0f, 0.0f},
@@ -228,9 +230,38 @@ namespace
         hinge.limit_min = limits[0];
         hinge.limit_max = limits[1];
       }
-      Join(hinge);
+      if (change) { change(hinge); }
+      _door_joint = Join(hinge);
       return door;
     }
+
+    /// A door that hangs at its frame, with its left edge inside the
+    /// frame, so that the two overlap. The hinge sits in the overlap.
+    BodyId CreateDoorAtItsFrame(const bool collide_with_other)
+    {
+      const auto frame = CreateBody(wall_entity, BodyKind::Static, Box({0.2f, 2.0f, 0.2f}), {0.0f, 1.0f, 0.0f});
+      const auto door = CreateBody(crate_entity, BodyKind::Dynamic, Box({1.6f, 2.0f, 0.1f}), {0.85f, 1.0f, 0.0f},
+                                   [](BodyInfo &info) { info.gravity_scale = 0.0f; });
+
+      _door_joint = Join(JointInfo{
+        .kind = JointKind::Hinge,
+        .body = door,
+        .other = frame,
+        .anchor = {0.05f, 1.0f, 0.0f},
+        .axis = {0.0f, 1.0f, 0.0f},
+        .collide_with_other = collide_with_other
+      });
+      return door;
+    }
+
+    JointState StateOfDoor()
+    {
+      JointState state;
+      EXPECT_TRUE(_physics.GetJointState(_door_joint, state));
+      return state;
+    }
+
+    JointId _door_joint = No_Joint;
 
     /// How far a door turned from where it hung, in degrees.
     float AngleOf(const BodyId door)
@@ -1861,6 +1892,281 @@ namespace
       EXPECT_EQ(first[i].position, second[i].position) << "step " << i;
       EXPECT_EQ(first[i].rotation, second[i].rotation) << "step " << i;
     }
+  }
+
+  TEST_F(JoltPhysicsSystemTest, KeepsADoorAtItsFrameWhenTheTwoAreNotToCollide)
+  {
+    const auto door = CreateDoorAtItsFrame(false);
+    const auto before = StateOf(door);
+    Run(60);
+
+    // nothing pushed the door out of the frame, and the two never touched
+    const auto after = StateOf(door);
+    EXPECT_NEAR(length(after.position - before.position), 0.0f, 0.01f);
+    EXPECT_NEAR(AngleOf(door), 0.0f, 1.0f);
+    EXPECT_EQ(Count(PhysicsEventKind::Began, crate_entity, wall_entity), 0u);
+
+    // it still swings on its hinge
+    _physics.AddImpulseAt(door, {0.0f, 0.0f, 1.0f}, {1.65f, 1.0f, 0.0f});
+    Run(60);
+    EXPECT_GT(AngleOf(door), 30.0f);
+  }
+
+  TEST_F(JoltPhysicsSystemTest, LetsADoorAtItsFrameCollideWithItWhenTold)
+  {
+    (void) CreateDoorAtItsFrame(true);
+    Run(60);
+
+    // the two overlap, so they touch
+    EXPECT_GT(Count(PhysicsEventKind::Began, crate_entity, wall_entity), 0u);
+  }
+
+  TEST_F(JoltPhysicsSystemTest, LetsTwoJoinedBodiesCollideWithEverythingElse)
+  {
+    (void) CreateFloor();
+    const auto door = CreateDoorAtItsFrame(false);
+
+    // a ball rolls into the door, which is kept apart from the frame alone
+    (void) CreateBody(ball_entity, BodyKind::Dynamic, Sphere(0.3f), {1.2f, 0.3f, 3.0f},
+                      [](BodyInfo &info) { info.linear_velocity = {0.0f, 0.0f, -6.0f}; });
+    Run(90);
+
+    EXPECT_GT(Count(PhysicsEventKind::Began, ball_entity, crate_entity), 0u);
+    EXPECT_GT(Count(PhysicsEventKind::Began, ball_entity, floor_entity), 0u);
+    EXPECT_GT(AngleOf(door), 10.0f);
+  }
+
+  TEST_F(JoltPhysicsSystemTest, LetsTheBodiesTouchAgainWhenTheJointIsGone)
+  {
+    (void) CreateDoorAtItsFrame(false);
+    Run(30);
+    EXPECT_EQ(Count(PhysicsEventKind::Began, crate_entity, wall_entity), 0u);
+
+    _physics.DestroyJoint(_door_joint);
+    Run(30);
+
+    // the overlap is a touch now
+    EXPECT_GT(Count(PhysicsEventKind::Began, crate_entity, wall_entity), 0u);
+  }
+
+  // motors and springs
+
+  TEST_F(JoltPhysicsSystemTest, TurnsADoorWithAMotorAtItsVelocity)
+  {
+    const auto door = CreateDoor({}, [](JointInfo &hinge)
+    {
+      hinge.motor_velocity = 1.0f;
+      hinge.motor_strength = 50.0f;
+    });
+    Run(60);
+
+    // a radian per second, so a second turns it 57 degrees
+    EXPECT_NEAR(AngleOf(door), 57.3f, 3.0f);
+    EXPECT_NEAR(StateOf(door).angular_velocity.y, 1.0f, 0.05f);
+    EXPECT_NEAR(StateOfDoor().velocity, 1.0f, 0.05f);
+  }
+
+  TEST_F(JoltPhysicsSystemTest, StopsAMotoredDoorAtItsLimit)
+  {
+    const auto door = CreateDoor({-glm::quarter_pi<float>(), glm::quarter_pi<float>()}, [](JointInfo &hinge)
+    {
+      hinge.motor_velocity = 2.0f;
+      hinge.motor_strength = 50.0f;
+    });
+    Run(120);
+
+    EXPECT_NEAR(AngleOf(door), 45.0f, 2.0f);
+    EXPECT_NEAR(StateOfDoor().velocity, 0.0f, 0.1f);
+  }
+
+  TEST_F(JoltPhysicsSystemTest, HoldsADoorStillWithAMotorOfNoVelocity)
+  {
+    const auto door = CreateDoor({}, [](JointInfo &hinge)
+    {
+      hinge.motor_velocity = 0.0f;
+      hinge.motor_strength = 100.0f;
+    });
+
+    // a push that would swing a free door wide
+    _physics.AddImpulseAt(door, {0.0f, 0.0f, 1.0f}, {1.85f, 1.0f, 0.0f});
+    Run(60);
+
+    EXPECT_LT(AngleOf(door), 10.0f);
+  }
+
+  TEST_F(JoltPhysicsSystemTest, LetsAWeakMotorBeOverpowered)
+  {
+    const auto door = CreateDoor({}, [](JointInfo &hinge)
+    {
+      hinge.motor_velocity = 0.0f;
+      hinge.motor_strength = 0.01f;
+    });
+
+    _physics.AddImpulseAt(door, {0.0f, 0.0f, 1.0f}, {1.85f, 1.0f, 0.0f});
+    Run(60);
+
+    EXPECT_GT(AngleOf(door), 45.0f);
+  }
+
+  TEST_F(JoltPhysicsSystemTest, PullsADoorBackToRestWithASpring)
+  {
+    const auto door = CreateDoor({}, [](JointInfo &hinge)
+    {
+      hinge.spring_stiffness = 20.0f;
+      hinge.spring_damping = 4.0f;
+    });
+
+    _physics.AddImpulseAt(door, {0.0f, 0.0f, 2.0f}, {1.85f, 1.0f, 0.0f});
+    Run(15);
+    const float swung = AngleOf(door);
+    EXPECT_GT(swung, 10.0f);
+
+    Run(240);
+
+    // back where it hung, and at rest
+    EXPECT_LT(AngleOf(door), 2.0f);
+    EXPECT_NEAR(StateOfDoor().position, 0.0f, 0.04f);
+    EXPECT_NEAR(StateOfDoor().velocity, 0.0f, 0.1f);
+  }
+
+  TEST_F(JoltPhysicsSystemTest, DrivesASledWithAMotorAndPullsItBackWithASpring)
+  {
+    const auto sled = CreateBody(crate_entity, BodyKind::Dynamic, Box({1.0f, 1.0f, 1.0f}), {0.0f, 0.0f, 0.0f},
+                                 [](BodyInfo &info) { info.gravity_scale = 0.0f; });
+    const auto motored = Join(JointInfo{
+      .kind = JointKind::Slider,
+      .body = sled,
+      .axis = {1.0f, 0.0f, 0.0f},
+      .motor_velocity = 2.0f,
+      .motor_strength = 100.0f
+    });
+    Run(30);
+
+    JointState state;
+    EXPECT_TRUE(_physics.GetJointState(motored, state));
+    EXPECT_NEAR(state.position, 1.0f, 0.05f);
+    EXPECT_NEAR(state.velocity, 2.0f, 0.05f);
+    EXPECT_NEAR(StateOf(sled).position.x, 1.0f, 0.05f);
+
+    // from where it is now, a spring pulls it back there
+    _physics.DestroyJoint(motored);
+    _physics.SetLinearVelocity(sled, {0.0f, 0.0f, 0.0f});
+    const auto sprung = Join(JointInfo{
+      .kind = JointKind::Slider,
+      .body = sled,
+      .anchor = StateOf(sled).position,
+      .axis = {1.0f, 0.0f, 0.0f},
+      .spring_stiffness = 30.0f,
+      .spring_damping = 5.0f
+    });
+    _physics.AddImpulse(sled, {3.0f, 0.0f, 0.0f});
+    Run(10);
+    EXPECT_TRUE(_physics.GetJointState(sprung, state));
+    EXPECT_GT(state.position, 0.1f);
+
+    Run(240);
+    EXPECT_TRUE(_physics.GetJointState(sprung, state));
+    EXPECT_NEAR(state.position, 0.0f, 0.02f);
+    EXPECT_NEAR(state.velocity, 0.0f, 0.05f);
+  }
+
+  TEST_F(JoltPhysicsSystemTest, RefusesAMotorOrASpringThatCannotBe)
+  {
+    const auto crate = CreateBody(crate_entity, BodyKind::Dynamic, Box({1.0f, 1.0f, 1.0f}), {0.0f, 5.0f, 0.0f});
+    JointId joint = No_Joint;
+
+    EXPECT_FALSE(_physics.CreateJoint(
+      JointInfo{.kind = JointKind::Hinge, .body = crate, .motor_strength = 1.0f, .spring_stiffness = 1.0f},
+      joint, _error));
+    EXPECT_EQ(_error, "the joint has a motor and a spring, where it has one or the other");
+
+    EXPECT_FALSE(_physics.CreateJoint(
+      JointInfo{.kind = JointKind::Slider, .body = crate, .motor_strength = -1.0f}, joint, _error));
+    EXPECT_EQ(_error, "the strength of the motor, the stiffness of the spring, and its damping are 0 or above");
+
+    EXPECT_FALSE(_physics.CreateJoint(
+      JointInfo{.kind = JointKind::Hinge, .body = crate, .spring_damping = NAN}, joint, _error));
+    EXPECT_EQ(_error, "the motor or the spring is no number");
+
+    // a fixed joint has no motor, and what is written for one is left alone
+    EXPECT_TRUE(_physics.CreateJoint(
+      JointInfo{.kind = JointKind::Fixed, .body = crate, .motor_strength = 1.0f, .spring_stiffness = 1.0f},
+      joint, _error)) << _error;
+    EXPECT_EQ(_physics.GetJointCount(), 1u);
+  }
+
+  // the state of a joint
+
+  TEST_F(JoltPhysicsSystemTest, ReadsTheAngleOfATurningHinge)
+  {
+    const auto door = CreateDoor();
+    _physics.AddImpulseAt(door, {0.0f, 0.0f, 1.0f}, {1.85f, 1.0f, 0.0f});
+    Run(30);
+
+    // the same angle the door was turned by, in radians, and the same
+    // speed the door turns at around its axis
+    const auto state = StateOfDoor();
+    EXPECT_NEAR(glm::degrees(std::abs(state.position)), AngleOf(door), 0.5f);
+    EXPECT_NEAR(state.velocity, StateOf(door).angular_velocity.y, 0.01f);
+    EXPECT_GT(std::abs(state.position), 0.2f);
+    EXPECT_GT(std::abs(state.velocity), 0.5f);
+
+    // and the other way is the other sign
+    _physics.AddImpulseAt(door, {0.0f, 0.0f, -3.0f}, {1.85f, 1.0f, 0.0f});
+    Run(1);
+    EXPECT_LT(StateOfDoor().velocity * state.velocity, 0.0f);
+    Run(59);
+    EXPECT_LT(StateOfDoor().position * state.position, 0.0f);
+  }
+
+  TEST_F(JoltPhysicsSystemTest, ReadsThePositionOfASlider)
+  {
+    const auto sled = CreateBody(crate_entity, BodyKind::Dynamic, Box({1.0f, 1.0f, 1.0f}), {0.0f, 0.0f, 0.0f},
+                                 [](BodyInfo &info) { info.gravity_scale = 0.0f; });
+    const auto joint = Join(JointInfo{
+      .kind = JointKind::Slider,
+      .body = sled,
+      .axis = {-1.0f, 0.0f, 0.0f},
+      .has_limits = true,
+      .limit_min = -2.0f,
+      .limit_max = 2.0f
+    });
+
+    _physics.SetLinearVelocity(sled, {-3.0f, 0.0f, 0.0f});
+    Run(20);
+
+    // a third of a second at 3 units per second along the axis, which
+    // points the other way than x, less what the damping took
+    JointState state;
+    EXPECT_TRUE(_physics.GetJointState(joint, state));
+    EXPECT_NEAR(state.position, 1.0f, 0.02f);
+    EXPECT_NEAR(state.velocity, 3.0f, 0.1f);
+    EXPECT_NEAR(state.velocity, -StateOf(sled).linear_velocity.x, 1e-4f);
+    EXPECT_NEAR(StateOf(sled).position.x, -1.0f, 0.02f);
+  }
+
+  TEST_F(JoltPhysicsSystemTest, ReadsZerosForAJointWithoutAStateAndSaysSoOnce)
+  {
+    const auto crate = CreateBody(crate_entity, BodyKind::Dynamic, Box({1.0f, 1.0f, 1.0f}), {0.0f, 5.0f, 0.0f});
+    const auto joint = Join(JointInfo{.kind = JointKind::Point, .body = crate, .anchor = {0.0f, 6.0f, 0.0f}});
+    Run(30);
+
+    JointState state{.position = 1.0f, .velocity = 1.0f};
+    EXPECT_TRUE(_physics.GetJointState(joint, state));
+    EXPECT_EQ(state.position, 0.0f);
+    EXPECT_EQ(state.velocity, 0.0f);
+    EXPECT_TRUE(_logger->Contains(
+      LogLevel::Warn,
+      "The state of joint 1 was asked for, and a point joint has none. Only a hinge has an angle and a slider a "
+      "position, which read as 0 here"));
+
+    EXPECT_TRUE(_physics.GetJointState(joint, state));
+    EXPECT_EQ(_logger->Count(LogLevel::Warn), 1u);
+
+    // and no joint is no state
+    EXPECT_FALSE(_physics.GetJointState(99, state));
+    _physics.DestroyJoint(joint);
+    EXPECT_FALSE(_physics.GetJointState(joint, state));
   }
 
   // shapes that change while a body lives

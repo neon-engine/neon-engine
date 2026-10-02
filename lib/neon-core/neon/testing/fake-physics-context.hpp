@@ -68,6 +68,9 @@ namespace neon::testing
     std::map<CharacterId, Character> characters;
     std::map<JointId, JointInfo> joints;
 
+    /// What a joint reads as. A joint that is not here reads as zeros.
+    std::map<JointId, JointState> joint_states;
+
     /// What was asked, in the order it was asked in.
     std::vector<BodyInfo> created;
     std::vector<BodyId> destroyed;
@@ -146,6 +149,15 @@ namespace neon::testing
     bool HasJoint(const JointId joint) override { return joints.contains(joint); }
 
     std::size_t GetJointCount() override { return joints.size(); }
+
+    bool GetJointState(const JointId joint, JointState &state) override
+    {
+      if (!joints.contains(joint)) { return false; }
+
+      const auto it = joint_states.find(joint);
+      state = it == joint_states.end() ? JointState{} : it->second;
+      return true;
+    }
 
     bool SetShape(const BodyId body, const std::vector<ShapeInfo> &shapes, std::string &error) override
     {

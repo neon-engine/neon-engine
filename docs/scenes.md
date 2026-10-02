@@ -262,7 +262,7 @@ are the components of the physics. What they hold is listed in
 | `Collider` | The shape of the body of its entity, or of the nearest entity above it that has one | `shape`, `offset`, `rotation`, and what belongs to the shape: `size`, `radius`, `height`, `top_radius`, `bottom_radius`, `model`, `fit`. A `mesh` or `convex_hull` without a `model` takes the entity's `Geometry` |
 | `Trigger` | An area that reports what enters and leaves it | `layers`, `mask` |
 | `CharacterBody` | Something that is moved by a velocity, stops at what is in its way, and slides along it | `velocity`, `fall_velocity`, `gravity_scale`, `max_slope`, `step_height`, `mass`, `push_strength`, `layers`, `mask` |
-| `Joint` | Holds the body of its entity to another body, named by its path, or to the world | `type`, `other`, `anchor`, and for a hinge and a slider: `axis`, `limits` |
+| `Joint` | Holds the body of its entity to another body, named by its path, or to the world | `type`, `other`, `anchor`, `collide_with_other`, and for a hinge and a slider: `axis`, `limits`, `motor_velocity`, `motor_strength`, `spring` |
 
 ## Changing the scene
 

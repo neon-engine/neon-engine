@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "joint-info.hpp"
+#include "joint-state.hpp"
 #include "physics-types.hpp"
 #include "shape-cast-hit.hpp"
 
@@ -116,6 +117,12 @@ namespace neon
     [[nodiscard]] virtual bool HasJoint(JointId joint) = 0;
 
     [[nodiscard]] virtual std::size_t GetJointCount() = 0;
+
+    /// Reads where a hinge or a slider is: its angle or its position, and
+    /// how fast that changes. A fixed joint and a point joint have none,
+    /// and read as zeros, which is said in the log once. Returns false
+    /// when the joint is not known.
+    virtual bool GetJointState(JointId joint, JointState &state) = 0;
 
     /// Advances the simulation by `seconds`. The engine calls this once per
     /// step of the world, always with the same length.

@@ -3,10 +3,10 @@
 #   NeonRuntime --scene assets://scenes/joints.scene.yml
 #
 # From left to right: a door on a hinge in a frame, which a ball rolls into
-# and swings open as far as its limits let it. A pendulum that hangs from a
-# hook on a point joint. A sled on a slider along a rail, kicked off to one
-# end and stopped at its limit. Two crates glued together with a fixed joint,
-# which fall off a ledge as one.
+# and swings open as far as its limits let it, and a spring pulls shut again.
+# A pendulum that hangs from a hook on a point joint. A sled on a slider
+# along a rail, kicked off to one end and stopped at its limit. Two crates
+# glued together with a fixed joint, which fall off a ledge as one.
 #
 # A Joint names the entity it is joined to by its path, or nothing for the
 # world itself. Its anchor and axis are on its entity. What the components
@@ -38,8 +38,10 @@ entities:
         shape: box
 
   # a door on a hinge: the frame does not move, and the door turns around
-  # its left edge, up to 100 degrees either way. The hinge sits a little off
-  # the frame, so that the door swings clear of it
+  # its left edge, up to 100 degrees either way. The hinge sits at the
+  # frame, which a hinge keeps the door from colliding with, and a spring
+  # pulls the door shut once the ball has swung it open. The door hangs a
+  # little above the floor, as a door does, so that it swings freely
   - name: house
     children:
       - name: frame
@@ -61,7 +63,7 @@ entities:
   - name: door
     components:
       Transform:
-        position: [-6, 1.1, 0]
+        position: [-6.1, 1.12, 0]
         scale: [1.6, 2.2, 0.1]
       Renderable:
         model: assets://models/cube.obj
@@ -79,6 +81,9 @@ entities:
         anchor: [-0.5, 0, 0]
         axis: [0, 1, 0]
         limits: [-100, 100]
+        spring:
+          stiffness: 20
+          damping: 4
 
   - name: ball
     components:
