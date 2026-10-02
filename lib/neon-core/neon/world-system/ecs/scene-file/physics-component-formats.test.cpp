@@ -861,7 +861,7 @@ namespace
                   "where one above 0 was expected"));
   }
 
-  TEST_F(PhysicsComponentFormatsTest, SaysThatAHullAndAMeshNeedAModel)
+  TEST_F(PhysicsComponentFormatsTest, AHullAndAMeshNeedNoModelSinceAGeometryMayShapeThem)
   {
     for (const std::string shape : {"convex_hull", "mesh"})
     {
@@ -871,8 +871,8 @@ namespace
 
       Read("Collider", map);
 
-      EXPECT_THAT(_errors, ElementsAre(
-                    "test.scene.yml: Collider of entity 'crate' needs a 'model' for the shape " + shape));
+      EXPECT_TRUE(_store.Get<Collider>(_entity)->model.empty());
+      EXPECT_THAT(_errors, IsEmpty()) << shape;
     }
   }
 

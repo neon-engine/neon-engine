@@ -3,6 +3,7 @@
 #include <neon/common/transform.hpp>
 #include <neon/world-system/ecs/components/camera.hpp>
 #include <neon/world-system/ecs/components/light.hpp>
+#include <neon/world-system/ecs/components/geometry.hpp>
 #include <neon/world-system/ecs/components/renderable.hpp>
 #include <neon/world-system/ecs/components/sound-listener.hpp>
 #include <neon/world-system/ecs/components/sound-source.hpp>
@@ -16,6 +17,7 @@ namespace neon
     // next to the component
     Add(ComponentFormat::Of<Transform>());
     Add(ComponentFormat::Of<Renderable>());
+    Add(ComponentFormat::Of<Geometry>());
     Add(ComponentFormat::Of<Camera>());
     Add(ComponentFormat::Of<Light>());
     Add(ComponentFormat::Of<Spectator>());

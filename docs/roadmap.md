@@ -131,7 +131,7 @@ These come first, because everything after them is cheaper with them in place.
 | Components from Lua (#100) | A script declares a component that takes part in scenes, reflection, and systems |
 | Script everything (#101) | As Godot does, in a design that fits an ECS: the unit is a system over components |
 | Games in C++ and Lua with hot reload (#104) | Other languages after 1.0. C++ reloads as a library, which may need a runtime made for the editor |
-| Meshes with collision, generated (#97) | Geometry built at run time and in the editor, with its collider, for level editing |
+| Meshes with collision, generated (#97) | **First step done:** `MeshData`, `MeshBuilder` (box, plane, ramp, prism), flat and smooth normals, textures projected once a metre, the `Geometry` component drawn by its `Renderable` and collided with through a `Collider`, a level blocked out in `blockout.scene.yml`. Open: concave outlines, brushes and booleans, rebuilding while the game runs. See [geometry.md](geometry.md) |
 | Scenes and resources serialized to binary and text (#96) | As Godot does with resources, so that saved games are the same machinery. Not decided; to be discussed |
 | A scene manager (#118) | Changes between whole scenes, with a loading screen and what carries over |
 | Prefabs (#146) | An entity, or a tree of them, described once in a `*.prefab.yml`, placed in scenes with what differs written on top, and made at run time. A prefab is not a scene |

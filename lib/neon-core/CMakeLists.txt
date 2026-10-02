@@ -69,6 +69,19 @@ add_library(${TARGET} STATIC
         neon/runtime/frame-capture.cpp
         neon/runtime/frame-capture.hpp
 
+        # geometry built at run time
+        neon/geometry/mesh-data.hpp
+        neon/geometry/mesh-builder.cpp
+        neon/geometry/mesh-builder.hpp
+        neon/geometry/mesh-normals.cpp
+        neon/geometry/mesh-normals.hpp
+        neon/geometry/mesh-uvs.cpp
+        neon/geometry/mesh-uvs.hpp
+        neon/world-system/ecs/components/geometry.hpp
+        neon/world-system/ecs/components/geometry-shape.hpp
+        neon/world-system/ecs/systems/geometry-building.cpp
+        neon/world-system/ecs/systems/geometry-building.hpp
+
         # project
         neon/project/project.hpp
         neon/project/project-file.cpp
@@ -428,6 +441,9 @@ neon_add_unit_test(${TARGET} neon/command-line/display-options.test.cpp)
   neon_add_unit_test(${TARGET} neon/physics/model-geometry.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/forward-render-pipeline.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/model.test.cpp)
+  neon_add_unit_test(${TARGET} neon/geometry/mesh-builder.test.cpp)
+  neon_add_unit_test(${TARGET} neon/geometry/mesh-normals.test.cpp)
+  neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/geometry-building.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/api-version.test.cpp)
   neon_add_unit_test(${TARGET} neon/runtime/frame-capture.test.cpp)
   neon_add_unit_test(${TARGET} neon/runtime/runtime.test.cpp)

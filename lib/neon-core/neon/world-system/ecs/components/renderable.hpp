@@ -23,8 +23,7 @@ namespace neon
     type.Named("Renderable", "Makes an entity visible");
 
     type.Field("model", [](Renderable &renderable) -> std::string & { return renderable.render_info.model_path; })
-        .Required()
-        .Describe("Virtual path of the model");
+        .Describe("Virtual path of the model. Left out when the entity has a Geometry, which is drawn instead");
 
     type.Field("shader", [](Renderable &renderable) -> std::string & { return renderable.render_info.shader_path; })
         .Required()

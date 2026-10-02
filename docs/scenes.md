@@ -88,7 +88,7 @@ the same.
 
 | Name | Holds | Default |
 |---|---|---|
-| `model` | Virtual path of the model | None. It has to be written |
+| `model` | A virtual path. Left out when the entity has a `Geometry`, which is drawn instead, see [geometry.md](geometry.md) | None |
 | `shader` | Virtual path of the shader, without an extension | None. It has to be written |
 | `textures` | A list of virtual paths | None |
 | `scale_textures` | Whether textures repeat as the entity grows | `false` |
@@ -114,6 +114,13 @@ draws the back as well, for a leaf, a flag, or a pane of glass that is seen
 from both sides. As `doubleSided` in the materials of glTF. An entity whose
 `scale` mirrors it, with one or three of its axes below 0, is still drawn
 from the front.
+
+**Geometry**
+
+A shape the engine builds in place of a model, in metres: a box, a plane, a
+ramp, or a prism from an outline, textured once a metre. The entity's
+`Renderable` draws it, and a `Collider` without a `model` takes the same
+shape. The fields are in [geometry.md](geometry.md).
 
 **Camera**
 
@@ -187,7 +194,7 @@ are the components of the physics. What they hold is listed in
 | Component | Short | Names |
 |---|---|---|
 | `RigidBody` | A body that does not move, is moved by code, or is moved by the simulation | `kind`, `mass`, `friction`, `bounce`, `linear_damping`, `angular_damping`, `gravity_scale`, `linear_velocity`, `angular_velocity`, `continuous`, `can_sleep`, `layers`, `mask` |
-| `Collider` | The shape of the body of its entity, or of the nearest entity above it that has one | `shape`, `offset`, `rotation`, and what belongs to the shape: `size`, `radius`, `height`, `top_radius`, `bottom_radius`, `model` |
+| `Collider` | The shape of the body of its entity, or of the nearest entity above it that has one | `shape`, `offset`, `rotation`, and what belongs to the shape: `size`, `radius`, `height`, `top_radius`, `bottom_radius`, `model`. A `mesh` or `convex_hull` without a `model` takes the entity's `Geometry` |
 | `Trigger` | An area that reports what enters and leaves it | `layers`, `mask` |
 | `CharacterBody` | Something that is moved by a velocity, stops at what is in its way, and slides along it | `velocity`, `fall_velocity`, `gravity_scale`, `max_slope`, `step_height`, `mass`, `push_strength`, `layers`, `mask` |
 | `Joint` | Holds the body of its entity to another body, named by its path, or to the world | `type`, `other`, `anchor`, and for a hinge and a slider: `axis`, `limits` |

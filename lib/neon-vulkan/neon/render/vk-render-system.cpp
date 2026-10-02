@@ -29,11 +29,11 @@ namespace neon
       0.0f, 1.0f, 0.0f, 0.0f,
       0.0f, 0.0f, 0.5f, 0.0f,
       0.0f, 0.0f, 0.5f, 1.0f);
+  }
 
-    VkDeviceSize align_up(const VkDeviceSize size, const VkDeviceSize alignment)
-    {
-      return alignment == 0 ? size : (size + alignment - 1) / alignment * alignment;
-    }
+  VkDeviceSize VK_RenderSystem::AlignUp(const VkDeviceSize size, const VkDeviceSize alignment)
+  {
+    return alignment == 0 ? size : (size + alignment - 1) / alignment * alignment;
   }
 
   void VK_RenderSystem::Initialize()
@@ -301,7 +301,7 @@ namespace neon
   {
     // entries are picked by an offset, which has to respect the alignment
     // the graphics card asks for
-    buffer.entry_size = align_up(entry_size, _device.Properties().limits.minUniformBufferOffsetAlignment);
+    buffer.entry_size = AlignUp(entry_size, _device.Properties().limits.minUniformBufferOffsetAlignment);
     buffer.capacity = capacity;
     buffer.used = 0;
 
@@ -697,10 +697,20 @@ namespace neon
 
   int VK_RenderSystem::CreateRenderObject(const RenderInfo &render_info)
   {
-    VK_Model model(render_info.model_path, _file_system_context, &_device, _logger);
+    if (render_info.mesh == nullptr && render_info.model_path.empty())
+    {
+      _logger->Error("A render object has neither a model nor a mesh that was built, so nothing is drawn");
+      return -1;
+    }
+
+    // a mesh that was built is drawn as it is; a file is read and normalised
+    VK_Model model = render_info.mesh != nullptr
+      ? VK_Model(render_info.mesh, &_device, _logger)
+      : VK_Model(render_info.model_path, _file_system_context, &_device, _logger);
     if (!model.Initialize())
     {
-      _logger->Error("Could not initialize model {}", render_info.model_path);
+      const std::string what = render_info.mesh != nullptr ? "the mesh that was built" : render_info.model_path;
+      _logger->Error("Could not initialize model {}", what);
       return -1;
     }
 
@@ -771,7 +781,7 @@ namespace neon
     _logger->Debug(
       "Created render object {} from {} with model id {} and material id {}",
       render_id,
-      render_info.model_path,
+      render_info.mesh != nullptr ? "a mesh that was built" : render_info.model_path,
       model_id,
       material_id);
 

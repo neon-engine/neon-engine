@@ -6,9 +6,11 @@
 
 #include <neon/world-system/ecs/components/character-body.hpp>
 #include <neon/world-system/ecs/components/collider.hpp>
+#include <neon/world-system/ecs/components/geometry.hpp>
 #include <neon/world-system/ecs/components/joint.hpp>
 #include <neon/world-system/ecs/components/rigid-body.hpp>
 #include <neon/world-system/ecs/components/trigger.hpp>
+#include <neon/world-system/ecs/systems/geometry-building.hpp>
 
 namespace neon
 {
@@ -317,17 +319,43 @@ namespace neon
 
       if (collider->shape == ShapeKind::ConvexHull || collider->shape == ShapeKind::Mesh)
       {
-        const auto *geometry = collider->model.empty() ? nullptr : GeometryOf(collider->model);
-        if (geometry == nullptr)
+        // a collider without a model takes the shape the entity builds, so
+        // that what is drawn is what collides
+        if (collider->model.empty())
         {
-          error = std::format(
-            "the model '{}' of the {} of entity '{}' cannot be read",
-            collider->model, Describe(collider->shape), PathOf(store, entity));
-          return false;
-        }
+          const auto *built = store.Get<Geometry>(entity);
+          if (built == nullptr)
+          {
+            error = std::format(
+              "the {} of entity '{}' names no model and the entity has no Geometry to take its shape from",
+              Describe(collider->shape), PathOf(store, entity));
+            return false;
+          }
 
-        shape.points = geometry->points;
-        if (collider->shape == ShapeKind::Mesh) { shape.triangles = geometry->triangles; }
+          const MeshData mesh = GeometryBuilding::Build(*built);
+          if (mesh.IsEmpty())
+          {
+            error = std::format(
+              "the Geometry of entity '{}' builds nothing for its {}", PathOf(store, entity), Describe(collider->shape));
+            return false;
+          }
+
+          for (const auto &vertex : mesh.vertices) { shape.points.push_back(vertex.position); }
+          if (collider->shape == ShapeKind::Mesh) { shape.triangles.assign(mesh.indices.begin(), mesh.indices.end()); }
+        } else
+        {
+          const auto *geometry = GeometryOf(collider->model);
+          if (geometry == nullptr)
+          {
+            error = std::format(
+              "the model '{}' of the {} of entity '{}' cannot be read",
+              collider->model, Describe(collider->shape), PathOf(store, entity));
+            return false;
+          }
+
+          shape.points = geometry->points;
+          if (collider->shape == ShapeKind::Mesh) { shape.triangles = geometry->triangles; }
+        }
       }
 
       shapes.push_back(std::move(shape));

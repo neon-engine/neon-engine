@@ -1,0 +1,109 @@
+# A level blocked out from shapes the engine builds, with no model file:
+#
+#   NeonRuntime --scene assets://scenes/blockout.scene.yml
+#
+# Every piece is a Geometry in metres, drawn by its Renderable with the pbr
+# shader and a texture that repeats once a metre, and collided with through a
+# Collider of kind mesh that takes the same shape. It is what a tool that
+# blocks out levels writes, and what an importer of a map format would fill.
+
+scene: blockout
+version: 1
+
+entities:
+  - name: light
+    components:
+      Transform: {}
+      Light:
+        type: direction
+        direction: [-0.4, -1, -0.3]
+        ambient: [0.25, 0.25, 0.28]
+        diffuse: [0.9, 0.9, 0.85]
+
+  # a room 8 metres square and 3 high, seen from within: a prism with its
+  # faces pointing inward, floor and ceiling included
+  - name: room
+    components:
+      Transform:
+        position: [0, 0, 0]
+      Geometry:
+        shape: prism
+        size: [0, 3, 0]
+        outline: [-4, -4, 4, -4, 4, 4, -4, 4]
+        inside: true
+      Renderable:
+        shader: assets://shaders/pbr
+        textures: [assets://textures/brick.png]
+        material:
+          roughness: 0.8
+      RigidBody:
+        kind: static
+      Collider:
+        shape: mesh
+
+  # a raised platform: a plane, which has a top and no thickness
+  - name: platform
+    components:
+      Transform:
+        position: [2, 0.4, 2]
+      Geometry:
+        shape: plane
+        size: [3, 0, 3]
+        segments: 3
+      Renderable:
+        shader: assets://shaders/pbr
+        textures: [assets://textures/concrete.png]
+        material:
+          roughness: 0.9
+      RigidBody:
+        kind: static
+      Collider:
+        shape: mesh
+
+  - name: crate
+    components:
+      Transform:
+        position: [1.5, 0.5, -1.5]
+      Geometry:
+        shape: box
+        size: [1, 1, 1]
+        texels_per_metre: 1
+      Renderable:
+        shader: assets://shaders/pbr
+        textures: [assets://textures/wood.png]
+        material:
+          roughness: 0.6
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [1, 1, 1]
+
+  - name: ramp
+    components:
+      Transform:
+        position: [-1.5, 0, 1]
+      Geometry:
+        shape: ramp
+        size: [2, 1, 4]
+      Renderable:
+        shader: assets://shaders/pbr
+        textures: [assets://textures/concrete.png]
+        material:
+          color: [0.8, 0.8, 0.9]
+          roughness: 0.9
+      RigidBody:
+        kind: static
+      Collider:
+        shape: convex_hull
+
+  - name: player
+    components:
+      Transform:
+        position: [0, 1.6, 3]
+      Spectator: Default
+    children:
+      - name: camera
+        components:
+          Transform: Default
+          Camera: Default

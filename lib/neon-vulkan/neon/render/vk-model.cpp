@@ -11,8 +11,32 @@ namespace neon
     _device = device;
   }
 
+  VK_Model::VK_Model(std::shared_ptr<const MeshData> mesh, VK_Device *device, const std::shared_ptr<Logger> &logger)
+    : Model("", nullptr, logger)
+  {
+    _device = device;
+    _mesh_data = std::move(mesh);
+  }
+
   bool VK_Model::Initialize()
   {
+    if (_mesh_data != nullptr)
+    {
+      if (_mesh_data->IsEmpty())
+      {
+        _logger->Error("The mesh that was built holds no triangle");
+        return false;
+      }
+
+      VK_Mesh vulkan_mesh(_mesh_data->vertices, _mesh_data->indices, {}, _device, _logger);
+      if (!vulkan_mesh.Initialize()) { return false; }
+      _meshes.push_back(vulkan_mesh);
+
+      // the numbers of a built mesh are meant as they are
+      _model_matrix = glm::mat4(1.0f);
+      return true;
+    }
+
     if (!LoadModel())
     {
       // the load may have stopped half way, with some meshes already uploaded

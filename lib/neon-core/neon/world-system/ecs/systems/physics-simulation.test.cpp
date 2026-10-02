@@ -14,6 +14,7 @@
 #include <neon/testing/recording-logger.hpp>
 #include <neon/world-system/ecs/components/character-body.hpp>
 #include <neon/world-system/ecs/components/collider.hpp>
+#include <neon/world-system/ecs/components/geometry.hpp>
 #include <neon/world-system/ecs/components/joint.hpp>
 #include <neon/world-system/ecs/components/rigid-body.hpp>
 #include <neon/world-system/ecs/components/trigger.hpp>
@@ -23,6 +24,7 @@ namespace
   using neon::BodyKind;
   using neon::CharacterBody;
   using neon::Collider;
+  using neon::Geometry;
   using neon::Entity;
   using neon::Joint;
   using neon::JointKind;
@@ -90,6 +92,7 @@ namespace
 
       _store.Initialize();
       _store.Register<Transform>("Transform");
+      _store.Register<Geometry>("Geometry");
       _system.Register(_store);
       _system.Initialize(_store);
     }
@@ -418,6 +421,49 @@ namespace
     EXPECT_EQ(shape.kind, ShapeKind::Mesh);
     EXPECT_FALSE(shape.points.empty());
     EXPECT_EQ(shape.triangles.size(), 8u * 3u);
+  }
+
+  TEST_F(PhysicsSimulationTest, MakesAMeshFromTheGeometryOfTheEntityWhenTheColliderNamesNoModel)
+  {
+    const Entity room = Create("room", At(0.0f, 0.0f, 0.0f), RigidBody{.kind = BodyKind::Static},
+                               Collider{.shape = ShapeKind::Mesh});
+    _store.Set(room, Geometry{.shape = neon::GeometryShape::Box, .size = {2.0f, 2.0f, 2.0f}});
+
+    Step();
+
+    ASSERT_EQ(_physics.created.size(), 1u);
+    const auto &shape = _physics.created[0].shapes[0];
+    EXPECT_EQ(shape.kind, ShapeKind::Mesh);
+    EXPECT_EQ(shape.points.size(), 24u);
+    EXPECT_EQ(shape.triangles.size(), 12u * 3u);
+  }
+
+  TEST_F(PhysicsSimulationTest, MakesAHullFromTheGeometryOfTheEntity)
+  {
+    const Entity ramp = Create("ramp", At(0.0f, 0.0f, 0.0f), RigidBody{.kind = BodyKind::Static},
+                               Collider{.shape = ShapeKind::ConvexHull});
+    _store.Set(ramp, Geometry{.shape = neon::GeometryShape::Ramp, .size = {2.0f, 1.0f, 4.0f}});
+
+    Step();
+
+    ASSERT_EQ(_physics.created.size(), 1u);
+    const auto &shape = _physics.created[0].shapes[0];
+    EXPECT_EQ(shape.kind, ShapeKind::ConvexHull);
+    EXPECT_FALSE(shape.points.empty());
+    EXPECT_TRUE(shape.triangles.empty());
+  }
+
+  TEST_F(PhysicsSimulationTest, SaysWhenAColliderHasNeitherAModelNorAGeometry)
+  {
+    const Entity rock = Create("rock", At(0.0f, 5.0f, 0.0f), RigidBody{}, Collider{.shape = ShapeKind::Mesh});
+
+    Step(2);
+
+    EXPECT_TRUE(BodyOf(rock).failed);
+    EXPECT_TRUE(_logger->Contains(
+      LogLevel::Error,
+      "the mesh of entity 'rock' names no model and the entity has no Geometry to take its shape from"))
+      << _logger->Messages(LogLevel::Error);
   }
 
   TEST_F(PhysicsSimulationTest, SaysThatAModelCannotBeReadAndDoesNotTryAgain)

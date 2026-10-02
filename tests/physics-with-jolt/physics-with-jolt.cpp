@@ -63,6 +63,7 @@ namespace
   using neon::testing::RecordingLogger;
   using ::testing::_;
   using ::testing::HasSubstr;
+  using ::testing::Not;
   using ::testing::NiceMock;
   using ::testing::Return;
 
@@ -1135,9 +1136,11 @@ entities:
     EXPECT_THAT(said, HasSubstr(
                   file + ":17: 'mask' of Trigger of entity 'gate' holds 40, where a layer from 1 to 32 was "
                   "expected"));
-    EXPECT_THAT(said, HasSubstr("Collider of entity 'gate' needs a 'model' for the shape convex_hull"));
-    // the seven problems, the line that counts them, and the world saying it goes on
-    EXPECT_EQ(world.logger->Count(LogLevel::Error), 9u) << said;
+    // a hull without a model is no mistake of the recipe since a Geometry
+    // may shape it; the physics says so when the body is made, not here
+    EXPECT_THAT(said, Not(HasSubstr("needs a 'model'")));
+    // the six problems, the line that counts them, and the world saying it goes on
+    EXPECT_EQ(world.logger->Count(LogLevel::Error), 8u) << said;
   }
 
   // a scene that is written

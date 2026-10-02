@@ -644,6 +644,7 @@ A character is found as a body is.
 | `PhysicsSimulation` | neon-core | The system that brings entities and the physics together |
 | `FixedClock` | neon-core | Turns the time of frames into steps. It belongs to `EntityWorld` |
 | `LoadModelGeometry` | neon-core | Reads the points and triangles of a model through the file system |
+| `GeometryBuilding::Build` | neon-core | The points and triangles of an entity's `Geometry`, for a `Collider` of kind `mesh` or `convex_hull` that names no model, so that what is drawn is what collides. See [geometry.md](geometry.md) |
 | `FakePhysicsContext` | neon-core, `neon/testing` | A physics in which nothing collides, for tests |
 
 Nothing outside neon-jolt includes a header of Jolt. The library is linked

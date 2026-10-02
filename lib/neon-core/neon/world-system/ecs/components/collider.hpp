@@ -89,10 +89,9 @@ namespace neon
         .OnlyWhen("shape", {"tapered_capsule", "tapered_cylinder"});
 
     type.Field("model", &Collider::model)
-        .Required()
         .AlwaysWritten()
         .OnlyWhen("shape", {"convex_hull", "mesh"})
-        .Describe("Virtual path of the model the shape is made from");
+        .Describe("Virtual path of the model the shape is made from. Left out, the shape is the entity's Geometry");
 
     type.Field("offset", &Collider::offset)
         .Describe("Where the shape sits on the entity");

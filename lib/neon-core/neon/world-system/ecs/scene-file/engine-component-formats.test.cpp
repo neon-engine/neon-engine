@@ -8,6 +8,7 @@
 #include <neon/common/transform.hpp>
 #include <neon/testing/fake-entity-store.hpp>
 #include <neon/world-system/ecs/components/camera.hpp>
+#include <neon/world-system/ecs/components/geometry.hpp>
 #include <neon/world-system/ecs/components/light.hpp>
 #include <neon/world-system/ecs/components/renderable.hpp>
 #include <neon/world-system/ecs/components/sound-listener.hpp>
@@ -20,6 +21,7 @@ namespace
 {
   using neon::AlphaMode;
   using neon::Camera;
+  using neon::Geometry;
   using neon::ComponentFormats;
   using neon::DataReader;
   using neon::DataValue;
@@ -93,6 +95,7 @@ namespace
       _store.Initialize();
       _store.Register<Transform>("Transform");
       _store.Register<Renderable>("Renderable");
+      _store.Register<Geometry>("Geometry");
       _store.Register<Camera>("Camera");
       _store.Register<Light>("Light");
       _store.Register<Spectator>("Spectator");
@@ -346,23 +349,82 @@ namespace
     EXPECT_THAT(_errors, IsEmpty());
   }
 
-  TEST_F(EngineComponentFormatsTest, ARenderableWithoutAModelIsReported)
+  TEST_F(EngineComponentFormatsTest, ARenderableWithoutAModelIsAcceptedSinceAGeometryMayDrawIt)
   {
     auto map = DataValue::Map();
     map.Set("shader", DataValue::Text("assets://shaders/basic-lit"));
 
     Read("Renderable", map);
 
-    EXPECT_THAT(_errors, ElementsAre("scene.yml: Renderable of entity 'thing' needs a 'model'"));
+    EXPECT_TRUE(_store.Get<Renderable>(_entity)->render_info.model_path.empty());
+    EXPECT_THAT(_errors, IsEmpty());
   }
 
-  TEST_F(EngineComponentFormatsTest, ARenderableWithoutAModelAndAShaderIsReportedForEach)
+  TEST_F(EngineComponentFormatsTest, ARenderableWithoutAShaderIsReported)
   {
     Read("Renderable", DataValue::Map());
 
+    EXPECT_THAT(_errors, ElementsAre("scene.yml: Renderable of entity 'thing' needs a 'shader'"));
+  }
+
+  // Geometry
+
+  TEST_F(EngineComponentFormatsTest, ReadsAGeometry)
+  {
+    auto map = DataValue::Map();
+    map.Set("shape", DataValue::Text("prism"));
+    map.Set("size", Numbers({0.0f, 3.0f, 0.0f}));
+    map.Set("outline", Numbers({-4.0f, -4.0f, 4.0f, -4.0f, 4.0f, 4.0f, -4.0f, 4.0f}));
+    map.Set("texels_per_metre", DataValue::Number(0.5f));
+    map.Set("inside", DataValue::Bool(true));
+
+    Read("Geometry", map);
+
+    const auto *geometry = _store.Get<Geometry>(_entity);
+    ASSERT_NE(geometry, nullptr);
+    EXPECT_EQ(geometry->shape, neon::GeometryShape::Prism);
+    EXPECT_EQ(geometry->size, glm::vec3(0.0f, 3.0f, 0.0f));
+    EXPECT_EQ(geometry->outline.size(), 8u);
+    EXPECT_EQ(geometry->texels_per_metre, 0.5f);
+    EXPECT_TRUE(geometry->inside);
+    EXPECT_THAT(_errors, IsEmpty());
+  }
+
+  TEST_F(EngineComponentFormatsTest, AGeometryIsABoxOfAMetreUnlessItSaysOtherwise)
+  {
+    Read("Geometry", DataValue::Map());
+
+    const auto *geometry = _store.Get<Geometry>(_entity);
+    ASSERT_NE(geometry, nullptr);
+    EXPECT_EQ(geometry->shape, neon::GeometryShape::Box);
+    EXPECT_EQ(geometry->size, glm::vec3(1.0f));
+    EXPECT_EQ(geometry->texels_per_metre, 1.0f);
+    EXPECT_FALSE(geometry->inside);
+    EXPECT_THAT(_errors, IsEmpty());
+  }
+
+  TEST_F(EngineComponentFormatsTest, APrismWithTooFewPointsIsReported)
+  {
+    auto map = DataValue::Map();
+    map.Set("shape", DataValue::Text("prism"));
+    map.Set("outline", Numbers({0.0f, 0.0f, 1.0f, 0.0f}));
+
+    Read("Geometry", map);
+
     EXPECT_THAT(_errors, ElementsAre(
-                  "scene.yml: Renderable of entity 'thing' needs a 'model'",
-                  "scene.yml: Renderable of entity 'thing' needs a 'shader'"));
+                  "scene.yml: 'outline' of Geometry of entity 'thing' needs at least three points, as pairs of x and z"));
+  }
+
+  TEST_F(EngineComponentFormatsTest, SegmentsBelongToAPlaneAlone)
+  {
+    auto map = DataValue::Map();
+    map.Set("shape", DataValue::Text("box"));
+    map.Set("segments", DataValue::Number(3));
+
+    Read("Geometry", map);
+
+    EXPECT_EQ(_errors.size(), 1u) << ::testing::PrintToString(_errors);
+    EXPECT_THAT(_errors.front(), ::testing::HasSubstr("'segments'"));
   }
 
   TEST_F(EngineComponentFormatsTest, ANameAMaterialDoesNotKnowIsReported)
