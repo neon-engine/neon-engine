@@ -6,6 +6,7 @@
 #include <neon/common/transform.hpp>
 #include <neon/testing/fake-entity-store.hpp>
 #include <neon/testing/mock-audio-context.hpp>
+#include <neon/testing/recording-logger.hpp>
 #include <neon/world-system/ecs/components/sound-listener.hpp>
 #include <neon/world-system/ecs/components/sound-source.hpp>
 
@@ -13,6 +14,8 @@ namespace
 {
   using neon::AudioPlayback;
   using neon::Entity;
+  using neon::testing::LogLevel;
+  using neon::testing::RecordingLogger;
   using neon::ListenerInfo;
   using neon::SoundInfo;
   using neon::SoundListener;
@@ -43,7 +46,8 @@ namespace
     // the store goes before the audio, as it releases sounds when it does
     NiceMock<MockAudioContext> _audio;
     FakeEntityStore _store;
-    AudioPlayback _system{&_audio};
+    std::shared_ptr<RecordingLogger> _logger = std::make_shared<RecordingLogger>();
+    AudioPlayback _system{&_audio, _logger};
 
     void SetUp() override
     {
@@ -60,6 +64,14 @@ namespace
     {
       const Entity entity = _store.CreateEntity("");
       _store.Set(entity, transform);
+      _store.Set(entity, source);
+      return entity;
+    }
+
+    /// A source on an entity that has no Transform.
+    Entity CreatePlacelessSource(const SoundSource &source, const std::string &name = "")
+    {
+      const Entity entity = _store.CreateEntity(name);
       _store.Set(entity, source);
       return entity;
     }
@@ -81,7 +93,7 @@ namespace
 
   TEST_F(AudioPlaybackTest, RegistersTheComponentsOfSound)
   {
-    EXPECT_NO_THROW((void) (_store.Query<Transform, SoundSource>()));
+    EXPECT_NO_THROW((void) (_store.Query<SoundSource>()));
     EXPECT_NO_THROW((void) (_store.Query<Transform, SoundListener>()));
   }
 
@@ -237,6 +249,52 @@ namespace
     CreateSource(Source(), PlacedAt({1.0f, 2.0f, 3.0f}));
 
     EXPECT_CALL(_audio, SetPosition(_, _, _)).Times(0);
+
+    _system.Update(_store, 0.016);
+  }
+
+  TEST_F(AudioPlaybackTest, PlaysASourceWithoutAPlaceWhenItsSoundHasNone)
+  {
+    CreatePlacelessSource(Source());
+
+    EXPECT_CALL(_audio, CreateSound(_)).WillOnce(Return(sound_id));
+    EXPECT_CALL(_audio, Play(sound_id)).Times(1);
+    EXPECT_CALL(_audio, SetPosition(_, _, _)).Times(0);
+
+    _system.Update(_store, 0.016);
+
+    EXPECT_EQ(_logger->Count(LogLevel::Warn), 0u);
+  }
+
+  TEST_F(AudioPlaybackTest, DoesNotHearASpatialSourceWithoutAPlaceAndSaysSoOnce)
+  {
+    auto source = Source();
+    source.sound.spatial = true;
+    CreatePlacelessSource(source, "reactor");
+
+    EXPECT_CALL(_audio, CreateSound(_)).Times(0);
+    EXPECT_CALL(_audio, Play(_)).Times(0);
+
+    _system.Update(_store, 0.016);
+    _system.Update(_store, 0.016);
+
+    EXPECT_EQ(_logger->Count(LogLevel::Warn), 1u);
+    EXPECT_TRUE(_logger->Contains(LogLevel::Warn, "The SoundSource of entity 'reactor' is spatial"))
+      << _logger->Messages(LogLevel::Warn);
+  }
+
+  TEST_F(AudioPlaybackTest, HearsASpatialSourceOnceItHasAPlace)
+  {
+    auto source = Source();
+    source.sound.spatial = true;
+    const Entity entity = CreatePlacelessSource(source, "reactor");
+    _system.Update(_store, 0.016);
+
+    _store.Set(entity, PlacedAt({1.0f, 2.0f, 3.0f}));
+
+    EXPECT_CALL(_audio, CreateSound(_)).WillOnce(Return(sound_id));
+    EXPECT_CALL(_audio, SetPosition(sound_id, glm::vec3(1.0f, 2.0f, 3.0f), glm::vec3(0.0f)));
+    EXPECT_CALL(_audio, Play(sound_id)).Times(1);
 
     _system.Update(_store, 0.016);
   }

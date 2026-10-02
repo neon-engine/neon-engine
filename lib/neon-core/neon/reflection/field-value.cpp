@@ -18,6 +18,7 @@ namespace neon
       case FieldKind::Length: return "a length";
       case FieldKind::NumberList: return "a list of numbers";
       case FieldKind::Layers: return "a list of layers";
+      case FieldKind::Precise: return "a number";
     }
     return "unknown";
   }
@@ -38,6 +39,7 @@ namespace neon
       case FieldKind::Length: return std::holds_alternative<FieldLength>(value);
       case FieldKind::NumberList: return std::holds_alternative<std::vector<float>>(value);
       case FieldKind::Layers: return std::holds_alternative<std::vector<float>>(value);
+      case FieldKind::Precise: return std::holds_alternative<double>(value);
     }
     return false;
   }
@@ -60,6 +62,7 @@ namespace neon
     if (const auto *flag = std::get_if<bool>(&left)) { return *flag == std::get<bool>(right); }
     if (const auto *whole = std::get_if<int>(&left)) { return *whole == std::get<int>(right); }
     if (const auto *number = std::get_if<float>(&left)) { return *number == std::get<float>(right); }
+    if (const auto *precise = std::get_if<double>(&left)) { return *precise == std::get<double>(right); }
     if (const auto *text = std::get_if<std::string>(&left)) { return *text == std::get<std::string>(right); }
 
     if (const auto *texts = std::get_if<std::vector<std::string>>(&left))

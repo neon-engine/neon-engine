@@ -14,6 +14,7 @@ neon_add_application_test(runtime-colours NeonRuntime run.cmake
         CASES
         half-red-over-black-is-half-the-light
         see-through-planes-blend-in-linear-light
+        an-opaque-plane-ignores-the-alpha-of-its-colour
         a-texture-is-shown-as-it-is
         a-surface-blends-as-css
         the-screen-blends-as-css

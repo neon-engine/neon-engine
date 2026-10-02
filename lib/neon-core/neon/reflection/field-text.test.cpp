@@ -194,6 +194,7 @@ namespace
     EXPECT_EQ(neon::FormatField(FieldValue{-7}), "-7");
     EXPECT_EQ(neon::FormatField(FieldValue{0.5f}), "0.5");
     EXPECT_EQ(neon::FormatField(FieldValue{75.0f}), "75");
+    EXPECT_EQ(neon::FormatField(FieldValue{1234.56789012345}), "1234.56789012345");
     EXPECT_EQ(neon::FormatField(FieldValue{std::string("Hello, world")}), "Hello, world");
     EXPECT_EQ(neon::FormatField(FieldValue{glm::vec3{1.0f, 2.5f, -3.0f}}), "1 2.5 -3");
     EXPECT_EQ(neon::FormatField(FieldValue{Color{1.0f, 0.5f, 0.0f, 1.0f}}), "#ff8000");
@@ -215,6 +216,10 @@ namespace
     EXPECT_FLOAT_EQ(std::get<float>(Read("0.5", FieldKind::Number)), 0.5f);
     EXPECT_FLOAT_EQ(std::get<float>(Read(" -12.25 ", FieldKind::Number)), -12.25f);
     EXPECT_FLOAT_EQ(std::get<float>(Read(".5", FieldKind::Number)), 0.5f);
+
+    // a precise number keeps the digits a float would lose
+    EXPECT_EQ(std::get<double>(Read("1234.56789012345", FieldKind::Precise)), 1234.56789012345);
+    EXPECT_EQ(std::get<double>(Read(" -0.25 ", FieldKind::Precise)), -0.25);
 
     // a text is what it is, spaces included
     EXPECT_EQ(std::get<std::string>(Read("  Hello, world ", FieldKind::Text)), "  Hello, world ");
@@ -258,6 +263,7 @@ namespace
       {FieldKind::Bool, FieldValue{true}},
       {FieldKind::Whole, FieldValue{-12}},
       {FieldKind::Number, FieldValue{0.125f}},
+      {FieldKind::Precise, FieldValue{1234.56789012345}},
       {FieldKind::Text, FieldValue{std::string("some text")}},
       {FieldKind::Vector, FieldValue{glm::vec3{1.0f, -2.0f, 0.5f}}},
       {FieldKind::TextList, FieldValue{std::vector<std::string>{"one", "two"}}},
@@ -280,6 +286,7 @@ namespace
     EXPECT_EQ(ProblemOf("fast", FieldKind::Number), "'field' of Thing is 'fast', where a number was expected");
     EXPECT_EQ(ProblemOf("1,5", FieldKind::Number), "'field' of Thing is '1,5', where a number was expected");
     EXPECT_EQ(ProblemOf("", FieldKind::Number), "'field' of Thing is '', where a number was expected");
+    EXPECT_EQ(ProblemOf("slow", FieldKind::Precise), "'field' of Thing is 'slow', where a number was expected");
     EXPECT_EQ(
       ProblemOf("1 2", FieldKind::Vector),
       "'field' of Thing is '1 2', where three numbers, such as 1 2 3 was expected");

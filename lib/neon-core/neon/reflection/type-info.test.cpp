@@ -49,6 +49,9 @@ namespace
     // kept as radians, seen as degrees
     float turn = 0.0f;
 
+    // precise, as seconds that add up are
+    double age = 0.0;
+
     // not described
     int handle = -1;
   };
@@ -79,6 +82,8 @@ namespace
       "turn",
       [](const Monster &monster) { return glm::degrees(monster.turn); },
       [](Monster &monster, const float &degrees) { monster.turn = glm::radians(degrees); });
+
+    type.Field("age", &Monster::age).AtLeast(0);
   }
 
   struct Ramp
@@ -227,7 +232,8 @@ namespace
     for (const auto &field : _type.fields) { names.push_back(field.name); }
 
     EXPECT_THAT(names, ElementsAre(
-                  "alive", "legs", "speed", "name", "home", "skin", "sounds", "mood", "armor", "stripes", "turn"));
+                  "alive", "legs", "speed", "name", "home", "skin", "sounds", "mood", "armor", "stripes", "turn",
+                  "age"));
   }
 
   TEST_F(TypeInfoTest, DeducesWhatAFieldHoldsFromTheMember)
@@ -243,6 +249,7 @@ namespace
     EXPECT_EQ(_type.Find("armor")->kind, FieldKind::Group);
     EXPECT_EQ(_type.Find("stripes")->kind, FieldKind::NumberList);
     EXPECT_EQ(_type.Find("turn")->kind, FieldKind::Number);
+    EXPECT_EQ(_type.Find("age")->kind, FieldKind::Precise);
   }
 
   TEST_F(TypeInfoTest, WhatFollowsAFieldIsAboutThatField)
@@ -290,7 +297,7 @@ namespace
   {
     EXPECT_THAT(_type.GetPaths(), ElementsAre(
                   "alive", "legs", "speed", "name", "home", "skin", "sounds", "mood",
-                  "armor.thickness", "armor.tint", "stripes", "turn"));
+                  "armor.thickness", "armor.tint", "stripes", "turn", "age"));
   }
 
   // reading
@@ -307,6 +314,7 @@ namespace
     _monster.mood = Mood::Angry;
     _monster.armor.thickness = 2.0f;
     _monster.stripes = {0.5f, 0.25f};
+    _monster.age = 1234.56789012345;
 
     EXPECT_FALSE(Get<bool>("alive"));
     EXPECT_EQ(Get<int>("legs"), 6);
@@ -318,6 +326,7 @@ namespace
     EXPECT_EQ(Get<std::string>("mood"), "angry");
     EXPECT_EQ(Get<float>("armor.thickness"), 2.0f);
     EXPECT_THAT(Get<std::vector<float>>("stripes"), ElementsAre(0.5f, 0.25f));
+    EXPECT_EQ(Get<double>("age"), 1234.56789012345);
   }
 
   TEST_F(TypeInfoTest, ReadsAFieldThatIsKeptAsSomethingElse)
@@ -349,6 +358,7 @@ namespace
     Set("armor.tint", Color{0.0f, 1.0f, 0.0f, 1.0f});
     Set("stripes", std::vector{2.0f, 3.0f});
     Set("turn", 180.0f);
+    Set("age", 1234.56789012345);
 
     EXPECT_FALSE(_monster.alive);
     EXPECT_EQ(_monster.legs, 8);
@@ -361,6 +371,7 @@ namespace
     EXPECT_EQ(_monster.armor.tint.g, 1.0f);
     EXPECT_THAT(_monster.stripes, ElementsAre(2.0f, 3.0f));
     EXPECT_FLOAT_EQ(_monster.turn, glm::radians(180.0f));
+    EXPECT_EQ(_monster.age, 1234.56789012345);
   }
 
   TEST_F(TypeInfoTest, LeavesWhatIsNotDescribedAlone)
@@ -390,6 +401,17 @@ namespace
     EXPECT_EQ(Check("home", 1.0f), "'home' of Monster takes three numbers");
     EXPECT_EQ(Check("name", FieldValue{}), "'name' of Monster takes text");
     EXPECT_EQ(Check("stripes", 1.0f), "'stripes' of Monster takes a list of numbers");
+
+    // a precise number is not a number of single precision, and the other way
+    EXPECT_EQ(Check("age", 1.0f), "'age' of Monster takes a number");
+    EXPECT_EQ(Check("speed", 1.0), "'speed' of Monster takes a number");
+  }
+
+  TEST_F(TypeInfoTest, ChecksAPreciseNumberAgainstItsLimitsAsADouble)
+  {
+    EXPECT_EQ(Check("age", 0.0), "");
+    EXPECT_EQ(Check("age", 1.0e-300), "");
+    EXPECT_EQ(Check("age", -0.5), "'age' of Monster is -0.5, where a number of 0 or above was expected");
   }
 
   TEST_F(TypeInfoTest, RefusesAListOfNumbersThatHoldsNotAsManyAsItHasTo)

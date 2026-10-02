@@ -72,6 +72,13 @@ namespace neon
           value = read;
           break;
         }
+        case FieldKind::Precise:
+        {
+          double read = 0.0;
+          if (!reader.Read(field.name, read)) { return false; }
+          value = read;
+          break;
+        }
         case FieldKind::Text:
         {
           std::string read;
@@ -247,6 +254,7 @@ namespace neon
     if (const auto *flag = std::get_if<bool>(&value)) { return DataValue::Bool(*flag); }
     if (const auto *whole = std::get_if<int>(&value)) { return DataValue::Number(*whole); }
     if (const auto *number = std::get_if<float>(&value)) { return DataValue::Number(*number); }
+    if (const auto *precise = std::get_if<double>(&value)) { return DataValue::Number(*precise); }
     if (const auto *text = std::get_if<std::string>(&value)) { return DataValue::Text(*text); }
     if (const auto *vector = std::get_if<glm::vec3>(&value)) { return ListOf(*vector); }
 

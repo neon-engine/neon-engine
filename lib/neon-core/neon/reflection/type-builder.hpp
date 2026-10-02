@@ -26,7 +26,8 @@ namespace neon
   ///     }
   ///
   /// What holds a field is deduced from the member: a `float` is a number,
-  /// a `std::string` is text, and so on. A member that is not described is
+  /// a `double` is a number that keeps its precision, a `std::string` is
+  /// text, and so on. A member that is not described is
   /// not seen from outside, which is how a value that the engine keeps for
   /// itself stays out of a scene file.
   ///
@@ -53,6 +54,7 @@ namespace neon
       else if constexpr (std::is_same_v<V, std::vector<std::string>>) { return FieldKind::TextList; }
       else if constexpr (std::is_same_v<V, FieldLength>) { return FieldKind::Length; }
       else if constexpr (std::is_same_v<V, std::vector<float>>) { return FieldKind::NumberList; }
+      else if constexpr (std::is_same_v<V, double>) { return FieldKind::Precise; }
       else
       {
         // depends on V, so that it is only looked at for a type that gets here

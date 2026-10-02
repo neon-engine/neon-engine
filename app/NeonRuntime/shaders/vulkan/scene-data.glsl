@@ -57,7 +57,10 @@ layout (std140, set = 0, binding = 1) uniform ObjectData {
 } object;
 
 // The alpha an object writes. An opaque one covers what is behind it
-// whatever its alpha says, and writes 1.
+// whatever its alpha says, and writes 1. The pipeline of an opaque material
+// keeps the alpha of the scene image at 1 as well, over an opaque clear.
+// This is for a texture a camera clears to a see-through colour, where the
+// pipeline cannot, so a shader of its own is well advised to use it.
 float object_alpha(float alpha)
 {
     return object.material.z > 0.5 ? alpha : 1.0;

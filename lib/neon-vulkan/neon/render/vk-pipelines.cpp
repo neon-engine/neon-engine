@@ -152,14 +152,26 @@ namespace neon
     // A see-through colour is blended over what is behind it, in the
     // linear light of the scene image. Its alpha is multiplied into the
     // colour, and the scene image keeps alpha multiplied in.
+    //
+    // An opaque colour replaces what is behind it, with factors of one and
+    // zero, which is the colour the shader wrote to the last bit. Its alpha
+    // does not reach the scene image as the shader wrote it: the resolve
+    // divides the light by the alpha, so an alpha below 1 from an opaque
+    // shader would come out brighter than it is. Vulkan has no blend factor
+    // that writes a constant, so the alpha is the larger of what the
+    // shader wrote and what was there, for which MAX ignores the factors.
+    // Over a clear that is opaque, as a frame is, that is 1 whatever the
+    // shader wrote. Over a texture a camera clears to a see-through colour
+    // it is at least what was there, and the shaders of the engine write 1
+    // themselves through object_alpha() for that case.
     VkPipelineColorBlendAttachmentState blend_attachment{};
-    blend_attachment.blendEnable = blends ? VK_TRUE : VK_FALSE;
-    blend_attachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-    blend_attachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+    blend_attachment.blendEnable = VK_TRUE;
+    blend_attachment.srcColorBlendFactor = blends ? VK_BLEND_FACTOR_SRC_ALPHA : VK_BLEND_FACTOR_ONE;
+    blend_attachment.dstColorBlendFactor = blends ? VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA : VK_BLEND_FACTOR_ZERO;
     blend_attachment.colorBlendOp = VK_BLEND_OP_ADD;
     blend_attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
     blend_attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-    blend_attachment.alphaBlendOp = VK_BLEND_OP_ADD;
+    blend_attachment.alphaBlendOp = blends ? VK_BLEND_OP_ADD : VK_BLEND_OP_MAX;
     blend_attachment.colorWriteMask =
       VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 

@@ -199,7 +199,7 @@ what a screenshot shows is what a window would show.
 | Stage | Drawn into | What happens |
 |---|---|---|
 | Render targets | Each target, in the order they are drawn | Each goes through the stages below on its own: a camera that draws into a texture lights a scene in a scene image of the target, a user interface on a surface draws on top. A target that shows only a user interface has no scene image |
-| Scene | The scene image, `R16G16B16A16_SFLOAT`, and its depth | Opaque models as they come, then see-through ones from the farthest to the nearest, tested against depth but not writing it. The back of every triangle is left out unless the material is double-sided. Lighting and blending are in linear light |
+| Scene | The scene image, `R16G16B16A16_SFLOAT`, and its depth | Opaque models as they come, then see-through ones from the farthest to the nearest, tested against depth but not writing it. The back of every triangle is left out unless the material is double-sided. Lighting and blending are in linear light. An opaque model replaces what is behind it and leaves the alpha of the scene image at 1, whatever its shader wrote |
 | Resolve | The image that is shown, `R8G8B8A8_UNORM` | A triangle that covers it reads the scene image pixel by pixel, clamps it, and writes it in sRGB. The one place where light becomes the colours of a screen |
 | On top | The same image | What is drawn in two dimensions: user interfaces, blended in sRGB as CSS blends them |
 | Copy | The window, or a file | Byte for byte. The bytes are sRGB already |
@@ -319,7 +319,7 @@ right before may want weaker `ambient` and `diffuse` values.
 | No validation layers | They need the Vulkan SDK. See open questions |
 | Image decoding lives in the backend | stb_image is compiled into neon-vulkan. It belongs in neon-core, where a second renderer could share it |
 | What a camera draws into a texture is clamped | Its scene is resolved into the bytes of the target, so light brighter than white, and what is later done with it, stays in the frame |
-| Shaders of models write alpha 1 when opaque | A shader of its own has to do the same through `object_alpha()` in `scene-data.glsl`, or its alpha comes out in the resolve |
+| An opaque material writes alpha 1 over an opaque clear | The pipeline of an opaque material keeps the larger of the alpha the shader wrote and the alpha of the scene image (`VK_BLEND_OP_MAX`), since Vulkan has no blend factor that writes a constant. Over a frame, which is cleared opaque, that is 1 whatever the shader wrote. A texture a camera clears to a see-through colour relies on the shader, and the shaders of the engine write 1 through `object_alpha()` in `scene-data.glsl` for that case |
 
 ## Order of work
 

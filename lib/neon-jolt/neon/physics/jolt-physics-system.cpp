@@ -65,13 +65,23 @@ namespace neon
     std::mutex shared_mutex;
     int shared_users = 0;
 
+    /// The factory Jolt makes its types with. It is one object for the
+    /// process, which Jolt is given the address of while a physics is in
+    /// use, and which is emptied again when the last is gone. Made on the
+    /// first call, after the allocator of Jolt is in place.
+    JPH::Factory &SharedFactory()
+    {
+      static JPH::Factory factory;
+      return factory;
+    }
+
     void AcquireShared()
     {
       const std::scoped_lock lock(shared_mutex);
       if (shared_users++ > 0) { return; }
 
       JPH::RegisterDefaultAllocator();
-      JPH::Factory::sInstance = new JPH::Factory();
+      JPH::Factory::sInstance = &SharedFactory();
       JPH::RegisterTypes();
     }
 
@@ -80,8 +90,8 @@ namespace neon
       const std::scoped_lock lock(shared_mutex);
       if (--shared_users > 0) { return; }
 
+      // unregistering empties the factory
       JPH::UnregisterTypes();
-      delete JPH::Factory::sInstance;
       JPH::Factory::sInstance = nullptr;
     }
 
@@ -258,14 +268,33 @@ namespace neon
       bool of_character = false;
     };
 
+    /// What is kept of a character. The character of Jolt is a part of the
+    /// record, built in place in a map, whose nodes do not move, so that
+    /// nothing is made with `new`. Jolt counts references to a character,
+    /// and the record marks it as embedded so that Jolt never deletes it.
     struct CharacterRecord
     {
-      JPH::Ref<JPH::CharacterVirtual> character;
+      JPH::CharacterVirtual character;
       Entity entity = No_Entity;
       BodyId body = No_Body;
       LayerEntry layers;
       float step_height = 0.0f;
       float cosine_of_slope = 0.0f;
+
+      CharacterRecord(
+        const JPH::CharacterVirtualSettings &settings,
+        const JPH::RVec3 &position,
+        const BodyId body,
+        JPH::PhysicsSystem *physics)
+        : character(&settings, position, JPH::Quat::sIdentity(), body, physics), body(body)
+      {
+        character.SetEmbedded();
+      }
+
+      // the character of Jolt stays where it was built
+      CharacterRecord(const CharacterRecord &) = delete;
+
+      CharacterRecord &operator=(const CharacterRecord &) = delete;
     };
 
     /// A contact as a thread of Jolt found it.
@@ -1285,14 +1314,10 @@ namespace neon
     const auto shape = _state->MakeShapes(info.shapes, error);
     if (shape == nullptr) { return false; }
 
-    CharacterRecord record;
-    record.entity = info.entity;
-    record.layers = LayerEntry{.layers = info.layers, .mask = info.mask, .moving = true, .trigger = false};
-    record.step_height = std::max(0.0f, info.step_height);
-    record.cosine_of_slope = std::cos(glm::radians(std::clamp(info.max_slope, 0.0f, 90.0f)));
+    const LayerEntry layers{.layers = info.layers, .mask = info.mask, .moving = true, .trigger = false};
 
     JPH::ObjectLayer layer = 0;
-    if (!_state->layers.Find(record.layers, layer))
+    if (!_state->layers.Find(layers, layer))
     {
       error = "there are more different sets of layers and masks than the physics can tell apart";
       return false;
@@ -1317,25 +1342,29 @@ namespace neon
 
     // the body that the character is for the bodies around it is known as
     // a body, so that events and queries name its entity
-    record.body = _state->next_body++;
+    const BodyId body = _state->next_body++;
 
-    record.character = new JPH::CharacterVirtual(
-      &settings,
-      ToJolt(info.position),
-      JPH::Quat::sIdentity(),
-      record.body,
-      &_state->physics);
+    // built where it stays, under the id it gets once it is known to be
+    // complete
+    const auto it = _state->characters.try_emplace(
+      _state->next_character, settings, ToJolt(info.position), body, &_state->physics).first;
+    auto &record = it->second;
+    record.entity = info.entity;
+    record.layers = layers;
+    record.step_height = std::max(0.0f, info.step_height);
+    record.cosine_of_slope = std::cos(glm::radians(std::clamp(info.max_slope, 0.0f, 90.0f)));
 
-    record.character->SetListener(&_state->character_contacts);
+    record.character.SetListener(&_state->character_contacts);
 
-    if (record.character->GetInnerBodyID().IsInvalid())
+    if (record.character.GetInnerBodyID().IsInvalid())
     {
+      _state->characters.erase(it);
       error = std::format("the physics holds {} bodies, and has no room for more", most_bodies);
       return false;
     }
 
-    _state->bodies[record.body] = BodyRecord{
-      .jolt = record.character->GetInnerBodyID(),
+    _state->bodies[body] = BodyRecord{
+      .jolt = record.character.GetInnerBodyID(),
       .entity = info.entity,
       .trigger = false,
       .of_character = true
@@ -1343,7 +1372,6 @@ namespace neon
     _state->added_since_rebuild++;
 
     character = _state->next_character++;
-    _state->characters[character] = std::move(record);
     return true;
   }
 
@@ -1372,7 +1400,7 @@ namespace neon
     const auto it = _state->characters.find(character);
     if (it == _state->characters.end()) { return; }
 
-    it->second.character->SetPosition(ToJolt(position));
+    it->second.character.SetPosition(ToJolt(position));
   }
 
   bool Jolt_PhysicsSystem::MoveCharacter(
@@ -1387,7 +1415,7 @@ namespace neon
     if (it == _state->characters.end()) { return false; }
 
     auto &record = it->second;
-    auto &moved = *record.character;
+    auto &moved = record.character;
 
     const auto before = moved.GetPosition();
 

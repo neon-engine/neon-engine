@@ -36,6 +36,16 @@ namespace neon
       throw ParseError(reason, location.line);
     }
 
+    /// Whether a scalar is written the way a person writes a number: digits,
+    /// a sign, a dot, an exponent. YAML also allows hexadecimal and octal,
+    /// which are the computer's forms and are text here, so that 0x1d is
+    /// never a number by surprise. A field that wants one, such as a colour,
+    /// reads the text.
+    bool IsDecimal(const ryml::csubstr text)
+    {
+      return text.first_not_of("0123456789.+-eE") == ryml::npos;
+    }
+
     std::string ToString(const ryml::csubstr text)
     {
       return text.empty() ? std::string{} : std::string(text.str, text.len);
@@ -98,9 +108,24 @@ namespace neon
         } else if (text == "false")
         {
           value = DataValue::Bool(false);
-        } else if (double number = 0.0; text.is_number() && ryml::from_chars(text, &number))
+        } else if (double number = 0.0; IsDecimal(text) && text.is_number() && ryml::from_chars(text, &number))
         {
           value = DataValue::Number(number);
+        } else if (const char suffix = text.empty() ? '\0' : text.back(); suffix == 'f' || suffix == 'd')
+        {
+          // A number with a fraction that a person marked with its precision,
+          // for the people who read the file: 0.5f is a float and 2.0d a
+          // double. The engine never writes them, it knows the type of what
+          // it writes. A whole number takes no suffix, so 2d is text.
+          const auto digits = text.first(text.len - 1);
+          const bool fraction = digits.first_of(".eE") != ryml::npos;
+          if (fraction && IsDecimal(digits) && digits.is_number() && ryml::from_chars(digits, &number))
+          {
+            value = suffix == 'f' ? DataValue::Number(static_cast<float>(number)) : DataValue::PreciseNumber(number);
+          } else
+          {
+            value = DataValue::Text(ToString(text));
+          }
         } else
         {
           value = DataValue::Text(ToString(text));

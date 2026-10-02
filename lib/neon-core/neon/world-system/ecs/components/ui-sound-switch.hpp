@@ -23,7 +23,7 @@ namespace neon
     std::string equals;
 
     /// How long fading in and out takes, in seconds.
-    float fade = 1.0f;
+    double fade = 1.0;
 
     /// Whether the value was `equals` in the last frame, which nothing knows
     /// before the first. Kept by the engine.

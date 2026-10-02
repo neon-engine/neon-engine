@@ -67,6 +67,10 @@ elseif (CASE STREQUAL "see-through-planes-blend-in-linear-light")
   expect_pixel("half of orange over half of blue over white" 1450 300 225 161 188)
   expect_pixel("half of orange over white" 1700 300 255 204 188)
   expect_pixel("half of orange over black" 1580 70 188 92 0)
+elseif (CASE STREQUAL "an-opaque-plane-ignores-the-alpha-of-its-colour")
+  # Were its alpha of 0.25 taken as the scene image's, the resolve would
+  # divide the green by it, clamp it, and multiply it back in: 64, not 255.
+  expect_pixel("the opaque green plane with an alpha of 0.25" 960 827 0 255 0)
 elseif (CASE STREQUAL "a-texture-is-shown-as-it-is")
   # read as linear light and written as sRGB again, the colours of the file
   expect_pixel("the left top of the texture" 386 723 128 128 128)

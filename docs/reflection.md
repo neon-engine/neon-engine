@@ -59,6 +59,7 @@ It is deduced from the member.
 | `bool` | Bool | `true` or `false` |
 | `int` | Whole | A number without a fraction |
 | `float` | Number | A number |
+| `double` | Precise | A number, kept with every digit a `double` holds, for what adds up over time such as seconds |
 | `std::string` | Text | Text |
 | `glm::vec3` | Vector | `[x, y, z]` |
 | `Color` | Color | `[red, green, blue]`, or with alpha as a fourth |
@@ -169,6 +170,7 @@ back.
 |---|---|
 | Bool | `true`, `false` |
 | Whole, Number | `12`, `0.5` |
+| Precise | `1234.56789012345`, with every digit. A file may write it as `2.0d` to say so; a plain number is read all the same, and the engine never writes the suffix |
 | Text, Choice | The text itself |
 | Vector | `1 2 3` |
 | Color | In the notation of CSS: `#ff8000`, `#ff800080`. `rgb()` and `rgba()` are read as well |
@@ -241,7 +243,7 @@ say.
 | Written in C++ by hand, not generated | No step in the build and no tool to keep. C++ gains reflection of its own with C++26, which no compiler of the toolchain offers yet |
 | Next to the type | It is changed when the type is changed, by whoever changes it |
 | A field is reached through functions, not through its place in memory | It works for a member of a member and for a value that is kept as something else. It does not depend on how the compiler lays out a struct |
-| A value is one of ten types | Code that works with any component needs a closed set to handle. A new kind is added in one place |
+| A value is one of eleven types | Code that works with any component needs a closed set to handle. A new kind is added in one place |
 | A scene file is the same as before | Descriptions replace how components are read and written, not what is read and written |
 | A refused number is told as the rest of the engine tells it | `is 0, where a number above 0 was expected` says what was written. `has to be above 0`, which descriptions said at first, did not, and the physics said it the first way |
 | Layers are a kind of their own | One layer may be written without a list, and a message names layers. A list of numbers with limits could say neither |

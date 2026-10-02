@@ -130,6 +130,67 @@ namespace
     EXPECT_EQ(NumberOf(*Read("value: -3e2\n").Find("value")), -300.0);
   }
 
+  TEST_F(RymlDocumentFormatTest, ANumberWithFIsASingleNumber)
+  {
+    const DataValue document = Read("scale: 0.5f\nsize: [1.0f, 2.5f]\n");
+
+    const DataValue &scale = *document.Find("scale");
+    EXPECT_EQ(NumberOf(scale), 0.5);
+    EXPECT_TRUE(scale.IsSinglePrecision());
+    EXPECT_FALSE(scale.IsPrecise());
+    EXPECT_EQ(NumberOf(document.Find("size")->GetItems()[1]), 2.5);
+  }
+
+  TEST_F(RymlDocumentFormatTest, ANumberWithDIsAPreciseNumber)
+  {
+    const DataValue document = Read("fade: 2.0d\nodometer: -123456.789012345d\n");
+
+    const DataValue &fade = *document.Find("fade");
+    EXPECT_EQ(NumberOf(fade), 2.0);
+    EXPECT_TRUE(fade.IsPrecise());
+    EXPECT_FALSE(fade.IsSinglePrecision());
+    EXPECT_EQ(NumberOf(*document.Find("odometer")), -123456.789012345);
+  }
+
+  TEST_F(RymlDocumentFormatTest, ASuffixOnWhatIsNoNumberLeavesText)
+  {
+    const DataValue document = Read("a: f\nb: d\nc: 1.2.3f\ne: 1e5d\nw: 2d\nv: 2f\n");
+
+    EXPECT_EQ(TextOf(*document.Find("a")), "f");
+    EXPECT_EQ(TextOf(*document.Find("b")), "d");
+    EXPECT_EQ(TextOf(*document.Find("c")), "1.2.3f");
+
+    // an exponent is a number with a fraction, so the suffix counts
+    EXPECT_EQ(NumberOf(*document.Find("e")), 100000.0);
+    EXPECT_TRUE(document.Find("e")->IsPrecise());
+
+    // a whole number takes no suffix: the precision is for fractions
+    EXPECT_EQ(TextOf(*document.Find("w")), "2d");
+    EXPECT_EQ(TextOf(*document.Find("v")), "2f");
+  }
+
+  TEST_F(RymlDocumentFormatTest, HexadecimalAndOctalAreText)
+  {
+    // numbers are written as people write them; the computer's forms are
+    // text, for a field that wants them as such
+    const DataValue document = Read("a: 0x1d\nb: 0XFF\nc: -0x10\nd: 0o17\ne: 1_000\n");
+
+    EXPECT_EQ(TextOf(*document.Find("a")), "0x1d");
+    EXPECT_EQ(TextOf(*document.Find("b")), "0XFF");
+    EXPECT_EQ(TextOf(*document.Find("c")), "-0x10");
+    EXPECT_EQ(TextOf(*document.Find("d")), "0o17");
+    EXPECT_EQ(TextOf(*document.Find("e")), "1_000");
+  }
+
+  TEST_F(RymlDocumentFormatTest, WritesNumbersWithoutASuffix)
+  {
+    auto map = DataValue::Map();
+    map.Set("fade", DataValue::PreciseNumber(2.0));
+    map.Set("scale", DataValue::Number(0.5f));
+
+    EXPECT_EQ(_format.Write(map), "fade: 2\nscale: 0.5\n");
+  }
+
   TEST_F(RymlDocumentFormatTest, TrueAndFalseAreBools)
   {
     const auto document = Read("on: true\noff: false\n");

@@ -53,7 +53,9 @@ camera.
 A sound with a place is quieter from further away, is heard from the side it
 is on, and shifts in pitch when it moves towards the listener or away. A sound
 without a place is heard the same everywhere, which is what music and the
-sounds of a menu want.
+sounds of a menu want, and its entity needs no `Transform`. A spatial sound on
+an entity without a `Transform` has no place to be heard from, so it is not
+heard, and the log names the entity once. It is heard once the entity has one.
 
 **SoundListener**
 
@@ -156,7 +158,6 @@ through two components that `UiAudio` acts on:
 # plays while the menu's value `track` is `chilled`, and fades out otherwise
 - name: chilled
   components:
-    Transform: {}
     SoundSource:
       sound: assets://sounds/music/electronic-chilled.wav
       group: music

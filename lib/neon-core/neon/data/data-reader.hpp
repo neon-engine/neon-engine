@@ -78,6 +78,9 @@ namespace neon
 
     bool Read(const std::string &name, float &value) const;
 
+    /// A number with the precision of a `double` kept.
+    bool Read(const std::string &name, double &value) const;
+
     /// A number without a fraction.
     bool Read(const std::string &name, int &value) const;
 

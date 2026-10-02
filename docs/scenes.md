@@ -193,6 +193,8 @@ components of the physics. What they hold is listed in
 | Every problem of a file is reported, not only the first | A file is corrected in one pass |
 | What is left out keeps its default | A file holds what was decided and nothing else |
 | Paths need no quotes | `assets://models/cube.obj` is plain text to YAML |
+| A number with a fraction may say its precision: `0.5f` is a float, `2.0d` a double | For the person reading the file. The engine knows the type of every field, reads a plain number in that type, and never writes a suffix. A whole number takes no suffix. `2.0d` into a `float` field is refused, since it would lose the precision that was asked for; `0.5f` into a `double` field is fine |
+| Numbers are written as people write them: `29`, `-0.5`, `1e3` | Hexadecimal and octal, `0x1d` and `0o17`, are the computer's forms and are text, never a number by surprise. A field that wants one, such as a colour, reads the text |
 | Comments are allowed | YAML has them. They are lost when the engine writes the file, see the open questions |
 | Anchors, aliases, and tags are refused | They make a file harder to follow, and harder for a tool to write back as it was |
 | Names are written the way the components of the engine are | `Transform` in a file is `Transform` in code |

@@ -85,6 +85,19 @@ entities:
           color: [0, 0, 1, 0.5]
           alpha_mode: blend
 
+  # An opaque plane whose colour has an alpha below 1. Opaque is opaque,
+  # so it is shown at full brightness, and not divided by its alpha.
+  - name: faint
+    components:
+      Transform:
+        position: [0, -1.1, 0]
+      Renderable:
+        model: assets://models/quad.obj
+        shader: assets://shaders/color
+        material:
+          color: [0, 1, 0, 0.25]
+          alpha_mode: opaque
+
   # four colours, one in each quarter, shown as they are in the file
   - name: textured
     components:

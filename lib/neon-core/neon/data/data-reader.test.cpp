@@ -116,6 +116,47 @@ namespace
                   "hud.ui.yml: 'scale' of the root is a number, where a list of numbers was expected"));
   }
 
+  TEST(DataReader, RefusesANumberWrittenAsADoubleWhereAFloatIsRead)
+  {
+    std::vector<std::string> errors;
+    auto precise = DataValue::PreciseNumber(2.0);
+    precise.SetLine(4);
+    auto list = DataValue::List();
+    list.Add(DataValue::Number(1.0f));
+    list.Add(precise);
+    auto map = DataValue::Map();
+    map.Set("fade", precise);
+    map.Set("size", list);
+    const DataReader reader(map, "hud.ui.yml", "the root", errors);
+
+    float fade = 7.0f;
+    double seconds = 0.0;
+    std::vector<float> size;
+    EXPECT_FALSE(reader.Read("fade", fade));
+    EXPECT_TRUE(reader.Read("fade", seconds));
+    EXPECT_FALSE(reader.Read("size", size));
+
+    EXPECT_EQ(seconds, 2.0);
+    EXPECT_THAT(errors, ElementsAre(
+                  "hud.ui.yml:4: 'fade' of the root is written as a double, with d, where a float is read and "
+                  "would lose that precision. Write it without the suffix, or with f",
+                  "hud.ui.yml:4: 'size' of the root holds a number written as a double, with d, where floats "
+                  "are read and would lose that precision. Write it without the suffix, or with f"));
+  }
+
+  TEST(DataReader, ReadsANumberWrittenAsAFloatIntoADouble)
+  {
+    std::vector<std::string> errors;
+    auto map = DataValue::Map();
+    map.Set("fade", DataValue::Number(2.5f));
+    const DataReader reader(map, "hud.ui.yml", "the root", errors);
+
+    double seconds = 0.0;
+    EXPECT_TRUE(reader.Read("fade", seconds));
+    EXPECT_EQ(seconds, 2.5);
+    EXPECT_THAT(errors, ElementsAre());
+  }
+
   TEST(DataReader, AReaderOfAPartWritesToTheSameErrors)
   {
     std::vector<std::string> errors;

@@ -47,7 +47,11 @@ namespace neon
     /// Some of the 32 layers, such as those a body of the physics is in.
     /// Held as the numbers of the layers, from 1 to 32, and kept as one bit
     /// for each.
-    Layers
+    Layers,
+
+    /// A number kept with the precision of a `double`, for what adds up
+    /// over time, such as seconds. It is written and read as a number.
+    Precise
   };
 
   /// A length as a style sheet writes one: pixels, a percentage of
@@ -99,7 +103,8 @@ namespace neon
     Color,
     std::vector<std::string>,
     FieldLength,
-    std::vector<float>>;
+    std::vector<float>,
+    double>;
 
   /// What a kind is called in a message, such as `a number`.
   [[nodiscard]] std::string Describe(FieldKind kind);

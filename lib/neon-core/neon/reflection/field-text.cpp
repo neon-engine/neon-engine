@@ -31,7 +31,7 @@ namespace neon
 
     // Read by hand. The functions of the standard library follow the
     // language of the machine, where the dot may be a comma.
-    bool ParseNumber(const std::string &written, float &number)
+    bool ParseNumber(const std::string &written, double &number)
     {
       const std::string text = Trimmed(written);
       std::size_t position = 0;
@@ -43,8 +43,10 @@ namespace neon
         position++;
       }
 
+      // all the digits as one whole number, divided once at the end, so
+      // that the number is exact as far as the 15 digits a double keeps
       double value = 0.0;
-      double scale = 1.0;
+      int fraction_digits = 0;
       std::size_t digits = 0;
       bool after_point = false;
 
@@ -58,14 +60,8 @@ namespace neon
         } else if (letter >= '0' && letter <= '9')
         {
           digits++;
-          if (after_point)
-          {
-            scale /= 10.0;
-            value += (letter - '0') * scale;
-          } else
-          {
-            value = value * 10.0 + (letter - '0');
-          }
+          value = value * 10.0 + (letter - '0');
+          if (after_point) { fraction_digits++; }
         } else
         {
           return false;
@@ -74,7 +70,17 @@ namespace neon
 
       if (digits == 0) { return false; }
 
-      number = static_cast<float>(negative ? -value : value);
+      value /= std::pow(10.0, fraction_digits);
+      number = negative ? -value : value;
+      return true;
+    }
+
+    bool ParseNumber(const std::string &written, float &number)
+    {
+      double precise = 0.0;
+      if (!ParseNumber(written, precise)) { return false; }
+
+      number = static_cast<float>(precise);
       return true;
     }
 
@@ -84,6 +90,12 @@ namespace neon
       if (rounded == 0.0f) { return "0"; }
 
       return std::format("{}", rounded);
+    }
+
+    /// A precise number keeps every digit, so that it reads back as the same.
+    std::string FormatNumber(const double number)
+    {
+      return std::format("{}", number);
     }
 
     /// What is set apart by spaces and commas.
@@ -260,6 +272,7 @@ namespace neon
     if (const auto *flag = std::get_if<bool>(&value)) { return *flag ? "true" : "false"; }
     if (const auto *whole = std::get_if<int>(&value)) { return std::format("{}", *whole); }
     if (const auto *number = std::get_if<float>(&value)) { return FormatNumber(*number); }
+    if (const auto *precise = std::get_if<double>(&value)) { return FormatNumber(*precise); }
     if (const auto *text = std::get_if<std::string>(&value)) { return *text; }
 
     if (const auto *vector = std::get_if<glm::vec3>(&value))
@@ -335,6 +348,15 @@ namespace neon
       case FieldKind::Number:
       {
         float number = 0.0f;
+        if (!ParseNumber(text, number)) { return refuse("a number"); }
+
+        value = number;
+        return true;
+      }
+
+      case FieldKind::Precise:
+      {
+        double number = 0.0;
         if (!ParseNumber(text, number)) { return refuse("a number"); }
 
         value = number;

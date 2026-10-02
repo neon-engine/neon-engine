@@ -32,6 +32,13 @@ namespace neon
     return Number(static_cast<double>(value));
   }
 
+  DataValue DataValue::PreciseNumber(const double value)
+  {
+    DataValue result = Number(value);
+    result._precise = true;
+    return result;
+  }
+
   DataValue DataValue::Text(const std::string &value)
   {
     DataValue result;
@@ -115,6 +122,11 @@ namespace neon
   bool DataValue::IsSinglePrecision() const
   {
     return _single_precision;
+  }
+
+  bool DataValue::IsPrecise() const
+  {
+    return _precise;
   }
 
   const std::vector<DataValue> &DataValue::GetItems() const

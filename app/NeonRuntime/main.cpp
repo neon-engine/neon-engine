@@ -337,7 +337,8 @@ int main(const int argc, char *argv[])
   // sounds are heard where their entities are drawn, so that a sound is not
   // heard from where it was a frame ago, or from the origin in the first
   // frame, before anything was placed
-  world.AddSystemAfterPlacing(std::make_unique<neon::AudioPlayback>(&audio_system));
+  world.AddSystemAfterPlacing(
+    std::make_unique<neon::AudioPlayback>(&audio_system, logging_system.CreateLogger("AudioPlayback")));
   world.AddSystem(std::make_unique<neon::UiViewLoading>(&ui_system));
   world.AddSystem(std::make_unique<neon::UiClock>(&ui_system));
   world.AddSystem(std::make_unique<neon::UiAudio>(&ui_system, &audio_system));

@@ -89,7 +89,6 @@ entities:
   # a new choice fades from it to the next over two seconds
   - name: chilled
     components:
-      Transform: {}
       SoundSource:
         sound: assets://sounds/music/electronic-chilled.wav
         group: music
@@ -101,7 +100,6 @@ entities:
 
   - name: fight
     components:
-      Transform: {}
       SoundSource:
         sound: assets://sounds/music/electronic-fight.wav
         group: music
@@ -113,7 +111,6 @@ entities:
 
   - name: hollow
     components:
-      Transform: {}
       SoundSource:
         sound: assets://sounds/music/electronic-hollow.wav
         group: music

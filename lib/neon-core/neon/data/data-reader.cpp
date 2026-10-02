@@ -116,6 +116,30 @@ namespace neon
                name, _where, DataValue::Describe(found->GetKind())));
       return false;
     }
+
+    if (found->IsPrecise())
+    {
+      Report(*found, std::format(
+               "'{}' of {} is written as a double, with d, where a float is read and would lose that "
+               "precision. Write it without the suffix, or with f",
+               name, _where));
+      return false;
+    }
+    return true;
+  }
+
+  bool DataReader::Read(const std::string &name, double &value) const
+  {
+    const auto *found = Ask(name);
+    if (found == nullptr) { return false; }
+
+    if (!found->GetNumber(value))
+    {
+      Report(*found, std::format(
+               "'{}' of {} is {}, where a number was expected",
+               name, _where, DataValue::Describe(found->GetKind())));
+      return false;
+    }
     return true;
   }
 
@@ -215,6 +239,15 @@ namespace neon
                  name, _where, DataValue::Describe(item.GetKind())));
         return false;
       }
+
+      if (item.IsPrecise())
+      {
+        Report(item, std::format(
+                 "'{}' of {} holds a number written as a double, with d, where floats are read and would "
+                 "lose that precision. Write it without the suffix, or with f",
+                 name, _where));
+        return false;
+      }
       numbers.push_back(number);
     }
 
@@ -260,6 +293,15 @@ namespace neon
         Report(items[i], std::format(
                  "'{}' of {} holds {}, where a number was expected",
                  name, _where, DataValue::Describe(items[i].GetKind())));
+        return false;
+      }
+
+      if (items[i].IsPrecise())
+      {
+        Report(items[i], std::format(
+                 "'{}' of {} holds a number written as a double, with d, where floats are read and would "
+                 "lose that precision. Write it without the suffix, or with f",
+                 name, _where));
         return false;
       }
     }

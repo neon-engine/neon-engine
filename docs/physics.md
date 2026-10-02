@@ -546,6 +546,7 @@ What a game does with a body, through `PhysicsContext` and the `body` of its
 | A kinematic body is moved by its `Transform` | It is what a game, an animation, and an editor write already |
 | A character is a component of its own, not a kind of `RigidBody` | It has other values, and is moved another way: by a sweep of its shape and not by the simulation |
 | The physics is handed the file system, and the backend is not | Reading a model is the same for every backend. The backend is handed points |
+| Nothing of Jolt is made with `new` | The factory Jolt shares is one static object, whose address Jolt is given while a physics is in use. A character is built in place in a map, whose nodes do not move, and marked as embedded so that Jolt, which counts references to it, never deletes it. What Jolt makes itself, such as shapes, is held by its own references |
 | The formats of the components are part of those of the engine | A scene with a `RigidBody` loads in every application. One without physics says so: `RigidBody of entity 'crate' needs the physics, which is not part of this world` |
 
 ## Entities with a parent

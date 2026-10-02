@@ -27,9 +27,9 @@ namespace neon
     }
   }
 
-  AudioPlayback::AudioPlayback(AudioContext *audio_context)
+  AudioPlayback::AudioPlayback(AudioContext *audio_context, std::shared_ptr<Logger> logger)
+    : _audio_context(audio_context), _logger(std::move(logger))
   {
-    _audio_context = audio_context;
   }
 
   void AudioPlayback::Register(EntityStore &store)
@@ -51,7 +51,10 @@ namespace neon
   void AudioPlayback::Initialize(EntityStore &store)
   {
     _listeners = store.Query<Transform, SoundListener>();
-    _sources = store.Query<Transform, SoundSource>();
+
+    // a source alone, as music and the sounds of a menu have no place. The
+    // place of a spatial one is read when it is needed
+    _sources = store.Query<SoundSource>();
   }
 
   void AudioPlayback::Update(EntityStore &store, const double delta_time)
@@ -80,12 +83,27 @@ namespace neon
 
     store.Each(_sources, [&](const EntityBlock &block)
     {
-      const auto *transforms = block.Column<Transform>(0);
-      auto *sources = block.Column<SoundSource>(1);
+      auto *sources = block.Column<SoundSource>(0);
 
       for (std::size_t i = 0; i < block.count; i++)
       {
+        const Entity entity = block.entities[i];
         auto &source = sources[i];
+
+        const Transform *transform = source.sound.spatial ? store.Get<Transform>(entity) : nullptr;
+        if (source.sound.spatial && transform == nullptr)
+        {
+          // said once, and not in every frame. It is heard once it has a place
+          if (_placeless.insert(entity).second)
+          {
+            const auto name = store.GetName(entity);
+            _logger->Warn(
+              "The SoundSource of entity '{}' is spatial, but the entity has no Transform to be heard "
+              "from, so it is not heard. Give the entity a Transform, or make the sound not spatial",
+              name);
+          }
+          continue;
+        }
 
         if (source.sound_id == failed_sound)
         {
@@ -113,9 +131,9 @@ namespace neon
         _audio_context->SetPitch(id, source.sound.pitch);
         _audio_context->SetLooping(id, source.sound.looping);
 
-        if (source.sound.spatial)
+        if (transform != nullptr)
         {
-          const glm::vec3 position = transforms[i].world_coordinates[3];
+          const glm::vec3 position = transform->world_coordinates[3];
           _audio_context->SetPosition(
             id,
             position,

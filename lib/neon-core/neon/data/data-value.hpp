@@ -35,6 +35,9 @@ namespace neon
     bool _bool = false;
     double _number = 0.0;
     bool _single_precision = false;
+
+    // whether the number was written as a double on purpose, with a d
+    bool _precise = false;
     std::string _text;
     std::vector<DataValue> _items;
     std::vector<Entry> _entries;
@@ -52,6 +55,12 @@ namespace neon
     static DataValue Number(float value);
 
     static DataValue Number(int value);
+
+    /// A number that a person wrote as a double on purpose, with the suffix
+    /// `d`, as in `2.0d`. Reading it into a `float` is refused, since that
+    /// would lose the precision that was asked for. The engine never writes
+    /// the suffix: it knows the type of what it writes.
+    static DataValue PreciseNumber(double value);
 
     static DataValue Text(const std::string &value);
 
@@ -85,6 +94,10 @@ namespace neon
 
     /// Whether the number came from a `float`.
     [[nodiscard]] bool IsSinglePrecision() const;
+
+    /// Whether the number was written as a double on purpose, see
+    /// PreciseNumber.
+    [[nodiscard]] bool IsPrecise() const;
 
     /// The values of a list. Empty for every other kind.
     [[nodiscard]] const std::vector<DataValue> &GetItems() const;

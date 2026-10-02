@@ -61,7 +61,8 @@ namespace neon
         range += limit;
       }
 
-      const bool one = field.kind == FieldKind::Number || field.kind == FieldKind::Whole;
+      const bool one = field.kind == FieldKind::Number || field.kind == FieldKind::Whole
+                       || field.kind == FieldKind::Precise;
 
       if (!field.unit.empty()) { return std::format("{} {} were expected", field.unit, range); }
       if (one) { return std::format("a number {} was expected", range); }
@@ -143,6 +144,19 @@ namespace neon
           return std::format("{} holds {}, where a layer from 1 to 32 was expected", what, number);
         }
       }
+      return {};
+    }
+
+    if (kind == FieldKind::Precise)
+    {
+      // compared as a double, so that a tiny number above 0 is not rounded
+      // down onto the limit
+      const double number = std::get<double>(value);
+      const bool fits = (!above.has_value() || number > *above)
+                        && (!at_least.has_value() || number >= *at_least)
+                        && (!at_most.has_value() || number <= *at_most);
+
+      if (!fits) { return std::format("{} is {}, where {}", what, number, Expected(*this)); }
       return {};
     }
 

@@ -38,6 +38,7 @@ namespace
     float tire_pressure = 2.2f;
     std::string tire_brand = "none";
     std::vector<float> gears;
+    double odometer = 0.0;
   };
 
   void Describe(TypeBuilder<Car> &type)
@@ -59,6 +60,7 @@ namespace
     });
 
     type.Field("gears", &Car::gears).Above(0);
+    type.Field("odometer", &Car::odometer).AtLeast(0);
   }
 
   DataValue Numbers(const std::vector<float> &numbers)
@@ -140,6 +142,7 @@ namespace
     map.Set("fuel", DataValue::Text("electric"));
     map.Set("tires", tires);
     map.Set("gears", Numbers({3.5f, 2.1f, 1.4f}));
+    map.Set("odometer", DataValue::Number(123456.789012345));
 
     Read(map);
 
@@ -155,6 +158,7 @@ namespace
     EXPECT_EQ(_car.tire_pressure, 2.5f);
     EXPECT_EQ(_car.tire_brand, "Grip");
     EXPECT_THAT(_car.gears, ElementsAre(3.5f, 2.1f, 1.4f));
+    EXPECT_EQ(_car.odometer, 123456.789012345);
   }
 
   TEST_F(FieldDocumentsTest, WhatIsNotWrittenKeepsItsValue)
@@ -198,7 +202,7 @@ namespace
 
     EXPECT_THAT(_errors, ElementsAre(
                   "cars.yml: 'wings' is not known to Car of entity 'taxi'. Known are: "
-                  "locked, seats, top_speed, plate, size, paint, owners, fuel, tires, gears"));
+                  "locked, seats, top_speed, plate, size, paint, owners, fuel, tires, gears, odometer"));
   }
 
   TEST_F(FieldDocumentsTest, ANameInAGroupThatIsNotDescribedIsReported)
@@ -432,6 +436,20 @@ namespace
     EXPECT_TRUE(Write().Find("top_speed")->IsSinglePrecision());
   }
 
+  TEST_F(FieldDocumentsTest, WritesAPreciseNumberWithEveryDigitItHolds)
+  {
+    _car.odometer = 123456.789012345;
+
+    const auto written = Write();
+    const auto *odometer = written.Find("odometer");
+    ASSERT_NE(odometer, nullptr);
+    EXPECT_FALSE(odometer->IsSinglePrecision());
+
+    double number = 0.0;
+    EXPECT_TRUE(odometer->GetNumber(number));
+    EXPECT_EQ(number, 123456.789012345);
+  }
+
   TEST_F(FieldDocumentsTest, WhatIsWrittenReadsBackAsTheSame)
   {
     _car.locked = true;
@@ -445,6 +463,7 @@ namespace
     _car.tire_pressure = 3.0f;
     _car.tire_brand = "Grip";
     _car.gears = {3.5f, 2.1f};
+    _car.odometer = 0.1 + 0.2;
     const auto written = Write();
     const Car before = _car;
 
@@ -463,6 +482,7 @@ namespace
     EXPECT_EQ(_car.tire_pressure, before.tire_pressure);
     EXPECT_EQ(_car.tire_brand, before.tire_brand);
     EXPECT_EQ(_car.gears, before.gears);
+    EXPECT_EQ(_car.odometer, before.odometer);
   }
 }
 
