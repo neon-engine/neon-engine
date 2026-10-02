@@ -211,6 +211,14 @@ The editor can export in two ways.
 | By compiling the game in (#105) | The game and the runtime become one executable, harder to decompile and optimised as a whole | When the developer chooses |
 
 
+**A shipped runtime (#143)** keeps only the options a player needs, and loads
+only the game it was exported with. Options it does not keep are left out
+when it is built. Which ones those are is proposed in
+[command-line.md](command-line.md). The aim is that a player cannot do what a
+game does not want with an option, a setting, or a file next to the
+executable, not to stop someone who is determined. Lower priority, but for
+1.0.
+
 **Containers** already build for Linux and cross-compile for Windows. See
 the [development guide](development.md).
 
@@ -270,6 +278,20 @@ client. That means building for WebAssembly.
 | A fourth toolchain | Emscripten |
 
 Threads are limited in browsers, which will matter for physics.
+
+### Networking
+
+A stretch goal for 1.0 (#144): wanted in it, and the first to move out if
+time runs short.
+
+| Item | Detail |
+|---|---|
+| Real time, with a server | A server that has the last word, clients that predict their own moves and are corrected, interpolation, and lag compensation |
+| Lockstep, for strategy | Only inputs are sent, and every machine simulates the same world. Needs the fixed time step, seeded random numbers (#80), and deterministic physics |
+| Peer to peer | One player hosts, or all are equal, through NAT traversal or a relay |
+| Replication of the ECS | Which entities and components go to whom, as changes. Builds on reflection |
+| A dedicated server | A runtime without a window, renderer, or audio, built for servers |
+| A transport behind an interface | UDP with what has to arrive arriving. Which library is open |
 
 ### Other
 

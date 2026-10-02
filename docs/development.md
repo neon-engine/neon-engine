@@ -203,6 +203,9 @@ the configure step again.
 
 ## Command line
 
+Every option, with whether a shipped game should keep it, is listed in
+[command-line.md](command-line.md).
+
 ```
 Usage: NeonRuntime [options]
 
