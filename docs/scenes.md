@@ -151,6 +151,21 @@ light by the name of its entity.
 | `move_speed` | Units per second | `2.5` |
 | `look_speed` | Degrees per unit the mouse moved | `0.1` |
 
+**Player**
+
+The entity is the player, seen from the first person and driven by the
+input. It carries a `CharacterBody`, and a child with a `Camera` is lifted
+to its eyes. How it is driven is in [physics.md](physics.md#the-player).
+
+| Name | Holds | Default |
+|---|---|---|
+| `walk_speed` | Metres per second along the ground | `4` |
+| `run_speed` | Metres per second along the ground while `run` is down | `6` |
+| `jump_speed` | Metres per second upward that a jump starts with | `5` |
+| `look_speed` | Radians the view turns for every pixel of `look` | `0.0025` |
+| `eye_height` | Metres from the feet to the eyes, where the camera is put | `1.6` |
+| `max_pitch` | Degrees the view can turn up or down, from 0 to 90 | `89` |
+
 **SoundSource** and **SoundListener** are listed in [audio.md](audio.md).
 
 **RigidBody**, **Collider**, **Trigger**, **CharacterBody**, and **Joint**

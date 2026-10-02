@@ -4,6 +4,7 @@
 
 #include "components/camera.hpp"
 #include "components/light.hpp"
+#include "components/player.hpp"
 #include "components/renderable.hpp"
 #include "components/spectator.hpp"
 #include "systems/render-submission.hpp"
@@ -55,6 +56,7 @@ namespace neon
     _store->Register<Camera>("Camera");
     _store->Register<Light>("Light");
     _store->Register<Spectator>("Spectator");
+    _store->Register<Player>("Player");
 
     // the renderer holds a model, textures, and a material for every entity
     // that was drawn, which are released when the entity stops being visible

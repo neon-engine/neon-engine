@@ -18,11 +18,13 @@
 #include "components/camera.hpp"
 #include "components/light.hpp"
 #include "components/renderable.hpp"
+#include "components/player.hpp"
 #include "components/spectator.hpp"
 
 namespace
 {
   using neon::Camera;
+  using neon::Player;
   using neon::Entity;
   using neon::EntityStore;
   using neon::EntitySystem;
@@ -149,7 +151,7 @@ namespace
   {
     _world.Initialize();
 
-    for (const char *name : {"Transform", "Camera", "Light", "Spectator", "Renderable"})
+    for (const char *name : {"Transform", "Camera", "Light", "Spectator", "Player", "Renderable"})
     {
       EXPECT_NE(_store.FindComponent(name), No_Component) << name;
     }
@@ -157,6 +159,7 @@ namespace
     EXPECT_EQ(_store.IdOf<Camera>(), _store.FindComponent("Camera"));
     EXPECT_EQ(_store.IdOf<Light>(), _store.FindComponent("Light"));
     EXPECT_EQ(_store.IdOf<Spectator>(), _store.FindComponent("Spectator"));
+    EXPECT_EQ(_store.IdOf<Player>(), _store.FindComponent("Player"));
     EXPECT_EQ(_store.IdOf<Renderable>(), _store.FindComponent("Renderable"));
   }
 

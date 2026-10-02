@@ -69,6 +69,18 @@ namespace
     EXPECT_EQ(look->stick, Stick::Right);
     EXPECT_EQ(look->rate, 600.0f);
 
+    const auto *jump = map.FindAction("jump");
+    ASSERT_NE(jump, nullptr);
+    EXPECT_EQ(jump->type, InputActionType::Button);
+    EXPECT_EQ(jump->keys, (std::vector{Key::Space}));
+    EXPECT_EQ(jump->buttons, (std::vector{ControllerButton::South}));
+
+    const auto *run = map.FindAction("run");
+    ASSERT_NE(run, nullptr);
+    EXPECT_EQ(run->type, InputActionType::Button);
+    EXPECT_EQ(run->keys, (std::vector{Key::LeftShift}));
+    EXPECT_TRUE(run->buttons.empty());
+
     const auto *pause = map.FindAction("pause");
     ASSERT_NE(pause, nullptr);
     EXPECT_EQ(pause->type, InputActionType::Button);
@@ -78,6 +90,8 @@ namespace
     EXPECT_EQ(map.GetFirstState(), "playing");
     EXPECT_TRUE(map.FindState("playing")->Has("move"));
     EXPECT_TRUE(map.FindState("playing")->Has("look"));
+    EXPECT_TRUE(map.FindState("playing")->Has("jump"));
+    EXPECT_TRUE(map.FindState("playing")->Has("run"));
     EXPECT_TRUE(map.FindState("playing")->Has("pause"));
     ASSERT_NE(map.FindState("menu"), nullptr);
     EXPECT_EQ(map.FindState("menu")->actions, (std::vector<std::string>{"pause"}));

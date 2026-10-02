@@ -7,9 +7,10 @@
 # behind the doorway. Columns stand in the corners of the room, a crate and a
 # supply crate with a blaster on it stand in the room, and a target hangs on
 # each end wall. The reactor hums. The player starts in the corridor, facing
-# the doorway, and flies with the Spectator's controls: W, A, S, D and the
-# mouse. A walker crosses the room and slides along its north wall, as the
-# character of physics.scene.yml does.
+# the doorway, and walks with the actions of the input map: W, A, S, D, the
+# mouse to look, space to jump, and the left shift to run. A walker crosses
+# the room and slides along its north wall, as the character of
+# physics.scene.yml does.
 #
 # The kit pieces are metres, but the loader scales every model so that its
 # longest side is 1 and puts its middle at the origin. The scale of each
@@ -389,12 +390,19 @@ entities:
             textures:
               - assets://textures/water.png
 
-  # the player, who starts in the corridor and looks through the doorway
+  # the player, who starts in the corridor and looks through the doorway. A
+  # capsule of 1.8 that the physics stands on the floor, with its middle 0.9
+  # above it, and the camera lifted to the eyes by the Player
   - name: player
     components:
       Transform:
-        position: [0, 1.6, 7.5]
-      Spectator: Default
+        position: [0, 0.9, 7.5]
+      Player: Default
+      CharacterBody: Default
+      Collider:
+        shape: capsule
+        radius: 0.4
+        height: 1.8
     children:
       - name: camera
         components:

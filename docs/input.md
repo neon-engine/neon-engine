@@ -214,6 +214,16 @@ What moved to actions:
 | `Action::Mouse` and `Axis::Mouse`, read by `SpectatorMovement` | `look`, an axis2 | The motion of the mouse; the right stick at 600 pixels a second |
 | `Action::Pause`, read by `Runtime` for the pause menu | `pause`, a button | Escape; start |
 
+And what came with the player, see [physics.md](physics.md#the-player):
+
+| Action | Is | Default binding | Read by |
+|---|---|---|---|
+| `jump` | A button | Space; south | `PlayerMovement`, once per press, while the player stands on the ground |
+| `run` | A button | Left shift | `PlayerMovement`, which walks at `run_speed` while it is down. A controller has no binding: the stick says how fast to walk |
+
+The `playing` state of the default map has `move`, `look`, `jump`, `run`, and
+`pause`; `menu` has `pause` alone.
+
 `Ui_Up` to `Ui_Cancel` and `Pointer_Primary` stay fixed actions of the user
 interface: they are the engine's, not the game's, and every project moves
 through a menu the same way. `L_*` and `R_*` are still set by the backends

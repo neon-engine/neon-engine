@@ -297,6 +297,7 @@ add_library(${TARGET} STATIC
         neon/world-system/ecs/components/collider.hpp
         neon/world-system/ecs/components/joint.hpp
         neon/world-system/ecs/components/light.hpp
+        neon/world-system/ecs/components/player.hpp
         neon/world-system/ecs/components/renderable.hpp
         neon/world-system/ecs/components/rigid-body.hpp
         neon/world-system/ecs/components/spectator.hpp
@@ -309,6 +310,8 @@ add_library(${TARGET} STATIC
         neon/world-system/ecs/components/trigger.hpp
         neon/world-system/ecs/systems/physics-simulation.cpp
         neon/world-system/ecs/systems/physics-simulation.hpp
+        neon/world-system/ecs/systems/player-movement.cpp
+        neon/world-system/ecs/systems/player-movement.hpp
         neon/world-system/ecs/components/ui-view.hpp
         neon/world-system/ecs/scene-file/ui-view-format.cpp
         neon/world-system/ecs/scene-file/ui-view-format.hpp
@@ -467,6 +470,7 @@ neon_add_unit_test(${TARGET} neon/command-line/display-options.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/audio-playback.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/physics-simulation.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/render-submission.test.cpp)
+  neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/player-movement.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/spectator-movement.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/transform-propagation.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/ui-view-loading.test.cpp)

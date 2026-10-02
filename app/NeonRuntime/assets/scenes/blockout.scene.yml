@@ -97,11 +97,18 @@ entities:
       Collider:
         shape: convex_hull
 
+  # the player walks the room: up the ramp, onto the platform, and against
+  # the crate. A capsule of 1.8 that the physics stands on the floor
   - name: player
     components:
       Transform:
-        position: [0, 1.6, 3]
-      Spectator: Default
+        position: [0, 0.9, 3]
+      Player: Default
+      CharacterBody: Default
+      Collider:
+        shape: capsule
+        radius: 0.4
+        height: 1.8
     children:
       - name: camera
         components:

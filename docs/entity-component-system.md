@@ -60,6 +60,7 @@ privately, so the compiler refuses it anywhere else.
 | `Camera` | Field of view and the distances between which things are visible | same |
 | `Light` | A light source | same |
 | `Spectator` | The speeds the input moves the entity with | same |
+| `Player` | The speeds the input walks, runs, jumps, and turns the entity with, and where its eyes are. See [physics.md](physics.md#the-player) | same |
 | `RigidBody`, `Collider`, `Trigger`, `CharacterBody` | What the physics needs to know of an entity. See [physics.md](physics.md) | same |
 
 ### Systems
@@ -91,7 +92,8 @@ The world takes 60 steps in a second, whatever the frame rate is. Why, and
 what belongs where, is in [physics.md](physics.md#the-time-step).
 
 `PhysicsSimulation` is a system that an application adds, as `main.cpp` of
-the runtime does.
+the runtime does, and so is `PlayerMovement`, which the runtime adds before
+it, so that the velocity it sets is taken in the step that follows.
 
 ## Using it
 

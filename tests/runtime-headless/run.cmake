@@ -100,7 +100,7 @@ endif ()
 # the script is checked against the input map before anything is rendered
 if (CASE STREQUAL "hold-of-an-action-the-map-does-not-have")
   expect_exit_code(1)
-  expect_output("'hold fly' names an action the input map does not have. It has: move, look, pause")
+  expect_output("'hold fly' names an action the input map does not have. It has: move, look, jump, run, pause")
   return()
 endif ()
 

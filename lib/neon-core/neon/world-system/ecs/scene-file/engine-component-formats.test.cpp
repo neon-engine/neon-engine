@@ -10,6 +10,7 @@
 #include <neon/world-system/ecs/components/camera.hpp>
 #include <neon/world-system/ecs/components/geometry.hpp>
 #include <neon/world-system/ecs/components/light.hpp>
+#include <neon/world-system/ecs/components/player.hpp>
 #include <neon/world-system/ecs/components/renderable.hpp>
 #include <neon/world-system/ecs/components/sound-listener.hpp>
 #include <neon/world-system/ecs/components/sound-source.hpp>
@@ -28,6 +29,7 @@ namespace
   using neon::Entity;
   using neon::Light;
   using neon::LightType;
+  using neon::Player;
   using neon::Renderable;
   using neon::RenderTarget;
   using neon::SoundListener;
@@ -99,6 +101,7 @@ namespace
       _store.Register<Camera>("Camera");
       _store.Register<Light>("Light");
       _store.Register<Spectator>("Spectator");
+      _store.Register<Player>("Player");
       _store.Register<SoundSource>("SoundSource");
       _store.Register<SoundListener>("SoundListener");
 
@@ -136,7 +139,7 @@ namespace
 
   TEST_F(EngineComponentFormatsTest, KnowsTheComponentsOfTheEngine)
   {
-    for (const auto *name : {"Transform", "Renderable", "Camera", "Light", "Spectator", "SoundSource", "SoundListener"})
+    for (const auto *name : {"Transform", "Renderable", "Camera", "Light", "Spectator", "Player", "SoundSource", "SoundListener"})
     {
       EXPECT_NE(_formats.Find(name), nullptr) << name;
     }
@@ -635,6 +638,84 @@ namespace
     _store.Set(_entity, Spectator{});
 
     EXPECT_THAT(NamesOf(Write("Spectator")), IsEmpty());
+  }
+
+  // Player
+
+  TEST_F(EngineComponentFormatsTest, ReadsAPlayer)
+  {
+    auto map = DataValue::Map();
+    map.Set("walk_speed", DataValue::Number(3.0f));
+    map.Set("run_speed", DataValue::Number(7.0f));
+    map.Set("jump_speed", DataValue::Number(4.0f));
+    map.Set("look_speed", DataValue::Number(0.01f));
+    map.Set("eye_height", DataValue::Number(1.2f));
+    map.Set("max_pitch", DataValue::Number(60.0f));
+
+    Read("Player", map);
+
+    const auto *player = _store.Get<Player>(_entity);
+    ASSERT_NE(player, nullptr);
+    EXPECT_EQ(player->walk_speed, 3.0f);
+    EXPECT_EQ(player->run_speed, 7.0f);
+    EXPECT_EQ(player->jump_speed, 4.0f);
+    EXPECT_EQ(player->look_speed, 0.01f);
+    EXPECT_EQ(player->eye_height, 1.2f);
+    EXPECT_EQ(player->max_pitch, 60.0f);
+    EXPECT_THAT(_errors, IsEmpty());
+  }
+
+  TEST_F(EngineComponentFormatsTest, ReadsAPlayerWithItsDefaults)
+  {
+    Read("Player", DataValue::Map());
+
+    const auto *player = _store.Get<Player>(_entity);
+    ASSERT_NE(player, nullptr);
+    EXPECT_EQ(player->walk_speed, 4.0f);
+    EXPECT_EQ(player->run_speed, 6.0f);
+    EXPECT_EQ(player->jump_speed, 5.0f);
+    EXPECT_EQ(player->look_speed, 0.0025f);
+    EXPECT_EQ(player->eye_height, 1.6f);
+    EXPECT_EQ(player->max_pitch, 89.0f);
+    EXPECT_THAT(_errors, IsEmpty());
+  }
+
+  TEST_F(EngineComponentFormatsTest, RefusesAPlayerThatLooksPastStraightUp)
+  {
+    auto map = DataValue::Map();
+    map.Set("max_pitch", DataValue::Number(95.0f));
+
+    Read("Player", map);
+
+    EXPECT_THAT(_errors, SizeIs(1));
+    EXPECT_THAT(_errors.front(), ::testing::HasSubstr("'max_pitch'"));
+  }
+
+  TEST_F(EngineComponentFormatsTest, RefusesAPlayerThatWalksBackwardsByItself)
+  {
+    auto map = DataValue::Map();
+    map.Set("walk_speed", DataValue::Number(-1.0f));
+
+    Read("Player", map);
+
+    EXPECT_THAT(_errors, SizeIs(1));
+    EXPECT_THAT(_errors.front(), ::testing::HasSubstr("'walk_speed'"));
+  }
+
+  TEST_F(EngineComponentFormatsTest, WritesNothingOfAPlayerThatHasItsDefaults)
+  {
+    _store.Set(_entity, Player{});
+
+    EXPECT_THAT(NamesOf(Write("Player")), IsEmpty());
+  }
+
+  TEST_F(EngineComponentFormatsTest, WritesWhatOfAPlayerWasChanged)
+  {
+    _store.Set(_entity, Player{.run_speed = 8.0f, .eye_height = 1.0f});
+
+    const auto written = Write("Player");
+
+    EXPECT_THAT(NamesOf(written), ElementsAre("run_speed", "eye_height"));
   }
 
   // SoundSource

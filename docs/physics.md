@@ -179,7 +179,7 @@ in the way. And `character` and `failed`, as the others.
 | Turning | The script turns the node | The game turns the `Transform`. The shape stays upright |
 
 So a scene recipe alone makes a character walk, which is what the scene of the
-runtime does.
+runtime does. A character that the input drives is the [player](#the-player).
 
 **Joint**
 
@@ -215,6 +215,68 @@ as a `RigidBody` has.
 The entity needs a `RigidBody`, and so does the entity `other` names. A
 `Trigger` and a `CharacterBody` cannot be joined to anything. One of the two
 bodies is dynamic, since there is nothing to hold otherwise.
+
+## The player
+
+A `Player` on an entity with a `CharacterBody` is driven by the input, seen
+from the first person. The system `PlayerMovement`, which the runtime adds
+before the physics, reads the actions of the [input map](input.md) once a
+frame and writes the body; the physics moves the body in the steps that
+follow, stops it at walls, and lets it fall. The camera is a child of the
+entity with a `Camera`, which the system lifts to the eyes and pitches.
+
+```yaml
+- name: player
+  components:
+    Transform:
+      position: [0, 0.9, 7.5]
+    Player: Default
+    CharacterBody: Default
+    Collider:
+      shape: capsule
+      radius: 0.4
+      height: 1.8
+  children:
+    - name: camera
+      components:
+        Transform: Default
+        Camera: Default
+        SoundListener: Default
+```
+
+**Player**
+
+| Name | Holds | Default |
+|---|---|---|
+| `walk_speed` | Metres per second along the ground | `4` |
+| `run_speed` | Metres per second along the ground while `run` is down | `6` |
+| `jump_speed` | Metres per second upward that a jump starts with | `5` |
+| `look_speed` | Radians the view turns for every pixel of `look` | `0.0025` |
+| `eye_height` | Metres from the feet to the eyes, where the camera is put | `1.6` |
+| `max_pitch` | Degrees the view can turn up or down, from 0 to 90 | `89` |
+
+| Action | Does |
+|---|---|
+| `move` | Sets `velocity` of the body along the ground in the direction the body faces, at `walk_speed`, or `run_speed` while `run` is down. Two keys together walk no faster than one, and a stick pushed halfway walks at half the speed. Nothing pressed stops the body |
+| `look` | Its `x` turns the entity's `Transform` around its up, by the yaw alone, so that the capsule stays upright. Its `y` pitches the camera's `Transform`, within `max_pitch` either way |
+| `jump` | Once per press, while `on_floor` of the body is set: `fall_velocity` becomes `jump_speed` upward, and the physics lets it fall back |
+| `run` | Walking is at `run_speed` while it is down |
+
+| | |
+|---|---|
+| Where the player looks at the start | The `rotation` of the entity's `Transform` holds the yaw and that of the camera's the pitch, so a scene writes them. The component keeps nothing of its own |
+| Where the camera is | At `eye_height` above the feet, which are the bottom of the entity's `Collider` (a capsule of 1.8 stands 0.9 below the origin). Measured from the origin without a `Collider`, and in the units of the entity when it is scaled. Written every frame, so the camera's `position` in a scene is not kept |
+| What the physics gives it | `on_floor` says whether a jump is allowed. Walking up steps, sliding along walls, slopes that are too steep, falling, and pushing crates come from the `CharacterBody` |
+| What is drawn | The body is placed between the last two steps as every character is, and the camera below it goes with it |
+| While the pause menu is shown | The world does not update its systems, so the player neither turns nor moves, and the user interface takes the input first, see [user-interface.md](user-interface.md#input-and-focus) |
+| The `Spectator` | Stays what it is: a camera that flies, for looking around while developing. `demo.scene.yml` keeps it |
+
+The runtime walks the prototype level and the blockout this way:
+
+```
+NeonRuntime --scene assets://scenes/prototype.scene.yml
+NeonRuntime --scene assets://scenes/blockout.scene.yml
+```
 
 ## Shapes
 
@@ -642,6 +704,7 @@ A character is found as a body is.
 | `Jolt_PhysicsSystem` | neon-jolt | The implementation |
 | `RigidBody`, `Collider`, `Trigger`, `CharacterBody`, `Joint` | neon-core | The components |
 | `PhysicsSimulation` | neon-core | The system that brings entities and the physics together |
+| `Player`, `PlayerMovement` | neon-core | The component and the system of the [player](#the-player), which the runtime adds before the physics |
 | `FixedClock` | neon-core | Turns the time of frames into steps. It belongs to `EntityWorld` |
 | `LoadModelGeometry` | neon-core | Reads the points and triangles of a model through the file system |
 | `GeometryBuilding::Build` | neon-core | The points and triangles of an entity's `Geometry`, for a `Collider` of kind `mesh` or `convex_hull` that names no model, so that what is drawn is what collides. See [geometry.md](geometry.md) |
@@ -790,6 +853,8 @@ Jolt Physics is a submodule in `external/jolt-physics`. Its options are set in
 | The same world twice, with 21 bodies, a mesh, a trigger, and a character, for 300 steps | The same state down to the last bit, and the same events in the same order |
 | The same pendulum twice, for 200 steps | The same state down to the last bit |
 | 91 checks of `PhysicsSimulation` with a physics that is a fake | Pass |
+| 28 checks of `PlayerMovement` with an input that is a fake, and 6 of the format of `Player` | Pass. Walking the way the body faces at the walking and the running speed, turning the body and pitching the camera within the clamp, the camera at the eyes, jumping from the ground once per press and not in the air, and what is no player left alone |
+| The prototype level, with W held for a second without a window | The player stands in the doorway, with the lintel above it where the black behind the walls was, and the first frame is the same byte for byte as before the player could walk |
 | 54 checks of the formats of the components | Pass. Reading, writing, reading what was written, and every message |
 | 21 checks of `Rotation` | Pass |
 | 19 checks of `FixedClock` | Pass |
@@ -821,7 +886,12 @@ It was built and run on macOS. **It was not built on Linux and Windows.**
   `Collider` below a body that moves. Both are read when the body is created.
 - Joints that are driven: a motor that opens a door, a spring that pulls it
   shut. And keeping two joined bodies from colliding with each other.
-- A character that changes its shape, as for crouching.
+- A character that changes its shape, as for crouching. The player has no
+  crouch for that reason.
+- What the player still lacks: a binding of `run` on a controller, a view
+  that is smoothed or bobs with the steps, a jump that is held for a higher
+  one, a body that keeps some of its speed in the air, and a step up that
+  the camera glides over instead of jumping with the body.
 - Whether a character reports every body it touches as events.
 - Drawing the shapes of the physics, to see what collides. Jolt has a
   renderer for it, which is turned off.

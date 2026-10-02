@@ -91,13 +91,28 @@ namespace neon
     });
 
     map.Add({
+      .name = "jump",
+      .type = InputActionType::Button,
+      .keys = {Key::Space},
+      .buttons = {ControllerButton::South}
+    });
+
+    // running is holding a key. A controller has no binding yet; the stick
+    // says how fast to walk
+    map.Add({
+      .name = "run",
+      .type = InputActionType::Button,
+      .keys = {Key::LeftShift}
+    });
+
+    map.Add({
       .name = "pause",
       .type = InputActionType::Button,
       .keys = {Key::Escape},
       .buttons = {ControllerButton::Start}
     });
 
-    map.Add({.name = "playing", .actions = {"move", "look", "pause"}});
+    map.Add({.name = "playing", .actions = {"move", "look", "jump", "run", "pause"}});
     map.Add({.name = "menu", .actions = {"pause"}});
 
     return map;
