@@ -469,6 +469,15 @@ namespace neon
       return "";
     }
 
+    /// A value as a number: a number as it is, a flag as 1 or 0, and a text
+    /// as the number it holds, as a style sheet writes one. Returns false
+    /// and leaves `number` alone for a name that has no value, or a text
+    /// that holds no number.
+    [[nodiscard]] virtual bool GetNumber(const std::string &name, double &number) const
+    {
+      return false;
+    }
+
     /// Calls `callback` whenever the element of that name is chosen. It is
     /// called at the end of Update() of the frame, where the game is free
     /// to load and unload files. A name has one callback, and a second

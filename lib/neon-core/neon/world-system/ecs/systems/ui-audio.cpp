@@ -1,7 +1,6 @@
 #include "ui-audio.hpp"
 
 #include <algorithm>
-#include <cstdlib>
 
 #include <neon/world-system/ecs/components/sound-source.hpp>
 #include <neon/world-system/ecs/components/ui-sound-switch.hpp>
@@ -9,35 +8,22 @@
 
 namespace neon
 {
-  namespace
-  {
-    /// The number a value holds, or nothing when it holds none.
-    std::optional<double> NumberOf(const std::string &text)
-    {
-      if (text.empty()) { return std::nullopt; }
-
-      char *end = nullptr;
-      const double number = std::strtod(text.c_str(), &end);
-      if (end != text.c_str() + text.size()) { return std::nullopt; }
-      return number;
-    }
-  }
-
   UiAudio::UiAudio(UiContext *ui_context, AudioContext *audio_context)
   {
     _ui_context = ui_context;
     _audio_context = audio_context;
   }
 
-  void UiAudio::Initialize(EntityStore &store)
+  void UiAudio::Register(EntityStore &store)
   {
     store.Register<UiVolume>("UiVolume");
     store.Register<UiSoundSwitch>("UiSoundSwitch");
+  }
 
+  void UiAudio::Initialize(EntityStore &store)
+  {
     _volumes = store.Query<UiVolume>();
-
-    // SoundSource is registered by AudioPlayback, which is initialized after
-    // this system, so the query that needs it is made in the first frame
+    _switches = store.Query<UiSoundSwitch, SoundSource>();
   }
 
   void UiAudio::Update(EntityStore &store, double)
@@ -50,11 +36,10 @@ namespace neon
       {
         auto &volume = volumes[i];
 
-        bool is_set = false;
-        const auto number = NumberOf(_ui_context->GetValue(volume.value, &is_set));
-        if (!is_set || !number || volume.full <= 0.0f) { continue; }
+        double number = 0.0;
+        if (!_ui_context->GetNumber(volume.value, number) || volume.full <= 0.0f) { continue; }
 
-        const float level = std::max(static_cast<float>(*number) / volume.full, 0.0f);
+        const float level = std::max(static_cast<float>(number) / volume.full, 0.0f);
         if (volume.last_volume == level) { continue; }
 
         // handed over only when it changes, so that a group that is not
@@ -63,8 +48,6 @@ namespace neon
         volume.last_volume = level;
       }
     });
-
-    if (_switches == 0) { _switches = store.Query<UiSoundSwitch, SoundSource>(); }
 
     store.Each(_switches, [&](const EntityBlock &block)
     {

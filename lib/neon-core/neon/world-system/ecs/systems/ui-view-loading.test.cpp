@@ -33,6 +33,7 @@ namespace
     void SetUp() override
     {
       _store.Initialize();
+      _system.Register(_store);
       _system.Initialize(_store);
     }
 

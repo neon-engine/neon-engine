@@ -28,6 +28,8 @@ namespace neon
     explicit UiSurfaceLoading(UiContext *ui_context);
 
     /// Registers the component, which the engine does not know by itself.
+    void Register(EntityStore &store) override;
+
     void Initialize(EntityStore &store) override;
 
     /// Throws when a surface cannot be made or a file cannot be used, as a

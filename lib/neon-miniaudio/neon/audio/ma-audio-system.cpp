@@ -40,7 +40,8 @@ namespace neon
       float volume = 1.0f;
 
       // made when the engine is, as it is a part of it
-      std::unique_ptr<ma_sound_group> group;
+      bool is_made = false;
+      ma_sound_group group{};
     };
   }
 
@@ -61,8 +62,9 @@ namespace neon
     // there is a sound card
     std::atomic<float> output_level{0.0f};
 
-    // sounds are handed to miniaudio by address, so they must not move
-    std::map<int, std::unique_ptr<Sound>> sounds;
+    // Sounds and groups are handed to miniaudio by address, so they must
+    // not move. What a map holds stays where it is until it is erased.
+    std::map<int, Sound> sounds;
     int next_id = 0;
 
     std::map<std::string, std::weak_ptr<FileContents>> files;
@@ -80,30 +82,25 @@ namespace neon
     Sound *Find(const int sound_id)
     {
       const auto it = sounds.find(sound_id);
-      return it == sounds.end() ? nullptr : it->second.get();
+      return it == sounds.end() ? nullptr : &it->second;
     }
 
     /// Makes the sound group of miniaudio for a group, once the engine is
     /// there.
     ma_result Make(Group &group)
     {
-      group.group = std::make_unique<ma_sound_group>();
-
       // the group is not a place in the world. Its sounds are placed each
       // for itself, and would be placed twice otherwise
       const auto result = ma_sound_group_init(
         &engine,
         MA_SOUND_FLAG_NO_SPATIALIZATION,
         nullptr,
-        group.group.get());
+        &group.group);
 
-      if (result != MA_SUCCESS)
-      {
-        group.group.reset();
-        return result;
-      }
+      if (result != MA_SUCCESS) { return result; }
 
-      ma_sound_group_set_volume(group.group.get(), group.volume);
+      group.is_made = true;
+      ma_sound_group_set_volume(&group.group, group.volume);
       return MA_SUCCESS;
     }
 
@@ -229,9 +226,9 @@ namespace neon
     // after the sounds, which are mixed into them
     for (auto &[name, group] : _state->groups)
     {
-      if (group.group == nullptr) { continue; }
-      ma_sound_group_uninit(group.group.get());
-      group.group.reset();
+      if (!group.is_made) { continue; }
+      ma_sound_group_uninit(&group.group);
+      group.is_made = false;
     }
 
     ma_engine_uninit(&_state->engine);
@@ -248,7 +245,11 @@ namespace neon
       return -1;
     }
 
-    auto sound = std::make_unique<Sound>();
+    // The sound is made where it stays, since miniaudio keeps its address.
+    // It is taken out again when it cannot be made, and the id is not used
+    // up then.
+    const int id = _state->next_id;
+    Sound *sound = &_state->sounds[id];
 
     if (const auto known = _state->files.find(sound_info.path); known != _state->files.end())
     {
@@ -261,6 +262,7 @@ namespace neon
       if (!_file_system->ReadBytes(sound_info.path, *sound->file))
       {
         _logger->Error("Sound {} cannot be read", sound_info.path);
+        _state->sounds.erase(id);
         return -1;
       }
       _state->files[sound_info.path] = sound->file;
@@ -279,6 +281,7 @@ namespace neon
       _logger->Error(
         "{} is not a sound that can be played. It has to be WAV, FLAC, MP3, or Ogg Vorbis",
         sound_info.path);
+      _state->sounds.erase(id);
       return -1;
     }
 
@@ -298,11 +301,12 @@ namespace neon
       &_state->engine,
       &sound->decoder,
       flags,
-      group->second.group.get(),
+      group->second.is_made ? &group->second.group : nullptr,
       &sound->sound);
     if (result != MA_SUCCESS)
     {
       ma_decoder_uninit(&sound->decoder);
+      _state->sounds.erase(id);
       const std::string reason = ma_result_description(result);
       _logger->Error("Sound {} could not be created: {}", sound_info.path, reason);
       return -1;
@@ -318,8 +322,7 @@ namespace neon
       ma_sound_set_max_distance(&sound->sound, sound_info.max_distance);
     }
 
-    const int id = _state->next_id++;
-    _state->sounds[id] = std::move(sound);
+    _state->next_id++;
 
     _logger->Debug("Created sound {} from {}", id, sound_info.path);
     return id;
@@ -330,8 +333,8 @@ namespace neon
     const auto it = _state->sounds.find(sound_id);
     if (it == _state->sounds.end()) { return; }
 
-    ma_sound_uninit(&it->second->sound);
-    ma_decoder_uninit(&it->second->decoder);
+    ma_sound_uninit(&it->second.sound);
+    ma_decoder_uninit(&it->second.decoder);
     _state->sounds.erase(it);
   }
 
@@ -474,7 +477,7 @@ namespace neon
     }
 
     it->second.volume = std::max(volume, 0.0f);
-    if (it->second.group != nullptr) { ma_sound_group_set_volume(it->second.group.get(), it->second.volume); }
+    if (it->second.is_made) { ma_sound_group_set_volume(&it->second.group, it->second.volume); }
   }
 
   float MA_AudioSystem::GetGroupVolume(const std::string &group)

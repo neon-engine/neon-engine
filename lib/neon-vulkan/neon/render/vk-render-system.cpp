@@ -2,20 +2,12 @@
 
 #include <algorithm>
 #include <array>
-#include <cstddef>
 #include <cstring>
 #include <format>
 #include <stdexcept>
 #include <glm/gtc/matrix_transform.hpp>
-#include <neon/common/color-space.hpp>
 
 #include "vk-culling.hpp"
-#include "vk-surface-format.hpp"
-
-// kept private to this file, so that another library can carry its own copy
-#define STB_IMAGE_WRITE_STATIC
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include <stb_image_write.h>
 
 namespace neon
 {
@@ -42,13 +34,6 @@ namespace neon
     {
       return alignment == 0 ? size : (size + alignment - 1) / alignment * alignment;
     }
-
-    void append_png_bytes(void *context, void *data, const int size)
-    {
-      auto *out = static_cast<std::vector<unsigned char> *>(context);
-      const auto *bytes = static_cast<const unsigned char *>(data);
-      out->insert(out->end(), bytes, bytes + size);
-    }
   }
 
   void VK_RenderSystem::Initialize()
@@ -65,35 +50,17 @@ namespace neon
 
     if (_device.Surface() != VK_NULL_HANDLE)
     {
-      if (!CreateSwapchain(_extent))
+      if (!_swapchain.Initialize(&_device, {width, height}, _logger))
       {
         throw std::runtime_error("Failed to create the Vulkan swapchain");
       }
 
       // the frame is drawn at the size of the window
-      _extent = _swapchain_extent;
-      _window_size = {width, height};
+      _extent = _swapchain.Extent();
     }
 
     _logger->Info("Render resolution: {}x{}", _extent.width, _extent.height);
     _render_resolution.emplace(static_cast<int>(_extent.width), static_cast<int>(_extent.height));
-
-    if (!CreateRenderPasses() ||
-        !_resolve.Initialize(&_device, _file_system_context, _frame_pass, max_scene_images, _logger) ||
-        !CreateFrameImages() ||
-        !CreateDescriptors())
-    {
-      throw std::runtime_error("Failed to set up the Vulkan renderer");
-    }
-
-    // drawn on top of the resolved scene, in the sRGB colours CSS blends in
-    _renderer_2d.Initialize(&_device, _file_system_context, _frame_pass, _extent, _logger);
-
-    _white_texture = VK_Texture("a plain white texture", _file_system_context, &_device, _logger);
-    if (!_white_texture.InitializeWithColor(255, 255, 255, 255))
-    {
-      throw std::runtime_error("Failed to create the fallback texture");
-    }
 
     VkCommandBufferAllocateInfo allocation{};
     allocation.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -110,109 +77,37 @@ namespace neon
     {
       throw std::runtime_error("Failed to set up the Vulkan frame");
     }
-  }
 
-  bool VK_RenderSystem::CreateSwapchain(const VkExtent2D wanted)
-  {
-    const VkPhysicalDevice physical_device = _device.PhysicalDevice();
-    const VkSurfaceKHR surface = _device.Surface();
-
-    VkSurfaceCapabilitiesKHR capabilities;
-    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical_device, surface, &capabilities);
-
-    uint32_t count = 0;
-    vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device, surface, &count, nullptr);
-    std::vector<VkSurfaceFormatKHR> formats(count);
-    vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device, surface, &count, formats.data());
-
-    vkGetPhysicalDeviceSurfacePresentModesKHR(physical_device, surface, &count, nullptr);
-    std::vector<VkPresentModeKHR> modes(count);
-    vkGetPhysicalDeviceSurfacePresentModesKHR(physical_device, surface, &count, modes.data());
-
-    if (formats.empty() || modes.empty())
+    if (!CreateRenderPasses() ||
+        !_resolve.Initialize(&_device, _file_system_context, _frame_pass, max_scene_images, _logger) ||
+        !CreateDescriptors())
     {
-      _logger->Critical("The window offers no format to present in");
-      return false;
+      throw std::runtime_error("Failed to set up the Vulkan renderer");
     }
 
-    if (!(capabilities.supportedUsageFlags & VK_IMAGE_USAGE_TRANSFER_DST_BIT))
+    _canvas_shared = {
+      .device = &_device,
+      .resolve = &_resolve,
+      .scene_pass = _scene_pass,
+      .frame_pass = _frame_pass,
+      .depth_format = _depth_format,
+      .pipeline_layout = _pipelines.Layout(),
+      .models = &_model_refs,
+      .logger = _logger,
+    };
+    _frame = VK_Canvas("the frame", &_canvas_shared);
+    _capture = VK_Capture(&_device, _file_system_context, _logger);
+
+    if (!CreateFrameImages()) { throw std::runtime_error("Failed to set up the Vulkan renderer"); }
+
+    // drawn on top of the resolved scene, in the sRGB colours CSS blends in
+    _renderer_2d.Initialize(&_device, _file_system_context, _frame_pass, _extent, _logger);
+
+    _white_texture = VK_Texture("a plain white texture", _file_system_context, &_device, _logger);
+    if (!_white_texture.InitializeWithColor(255, 255, 255, 255))
     {
-      _logger->Critical("The window does not accept copied images");
-      return false;
+      throw std::runtime_error("Failed to create the fallback texture");
     }
-
-    // the frame is copied as it is, and its bytes are sRGB already
-    const VkSurfaceFormatKHR format = ChooseSurfaceFormat(formats);
-    if (IsSrgbFormat(format.format) && !_warned_about_window_format)
-    {
-      _warned_about_window_format = true;
-      _logger->Warn("The window offers only formats that convert to sRGB, frames are shown too light");
-    }
-
-    // Show frames as soon as they are done. Waiting for the screen is the
-    // one mode every driver has, and the fallback.
-    VkPresentModeKHR mode = VK_PRESENT_MODE_FIFO_KHR;
-    for (const VkPresentModeKHR wanted : {VK_PRESENT_MODE_MAILBOX_KHR, VK_PRESENT_MODE_IMMEDIATE_KHR})
-    {
-      if (std::ranges::find(modes, wanted) != modes.end())
-      {
-        mode = wanted;
-        break;
-      }
-    }
-
-    // The window usually dictates the size. A minimized one can have none,
-    // and keeps the swapchain it has until it is shown again.
-    const VkExtent2D extent = VK_SwapchainSizing::ExtentOf(capabilities, wanted);
-    if (extent.width == 0 || extent.height == 0) { return false; }
-
-    uint32_t image_count = capabilities.minImageCount + 1;
-    if (capabilities.maxImageCount > 0) { image_count = std::min(image_count, capabilities.maxImageCount); }
-
-    VkSwapchainCreateInfoKHR info{};
-    info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-    info.surface = surface;
-    info.minImageCount = image_count;
-    info.imageFormat = format.format;
-    info.imageColorSpace = format.colorSpace;
-    info.imageExtent = extent;
-    info.imageArrayLayers = 1;
-    info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-    info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    info.preTransform = capabilities.currentTransform;
-    info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-    info.presentMode = mode;
-    info.clipped = VK_TRUE;
-    // a swapchain that is made again can take over from the one before
-    info.oldSwapchain = _swapchain;
-
-    VkSwapchainKHR swapchain = VK_NULL_HANDLE;
-    if (vkCreateSwapchainKHR(_device.Device(), &info, nullptr, &swapchain) != VK_SUCCESS)
-    {
-      _logger->Critical("Could not create the Vulkan swapchain");
-
-      // the one before is retired all the same, and cannot be drawn to
-      if (_swapchain != VK_NULL_HANDLE) { vkDestroySwapchainKHR(_device.Device(), _swapchain, nullptr); }
-      _swapchain = VK_NULL_HANDLE;
-      return false;
-    }
-
-    if (_swapchain != VK_NULL_HANDLE) { vkDestroySwapchainKHR(_device.Device(), _swapchain, nullptr); }
-    _swapchain = swapchain;
-    _swapchain_extent = extent;
-
-    vkGetSwapchainImagesKHR(_device.Device(), _swapchain, &count, nullptr);
-    _swapchain_images.resize(count);
-    vkGetSwapchainImagesKHR(_device.Device(), _swapchain, &count, _swapchain_images.data());
-
-    // the semaphores stay when the swapchain is made again
-    if (_image_available != VK_NULL_HANDLE) { return true; }
-
-    VkSemaphoreCreateInfo semaphore{};
-    semaphore.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-
-    return vkCreateSemaphore(_device.Device(), &semaphore, nullptr, &_image_available) == VK_SUCCESS &&
-           vkCreateSemaphore(_device.Device(), &semaphore, nullptr, &_render_finished) == VK_SUCCESS;
   }
 
   bool VK_RenderSystem::CreateRenderPasses()
@@ -357,14 +252,10 @@ namespace neon
           _extent.width, _extent.height, 1, color_format,
           VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
           _color_image, _color_memory) ||
-        !_device.CreateImageView(_color_image, color_format, VK_IMAGE_ASPECT_COLOR_BIT, 1, _color_view) ||
-        !_scene.Initialize(&_device, _extent.width, _extent.height, _scene_pass, _depth_format))
+        !_device.CreateImageView(_color_image, color_format, VK_IMAGE_ASPECT_COLOR_BIT, 1, _color_view))
     {
       return false;
     }
-
-    _scene_set = _resolve.Keep(_scene.View());
-    if (_scene_set == VK_NULL_HANDLE) { return false; }
 
     VkFramebufferCreateInfo framebuffer{};
     framebuffer.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
@@ -380,7 +271,11 @@ namespace neon
       _logger->Critical("Could not create the Vulkan framebuffer");
       return false;
     }
-    return true;
+
+    // the frame always lights a scene, and has its scene image from the
+    // start
+    _frame.SetImages(_commands, _framebuffer, _extent);
+    return _frame.PrepareScene();
   }
 
   void VK_RenderSystem::DestroyFrameImages()
@@ -388,14 +283,12 @@ namespace neon
     const VkDevice device = _device.Device();
 
     if (_framebuffer != VK_NULL_HANDLE) { vkDestroyFramebuffer(device, _framebuffer, nullptr); }
-    _resolve.Release(_scene_set);
-    _scene.CleanUp();
+    _frame.CleanUp();
     if (_color_view != VK_NULL_HANDLE) { vkDestroyImageView(device, _color_view, nullptr); }
     if (_color_image != VK_NULL_HANDLE) { vkDestroyImage(device, _color_image, nullptr); }
     if (_color_memory != VK_NULL_HANDLE) { vkFreeMemory(device, _color_memory, nullptr); }
 
     _framebuffer = VK_NULL_HANDLE;
-    _scene_set = VK_NULL_HANDLE;
     _color_view = VK_NULL_HANDLE;
     _color_image = VK_NULL_HANDLE;
     _color_memory = VK_NULL_HANDLE;
@@ -447,36 +340,7 @@ namespace neon
       return false;
     }
 
-    // has to match the bindings in scene-data.glsl and the shaders
-    constexpr VkShaderStageFlags both = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-    constexpr std::array<VkDescriptorSetLayoutBinding, 4> bindings{{
-      {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, both, nullptr},
-      {1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, both, nullptr},
-      {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
-      {3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
-    }};
-
-    VkDescriptorSetLayoutCreateInfo layout{};
-    layout.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    layout.bindingCount = static_cast<uint32_t>(bindings.size());
-    layout.pBindings = bindings.data();
-
-    if (vkCreateDescriptorSetLayout(_device.Device(), &layout, nullptr, &_descriptor_layout) != VK_SUCCESS)
-    {
-      _logger->Critical("Could not create the Vulkan descriptor layout");
-      return false;
-    }
-
-    VkPipelineLayoutCreateInfo pipeline_layout{};
-    pipeline_layout.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipeline_layout.setLayoutCount = 1;
-    pipeline_layout.pSetLayouts = &_descriptor_layout;
-
-    if (vkCreatePipelineLayout(_device.Device(), &pipeline_layout, nullptr, &_pipeline_layout) != VK_SUCCESS)
-    {
-      _logger->Critical("Could not create the Vulkan pipeline layout");
-      return false;
-    }
+    if (!_pipelines.Initialize(&_device, _file_system_context, _scene_pass, _logger)) { return false; }
 
     // one set for each material
     constexpr std::array<VkDescriptorPoolSize, 2> sizes{{
@@ -499,144 +363,15 @@ namespace neon
     return true;
   }
 
-  bool VK_RenderSystem::GetPipeline(
-    const std::string &shader_path,
-    const AlphaMode alpha_mode,
-    const bool double_sided,
-    const bool mirrored,
-    VkPipeline &pipeline)
-  {
-    const bool blends = alpha_mode == AlphaMode::Blend;
-
-    // materials that name the same shader, and cover and are culled alike,
-    // share a pipeline
-    const std::string key = VK_Culling::PipelineKey(shader_path, alpha_mode, double_sided, mirrored);
-    if (const auto existing = _pipelines.find(key); existing != _pipelines.end())
-    {
-      pipeline = existing->second.pipeline;
-      return true;
-    }
-
-    PipelineEntry entry;
-    entry.shader = VK_Shader(shader_path, _file_system_context, &_device, _logger);
-    if (!entry.shader.Initialize()) { return false; }
-
-    std::array<VkPipelineShaderStageCreateInfo, 2> stages{};
-    stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
-    stages[0].module = entry.shader.Vertex();
-    stages[0].pName = "main";
-    stages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-    stages[1].module = entry.shader.Fragment();
-    stages[1].pName = "main";
-
-    constexpr VkVertexInputBindingDescription binding{0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX};
-    constexpr std::array<VkVertexInputAttributeDescription, 3> attributes{{
-      {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, position)},
-      {1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, normal)},
-      {2, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, tex_coords)},
-    }};
-
-    VkPipelineVertexInputStateCreateInfo vertex_input{};
-    vertex_input.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    vertex_input.vertexBindingDescriptionCount = 1;
-    vertex_input.pVertexBindingDescriptions = &binding;
-    vertex_input.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributes.size());
-    vertex_input.pVertexAttributeDescriptions = attributes.data();
-
-    VkPipelineInputAssemblyStateCreateInfo assembly{};
-    assembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-    assembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-
-    // set for every frame in PrepareFrame()
-    VkPipelineViewportStateCreateInfo viewport{};
-    viewport.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-    viewport.viewportCount = 1;
-    viewport.scissorCount = 1;
-
-    // the back of a triangle is left out, unless the material is drawn
-    // from both sides
-    VkPipelineRasterizationStateCreateInfo rasterization{};
-    rasterization.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-    rasterization.polygonMode = VK_POLYGON_MODE_FILL;
-    rasterization.cullMode = VK_Culling::CullModeFor(double_sided);
-    rasterization.frontFace = VK_Culling::FrontFaceFor(mirrored);
-    rasterization.lineWidth = 1.0f;
-
-    VkPipelineMultisampleStateCreateInfo multisample{};
-    multisample.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-    multisample.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-
-    // What is see-through is hidden by what is opaque in front of it, but
-    // hides nothing itself, so that what is drawn after it still shows.
-    VkPipelineDepthStencilStateCreateInfo depth{};
-    depth.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    depth.depthTestEnable = VK_TRUE;
-    depth.depthWriteEnable = blends ? VK_FALSE : VK_TRUE;
-    depth.depthCompareOp = VK_COMPARE_OP_LESS;
-
-    // A see-through colour is blended over what is behind it, in the
-    // linear light of the scene image. Its alpha is multiplied into the
-    // colour, and the scene image keeps alpha multiplied in.
-    VkPipelineColorBlendAttachmentState blend_attachment{};
-    blend_attachment.blendEnable = blends ? VK_TRUE : VK_FALSE;
-    blend_attachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-    blend_attachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-    blend_attachment.colorBlendOp = VK_BLEND_OP_ADD;
-    blend_attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-    blend_attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-    blend_attachment.alphaBlendOp = VK_BLEND_OP_ADD;
-    blend_attachment.colorWriteMask =
-      VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-
-    VkPipelineColorBlendStateCreateInfo blend{};
-    blend.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-    blend.attachmentCount = 1;
-    blend.pAttachments = &blend_attachment;
-
-    constexpr std::array dynamic_states{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
-    VkPipelineDynamicStateCreateInfo dynamic{};
-    dynamic.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-    dynamic.dynamicStateCount = static_cast<uint32_t>(dynamic_states.size());
-    dynamic.pDynamicStates = dynamic_states.data();
-
-    VkGraphicsPipelineCreateInfo info{};
-    info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    info.stageCount = static_cast<uint32_t>(stages.size());
-    info.pStages = stages.data();
-    info.pVertexInputState = &vertex_input;
-    info.pInputAssemblyState = &assembly;
-    info.pViewportState = &viewport;
-    info.pRasterizationState = &rasterization;
-    info.pMultisampleState = &multisample;
-    info.pDepthStencilState = &depth;
-    info.pColorBlendState = &blend;
-    info.pDynamicState = &dynamic;
-    info.layout = _pipeline_layout;
-    info.renderPass = _scene_pass;
-    info.subpass = 0;
-
-    if (vkCreateGraphicsPipelines(
-      _device.Device(), VK_NULL_HANDLE, 1, &info, nullptr, &entry.pipeline) != VK_SUCCESS)
-    {
-      _logger->Error("Could not create the pipeline of shader {}", shader_path);
-      entry.shader.CleanUp();
-      return false;
-    }
-
-    pipeline = entry.pipeline;
-    _pipelines.emplace(key, entry);
-    return true;
-  }
-
   bool VK_RenderSystem::CreateDescriptorSet(VK_Material &material) const
   {
+    const VkDescriptorSetLayout layout = _pipelines.DescriptorLayout();
+
     VkDescriptorSetAllocateInfo allocation{};
     allocation.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     allocation.descriptorPool = _descriptor_pool;
     allocation.descriptorSetCount = 1;
-    allocation.pSetLayouts = &_descriptor_layout;
+    allocation.pSetLayouts = &layout;
 
     VkDescriptorSet set = VK_NULL_HANDLE;
     if (vkAllocateDescriptorSets(_device.Device(), &allocation, &set) != VK_SUCCESS)
@@ -730,24 +465,14 @@ namespace neon
     _white_texture.CleanUp();
     _renderer_2d.CleanUp();
 
-    for (auto &[path, entry] : _pipelines)
-    {
-      vkDestroyPipeline(device, entry.pipeline, nullptr);
-      entry.shader.CleanUp();
-    }
-    _pipelines.clear();
-
+    _pipelines.CleanUp();
     if (_descriptor_pool != VK_NULL_HANDLE) { vkDestroyDescriptorPool(device, _descriptor_pool, nullptr); }
-    if (_pipeline_layout != VK_NULL_HANDLE) { vkDestroyPipelineLayout(device, _pipeline_layout, nullptr); }
-    if (_descriptor_layout != VK_NULL_HANDLE) { vkDestroyDescriptorSetLayout(device, _descriptor_layout, nullptr); }
 
     DestroyFrameBuffer(_scene_buffer);
     DestroyFrameBuffer(_object_buffer);
 
     if (_frame_done != VK_NULL_HANDLE) { vkDestroyFence(device, _frame_done, nullptr); }
-    if (_image_available != VK_NULL_HANDLE) { vkDestroySemaphore(device, _image_available, nullptr); }
-    if (_render_finished != VK_NULL_HANDLE) { vkDestroySemaphore(device, _render_finished, nullptr); }
-    if (_swapchain != VK_NULL_HANDLE) { vkDestroySwapchainKHR(device, _swapchain, nullptr); }
+    _swapchain.CleanUp();
 
     DestroyFrameImages();
     _resolve.CleanUp();
@@ -755,12 +480,7 @@ namespace neon
     if (_frame_pass != VK_NULL_HANDLE) { vkDestroyRenderPass(device, _frame_pass, nullptr); }
 
     _descriptor_pool = VK_NULL_HANDLE;
-    _pipeline_layout = VK_NULL_HANDLE;
-    _descriptor_layout = VK_NULL_HANDLE;
     _frame_done = VK_NULL_HANDLE;
-    _image_available = VK_NULL_HANDLE;
-    _render_finished = VK_NULL_HANDLE;
-    _swapchain = VK_NULL_HANDLE;
     _scene_pass = VK_NULL_HANDLE;
     _frame_pass = VK_NULL_HANDLE;
     _commands = VK_NULL_HANDLE;
@@ -814,42 +534,26 @@ namespace neon
 
   void VK_RenderSystem::ReleaseTarget(Target &target) const
   {
-    _resolve.Release(target.scene_set);
-    target.scene_set = VK_NULL_HANDLE;
+    target.canvas.CleanUp();
     target.target.CleanUp();
+  }
+
+  VK_Canvas &VK_RenderSystem::CurrentCanvas()
+  {
+    return _current_target != No_Render_Target ? _targets[_current_target].canvas : _frame;
   }
 
   bool VK_RenderSystem::FitWindow()
   {
-    const WindowSize window = _window_context->GetDrawableSize();
-
-    switch (VK_SwapchainSizing::Decide(window, _window_size, _swapchain_stale))
-    {
-      case VK_FrameSizing::Draw: return true;
-      case VK_FrameSizing::Skip: return false;
-      case VK_FrameSizing::Recreate: break;
-    }
-
-    // nothing that is made again may still be in use
-    vkDeviceWaitIdle(_device.Device());
-
-    if (!CreateSwapchain({static_cast<uint32_t>(window.width), static_cast<uint32_t>(window.height)}))
-    {
-      // tried again in the next frame
-      _swapchain_stale = true;
-      return false;
-    }
-    _swapchain_stale = false;
-    _window_size = window;
+    if (!_swapchain.Fit(_window_context->GetDrawableSize())) { return false; }
 
     // The frame is drawn at the size of the window, so that the projection
     // of the camera and what is drawn in two dimensions follow it.
-    if (_framebuffer == VK_NULL_HANDLE ||
-        _swapchain_extent.width != _extent.width ||
-        _swapchain_extent.height != _extent.height)
+    const VkExtent2D window = _swapchain.Extent();
+    if (_framebuffer == VK_NULL_HANDLE || window.width != _extent.width || window.height != _extent.height)
     {
       DestroyFrameImages();
-      _extent = _swapchain_extent;
+      _extent = window;
 
       // the frame that was finished went with its image
       _frame_finished = false;
@@ -858,7 +562,7 @@ namespace neon
       {
         _logger->Critical("Could not resize the frame to {}x{}", _extent.width, _extent.height);
         DestroyFrameImages();
-        _swapchain_stale = true;
+        _swapchain.MakeAgain();
         return false;
       }
 
@@ -895,203 +599,12 @@ namespace neon
     begin.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
     vkBeginCommandBuffer(_commands, &begin);
 
-    // a render pass is begun by what is drawn first
-    _frame_stage = VK_FrameStage::Nothing;
-    _see_through.clear();
+    // a render pass is begun by what is drawn first, and the frame is
+    // cleared to black
+    _frame.Begin({0.0f, 0.0f, 0.0f, 1.0f});
 
     _device.SetFrameCommands(_commands);
     _frame_open = true;
-  }
-
-  bool VK_RenderSystem::EnterScene()
-  {
-    const bool is_target = _current_target != No_Render_Target;
-    VK_FrameStage &stage = is_target ? _targets[_current_target].stage : _frame_stage;
-    const VK_StageSteps steps = VK_FrameStages::ToScene(stage);
-
-    if (steps.refuse)
-    {
-      if (!_warned_about_order)
-      {
-        _warned_about_order = true;
-        _logger->Warn("A model was drawn after what is drawn on top of the scene, and is left out");
-      }
-      return false;
-    }
-    if (!steps.begin_scene) { return true; }
-
-    VkCommandBuffer commands = _commands;
-    VkFramebuffer framebuffer = _scene.Framebuffer();
-    VkExtent2D extent = _extent;
-    Color clear{0.0f, 0.0f, 0.0f, 1.0f};
-
-    if (is_target)
-    {
-      Target &kept = _targets[_current_target];
-      if (!kept.target.PrepareScene(_scene_pass, _depth_format)) { return false; }
-
-      if (kept.scene_set == VK_NULL_HANDLE) { kept.scene_set = _resolve.Keep(kept.target.Scene().View()); }
-      if (kept.scene_set == VK_NULL_HANDLE) { return false; }
-
-      commands = _target_commands;
-      framebuffer = kept.target.Scene().Framebuffer();
-      extent = kept.target.Extent();
-
-      // the colour asked for is sRGB, and the scene image holds light
-      clear = SrgbToLinear(kept.clear);
-    }
-
-    std::array<VkClearValue, 2> clears{};
-    clears[0].color = {{clear.r * clear.a, clear.g * clear.a, clear.b * clear.a, clear.a}};
-    clears[1].depthStencil = {1.0f, 0};
-
-    VkRenderPassBeginInfo pass{};
-    pass.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    pass.renderPass = _scene_pass;
-    pass.framebuffer = framebuffer;
-    pass.renderArea = {{0, 0}, extent};
-    pass.clearValueCount = static_cast<uint32_t>(clears.size());
-    pass.pClearValues = clears.data();
-
-    vkCmdBeginRenderPass(commands, &pass, VK_SUBPASS_CONTENTS_INLINE);
-
-    // Vulkan counts rows from the top, while the projection of the core
-    // assumes they are counted from the bottom. A viewport of negative
-    // height, starting at the bottom, turns the picture the right way up.
-    const VkViewport viewport{
-      0.0f,
-      static_cast<float>(extent.height),
-      static_cast<float>(extent.width),
-      -static_cast<float>(extent.height),
-      0.0f,
-      1.0f};
-    const VkRect2D scissor{{0, 0}, extent};
-
-    vkCmdSetViewport(commands, 0, 1, &viewport);
-    vkCmdSetScissor(commands, 0, 1, &scissor);
-
-    stage = VK_FrameStage::Scene;
-    return true;
-  }
-
-  void VK_RenderSystem::EnterOverlay()
-  {
-    const bool is_target = _current_target != No_Render_Target;
-    VK_FrameStage &stage = is_target ? _targets[_current_target].stage : _frame_stage;
-    const VK_StageSteps steps = VK_FrameStages::ToOverlay(stage);
-
-    VkCommandBuffer commands = _commands;
-    VkFramebuffer framebuffer = _framebuffer;
-    VkDescriptorSet scene_set = _scene_set;
-    VkExtent2D extent = _extent;
-    Color clear{0.0f, 0.0f, 0.0f, 1.0f};
-
-    if (is_target)
-    {
-      const Target &kept = _targets[_current_target];
-      commands = _target_commands;
-      framebuffer = kept.target.Framebuffer();
-      scene_set = kept.scene_set;
-      extent = kept.target.Extent();
-      clear = kept.clear;
-    }
-
-    if (steps.end_scene)
-    {
-      DrawSeeThrough(commands, is_target ? _targets[_current_target].see_through : _see_through);
-      vkCmdEndRenderPass(commands);
-    }
-
-    if (steps.begin_overlay)
-    {
-      // where a scene was drawn the resolve covers what is cleared here
-      VkClearValue clear_value{};
-      clear_value.color = {{clear.r * clear.a, clear.g * clear.a, clear.b * clear.a, clear.a}};
-
-      VkRenderPassBeginInfo pass{};
-      pass.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-      pass.renderPass = _frame_pass;
-      pass.framebuffer = framebuffer;
-      pass.renderArea = {{0, 0}, extent};
-      pass.clearValueCount = 1;
-      pass.pClearValues = &clear_value;
-
-      vkCmdBeginRenderPass(commands, &pass, VK_SUBPASS_CONTENTS_INLINE);
-    }
-
-    if (steps.resolve) { _resolve.Draw(commands, scene_set, extent); }
-
-    stage = VK_FrameStage::Overlay;
-  }
-
-  void VK_RenderSystem::DrawSeeThrough(const VkCommandBuffer commands, std::vector<VK_SeeThroughDraw> &draws)
-  {
-    VK_DrawOrder::BackToFront(draws);
-
-    for (const auto &draw : draws)
-    {
-      // a model that was destroyed since is left out
-      if (!_model_refs.Contains(draw.model_id)) { continue; }
-
-      const std::array offsets{draw.scene_offset, draw.object_offset};
-
-      vkCmdBindPipeline(commands, VK_PIPELINE_BIND_POINT_GRAPHICS, draw.pipeline);
-      vkCmdBindDescriptorSets(
-        commands,
-        VK_PIPELINE_BIND_POINT_GRAPHICS,
-        _pipeline_layout,
-        0,
-        1,
-        &draw.set,
-        static_cast<uint32_t>(offsets.size()),
-        offsets.data());
-
-      _model_refs[draw.model_id].Use();
-    }
-
-    draws.clear();
-  }
-
-  void VK_RenderSystem::LeaveCanvas()
-  {
-    const bool is_target = _current_target != No_Render_Target;
-
-    EnterOverlay();
-    vkCmdEndRenderPass(is_target ? _target_commands : _commands);
-
-    VK_FrameStage &stage = is_target ? _targets[_current_target].stage : _frame_stage;
-    stage = VK_FrameStage::Nothing;
-  }
-
-  void VK_RenderSystem::CopyToWindow(const VkCommandBuffer commands, const uint32_t image_index) const
-  {
-    const VkImage target = _swapchain_images[image_index];
-    constexpr VkImageAspectFlags color = VK_IMAGE_ASPECT_COLOR_BIT;
-
-    VK_Device::TransitionImage(
-      commands, target, color, 0, 1,
-      VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-
-    // a scaling copy, which also converts between the colour orders that the
-    // renderer and the window may use
-    VkImageBlit blit{};
-    blit.srcSubresource = {color, 0, 0, 1};
-    blit.srcOffsets[1] = {static_cast<int32_t>(_extent.width), static_cast<int32_t>(_extent.height), 1};
-    blit.dstSubresource = {color, 0, 0, 1};
-    blit.dstOffsets[1] = {
-      static_cast<int32_t>(_swapchain_extent.width),
-      static_cast<int32_t>(_swapchain_extent.height),
-      1};
-
-    vkCmdBlitImage(
-      commands,
-      _color_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-      target, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-      1, &blit, VK_FILTER_NEAREST);
-
-    VK_Device::TransitionImage(
-      commands, target, color, 0, 1,
-      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
   }
 
   void VK_RenderSystem::FinishFrame()
@@ -1101,28 +614,15 @@ namespace neon
     // a target that was left open is closed, so that its commands can run
     if (_current_target != No_Render_Target) { EndRenderTarget(); }
 
-    LeaveCanvas();
+    _frame.Leave();
 
     uint32_t image_index = 0;
     bool present = false;
 
-    if (_swapchain != VK_NULL_HANDLE)
+    if (_swapchain.IsReady())
     {
-      const VkResult acquired = vkAcquireNextImageKHR(
-        _device.Device(), _swapchain, UINT64_MAX, _image_available, VK_NULL_HANDLE, &image_index);
-
-      // the swapchain is made again before the next frame
-      if (VK_SwapchainSizing::IsStale(acquired)) { _swapchain_stale = true; }
-
-      present = acquired == VK_SUCCESS || acquired == VK_SUBOPTIMAL_KHR;
-      if (present)
-      {
-        CopyToWindow(_commands, image_index);
-      } else if (acquired != VK_ERROR_OUT_OF_DATE_KHR)
-      {
-        const int code = acquired;
-        _logger->Warn("Could not get an image of the window to draw to, error {}", code);
-      }
+      present = _swapchain.Acquire(image_index);
+      if (present) { _swapchain.CopyFrom(_commands, _color_image, _extent, image_index); }
     }
 
     vkEndCommandBuffer(_commands);
@@ -1140,6 +640,8 @@ namespace neon
     buffers[buffer_count++] = _commands;
 
     constexpr VkPipelineStageFlags wait_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+    const VkSemaphore image_available = _swapchain.ImageAvailable();
+    const VkSemaphore render_finished = _swapchain.RenderFinished();
 
     VkSubmitInfo submit{};
     submit.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -1148,10 +650,10 @@ namespace neon
     if (present)
     {
       submit.waitSemaphoreCount = 1;
-      submit.pWaitSemaphores = &_image_available;
+      submit.pWaitSemaphores = &image_available;
       submit.pWaitDstStageMask = &wait_stage;
       submit.signalSemaphoreCount = 1;
-      submit.pSignalSemaphores = &_render_finished;
+      submit.pSignalSemaphores = &render_finished;
     }
 
     if (vkQueueSubmit(_device.Queue(), 1, &submit, _frame_done) != VK_SUCCESS)
@@ -1159,17 +661,7 @@ namespace neon
       _logger->Error("Could not submit the frame");
     } else
     {
-      if (present)
-      {
-        VkPresentInfoKHR info{};
-        info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-        info.waitSemaphoreCount = 1;
-        info.pWaitSemaphores = &_render_finished;
-        info.swapchainCount = 1;
-        info.pSwapchains = &_swapchain;
-        info.pImageIndices = &image_index;
-        if (VK_SwapchainSizing::IsStale(vkQueuePresentKHR(_device.Queue(), &info))) { _swapchain_stale = true; }
-      }
+      if (present) { _swapchain.Present(image_index); }
 
       // One frame at a time. The frame is done before the next one starts,
       // which keeps the buffers of shader data free to be written again.
@@ -1190,60 +682,7 @@ namespace neon
       return false;
     }
 
-    const VkDevice device = _device.Device();
-    const VkDeviceSize size = static_cast<VkDeviceSize>(_extent.width) * _extent.height * 4;
-
-    VkBuffer buffer = VK_NULL_HANDLE;
-    VkDeviceMemory memory = VK_NULL_HANDLE;
-    if (!_device.CreateBuffer(
-      size,
-      VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-      buffer,
-      memory))
-    {
-      return false;
-    }
-
-    // a finished frame is left ready to be copied from
-    const VkCommandBuffer commands = _device.BeginCommands();
-
-    VkBufferImageCopy region{};
-    region.imageSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
-    region.imageExtent = {_extent.width, _extent.height, 1};
-    vkCmdCopyImageToBuffer(commands, _color_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, buffer, 1, &region);
-
-    bool written = false;
-    void *pixels = nullptr;
-
-    if (_device.EndCommands(commands) && vkMapMemory(device, memory, 0, size, 0, &pixels) == VK_SUCCESS)
-    {
-      std::vector<unsigned char> png;
-      const int encoded = stbi_write_png_to_func(
-        append_png_bytes,
-        &png,
-        static_cast<int>(_extent.width),
-        static_cast<int>(_extent.height),
-        4,
-        pixels,
-        static_cast<int>(_extent.width) * 4);
-
-      vkUnmapMemory(device, memory);
-
-      written = encoded != 0 && _file_system_context->WriteBytes(path, png);
-    }
-
-    vkDestroyBuffer(device, buffer, nullptr);
-    vkFreeMemory(device, memory, nullptr);
-
-    if (written)
-    {
-      _logger->Info("Saved the frame to {}", path);
-    } else
-    {
-      _logger->Error("Could not save the frame to {}", path);
-    }
-    return written;
+    return _capture.Write(_color_image, _extent, path);
   }
 
   const RenderCapabilities &VK_RenderSystem::GetCapabilities() const
@@ -1279,15 +718,13 @@ namespace neon
       return FindSurface(name, texture);
     });
 
-    // a mirrored object turns its triangles round, and is drawn with the
-    // opposite front
+    // The pipeline for a mirrored object, which turns its triangles round,
+    // is left until one is drawn: most materials never have one.
     const MaterialInfo &material_info = render_info.material_info;
     VkPipeline pipeline = VK_NULL_HANDLE;
-    VkPipeline mirrored_pipeline = VK_NULL_HANDLE;
     if (!material.Initialize() ||
-        !GetPipeline(render_info.shader_path, material_info.alpha_mode, material_info.double_sided, false, pipeline) ||
-        !GetPipeline(
-          render_info.shader_path, material_info.alpha_mode, material_info.double_sided, true, mirrored_pipeline) ||
+        !_pipelines.Get(
+          render_info.shader_path, material_info.alpha_mode, material_info.double_sided, false, pipeline) ||
         !CreateDescriptorSet(material))
     {
       _logger->Error("Could not initialize material with shader {}", render_info.shader_path);
@@ -1295,7 +732,7 @@ namespace neon
       material.CleanUp();
       return -1;
     }
-    material.SetPipelines(pipeline, mirrored_pipeline);
+    material.SetPipeline(pipeline);
 
     const auto model_id = _model_refs.Add(model);
     const auto material_id = _material_refs.Add(material);
@@ -1418,7 +855,7 @@ namespace neon
 
     const auto [model_id, material_id] = _render_object_buffer[render_object_id];
     const auto &model = _model_refs[model_id];
-    const auto &material = _material_refs[material_id];
+    auto &material = _material_refs[material_id];
 
     // What is drawn into a render target cannot show that target, since
     // an image is not read while it is written. It is left out there.
@@ -1427,8 +864,9 @@ namespace neon
       return;
     }
 
-    const VkCommandBuffer commands = _current_target != No_Render_Target ? _target_commands : _commands;
-    if (!EnterScene()) { return; }
+    VK_Canvas &canvas = CurrentCanvas();
+    const VkCommandBuffer commands = canvas.Commands();
+    if (!canvas.EnterScene()) { return; }
 
     // The camera and the lights are handed over with every object, but they
     // rarely change within a frame. They are only stored again when they do.
@@ -1461,7 +899,21 @@ namespace neon
 
     const glm::mat4 model_matrix = transform.world_coordinates * model.GetNormalizedModelMatrix();
     const VK_ObjectData object = material.GetObjectData(model_matrix, transform);
-    const VkPipeline pipeline = material.Pipeline(VK_Culling::IsMirrored(model_matrix));
+
+    // A mirrored object turns its triangles round, and is drawn with the
+    // opposite front. The pipeline for that is made when the first mirrored
+    // object of a variant is drawn, which pays for it; the pipeline is
+    // shared by every material of the variant from then on.
+    const bool mirrored = VK_Culling::IsMirrored(model_matrix);
+    VkPipeline pipeline = material.Pipeline(mirrored);
+    if (pipeline == VK_NULL_HANDLE)
+    {
+      if (!_pipelines.Get(material.ShaderPath(), material.GetAlphaMode(), material.IsDoubleSided(), true, pipeline))
+      {
+        return;
+      }
+      material.SetMirroredPipeline(pipeline);
+    }
 
     const auto object_offset = static_cast<uint32_t>(_object_buffer.used * _object_buffer.entry_size);
     std::memcpy(_object_buffer.mapped + object_offset, &object, sizeof(VK_ObjectData));
@@ -1474,8 +926,7 @@ namespace neon
     // is opaque, from the farthest to the nearest
     if (material.GetAlphaMode() == AlphaMode::Blend)
     {
-      auto &kept = _current_target != No_Render_Target ? _targets[_current_target].see_through : _see_through;
-      kept.push_back({
+      canvas.KeepSeeThrough({
         .pipeline = pipeline,
         .set = set,
         .scene_offset = _last_scene_offset,
@@ -1490,7 +941,7 @@ namespace neon
     vkCmdBindDescriptorSets(
       commands,
       VK_PIPELINE_BIND_POINT_GRAPHICS,
-      _pipeline_layout,
+      _pipelines.Layout(),
       0,
       1,
       &set,
@@ -1542,7 +993,7 @@ namespace neon
   {
     if (!_frame_open) { return; }
 
-    EnterOverlay();
+    CurrentCanvas().EnterOverlay();
     _renderer_2d.Draw(triangles);
   }
 
@@ -1618,6 +1069,9 @@ namespace neon
       return refuse("its images could not be made");
     }
 
+    kept.canvas = VK_Canvas(std::format("the render target '{}'", name), &_canvas_shared);
+    kept.canvas.SetImages(_target_commands, kept.target.Framebuffer(), kept.target.Extent());
+
     const int id = _targets.Add(kept);
     if (id < 0)
     {
@@ -1668,10 +1122,7 @@ namespace neon
     Target &kept = _targets[target];
     const VkExtent2D extent = kept.target.Extent();
 
-    // a render pass is begun by what is drawn first, as in the frame
-    kept.clear = clear;
-    kept.stage = VK_FrameStage::Nothing;
-    kept.see_through.clear();
+    kept.canvas.Begin(clear);
     kept.is_drawn = true;
     _current_target = target;
 
@@ -1687,9 +1138,9 @@ namespace neon
   {
     if (_current_target == No_Render_Target) { return; }
 
-    LeaveCanvas();
-
-    if (_targets.Contains(_current_target)) { _targets[_current_target].target.Finish(_target_commands); }
+    Target &kept = _targets[_current_target];
+    kept.canvas.Leave();
+    kept.target.Finish(_target_commands);
 
     _current_target = No_Render_Target;
     _has_last_scene = false;

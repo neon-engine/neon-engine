@@ -42,6 +42,7 @@ Principles that hold for both:
 | Linear light (#67) | The world is lit and blended in linear light in a floating-point scene image, and a resolve step turns it into the colours of the screen. User interfaces blend in sRGB, as CSS does. See [vulkan-renderer.md](vulkan-renderer.md#colour-spaces) |
 | See-through materials (#67) | `alpha_mode: blend`, drawn after what is opaque, from the farthest to the nearest. The first of the alpha modes of #106 |
 | Back faces left out (#136) | The back of every triangle is left out unless a material is `double_sided`, and what is mirrored is still drawn from the front |
+| `VK_RenderSystem` split (#163) | The swapchain, the pipelines of materials, the canvas a frame or a render target is drawn on, and the reading back of a frame are types of their own. The render system wires them. Done ahead of the programmable pipeline (#102) |
 | File system (#22) | Virtual paths with `assets://`, `user://`, and `output://`. See [file-systems.md](file-systems.md) |
 | Log file (#44) | Written to `user://logs/neon-engine.log`, with what was logged before the file system started. See [file-systems.md](file-systems.md#the-log-file) |
 | Window modes (#22) | Windowed, borderless, and fullscreen |

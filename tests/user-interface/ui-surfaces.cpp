@@ -932,6 +932,7 @@ namespace
 
       _store.Initialize();
       _loading = std::make_unique<UiSurfaceLoading>(_ui.get());
+      _loading->Register(_store);
       _loading->Initialize(_store);
     }
 

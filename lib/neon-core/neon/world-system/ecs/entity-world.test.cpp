@@ -69,6 +69,11 @@ namespace
       _on_update = on_update;
     }
 
+    void Register(EntityStore &) override
+    {
+      _calls->push_back(_name + " registered");
+    }
+
     void Initialize(EntityStore &) override
     {
       _calls->push_back(_name + " initialized");
@@ -194,7 +199,22 @@ namespace
 
     _world.Initialize();
 
-    EXPECT_THAT(_calls, ElementsAre("first initialized", "second initialized", "scene populated"));
+    EXPECT_THAT(_calls, ElementsAre(
+                  "first registered", "second registered", "first initialized", "second initialized",
+                  "scene populated"));
+  }
+
+  TEST_F(EntityWorldTest, RegistersTheComponentsOfEverySystemBeforeAnyIsInitialized)
+  {
+    // a system of the game that queries a component another system brings,
+    // one that is added after placing and so initialized after it
+    _world.AddSystem(std::make_unique<RecordingSystem>("game", &_calls));
+    _world.AddSystemAfterPlacing(std::make_unique<RecordingSystem>("after placing", &_calls));
+
+    _world.Initialize();
+
+    EXPECT_THAT(_calls, ElementsAre(
+                  "game registered", "after placing registered", "game initialized", "after placing initialized"));
   }
 
   TEST_F(EntityWorldTest, InitializesASystemAddedAfterPlacingBeforeTheSceneIsPopulated)
@@ -206,7 +226,9 @@ namespace
     _world.Initialize();
 
     // it can register its components, as the scene may use them
-    EXPECT_THAT(_calls, ElementsAre("game initialized", "after placing initialized", "scene populated"));
+    EXPECT_THAT(_calls, ElementsAre(
+                  "game registered", "after placing registered", "game initialized", "after placing initialized",
+                  "scene populated"));
   }
 
   TEST_F(EntityWorldTest, InitializesASystemOfTheGameWithTheStoreAndTheComponentsOfTheEngine)
@@ -868,6 +890,6 @@ namespace
 
     _world.Update();
 
-    EXPECT_THAT(_calls, ElementsAre("game initialized", "game updated"));
+    EXPECT_THAT(_calls, ElementsAre("game registered", "game initialized", "game updated"));
   }
 }

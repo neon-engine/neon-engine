@@ -63,6 +63,10 @@ function(neon_add_unit_test LIBRARY SOURCE)
   gtest_discover_tests(${TEST_TARGET}
           WORKING_DIRECTORY "${TEST_DIRECTORY}"
           DISCOVERY_MODE PRE_TEST
+          # The first start of a binary that was just built is slow on macOS,
+          # while the system checks it, which is longer than the 5 seconds
+          # given otherwise.
+          DISCOVERY_TIMEOUT 60
           PROPERTIES LABELS "unit"
   )
 
@@ -99,6 +103,10 @@ function(neon_add_functional_test NAME)
   gtest_discover_tests(${TEST_TARGET}
           WORKING_DIRECTORY "${TEST_DIRECTORY}"
           DISCOVERY_MODE PRE_TEST
+          # The first start of a binary that was just built is slow on macOS,
+          # while the system checks it, which is longer than the 5 seconds
+          # given otherwise.
+          DISCOVERY_TIMEOUT 60
           PROPERTIES LABELS "integration"
   )
 endfunction()
@@ -149,7 +157,9 @@ function(neon_add_application_test NAME APPLICATION SCRIPT)
     set_tests_properties("${NAME}.${CASE}" PROPERTIES
             LABELS "integration"
             SKIP_REGULAR_EXPRESSION "SKIPPED:"
-            TIMEOUT 300
+            # A check runs a handful of frames. Each run has a limit of its
+            # own in run-application.cmake; this is the net under it.
+            TIMEOUT 120
     )
   endforeach ()
 endfunction()

@@ -80,6 +80,7 @@ namespace
 
     EXPECT_THAT(material.Textures(), IsEmpty());
     EXPECT_EQ(material.Pipeline(), VK_NULL_HANDLE);
+    EXPECT_EQ(material.Pipeline(true), VK_NULL_HANDLE);
     EXPECT_EQ(material.DescriptorSet(), VK_NULL_HANDLE);
   }
 

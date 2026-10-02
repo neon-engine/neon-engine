@@ -13,7 +13,10 @@ function(setup_copy_assets TARGET_NAME SOURCE_ASSETS_DIR OUTPUT_ASSETS_DIR)
             VERBATIM
     )
 
-    file(GLOB_RECURSE SOURCE_FILES
+    # CONFIGURE_DEPENDS makes a build look for assets that were added or
+    # removed since the build was configured, and configure again when there
+    # are any, so that a new scene is copied without configuring by hand.
+    file(GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS
             "${SOURCE_ASSETS_DIR}/*"
     )
     list(FILTER SOURCE_FILES EXCLUDE REGEX "\\.gitignore$")

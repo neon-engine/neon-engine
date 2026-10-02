@@ -26,6 +26,8 @@ namespace neon
 
     explicit AudioPlayback(AudioContext *audio_context);
 
+    void Register(EntityStore &store) override;
+
     void Initialize(EntityStore &store) override;
 
     void Update(EntityStore &store, double delta_time) override;

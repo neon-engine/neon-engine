@@ -44,7 +44,6 @@
 *.bmp binary
 *.tga binary
 *.webp binary
-*.svg binary
 *.exr binary
 *.dds binary
 *.psd binary

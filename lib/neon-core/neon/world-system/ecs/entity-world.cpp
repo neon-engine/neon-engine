@@ -74,6 +74,14 @@ namespace neon
     _store->Initialize();
     RegisterComponents();
 
+    // every component first, so that a system finds the components of
+    // another when it makes its queries, whichever comes first
+    for (const auto &system : _before) { system->Register(*_store); }
+    for (const auto &system : _added) { system->Register(*_store); }
+    for (const auto &system : _placing) { system->Register(*_store); }
+    for (const auto &system : _after) { system->Register(*_store); }
+    for (const auto &system : _added_after_placing) { system->Register(*_store); }
+
     for (const auto &system : _before) { system->Initialize(*_store); }
     for (const auto &system : _added) { system->Initialize(*_store); }
     for (const auto &system : _placing) { system->Initialize(*_store); }

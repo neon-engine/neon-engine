@@ -10,9 +10,18 @@ file(MAKE_DIRECTORY "${DIRECTORY}")
 # Starts the application in the folder of the test. Sets EXIT_CODE, and OUTPUT
 # to everything it printed.
 #
+# The application is given RUN_TIMEOUT seconds, 60 unless the script says
+# otherwise before calling run(), and is killed after that: a check of a few
+# frames that takes minutes has hung, and the application cannot be trusted
+# to notice that itself. EXIT_CODE is then "timeout".
+#
 # The folder of the user is sent into the folder of the test, so that user://
 # does not end up in the home folder of whoever runs the tests. Linux follows
 # XDG_DATA_HOME and macOS CFFIXED_USER_HOME. Windows takes no hint.
+if (NOT DEFINED RUN_TIMEOUT)
+  set(RUN_TIMEOUT 60)
+endif ()
+
 function(run)
   execute_process(
           COMMAND "${CMAKE_COMMAND}" -E env
@@ -20,10 +29,16 @@ function(run)
           "CFFIXED_USER_HOME=${DIRECTORY}/home"
           "${APPLICATION}" ${ARGN}
           WORKING_DIRECTORY "${DIRECTORY}"
+          TIMEOUT "${RUN_TIMEOUT}"
           RESULT_VARIABLE RESULT
           OUTPUT_VARIABLE PRINTED
           ERROR_VARIABLE PRINTED_AS_ERROR
   )
+
+  if (RESULT MATCHES "timeout")
+    set(RESULT "timeout")
+    string(APPEND PRINTED_AS_ERROR "\n(killed after ${RUN_TIMEOUT} seconds)")
+  endif ()
 
   set(EXIT_CODE "${RESULT}" PARENT_SCOPE)
   set(OUTPUT "${PRINTED}${PRINTED_AS_ERROR}" PARENT_SCOPE)

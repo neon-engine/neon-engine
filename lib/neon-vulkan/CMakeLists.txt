@@ -41,6 +41,15 @@ add_library(${TARGET} STATIC
         neon/render/vk-scene-image.hpp
         neon/render/vk-surface-format.cpp
         neon/render/vk-surface-format.hpp
+        neon/render/vk-swapchain.cpp
+        neon/render/vk-swapchain.hpp
+        neon/render/vk-pipelines.cpp
+        neon/render/vk-pipelines.hpp
+        neon/render/vk-canvas.cpp
+        neon/render/vk-canvas.hpp
+        neon/render/vk-canvas-shared.hpp
+        neon/render/vk-capture.cpp
+        neon/render/vk-capture.hpp
 )
 
 target_include_directories(${TARGET}

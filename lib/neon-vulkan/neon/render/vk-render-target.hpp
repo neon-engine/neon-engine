@@ -6,7 +6,6 @@
 #include <neon/logging/logger.hpp>
 
 #include "vk-device.hpp"
-#include "vk-scene-image.hpp"
 
 namespace neon
 {
@@ -14,11 +13,10 @@ namespace neon
   /// afterwards: by a user interface that shows it, and by a model in the
   /// world that carries it on its surface.
   ///
-  /// It has the formats of the frame, so that everything that draws into
-  /// the frame draws into it as well, with the same pipelines: models of a
-  /// scene into a scene image of its own, which is resolved into the
-  /// target, and what is drawn in two dimensions on top. It has smaller
-  /// copies, which are made again whenever it was drawn to, since a surface
+  /// It has the format of the frame, so that everything that draws into
+  /// the frame draws into it as well, through a canvas of its own: models
+  /// of a scene into a scene image, which is resolved into the target, and
+  /// what is drawn in two dimensions on top. It has smaller copies, which are made again whenever it was drawn to, since a surface
   /// in the world is seen from afar and from the side.
   ///
   /// Between two frames the image is ready to be read by a shader.
@@ -43,9 +41,6 @@ namespace neon
     VkImageView _view = VK_NULL_HANDLE;
     VkImageView _bytes_view = VK_NULL_HANDLE;
 
-    // where models are lit, made when the first is drawn into the target
-    VK_SceneImage _scene;
-
     VkFramebuffer _framebuffer = VK_NULL_HANDLE;
     VkSampler _sampler = VK_NULL_HANDLE;
 
@@ -69,10 +64,6 @@ namespace neon
       uint32_t height,
       VkRenderPass render_pass,
       VkFormat color_format);
-
-    /// Makes the scene image of the target, unless it has one. A target
-    /// that only shows what is drawn in two dimensions needs none.
-    bool PrepareScene(VkRenderPass scene_pass, VkFormat depth_format);
 
     void CleanUp();
 
@@ -102,7 +93,6 @@ namespace neon
     /// What is drawn in two dimensions reads, as the bytes they are.
     [[nodiscard]] VkImageView BytesView() const { return _bytes_view; }
     [[nodiscard]] VkSampler Sampler() const { return _sampler; }
-    [[nodiscard]] const VK_SceneImage &Scene() const { return _scene; }
   };
 } // neon
 

@@ -1,0 +1,37 @@
+#ifndef VK_CANVAS_SHARED_HPP
+#define VK_CANVAS_SHARED_HPP
+
+#include <memory>
+
+#include <neon/common/data-buffer.hpp>
+#include <neon/logging/logger.hpp>
+
+#include "vk-device.hpp"
+#include "vk-model.hpp"
+#include "vk-resolve.hpp"
+
+namespace neon
+{
+  /// What every canvas draws with, which the renderer owns and the
+  /// frame and the render targets share.
+  // ReSharper disable once CppInconsistentNaming
+  struct VK_CanvasShared
+  {
+    VK_Device *device = nullptr;
+    VK_Resolve *resolve = nullptr;
+    VkRenderPass scene_pass = VK_NULL_HANDLE;
+    VkRenderPass frame_pass = VK_NULL_HANDLE;
+    VkFormat depth_format = VK_FORMAT_UNDEFINED;
+
+    // what the see-through models are drawn with
+    VkPipelineLayout pipeline_layout = VK_NULL_HANDLE;
+    DataBuffer<VK_Model> *models = nullptr;
+
+    std::shared_ptr<Logger> logger;
+
+    // said once, and not for every model
+    bool warned_about_order = false;
+  };
+} // neon
+
+#endif //VK_CANVAS_SHARED_HPP

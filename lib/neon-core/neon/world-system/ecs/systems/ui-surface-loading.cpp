@@ -12,7 +12,7 @@ namespace neon
     _ui_context = ui_context;
   }
 
-  void UiSurfaceLoading::Initialize(EntityStore &store)
+  void UiSurfaceLoading::Register(EntityStore &store)
   {
     store.Register<UiSurfaceView>(kComponent_Name, [this](Entity, UiSurfaceView &view)
     {
@@ -22,7 +22,10 @@ namespace neon
       view.surface = -1;
       view.document = -1;
     });
+  }
 
+  void UiSurfaceLoading::Initialize(EntityStore &store)
+  {
     _query = store.Query<UiSurfaceView>();
   }
 

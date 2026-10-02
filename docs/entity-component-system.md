@@ -115,11 +115,12 @@ struct Health
 {
   int points = 100;
 };
-
-store.Register<Health>("Health");
 ```
 
-A system:
+A system, which registers the component it brings in `Register` and makes
+its queries in `Initialize`. The world calls `Register` of every system
+before `Initialize` of any, so that a system finds the components of another
+whichever comes first:
 
 ```cpp
 class Regeneration final : public neon::EntitySystem
@@ -127,6 +128,11 @@ class Regeneration final : public neon::EntitySystem
   neon::QueryId _query = 0;
 
 public:
+  void Register(neon::EntityStore &store) override
+  {
+    store.Register<Health>("Health");
+  }
+
   void Initialize(neon::EntityStore &store) override
   {
     _query = store.Query<Health>();

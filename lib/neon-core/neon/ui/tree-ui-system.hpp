@@ -604,6 +604,8 @@ namespace neon
 
     [[nodiscard]] std::string GetValue(const std::string &name, bool *is_set) const override;
 
+    [[nodiscard]] bool GetNumber(const std::string &name, double &number) const override;
+
     [[nodiscard]] bool DescribeElement(const std::string &type, TypeInfo &description) const override;
 
     /// A property of the style as a field, named `style.<property>` with

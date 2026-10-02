@@ -67,7 +67,7 @@ namespace neon
     _logger = logger;
   }
 
-  void PhysicsSimulation::Initialize(EntityStore &store)
+  void PhysicsSimulation::Register(EntityStore &store)
   {
     // what the physics holds for a component is released when the component
     // leaves its entity, which includes the entity being destroyed
@@ -97,6 +97,10 @@ namespace neon
 
     // parents come first, so that a body below another finds its parent
     // where this step put it
+  }
+
+  void PhysicsSimulation::Initialize(EntityStore &store)
+  {
     _bodies = store.Query<Transform, RigidBody>(QueryOrder::ParentsFirst);
     _triggers = store.Query<Transform, Trigger>(QueryOrder::ParentsFirst);
     _characters = store.Query<Transform, CharacterBody>(QueryOrder::ParentsFirst);

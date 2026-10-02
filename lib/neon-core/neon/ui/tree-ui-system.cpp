@@ -269,6 +269,19 @@ namespace neon
     return value != nullptr ? value->AsText() : "";
   }
 
+  bool Tree_UiSystem::GetNumber(const std::string &name, double &number) const
+  {
+    const UiValue *value = _values.Find(name);
+    if (value == nullptr) { return false; }
+
+    // a text that holds no number is told apart by a number no text holds
+    const double read = value->AsNumber(std::numeric_limits<double>::quiet_NaN());
+    if (std::isnan(read)) { return false; }
+
+    number = read;
+    return true;
+  }
+
   void Tree_UiSystem::OnClick(const std::string &element, const std::function<void()> &callback)
   {
     if (callback)

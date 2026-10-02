@@ -93,20 +93,21 @@ namespace neon
     [[nodiscard]] AlphaMode GetAlphaMode() const { return _material_info.alpha_mode; }
     [[nodiscard]] const std::vector<VK_Texture> &Textures() const { return _textures; }
 
+    [[nodiscard]] bool IsDoubleSided() const { return _material_info.double_sided; }
+
     /// The pipeline that draws an object with this material. A mirrored
     /// object, one whose transform turns it inside out, takes the other one,
-    /// which knows that its triangles go round the other way.
+    /// which knows that its triangles go round the other way. That one is
+    /// VK_NULL_HANDLE until the render system makes it, which it does when
+    /// the first mirrored object is drawn with the material.
     [[nodiscard]] VkPipeline Pipeline(const bool mirrored = false) const
     {
       return mirrored ? _mirrored_pipeline : _pipeline;
     }
     [[nodiscard]] VkDescriptorSet DescriptorSet() const { return _descriptor_set; }
 
-    void SetPipelines(const VkPipeline pipeline, const VkPipeline mirrored_pipeline)
-    {
-      _pipeline = pipeline;
-      _mirrored_pipeline = mirrored_pipeline;
-    }
+    void SetPipeline(const VkPipeline pipeline) { _pipeline = pipeline; }
+    void SetMirroredPipeline(const VkPipeline pipeline) { _mirrored_pipeline = pipeline; }
     void SetDescriptorSet(const VkDescriptorSet descriptor_set) { _descriptor_set = descriptor_set; }
   };
 } // neon

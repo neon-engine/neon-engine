@@ -175,6 +175,8 @@ namespace neon
       FileSystemContext *file_system,
       const std::shared_ptr<Logger> &logger);
 
+    void Register(EntityStore &store) override;
+
     void Initialize(EntityStore &store) override;
 
     /// Does nothing. The physics has nothing that belongs to a frame.

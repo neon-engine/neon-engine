@@ -26,6 +26,8 @@ namespace neon
     explicit UiViewLoading(UiContext *ui_context);
 
     /// Registers the component, which the engine does not know by itself.
+    void Register(EntityStore &store) override;
+
     void Initialize(EntityStore &store) override;
 
     /// Throws when a file cannot be used, as a scene does that cannot be

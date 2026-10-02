@@ -23,8 +23,14 @@ namespace neon
   public:
     virtual ~EntitySystem() = default;
 
-    /// Called once, after the components of the engine are registered and
-    /// before the scene is populated. The place to create queries.
+    /// Called once, before any system is initialized. The place to register
+    /// the components the system brings, so that every system finds every
+    /// component when it makes its queries, whichever is initialized first.
+    /// Does nothing unless a system says otherwise.
+    virtual void Register(EntityStore &store) {}
+
+    /// Called once, after every component is registered and before the
+    /// scene is populated. The place to create queries.
     virtual void Initialize(EntityStore &store) = 0;
 
     /// Called once per frame. `delta_time` is in seconds.

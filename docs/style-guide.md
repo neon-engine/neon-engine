@@ -300,6 +300,25 @@ not have a file of the same path.
 Third-party code lives in `external/` as git submodules. No tool and no rule
 of this guide applies to it.
 
+### One type per file
+
+Every class and struct at namespace scope has a file of its own, named after
+it: `VK_Canvas` is in `vk-canvas.hpp`, and `SoundFade` in `sound-fade.hpp`.
+A simple struct, one that holds data and at most a few inline helpers, is a
+`.hpp` alone, without a `.cpp`. More files, and each one about one thing,
+which is found by its name.
+
+Two kinds of type stay where they are:
+
+- A type nested inside a class as a detail that only the class uses, such
+  as the `State` a backend keeps behind a pointer, or a private `Entry` of
+  a map. It is part of the class.
+- An enum that only one type reads, which goes next to that type. One that
+  several types share gets a file of its own.
+
+The headers that still hold several types are listed in #168, and are split
+one area at a time.
+
 ### Unit tests
 
 A unit test is a file named `name.test.cpp` next to the file it tests. The
@@ -435,6 +454,7 @@ owner to decide.
 | Rule | Why not |
 |---|---|
 | File and folder names | clang-tidy does not look at them |
+| One type per file | Nothing counts the types of a header. A script over the headers could, see #168 |
 | Header guards | The check that exists wants the path in the guard. Guards without a prefix, such as `LOGGER_HPP` and `MESH_HPP`, can also collide with those of a library. `NEON_` in front, or `#pragma once`, would end that |
 | The kind of include, and the order | clang-format can sort, but not by these rules |
 | Line length | See [what clang-format does](#what-clang-format-does) |

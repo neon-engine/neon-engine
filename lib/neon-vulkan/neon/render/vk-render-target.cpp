@@ -148,18 +148,6 @@ namespace neon
     return true;
   }
 
-  bool VK_RenderTarget::PrepareScene(const VkRenderPass scene_pass, const VkFormat depth_format)
-  {
-    if (_scene.IsReady()) { return true; }
-
-    if (!_scene.Initialize(_device, _extent.width, _extent.height, scene_pass, depth_format))
-    {
-      _logger->Error("Could not create the scene image of the render target '{}'", _name);
-      return false;
-    }
-    return true;
-  }
-
   VkFormat VK_RenderTarget::SampledFormatOf(const VkFormat format)
   {
     switch (format)
@@ -225,7 +213,6 @@ namespace neon
 
     if (_sampler != VK_NULL_HANDLE) { vkDestroySampler(device, _sampler, nullptr); }
     if (_framebuffer != VK_NULL_HANDLE) { vkDestroyFramebuffer(device, _framebuffer, nullptr); }
-    _scene.CleanUp();
     if (_view != VK_NULL_HANDLE) { vkDestroyImageView(device, _view, nullptr); }
     if (_bytes_view != VK_NULL_HANDLE) { vkDestroyImageView(device, _bytes_view, nullptr); }
     if (_attachment_view != VK_NULL_HANDLE) { vkDestroyImageView(device, _attachment_view, nullptr); }

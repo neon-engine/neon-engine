@@ -52,6 +52,7 @@ namespace
 
       _store.Initialize();
       _store.Register<Transform>("Transform");
+      _system.Register(_store);
       _system.Initialize(_store);
     }
 

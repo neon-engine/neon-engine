@@ -49,11 +49,23 @@ namespace
         return found == _values.end() ? std::string{} : found->second;
       }));
 
-      // as in the runtime, where AudioPlayback registers SoundSource after
-      // this system was initialized
+      // as the user interface reads a number: a text that holds none is no
+      // number
+      ON_CALL(_ui, GetNumber(_, _)).WillByDefault(Invoke([this](const std::string &name, double &number)
+      {
+        const auto found = _values.find(name);
+        if (found == _values.end()) { return false; }
+
+        try { number = std::stod(found->second); } catch (const std::exception &) { return false; }
+        return true;
+      }));
+
+      // as the world does: every component is registered, by this system
+      // and by AudioPlayback, before any system makes its queries
       _store.Initialize();
-      _system.Initialize(_store);
+      _system.Register(_store);
       _store.Register<SoundSource>("SoundSource");
+      _system.Initialize(_store);
     }
 
     void AddVolume(const UiVolume &volume)

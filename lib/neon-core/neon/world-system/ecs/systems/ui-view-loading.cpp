@@ -11,7 +11,7 @@ namespace neon
     _ui_context = ui_context;
   }
 
-  void UiViewLoading::Initialize(EntityStore &store)
+  void UiViewLoading::Register(EntityStore &store)
   {
     store.Register<UiView>(kComponent_Name, [this](Entity, UiView &view)
     {
@@ -20,7 +20,10 @@ namespace neon
       _ui_context->Unload(view.document);
       view.document = -1;
     });
+  }
 
+  void UiViewLoading::Initialize(EntityStore &store)
+  {
     _query = store.Query<UiView>();
   }
 

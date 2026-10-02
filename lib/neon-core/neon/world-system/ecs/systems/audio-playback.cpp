@@ -32,7 +32,7 @@ namespace neon
     _audio_context = audio_context;
   }
 
-  void AudioPlayback::Initialize(EntityStore &store)
+  void AudioPlayback::Register(EntityStore &store)
   {
     store.Register<SoundListener>("SoundListener");
 
@@ -46,7 +46,10 @@ namespace neon
       source.sound_id = -1;
       source.was_playing = false;
     });
+  }
 
+  void AudioPlayback::Initialize(EntityStore &store)
+  {
     _listeners = store.Query<Transform, SoundListener>();
     _sources = store.Query<Transform, SoundSource>();
   }

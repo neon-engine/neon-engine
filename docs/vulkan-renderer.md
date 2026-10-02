@@ -173,14 +173,21 @@ A library of its own, `neon-vulkan`.
 
 | Piece | Role |
 |---|---|
-| `VK_RenderSystem` | Implements `RenderSystem`. Owns the instance, device, and frame loop |
+| `VK_RenderSystem` | Implements `RenderSystem` and `Render2DContext`. Owns the device, the render passes, the frame images, the buffers of shader data, and the frame loop, and hands the work to the types below |
+| `VK_Device` | The instance, the graphics card, the logical device and its queue, and the helpers for buffers and images |
+| `VK_Swapchain` | The images of a window, made again when the window changes, and the copy of a finished frame into them |
+| `VK_Canvas` | Where the frame, or a render target, is drawn: its stages, its clear colour, its scene image, and the see-through models kept for the end of its scene. The frame and every render target own one |
+| `VK_Pipelines` | The pipelines of materials, one per variant of shader, covering, and culling, and the layout they share |
+| `VK_Capture` | Reads a finished frame back and writes it as a PNG |
 | `VK_Model`, `VK_Mesh` | Vertex and index buffers. `VK_Model` derives from the core `Model`, which does the loading through assimp for every renderer |
 | `VK_Texture` | Image, view, and sampler |
 | `VK_Shader` | Shader modules from SPIR-V |
-| `VK_Material` | Pipeline, descriptor sets, and per-object data |
+| `VK_Material` | Textures, descriptor set, per-object data, and which pipelines draw it |
 | `VK_SceneImage` | The image of linear light a scene is lit in, with its depth |
 | `VK_Resolve` | The resolve step, which turns a scene image into the colours of the image that is shown |
 | `VK_RenderTarget` | An image that is drawn to like the frame, and read as a texture |
+| `VK_Renderer2D` | What is drawn in two dimensions, on top of the resolved scene |
+| `VK_SwapchainSizing`, `VK_FrameStages`, `VK_DrawOrder`, `VK_Culling` | The decisions of the renderer, kept apart from the graphics card so that they are tested |
 
 **Render to an image first, always.** Every frame is drawn into an offscreen
 image. With a window, that image is then copied to the swapchain. Headless,
@@ -203,11 +210,13 @@ on top, and is left out with a warning. The runtime draws the world before
 its user interfaces, so this does not happen.
 
 Which side of a triangle is the front is part of a pipeline, and a model
-whose transform mirrors it turns its triangles round. Every material that
-is not double-sided has a second pipeline for that, with the other side as
-its front, and the draw picks it by the sign of the determinant of the
-model's transform. `VK_Culling` holds these rules, apart from the graphics
-card, so that they are tested.
+whose transform mirrors it turns its triangles round. A material gets a
+second pipeline for that, with the other side as its front, when the first
+mirrored object is drawn with it, and the draw picks it by the sign of the
+determinant of the model's transform. The pipeline is shared by every
+material with the same shader, covering, and culling, so the first mirrored
+object of such a variant pays for it once. `VK_Culling` holds these rules,
+apart from the graphics card, so that they are tested.
 
 The resolve is where what changes how light looks on a screen goes. Light
 that bleeds around what is bright is added to the scene image just before
