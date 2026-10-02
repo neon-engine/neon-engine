@@ -5,9 +5,10 @@ it is built the way it is, and what is still open.
 
 **Current decision:** physics is components and a system. An entity is given
 a `RigidBody`, a `Trigger`, or a `CharacterBody`, and a `Collider` for its
-shape. The engine has its own interface for the physics, with one
-implementation built on [Jolt Physics](https://github.com/jrouwe/JoltPhysics)
-5.2.0. The world advances in steps of one length, whatever the frame rate is.
+shape. A `Joint` holds the body of its entity to another. The engine has its
+own interface for the physics, with one implementation built on
+[Jolt Physics](https://github.com/jrouwe/JoltPhysics) 5.2.0. The world
+advances in steps of one length, whatever the frame rate is.
 
 ## What a body can be
 
@@ -51,6 +52,10 @@ all of them:
 NeonRuntime --scene assets://scenes/physics.scene.yml
 ```
 
+The scene [joints.scene.yml](../app/NeonRuntime/assets/scenes/joints.scene.yml)
+shows every kind of joint: a door on a hinge, a pendulum on a point, a sled
+on a slider, and two crates glued together.
+
 ## Components
 
 What a component leaves out keeps its default. A value that is wrong is
@@ -79,6 +84,8 @@ is at least as high as it is wide, is a rule of the description. See
 | `angular_velocity` | `[x, y, z]` in degrees per second around each axis | `[0, 0, 0]` |
 | `continuous` | Looks for hits along the whole way of a step. For what is small and fast, which would otherwise pass through a wall between two steps | `false` |
 | `can_sleep` | A body that came to rest stops being simulated until something touches it | `true` |
+| `lock_position` | The axes of the world a dynamic body cannot move along, a list of `x`, `y`, and `z` | `[]` |
+| `lock_rotation` | The axes of the world a dynamic body cannot turn around, the same way. A crate that cannot tip over has `[x, y, z]` | `[]` |
 | `layers`, `mask` | See [layers](#layers-and-masks) | `1` |
 
 In code it has two more, which the engine fills in and a scene recipe never
@@ -86,7 +93,13 @@ holds: `body`, the id the physics knows the body by, and `failed`, which is
 set when the body could not be created.
 
 The values are read when the body is created. After that the physics follows
-two things that a game writes: the `Transform`, and the two velocities.
+two things that a game writes: the `Transform`, and the two velocities. The
+`Collider` is watched as well, see [shapes that change](#shapes-that-change).
+
+A body that is locked on all six axes cannot be created, which is said in
+the log. A static body is what it would be. The axes are those of the world,
+not of the body: a crate that may only move along `x` moves along the `x` of
+the world however it is turned.
 
 | What a game writes | Dynamic | Kinematic | Static |
 |---|---|---|---|
@@ -118,6 +131,10 @@ the values of the new one.
 
 A name that does not belong to the shape is an error, as a name that is not
 known is. `radius` for a box would otherwise be ignored without a word.
+
+The values of a `Collider` are watched while its body lives. One that a game
+changes gives the body its shapes anew, see
+[shapes that change](#shapes-that-change).
 
 The shape is sized by the `scale` of the `Transform`, as what is drawn is. A
 floor that is a cube scaled by `[100, 0.1, 100]` has a `box` with its
@@ -163,6 +180,41 @@ in the way. And `character` and `failed`, as the others.
 
 So a scene recipe alone makes a character walk, which is what the scene of the
 runtime does.
+
+**Joint**
+
+| Name | Holds | Default | Belongs to |
+|---|---|---|---|
+| `type` | `fixed`, `hinge`, `slider`, or `point`, see [joints](#joints) | `fixed` | |
+| `other` | The path of the entity the body is joined to, from the top, such as `house/frame`. Empty for the world itself, which holds the body where it is | Empty | Every type |
+| `anchor` | `[x, y, z]`, where the joint sits on the entity. Sized by the `scale` of the `Transform`, as the `offset` of a `Collider` is, so `[-0.5, 0, 0]` is the left edge of a scaled cube | `[0, 0, 0]` | Every type |
+| `axis` | `[x, y, z]` on the entity: what a hinge turns around, or a slider moves along. A direction, which the scale does not change | `[0, 1, 0]` | `hinge`, `slider` |
+| `limits` | `[least, most]`, how far the body may go from where it is when the joint is made: degrees around the axis for a hinge, from -180 to 180, or units along it for a slider. The least is 0 or below, the most 0 or above. `[]` for no limit | `[]` | `hinge`, `slider` |
+
+In code it has `joint`, the id the physics knows the joint by, and `failed`,
+as a `RigidBody` has.
+
+```yaml
+- name: door
+  components:
+    Transform:
+      position: [-6, 1.1, 0]
+      scale: [1.6, 2.2, 0.1]
+    RigidBody:
+      mass: 5
+    Collider:
+      shape: box
+    Joint:
+      type: hinge
+      other: house/frame
+      anchor: [-0.5, 0, 0]
+      axis: [0, 1, 0]
+      limits: [-100, 100]
+```
+
+The entity needs a `RigidBody`, and so does the entity `other` names. A
+`Trigger` and a `CharacterBody` cannot be joined to anything. One of the two
+bodies is dynamic, since there is nothing to hold otherwise.
 
 ## Shapes
 
@@ -261,7 +313,90 @@ A body of several shapes is an entity with children that each carry a
 | Where the shape sits | Where the `Transform` of its entity puts it relative to the body, over as many levels as lie between them |
 | A child that is a body of its own | Its colliders, and those below it, are its own |
 | A collider that belongs to nothing | Is said once in the log, as a warning |
-| A collider that is added after the body was created | Is not part of it, which is said once in the log. The shapes of a body are read when it is created |
+| A collider that is added after the body was created | Joins the body in the step that follows, see below |
+
+### Shapes that change
+
+The `Collider` components of a body are watched. In the step after one of
+them was changed, added below the body, or removed, the body is given its
+shapes anew, through `SetShape` of the interface. The body stays what it is:
+the same id, the same mass, the same velocity, the same locked axes.
+
+| What a game does | What happens |
+|---|---|
+| Writes a field of a `Collider` of the body, such as `size` or `shape` | The shapes are read again, and the body gets them |
+| Adds a `Collider` to an entity below the body | The same. It is part of the body from then on |
+| Removes a `Collider` of the body | The same, without it. Removing the last one is refused, and the body keeps its shapes |
+| Changes the `Transform` of an entity below the body that carries a `Collider`, or the `scale` of the body | Nothing. These are read when the body is created. Write the `offset` of the `Collider` instead, or replace the `RigidBody` |
+| Changes a `Collider` of a `CharacterBody` | Nothing, which is said once in the log. Replace the component |
+
+What is wrong with the new shapes is said in the log, once, and the body
+keeps the shapes it had:
+
+```
+The shape of the RigidBody of entity 'crate' cannot be changed, and stays
+what it was: a dynamic body cannot have a mesh. A mesh is a surface without
+an inside, so it has no mass. Make the body static or kinematic, or give it a
+convex hull
+```
+
+| Decision | Reason |
+|---|---|
+| The system notices a changed `Collider` by itself, instead of a game calling something | It is how everything else about a body is written: the `Transform` and the velocities are written, and the engine hands them on. A game that writes `collider.size` and has to know of a second call would forget it |
+| The `Collider` is compared with a copy in every step | A body has few colliders, and comparing a handful of numbers is cheap. Watching every field for a write would need the store to tell, which it does not |
+| A `Transform` below the body is not watched | A shape that moves on its body in every step is what a child body with a joint is for. Watching every `Transform` below every body in every step would cost what the comparison above does not |
+| The shape of a character cannot change | Jolt builds a character around its shape, and gives it another only through a sweep that checks the new one fits. What a character needs, such as crouching, is more than a new shape, and is left open |
+
+## Joints
+
+A `Joint` holds the body of its entity to another body, or to the world. It
+is made in the first step in which both bodies exist, and is gone when either
+of them is. It is made again when both are back, such as when a `RigidBody`
+was replaced. Removing the `Joint` component takes it apart.
+
+| Type | Holds | What is free | Needs | In Godot |
+|---|---|---|---|---|
+| `fixed` | The two together, as one | Nothing | `anchor` | Generic6DOFJoint3D with everything locked |
+| `hinge` | The two at the anchor, turning around the axis | The turn around the axis, within `limits` | `anchor`, `axis` | HingeJoint3D |
+| `slider` | The two along the axis | Moving along the axis, within `limits` | `anchor`, `axis` | SliderJoint3D |
+| `point` | The two at the anchor | Every turn around the anchor | `anchor` | PinJoint3D |
+
+The anchor and the axis are on the entity, and are turned and moved with the
+entity to where it is when the joint is made. A door that hangs on its left
+edge has its anchor at `[-0.5, 0, 0]`, whatever way the door faces. The
+limits count from there: a hinge with `limits: [-100, 100]` turns 100 degrees
+either way from where the door hung.
+
+What goes wrong is said in the log, once, and `failed` of the component is
+set:
+
+```
+The Joint of entity 'door' cannot be created: it names 'house/frame', which
+is no entity
+The Joint of entity 'sign' cannot be created: the entity has no RigidBody.
+Only a RigidBody can be joined to something
+The Joint of entity 'beam' cannot be created: neither body is dynamic, so
+there is nothing for the joint to hold
+```
+
+In code, through `PhysicsContext`:
+
+| Function | Does |
+|---|---|
+| `CreateJoint` | Joins two bodies, or a body and the world, from a `JointInfo` in the space of the world |
+| `DestroyJoint` | Takes a joint apart. What it held wakes up, so that what was held up falls |
+| `HasJoint` | Whether a joint still holds. It stops holding when one of its bodies is destroyed |
+| `GetJointCount` | How many hold |
+
+| Decision | Reason |
+|---|---|
+| `other` is the path of an entity | It is what a scene recipe can say today. A kind of field that refers to an entity is an open question of [reflection](reflection.md), and the path becomes it when it exists |
+| An entity that does not exist is an error, and not waited for | A scene is loaded whole, so the entity is there in the first step or is misspelt. A game that spawns a chain makes each link after the one it hangs on |
+| The anchor is sized by the scale of the entity, the axis is not | The `offset` of a `Collider` is sized the same way, so the edge of a scaled cube is written the same in both. An axis is a direction, and a scale that differs along the axes would bend it |
+| The limits of a hinge are in degrees | Every angle a scene recipe holds is. The interface takes radians, as it takes the angular velocity |
+| The world is the other body when `other` is empty | A pendulum hangs from a point in the air. A static body to hang it from would be an entity for nothing |
+| The joint goes with either body, and comes back with it | Jolt cannot hold a body that is gone. The component stays, so the game need not know when a body was replaced |
+| The joined bodies still collide with each other | Jolt lets two joined bodies collide unless they are put in a group that does not. A door swings clear of its frame when the hinge sits a little off it, as in the scenes. Keeping joined bodies apart is a limit for now |
 
 ## Layers and masks
 
@@ -473,12 +608,22 @@ blast.radius = 5.0f;
 
 std::vector<neon::OverlapHit> hits;
 physics->Overlap(blast, position, glm::quat{1.0f, 0.0f, 0.0f, 0.0f}, neon::QueryFilter{}, hits);
+
+// whether a crate fits where it is about to be put down
+neon::ShapeInfo crate;
+neon::ShapeCastHit touched;
+
+if (physics->CastShape(crate, above, upright, ground, neon::QueryFilter{}, touched))
+{
+  // touched.entity, touched.point, touched.normal, touched.fraction, touched.distance
+}
 ```
 
 | Query | Finds |
 |---|---|
 | `CastRay` | The first body along a ray: the entity, the point, the direction away from what was hit, and the distance |
 | `Overlap` | Every body that overlaps a shape that is held somewhere. Each body once, ordered by its id. The shape is any but a mesh and a plane |
+| `CastShape` | The first body a shape meets when it is moved from one place to another, turned as it is held: the entity, the point on what was met, the direction away from it, and how far along the way it got, from 0 to 1, and as a length. A ray finds what a line hits, this finds what a body of that shape would hit, with its sides. A shape that touches something where it starts meets it at 0. The shape is any but a mesh and a plane |
 
 | Of a `QueryFilter` | Holds | Default |
 |---|---|---|
@@ -495,7 +640,7 @@ A character is found as a body is.
 | `PhysicsContext` | neon-core | What the rest of the engine sees: bodies, characters, the step, events, and queries |
 | `PhysicsSystem` | neon-core | Base class of backends, with `Initialize` and `CleanUp`. It keeps the events |
 | `Jolt_PhysicsSystem` | neon-jolt | The implementation |
-| `RigidBody`, `Collider`, `Trigger`, `CharacterBody` | neon-core | The components |
+| `RigidBody`, `Collider`, `Trigger`, `CharacterBody`, `Joint` | neon-core | The components |
 | `PhysicsSimulation` | neon-core | The system that brings entities and the physics together |
 | `FixedClock` | neon-core | Turns the time of frames into steps. It belongs to `EntityWorld` |
 | `LoadModelGeometry` | neon-core | Reads the points and triangles of a model through the file system |
@@ -534,6 +679,8 @@ What a game does with a body, through `PhysicsContext` and the `body` of its
 | `SetLinearVelocity`, `SetAngularVelocity` | The same as writing the velocities of the component. Turning is in radians per second here, and in degrees in the component |
 | `SetBodyPlace`, `MoveBody` | The same as writing the `Transform` |
 | `GetBodyState` | Where the body is, how it moves, and whether it sleeps |
+| `SetShape` | Gives the body other shapes. The same as changing its `Collider`, which the engine does through this |
+| `CreateJoint`, `DestroyJoint`, `HasJoint` | What a `Joint` component does, see [joints](#joints) |
 | `SetGravity`, `GetGravity` | `[0, -9.81, 0]` unless it is set |
 
 ### Decisions
@@ -541,7 +688,11 @@ What a game does with a body, through `PhysicsContext` and the `body` of its
 | Decision | Reason |
 |---|---|
 | A body is released when its component leaves its entity | The store tells the system, through `on_remove`. That includes the entity being destroyed and the store being cleaned up. Nothing has to watch for it |
-| The shapes and the values of a body are read once | Changing the shape of a body while it collides is costly, and rare. Replacing the component creates the body anew |
+| The values of a body are read once, its shapes are watched | What a body is, such as its mass and its kind, is rarely changed and is changed by replacing the component, which creates the body anew. Its shape is changed by a game that opens a crate or grows a plant, and that is a change to the `Collider`, which the engine notices. See [shapes that change](#shapes-that-change) |
+| Locked axes are those of the world | It is what Jolt offers, and what a crate that may not tip over needs. A lock that turns with the body would be a joint |
+| A body locked on every axis is refused | Jolt cannot simulate a dynamic body with nothing free, and a static body is what was meant |
+| A shape is cast by the interface as it is held, with a rotation | A sword is swung turned, and a crate is let down upright. Jolt casts a shape from a transform, and a rotation is what a transform holds beside a place |
+| `SetShape` keeps the mass | Jolt would give the body the mass of its new shape, as if it were a shape of the same stuff. A crate of 10 kg that opens its lid still weighs 10 kg. The mass is spread over the new shape |
 | A collider is a component of its own | One shape can be on a body, a trigger, and a character, and a body can have several |
 | A kinematic body is moved by its `Transform` | It is what a game, an animation, and an editor write already |
 | A character is a component of its own, not a kind of `RigidBody` | It has other values, and is moved another way: by a sweep of its shape and not by the simulation |
@@ -622,30 +773,34 @@ Jolt Physics is a submodule in `external/jolt-physics`. Its options are set in
 | Two triggers | Report nothing of each other |
 | A character | Reports the bodies it touches through `on_floor`, `on_wall`, `on_ceiling`, and `floor`. It reports a dynamic body and a trigger as events, and a static body and a kinematic one not |
 | A character | Stays upright. Its shape is not turned with its entity |
-| The shapes of a body | Are read when it is created. A collider that is added, changed, or removed later changes nothing |
-| The scale of an entity | Is read when its body is created |
-| Joints, such as a hinge | Not there |
+| The shapes of a body | Follow its `Collider` components. The `Transform` of an entity below the body, and the `scale` of the body, are read when it is created |
+| The shape of a character | Is read when it is created. A `Collider` that changes is said once, and changes nothing |
+| Joints | `fixed`, `hinge`, `slider`, and `point`, with limits on a hinge and a slider. Not there: motors that drive a joint, springs, a cone or a swing-twist joint, a distance joint, a joint that breaks under a force, and keeping two joined bodies from colliding with each other |
+| A hinge | Turns at most 180 degrees either way from where it was made, which is what Jolt holds |
+| Locking an axis | On a dynamic body, along and around the axes of the world. Not around an axis that turns with the body |
 | Height fields, soft bodies, vehicles | Jolt has them. The interface does not |
-| Locking an axis of a body | Not there |
-| A shape that is cast along a way | Not there. A ray and an overlap are |
+| A shape that is cast | Is any but a mesh and a plane. It finds the first body, not every body on the way |
 
 ## How it was checked
 
 | Check | Result |
 |---|---|
-| 89 checks of `Jolt_PhysicsSystem` through the interface | Pass. A box falls and comes to rest, a sphere rolls down a slope, a character stops at a wall and slides along it and is not pushed by a body of 500 kg, a trigger reports enter and leave once each and changes nothing of what passes, layers and masks, rays and overlaps, a mesh is refused on a dynamic body, bodies are released |
+| 117 checks of `Jolt_PhysicsSystem` through the interface | Pass. A box falls and comes to rest, a sphere rolls down a slope, a character stops at a wall and slides along it and is not pushed by a body of 500 kg, a trigger reports enter and leave once each and changes nothing of what passes, layers and masks, rays and overlaps, a mesh is refused on a dynamic body, bodies are released, a crate with its rotation locked slides upright where a free one falls over, a cast box meets a post a ray down its middle misses, a body that grows touches what it did not and keeps its mass, a door turns on its hinge and stops at its limits, a pendulum swings on a point, a sled moves along its slider alone, a glued pair moves as one, a joint goes with either of its bodies |
 | The same world twice, with 21 bodies, a mesh, a trigger, and a character, for 300 steps | The same state down to the last bit, and the same events in the same order |
-| 73 checks of `PhysicsSimulation` with a physics that is a fake | Pass |
-| 43 checks of the formats of the components | Pass. Reading, writing, reading what was written, and every message |
+| The same pendulum twice, for 200 steps | The same state down to the last bit |
+| 91 checks of `PhysicsSimulation` with a physics that is a fake | Pass |
+| 54 checks of the formats of the components | Pass. Reading, writing, reading what was written, and every message |
 | 21 checks of `Rotation` | Pass |
 | 19 checks of `FixedClock` | Pass |
-| 21 checks of the world with Flecs, Jolt, and a scene recipe | Pass |
+| 25 checks of the world with Flecs, Jolt, and a scene recipe | Pass. Among them a ball that swings a door open on its hinge in a scene, with the hinge still at the frame, and a crate whose `Collider` grows while it rests and is lifted out of the lift |
 | The same scene at 30, 60, 144, and 1000 frames per second, for four seconds, with a force that a system of a game asks for | 240 steps each. Every body is in the same state after every step, down to the last bit |
 | The same scene with frames between 0.1 and 120 milliseconds | The steps of the time that passed, and the same state after every one of them |
 | A frame of ten seconds | 8 steps, and 592 given up. The state is that of 8 steps of any other run |
 | A crate that falls, drawn at 1000 frames per second | It is drawn lower in every frame, not only in the 30 that took a step |
 | The scene of the runtime, rendered twice without a window | The same images, byte for byte |
 | The scene of the runtime at 30, 60, 120, and 240 frames per second | The same images one and two seconds in, byte for byte |
+| The scene of the joints, rendered twice without a window | Something is somewhere else after one and two seconds, and the same images, byte for byte |
+| The scene of the runtime, 120 frames without a window, before and after locked axes, shape casts, shapes that change, and joints | The same image, byte for byte |
 | The demo scene | The same image as before the physics, byte for byte |
 | Every test program started by itself, which runs its tests in one process | Pass |
 
@@ -661,9 +816,11 @@ It was built and run on macOS. **It was not built on Linux and Windows.**
 - How a script reads events. A list fits what a script can walk through.
 - Whether a collider without a body should count as a static body, as in
   Unity. It is a warning today.
-- Shapes that change while a body lives: a collider that is added or removed,
-  and a scale that changes.
-- Joints, locked axes, and casting a shape along a way.
+- A scale that changes while a body lives, and the `Transform` of a
+  `Collider` below a body that moves. Both are read when the body is created.
+- Joints that are driven: a motor that opens a door, a spring that pulls it
+  shut. And keeping two joined bodies from colliding with each other.
+- A character that changes its shape, as for crouching.
 - Whether a character reports every body it touches as events.
 - Drawing the shapes of the physics, to see what collides. Jolt has a
   renderer for it, which is turned off.

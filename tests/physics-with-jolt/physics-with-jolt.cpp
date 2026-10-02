@@ -26,6 +26,7 @@
 #include <neon/testing/recording-logger.hpp>
 #include <neon/world-system/ecs/components/character-body.hpp>
 #include <neon/world-system/ecs/components/collider.hpp>
+#include <neon/world-system/ecs/components/joint.hpp>
 #include <neon/world-system/ecs/components/renderable.hpp>
 #include <neon/world-system/ecs/components/rigid-body.hpp>
 #include <neon/world-system/ecs/components/trigger.hpp>
@@ -504,6 +505,213 @@ entities:
     {
       EXPECT_EQ(world.record.steps[step][player], without.record.steps[step][player]) << "step " << step;
     }
+  }
+
+  // queries
+
+  TEST(PhysicsWithJolt, FindsWithACastShapeWhatAGameWouldPutSomewhere)
+  {
+    World world;
+    world.world->Initialize();
+    world.Run(60.0, 2.0);
+
+    // a crate that is let down over the lift lands on the passenger, and
+    // one let down beside everything lands on the floor
+    neon::ShapeInfo crate;
+    crate.kind = neon::ShapeKind::Box;
+    const glm::quat upright{1.0f, 0.0f, 0.0f, 0.0f};
+
+    neon::ShapeCastHit hit;
+    const auto let_down = [&](const float x, const float z, const float to)
+    {
+      return world.physics.CastShape(crate, {x, 10.0f, z}, upright, {x, to, z}, neon::QueryFilter{}, hit);
+    };
+
+    ASSERT_TRUE(let_down(6.0f, 6.0f, 0.0f));
+    EXPECT_EQ(hit.entity, world.store.FindEntity("passenger"));
+    EXPECT_GT(hit.point.y, 1.0f);
+    EXPECT_NEAR(hit.normal.y, 1.0f, 1e-3f);
+
+    ASSERT_TRUE(let_down(20.0f, 20.0f, 0.0f));
+    EXPECT_EQ(hit.entity, world.store.FindEntity("floor"));
+    EXPECT_NEAR(hit.point.y, 0.0f, 1e-2f);
+    EXPECT_NEAR(hit.fraction, 0.95f, 1e-2f);
+
+    // not far enough down to reach anything
+    EXPECT_FALSE(let_down(60.0f, 60.0f, 5.0f));
+  }
+
+  // shapes that change while a body lives
+
+  TEST(PhysicsWithJolt, LiftsACrateWhoseColliderGrowsWhileItRests)
+  {
+    World world;
+    world.world->Initialize();
+    world.Run(60.0, 3.0);
+
+    const Entity passenger = world.store.FindEntity("passenger");
+    const auto body = world.store.Get<RigidBody>(passenger)->body;
+    const float before = world.TransformOf("passenger").position.y;
+
+    // three times as high, with the same middle, so that it stands in the
+    // lift and is lifted out
+    world.store.Get<neon::Collider>(passenger)->size = {1.0f, 3.0f, 1.0f};
+    world.Run(60.0, 2.0);
+
+    EXPECT_GT(world.TransformOf("passenger").position.y, before + 0.8f);
+    EXPECT_EQ(world.store.Get<RigidBody>(passenger)->body, body);
+    EXPECT_EQ(world.physics.GetBodyCount(), 10u);
+    EXPECT_EQ(world.logger->Count(LogLevel::Error), 0u) << world.logger->Messages(LogLevel::Error);
+  }
+
+  // joints
+
+  // A door on a hinge in a frame, which a ball rolls into, and a pendulum
+  // on a point joint to the world.
+  const std::string joints_scene = R"(scene: joints
+version: 1
+
+entities:
+  - name: floor
+    components:
+      Transform:
+        position: [0, -0.5, 0]
+        scale: [100, 1, 100]
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+
+  - name: house
+    children:
+      - name: frame
+        components:
+          Transform:
+            position: [0, 1, 0]
+            scale: [0.2, 2, 0.2]
+          RigidBody:
+            kind: static
+          Collider:
+            shape: box
+
+  - name: door
+    components:
+      Transform:
+        position: [1.05, 1, 0]
+      RigidBody:
+        mass: 5
+      Collider:
+        shape: box
+        size: [1.6, 2, 0.1]
+      Joint:
+        type: hinge
+        other: house/frame
+        anchor: [-0.85, 0, 0]
+        axis: [0, 1, 0]
+        limits: [-90, 90]
+
+  - name: ball
+    components:
+      Transform:
+        position: [1.2, 0.4, 4]
+      RigidBody:
+        mass: 10
+        linear_velocity: [0, 0, -6]
+      Collider:
+        shape: sphere
+        radius: 0.4
+
+  - name: hook
+    components:
+      Transform:
+        position: [6, 5, 0]
+        scale: 0.2
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+
+  - name: bob
+    components:
+      Transform:
+        position: [7.5, 3.5, 0]
+      RigidBody:
+        mass: 2
+      Collider:
+        shape: sphere
+        radius: 0.3
+      Joint:
+        type: point
+        anchor: [-1.5, 1.5, 0]
+)";
+
+  TEST(PhysicsWithJolt, LetsABallSwingADoorOpenOnItsHinge)
+  {
+    World world(joints_scene);
+    world.world->Initialize();
+
+    // half a swing of the pendulum takes a second and a half
+    world.Run(60.0, 1.5);
+    EXPECT_EQ(world.logger->Count(LogLevel::Error), 0u) << world.logger->Messages(LogLevel::Error);
+    EXPECT_EQ(world.physics.GetJointCount(), 2u);
+
+    // the pendulum swung to the other side, and hangs from the hook
+    const auto &bob = world.TransformOf("bob");
+    EXPECT_LT(bob.position.x, 6.0f);
+    EXPECT_NEAR(length(bob.position - glm::vec3(6.0f, 5.0f, 0.0f)), std::sqrt(4.5f), 0.1f);
+
+    world.Run(60.0, 1.5);
+
+    const auto &door = world.TransformOf("door");
+    EXPECT_GT(std::abs(door.rotation.yaw), 20.0f);
+    EXPECT_NEAR(door.rotation.pitch, 0.0f, 2.0f);
+    EXPECT_NEAR(door.rotation.roll, 0.0f, 2.0f);
+
+    // the hinge of the door is still at the frame
+    const auto hinge = door.position + door.rotation.GetQuaternion() * glm::vec3(-0.85f, 0.0f, 0.0f);
+    EXPECT_NEAR(hinge.x, 0.2f, 0.1f);
+    EXPECT_NEAR(hinge.z, 0.0f, 0.1f);
+    EXPECT_NEAR(door.position.y, 1.0f, 0.1f);
+
+    const auto *joint = world.store.Get<neon::Joint>(world.store.FindEntity("door"));
+    EXPECT_NE(joint->joint, neon::No_Joint);
+    EXPECT_FALSE(joint->failed);
+  }
+
+  TEST(PhysicsWithJolt, SaysWhatAJointNamesThatIsNotThereAndGoesOn)
+  {
+    World world(R"(scene: wrong
+entities:
+  - name: crate
+    components:
+      Transform:
+        position: [0, 5, 0]
+      RigidBody: {}
+      Collider: {}
+      Joint:
+        type: hinge
+        other: house/frame
+  - name: sign
+    components:
+      Transform: {}
+      Joint: {}
+)");
+    world.world->Initialize();
+    world.Run(60.0, 1.0);
+
+    EXPECT_EQ(world.logger->Count(LogLevel::Error), 2u) << world.logger->Messages(LogLevel::Error);
+    EXPECT_TRUE(world.logger->Contains(
+      LogLevel::Error,
+      "The Joint of entity 'crate' cannot be created: it names 'house/frame', which is no entity"));
+    EXPECT_TRUE(world.logger->Contains(
+      LogLevel::Error,
+      "The Joint of entity 'sign' cannot be created: the entity has no RigidBody. Only a RigidBody can be "
+      "joined to something"));
+
+    // the crate falls all the same
+    EXPECT_EQ(world.physics.GetJointCount(), 0u);
+    EXPECT_LT(world.TransformOf("crate").position.y, 1.0f);
+    EXPECT_TRUE(world.store.Get<neon::Joint>(world.store.FindEntity("crate"))->failed);
   }
 
   // events

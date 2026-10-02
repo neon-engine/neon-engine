@@ -14,6 +14,7 @@
 #include <neon/testing/recording-logger.hpp>
 #include <neon/world-system/ecs/components/character-body.hpp>
 #include <neon/world-system/ecs/components/collider.hpp>
+#include <neon/world-system/ecs/components/joint.hpp>
 #include <neon/world-system/ecs/components/rigid-body.hpp>
 #include <neon/world-system/ecs/components/trigger.hpp>
 
@@ -23,7 +24,10 @@ namespace
   using neon::CharacterBody;
   using neon::Collider;
   using neon::Entity;
+  using neon::Joint;
+  using neon::JointKind;
   using neon::No_Body;
+  using neon::No_Joint;
   using neon::No_Character;
   using neon::No_Entity;
   using neon::PhysicsEvent;
@@ -138,6 +142,7 @@ namespace
     EXPECT_NE(_store.FindComponent("Trigger"), neon::No_Component);
     EXPECT_NE(_store.FindComponent("CharacterBody"), neon::No_Component);
     EXPECT_NE(_store.FindComponent("Collider"), neon::No_Component);
+    EXPECT_NE(_store.FindComponent("Joint"), neon::No_Component);
   }
 
   // creating
@@ -169,6 +174,8 @@ namespace
     body.angular_velocity = {180.0f, 0.0f, -90.0f};
     body.continuous = true;
     body.can_sleep = false;
+    body.lock_position = {"x", "z"};
+    body.lock_rotation = {"y"};
     body.layers = 0b10;
     body.mask = 0b101;
     const Entity crate = Create("crate", transform, body);
@@ -192,6 +199,8 @@ namespace
     ExpectVector(info.angular_velocity, glm::pi<float>(), 0.0f, -glm::half_pi<float>());
     EXPECT_TRUE(info.continuous);
     EXPECT_FALSE(info.can_sleep);
+    EXPECT_EQ(info.locked_position, neon::Axis_X | neon::Axis_Z);
+    EXPECT_EQ(info.locked_rotation, neon::Axis_Y);
     EXPECT_EQ(info.layers, 0b10u);
     EXPECT_EQ(info.mask, 0b101u);
 
@@ -532,22 +541,346 @@ namespace
       "CharacterBody on its entity or on one above it")) << _logger->Messages(LogLevel::Warn);
   }
 
-  TEST_F(PhysicsSimulationTest, SaysOnceThatAColliderCameTooLate)
+  // shapes that change while a body lives
+
+  TEST_F(PhysicsSimulationTest, GivesABodyItsShapesAnewWhenItsColliderChanges)
+  {
+    const Entity crate = Create("crate", At(0.0f, 1.0f, 0.0f), RigidBody{}, Collider{.size = glm::vec3{1.0f}});
+    Step(2);
+    const auto body = BodyOf(crate).body;
+
+    _store.Get<Collider>(crate)->size = {1.0f, 3.0f, 1.0f};
+    Step();
+
+    ASSERT_EQ(_physics.reshaped.size(), 1u);
+    EXPECT_EQ(_physics.reshaped[0].body, body);
+    ASSERT_EQ(_physics.reshaped[0].shapes.size(), 1u);
+    EXPECT_EQ(_physics.reshaped[0].shapes[0].size, glm::vec3(1.0f, 3.0f, 1.0f));
+
+    // the body is the same, and not created anew
+    EXPECT_EQ(_physics.created.size(), 1u);
+    EXPECT_EQ(BodyOf(crate).body, body);
+
+    // and once is enough
+    Step(3);
+    EXPECT_EQ(_physics.reshaped.size(), 1u);
+  }
+
+  TEST_F(PhysicsSimulationTest, GivesABodyItsShapesAnewWhenAColliderBelowItChanges)
+  {
+    const Entity table = _store.CreateEntity("table");
+    _store.Set(table, At(0.0f, 1.0f, 0.0f));
+    _store.Set(table, RigidBody{});
+    const Entity top = _store.CreateEntity("top", table);
+    _store.Set(top, At(0.0f, 0.9f, 0.0f));
+    _store.Set(top, Collider{.size = glm::vec3{2.0f, 0.2f, 2.0f}});
+    Step();
+
+    _store.Get<Collider>(top)->shape = ShapeKind::Sphere;
+    Step();
+
+    ASSERT_EQ(_physics.reshaped.size(), 1u);
+    ASSERT_EQ(_physics.reshaped[0].shapes.size(), 1u);
+    EXPECT_EQ(_physics.reshaped[0].shapes[0].kind, ShapeKind::Sphere);
+    ExpectVector(_physics.reshaped[0].shapes[0].position, 0.0f, 0.9f, 0.0f);
+  }
+
+  TEST_F(PhysicsSimulationTest, TakesAColliderThatJoinsLaterIntoItsBody)
   {
     const Entity table = Create("table", At(0.0f, 1.0f, 0.0f), RigidBody{});
     Step();
 
     const Entity leg = _store.CreateEntity("leg", table);
-    _store.Set(leg, Transform{});
-    _store.Set(leg, Collider{});
+    _store.Set(leg, At(-0.9f, 0.4f, -0.9f));
+    _store.Set(leg, Collider{.size = glm::vec3{0.2f, 0.8f, 0.2f}});
     Step(5);
 
     EXPECT_EQ(_physics.created.size(), 1u);
-    EXPECT_EQ(_logger->Count(LogLevel::Warn), 1u);
+    EXPECT_EQ(_logger->Count(LogLevel::Warn), 0u) << _logger->Messages(LogLevel::Warn);
+    ASSERT_EQ(_physics.reshaped.size(), 1u);
+    ASSERT_EQ(_physics.reshaped[0].shapes.size(), 2u);
+    EXPECT_EQ(_physics.reshaped[0].shapes[1].size, glm::vec3(0.2f, 0.8f, 0.2f));
+    ExpectVector(_physics.reshaped[0].shapes[1].position, -0.9f, 0.4f, -0.9f);
+
+    // the leg is part of the table now, and a change to it is noticed
+    _store.Get<Collider>(leg)->radius = 0.3f;
+    Step();
+    EXPECT_EQ(_physics.reshaped.size(), 2u);
+  }
+
+  TEST_F(PhysicsSimulationTest, GivesABodyItsShapesAnewWhenAColliderLeaves)
+  {
+    const Entity table = Create("table", At(0.0f, 1.0f, 0.0f), RigidBody{});
+    const Entity leg = _store.CreateEntity("leg", table);
+    _store.Set(leg, Transform{});
+    _store.Set(leg, Collider{});
+    Step();
+
+    _store.Remove<Collider>(leg);
+    Step();
+
+    ASSERT_EQ(_physics.reshaped.size(), 1u);
+    EXPECT_EQ(_physics.reshaped[0].shapes.size(), 1u);
+  }
+
+  TEST_F(PhysicsSimulationTest, KeepsTheShapesOfABodyWhoseLastColliderLeaves)
+  {
+    const Entity crate = Create("crate", At(0.0f, 1.0f, 0.0f), RigidBody{});
+    Step();
+
+    _store.Remove<Collider>(crate);
+    Step(3);
+
+    EXPECT_TRUE(_physics.reshaped.empty());
+    EXPECT_TRUE(_physics.HasBody(BodyOf(crate).body));
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 1u);
     EXPECT_TRUE(_logger->Contains(
-      LogLevel::Warn,
-      "The Collider of entity 'table/leg' was added after 'table' was created, and is not part of it"))
-      << _logger->Messages(LogLevel::Warn);
+      LogLevel::Error,
+      "The shape of the RigidBody of entity 'crate' cannot be changed, and stays what it was: it has no "
+      "Collider, on itself or on an entity below it")) << _logger->Messages(LogLevel::Error);
+  }
+
+  TEST_F(PhysicsSimulationTest, SaysOnceWhenTheNewShapesOfABodyCannotBeMade)
+  {
+    const Entity crate = Create("crate", At(0.0f, 1.0f, 0.0f), RigidBody{});
+    Step();
+
+    _physics.fail_with = "the box is too round";
+    _store.Get<Collider>(crate)->size = glm::vec3{2.0f};
+    Step(3);
+
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 1u);
+    EXPECT_TRUE(_logger->Contains(
+      LogLevel::Error,
+      "The shape of the RigidBody of entity 'crate' cannot be changed, and stays what it was: the box is too "
+      "round")) << _logger->Messages(LogLevel::Error);
+  }
+
+  TEST_F(PhysicsSimulationTest, GivesATriggerItsShapesAnew)
+  {
+    const Entity gate = _store.CreateEntity("gate");
+    _store.Set(gate, Transform{});
+    _store.Set(gate, Trigger{});
+    _store.Set(gate, Collider{});
+    Step();
+
+    _store.Get<Collider>(gate)->shape = ShapeKind::Sphere;
+    Step();
+
+    ASSERT_EQ(_physics.reshaped.size(), 1u);
+    EXPECT_EQ(_physics.reshaped[0].body, _store.Get<Trigger>(gate)->body);
+  }
+
+  TEST_F(PhysicsSimulationTest, SaysThatTheShapeOfACharacterCannotChange)
+  {
+    const Entity player = CreateCharacter("player", At(0.0f, 1.0f, 0.0f));
+    Step();
+
+    _store.Get<Collider>(player)->radius = 0.7f;
+    Step(3);
+
+    EXPECT_TRUE(_physics.reshaped.empty());
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 1u);
+    EXPECT_TRUE(_logger->Contains(
+      LogLevel::Error,
+      "The shape of the CharacterBody of entity 'player' cannot change while it lives. Replace the component "
+      "to give it another shape")) << _logger->Messages(LogLevel::Error);
+  }
+
+  TEST_F(PhysicsSimulationTest, StopsWatchingTheCollidersOfABodyThatIsReleased)
+  {
+    const Entity crate = Create("crate", At(0.0f, 1.0f, 0.0f), RigidBody{});
+    Step();
+
+    _store.Remove<RigidBody>(crate);
+    _store.Get<Collider>(crate)->size = glm::vec3{2.0f};
+    Step(2);
+
+    EXPECT_TRUE(_physics.reshaped.empty());
+  }
+
+  // joints
+
+  TEST_F(PhysicsSimulationTest, MakesAJointOnceBothBodiesExistWithTheAnchorAndTheAxisInTheWorld)
+  {
+    Create("frame", At(3.0f, 0.0f, 0.0f), RigidBody{.kind = BodyKind::Static});
+    Transform turned = At(4.0f, 1.0f, 0.0f);
+    turned.rotation = {.yaw = 90.0f};
+    const Entity door = Create("door", turned, RigidBody{});
+    Joint joint;
+    joint.type = JointKind::Hinge;
+    joint.other = "frame";
+    joint.anchor = {-0.8f, 0.0f, 0.0f};
+    joint.axis = {0.0f, 1.0f, 0.0f};
+    joint.limits = {-90.0f, 45.0f};
+    _store.Set(door, joint);
+
+    Step();
+
+    ASSERT_EQ(_physics.created_joints.size(), 1u);
+    const auto &info = _physics.created_joints[0];
+    EXPECT_EQ(info.kind, JointKind::Hinge);
+    EXPECT_EQ(info.body, BodyOf(door).body);
+    EXPECT_EQ(info.other, BodyOf(_store.FindEntity("frame")).body);
+
+    // turned by 90 degrees of yaw, -x on the door points to -z in the world
+    ExpectVector(info.anchor, 4.0f, 1.0f, 0.8f);
+    ExpectVector(info.axis, 0.0f, 1.0f, 0.0f);
+    EXPECT_TRUE(info.has_limits);
+    EXPECT_NEAR(info.limit_min, -glm::half_pi<float>(), tolerance);
+    EXPECT_NEAR(info.limit_max, glm::quarter_pi<float>(), tolerance);
+
+    EXPECT_NE(_store.Get<Joint>(door)->joint, No_Joint);
+    EXPECT_FALSE(_store.Get<Joint>(door)->failed);
+    EXPECT_EQ(_physics.GetJointCount(), 1u);
+
+    // once is enough
+    Step(3);
+    EXPECT_EQ(_physics.created_joints.size(), 1u);
+  }
+
+  TEST_F(PhysicsSimulationTest, SizesTheAnchorOfAJointByTheScaleOfItsEntity)
+  {
+    Transform scaled = At(0.0f, 1.0f, 0.0f);
+    scaled.scale = {1.6f, 2.0f, 0.1f};
+    const Entity door = Create("door", scaled, RigidBody{});
+    _store.Set(door, Joint{.type = JointKind::Hinge, .anchor = {-0.5f, 0.25f, 0.0f}, .axis = {0.0f, 1.0f, 0.0f}});
+
+    Step();
+
+    ASSERT_EQ(_physics.created_joints.size(), 1u);
+    ExpectVector(_physics.created_joints[0].anchor, -0.8f, 1.5f, 0.0f);
+    ExpectVector(_physics.created_joints[0].axis, 0.0f, 1.0f, 0.0f);
+  }
+
+  TEST_F(PhysicsSimulationTest, KeepsTheLimitsOfASliderInUnits)
+  {
+    const Entity sled = Create("sled", At(0.0f, 1.0f, 0.0f), RigidBody{});
+    _store.Set(sled, Joint{.type = JointKind::Slider, .axis = {1.0f, 0.0f, 0.0f}, .limits = {-3.0f, 2.0f}});
+
+    Step();
+
+    ASSERT_EQ(_physics.created_joints.size(), 1u);
+    EXPECT_EQ(_physics.created_joints[0].limit_min, -3.0f);
+    EXPECT_EQ(_physics.created_joints[0].limit_max, 2.0f);
+    EXPECT_TRUE(_physics.created_joints[0].has_limits);
+  }
+
+  TEST_F(PhysicsSimulationTest, JoinsABodyToTheWorldWhenTheJointNamesNothing)
+  {
+    const Entity bob = Create("bob", At(0.0f, 3.0f, 0.0f), RigidBody{});
+    _store.Set(bob, Joint{.type = JointKind::Point, .anchor = {0.0f, 2.0f, 0.0f}});
+
+    Step();
+
+    ASSERT_EQ(_physics.created_joints.size(), 1u);
+    EXPECT_EQ(_physics.created_joints[0].other, No_Body);
+    EXPECT_FALSE(_physics.created_joints[0].has_limits);
+    ExpectVector(_physics.created_joints[0].anchor, 0.0f, 5.0f, 0.0f);
+  }
+
+  TEST_F(PhysicsSimulationTest, MakesTheJointOfAnEntityThatJoinsLater)
+  {
+    Create("frame", At(3.0f, 0.0f, 0.0f), RigidBody{.kind = BodyKind::Static});
+    Step(3);
+
+    const Entity door = Create("door", At(4.0f, 1.0f, 0.0f), RigidBody{});
+    _store.Set(door, Joint{.type = JointKind::Hinge, .other = "frame"});
+    Step();
+
+    ASSERT_EQ(_physics.created_joints.size(), 1u);
+    EXPECT_EQ(_physics.created_joints[0].body, BodyOf(door).body);
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 0u) << _logger->Messages(LogLevel::Error);
+  }
+
+  TEST_F(PhysicsSimulationTest, SaysOnceWhatIsWrongWithAJoint)
+  {
+    const Entity door = Create("door", At(0.0f, 1.0f, 0.0f), RigidBody{});
+    _store.Set(door, Joint{.other = "house/frame"});
+    const Entity sign = _store.CreateEntity("sign");
+    _store.Set(sign, Transform{});
+    _store.Set(sign, Joint{});
+    const Entity frame = _store.CreateEntity("frame");
+    _store.Set(frame, Transform{});
+    const Entity bell = Create("bell", At(0.0f, 1.0f, 0.0f), RigidBody{});
+    _store.Set(bell, Joint{.other = "frame"});
+
+    Step(3);
+
+    EXPECT_TRUE(_physics.created_joints.empty());
+    EXPECT_TRUE(_store.Get<Joint>(door)->failed);
+    EXPECT_TRUE(_store.Get<Joint>(sign)->failed);
+    EXPECT_TRUE(_store.Get<Joint>(bell)->failed);
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 3u) << _logger->Messages(LogLevel::Error);
+    EXPECT_TRUE(_logger->Contains(
+      LogLevel::Error,
+      "The Joint of entity 'door' cannot be created: it names 'house/frame', which is no entity"));
+    EXPECT_TRUE(_logger->Contains(
+      LogLevel::Error,
+      "The Joint of entity 'sign' cannot be created: the entity has no RigidBody. Only a RigidBody can be "
+      "joined to something"));
+    EXPECT_TRUE(_logger->Contains(
+      LogLevel::Error,
+      "The Joint of entity 'bell' cannot be created: it names 'frame', which has no RigidBody"));
+  }
+
+  TEST_F(PhysicsSimulationTest, SaysWhenThePhysicsRefusesAJoint)
+  {
+    const Entity door = Create("door", At(0.0f, 1.0f, 0.0f), RigidBody{});
+    Step();
+    _store.Set(door, Joint{});
+    _physics.fail_with = "neither body is dynamic";
+
+    Step(3);
+
+    EXPECT_TRUE(_store.Get<Joint>(door)->failed);
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 1u);
+    EXPECT_TRUE(_logger->Contains(
+      LogLevel::Error, "The Joint of entity 'door' cannot be created: neither body is dynamic"));
+  }
+
+  TEST_F(PhysicsSimulationTest, TakesAJointApartWhenItsComponentLeaves)
+  {
+    const Entity bob = Create("bob", At(0.0f, 3.0f, 0.0f), RigidBody{});
+    _store.Set(bob, Joint{.type = JointKind::Point});
+    Step();
+    const auto made = _store.Get<Joint>(bob)->joint;
+
+    _store.Remove<Joint>(bob);
+    Step();
+
+    EXPECT_THAT(_physics.destroyed_joints, ::testing::ElementsAre(made));
+    EXPECT_EQ(_physics.GetJointCount(), 0u);
+  }
+
+  TEST_F(PhysicsSimulationTest, MakesAJointAgainWhenABodyItHeldIsReplaced)
+  {
+    const Entity frame = Create("frame", At(3.0f, 0.0f, 0.0f), RigidBody{.kind = BodyKind::Static});
+    const Entity door = Create("door", At(4.0f, 1.0f, 0.0f), RigidBody{});
+    _store.Set(door, Joint{.type = JointKind::Hinge, .other = "frame"});
+    Step();
+    EXPECT_EQ(_physics.GetJointCount(), 1u);
+
+    // the frame is made anew, and the joint went with its body
+    _store.Set(frame, RigidBody{.kind = BodyKind::Static});
+    Step();
+
+    EXPECT_EQ(_physics.created_joints.size(), 2u);
+    EXPECT_EQ(_physics.GetJointCount(), 1u);
+    EXPECT_EQ(_physics.created_joints[1].other, BodyOf(frame).body);
+    EXPECT_EQ(_store.Get<Joint>(door)->joint, 2u);
+  }
+
+  TEST_F(PhysicsSimulationTest, LetsAJointGoWithTheEntityItIsOn)
+  {
+    const Entity bob = Create("bob", At(0.0f, 3.0f, 0.0f), RigidBody{});
+    _store.Set(bob, Joint{.type = JointKind::Point});
+    Step();
+
+    _store.DestroyEntity(bob);
+
+    EXPECT_EQ(_physics.GetJointCount(), 0u);
+    EXPECT_EQ(_physics.GetBodyCount(), 0u);
   }
 
   // in the world

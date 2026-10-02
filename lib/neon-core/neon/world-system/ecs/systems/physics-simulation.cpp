@@ -6,55 +6,78 @@
 
 #include <neon/world-system/ecs/components/character-body.hpp>
 #include <neon/world-system/ecs/components/collider.hpp>
+#include <neon/world-system/ecs/components/joint.hpp>
 #include <neon/world-system/ecs/components/rigid-body.hpp>
 #include <neon/world-system/ecs/components/trigger.hpp>
 
 namespace neon
 {
-  namespace
+  glm::mat4 PhysicsSimulation::LocalMatrixOf(const Transform &transform)
   {
-    glm::mat4 LocalMatrixOf(const Transform &transform)
+    return translate(glm::mat4{1.0f}, transform.position)
+           * mat4_cast(transform.rotation.GetQuaternion())
+           * scale(glm::mat4{1.0f}, transform.scale);
+  }
+
+  void PhysicsSimulation::TakeApart(
+    const glm::mat4 &matrix,
+    glm::vec3 &position,
+    glm::quat &rotation,
+    glm::vec3 &size)
+  {
+    position = matrix[3];
+
+    glm::mat3 axes{matrix};
+    size = {length(axes[0]), length(axes[1]), length(axes[2])};
+
+    for (int axis = 0; axis < 3; axis++)
     {
-      return translate(glm::mat4{1.0f}, transform.position)
-             * mat4_cast(transform.rotation.GetQuaternion())
-             * scale(glm::mat4{1.0f}, transform.scale);
+      if (size[axis] > 0.0f) { axes[axis] /= size[axis]; }
     }
 
-    /// Takes a matrix apart into where it moves to, how it turns, and how
-    /// it sizes. A matrix that shears, which a parent with different sizes
-    /// along its axes and a child that is turned make together, comes out
-    /// without the shear.
-    void TakeApart(const glm::mat4 &matrix, glm::vec3 &position, glm::quat &rotation, glm::vec3 &size)
+    // a mirrored matrix is no rotation. The mirror goes into the size
+    if (determinant(axes) < 0.0f)
     {
-      position = matrix[3];
-
-      glm::mat3 axes{matrix};
-      size = {length(axes[0]), length(axes[1]), length(axes[2])};
-
-      for (int axis = 0; axis < 3; axis++)
-      {
-        if (size[axis] > 0.0f) { axes[axis] /= size[axis]; }
-      }
-
-      // a mirrored matrix is no rotation. The mirror goes into the size
-      if (determinant(axes) < 0.0f)
-      {
-        axes[0] = -axes[0];
-        size.x = -size.x;
-      }
-
-      rotation = normalize(quat_cast(axes));
+      axes[0] = -axes[0];
+      size.x = -size.x;
     }
 
-    bool SameRotation(const Rotation &left, const Rotation &right)
-    {
-      return left.pitch == right.pitch && left.yaw == right.yaw && left.roll == right.roll;
-    }
+    rotation = normalize(quat_cast(axes));
+  }
 
-    std::string Describe(const ShapeKind shape)
+  bool PhysicsSimulation::SameRotation(const Rotation &left, const Rotation &right)
+  {
+    return left.pitch == right.pitch && left.yaw == right.yaw && left.roll == right.roll;
+  }
+
+  bool PhysicsSimulation::SameCollider(const Collider &left, const Collider &right)
+  {
+    return left.shape == right.shape
+           && left.size == right.size
+           && left.radius == right.radius
+           && left.height == right.height
+           && left.top_radius == right.top_radius
+           && left.bottom_radius == right.bottom_radius
+           && left.model == right.model
+           && left.offset == right.offset
+           && SameRotation(left.rotation, right.rotation);
+  }
+
+  std::string PhysicsSimulation::Describe(const ShapeKind shape)
+  {
+    return shape == ShapeKind::ConvexHull ? "convex hull" : "mesh";
+  }
+
+  std::uint8_t PhysicsSimulation::AxisBits(const std::vector<std::string> &axes)
+  {
+    std::uint8_t bits = 0;
+    for (const auto &axis : axes)
     {
-      return shape == ShapeKind::ConvexHull ? "convex hull" : "mesh";
+      if (axis == "x") { bits |= Axis_X; }
+      if (axis == "y") { bits |= Axis_Y; }
+      if (axis == "z") { bits |= Axis_Z; }
     }
+    return bits;
   }
 
   PhysicsSimulation::PhysicsSimulation(
@@ -89,9 +112,24 @@ namespace neon
       character.character = No_Character;
     });
 
+    store.Register<Joint>("Joint", [this](const Entity entity, Joint &joint)
+    {
+      if (const auto it = _joints.find(entity); it != _joints.end())
+      {
+        _physics->DestroyJoint(it->second);
+        _joints.erase(it);
+      }
+      joint.joint = No_Joint;
+    });
+
     store.Register<Collider>("Collider", [this](const Entity entity, Collider &)
     {
-      _claimed.erase(entity);
+      // the body it was part of has one shape less
+      if (const auto it = _claimed.find(entity); it != _claimed.end())
+      {
+        _reshape.insert(it->second);
+        _claimed.erase(it);
+      }
       _loose.erase(entity);
     });
 
@@ -105,6 +143,7 @@ namespace neon
     _triggers = store.Query<Transform, Trigger>(QueryOrder::ParentsFirst);
     _characters = store.Query<Transform, CharacterBody>(QueryOrder::ParentsFirst);
     _colliders = store.Query<Collider>();
+    _joint_query = store.Query<Joint>();
   }
 
   void PhysicsSimulation::Update(EntityStore &, const double) {}
@@ -117,7 +156,35 @@ namespace neon
     if (it->second.body != No_Body) { _physics->DestroyBody(it->second.body); }
     if (it->second.character != No_Character) { _physics->DestroyCharacter(it->second.character); }
 
+    for (const auto &read : it->second.colliders) { _claimed.erase(read.entity); }
+    _reshape.erase(entity);
     _records.erase(it);
+  }
+
+  std::string PhysicsSimulation::NameOf(const RecordKind kind)
+  {
+    switch (kind)
+    {
+      case RecordKind::Body: return "RigidBody";
+      case RecordKind::Trigger: return "Trigger";
+      case RecordKind::Character: return "CharacterBody";
+    }
+    return "body";
+  }
+
+  void PhysicsSimulation::Claim(
+    Record &record,
+    const Entity owner,
+    const std::vector<Entity> &colliders,
+    EntityStore &store)
+  {
+    record.colliders.clear();
+    for (const auto collider : colliders)
+    {
+      _claimed[collider] = owner;
+      _loose.erase(collider);
+      record.colliders.push_back({collider, *store.Get<Collider>(collider)});
+    }
   }
 
   bool PhysicsSimulation::Knows(const Entity entity, const BodyId body, const CharacterId character) const
@@ -330,11 +397,7 @@ namespace neon
       return false;
     }
 
-    for (const auto collider : colliders)
-    {
-      _claimed.insert(collider);
-      _loose.erase(collider);
-    }
+    Claim(record, entity, colliders, store);
     return true;
   }
 
@@ -384,6 +447,8 @@ namespace neon
         info.angular_velocity = radians(body.angular_velocity);
         info.continuous = body.continuous;
         info.can_sleep = body.can_sleep;
+        info.locked_position = AxisBits(body.lock_position);
+        info.locked_rotation = AxisBits(body.lock_rotation);
         info.layers = body.layers;
         info.mask = body.mask;
 
@@ -508,6 +573,113 @@ namespace neon
     });
   }
 
+  void PhysicsSimulation::CreateJoints(EntityStore &store)
+  {
+    store.Each(_joint_query, [&](const EntityBlock &block)
+    {
+      auto *joints = block.Column<Joint>(0);
+
+      for (std::size_t i = 0; i < block.count; i++)
+      {
+        auto &joint = joints[i];
+        const auto entity = block.entities[i];
+        if (joint.failed) { continue; }
+
+        if (joint.joint != No_Joint)
+        {
+          // it holds. Or one of its bodies is gone, and it is made again
+          // once both are back
+          const auto it = _joints.find(entity);
+          if (it != _joints.end() && it->second == joint.joint && _physics->HasJoint(joint.joint)) { continue; }
+
+          if (it != _joints.end()) { _joints.erase(it); }
+          joint.joint = No_Joint;
+        }
+
+        const auto refuse = [&](const std::string &why)
+        {
+          joint.failed = true;
+          Refuse(store, entity, "Joint", why);
+        };
+
+        // the body of its own entity
+        const auto *body = store.Get<RigidBody>(entity);
+        if (body == nullptr)
+        {
+          refuse("the entity has no RigidBody. Only a RigidBody can be joined to something");
+          continue;
+        }
+        if (body->failed)
+        {
+          refuse("the RigidBody of the entity could not be created");
+          continue;
+        }
+
+        const auto own = _records.find(entity);
+        if (own == _records.end() || own->second.kind != RecordKind::Body) { continue; }
+
+        // the body it is joined to, or the world
+        BodyId other = No_Body;
+        if (!joint.other.empty())
+        {
+          const Entity named = store.FindEntity(joint.other);
+          if (named == No_Entity)
+          {
+            refuse(std::format("it names '{}', which is no entity", joint.other));
+            continue;
+          }
+
+          const auto *other_body = store.Get<RigidBody>(named);
+          if (other_body == nullptr)
+          {
+            refuse(std::format("it names '{}', which has no RigidBody", joint.other));
+            continue;
+          }
+          if (other_body->failed)
+          {
+            refuse(std::format("the RigidBody of '{}' could not be created", joint.other));
+            continue;
+          }
+
+          const auto record = _records.find(named);
+          if (record == _records.end() || record->second.kind != RecordKind::Body) { continue; }
+          other = record->second.body;
+        }
+
+        // The anchor and the axis go with the entity, as it is now. The
+        // anchor is sized by the scale of the entity, as the offset of a
+        // Collider is, so that [-0.5, 0, 0] is the left edge of a scaled
+        // cube. The axis is a direction, and is not.
+        const auto &pose = own->second.current;
+
+        JointInfo info;
+        info.kind = joint.type;
+        info.body = own->second.body;
+        info.other = other;
+        info.anchor = pose.position + pose.rotation * (own->second.scale * joint.anchor);
+        info.axis = pose.rotation * joint.axis;
+        info.has_limits = joint.limits.size() == 2;
+        if (info.has_limits)
+        {
+          const bool in_degrees = joint.type == JointKind::Hinge;
+          info.limit_min = in_degrees ? glm::radians(joint.limits[0]) : joint.limits[0];
+          info.limit_max = in_degrees ? glm::radians(joint.limits[1]) : joint.limits[1];
+        }
+
+        JointId made = No_Joint;
+        std::string error;
+        if (!_physics->CreateJoint(info, made, error))
+        {
+          refuse(error);
+          continue;
+        }
+
+        joint.joint = made;
+        _joints[entity] = made;
+      }
+    });
+  }
+
   void PhysicsSimulation::FindLooseColliders(EntityStore &store)
   {
     store.Each(_colliders, [&](const EntityBlock &block)
@@ -520,25 +692,83 @@ namespace neon
         Entity owner = entity;
         while (owner != No_Entity && !IsOwner(store, owner)) { owner = store.GetParent(owner); }
 
+        // it joins a body that is there already, which gets its shapes anew
+        if (owner != No_Entity && _records.contains(owner))
+        {
+          _reshape.insert(owner);
+          continue;
+        }
+
         // said once, and not in every step
         _loose.insert(entity);
 
-        const auto path = PathOf(store, entity);
         if (owner == No_Entity)
         {
+          const auto path = PathOf(store, entity);
           _logger->Warn(
             "The Collider of entity '{}' belongs to nothing. It needs a RigidBody, a Trigger, or a "
             "CharacterBody on its entity or on one above it",
             path);
-        } else if (_records.contains(owner))
-        {
-          const auto owner_path = PathOf(store, owner);
-          _logger->Warn(
-            "The Collider of entity '{}' was added after '{}' was created, and is not part of it",
-            path, owner_path);
         }
       }
     });
+  }
+
+  void PhysicsSimulation::WatchColliders(EntityStore &store)
+  {
+    for (const auto &[entity, record] : _records)
+    {
+      for (const auto &read : record.colliders)
+      {
+        const auto *collider = store.Get<Collider>(read.entity);
+        if (collider == nullptr || !SameCollider(*collider, read.collider))
+        {
+          _reshape.insert(entity);
+          break;
+        }
+      }
+    }
+  }
+
+  void PhysicsSimulation::Reshape(EntityStore &store)
+  {
+    for (const auto entity : _reshape)
+    {
+      const auto it = _records.find(entity);
+      if (it == _records.end()) { continue; }
+
+      auto &record = it->second;
+      const auto what = NameOf(record.kind);
+      const auto path = PathOf(store, entity);
+
+      // the colliders as they are now are what was read, so that what
+      // cannot be done is said once
+      std::vector<ShapeInfo> shapes;
+      std::vector<Entity> colliders;
+      std::string error;
+      const bool collected = CollectShapes(
+        store, entity, scale(glm::mat4{1.0f}, record.scale), shapes, colliders, error);
+      Claim(record, entity, colliders, store);
+
+      if (record.kind == RecordKind::Character)
+      {
+        _logger->Error(
+          "The shape of the {} of entity '{}' cannot change while it lives. Replace the component to give it "
+          "another shape",
+          what, path);
+        continue;
+      }
+
+      if (!collected || shapes.empty() || !_physics->SetShape(record.body, shapes, error))
+      {
+        if (shapes.empty() && collected) { error = "it has no Collider, on itself or on an entity below it"; }
+
+        _logger->Error(
+          "The shape of the {} of entity '{}' cannot be changed, and stays what it was: {}",
+          what, path, error);
+      }
+    }
+    _reshape.clear();
   }
 
   void PhysicsSimulation::HandOver(EntityStore &store, const double fixed_delta_time)
@@ -796,7 +1026,10 @@ namespace neon
   void PhysicsSimulation::FixedUpdate(EntityStore &store, const double fixed_delta_time)
   {
     CreateMissing(store);
+    CreateJoints(store);
     FindLooseColliders(store);
+    WatchColliders(store);
+    Reshape(store);
     HandOver(store, fixed_delta_time);
 
     _physics->Step(fixed_delta_time);

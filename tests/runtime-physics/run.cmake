@@ -4,19 +4,26 @@
 
 include("${CMAKE_CURRENT_LIST_DIR}/../../cmake/scripts/run-application.cmake")
 
-# run_physics(<folder> <time step> <frame>...)
+# run_scene(<scene> <folder> <time step> <frame>...)
 #
 # Saves the frames that are listed into a folder of their own.
-function(run_physics FOLDER TIME_STEP)
+function(run_scene SCENE FOLDER TIME_STEP)
   list(JOIN ARGN "," FRAMES)
 
   run(--headless-renderer
-          --scene assets://scenes/physics.scene.yml
+          --scene assets://scenes/${SCENE}.scene.yml
           --time-step ${TIME_STEP}
           --output-dir ${FOLDER}
           --screenshot output://frame.png
           --screenshot-at ${FRAMES})
 
+  set(EXIT_CODE "${EXIT_CODE}" PARENT_SCOPE)
+  set(OUTPUT "${OUTPUT}" PARENT_SCOPE)
+endfunction()
+
+# run_physics(<folder> <time step> <frame>...): the scene of the physics
+function(run_physics FOLDER TIME_STEP)
+  run_scene(physics "${FOLDER}" "${TIME_STEP}" ${ARGN})
   set(EXIT_CODE "${EXIT_CODE}" PARENT_SCOPE)
   set(OUTPUT "${OUTPUT}" PARENT_SCOPE)
 endfunction()
@@ -101,6 +108,27 @@ elseif (CASE STREQUAL "same-at-every-frame-rate")
 
   # something moved in between
   expect_other_image("at-60/frame-0060.png" "at-60/frame-0120.png")
+elseif (CASE STREQUAL "joints-move")
+  # The scene of the joints: a door swings open, a pendulum swings, a sled
+  # slides, and a glued pair tips as one. Something is somewhere else after
+  # one and two seconds, and the same run leads to the same images.
+  run_scene(joints first 0.016667 1 60 120)
+  skip_without_renderer()
+  if (SKIPPED)
+    return()
+  endif ()
+  expect_exit_code(0)
+  expect_no_output("[error]")
+  expect_no_output("[warning]")
+
+  expect_other_image("first/frame-0001.png" "first/frame-0060.png")
+  expect_other_image("first/frame-0060.png" "first/frame-0120.png")
+
+  run_scene(joints second 0.016667 1 60 120)
+  expect_exit_code(0)
+  expect_same_image("first/frame-0001.png" "second/frame-0001.png")
+  expect_same_image("first/frame-0060.png" "second/frame-0060.png")
+  expect_same_image("first/frame-0120.png" "second/frame-0120.png")
 else ()
   message(FATAL_ERROR "There is no case '${CASE}'")
 endif ()

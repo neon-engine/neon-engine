@@ -24,6 +24,23 @@ namespace neon
 
     std::unique_ptr<State> _state;
 
+    /// Sets up what Jolt shares between every physics of a process, with
+    /// the first physics that is initialized.
+    static void AcquireShared();
+
+    /// Takes down what Jolt shares, with the last physics that is cleaned
+    /// up.
+    static void ReleaseShared();
+
+    [[nodiscard]] static bool IsFinite(const glm::vec3 &value);
+
+    [[nodiscard]] static std::string Name(ShapeKind kind);
+
+    [[nodiscard]] static std::string Name(JointKind kind);
+
+    /// Whether shapes can be on a body. Says why not in `error`.
+    static bool ShapesFit(const std::vector<ShapeInfo> &shapes, BodyKind kind, bool trigger, std::string &error);
+
   public:
     Jolt_PhysicsSystem(const SettingsConfig &settings_config, const std::shared_ptr<Logger> &logger);
 
@@ -41,6 +58,8 @@ namespace neon
     bool CreateBody(const BodyInfo &info, BodyId &body, std::string &error) override;
 
     void DestroyBody(BodyId body) override;
+
+    bool SetShape(BodyId body, const std::vector<ShapeInfo> &shapes, std::string &error) override;
 
     [[nodiscard]] bool HasBody(BodyId body) override;
 
@@ -82,6 +101,14 @@ namespace neon
       double seconds,
       CharacterState &state) override;
 
+    bool CreateJoint(const JointInfo &info, JointId &joint, std::string &error) override;
+
+    void DestroyJoint(JointId joint) override;
+
+    [[nodiscard]] bool HasJoint(JointId joint) override;
+
+    [[nodiscard]] std::size_t GetJointCount() override;
+
     void Step(double seconds) override;
 
     bool CastRay(const Ray &ray, const QueryFilter &filter, RayHit &hit) override;
@@ -92,6 +119,14 @@ namespace neon
       const glm::quat &rotation,
       const QueryFilter &filter,
       std::vector<OverlapHit> &hits) override;
+
+    bool CastShape(
+      const ShapeInfo &shape,
+      const glm::vec3 &from,
+      const glm::quat &rotation,
+      const glm::vec3 &to,
+      const QueryFilter &filter,
+      ShapeCastHit &hit) override;
   };
 } // neon
 

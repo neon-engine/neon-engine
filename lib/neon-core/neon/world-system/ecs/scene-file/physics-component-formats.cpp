@@ -4,6 +4,7 @@
 
 #include <neon/world-system/ecs/components/character-body.hpp>
 #include <neon/world-system/ecs/components/collider.hpp>
+#include <neon/world-system/ecs/components/joint.hpp>
 #include <neon/world-system/ecs/components/rigid-body.hpp>
 #include <neon/world-system/ecs/components/trigger.hpp>
 
@@ -13,35 +14,29 @@
 
 namespace neon
 {
-  namespace
+  template<typename T>
+  ComponentFormat ComponentFormats::PhysicsFormat()
   {
-    /// The format of a component that the physics registers. A world
-    /// without physics does not know the component, which is said instead
-    /// of giving the entity something the store cannot hold.
-    template<typename T>
-    ComponentFormat PhysicsFormat()
+    auto format = ComponentFormat::Of<T>();
+
+    format.read = [type = format.type](const DataReader &reader, EntityStore &store, const Entity entity)
     {
-      auto format = ComponentFormat::Of<T>();
+      // read first, so that what is wrong with it is said as well
+      T component{};
+      ReadFields(*type, reader, &component);
 
-      format.read = [type = format.type](const DataReader &reader, EntityStore &store, const Entity entity)
+      if (store.FindComponent(type->name) == No_Component)
       {
-        // read first, so that what is wrong with it is said as well
-        T component{};
-        ReadFields(*type, reader, &component);
+        reader.Report({}, std::format(
+                        "{} needs the physics, which is not part of this world",
+                        reader.GetWhere()));
+        return;
+      }
 
-        if (store.FindComponent(type->name) == No_Component)
-        {
-          reader.Report({}, std::format(
-                          "{} needs the physics, which is not part of this world",
-                          reader.GetWhere()));
-          return;
-        }
+      store.Set(entity, component);
+    };
 
-        store.Set(entity, component);
-      };
-
-      return format;
-    }
+    return format;
   }
 
   void ComponentFormats::AddPhysicsComponents()
@@ -50,5 +45,6 @@ namespace neon
     Add(PhysicsFormat<Trigger>());
     Add(PhysicsFormat<CharacterBody>());
     Add(PhysicsFormat<Collider>());
+    Add(PhysicsFormat<Joint>());
   }
 } // neon

@@ -4,7 +4,9 @@
 #include <string>
 #include <vector>
 
+#include "joint-info.hpp"
 #include "physics-types.hpp"
+#include "shape-cast-hit.hpp"
 
 namespace neon
 {
@@ -39,6 +41,12 @@ namespace neon
 
     /// Destroys a body. One that is not known is ignored.
     virtual void DestroyBody(BodyId body) = 0;
+
+    /// Gives a body other shapes while it lives. What the body is, its
+    /// mass included, stays. Returns false and says why in `error` when the
+    /// shapes cannot be made, or when the body is not known or belongs to
+    /// a character. The body keeps its shapes then.
+    virtual bool SetShape(BodyId body, const std::vector<ShapeInfo> &shapes, std::string &error) = 0;
 
     [[nodiscard]] virtual bool HasBody(BodyId body) = 0;
 
@@ -95,6 +103,20 @@ namespace neon
       double seconds,
       CharacterState &state) = 0;
 
+    /// Joins two bodies, or a body and the world. Returns false and says why
+    /// in `error` when it cannot be made, such as when neither body is
+    /// dynamic. The joint is gone when either of its bodies is destroyed.
+    virtual bool CreateJoint(const JointInfo &info, JointId &joint, std::string &error) = 0;
+
+    /// Takes a joint apart. One that is not known is ignored.
+    virtual void DestroyJoint(JointId joint) = 0;
+
+    /// Whether a joint still holds. It stops holding when it is destroyed,
+    /// and when one of its bodies is.
+    [[nodiscard]] virtual bool HasJoint(JointId joint) = 0;
+
+    [[nodiscard]] virtual std::size_t GetJointCount() = 0;
+
     /// Advances the simulation by `seconds`. The engine calls this once per
     /// step of the world, always with the same length.
     virtual void Step(double seconds) = 0;
@@ -120,6 +142,19 @@ namespace neon
       const glm::quat &rotation,
       const QueryFilter &filter,
       std::vector<OverlapHit> &hits) = 0;
+
+    /// Moves a shape, turned by `rotation`, from `from` to `to`, and finds
+    /// the first body it meets on the way. Returns false when it meets none.
+    /// A ray finds what a line hits, this finds what a body of that shape
+    /// would hit: whether a crate fits where it is about to be put, or what
+    /// a swung sword touches. The shape is any but a mesh and a plane.
+    virtual bool CastShape(
+      const ShapeInfo &shape,
+      const glm::vec3 &from,
+      const glm::quat &rotation,
+      const glm::vec3 &to,
+      const QueryFilter &filter,
+      ShapeCastHit &hit) = 0;
   };
 } // neon
 

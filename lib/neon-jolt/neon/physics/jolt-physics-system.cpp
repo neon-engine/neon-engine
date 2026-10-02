@@ -23,6 +23,7 @@
 #include <Jolt/Core/TempAllocator.h>
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 #include <Jolt/Physics/Body/BodyLock.h>
+#include <Jolt/Physics/Body/BodyLockMulti.h>
 #include <Jolt/Physics/Character/CharacterVirtual.h>
 #include <Jolt/Physics/Collision/BroadPhase/BroadPhaseLayer.h>
 #include <Jolt/Physics/Collision/CastResult.h>
@@ -31,6 +32,7 @@
 #include <Jolt/Physics/Collision/ContactListener.h>
 #include <Jolt/Physics/Collision/ObjectLayer.h>
 #include <Jolt/Physics/Collision/RayCast.h>
+#include <Jolt/Physics/Collision/ShapeCast.h>
 #include <Jolt/Physics/Collision/Shape/BoxShape.h>
 #include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
 #include <Jolt/Physics/Collision/Shape/ConvexHullShape.h>
@@ -42,6 +44,11 @@
 #include <Jolt/Physics/Collision/Shape/StaticCompoundShape.h>
 #include <Jolt/Physics/Collision/Shape/TaperedCapsuleShape.h>
 #include <Jolt/Physics/Collision/Shape/TaperedCylinderShape.h>
+#include <Jolt/Physics/Constraints/FixedConstraint.h>
+#include <Jolt/Physics/Constraints/HingeConstraint.h>
+#include <Jolt/Physics/Constraints/PointConstraint.h>
+#include <Jolt/Physics/Constraints/SliderConstraint.h>
+#include <Jolt/Physics/Constraints/TwoBodyConstraint.h>
 #include <Jolt/Physics/PhysicsSystem.h>
 #include <Jolt/RegisterTypes.h>
 
@@ -75,26 +82,6 @@ namespace neon
       return factory;
     }
 
-    void AcquireShared()
-    {
-      const std::scoped_lock lock(shared_mutex);
-      if (shared_users++ > 0) { return; }
-
-      JPH::RegisterDefaultAllocator();
-      JPH::Factory::sInstance = &SharedFactory();
-      JPH::RegisterTypes();
-    }
-
-    void ReleaseShared()
-    {
-      const std::scoped_lock lock(shared_mutex);
-      if (--shared_users > 0) { return; }
-
-      // unregistering empties the factory
-      JPH::UnregisterTypes();
-      JPH::Factory::sInstance = nullptr;
-    }
-
     JPH::Vec3 ToJolt(const glm::vec3 &value) { return {value.x, value.y, value.z}; }
 
     JPH::Quat ToJolt(const glm::quat &value)
@@ -106,26 +93,17 @@ namespace neon
 
     glm::quat ToGlm(const JPH::Quat &value) { return {value.GetW(), value.GetX(), value.GetY(), value.GetZ()}; }
 
-    bool IsFinite(const glm::vec3 &value)
+    /// What a body is free to do, which is everything but what is locked.
+    JPH::EAllowedDOFs AllowedDegrees(const std::uint8_t locked_position, const std::uint8_t locked_rotation)
     {
-      return std::isfinite(value.x) && std::isfinite(value.y) && std::isfinite(value.z);
-    }
-
-    std::string Name(const ShapeKind kind)
-    {
-      switch (kind)
-      {
-        case ShapeKind::Box: return "box";
-        case ShapeKind::Sphere: return "sphere";
-        case ShapeKind::Capsule: return "capsule";
-        case ShapeKind::Cylinder: return "cylinder";
-        case ShapeKind::TaperedCapsule: return "tapered capsule";
-        case ShapeKind::TaperedCylinder: return "tapered cylinder";
-        case ShapeKind::Plane: return "plane";
-        case ShapeKind::ConvexHull: return "convex hull";
-        case ShapeKind::Mesh: return "mesh";
-      }
-      return "shape";
+      auto allowed = JPH::EAllowedDOFs::None;
+      if ((locked_position & Axis_X) == 0) { allowed |= JPH::EAllowedDOFs::TranslationX; }
+      if ((locked_position & Axis_Y) == 0) { allowed |= JPH::EAllowedDOFs::TranslationY; }
+      if ((locked_position & Axis_Z) == 0) { allowed |= JPH::EAllowedDOFs::TranslationZ; }
+      if ((locked_rotation & Axis_X) == 0) { allowed |= JPH::EAllowedDOFs::RotationX; }
+      if ((locked_rotation & Axis_Y) == 0) { allowed |= JPH::EAllowedDOFs::RotationY; }
+      if ((locked_rotation & Axis_Z) == 0) { allowed |= JPH::EAllowedDOFs::RotationZ; }
+      return allowed;
     }
 
     /// What a body is in and looks for. Jolt keeps a number of 16 bits
@@ -262,10 +240,24 @@ namespace neon
     {
       JPH::BodyID jolt;
       Entity entity = No_Entity;
+      BodyKind kind = BodyKind::Static;
       bool trigger = false;
 
       /// The body that a character is for the bodies around it.
       bool of_character = false;
+
+      /// What a dynamic body keeps when its shape changes.
+      float mass = 1.0f;
+      JPH::EAllowedDOFs allowed = JPH::EAllowedDOFs::All;
+    };
+
+    /// What is kept of a joint. Jolt makes the constraint itself, and
+    /// counts references to it. This is one of them.
+    struct JointRecord
+    {
+      JPH::Ref<JPH::TwoBodyConstraint> constraint;
+      BodyId body = No_Body;
+      BodyId other = No_Body;
     };
 
     /// What is kept of a character. The character of Jolt is a part of the
@@ -444,12 +436,14 @@ namespace neon
 
     std::unordered_map<BodyId, BodyRecord> bodies;
     std::map<CharacterId, CharacterRecord> characters;
+    std::map<JointId, JointRecord> joints;
 
     // by the two numbers Jolt knows the bodies as
     std::map<std::pair<std::uint32_t, std::uint32_t>, Touch> touches;
 
     BodyId next_body = 1;
     CharacterId next_character = 1;
+    JointId next_joint = 1;
     std::size_t body_count = 0;
     std::size_t added_since_rebuild = 0;
 
@@ -468,10 +462,56 @@ namespace neon
 
     JPH::RefConst<JPH::Shape> MakeShapes(const std::vector<ShapeInfo> &shapes, std::string &error) const;
 
+    /// Makes the shape of a query, which is held where the query says and
+    /// has an inside. Returns nullptr and says why in the log when it
+    /// cannot be made. `what` is the query, such as `An overlap cannot be
+    /// looked for`.
+    JPH::RefConst<JPH::Shape> MakeQueryShape(
+      const ShapeInfo &info,
+      const std::string &what,
+      const std::shared_ptr<Logger> &logger) const;
+
     [[nodiscard]] bool IsResting(const std::pair<std::uint32_t, std::uint32_t> &pair, const Touch &touch) const;
 
     std::vector<PhysicsEvent> ReadContacts();
+
+    /// Takes a joint apart. What it held wakes up, since what was held
+    /// up may now fall.
+    void RemoveJoint(const JointRecord &record);
+
+    /// Takes every joint apart that holds a body.
+    void RemoveJointsOf(BodyId body);
   };
+
+  void Jolt_PhysicsSystem::State::RemoveJoint(const JointRecord &record)
+  {
+    physics.RemoveConstraint(record.constraint);
+
+    auto &interface = physics.GetBodyInterface();
+    for (const auto body : {record.body, record.other})
+    {
+      const auto *found = Find(body);
+      if (found != nullptr && found->kind == BodyKind::Dynamic && !found->trigger)
+      {
+        interface.ActivateBody(found->jolt);
+      }
+    }
+  }
+
+  void Jolt_PhysicsSystem::State::RemoveJointsOf(const BodyId body)
+  {
+    for (auto it = joints.begin(); it != joints.end();)
+    {
+      if (it->second.body == body || it->second.other == body)
+      {
+        RemoveJoint(it->second);
+        it = joints.erase(it);
+      } else
+      {
+        ++it;
+      }
+    }
+  }
 
   JPH::RefConst<JPH::Shape> Jolt_PhysicsSystem::State::MakeShape(const ShapeInfo &info, std::string &error) const
   {
@@ -762,6 +802,29 @@ namespace neon
     return result.Get();
   }
 
+  JPH::RefConst<JPH::Shape> Jolt_PhysicsSystem::State::MakeQueryShape(
+    const ShapeInfo &info,
+    const std::string &what,
+    const std::shared_ptr<Logger> &logger) const
+  {
+    if (info.kind == ShapeKind::Mesh || info.kind == ShapeKind::Plane)
+    {
+      const auto name = Name(info.kind);
+      logger->Error("{} with a {}, which has no inside", what, name);
+      return nullptr;
+    }
+
+    // where the shape sits is what the call says
+    ShapeInfo in_place = info;
+    in_place.position = glm::vec3{0.0f};
+    in_place.rotation = glm::quat{1.0f, 0.0f, 0.0f, 0.0f};
+
+    std::string error;
+    const auto made = MakeShape(in_place, error);
+    if (made == nullptr) { logger->Error("{}: {}", what, error); }
+    return made;
+  }
+
   bool Jolt_PhysicsSystem::State::IsResting(
     const std::pair<std::uint32_t, std::uint32_t> &pair,
     const Touch &touch) const
@@ -909,6 +972,86 @@ namespace neon
     return events;
   }
 
+  void Jolt_PhysicsSystem::AcquireShared()
+  {
+    const std::scoped_lock lock(shared_mutex);
+    if (shared_users++ > 0) { return; }
+
+    JPH::RegisterDefaultAllocator();
+    JPH::Factory::sInstance = &SharedFactory();
+    JPH::RegisterTypes();
+  }
+
+  void Jolt_PhysicsSystem::ReleaseShared()
+  {
+    const std::scoped_lock lock(shared_mutex);
+    if (--shared_users > 0) { return; }
+
+    // unregistering empties the factory
+    JPH::UnregisterTypes();
+    JPH::Factory::sInstance = nullptr;
+  }
+
+  bool Jolt_PhysicsSystem::IsFinite(const glm::vec3 &value)
+  {
+    return std::isfinite(value.x) && std::isfinite(value.y) && std::isfinite(value.z);
+  }
+
+  std::string Jolt_PhysicsSystem::Name(const ShapeKind kind)
+  {
+    switch (kind)
+    {
+      case ShapeKind::Box: return "box";
+      case ShapeKind::Sphere: return "sphere";
+      case ShapeKind::Capsule: return "capsule";
+      case ShapeKind::Cylinder: return "cylinder";
+      case ShapeKind::TaperedCapsule: return "tapered capsule";
+      case ShapeKind::TaperedCylinder: return "tapered cylinder";
+      case ShapeKind::Plane: return "plane";
+      case ShapeKind::ConvexHull: return "convex hull";
+      case ShapeKind::Mesh: return "mesh";
+    }
+    return "shape";
+  }
+
+  std::string Jolt_PhysicsSystem::Name(const JointKind kind)
+  {
+    switch (kind)
+    {
+      case JointKind::Fixed: return "fixed";
+      case JointKind::Hinge: return "hinge";
+      case JointKind::Slider: return "slider";
+      case JointKind::Point: return "point";
+    }
+    return "joint";
+  }
+
+  bool Jolt_PhysicsSystem::ShapesFit(
+    const std::vector<ShapeInfo> &shapes,
+    const BodyKind kind,
+    const bool trigger,
+    std::string &error)
+  {
+    const bool dynamic = kind == BodyKind::Dynamic && !trigger;
+
+    for (const auto &shape : shapes)
+    {
+      if (shape.kind == ShapeKind::Mesh && dynamic)
+      {
+        error = "a dynamic body cannot have a mesh. A mesh is a surface without an inside, so it has no "
+                "mass. Make the body static or kinematic, or give it a convex hull";
+        return false;
+      }
+
+      if (shape.kind == ShapeKind::Plane && (kind != BodyKind::Static || trigger))
+      {
+        error = "only a static body can have a plane, which has no end and cannot move";
+        return false;
+      }
+    }
+    return true;
+  }
+
   Jolt_PhysicsSystem::Jolt_PhysicsSystem(
     const SettingsConfig &settings_config,
     const std::shared_ptr<Logger> &logger) : PhysicsSystem(settings_config, logger) {}
@@ -955,7 +1098,10 @@ namespace neon
 
     _logger->Info("Cleaning up the physics");
 
-    // characters first, since each holds a body
+    // joints first, since each holds bodies, then characters, since each
+    // holds a body
+    for (const auto &[id, record] : _state->joints) { _state->physics.RemoveConstraint(record.constraint); }
+    _state->joints.clear();
     _state->characters.clear();
 
     auto &interface = _state->physics.GetBodyInterface();
@@ -985,25 +1131,18 @@ namespace neon
 
     const bool dynamic = info.kind == BodyKind::Dynamic && !info.trigger;
 
-    for (const auto &shape : info.shapes)
-    {
-      if (shape.kind == ShapeKind::Mesh && dynamic)
-      {
-        error = "a dynamic body cannot have a mesh. A mesh is a surface without an inside, so it has no "
-                "mass. Make the body static or kinematic, or give it a convex hull";
-        return false;
-      }
-
-      if (shape.kind == ShapeKind::Plane && (info.kind != BodyKind::Static || info.trigger))
-      {
-        error = "only a static body can have a plane, which has no end and cannot move";
-        return false;
-      }
-    }
+    if (!ShapesFit(info.shapes, info.kind, info.trigger, error)) { return false; }
 
     if (dynamic && !(info.mass > 0.0f && std::isfinite(info.mass)))
     {
       error = std::format("a dynamic body has a mass above 0, and this one has {}", info.mass);
+      return false;
+    }
+
+    if (dynamic && AllowedDegrees(info.locked_position, info.locked_rotation) == JPH::EAllowedDOFs::None)
+    {
+      error = "a dynamic body that is locked along every axis and around every axis cannot move at all. Make "
+              "it static";
       return false;
     }
 
@@ -1063,6 +1202,7 @@ namespace neon
     {
       settings.mOverrideMassProperties = JPH::EOverrideMassProperties::CalculateInertia;
       settings.mMassPropertiesOverride.mMass = info.mass;
+      settings.mAllowedDOFs = AllowedDegrees(info.locked_position, info.locked_rotation);
     } else
     {
       // What is not moved by the simulation has no use for a mass. Jolt
@@ -1086,7 +1226,14 @@ namespace neon
       motion == JPH::EMotionType::Static ? JPH::EActivation::DontActivate : JPH::EActivation::Activate);
 
     body = _state->next_body++;
-    _state->bodies[body] = BodyRecord{.jolt = created->GetID(), .entity = info.entity, .trigger = info.trigger};
+    _state->bodies[body] = BodyRecord{
+      .jolt = created->GetID(),
+      .entity = info.entity,
+      .kind = info.kind,
+      .trigger = info.trigger,
+      .mass = info.mass,
+      .allowed = settings.mAllowedDOFs
+    };
     _state->body_count++;
     _state->added_since_rebuild++;
     return true;
@@ -1099,12 +1246,55 @@ namespace neon
     const auto it = _state->bodies.find(body);
     if (it == _state->bodies.end() || it->second.of_character) { return; }
 
+    // a joint cannot hold what is gone
+    _state->RemoveJointsOf(body);
+
     auto &interface = _state->physics.GetBodyInterface();
     interface.RemoveBody(it->second.jolt);
     interface.DestroyBody(it->second.jolt);
 
     _state->bodies.erase(it);
     _state->body_count--;
+  }
+
+  bool Jolt_PhysicsSystem::SetShape(const BodyId body, const std::vector<ShapeInfo> &shapes, std::string &error)
+  {
+    if (_state == nullptr)
+    {
+      error = "the physics is not initialized";
+      return false;
+    }
+
+    const auto *record = _state->Find(body);
+    if (record == nullptr || record->of_character)
+    {
+      error = record == nullptr
+                ? "the body is not known"
+                : "the body is that of a character, whose shape cannot change while it lives";
+      return false;
+    }
+
+    if (!ShapesFit(shapes, record->kind, record->trigger, error)) { return false; }
+
+    const auto shape = _state->MakeShapes(shapes, error);
+    if (shape == nullptr) { return false; }
+
+    auto &interface = _state->physics.GetBodyInterface();
+    interface.SetShape(record->jolt, shape, false, JPH::EActivation::Activate);
+
+    // Jolt would give the body the mass of its new shape. The body keeps the
+    // mass it was created with, spread over the new shape.
+    if (record->kind == BodyKind::Dynamic && !record->trigger)
+    {
+      const JPH::BodyLockWrite lock(_state->physics.GetBodyLockInterface(), record->jolt);
+      if (lock.Succeeded())
+      {
+        auto properties = shape->GetMassProperties();
+        properties.ScaleToMass(record->mass);
+        lock.GetBody().GetMotionProperties()->SetMassProperties(record->allowed, properties);
+      }
+    }
+    return true;
   }
 
   bool Jolt_PhysicsSystem::HasBody(const BodyId body)
@@ -1488,6 +1678,181 @@ namespace neon
     return true;
   }
 
+  bool Jolt_PhysicsSystem::CreateJoint(const JointInfo &info, JointId &joint, std::string &error)
+  {
+    joint = No_Joint;
+
+    if (_state == nullptr)
+    {
+      error = "the physics is not initialized";
+      return false;
+    }
+
+    const auto *first = _state->Find(info.body);
+    if (first == nullptr || first->of_character)
+    {
+      error = first == nullptr
+                ? "the body is not known"
+                : "the body is that of a character, which cannot be joined to anything";
+      return false;
+    }
+
+    const auto *second = info.other == No_Body ? nullptr : _state->Find(info.other);
+    if (info.other != No_Body && (second == nullptr || second->of_character))
+    {
+      error = second == nullptr
+                ? "the other body is not known"
+                : "the other body is that of a character, which cannot be joined to anything";
+      return false;
+    }
+
+    const bool first_dynamic = first->kind == BodyKind::Dynamic && !first->trigger;
+    const bool second_dynamic = second != nullptr && second->kind == BodyKind::Dynamic && !second->trigger;
+    if (!first_dynamic && !second_dynamic)
+    {
+      error = "neither body is dynamic, so there is nothing for the joint to hold";
+      return false;
+    }
+
+    if (!IsFinite(info.anchor) || !IsFinite(info.axis))
+    {
+      error = "where the joint sits or what it is along is no number";
+      return false;
+    }
+
+    const bool has_axis = info.kind == JointKind::Hinge || info.kind == JointKind::Slider;
+    if (has_axis && !(length(info.axis) > 0.0f))
+    {
+      const auto name = Name(info.kind);
+      error = std::format("a {} needs an axis, and this one has none", name);
+      return false;
+    }
+
+    if (info.has_limits && (info.limit_min > 0.0f || info.limit_max < 0.0f))
+    {
+      error = std::format(
+        "the limits are {} and {}, where the least is 0 or below and the most 0 or above",
+        info.limit_min, info.limit_max);
+      return false;
+    }
+
+    const auto anchor = ToJolt(info.anchor);
+    const auto axis = has_axis ? ToJolt(normalize(info.axis)) : JPH::Vec3::sAxisY();
+    const auto normal = axis.GetNormalizedPerpendicular();
+
+    // The world, or the other body, comes first, and the body of the joint
+    // second. Jolt measures how far the second turned or moved from the
+    // first, which is what the limits say.
+    const JPH::BodyID ids[] = {second == nullptr ? JPH::BodyID() : second->jolt, first->jolt};
+    const JPH::BodyLockMultiWrite lock(_state->physics.GetBodyLockInterface(), ids, 2);
+
+    auto *held = second == nullptr ? &JPH::Body::sFixedToWorld : lock.GetBody(0);
+    auto *holding = lock.GetBody(1);
+    if (held == nullptr || holding == nullptr)
+    {
+      error = "a body is not known";
+      return false;
+    }
+
+    JPH::Ref<JPH::TwoBodyConstraint> constraint;
+
+    switch (info.kind)
+    {
+      case JointKind::Fixed:
+      {
+        JPH::FixedConstraintSettings settings;
+        settings.mSpace = JPH::EConstraintSpace::WorldSpace;
+        settings.mPoint1 = anchor;
+        settings.mPoint2 = anchor;
+        constraint = settings.Create(*held, *holding);
+        break;
+      }
+
+      case JointKind::Point:
+      {
+        JPH::PointConstraintSettings settings;
+        settings.mSpace = JPH::EConstraintSpace::WorldSpace;
+        settings.mPoint1 = anchor;
+        settings.mPoint2 = anchor;
+        constraint = settings.Create(*held, *holding);
+        break;
+      }
+
+      case JointKind::Hinge:
+      {
+        JPH::HingeConstraintSettings settings;
+        settings.mSpace = JPH::EConstraintSpace::WorldSpace;
+        settings.mPoint1 = anchor;
+        settings.mPoint2 = anchor;
+        settings.mHingeAxis1 = axis;
+        settings.mHingeAxis2 = axis;
+        settings.mNormalAxis1 = normal;
+        settings.mNormalAxis2 = normal;
+        if (info.has_limits)
+        {
+          settings.mLimitsMin = std::clamp(info.limit_min, -JPH::JPH_PI, 0.0f);
+          settings.mLimitsMax = std::clamp(info.limit_max, 0.0f, JPH::JPH_PI);
+        }
+        constraint = settings.Create(*held, *holding);
+        break;
+      }
+
+      case JointKind::Slider:
+      {
+        JPH::SliderConstraintSettings settings;
+        settings.mSpace = JPH::EConstraintSpace::WorldSpace;
+        settings.mAutoDetectPoint = false;
+        settings.mPoint1 = anchor;
+        settings.mPoint2 = anchor;
+        settings.mSliderAxis1 = axis;
+        settings.mSliderAxis2 = axis;
+        settings.mNormalAxis1 = normal;
+        settings.mNormalAxis2 = normal;
+        if (info.has_limits)
+        {
+          settings.mLimitsMin = std::min(info.limit_min, 0.0f);
+          settings.mLimitsMax = std::max(info.limit_max, 0.0f);
+        }
+        constraint = settings.Create(*held, *holding);
+        break;
+      }
+    }
+
+    if (constraint == nullptr)
+    {
+      const auto name = Name(info.kind);
+      error = std::format("the {} cannot be made", name);
+      return false;
+    }
+
+    _state->physics.AddConstraint(constraint);
+
+    joint = _state->next_joint++;
+    _state->joints[joint] = JointRecord{.constraint = constraint, .body = info.body, .other = info.other};
+    return true;
+  }
+
+  void Jolt_PhysicsSystem::DestroyJoint(const JointId joint)
+  {
+    if (_state == nullptr) { return; }
+
+    const auto it = _state->joints.find(joint);
+    if (it == _state->joints.end()) { return; }
+
+    _state->RemoveJoint(it->second);
+    _state->joints.erase(it);
+  }
+
+  bool Jolt_PhysicsSystem::HasJoint(const JointId joint)
+  {
+    return _state != nullptr && _state->joints.contains(joint);
+  }
+
+  std::size_t Jolt_PhysicsSystem::GetJointCount()
+  {
+    return _state == nullptr ? 0 : _state->joints.size();
+  }
+
   void Jolt_PhysicsSystem::Step(const double seconds)
   {
     if (_state == nullptr || !(seconds > 0.0) || !std::isfinite(seconds))
@@ -1584,25 +1949,8 @@ namespace neon
     hits.clear();
     if (_state == nullptr || !IsFinite(position)) { return; }
 
-    if (shape.kind == ShapeKind::Mesh || shape.kind == ShapeKind::Plane)
-    {
-      const auto name = Name(shape.kind);
-      _logger->Error("An overlap cannot be looked for with a {}, which has no inside", name);
-      return;
-    }
-
-    // where the shape sits is what the call says
-    ShapeInfo in_place = shape;
-    in_place.position = glm::vec3{0.0f};
-    in_place.rotation = glm::quat{1.0f, 0.0f, 0.0f, 0.0f};
-
-    std::string error;
-    const auto made = _state->MakeShape(in_place, error);
-    if (made == nullptr)
-    {
-      _logger->Error("An overlap cannot be looked for: {}", error);
-      return;
-    }
+    const auto made = _state->MakeQueryShape(shape, "An overlap cannot be looked for", _logger);
+    if (made == nullptr) { return; }
 
     const auto place = JPH::RMat44::sRotationTranslation(ToJolt(rotation), ToJolt(position))
                        * JPH::RMat44::sTranslation(made->GetCenterOfMass());
@@ -1638,5 +1986,56 @@ namespace neon
     }
 
     std::ranges::sort(hits, [](const OverlapHit &left, const OverlapHit &right) { return left.body < right.body; });
+  }
+  bool Jolt_PhysicsSystem::CastShape(
+    const ShapeInfo &shape,
+    const glm::vec3 &from,
+    const glm::quat &rotation,
+    const glm::vec3 &to,
+    const QueryFilter &filter,
+    ShapeCastHit &hit)
+  {
+    if (_state == nullptr || !IsFinite(from) || !IsFinite(to)) { return false; }
+
+    const auto made = _state->MakeQueryShape(shape, "A shape cannot be cast", _logger);
+    if (made == nullptr) { return false; }
+
+    const auto start = JPH::RMat44::sRotationTranslation(ToJolt(rotation), ToJolt(from));
+    const auto cast = JPH::RShapeCast::sFromWorldTransform(
+      made, JPH::Vec3::sReplicate(1.0f), start, ToJolt(to - from));
+
+    const LayerFilter layer_filter(&_state->layers, filter);
+    const IgnoreEntity body_filter(&_state->bodies, filter.ignore);
+
+    // what the shape touches where it starts is found as well, at 0
+    JPH::ClosestHitCollisionCollector<JPH::CastShapeCollector> collector;
+    _state->physics.GetNarrowPhaseQuery().CastShape(
+      cast,
+      JPH::ShapeCastSettings(),
+      JPH::RVec3::sZero(),
+      collector,
+      {},
+      layer_filter,
+      body_filter);
+
+    if (!collector.HadHit()) { return false; }
+
+    const auto &found = collector.mHit;
+
+    const JPH::BodyLockRead lock(_state->physics.GetBodyLockInterface(), found.mBodyID2);
+    if (!lock.Succeeded()) { return false; }
+
+    const auto &body = lock.GetBody();
+    const auto id = static_cast<BodyId>(body.GetUserData());
+    const auto *record = _state->Find(id);
+
+    hit.body = id;
+    hit.entity = record == nullptr ? No_Entity : record->entity;
+    hit.trigger = body.IsSensor();
+    hit.point = ToGlm(JPH::Vec3(found.mContactPointOn2));
+    hit.normal = ToGlm(body.GetWorldSpaceSurfaceNormal(found.mSubShapeID2, found.mContactPointOn2));
+    hit.fraction = found.mFraction;
+    hit.distance = found.mFraction * length(to - from);
+    return true;
   }
 } // neon

@@ -222,8 +222,8 @@ be built on. Neither exists yet.
 All of it is in neon-core and depends on no library.
 
 `Transform`, `Renderable`, `Camera`, `Light`, `Spectator`, `SoundSource`,
-`SoundListener`, `RigidBody`, `Trigger`, `CharacterBody`, and `Collider` are
-described. Every component of the engine is.
+`SoundListener`, `RigidBody`, `Trigger`, `CharacterBody`, `Collider`, and
+`Joint` are described. Every component of the engine is.
 The functions that read and wrote them by hand are removed. For the first
 seven that took 232 lines out and put 149 in. For the four of the physics it
 took 409 out and put 238 in, the descriptions included.

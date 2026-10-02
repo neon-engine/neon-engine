@@ -33,6 +33,13 @@ namespace neon
   // ReSharper disable once CppInconsistentNaming
   inline constexpr std::uint32_t All_Layers = 0xffffffffu;
 
+  /// The axes of the world, one bit each, for what is locked on a body.
+  // ReSharper disable CppInconsistentNaming
+  inline constexpr std::uint8_t Axis_X = 1;
+  inline constexpr std::uint8_t Axis_Y = 2;
+  inline constexpr std::uint8_t Axis_Z = 4;
+  // ReSharper restore CppInconsistentNaming
+
   /// How a body moves.
   enum class BodyKind
   {
@@ -158,6 +165,14 @@ namespace neon
     /// A body that came to rest stops being simulated until something
     /// touches it.
     bool can_sleep = true;
+
+    /// The axes of the world a dynamic body cannot move along, and those it
+    /// cannot turn around, one bit each: Axis_X, Axis_Y, and Axis_Z. A
+    /// crate that cannot tip over has its rotation locked around all three.
+    /// A body that is locked on all six cannot be created, it is static
+    /// instead.
+    std::uint8_t locked_position = 0;
+    std::uint8_t locked_rotation = 0;
 
     /// The layers the body is in, one bit each.
     std::uint32_t layers = 1;

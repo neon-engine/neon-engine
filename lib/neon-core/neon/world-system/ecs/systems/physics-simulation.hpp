@@ -1,6 +1,7 @@
 #ifndef PHYSICS_SIMULATION_HPP
 #define PHYSICS_SIMULATION_HPP
 
+#include <cstdint>
 #include <map>
 #include <memory>
 #include <set>
@@ -13,6 +14,7 @@
 #include <neon/logging/logger.hpp>
 #include <neon/physics/model-geometry.hpp>
 #include <neon/physics/physics-context.hpp>
+#include <neon/world-system/ecs/components/collider.hpp>
 #include <neon/world-system/ecs/entity-system.hpp>
 
 namespace neon
@@ -25,6 +27,13 @@ namespace neon
   /// changed to the physics, lets the physics take a step, and writes what
   /// that led to into the components. In every frame it places what is drawn
   /// between the last two steps.
+  ///
+  /// The Colliders of a body are watched. One that a game changes, adds
+  /// below the body, or removes gives the body its shapes anew, in the step
+  /// that follows. The shape of a character cannot change while it lives.
+  ///
+  /// A Joint is made once the bodies of its entity and of the entity it
+  /// names exist, and made again when one of them was replaced.
   ///
   /// Everything that moves is moved in FixedUpdate, by the length of a step.
   /// Nothing here reads the time of a frame, so the physics does the same
@@ -57,6 +66,14 @@ namespace neon
       Character
     };
 
+    /// A Collider as it was when the shapes of its body were last read, so
+    /// that what a game changes is noticed.
+    struct ColliderRead
+    {
+      Entity entity = No_Entity;
+      Collider collider;
+    };
+
     /// What is kept of an entity that the physics knows.
     struct Record
     {
@@ -67,6 +84,9 @@ namespace neon
 
       /// The size of the entity in the world when it was created.
       glm::vec3 scale{1.0f};
+
+      /// The Colliders the shapes were last read from.
+      std::vector<ColliderRead> colliders;
 
       /// Where the last two steps led to, in the world. What is drawn lies
       /// between them.
@@ -99,15 +119,24 @@ namespace neon
     // without points, so that it is not read again
     std::map<std::string, ModelGeometry> _geometries;
 
-    // colliders that are part of something, and those that were found to be
-    // part of nothing, which was said once
-    std::set<Entity> _claimed;
+    // colliders that are part of something, by the entity whose body they
+    // are part of, and those that were found to be part of nothing, which
+    // was said once
+    std::map<Entity, Entity> _claimed;
     std::set<Entity> _loose;
+
+    // bodies whose colliders changed, and which get their shapes anew in
+    // the next step
+    std::set<Entity> _reshape;
+
+    // the joints that were made, by their entity
+    std::map<Entity, JointId> _joints;
 
     QueryId _bodies = 0;
     QueryId _triggers = 0;
     QueryId _characters = 0;
     QueryId _colliders = 0;
+    QueryId _joint_query = 0;
 
     void Release(Entity entity);
 
@@ -116,10 +145,21 @@ namespace neon
 
     [[nodiscard]] static bool IsOwner(EntityStore &store, Entity entity);
 
+    /// The component a record stands for, as a scene names it.
+    [[nodiscard]] static std::string NameOf(RecordKind kind);
+
     [[nodiscard]] static std::string PathOf(EntityStore &store, Entity entity);
+
+    [[nodiscard]] static glm::mat4 LocalMatrixOf(const Transform &transform);
 
     /// Where the parent of an entity places what is below it.
     [[nodiscard]] static glm::mat4 ParentMatrixOf(EntityStore &store, Entity entity);
+
+    /// Takes a matrix apart into where it moves to, how it turns, and how
+    /// it sizes. A matrix that shears, which a parent with different sizes
+    /// along its axes and a child that is turned make together, comes out
+    /// without the shear.
+    static void TakeApart(const glm::mat4 &matrix, glm::vec3 &position, glm::quat &rotation, glm::vec3 &size);
 
     [[nodiscard]] static Pose WorldPoseOf(EntityStore &store, Entity entity, const Transform &transform);
 
@@ -127,6 +167,8 @@ namespace neon
     static void WriteLocal(EntityStore &store, Entity entity, const Pose &world, Transform &transform, Record &record);
 
     [[nodiscard]] const ModelGeometry *GeometryOf(const std::string &path);
+
+    [[nodiscard]] static std::string Describe(ShapeKind shape);
 
     bool CollectShapes(
       EntityStore &store,
@@ -149,9 +191,30 @@ namespace neon
 
     void Refuse(EntityStore &store, Entity entity, const std::string &what, const std::string &error) const;
 
+    /// Writes down the Colliders the shapes were read from, so that a
+    /// change to them is noticed.
+    void Claim(Record &record, Entity owner, const std::vector<Entity> &colliders, EntityStore &store);
+
+    /// The axes a component names, as the bits the physics takes. A word
+    /// that is no axis was refused when the component was read.
+    [[nodiscard]] static std::uint8_t AxisBits(const std::vector<std::string> &axes);
+
     void CreateMissing(EntityStore &store);
 
+    /// Makes the joints whose bodies are both there.
+    void CreateJoints(EntityStore &store);
+
     void FindLooseColliders(EntityStore &store);
+
+    [[nodiscard]] static bool SameRotation(const Rotation &left, const Rotation &right);
+
+    [[nodiscard]] static bool SameCollider(const Collider &left, const Collider &right);
+
+    /// Finds the Colliders that a game changed since the shapes were read.
+    void WatchColliders(EntityStore &store);
+
+    /// Gives the bodies whose Colliders changed their shapes anew.
+    void Reshape(EntityStore &store);
 
     void HandOver(EntityStore &store, double fixed_delta_time);
 

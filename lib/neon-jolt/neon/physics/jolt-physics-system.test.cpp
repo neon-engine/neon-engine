@@ -24,9 +24,13 @@ namespace
   using neon::CharacterInfo;
   using neon::CharacterState;
   using neon::Entity;
+  using neon::JointId;
+  using neon::JointInfo;
+  using neon::JointKind;
   using neon::Jolt_PhysicsSystem;
   using neon::No_Body;
   using neon::No_Character;
+  using neon::No_Joint;
   using neon::OverlapHit;
   using neon::PhysicsEvent;
   using neon::PhysicsEventKind;
@@ -34,6 +38,7 @@ namespace
   using neon::Ray;
   using neon::RayHit;
   using neon::Rotation;
+  using neon::ShapeCastHit;
   using neon::ShapeInfo;
   using neon::ShapeKind;
   using neon::testing::LogLevel;
@@ -195,6 +200,45 @@ namespace
       return state;
     }
 
+    JointId Join(const JointInfo &info)
+    {
+      JointId joint = No_Joint;
+      EXPECT_TRUE(_physics.CreateJoint(info, joint, _error)) << _error;
+      return joint;
+    }
+
+    /// A door of 1.6 by 2 that hangs on a post at the origin, with its
+    /// hinge a little off its left edge, so that the door swings clear of
+    /// the post. Gravity does not pull it.
+    BodyId CreateDoor(const std::vector<float> &limits = {})
+    {
+      const auto frame = CreateBody(wall_entity, BodyKind::Static, Box({0.2f, 2.0f, 0.2f}), {0.0f, 1.0f, 0.0f});
+      const auto door = CreateBody(crate_entity, BodyKind::Dynamic, Box({1.6f, 2.0f, 0.1f}), {1.05f, 1.0f, 0.0f},
+                                   [](BodyInfo &info) { info.gravity_scale = 0.0f; });
+
+      JointInfo hinge;
+      hinge.kind = JointKind::Hinge;
+      hinge.body = door;
+      hinge.other = frame;
+      hinge.anchor = {0.2f, 1.0f, 0.0f};
+      hinge.axis = {0.0f, 1.0f, 0.0f};
+      if (limits.size() == 2)
+      {
+        hinge.has_limits = true;
+        hinge.limit_min = limits[0];
+        hinge.limit_max = limits[1];
+      }
+      Join(hinge);
+      return door;
+    }
+
+    /// How far a door turned from where it hung, in degrees.
+    float AngleOf(const BodyId door)
+    {
+      const auto across = StateOf(door).rotation * glm::vec3(1.0f, 0.0f, 0.0f);
+      return glm::degrees(std::acos(std::clamp(across.x, -1.0f, 1.0f)));
+    }
+
     BodyState StateOf(const BodyId body)
     {
       BodyState state;
@@ -214,6 +258,86 @@ namespace
 
     float _fall = 0.0f;
   };
+
+  // locked axes
+
+  TEST_F(JoltPhysicsSystemTest, DoesNotTurnABodyWhoseRotationIsLockedWhenItIsHitBesideItsMiddle)
+  {
+    CreateFloor();
+    const auto crate = CreateBody(crate_entity, BodyKind::Dynamic, Box({1.0f, 2.0f, 1.0f}), {0.0f, 1.0f, 0.0f},
+                                  [](BodyInfo &info)
+                                  {
+                                    info.locked_rotation = neon::Axis_X | neon::Axis_Y | neon::Axis_Z;
+                                  });
+    const auto other = CreateBody(other_entity, BodyKind::Dynamic, Box({1.0f, 2.0f, 1.0f}), {3.0f, 1.0f, 0.0f});
+    Run(30);
+
+    // a kick at the top, which tips a crate over
+    _physics.AddImpulseAt(crate, {30.0f, 0.0f, 0.0f}, {0.0f, 1.9f, 0.0f});
+    _physics.AddImpulseAt(other, {30.0f, 0.0f, 0.0f}, {3.0f, 1.9f, 0.0f});
+    Run(60);
+
+    const auto locked = StateOf(crate);
+    const auto free = StateOf(other);
+
+    // the locked one slid, upright, and the other fell over
+    EXPECT_GT(locked.position.x, 0.5f);
+    EXPECT_NEAR(std::abs(locked.rotation.w), 1.0f, 1e-4f);
+    EXPECT_EQ(locked.angular_velocity, glm::vec3(0.0f));
+    EXPECT_LT(std::abs(free.rotation.w), 0.99f);
+  }
+
+  TEST_F(JoltPhysicsSystemTest, DoesNotMoveABodyAlongAnAxisItIsLockedOn)
+  {
+    const auto crate = CreateBody(crate_entity, BodyKind::Dynamic, Box({1.0f, 1.0f, 1.0f}), {0.0f, 5.0f, 0.0f},
+                                  [](BodyInfo &info)
+                                  {
+                                    info.gravity_scale = 0.0f;
+                                    info.locked_position = neon::Axis_X;
+                                  });
+
+    _physics.AddImpulse(crate, {10.0f, 0.0f, 10.0f});
+    Run(30);
+
+    const auto state = StateOf(crate);
+    EXPECT_EQ(state.position.x, 0.0f);
+    EXPECT_GT(state.position.z, 1.0f);
+  }
+
+  TEST_F(JoltPhysicsSystemTest, LetsAFallingBodyWithALockedRotationComeToRestOnTheFloor)
+  {
+    CreateFloor();
+    const auto crate = CreateBody(crate_entity, BodyKind::Dynamic, Box({1.0f, 1.0f, 1.0f}), {0.0f, 3.0f, 0.0f},
+                                  [](BodyInfo &info)
+                                  {
+                                    info.rotation = Rotation{.yaw = 30.0f}.GetQuaternion();
+                                    info.locked_rotation = neon::Axis_X | neon::Axis_Y | neon::Axis_Z;
+                                  });
+    Run(180);
+
+    // Jolt lets what rests sink in by up to 0.02
+    const auto state = StateOf(crate);
+    EXPECT_NEAR(state.position.y, 0.5f, 0.03f);
+    EXPECT_NEAR(std::abs(dot(state.rotation, Rotation{.yaw = 30.0f}.GetQuaternion())), 1.0f, 1e-4f);
+  }
+
+  TEST_F(JoltPhysicsSystemTest, RefusesADynamicBodyThatIsLockedOnEveryAxis)
+  {
+    BodyInfo info;
+    info.entity = crate_entity;
+    info.shapes = {Box({1.0f, 1.0f, 1.0f})};
+    info.locked_position = neon::Axis_X | neon::Axis_Y | neon::Axis_Z;
+    info.locked_rotation = neon::Axis_X | neon::Axis_Y | neon::Axis_Z;
+
+    BodyId body = No_Body;
+    EXPECT_FALSE(_physics.CreateBody(info, body, _error));
+    EXPECT_THAT(_error, HasSubstr("locked along every axis and around every axis"));
+    EXPECT_EQ(_physics.GetBodyCount(), 0u);
+
+    // what does not move anyway is not locked
+    info.kind = BodyKind::Static;
+    EXPECT_TRUE(_physics.CreateBody(info, body, _error)) << _error;
+  }
 
   // bodies that react
 
@@ -1350,6 +1474,489 @@ namespace
     EXPECT_TRUE(hits.empty());
     EXPECT_TRUE(_logger->Contains(
       LogLevel::Error, "An overlap cannot be looked for with a mesh, which has no inside"));
+  }
+
+  TEST_F(JoltPhysicsSystemTest, FindsWhatACastShapeMeetsOnItsWay)
+  {
+    const auto floor = CreateFloor();
+    const glm::quat upright{1.0f, 0.0f, 0.0f, 0.0f};
+
+    ShapeCastHit hit;
+    const bool found = _physics.CastShape(Sphere(0.5f), {0.0f, 5.0f, 0.0f}, upright, {0.0f, -5.0f, 0.0f},
+                                          QueryFilter{}, hit);
+
+    ASSERT_TRUE(found);
+    EXPECT_EQ(hit.entity, floor_entity);
+    EXPECT_EQ(hit.body, floor);
+    EXPECT_FALSE(hit.trigger);
+
+    // the sphere touches the floor once its middle is half a unit above it
+    EXPECT_NEAR(hit.fraction, 0.45f, 1e-3f);
+    EXPECT_NEAR(hit.distance, 4.5f, 1e-2f);
+    EXPECT_NEAR(hit.point.y, 0.0f, 1e-2f);
+    EXPECT_NEAR(hit.point.x, 0.0f, 1e-2f);
+    EXPECT_NEAR(hit.normal.y, 1.0f, 1e-3f);
+  }
+
+  TEST_F(JoltPhysicsSystemTest, FindsWhatACastShapeMeetsWithItsSideAndARayWouldMiss)
+  {
+    // a post beside the way, which a line down the middle passes
+    CreateBody(wall_entity, BodyKind::Static, Box({0.2f, 10.0f, 0.2f}), {0.8f, 0.0f, 0.0f});
+    const glm::quat upright{1.0f, 0.0f, 0.0f, 0.0f};
+
+    RayHit ray_hit;
+    const Ray ray{.origin = {0.0f, 0.0f, 5.0f}, .direction = {0.0f, 0.0f, -1.0f}, .distance = 10.0f};
+    EXPECT_FALSE(_physics.CastRay(ray, QueryFilter{}, ray_hit));
+
+    ShapeCastHit hit;
+    ASSERT_TRUE(_physics.CastShape(Box({2.0f, 1.0f, 1.0f}), {0.0f, 0.0f, 5.0f}, upright, {0.0f, 0.0f, -5.0f},
+                                   QueryFilter{}, hit));
+    EXPECT_EQ(hit.entity, wall_entity);
+    EXPECT_NEAR(hit.fraction, 0.44f, 1e-2f);
+    EXPECT_NEAR(hit.normal.z, 1.0f, 1e-3f);
+  }
+
+  TEST_F(JoltPhysicsSystemTest, MissesWithACastShapeWhatIsNotOnItsWay)
+  {
+    CreateBody(crate_entity, BodyKind::Static, Box({2.0f, 2.0f, 2.0f}), {0.0f, 0.0f, -10.0f});
+    const glm::quat upright{1.0f, 0.0f, 0.0f, 0.0f};
+    ShapeCastHit hit;
+
+    const auto cast = [&](const glm::vec3 &from, const glm::vec3 &to)
+    {
+      return _physics.CastShape(Sphere(0.5f), from, upright, to, QueryFilter{}, hit);
+    };
+
+    // to the other side
+    EXPECT_FALSE(cast({0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 10.0f}));
+    // past it
+    EXPECT_FALSE(cast({5.0f, 0.0f, 0.0f}, {5.0f, 0.0f, -20.0f}));
+    // not far enough
+    EXPECT_FALSE(cast({0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, -8.0f}));
+    // nowhere
+    EXPECT_FALSE(cast({0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}));
+
+    EXPECT_EQ(hit.entity, neon::No_Entity);
+  }
+
+  TEST_F(JoltPhysicsSystemTest, FindsTheNearestOfWhatACastShapeMeets)
+  {
+    CreateBody(wall_entity, BodyKind::Static, Box({2.0f, 2.0f, 2.0f}), {0.0f, 0.0f, -20.0f});
+    CreateBody(crate_entity, BodyKind::Dynamic, Sphere(1.0f), {0.0f, 0.0f, -10.0f},
+               [](BodyInfo &info) { info.gravity_scale = 0.0f; });
+    const glm::quat upright{1.0f, 0.0f, 0.0f, 0.0f};
+
+    ShapeCastHit hit;
+    ASSERT_TRUE(_physics.CastShape(
+      Sphere(0.5f), {0.0f, 0.0f, 0.0f}, upright, {0.0f, 0.0f, -30.0f}, QueryFilter{}, hit));
+
+    EXPECT_EQ(hit.entity, crate_entity);
+    EXPECT_NEAR(hit.distance, 8.5f, 1e-2f);
+  }
+
+  TEST_F(JoltPhysicsSystemTest, FindsWhatACastShapeTouchesWhereItStarts)
+  {
+    CreateBody(crate_entity, BodyKind::Static, Box({2.0f, 2.0f, 2.0f}), {0.0f, 0.0f, 0.0f});
+    const glm::quat upright{1.0f, 0.0f, 0.0f, 0.0f};
+
+    ShapeCastHit hit;
+    ASSERT_TRUE(_physics.CastShape(
+      Sphere(0.5f), {0.0f, 0.0f, 0.0f}, upright, {0.0f, 0.0f, -5.0f}, QueryFilter{}, hit));
+
+    EXPECT_EQ(hit.entity, crate_entity);
+    EXPECT_EQ(hit.fraction, 0.0f);
+  }
+
+  TEST_F(JoltPhysicsSystemTest, CastsAShapeAsItIsTurned)
+  {
+    // a gap of 1.5 between two posts, which a box of 1 by 3 passes only on
+    // its side
+    CreateBody(wall_entity, BodyKind::Static, Box({1.0f, 10.0f, 1.0f}), {-1.25f, 0.0f, 0.0f});
+    CreateBody(crate_entity, BodyKind::Static, Box({1.0f, 10.0f, 1.0f}), {1.25f, 0.0f, 0.0f});
+    const auto box = Box({1.0f, 3.0f, 1.0f});
+    ShapeCastHit hit;
+
+    EXPECT_FALSE(_physics.CastShape(
+      box, {0.0f, 0.0f, 5.0f}, glm::quat{1.0f, 0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, -5.0f}, QueryFilter{}, hit));
+    EXPECT_TRUE(_physics.CastShape(
+      box, {0.0f, 0.0f, 5.0f}, Rotation{.roll = 90.0f}.GetQuaternion(), {0.0f, 0.0f, -5.0f}, QueryFilter{}, hit));
+  }
+
+  TEST_F(JoltPhysicsSystemTest, CastsAShapeOnlyAtWhatIsInTheLayersItLooksFor)
+  {
+    CreateBody(crate_entity, BodyKind::Static, Box({2.0f, 2.0f, 2.0f}), {0.0f, 0.0f, -10.0f},
+               [](BodyInfo &info) { info.layers = 0b01; });
+    CreateBody(wall_entity, BodyKind::Static, Box({2.0f, 2.0f, 2.0f}), {0.0f, 0.0f, -20.0f},
+               [](BodyInfo &info) { info.layers = 0b10; });
+    const glm::quat upright{1.0f, 0.0f, 0.0f, 0.0f};
+    const glm::vec3 from{0.0f};
+    const glm::vec3 to{0.0f, 0.0f, -30.0f};
+    ShapeCastHit hit;
+
+    ASSERT_TRUE(_physics.CastShape(Sphere(0.5f), from, upright, to, QueryFilter{.mask = 0b10}, hit));
+    EXPECT_EQ(hit.entity, wall_entity);
+
+    ASSERT_TRUE(_physics.CastShape(Sphere(0.5f), from, upright, to, QueryFilter{.mask = 0b11}, hit));
+    EXPECT_EQ(hit.entity, crate_entity);
+
+    ASSERT_TRUE(_physics.CastShape(Sphere(0.5f), from, upright, to, QueryFilter{.ignore = crate_entity}, hit));
+    EXPECT_EQ(hit.entity, wall_entity);
+
+    EXPECT_FALSE(_physics.CastShape(Sphere(0.5f), from, upright, to, QueryFilter{.mask = 0b100}, hit));
+  }
+
+  TEST_F(JoltPhysicsSystemTest, CastsAShapeAtATriggerOnlyWhenAsked)
+  {
+    CreateTrigger(Box({2.0f, 2.0f, 2.0f}), {0.0f, 0.0f, -10.0f});
+    const glm::quat upright{1.0f, 0.0f, 0.0f, 0.0f};
+    ShapeCastHit hit;
+
+    EXPECT_FALSE(_physics.CastShape(
+      Sphere(0.5f), {0.0f, 0.0f, 0.0f}, upright, {0.0f, 0.0f, -20.0f}, QueryFilter{}, hit));
+    ASSERT_TRUE(_physics.CastShape(
+      Sphere(0.5f), {0.0f, 0.0f, 0.0f}, upright, {0.0f, 0.0f, -20.0f}, QueryFilter{.triggers = true}, hit));
+    EXPECT_EQ(hit.entity, trigger_entity);
+    EXPECT_TRUE(hit.trigger);
+  }
+
+  TEST_F(JoltPhysicsSystemTest, RefusesToCastAShapeThatHasNoInside)
+  {
+    CreateBody(crate_entity, BodyKind::Static, Box({1.0f, 1.0f, 1.0f}), {0.0f, 0.0f, 0.0f});
+    const glm::quat upright{1.0f, 0.0f, 0.0f, 0.0f};
+    ShapeCastHit hit;
+
+    EXPECT_FALSE(_physics.CastShape(
+      CubeOf(ShapeKind::Mesh), {0.0f, 0.0f, 5.0f}, upright, {0.0f, 0.0f, -5.0f}, QueryFilter{}, hit));
+    EXPECT_TRUE(_logger->Contains(LogLevel::Error, "A shape cannot be cast with a mesh, which has no inside"));
+  }
+
+  // joints
+
+  TEST_F(JoltPhysicsSystemTest, LetsADoorTurnOnItsHingeWhenItIsPushed)
+  {
+    const auto door = CreateDoor();
+
+    // a push at the far edge
+    _physics.AddImpulseAt(door, {0.0f, 0.0f, 1.0f}, {1.85f, 1.0f, 0.0f});
+    Run(60);
+
+    const auto state = StateOf(door);
+    EXPECT_GT(AngleOf(door), 45.0f);
+    EXPECT_LT(AngleOf(door), 175.0f);
+
+    // the hinge stays on the post, and the door stays as long
+    const auto hinge = state.position + state.rotation * glm::vec3(-0.85f, 0.0f, 0.0f);
+    EXPECT_NEAR(hinge.x, 0.2f, 0.05f);
+    EXPECT_NEAR(hinge.y, 1.0f, 0.05f);
+    EXPECT_NEAR(hinge.z, 0.0f, 0.05f);
+    EXPECT_NEAR(length(state.position - glm::vec3(0.2f, 1.0f, 0.0f)), 0.85f, 0.05f);
+
+    // and it turned around the hinge alone
+    EXPECT_NEAR(state.angular_velocity.x, 0.0f, 0.05f);
+    EXPECT_NEAR(state.angular_velocity.z, 0.0f, 0.05f);
+    EXPECT_EQ(_physics.GetJointCount(), 1u);
+  }
+
+  TEST_F(JoltPhysicsSystemTest, StopsADoorAtTheLimitsOfItsHinge)
+  {
+    const auto door = CreateDoor({-glm::quarter_pi<float>(), glm::quarter_pi<float>()});
+
+    _physics.AddImpulseAt(door, {0.0f, 0.0f, 6.0f}, {1.85f, 1.0f, 0.0f});
+
+    // it reaches the limit and is held there, within what one step of a
+    // hard push gets past it before it is pulled back
+    float widest = 0.0f;
+    for (int i = 0; i < 120; i++)
+    {
+      Run(1);
+      widest = std::max(widest, AngleOf(door));
+    }
+
+    EXPECT_GT(widest, 42.0f);
+    EXPECT_LT(widest, 48.0f);
+  }
+
+  TEST_F(JoltPhysicsSystemTest, LetsAPendulumSwingOnAPointJoint)
+  {
+    const auto bob = CreateBody(ball_entity, BodyKind::Dynamic, Sphere(0.2f), {1.0f, 4.0f, 0.0f});
+    const glm::vec3 hook{0.0f, 5.0f, 0.0f};
+    Join(JointInfo{.kind = JointKind::Point, .body = bob, .anchor = hook});
+
+    // half a swing takes 1.2 seconds on a string of this length
+    float lowest = 4.0f;
+    for (int i = 0; i < 72; i++)
+    {
+      Run(1);
+      const auto state = StateOf(bob);
+      lowest = std::min(lowest, state.position.y);
+
+      // always as far from the hook as it hung
+      EXPECT_NEAR(length(state.position - hook), std::sqrt(2.0f), 0.05f) << "step " << i;
+    }
+
+    // it swung down through the middle and up the other side
+    const auto state = StateOf(bob);
+    EXPECT_LT(lowest, 3.7f);
+    EXPECT_LT(state.position.x, -0.5f);
+  }
+
+  TEST_F(JoltPhysicsSystemTest, LetsABodyMoveAlongASliderAlone)
+  {
+    const auto sled = CreateBody(crate_entity, BodyKind::Dynamic, Box({1.0f, 1.0f, 1.0f}), {0.0f, 0.0f, 0.0f},
+                                 [](BodyInfo &info) { info.gravity_scale = 0.0f; });
+    Join(JointInfo{
+      .kind = JointKind::Slider,
+      .body = sled,
+      .axis = {1.0f, 0.0f, 0.0f},
+      .has_limits = true,
+      .limit_min = -2.0f,
+      .limit_max = 2.0f
+    });
+
+    // a kick in every direction, beside the middle
+    _physics.AddImpulseAt(sled, {5.0f, 5.0f, 5.0f}, {0.0f, 0.4f, 0.4f});
+    Run(90);
+
+    const auto state = StateOf(sled);
+    EXPECT_NEAR(state.position.x, 2.0f, 0.05f);
+    EXPECT_NEAR(state.position.y, 0.0f, 0.01f);
+    EXPECT_NEAR(state.position.z, 0.0f, 0.01f);
+    EXPECT_NEAR(std::abs(state.rotation.w), 1.0f, 1e-3f);
+  }
+
+  TEST_F(JoltPhysicsSystemTest, MovesTwoBodiesAsOneWithAFixedJoint)
+  {
+    const auto left = CreateBody(crate_entity, BodyKind::Dynamic, Box({1.0f, 1.0f, 1.0f}), {0.0f, 5.0f, 0.0f},
+                                 [](BodyInfo &info) { info.gravity_scale = 0.0f; });
+    const auto right = CreateBody(other_entity, BodyKind::Dynamic, Box({1.0f, 1.0f, 1.0f}), {1.0f, 5.0f, 0.0f},
+                                  [](BodyInfo &info) { info.gravity_scale = 0.0f; });
+    Join(JointInfo{.kind = JointKind::Fixed, .body = right, .other = left, .anchor = {0.5f, 5.0f, 0.0f}});
+
+    // a kick at the far side of the right one, which would turn it alone
+    _physics.AddImpulseAt(right, {0.0f, 4.0f, 0.0f}, {1.4f, 5.0f, 0.0f});
+    Run(60);
+
+    // the pair moved and turned as one: still side by side, and both turned
+    // the same way
+    const auto first = StateOf(left);
+    const auto second = StateOf(right);
+    EXPECT_GT(first.position.y, 5.5f);
+    EXPECT_GT(second.position.y, 5.5f);
+    EXPECT_NEAR(length(second.position - first.position), 1.0f, 0.02f);
+    EXPECT_NEAR(std::abs(dot(first.rotation, second.rotation)), 1.0f, 1e-3f);
+    EXPECT_LT(std::abs(first.rotation.w), 0.999f);
+  }
+
+  TEST_F(JoltPhysicsSystemTest, HoldsABodyUpAgainstGravityWithAJointToTheWorld)
+  {
+    const auto crate = CreateBody(crate_entity, BodyKind::Dynamic, Box({1.0f, 1.0f, 1.0f}), {0.0f, 5.0f, 0.0f});
+    const auto joint = Join(JointInfo{.kind = JointKind::Fixed, .body = crate, .anchor = {0.0f, 5.0f, 0.0f}});
+    Run(120);
+
+    EXPECT_NEAR(StateOf(crate).position.y, 5.0f, 0.02f);
+
+    // taken apart, it falls
+    _physics.DestroyJoint(joint);
+    EXPECT_FALSE(_physics.HasJoint(joint));
+    EXPECT_EQ(_physics.GetJointCount(), 0u);
+    Run(60);
+    EXPECT_LT(StateOf(crate).position.y, 4.0f);
+  }
+
+  TEST_F(JoltPhysicsSystemTest, TakesAJointApartWithEitherOfItsBodies)
+  {
+    const auto left = CreateBody(crate_entity, BodyKind::Dynamic, Box({1.0f, 1.0f, 1.0f}), {0.0f, 5.0f, 0.0f});
+    const auto right = CreateBody(other_entity, BodyKind::Dynamic, Box({1.0f, 1.0f, 1.0f}), {1.0f, 5.0f, 0.0f});
+    const auto first = Join(JointInfo{.kind = JointKind::Fixed, .body = right, .other = left});
+    const auto second = Join(JointInfo{.kind = JointKind::Point, .body = left});
+    EXPECT_EQ(_physics.GetJointCount(), 2u);
+
+    _physics.DestroyBody(right);
+    EXPECT_FALSE(_physics.HasJoint(first));
+    EXPECT_TRUE(_physics.HasJoint(second));
+
+    _physics.DestroyBody(left);
+    EXPECT_FALSE(_physics.HasJoint(second));
+    EXPECT_EQ(_physics.GetJointCount(), 0u);
+
+    // and nothing is left to go wrong
+    Run(5);
+    _physics.DestroyJoint(first);
+  }
+
+  TEST_F(JoltPhysicsSystemTest, RefusesAJointThatCannotHold)
+  {
+    const auto floor = CreateFloor();
+    const auto wall = CreateBody(wall_entity, BodyKind::Static, Box({1.0f, 1.0f, 1.0f}), {0.0f, 3.0f, 0.0f});
+    const auto crate = CreateBody(crate_entity, BodyKind::Dynamic, Box({1.0f, 1.0f, 1.0f}), {0.0f, 5.0f, 0.0f});
+    CreateCharacter({3.0f, 1.0f, 0.0f});
+    JointId joint = No_Joint;
+
+    EXPECT_FALSE(_physics.CreateJoint(JointInfo{.body = 99}, joint, _error));
+    EXPECT_EQ(_error, "the body is not known");
+
+    EXPECT_FALSE(_physics.CreateJoint(JointInfo{.body = crate, .other = 99}, joint, _error));
+    EXPECT_EQ(_error, "the other body is not known");
+
+    EXPECT_FALSE(_physics.CreateJoint(JointInfo{.body = wall, .other = floor}, joint, _error));
+    EXPECT_EQ(_error, "neither body is dynamic, so there is nothing for the joint to hold");
+
+    EXPECT_FALSE(_physics.CreateJoint(JointInfo{.body = wall}, joint, _error));
+    EXPECT_EQ(_error, "neither body is dynamic, so there is nothing for the joint to hold");
+
+    // the character holds body 4
+    EXPECT_FALSE(_physics.CreateJoint(JointInfo{.body = crate, .other = 4}, joint, _error));
+    EXPECT_THAT(_error, HasSubstr("that of a character"));
+
+    EXPECT_FALSE(_physics.CreateJoint(JointInfo{.kind = JointKind::Hinge, .body = crate, .axis = {}}, joint, _error));
+    EXPECT_EQ(_error, "a hinge needs an axis, and this one has none");
+
+    EXPECT_FALSE(_physics.CreateJoint(
+      JointInfo{.kind = JointKind::Slider, .body = crate, .has_limits = true, .limit_min = 1.0f, .limit_max = 2.0f},
+      joint, _error));
+    EXPECT_THAT(_error, HasSubstr("the least is 0 or below"));
+
+    EXPECT_EQ(joint, No_Joint);
+    EXPECT_EQ(_physics.GetJointCount(), 0u);
+  }
+
+  TEST_F(JoltPhysicsSystemTest, GivesTheSameSwingTwice)
+  {
+    const auto swing = [](std::vector<BodyState> &states)
+    {
+      const auto logger = std::make_shared<RecordingLogger>();
+      Jolt_PhysicsSystem physics{SettingsConfig{}, logger};
+      physics.Initialize();
+      std::string error;
+
+      BodyInfo info;
+      info.entity = ball_entity;
+      info.shapes = {Sphere(0.2f)};
+      info.position = {1.0f, 4.0f, 0.0f};
+      BodyId bob = No_Body;
+      EXPECT_TRUE(physics.CreateBody(info, bob, error)) << error;
+
+      JointId joint = No_Joint;
+      EXPECT_TRUE(physics.CreateJoint(
+        JointInfo{.kind = JointKind::Point, .body = bob, .anchor = {0.0f, 5.0f, 0.0f}}, joint, error)) << error;
+
+      for (int i = 0; i < 200; i++)
+      {
+        physics.Step(step);
+        BodyState state;
+        EXPECT_TRUE(physics.GetBodyState(bob, state));
+        states.push_back(state);
+      }
+      physics.CleanUp();
+    };
+
+    std::vector<BodyState> first;
+    std::vector<BodyState> second;
+    swing(first);
+    swing(second);
+
+    ASSERT_EQ(first.size(), second.size());
+    for (std::size_t i = 0; i < first.size(); i++)
+    {
+      EXPECT_EQ(first[i].position, second[i].position) << "step " << i;
+      EXPECT_EQ(first[i].rotation, second[i].rotation) << "step " << i;
+    }
+  }
+
+  // shapes that change while a body lives
+
+  TEST_F(JoltPhysicsSystemTest, LetsABodyGrowSoThatItTouchesWhatItDidNot)
+  {
+    CreateTrigger(Box({1.0f, 1.0f, 1.0f}), {0.0f, 0.0f, 0.0f});
+    const auto crate = CreateBody(crate_entity, BodyKind::Kinematic, Box({1.0f, 1.0f, 1.0f}), {3.0f, 0.0f, 0.0f});
+    Run(5);
+    EXPECT_EQ(Count(PhysicsEventKind::Began, trigger_entity, crate_entity), 0u);
+
+    ASSERT_TRUE(_physics.SetShape(crate, {Box({8.0f, 1.0f, 1.0f})}, _error)) << _error;
+    Run(5);
+
+    EXPECT_EQ(Count(PhysicsEventKind::Began, trigger_entity, crate_entity), 1u);
+    EXPECT_EQ(_physics.GetBodyCount(), 2u);
+
+    // and shrinks away again
+    ASSERT_TRUE(_physics.SetShape(crate, {Box({1.0f, 1.0f, 1.0f})}, _error)) << _error;
+    Run(5);
+    EXPECT_EQ(Count(PhysicsEventKind::Ended, trigger_entity, crate_entity), 1u);
+  }
+
+  TEST_F(JoltPhysicsSystemTest, LiftsADynamicBodyThatGrowsIntoTheFloor)
+  {
+    CreateFloor();
+    const auto crate = CreateBody(crate_entity, BodyKind::Dynamic, Box({1.0f, 1.0f, 1.0f}), {0.0f, 0.5f, 0.0f});
+    Run(120);
+    EXPECT_NEAR(StateOf(crate).position.y, 0.5f, 0.03f);
+
+    ASSERT_TRUE(_physics.SetShape(crate, {Box({1.0f, 3.0f, 1.0f})}, _error)) << _error;
+    Run(120);
+
+    EXPECT_NEAR(StateOf(crate).position.y, 1.5f, 0.05f);
+  }
+
+  TEST_F(JoltPhysicsSystemTest, KeepsTheMassOfADynamicBodyWhoseShapeChanges)
+  {
+    const auto crate = CreateBody(crate_entity, BodyKind::Dynamic, Box({1.0f, 1.0f, 1.0f}), {0.0f, 5.0f, 0.0f},
+                                  [](BodyInfo &info)
+                                  {
+                                    info.gravity_scale = 0.0f;
+                                    info.linear_damping = 0.0f;
+                                    info.mass = 4.0f;
+                                  });
+
+    ASSERT_TRUE(_physics.SetShape(crate, {Box({10.0f, 10.0f, 10.0f})}, _error)) << _error;
+    _physics.AddImpulse(crate, {8.0f, 0.0f, 0.0f});
+    Run(1);
+
+    // an impulse of 8 on a mass of 4 gives 2, whatever the size
+    EXPECT_NEAR(StateOf(crate).linear_velocity.x, 2.0f, 1e-3f);
+  }
+
+  TEST_F(JoltPhysicsSystemTest, KeepsTheLockedAxesOfABodyWhoseShapeChanges)
+  {
+    const auto crate = CreateBody(crate_entity, BodyKind::Dynamic, Box({1.0f, 1.0f, 1.0f}), {0.0f, 5.0f, 0.0f},
+                                  [](BodyInfo &info)
+                                  {
+                                    info.gravity_scale = 0.0f;
+                                    info.locked_rotation = neon::Axis_X | neon::Axis_Y | neon::Axis_Z;
+                                  });
+
+    ASSERT_TRUE(_physics.SetShape(crate, {Box({1.0f, 2.0f, 1.0f})}, _error)) << _error;
+    _physics.AddImpulseAt(crate, {5.0f, 0.0f, 0.0f}, {0.0f, 5.9f, 0.0f});
+    Run(10);
+
+    EXPECT_EQ(StateOf(crate).angular_velocity, glm::vec3(0.0f));
+  }
+
+  TEST_F(JoltPhysicsSystemTest, RefusesShapesThatCannotBeOnTheBody)
+  {
+    const auto crate = CreateBody(crate_entity, BodyKind::Dynamic, Box({1.0f, 1.0f, 1.0f}), {0.0f, 5.0f, 0.0f});
+
+    EXPECT_FALSE(_physics.SetShape(crate, {CubeOf(ShapeKind::Mesh)}, _error));
+    EXPECT_THAT(_error, HasSubstr("a dynamic body cannot have a mesh"));
+
+    EXPECT_FALSE(_physics.SetShape(crate, {Sphere(0.0f)}, _error));
+    EXPECT_THAT(_error, HasSubstr("the sphere has a radius of 0"));
+
+    EXPECT_FALSE(_physics.SetShape(crate, {}, _error));
+    EXPECT_EQ(_error, "it has no shape");
+
+    // it is as it was
+    BodyState state;
+    EXPECT_TRUE(_physics.GetBodyState(crate, state));
+  }
+
+  TEST_F(JoltPhysicsSystemTest, RefusesToChangeTheShapeOfWhatIsNotABody)
+  {
+    EXPECT_FALSE(_physics.SetShape(42, {Sphere(1.0f)}, _error));
+    EXPECT_EQ(_error, "the body is not known");
+
+    CreateCharacter({0.0f, 1.0f, 0.0f});
+    EXPECT_FALSE(_physics.SetShape(1, {Sphere(1.0f)}, _error));
+    EXPECT_THAT(_error, HasSubstr("that of a character"));
   }
 
   // shapes

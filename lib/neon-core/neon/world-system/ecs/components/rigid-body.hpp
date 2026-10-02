@@ -2,6 +2,9 @@
 #define RIGID_BODY_HPP
 
 #include <cstdint>
+#include <format>
+#include <string>
+#include <vector>
 
 #include <glm/glm.hpp>
 
@@ -56,6 +59,12 @@ namespace neon
     /// A body that came to rest stops being simulated until something
     /// touches it.
     bool can_sleep = true;
+
+    /// The axes of the world a dynamic body cannot move along, and those it
+    /// cannot turn around, each a list of `x`, `y`, and `z`. A crate that
+    /// cannot tip over has `lock_rotation: [x, y, z]`.
+    std::vector<std::string> lock_position;
+    std::vector<std::string> lock_rotation;
 
     /// The layers the body is in, and the layers it looks for. One bit for
     /// each of the 32 layers, the lowest for layer 1.
@@ -119,11 +128,36 @@ namespace neon
     type.Field("can_sleep", &RigidBody::can_sleep)
         .Describe("Whether a body that came to rest stops being simulated until something touches it");
 
+    type.Field("lock_position", &RigidBody::lock_position)
+        .Describe("The axes of the world a dynamic body cannot move along: x, y, or z");
+
+    type.Field("lock_rotation", &RigidBody::lock_rotation)
+        .Describe("The axes of the world a dynamic body cannot turn around: x, y, or z");
+
     type.Layers("layers", &RigidBody::layers)
         .Describe("The layers the body is in");
 
     type.Layers("mask", &RigidBody::mask)
         .Describe("The layers the body looks for");
+
+    // a word that is no axis would otherwise lock nothing without a word
+    const auto axes = [](const std::string &name, std::vector<std::string> RigidBody::*axes)
+    {
+      return [name, axes](const RigidBody &body, const std::string &where) -> std::string
+      {
+        for (const auto &axis : body.*axes)
+        {
+          if (axis != "x" && axis != "y" && axis != "z")
+          {
+            return std::format("'{}' of {} holds '{}', where x, y, or z was expected", name, where, axis);
+          }
+        }
+        return {};
+      };
+    };
+
+    type.Rule("lock_position", axes("lock_position", &RigidBody::lock_position));
+    type.Rule("lock_rotation", axes("lock_rotation", &RigidBody::lock_rotation));
   }
 } // neon
 

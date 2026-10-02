@@ -4,4 +4,5 @@ neon_add_application_test(runtime-physics NeonRuntime run.cmake
         CASES
         moves-and-comes-to-rest
         same-at-every-frame-rate
+        joints-move
 )

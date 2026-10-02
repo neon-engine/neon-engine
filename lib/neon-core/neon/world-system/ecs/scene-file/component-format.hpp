@@ -104,6 +104,12 @@ namespace neon
     // in the order they were added, which is the order they are written in
     std::vector<ComponentFormat> _formats;
 
+    /// The format of a component that the physics registers. A world
+    /// without physics does not know the component, which is said instead
+    /// of giving the entity something the store cannot hold.
+    template<typename T>
+    static ComponentFormat PhysicsFormat();
+
   public:
     /// Adds a format, or replaces the one of the same name.
     void Add(const ComponentFormat &format);
@@ -118,7 +124,7 @@ namespace neon
     void AddEngineComponents();
 
     /// Adds the formats of the components of the physics: RigidBody,
-    /// Trigger, CharacterBody, and Collider.
+    /// Trigger, CharacterBody, Collider, and Joint.
     void AddPhysicsComponents();
   };
 } // neon

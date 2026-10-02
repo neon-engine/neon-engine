@@ -1,6 +1,7 @@
 #ifndef FAKE_PHYSICS_CONTEXT_HPP
 #define FAKE_PHYSICS_CONTEXT_HPP
 
+#include <iterator>
 #include <map>
 #include <string>
 #include <vector>
@@ -38,6 +39,12 @@ namespace neon::testing
       CharacterState state;
     };
 
+    struct Reshape
+    {
+      BodyId body = No_Body;
+      std::vector<ShapeInfo> shapes;
+    };
+
     struct Move
     {
       BodyId body = No_Body;
@@ -59,11 +66,15 @@ namespace neon::testing
     /// What is alive.
     std::map<BodyId, Body> bodies;
     std::map<CharacterId, Character> characters;
+    std::map<JointId, JointInfo> joints;
 
     /// What was asked, in the order it was asked in.
     std::vector<BodyInfo> created;
     std::vector<BodyId> destroyed;
+    std::vector<Reshape> reshaped;
     std::vector<CharacterId> destroyed_characters;
+    std::vector<JointInfo> created_joints;
+    std::vector<JointId> destroyed_joints;
     std::vector<Move> placed;
     std::vector<Move> moved;
     std::vector<CharacterMove> character_moves;
@@ -105,6 +116,55 @@ namespace neon::testing
     void DestroyBody(const BodyId body) override
     {
       if (bodies.erase(body) > 0) { destroyed.push_back(body); }
+
+      // a joint goes with either of its bodies
+      for (auto it = joints.begin(); it != joints.end();)
+      {
+        it = it->second.body == body || it->second.other == body ? joints.erase(it) : std::next(it);
+      }
+    }
+
+    bool CreateJoint(const JointInfo &info, JointId &joint, std::string &error) override
+    {
+      if (!fail_with.empty())
+      {
+        error = fail_with;
+        return false;
+      }
+
+      joint = _next_joint++;
+      joints[joint] = info;
+      created_joints.push_back(info);
+      return true;
+    }
+
+    void DestroyJoint(const JointId joint) override
+    {
+      if (joints.erase(joint) > 0) { destroyed_joints.push_back(joint); }
+    }
+
+    bool HasJoint(const JointId joint) override { return joints.contains(joint); }
+
+    std::size_t GetJointCount() override { return joints.size(); }
+
+    bool SetShape(const BodyId body, const std::vector<ShapeInfo> &shapes, std::string &error) override
+    {
+      const auto it = bodies.find(body);
+      if (it == bodies.end())
+      {
+        error = "the body is not known";
+        return false;
+      }
+
+      if (!fail_with.empty())
+      {
+        error = fail_with;
+        return false;
+      }
+
+      it->second.info.shapes = shapes;
+      reshaped.push_back({body, shapes});
+      return true;
     }
 
     bool HasBody(const BodyId body) override { return bodies.contains(body); }
@@ -288,6 +348,18 @@ namespace neon::testing
       hits.clear();
     }
 
+    /// Meets nothing.
+    bool CastShape(
+      const ShapeInfo &,
+      const glm::vec3 &,
+      const glm::quat &,
+      const glm::vec3 &,
+      const QueryFilter &,
+      ShapeCastHit &) override
+    {
+      return false;
+    }
+
     /// The body that was created for an entity, or nullptr.
     [[nodiscard]] Body *BodyOf(const Entity entity)
     {
@@ -310,6 +382,7 @@ namespace neon::testing
   private:
     BodyId _next_body = 1;
     CharacterId _next_character = 1;
+    JointId _next_joint = 1;
     std::vector<PhysicsEvent> _step_events;
     std::vector<PhysicsEvent> _frame_events;
   };

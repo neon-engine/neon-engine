@@ -253,11 +253,14 @@ add_library(${TARGET} STATIC
         neon/render/material-info.hpp
 
         # physics
+        neon/physics/joint-info.hpp
+        neon/physics/joint-kind.hpp
         neon/physics/model-geometry.cpp
         neon/physics/model-geometry.hpp
         neon/physics/physics-context.hpp
         neon/physics/physics-system.hpp
         neon/physics/physics-types.hpp
+        neon/physics/shape-cast-hit.hpp
 
         # world-system
         neon/world-system/world-system.hpp
@@ -279,6 +282,7 @@ add_library(${TARGET} STATIC
         neon/world-system/ecs/components/camera.hpp
         neon/world-system/ecs/components/character-body.hpp
         neon/world-system/ecs/components/collider.hpp
+        neon/world-system/ecs/components/joint.hpp
         neon/world-system/ecs/components/light.hpp
         neon/world-system/ecs/components/renderable.hpp
         neon/world-system/ecs/components/rigid-body.hpp

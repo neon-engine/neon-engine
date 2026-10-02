@@ -9,6 +9,7 @@
 #include <neon/testing/fake-entity-store.hpp>
 #include <neon/world-system/ecs/components/character-body.hpp>
 #include <neon/world-system/ecs/components/collider.hpp>
+#include <neon/world-system/ecs/components/joint.hpp>
 #include <neon/world-system/ecs/components/rigid-body.hpp>
 #include <neon/world-system/ecs/components/trigger.hpp>
 
@@ -21,6 +22,8 @@ namespace
   using neon::DataReader;
   using neon::DataValue;
   using neon::Entity;
+  using neon::Joint;
+  using neon::JointKind;
   using neon::RigidBody;
   using neon::ShapeKind;
   using neon::Trigger;
@@ -40,6 +43,28 @@ namespace
     auto list = DataValue::List();
     for (const double number : numbers) { list.Add(DataValue::Number(number)); }
     return list;
+  }
+
+  DataValue Texts(const std::vector<std::string> &texts)
+  {
+    auto list = DataValue::List();
+    for (const auto &text : texts) { list.Add(DataValue::Text(text)); }
+    return list;
+  }
+
+  std::vector<std::string> TextsOf(const DataValue &map, const std::string &name)
+  {
+    std::vector<std::string> texts;
+    const auto *value = map.Find(name);
+    if (value == nullptr) { return texts; }
+
+    for (const auto &item : value->GetItems())
+    {
+      std::string text;
+      (void) item.GetText(text);
+      texts.push_back(text);
+    }
+    return texts;
   }
 
   /// The names of a map, in the order they were written in.
@@ -96,6 +121,7 @@ namespace
       _store.Register<Trigger>("Trigger");
       _store.Register<CharacterBody>("CharacterBody");
       _store.Register<Collider>("Collider");
+      _store.Register<Joint>("Joint");
 
       _formats.AddPhysicsComponents();
       _entity = _store.CreateEntity("crate");
@@ -145,6 +171,7 @@ namespace
     EXPECT_NE(_formats.Find("Trigger"), nullptr);
     EXPECT_NE(_formats.Find("CharacterBody"), nullptr);
     EXPECT_NE(_formats.Find("Collider"), nullptr);
+    EXPECT_NE(_formats.Find("Joint"), nullptr);
   }
 
   TEST_F(PhysicsComponentFormatsTest, AreAmongTheComponentsOfTheEngine)
@@ -157,11 +184,12 @@ namespace
     EXPECT_NE(formats.Find("Trigger"), nullptr);
     EXPECT_NE(formats.Find("CharacterBody"), nullptr);
     EXPECT_NE(formats.Find("Collider"), nullptr);
+    EXPECT_NE(formats.Find("Joint"), nullptr);
   }
 
   TEST_F(PhysicsComponentFormatsTest, AreMadeFromTheDescriptionsOfTheComponents)
   {
-    for (const std::string name : {"RigidBody", "Trigger", "CharacterBody", "Collider"})
+    for (const std::string name : {"RigidBody", "Trigger", "CharacterBody", "Collider", "Joint"})
     {
       const auto *format = _formats.Find(name);
       ASSERT_NE(format, nullptr);
@@ -174,6 +202,7 @@ namespace
                   "rotation"));
     EXPECT_EQ(_formats.Find("RigidBody")->type->Find("layers")->kind, neon::FieldKind::Layers);
     EXPECT_EQ(_formats.Find("CharacterBody")->type->Find("max_slope")->unit, "degrees");
+    EXPECT_THAT(_formats.Find("Joint")->type->GetPaths(), ElementsAre("type", "other", "anchor", "axis", "limits"));
   }
 
   TEST_F(PhysicsComponentFormatsTest, SaysThatAWorldWithoutPhysicsCannotHoldThem)
@@ -182,7 +211,7 @@ namespace
     store.Initialize();
     const Entity entity = store.CreateEntity("crate");
 
-    for (const std::string name : {"RigidBody", "Trigger", "CharacterBody", "Collider"})
+    for (const std::string name : {"RigidBody", "Trigger", "CharacterBody", "Collider", "Joint"})
     {
       _errors.clear();
       const auto map = At(4, DataValue::Map());
@@ -388,7 +417,36 @@ namespace
     EXPECT_THAT(_errors, ElementsAre(
                   "test.scene.yml:12: 'weight' is not known to RigidBody of entity 'crate'. Known are: "
                   "kind, mass, friction, bounce, linear_damping, angular_damping, gravity_scale, "
-                  "linear_velocity, angular_velocity, continuous, can_sleep, layers, mask"));
+                  "linear_velocity, angular_velocity, continuous, can_sleep, lock_position, lock_rotation, "
+                  "layers, mask"));
+  }
+
+  TEST_F(PhysicsComponentFormatsTest, ReadsTheAxesARigidBodyIsLockedOn)
+  {
+    auto map = DataValue::Map();
+    map.Set("lock_position", Texts({"x", "z"}));
+    map.Set("lock_rotation", Texts({"x", "y", "z"}));
+
+    Read("RigidBody", map);
+
+    const auto *body = _store.Get<RigidBody>(_entity);
+    ASSERT_NE(body, nullptr);
+    EXPECT_THAT(_errors, IsEmpty());
+    EXPECT_THAT(body->lock_position, ElementsAre("x", "z"));
+    EXPECT_THAT(body->lock_rotation, ElementsAre("x", "y", "z"));
+  }
+
+  TEST_F(PhysicsComponentFormatsTest, SaysThatAnAxisARigidBodyIsLockedOnIsNotKnown)
+  {
+    EXPECT_EQ(ProblemOf("RigidBody", "lock_rotation", Texts({"y", "w"})),
+              "test.scene.yml:7: 'lock_rotation' of RigidBody of entity 'crate' holds 'w', where x, y, or z was "
+              "expected");
+    EXPECT_EQ(ProblemOf("RigidBody", "lock_position", Texts({"up"})),
+              "test.scene.yml:7: 'lock_position' of RigidBody of entity 'crate' holds 'up', where x, y, or z "
+              "was expected");
+    EXPECT_EQ(ProblemOf("RigidBody", "lock_position", DataValue::Text("x")),
+              "test.scene.yml:7: 'lock_position' of RigidBody of entity 'crate' is text, where a list of texts "
+              "was expected");
   }
 
   TEST_F(PhysicsComponentFormatsTest, WritesOnlyTheKindOfARigidBodyWithDefaults)
@@ -415,6 +473,8 @@ namespace
     body.angular_velocity = {90.0f, 0.0f, -45.0f};
     body.continuous = true;
     body.can_sleep = false;
+    body.lock_position = {"y"};
+    body.lock_rotation = {"x", "z"};
     body.layers = 0b110;
     body.mask = 0x80000001u;
     _store.Set(_entity, body);
@@ -423,7 +483,10 @@ namespace
 
     EXPECT_THAT(NamesOf(map), ElementsAre(
                   "kind", "mass", "friction", "bounce", "linear_damping", "angular_damping", "gravity_scale",
-                  "linear_velocity", "angular_velocity", "continuous", "can_sleep", "layers", "mask"));
+                  "linear_velocity", "angular_velocity", "continuous", "can_sleep", "lock_position",
+                  "lock_rotation", "layers", "mask"));
+    EXPECT_THAT(TextsOf(map, "lock_position"), ElementsAre("y"));
+    EXPECT_THAT(TextsOf(map, "lock_rotation"), ElementsAre("x", "z"));
     EXPECT_EQ(TextOf(map, "kind"), "static");
     EXPECT_EQ(NumberOf(map, "mass"), 10.0);
     EXPECT_EQ(NumberOf(map, "gravity_scale"), 0.0);
@@ -1051,5 +1114,161 @@ namespace
                   "numbers was expected",
                   "test.scene.yml:6: 'size' is not known to Collider of entity 'crate'. Known are: shape, "
                   "radius, height, offset, rotation"));
+  }
+
+  // Joint
+
+  TEST_F(PhysicsComponentFormatsTest, ReadsAJointWithItsDefaults)
+  {
+    Read("Joint", DataValue::Map());
+
+    const auto *joint = _store.Get<Joint>(_entity);
+    ASSERT_NE(joint, nullptr);
+    EXPECT_THAT(_errors, IsEmpty());
+    EXPECT_EQ(joint->type, JointKind::Fixed);
+    EXPECT_EQ(joint->other, "");
+    EXPECT_EQ(joint->anchor, glm::vec3(0.0f));
+    EXPECT_EQ(joint->axis, glm::vec3(0.0f, 1.0f, 0.0f));
+    EXPECT_THAT(joint->limits, IsEmpty());
+    EXPECT_EQ(joint->joint, neon::No_Joint);
+    EXPECT_FALSE(joint->failed);
+  }
+
+  TEST_F(PhysicsComponentFormatsTest, ReadsEveryValueOfAJoint)
+  {
+    auto map = DataValue::Map();
+    map.Set("type", DataValue::Text("hinge"));
+    map.Set("other", DataValue::Text("house/frame"));
+    map.Set("anchor", Numbers({-0.8, 0.0, 0.0}));
+    map.Set("axis", Numbers({0.0, 0.0, 1.0}));
+    map.Set("limits", Numbers({-90.0, 10.0}));
+
+    Read("Joint", map);
+
+    const auto *joint = _store.Get<Joint>(_entity);
+    ASSERT_NE(joint, nullptr);
+    EXPECT_THAT(_errors, IsEmpty());
+    EXPECT_EQ(joint->type, JointKind::Hinge);
+    EXPECT_EQ(joint->other, "house/frame");
+    EXPECT_EQ(joint->anchor, glm::vec3(-0.8f, 0.0f, 0.0f));
+    EXPECT_EQ(joint->axis, glm::vec3(0.0f, 0.0f, 1.0f));
+    EXPECT_THAT(joint->limits, ElementsAre(-90.0f, 10.0f));
+  }
+
+  TEST_F(PhysicsComponentFormatsTest, ReadsEveryTypeOfJoint)
+  {
+    const std::vector<std::pair<std::string, JointKind>> types = {
+      {"fixed", JointKind::Fixed},
+      {"hinge", JointKind::Hinge},
+      {"slider", JointKind::Slider},
+      {"point", JointKind::Point}
+    };
+
+    for (const auto &[word, kind] : types)
+    {
+      auto map = DataValue::Map();
+      map.Set("type", DataValue::Text(word));
+      Read("Joint", map);
+
+      EXPECT_THAT(_errors, IsEmpty()) << word;
+      EXPECT_EQ(_store.Get<Joint>(_entity)->type, kind) << word;
+    }
+  }
+
+  TEST_F(PhysicsComponentFormatsTest, SaysWhatIsWrongWithAJoint)
+  {
+    const std::string where = "test.scene.yml:7: ";
+    const std::string of = " of Joint of entity 'crate' ";
+
+    EXPECT_EQ(ProblemOf("Joint", "type", DataValue::Text("rope")),
+              where + "'type'" + of + "is 'rope', where one of these was expected: fixed, hinge, slider, point");
+    EXPECT_EQ(ProblemOf("Joint", "other", DataValue::Number(3.0)),
+              where + "'other'" + of + "is a number, where text was expected");
+    EXPECT_EQ(ProblemOf("Joint", "anchor", Numbers({1.0, 2.0})),
+              where + "'anchor'" + of + "holds 2 values, where a list of 3 numbers was expected");
+  }
+
+  TEST_F(PhysicsComponentFormatsTest, SaysWhatIsWrongWithTheAxisAndTheLimitsOfAJoint)
+  {
+    const auto problem = [this](const std::string &type, const std::string &name, const DataValue &value)
+    {
+      _errors.clear();
+      auto map = DataValue::Map();
+      map.Set("type", DataValue::Text(type));
+      map.Set(name, At(9, value));
+      Read("Joint", map);
+      return _errors.size() == 1 ? _errors.front() : std::to_string(_errors.size()) + " problems";
+    };
+    const std::string where = "test.scene.yml:9: ";
+    const std::string of = " of Joint of entity 'crate' ";
+
+    EXPECT_EQ(problem("hinge", "axis", Numbers({0.0, 0.0, 0.0})),
+              where + "'axis'" + of + "is [0, 0, 0], where a direction was expected");
+    EXPECT_EQ(problem("slider", "limits", Numbers({-1.0})),
+              where + "'limits'" + of + "holds 1 number, where [least, most] or an empty list was expected");
+    EXPECT_EQ(problem("slider", "limits", Numbers({-1.0, 0.0, 1.0})),
+              where + "'limits'" + of + "holds 3 numbers, where [least, most] or an empty list was expected");
+    EXPECT_EQ(problem("slider", "limits", Numbers({1.0, 2.0})),
+              where + "'limits'" + of + "is [1, 2], where the least is 0 or below and the most 0 or above");
+    EXPECT_EQ(problem("hinge", "limits", Numbers({-200.0, 90.0})),
+              where + "'limits'" + of + "is [-200, 90], where degrees from -180 to 180 were expected");
+    EXPECT_EQ(problem("slider", "limits", Numbers({-200.0, 90.0})), "0 problems");
+    EXPECT_EQ(problem("hinge", "limits", Numbers({})), "0 problems");
+  }
+
+  TEST_F(PhysicsComponentFormatsTest, SaysThatTheAxisAndTheLimitsBelongToAHingeAndASlider)
+  {
+    auto map = DataValue::Map();
+    map.Set("type", DataValue::Text("point"));
+    map.Set("axis", At(5, Numbers({0.0, 1.0, 0.0})));
+    map.Set("limits", At(6, Numbers({-1.0, 1.0})));
+
+    Read("Joint", map);
+
+    EXPECT_THAT(_errors, ElementsAre(
+                  "test.scene.yml:5: 'axis' is not known to Joint of entity 'crate'. Known are: type, other, anchor",
+                  "test.scene.yml:6: 'limits' is not known to Joint of entity 'crate'. Known are: type, other, "
+                  "anchor"));
+  }
+
+  TEST_F(PhysicsComponentFormatsTest, WritesOnlyTheTypeOfAJointWithDefaults)
+  {
+    _store.Set(_entity, Joint{});
+
+    const auto map = Write("Joint");
+
+    EXPECT_THAT(NamesOf(map), ElementsAre("type"));
+    EXPECT_EQ(TextOf(map, "type"), "fixed");
+  }
+
+  TEST_F(PhysicsComponentFormatsTest, WritesAJointAndReadsItBack)
+  {
+    Joint joint;
+    joint.type = JointKind::Slider;
+    joint.other = "rail";
+    joint.anchor = {0.0f, -0.5f, 0.0f};
+    joint.axis = {1.0f, 0.0f, 0.0f};
+    joint.limits = {-3.0f, 3.0f};
+    joint.joint = 7;
+    joint.failed = true;
+    _store.Set(_entity, joint);
+
+    const auto map = Write("Joint");
+    EXPECT_THAT(NamesOf(map), ElementsAre("type", "other", "anchor", "axis", "limits"));
+    EXPECT_EQ(TextOf(map, "other"), "rail");
+    EXPECT_THAT(NumbersOf(map, "limits"), ElementsAre(-3.0, 3.0));
+
+    _store.Set(_entity, Joint{});
+    Read("Joint", map);
+
+    const auto *read = _store.Get<Joint>(_entity);
+    EXPECT_THAT(_errors, IsEmpty());
+    EXPECT_EQ(read->type, JointKind::Slider);
+    EXPECT_EQ(read->other, "rail");
+    EXPECT_EQ(read->anchor, glm::vec3(0.0f, -0.5f, 0.0f));
+    EXPECT_EQ(read->axis, glm::vec3(1.0f, 0.0f, 0.0f));
+    EXPECT_THAT(read->limits, ElementsAre(-3.0f, 3.0f));
+    EXPECT_EQ(read->joint, neon::No_Joint);
+    EXPECT_FALSE(read->failed);
   }
 }
