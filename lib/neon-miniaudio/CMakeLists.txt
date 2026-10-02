@@ -5,11 +5,17 @@ add_library(${TARGET} STATIC
         neon/audio/ma-audio-system.hpp
         neon/audio/miniaudio-implementation.c
 )
+neon_warnings(${TARGET})
 
 target_include_directories(${TARGET}
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
-        # miniaudio is private. What includes ma-audio-system.hpp sees no
-        # declaration of miniaudio and cannot call it.
+)
+
+# miniaudio is private. What includes ma-audio-system.hpp sees no declaration
+# of miniaudio and cannot call it. It is a system header, so that the warnings
+# of the engine stop at it: its implementation is compiled into the file that
+# includes it.
+target_include_directories(${TARGET} SYSTEM
         PRIVATE ${CMAKE_SOURCE_DIR}/external/miniaudio
 )
 

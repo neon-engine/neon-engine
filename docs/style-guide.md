@@ -335,6 +335,8 @@ this guide like any other file.
 | Commands are lower-case, variables are upper-case | `set(APP_BIN_DIRECTORY ...)` |
 | A setting that exists for one platform or one library carries a comment that says why | |
 | Functions of the build live in `cmake/*.cmake`, scripts run with `-P` in `cmake/scripts/` | |
+| Every library and application calls `neon_warnings(${TARGET})` right after it is declared. The test functions do it themselves | See [compiler warnings](#compiler-warnings) |
+| A header of a library in `external/` that the engine includes is marked `SYSTEM`, so that the warnings stop at it | `target_include_directories(stb SYSTEM INTERFACE ...)` |
 
 ## Git
 
@@ -347,6 +349,29 @@ this guide like any other file.
 | A pull request is reviewed and merged by the owner | |
 
 ## Tooling
+
+### Compiler warnings
+
+Every target of the engine is compiled with `-Wall -Wextra -Werror`: the
+libraries under `lib/`, the applications under `app/`, and every test. A
+warning in them fails the build. The libraries under `external/` are built as
+they come, their warnings are not ours to fix, and a header of theirs that the
+engine includes is marked as a system header, so that the warnings stop at it.
+The flags are set by `neon_warnings(<target>)` in
+[cmake/Warnings.cmake](../cmake/Warnings.cmake), which every library and
+application calls, and which the test functions call for every test.
+
+| Switched off | Reason |
+|---|---|
+| `-Wunused-parameter` | An interface gives its methods a default body that does nothing, and the names of the parameters there document the method. clang-tidy's `readability-named-parameter` is off for the same reason |
+| `-Wmissing-designated-field-initializers` | A designated initializer leaves out the fields that keep their default on purpose |
+
+A warning is fixed where it points, and not switched off. An argument a
+backend has no use for has no name, or is marked `[[maybe_unused]]` when its
+name says something. A narrowing that is meant is written as a
+`static_cast`, so that it reads as meant.
+
+### clang-tidy and clang-format
 
 Both tools come with LLVM 20, the compiler of the project. On macOS they are
 found in the folder of Homebrew's LLVM, elsewhere on `PATH`. A target says so

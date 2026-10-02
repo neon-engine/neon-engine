@@ -4,6 +4,7 @@ add_library(${TARGET} STATIC
         neon/physics/jolt-physics-system.cpp
         neon/physics/jolt-physics-system.hpp
 )
+neon_warnings(${TARGET})
 
 target_include_directories(${TARGET}
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}

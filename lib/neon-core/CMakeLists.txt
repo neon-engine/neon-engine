@@ -311,6 +311,7 @@ add_library(${TARGET} STATIC
         neon/world-system/ecs/systems/ui-surface-pointing.cpp
         neon/world-system/ecs/systems/ui-surface-pointing.hpp
 )
+neon_warnings(${TARGET})
 
 target_include_directories(${TARGET}
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}

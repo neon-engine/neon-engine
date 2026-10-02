@@ -14,9 +14,6 @@ namespace neon
 {
   class RenderSystem : public RenderContext
   {
-    int _mesh_index = 0;
-    int _material_index = 0;
-
   protected:
     WindowContext *_window_context;
     FileSystemContext *_file_system_context;

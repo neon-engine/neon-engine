@@ -68,10 +68,6 @@ namespace neon
     /// number when it was moved sideways since.
     float _wanted_x = std::numeric_limits<float>::quiet_NaN();
 
-    // whether the text was changed by typing since the game was last
-    // told
-    bool _is_changed = false;
-
     [[nodiscard]] const UiFont *FontOf(const UiFrame &frame) const;
 
     [[nodiscard]] UiTextMeasure::Request RequestOf(const UiFrame &frame, const std::string &shown) const;

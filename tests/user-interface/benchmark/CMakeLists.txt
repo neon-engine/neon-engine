@@ -1,6 +1,7 @@
 # How long a frame of the user interface takes. Not a test: it is built by
 # its target name and run by hand, and prints what it measured.
 add_executable(user-interface.benchmark EXCLUDE_FROM_ALL ui-benchmark.cpp)
+neon_warnings(user-interface.benchmark)
 
 target_link_libraries(user-interface.benchmark PRIVATE
         GTest::gmock

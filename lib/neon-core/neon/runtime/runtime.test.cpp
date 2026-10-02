@@ -31,7 +31,6 @@ namespace
   using ::testing::_;
   using ::testing::AnyNumber;
   using ::testing::InSequence;
-  using ::testing::Invoke;
   using ::testing::NiceMock;
   using ::testing::Return;
   using ::testing::ReturnRef;
@@ -110,9 +109,9 @@ namespace
     /// Lets the window behave like one: it runs until it is told to close.
     void LetTheWindowRunUntilItIsClosed()
     {
-      EXPECT_CALL(_window_system, IsRunning()).WillRepeatedly(Invoke([this] { return !_closed; }));
+      EXPECT_CALL(_window_system, IsRunning()).WillRepeatedly([this] { return !_closed; });
       EXPECT_CALL(_window_system, SignalToClose()).Times(AnyNumber()).WillRepeatedly(
-        Invoke([this] { _closed = true; }));
+        [this] { _closed = true; });
     }
 
     /// Expects the calls of a number of frames, and nothing beyond them.
@@ -389,8 +388,8 @@ namespace
 
     ExpectInitialize();
     ExpectFrames(3);
-    EXPECT_CALL(_window_system, IsRunning()).WillRepeatedly(Invoke([this] { return !_closed; }));
-    EXPECT_CALL(_window_system, SignalToClose()).WillOnce(Invoke([this] { _closed = true; }));
+    EXPECT_CALL(_window_system, IsRunning()).WillRepeatedly([this] { return !_closed; });
+    EXPECT_CALL(_window_system, SignalToClose()).WillOnce([this] { _closed = true; });
 
     runtime->Run();
 
@@ -552,13 +551,13 @@ namespace
       EXPECT_CALL(_ui_system, CleanUp());
       LetTheWindowRunUntilItIsClosed();
 
-      EXPECT_CALL(_input_system, ProcessInput()).WillRepeatedly(Invoke([this]
+      EXPECT_CALL(_input_system, ProcessInput()).WillRepeatedly([this]
       {
         _frame++;
         _raw.Reset();
         _game.state.Reset();
         if (_press) { _press(_frame); }
-      }));
+      });
       EXPECT_CALL(_input_system, GetInputState()).WillRepeatedly(ReturnRef(_raw));
       EXPECT_CALL(_ui_system, GetGameInput()).WillRepeatedly(Return(&_game));
       EXPECT_CALL(_ui_system, Update()).Times(AnyNumber());

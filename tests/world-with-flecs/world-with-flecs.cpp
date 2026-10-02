@@ -58,7 +58,6 @@ namespace
   using ::testing::AnyNumber;
   using ::testing::ElementsAre;
   using ::testing::Field;
-  using ::testing::Invoke;
   using ::testing::IsEmpty;
   using ::testing::NiceMock;
   using ::testing::Return;
@@ -162,21 +161,21 @@ namespace
     {
       ON_CALL(_renderer, GetRenderResolution()).WillByDefault(ReturnRef(_resolution));
 
-      ON_CALL(_renderer, CreateRenderObject(_)).WillByDefault(Invoke([this](const RenderInfo &render_info)
+      ON_CALL(_renderer, CreateRenderObject(_)).WillByDefault([this](const RenderInfo &render_info)
       {
         // a model of that name stands for one that cannot be loaded
         if (render_info.model_path == "assets://models/missing.obj") { return -1; }
 
         _models.push_back(render_info.model_path);
         return static_cast<int>(_models.size()) - 1;
-      }));
+      });
 
-      ON_CALL(_renderer, DestroyRenderObject(_)).WillByDefault(Invoke([this](const int id)
+      ON_CALL(_renderer, DestroyRenderObject(_)).WillByDefault([this](const int id)
       {
         _destroyed.push_back(id);
-      }));
+      });
 
-      ON_CALL(_renderer, DrawRenderObject(_, _, _, _, _)).WillByDefault(Invoke(
+      ON_CALL(_renderer, DrawRenderObject(_, _, _, _, _)).WillByDefault(
         [this](
         const int id,
         const Transform &transform,
@@ -185,7 +184,7 @@ namespace
         const std::vector<LightSource> &lights)
         {
           _drawn.push_back({_models.at(id), glm::vec3(transform.world_coordinates[3]), view, lights});
-        }));
+        });
     }
 
     void TearDown() override

@@ -53,6 +53,7 @@ add_library(${TARGET} STATIC
         neon/text/hb-text-shaper.cpp
         neon/text/hb-text-shaper.hpp
 )
+neon_warnings(${TARGET})
 
 target_include_directories(${TARGET}
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}

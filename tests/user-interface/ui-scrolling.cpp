@@ -1123,7 +1123,7 @@ namespace
     {
       float x = 0.0f;
       float y = 0.0f;
-      _ui->GetScroll(event.target, x, y);
+      EXPECT_TRUE(_ui->GetScroll(event.target, x, y));
       scrolled.push_back(y);
     });
 

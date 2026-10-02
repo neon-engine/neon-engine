@@ -58,7 +58,7 @@ namespace neon
     /// How far the corners reach into the image when it is drawn in nine
     /// parts, as its atlas says. In pixels of the image.
     bool has_slice = false;
-    LayoutEdges<float> slice;
+    LayoutEdges<float> slice{};
 
     [[nodiscard]] float NaturalWidth() const
     {

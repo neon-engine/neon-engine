@@ -26,7 +26,6 @@ namespace
   using neon::testing::MockUiContext;
   using ::testing::_;
   using ::testing::FloatEq;
-  using ::testing::Invoke;
   using ::testing::NiceMock;
 
   class UiAudioTest : public ::testing::Test
@@ -42,23 +41,23 @@ namespace
 
     void SetUp() override
     {
-      ON_CALL(_ui, GetValue(_, _)).WillByDefault(Invoke([this](const std::string &name, bool *is_set)
+      ON_CALL(_ui, GetValue(_, _)).WillByDefault([this](const std::string &name, bool *is_set)
       {
         const auto found = _values.find(name);
         if (is_set != nullptr) { *is_set = found != _values.end(); }
         return found == _values.end() ? std::string{} : found->second;
-      }));
+      });
 
       // as the user interface reads a number: a text that holds none is no
       // number
-      ON_CALL(_ui, GetNumber(_, _)).WillByDefault(Invoke([this](const std::string &name, double &number)
+      ON_CALL(_ui, GetNumber(_, _)).WillByDefault([this](const std::string &name, double &number)
       {
         const auto found = _values.find(name);
         if (found == _values.end()) { return false; }
 
         try { number = std::stod(found->second); } catch (const std::exception &) { return false; }
         return true;
-      }));
+      });
 
       // as the world does: every component is registered, by this system
       // and by AudioPlayback, before any system makes its queries

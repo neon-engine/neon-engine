@@ -6,6 +6,7 @@ add_library(${TARGET} STATIC
         neon/image/stb-image-decoder.cpp
         neon/image/stb-image-decoder.hpp
 )
+neon_warnings(${TARGET})
 
 target_include_directories(${TARGET}
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}

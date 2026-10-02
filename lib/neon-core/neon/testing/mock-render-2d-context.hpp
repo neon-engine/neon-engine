@@ -76,7 +76,7 @@ namespace neon::testing
       std::string path;
 
       // how it was asked to be kept, and the target it shows
-      TextureOptions2D options;
+      TextureOptions2D options{};
       int target = No_Render_Target;
     };
 

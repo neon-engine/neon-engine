@@ -878,6 +878,12 @@ A few settings in the top-level [CMakeLists.txt](../CMakeLists.txt) exist only
 to keep the three platforms building with the same toolchain. Each carries a
 comment, but in short:
 
+- The engine's own targets, the libraries under `lib/`, the applications, and
+  the tests, are compiled with `-Wall -Wextra -Werror`, set per target by
+  `neon_warnings()` in [cmake/Warnings.cmake](../cmake/Warnings.cmake). The
+  libraries under `external/` are not, and their headers are included as
+  system headers. The [style guide](style-guide.md#compiler-warnings) lists
+  the two categories that are off, and why.
 - `BUILD_SHARED_LIBS` is forced off. assimp turns it on by default and that
   would leak into every dependency added after it, producing executables that
   depend on `.so` or `.dll` files from the build tree.

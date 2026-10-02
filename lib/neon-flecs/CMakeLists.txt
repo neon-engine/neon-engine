@@ -4,6 +4,7 @@ add_library(${TARGET} STATIC
         neon/world-system/flecs-entity-store.cpp
         neon/world-system/flecs-entity-store.hpp
 )
+neon_warnings(${TARGET})
 
 target_include_directories(${TARGET}
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}

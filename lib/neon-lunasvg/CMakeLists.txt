@@ -18,6 +18,7 @@ add_library(${TARGET} STATIC
         neon/image/luna-vector-image-rasterizer.cpp
         neon/image/luna-vector-image-rasterizer.hpp
 )
+neon_warnings(${TARGET})
 
 target_include_directories(${TARGET}
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}

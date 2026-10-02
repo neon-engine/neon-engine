@@ -51,6 +51,7 @@ add_library(${TARGET} STATIC
         neon/render/vk-capture.cpp
         neon/render/vk-capture.hpp
 )
+neon_warnings(${TARGET})
 
 target_include_directories(${TARGET}
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}

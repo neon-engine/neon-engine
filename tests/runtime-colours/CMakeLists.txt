@@ -4,6 +4,7 @@
 # driver. On a machine without one the tests are skipped, they do not fail.
 
 add_executable(pixel-probe pixel-probe.cpp)
+neon_warnings(pixel-probe)
 target_link_libraries(pixel-probe PRIVATE stb)
 add_dependencies(neon-tests pixel-probe)
 

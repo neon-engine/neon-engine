@@ -41,6 +41,7 @@ function(neon_add_unit_test LIBRARY SOURCE)
   set(TEST_DIRECTORY "${NEON_TESTS_DIRECTORY}/${TEST_TARGET}")
 
   add_executable(${TEST_TARGET} EXCLUDE_FROM_ALL "${SOURCE}")
+  neon_warnings(${TEST_TARGET})
 
   # GoogleTest comes first, so that its main() is the one that is found. SDL
   # brings one of its own on Windows, in SDL2main.
@@ -86,6 +87,7 @@ function(neon_add_functional_test NAME)
   set(TEST_DIRECTORY "${NEON_TESTS_DIRECTORY}/${TEST_TARGET}")
 
   add_executable(${TEST_TARGET} EXCLUDE_FROM_ALL ${TEST_SOURCES})
+  neon_warnings(${TEST_TARGET})
 
   target_link_libraries(${TEST_TARGET} PRIVATE
           GTest::gmock_main

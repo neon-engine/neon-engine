@@ -11,6 +11,7 @@ setup_copy_assets(
         "${CMAKE_CURRENT_SOURCE_DIR}/assets"
         "${APP_BIN_DIRECTORY}/assets"
 )
+neon_warnings(${TARGET})
 
 setup_compile_shaders(
         ${TARGET}

@@ -44,7 +44,6 @@ namespace
   using ::testing::_;
   using ::testing::ElementsAre;
   using ::testing::InSequence;
-  using ::testing::Invoke;
   using ::testing::NiceMock;
   using ::testing::Ref;
   using ::testing::Return;
@@ -116,7 +115,7 @@ namespace
     /// Lets the scene create what a test asks for.
     void PopulateWith(const std::function<void(EntityStore &)> &populate)
     {
-      ON_CALL(_scene, Populate(_)).WillByDefault(Invoke(populate));
+      ON_CALL(_scene, Populate(_)).WillByDefault(populate);
     }
   };
 
@@ -234,11 +233,11 @@ namespace
   TEST_F(EntityWorldTest, InitializesASystemOfTheGameWithTheStoreAndTheComponentsOfTheEngine)
   {
     auto system = std::make_unique<StrictMock<MockEntitySystem>>();
-    EXPECT_CALL(*system, Initialize(Ref(_store))).WillOnce(Invoke([](EntityStore &store)
+    EXPECT_CALL(*system, Initialize(Ref(_store))).WillOnce([](EntityStore &store)
     {
       // the place to create queries, which needs the components
       EXPECT_NO_THROW((void) (store.Query<Transform, Renderable>()));
-    }));
+    });
     _world.AddSystem(std::move(system));
 
     _world.Initialize();
@@ -871,10 +870,10 @@ namespace
     ON_CALL(_pipeline, CreateRenderObject(_)).WillByDefault(Return(4));
 
     glm::vec3 drawn_at{0.0f};
-    EXPECT_CALL(_pipeline, EnqueueForRendering(4, _)).WillOnce(Invoke([&](int, const Transform &transform)
+    EXPECT_CALL(_pipeline, EnqueueForRendering(4, _)).WillOnce([&](int, const Transform &transform)
     {
       drawn_at = transform.world_coordinates[3];
-    }));
+    });
     _world.Update();
 
     EXPECT_EQ(drawn_at, glm::vec3(7.0f, 8.0f, 9.0f));

@@ -62,7 +62,6 @@ namespace
   using neon::testing::RecordingLogger;
   using ::testing::_;
   using ::testing::HasSubstr;
-  using ::testing::Invoke;
   using ::testing::NiceMock;
   using ::testing::Return;
 
@@ -685,10 +684,10 @@ entities:
     std::vector<float> heights;
 
     ON_CALL(world.pipeline, CreateRenderObject(_)).WillByDefault(Return(1));
-    ON_CALL(world.pipeline, EnqueueForRendering(_, _)).WillByDefault(Invoke([&](int, const Transform &transform)
+    ON_CALL(world.pipeline, EnqueueForRendering(_, _)).WillByDefault([&](int, const Transform &transform)
     {
       heights.push_back(transform.world_coordinates[3].y);
-    }));
+    });
 
     world.Run(frames_per_second, seconds);
     return heights;
@@ -758,10 +757,10 @@ entities:
     ASSERT_LT(after_ten, after_nine);
 
     float drawn = 0.0f;
-    ON_CALL(world.pipeline, EnqueueForRendering(_, _)).WillByDefault(Invoke([&](int, const Transform &transform)
+    ON_CALL(world.pipeline, EnqueueForRendering(_, _)).WillByDefault([&](int, const Transform &transform)
     {
       drawn = transform.world_coordinates[3].y;
-    }));
+    });
     world.RunFrame(0.25 / 60.0);
 
     ASSERT_EQ(world.record.steps.size(), 10u);

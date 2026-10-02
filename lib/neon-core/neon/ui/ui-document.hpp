@@ -50,7 +50,7 @@ namespace neon
     std::string path;
 
     /// `style: italic` and `rendering: sdf` of the font.
-    UiFaceOptions options;
+    UiFaceOptions options{};
   };
 
   /// A user interface as a file holds it: a tree of elements, and what is

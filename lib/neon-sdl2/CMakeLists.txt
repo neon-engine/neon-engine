@@ -10,6 +10,7 @@ add_library(${TARGET} STATIC
         neon/input/sdl2-input-system.cpp
         neon/input/sdl2-input-system.hpp
 )
+neon_warnings(${TARGET})
 
 target_include_directories(${TARGET}
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}

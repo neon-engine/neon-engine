@@ -742,11 +742,6 @@ namespace neon
       return true;
     }
 
-    bool EqualsText(const std::string &a, const std::string &b, const bool ignores_case)
-    {
-      return ignores_case ? Lowered(a) == Lowered(b) : a == b;
-    }
-
     bool MatchesAttribute(const CssSimpleSelector &simple, const CssElement &element)
     {
       std::string value;
