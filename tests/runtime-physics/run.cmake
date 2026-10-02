@@ -10,7 +10,7 @@ include("${CMAKE_CURRENT_LIST_DIR}/../../cmake/scripts/run-application.cmake")
 function(run_physics FOLDER TIME_STEP)
   list(JOIN ARGN "," FRAMES)
 
-  run(--headless
+  run(--headless-renderer
           --scene assets://scenes/physics.scene.yml
           --time-step ${TIME_STEP}
           --output-dir ${FOLDER}

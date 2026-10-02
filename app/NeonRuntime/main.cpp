@@ -175,7 +175,7 @@ int main(const int argc, char *argv[])
 
   // Without a window there is no one to hear anything. Sounds are still read
   // and mixed, so that a run without a window finds a sound that is broken.
-  if (settings_config.headless) { settings_config.audio_output = AudioOutput::None; }
+  if (settings_config.headless_renderer) { settings_config.audio_output = AudioOutput::None; }
 
   neon::MA_AudioSystem audio_system(
     settings_config,
@@ -196,7 +196,7 @@ int main(const int argc, char *argv[])
   neon::RenderSystem *render_system;
   neon::Render2DContext *render_2d_context;
 
-  if (settings_config.headless)
+  if (settings_config.headless_renderer)
   {
     window_system = &headless_window_system.emplace(
       settings_config,
@@ -307,7 +307,7 @@ int main(const int argc, char *argv[])
   // through the clipboard of the platform where there is one.
   neon::SDL2_Clipboard sdl2_clipboard;
   ui_system.SetWindow(window_system);
-  if (!settings_config.headless) { ui_system.SetClipboard(&sdl2_clipboard); }
+  if (!settings_config.headless_renderer) { ui_system.SetClipboard(&sdl2_clipboard); }
   ui_system.SetUserScale(static_cast<float>(settings_config.ui_scale));
 
   neon::SceneFile scene(

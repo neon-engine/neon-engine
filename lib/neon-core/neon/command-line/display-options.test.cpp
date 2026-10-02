@@ -110,14 +110,14 @@ namespace
 
   TEST_F(DisplayOptionsTest, TakesTheRenderScaleWithoutAWindow)
   {
-    ASSERT_TRUE(Apply({"--headless", "--render-scale", "1.25"}));
+    ASSERT_TRUE(Apply({"--headless-renderer", "--render-scale", "1.25"}));
     EXPECT_EQ(_settings.render_scale, 1.25);
   }
 
   TEST_F(DisplayOptionsTest, RefusesARenderScaleWithAWindow)
   {
     EXPECT_FALSE(Apply({"--render-scale", "2"}));
-    EXPECT_EQ(_error, "Option '--render-scale' needs '--headless'. A window takes the density of its display");
+    EXPECT_EQ(_error, "Option '--render-scale' needs '--headless-renderer'. A window takes the density of its display");
     EXPECT_EQ(_settings.render_scale, 1.0);
   }
 
@@ -126,7 +126,7 @@ namespace
     for (const char *scale : {"0", "-1", "0.1", "9", "twice"})
     {
       _settings.render_scale = 1.0;
-      EXPECT_FALSE(Apply({"--headless", "--render-scale", scale})) << scale;
+      EXPECT_FALSE(Apply({"--headless-renderer", "--render-scale", scale})) << scale;
       EXPECT_EQ(_error, "Option '--render-scale' needs a number from 0.25 to 8, such as 2");
       EXPECT_EQ(_settings.render_scale, 1.0);
     }
@@ -137,7 +137,7 @@ namespace
     ASSERT_TRUE(Apply({"--ui-scale", "1.5"}));
     EXPECT_EQ(_settings.ui_scale, 1.5);
 
-    ASSERT_TRUE(Apply({"--headless", "--ui-scale", "0.75"}));
+    ASSERT_TRUE(Apply({"--headless-renderer", "--ui-scale", "0.75"}));
     EXPECT_EQ(_settings.ui_scale, 0.75);
   }
 
@@ -153,25 +153,25 @@ namespace
 
   TEST_F(DisplayOptionsTest, TakesAScriptOfInputWithoutAWindow)
   {
-    ASSERT_TRUE(Apply({"--headless", "--input", "1: pointer 10 10; 2: click"}));
+    ASSERT_TRUE(Apply({"--headless-renderer", "--input", "1: pointer 10 10; 2: click"}));
     EXPECT_EQ(_settings.input_script, "1: pointer 10 10; 2: click");
 
-    ASSERT_TRUE(Apply({"--headless", "--input-script", "assets://input/menu.input"}));
+    ASSERT_TRUE(Apply({"--headless-renderer", "--input-script", "assets://input/menu.input"}));
     EXPECT_EQ(_settings.input_script_path, "assets://input/menu.input");
   }
 
   TEST_F(DisplayOptionsTest, RefusesAScriptOfInputWithAWindow)
   {
     EXPECT_FALSE(Apply({"--input", "1: click"}));
-    EXPECT_EQ(_error, "Option '--input' needs '--headless'. A window takes its input from devices");
+    EXPECT_EQ(_error, "Option '--input' needs '--headless-renderer'. A window takes its input from devices");
 
     EXPECT_FALSE(Apply({"--input-script", "assets://a.input"}));
-    EXPECT_EQ(_error, "Option '--input-script' needs '--headless'. A window takes its input from devices");
+    EXPECT_EQ(_error, "Option '--input-script' needs '--headless-renderer'. A window takes its input from devices");
   }
 
   TEST_F(DisplayOptionsTest, RefusesTwoScriptsOfInput)
   {
-    EXPECT_FALSE(Apply({"--headless", "--input", "1: click", "--input-script", "assets://a.input"}));
+    EXPECT_FALSE(Apply({"--headless-renderer", "--input", "1: click", "--input-script", "assets://a.input"}));
     EXPECT_EQ(_error, "Option '--input' and '--input-script' cannot be given together");
   }
 } // namespace

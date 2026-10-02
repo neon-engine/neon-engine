@@ -75,7 +75,8 @@ namespace
       "  --output-dir DIR          Folder of this machine that output:// stands for. Created when missing\n"
       "  --time-step SECONDS       Advance the game by this much time in every frame, for example 0.016667, "
       "so that a run gives the same frames every time\n"
-      "  --headless                Run without a window\n");
+      "  --headless-renderer       Render without a window, for screenshots and checks on a machine with no display\n"
+      "  --headless                Run as a dedicated server. Not available yet, see --headless-renderer\n");
   }
 
   TEST_F(RuntimeOptionsTest, UiNamesTheUserInterfaceToShow)
@@ -113,13 +114,13 @@ namespace
     EXPECT_EQ(_command_line.GetError(), "'opengl' is not a value of '--renderer'. It accepts vulkan");
   }
 
-  TEST_F(RuntimeOptionsTest, HeadlessTakesNoValue)
+  TEST_F(RuntimeOptionsTest, HeadlessRendererTakesNoValue)
   {
-    EXPECT_FALSE(Parse({"--headless=yes"}));
-    EXPECT_EQ(_command_line.GetError(), "Option '--headless' takes no value");
+    EXPECT_FALSE(Parse({"--headless-renderer=yes"}));
+    EXPECT_EQ(_command_line.GetError(), "Option '--headless-renderer' takes no value");
   }
 
-  TEST_F(RuntimeOptionsTest, EveryOptionButHeadlessNeedsAValue)
+  TEST_F(RuntimeOptionsTest, EveryOptionButTheHeadlessOnesNeedsAValue)
   {
     for (const char *option : {"--ui", "--renderer", "--frames", "--screenshot", "--screenshot-at",
                                "--output-dir", "--time-step", "--vulkan-version"})
@@ -146,7 +147,7 @@ namespace
 
     EXPECT_EQ(_error, "");
     EXPECT_EQ(_settings.selected_api, RenderingApi::Vulkan);
-    EXPECT_FALSE(_settings.headless);
+    EXPECT_FALSE(_settings.headless_renderer);
     EXPECT_EQ(_settings.max_frames, 0u);
     EXPECT_EQ(_settings.time_step, 0.0);
     EXPECT_EQ(_settings.vulkan_version, (ApiVersion{1, 3}));
@@ -180,22 +181,41 @@ namespace
     EXPECT_EQ(_settings.selected_api, RenderingApi::Vulkan);
   }
 
-  // --headless
+  // --headless-renderer
 
-  TEST_F(RuntimeOptionsTest, HeadlessIsCarriedOver)
+  TEST_F(RuntimeOptionsTest, HeadlessRendererIsCarriedOver)
   {
-    ASSERT_TRUE(Apply({"--headless"}));
+    ASSERT_TRUE(Apply({"--headless-renderer"}));
 
-    EXPECT_TRUE(_settings.headless);
+    EXPECT_TRUE(_settings.headless_renderer);
   }
 
-  TEST_F(RuntimeOptionsTest, HeadlessIsTurnedOffWhenItIsNotGiven)
+  TEST_F(RuntimeOptionsTest, HeadlessRendererIsTurnedOffWhenItIsNotGiven)
   {
-    _settings.headless = true;
+    _settings.headless_renderer = true;
 
     ASSERT_TRUE(Apply({}));
 
-    EXPECT_FALSE(_settings.headless);
+    EXPECT_FALSE(_settings.headless_renderer);
+  }
+
+  // --headless
+
+  TEST_F(RuntimeOptionsTest, HeadlessIsRefusedUntilThereIsADedicatedServer)
+  {
+    EXPECT_FALSE(Apply({"--headless"}));
+
+    EXPECT_EQ(
+      _error,
+      "'--headless' is for a dedicated server, which does not exist yet (#144). "
+      "To render without a window, use '--headless-renderer'");
+  }
+
+  TEST_F(RuntimeOptionsTest, HeadlessIsNotTheHeadlessRenderer)
+  {
+    EXPECT_FALSE(Apply({"--headless"}));
+
+    EXPECT_FALSE(_settings.headless_renderer);
   }
 
   // --output-dir
@@ -515,7 +535,7 @@ namespace
     ASSERT_TRUE(
       Apply({
         "--renderer", "vulkan",
-        "--headless",
+        "--headless-renderer",
         "--frames", "60",
         "--output-dir", "shots",
         "--screenshot", "output://frame.png",
@@ -525,7 +545,7 @@ namespace
 
     EXPECT_EQ(_error, "");
     EXPECT_EQ(_settings.selected_api, RenderingApi::Vulkan);
-    EXPECT_TRUE(_settings.headless);
+    EXPECT_TRUE(_settings.headless_renderer);
     EXPECT_EQ(_settings.max_frames, 60u);
     EXPECT_EQ(_settings.output_directory, "shots");
     EXPECT_EQ(_settings.screenshot_path, "output://frame.png");

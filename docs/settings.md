@@ -16,7 +16,7 @@ before. A layer only changes what it writes down.
 | 4 | The command line | Whoever starts the runtime, see [command-line.md](command-line.md) |
 
 The command line is applied twice: once before the file system comes up,
-since `--headless` and `--output-dir` decide how it does, and once after the
+since `--headless-renderer` and `--output-dir` decide how it does, and once after the
 files, so that it wins. Applying it twice gives the same result; the options
 are written so.
 
@@ -81,7 +81,7 @@ by a file a menu wrote.
 | What | Where it is decided | Why not a setting |
 |---|---|---|
 | The name and organization of the project, the scenes, the entry scene | `project.yml`, see [projects.md](projects.md) | They say what the project is. A player may not change them |
-| `--headless`, `--frames`, `--screenshot`, `--output-dir`, `--time-step`, `--input` | The command line only | They are for a run, not for a game |
+| `--headless-renderer`, `--frames`, `--screenshot`, `--output-dir`, `--time-step`, `--input` | The command line only | They are for a run, not for a game |
 | The volume of the sound groups | Nothing yet | They belong in layer 3 once a settings menu writes it, through the audio interfaces of #71 |
 | The present mode, the renderer | Nothing yet | Open in [command-line.md](command-line.md#open-questions) |
 

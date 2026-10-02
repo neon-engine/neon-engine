@@ -14,7 +14,7 @@ namespace neon
     const std::string input_script = "input-script";
 
     // declared by the options of the runtime
-    const std::string headless = "headless";
+    const std::string headless_renderer = "headless-renderer";
 
     const std::string display = "Display";
     const std::string development = "Development";
@@ -62,7 +62,7 @@ namespace neon
       .name = render_scale,
       .value_name = "NUMBER",
       .description = "Pixels that are drawn for each point, for example 2 for what a display of high "
-                     "density shows. Needs --headless, a window takes the density of its display",
+                     "density shows. Needs --headless-renderer, a window takes the density of its display",
       .group = display
     });
 
@@ -77,14 +77,14 @@ namespace neon
       .name = input,
       .value_name = "SCRIPT",
       .description = "Input in place of devices, for example \"1: pointer 640 360; 2: click\". "
-                     "Needs --headless",
+                     "Needs --headless-renderer",
       .group = development
     });
 
     command_line.Add({
       .name = input_script,
       .value_name = "PATH",
-      .description = "The same from a file, for example assets://input/menu.input. Needs --headless",
+      .description = "The same from a file, for example assets://input/menu.input. Needs --headless-renderer",
       .group = development
     });
   }
@@ -106,7 +106,7 @@ namespace neon
       settings.window_mode = WindowMode::Windowed;
     }
 
-    const bool is_headless = command_line.IsSet(headless);
+    const bool is_headless_renderer = command_line.IsSet(headless_renderer);
 
     if (command_line.IsSet(render_scale))
     {
@@ -117,9 +117,9 @@ namespace neon
         return false;
       }
 
-      if (!is_headless)
+      if (!is_headless_renderer)
       {
-        error = "Option '--" + render_scale + "' needs '--" + headless +
+        error = "Option '--" + render_scale + "' needs '--" + headless_renderer +
                 "'. A window takes the density of its display";
         return false;
       }
@@ -146,9 +146,10 @@ namespace neon
 
     for (const auto &name : {input, input_script})
     {
-      if (command_line.IsSet(name) && !is_headless)
+      if (command_line.IsSet(name) && !is_headless_renderer)
       {
-        error = "Option '--" + name + "' needs '--" + headless + "'. A window takes its input from devices";
+        error = "Option '--" + name + "' needs '--" + headless_renderer +
+                "'. A window takes its input from devices";
         return false;
       }
     }

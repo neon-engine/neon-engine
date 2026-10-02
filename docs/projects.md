@@ -63,7 +63,7 @@ folder each inside it. Two organizations never share one.
 
 | Step | What happens | Why in this order |
 |---|---|---|
-| 1 | The command line is read | Options such as `--headless` and `--output-dir` decide how the file system comes up |
+| 1 | The command line is read | Options such as `--headless-renderer` and `--output-dir` decide how the file system comes up |
 | 2 | The file system finds `assets://` and `output://` | `assets://` is next to the executable, `output://` is `--output-dir`. `user://` has no folder yet, and every `user://` path is refused |
 | 3 | `assets://project.yml` is read | It is the only file that can be read before `user://` exists, and it is what places `user://` |
 | 4 | `user://` is placed under the organization and the name | `FileSystem::PlaceUserDirectory`. The SDL2 backend asks the platform for the folder and creates it |

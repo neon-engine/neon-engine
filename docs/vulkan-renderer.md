@@ -12,7 +12,7 @@ has been removed. See [Current state](#current-state).
    earlier OpenGL backend drew. **This is the priority.**
 2. Follow the engine's architecture. The backend sits behind the neon-core
    render interfaces. Nothing outside the backend sees a Vulkan type.
-3. Later: run headless as a feature of its own, with no window, no display,
+3. Later: a headless renderer as a feature of its own, with no window, no display,
    and no input devices, to make rendering testable in CI.
 
 The pieces that headless rendering needs already exist, because they were
@@ -258,14 +258,14 @@ NeonRuntime
 For development, a scene can be rendered without a window:
 
 ```bash
-NeonRuntime --headless --frames 3 --screenshot user://screenshots/frame.png
+NeonRuntime --headless-renderer --frames 3 --screenshot user://screenshots/frame.png
 ```
 
 | Option | Meaning |
 |---|---|
 | `--renderer vulkan` | Renderer to use. Vulkan is the only one so far |
 | `--vulkan-version 1.N` | The highest version of Vulkan to render with. 1.3 unless it is given |
-| `--headless` | No window and no input |
+| `--headless-renderer` | No window and no input devices, the frames are drawn off-screen. `--headless` is something else, a dedicated server (#144) that is not there yet |
 | `--frames N` | Render N frames, then exit |
 | `--screenshot PATH` | Save the last frame to a virtual path before exiting |
 

@@ -3,6 +3,10 @@ function(setup_copy_assets TARGET_NAME SOURCE_ASSETS_DIR OUTPUT_ASSETS_DIR)
             COMMENT "Syncing assets for ${TARGET_NAME}"
     )
 
+    # The copy below only adds and replaces, so this first removes what the
+    # source no longer has, files and the folders they leave empty, and the
+    # destination mirrors the source. Removing only that keeps an incremental
+    # build fast, see RemoveOrphans.cmake (#177).
     add_custom_command(
             TARGET ${TARGET_NAME}_copy_assets
             PRE_BUILD

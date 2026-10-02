@@ -8,7 +8,7 @@ include("${CMAKE_CURRENT_LIST_DIR}/../../cmake/scripts/run-application.cmake")
 
 # run_headless(<argument>...)
 function(run_headless)
-  run(--headless --time-step 0.05 ${ARGN})
+  run(--headless-renderer --time-step 0.05 ${ARGN})
 
   set(EXIT_CODE "${EXIT_CODE}" PARENT_SCOPE)
   set(OUTPUT "${OUTPUT}" PARENT_SCOPE)

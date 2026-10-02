@@ -9,7 +9,10 @@
 namespace neon
 {
   /// An audio system that plays nothing. It needs no sound card and reads no
-  /// files, so the engine can run on a build server or from a script.
+  /// files, so the engine can run on a build server or from a script. It is
+  /// for a run without a window, as --headless-renderer gives, and not for a
+  /// headless runtime, the dedicated server of #144, which has no audio
+  /// system at all, so the name stays.
   ///
   /// It keeps track of what it is told, so that a game behaves as it does
   /// with sound. A sound that does not loop has no length here, and counts

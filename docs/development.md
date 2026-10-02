@@ -221,13 +221,14 @@ Development:
   --screenshot-at N[,N...]  Save these frames instead of the last one, counted from 1. Each file gets its frame in its name, as in frame-0030.png. Needs --screenshot
   --output-dir DIR          Folder of this machine that output:// stands for. Created when missing
   --time-step SECONDS       Advance the game by this much time in every frame, for example 0.016667, so that a run gives the same frames every time
-  --headless                Run without a window
-  --input SCRIPT            Input in place of devices, for example "1: pointer 640 360; 2: click". Needs --headless
-  --input-script PATH       The same from a file, for example assets://input/menu.input. Needs --headless
+  --headless-renderer       Render without a window, for screenshots and checks on a machine with no display
+  --headless                Run as a dedicated server. Not available yet, see --headless-renderer
+  --input SCRIPT            Input in place of devices, for example "1: pointer 640 360; 2: click". Needs --headless-renderer
+  --input-script PATH       The same from a file, for example assets://input/menu.input. Needs --headless-renderer
 
 Display:
   --window-size WxH         Size of the window in points, for example 1280x720. Shows a window of that size in place of one that covers the display
-  --render-scale NUMBER     Pixels that are drawn for each point, for example 2 for what a display of high density shows. Needs --headless, a window takes the density of its display
+  --render-scale NUMBER     Pixels that are drawn for each point, for example 2 for what a display of high density shows. Needs --headless-renderer, a window takes the density of its display
   --ui-scale NUMBER         Makes the user interface larger or smaller, for example 1.5
 ```
 
@@ -238,7 +239,7 @@ Together the development options render a scene without a window and save the
 result, which is how the renderer is checked on a machine with no display:
 
 ```bash
-NeonRuntime --headless --frames 3 --output-dir /some/where --screenshot output://frame.png
+NeonRuntime --headless-renderer --frames 3 --output-dir /some/where --screenshot output://frame.png
 ```
 
 This writes `/some/where/frame.png`.
@@ -247,7 +248,7 @@ This writes `/some/where/frame.png`.
 
 | Option | What it does |
 |---|---|
-| `--headless` | Creates no window and reads no input devices. Frames are rendered at the configured size |
+| `--headless-renderer` | Creates no window and reads no input devices. Frames are rendered off-screen at the configured size, and the sound is mixed and discarded. It is a headless renderer, not a headless runtime: `--headless` is kept for the dedicated server of #144 and refused until it exists, see [command-line.md](command-line.md#headless-renderer-and-headless-runtime) |
 | `--frames N` | Stops after N frames |
 | `--output-dir DIR` | Says which folder `output://` is. `DIR` is a path of the operating system, absolute or relative to the working directory. The folder is created when it is missing |
 | `--screenshot PATH` | Saves the last frame as a PNG image at a virtual path, under the exact name given |
@@ -267,7 +268,7 @@ With `--screenshot-at`, each file carries the number of its frame in front of
 its extension, with at least four digits:
 
 ```bash
-NeonRuntime --headless --output-dir shots --screenshot output://frame.png --screenshot-at 1,30,60
+NeonRuntime --headless-renderer --output-dir shots --screenshot output://frame.png --screenshot-at 1,30,60
 ```
 
 This writes `shots/frame-0001.png`, `shots/frame-0030.png`, and

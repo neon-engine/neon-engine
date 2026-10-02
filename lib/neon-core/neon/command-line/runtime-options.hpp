@@ -16,7 +16,8 @@ namespace neon
   ///   --screenshot-at N[,N...]  Save these frames instead of the last one
   ///   --output-dir DIR          Folder of this machine that output:// stands for
   ///   --time-step SECONDS       Advance the game by this much in every frame
-  ///   --headless                Run without a window
+  ///   --headless-renderer       Render without a window
+  ///   --headless                Run as a dedicated server. Refused until there is one (#144)
   class RuntimeOptions final : public CommandLineOptions
   {
   public:

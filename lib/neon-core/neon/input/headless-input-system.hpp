@@ -10,7 +10,10 @@
 namespace neon
 {
   /// An input system without devices. Nothing is ever pressed or moved,
-  /// unless a script says so: see InputScript.
+  /// unless a script says so: see InputScript. It is what --headless-renderer
+  /// creates, so that a run without a window can still be played. A headless
+  /// runtime, the dedicated server of #144, has no input system at all, so
+  /// the name stays.
   // ReSharper disable once CppInconsistentNaming
   class Headless_InputSystem final : public InputSystem
   {

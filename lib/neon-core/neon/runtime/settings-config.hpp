@@ -112,8 +112,12 @@ struct SettingsConfig
   std::size_t log_max_files = 1;
   std::size_t max_light_sources = 1024;
 
-  /// Run without a window and without input devices.
-  bool headless = false;
+  /// Render without a window: frames are drawn off-screen at width by
+  /// height, input comes from a script, and the sound is mixed and
+  /// discarded. For screenshots and checks on a machine with no display. It
+  /// is not a headless runtime, a dedicated server with no renderer at all,
+  /// which is #144.
+  bool headless_renderer = false;
 
   /// Number of frames to render before the application stops by itself.
   /// 0 keeps it running until its window is closed.

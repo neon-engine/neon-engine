@@ -216,7 +216,7 @@ Nothing outside neon-miniaudio includes a header of miniaudio.
 | `Device` | miniaudio mixes on a thread of its own and hands the result to the sound card |
 | `None` | There is no sound card and no thread. Sounds are read and mixed all the same, as much as each frame lasted |
 
-NeonRuntime uses `None` when it runs with `--headless`. A run without a window
+NeonRuntime uses `None` when it runs with `--headless-renderer`. A run without a window
 therefore finds a sound that is missing or broken, and with a fixed time step
 it mixes the same every time.
 

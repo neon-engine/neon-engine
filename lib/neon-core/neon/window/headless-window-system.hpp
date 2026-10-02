@@ -9,7 +9,9 @@
 namespace neon
 {
   /// A window system without a window. It needs no display, so the engine can
-  /// render on a build server or from a script.
+  /// render on a build server or from a script. It is what --headless-renderer
+  /// creates: the renderer draws off-screen. A headless runtime, the dedicated
+  /// server of #144, has no window system at all, so the name stays.
   ///
   /// Time advances by the same amount every frame. A run therefore produces
   /// the same frames every time, whatever the speed of the machine. The

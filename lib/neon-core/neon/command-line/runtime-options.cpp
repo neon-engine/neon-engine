@@ -17,6 +17,7 @@ namespace neon
     const std::string frames = "frames";
     const std::string screenshot = "screenshot";
     const std::string screenshot_at = "screenshot-at";
+    const std::string headless_renderer = "headless-renderer";
     const std::string headless = "headless";
     const std::string time_step = "time-step";
     const std::string output_dir = "output-dir";
@@ -133,8 +134,17 @@ namespace neon
     });
 
     command_line.Add({
+      .name = headless_renderer,
+      .description = "Render without a window, for screenshots and checks on a machine with no display",
+      .group = development
+    });
+
+    // declared so that it is understood and refused with a pointer to the
+    // right option, instead of being an unknown one. Applying it is for the
+    // dedicated server, #144
+    command_line.Add({
       .name = headless,
-      .description = "Run without a window",
+      .description = "Run as a dedicated server. Not available yet, see --headless-renderer",
       .group = development
     });
   }
@@ -167,7 +177,14 @@ namespace neon
       return false;
     }
 
-    settings.headless = command_line.IsSet(headless);
+    if (command_line.IsSet(headless))
+    {
+      error = "'--" + headless + "' is for a dedicated server, which does not exist yet (#144). "
+              "To render without a window, use '--" + headless_renderer + "'";
+      return false;
+    }
+
+    settings.headless_renderer = command_line.IsSet(headless_renderer);
 
     if (command_line.IsSet(output_dir))
     {

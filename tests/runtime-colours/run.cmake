@@ -5,7 +5,7 @@
 
 include("${CMAKE_CURRENT_LIST_DIR}/../../cmake/scripts/run-application.cmake")
 
-run(--headless --window-size 1920x1080 --render-scale 1 --time-step 0.05 --frames 5
+run(--headless-renderer --window-size 1920x1080 --render-scale 1 --time-step 0.05 --frames 5
         --output-dir shots --screenshot output://frame.png --scene assets://scenes/gamma-test.scene.yml)
 
 # a machine that cannot render at all skips the test
