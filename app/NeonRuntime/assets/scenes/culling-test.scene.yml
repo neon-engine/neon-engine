@@ -55,7 +55,7 @@ entities:
         shader: assets://shaders/color
         material:
           color: [0, 0, 1]
-          double_sided: true
+          double_sided: always
 
   # mirrored and seen from the front, so drawn
   - name: mirrored

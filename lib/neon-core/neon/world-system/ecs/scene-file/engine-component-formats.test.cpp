@@ -21,6 +21,7 @@
 namespace
 {
   using neon::AlphaMode;
+  using neon::DoubleSided;
   using neon::Camera;
   using neon::Geometry;
   using neon::ModelFit;
@@ -385,21 +386,27 @@ namespace
     EXPECT_THAT(_errors, IsEmpty());
   }
 
-  TEST_F(EngineComponentFormatsTest, AMaterialDrawsOneSideUnlessItSaysItIsDoubleSided)
+  TEST_F(EngineComponentFormatsTest, AMaterialTakesTheSidesOfTheModelUnlessItSaysAlwaysOrNever)
   {
     auto map = DataValue::Map();
     map.Set("model", DataValue::Text("m"));
     map.Set("shader", DataValue::Text("s"));
 
     Read("Renderable", map);
-    EXPECT_FALSE(_store.Get<Renderable>(_entity)->render_info.material_info.double_sided);
+    EXPECT_EQ(_store.Get<Renderable>(_entity)->render_info.material_info.double_sided, DoubleSided::Model);
 
     auto material = DataValue::Map();
-    material.Set("double_sided", DataValue::Bool(true));
+    material.Set("double_sided", DataValue::Text("always"));
     map.Set("material", material);
 
     Read("Renderable", map);
-    EXPECT_TRUE(_store.Get<Renderable>(_entity)->render_info.material_info.double_sided);
+    EXPECT_EQ(_store.Get<Renderable>(_entity)->render_info.material_info.double_sided, DoubleSided::Always);
+
+    material.Set("double_sided", DataValue::Text("never"));
+    map.Set("material", material);
+
+    Read("Renderable", map);
+    EXPECT_EQ(_store.Get<Renderable>(_entity)->render_info.material_info.double_sided, DoubleSided::Never);
     EXPECT_THAT(_errors, IsEmpty());
   }
 

@@ -117,10 +117,13 @@ namespace neon
     stages[1].pName = "main";
 
     constexpr VkVertexInputBindingDescription binding{0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX};
-    constexpr std::array<VkVertexInputAttributeDescription, 3> attributes{{
+    // one layout for every model: a model without vertex colours carries
+    // white ones, see docs/models.md
+    constexpr std::array<VkVertexInputAttributeDescription, 4> attributes{{
       {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, position)},
       {1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, normal)},
       {2, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, tex_coords)},
+      {3, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(Vertex, color)},
     }};
 
     VkPipelineVertexInputStateCreateInfo vertex_input{};

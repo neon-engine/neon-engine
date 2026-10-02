@@ -20,6 +20,11 @@ namespace neon
     /// The base colour factor of a glTF material, white when there is none.
     /// A renderer multiplies it into the colour of the material.
     Color color;
+
+    /// Whether the file draws both sides of every triangle, `doubleSided`
+    /// of a glTF material. Off when the file says nothing. A scene whose
+    /// `double_sided` is `model` takes it.
+    bool double_sided = false;
   };
 } // neon
 

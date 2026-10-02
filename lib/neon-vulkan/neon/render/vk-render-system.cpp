@@ -756,11 +756,17 @@ namespace neon
     const VK_Model &model = _models[model_id];
 
     // What the model file says about its look fills in what the scene does
-    // not: its colour factor multiplies the colour of the material, and its
-    // textures are shown when the scene names none. A model with several
+    // not: its colour factor multiplies the colour of the material, its
+    // textures are shown when the scene names none, and its doubleSided
+    // holds unless the scene says always or never. A model with several
     // materials is drawn with its first, see docs/models.md.
     MaterialInfo material_info = render_info.material_info;
     const ModelMaterial *model_material = model.GetDrawnMaterial();
+    if (material_info.double_sided == DoubleSided::Model)
+    {
+      const bool from_file = model_material != nullptr && model_material->double_sided;
+      material_info.double_sided = from_file ? DoubleSided::Always : DoubleSided::Never;
+    }
     if (model_material != nullptr)
     {
       const Color &factor = model_material->color;
@@ -792,7 +798,7 @@ namespace neon
     VkPipeline pipeline = VK_NULL_HANDLE;
     if (!material.Initialize() ||
         !_pipelines.Get(
-          render_info.shader_path, material_info.alpha_mode, material_info.double_sided, false, pipeline) ||
+          render_info.shader_path, material_info.alpha_mode, material.IsDoubleSided(), false, pipeline) ||
         !CreateDescriptorSet(material))
     {
       _logger->Error("Could not initialize material with shader {}", render_info.shader_path);

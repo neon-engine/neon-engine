@@ -23,14 +23,9 @@ namespace neon
 
     bool ProcessNode(aiNode *root, const aiScene *scene);
 
-    /// Reads the materials of a scene into `_materials`, and warns once
-    /// about what the renderer cannot show of them.
+    /// Reads the materials of a scene into `_materials`, and says once
+    /// what of them the renderer does not show.
     void LoadMaterials(const aiScene *scene);
-
-    /// Warns once about what a mesh carries that the renderer cannot show.
-    void NoteWhatIsNotShown(const aiMesh *mesh);
-
-    bool _noted_vertex_colors = false;
 
     // the material of the first mesh, which the model is drawn with
     int _drawn_material = -1;
@@ -52,6 +47,12 @@ namespace neon
       const aiMaterial *material,
       const aiTextureType &type,
       std::vector<TextureInfo> &textures) const;
+
+    /// The vertices of a mesh as the file gives them: position, normal, and
+    /// the first set of texture coordinates, with what the mesh has not
+    /// left at zero, and the first set of vertex colours (`COLOR_0` of
+    /// glTF), white when the mesh has none.
+    static std::vector<Vertex> ReadVertices(const aiMesh *mesh);
 
     /// Moves vertices where a node of the model places its mesh. The normals
     /// turn with it. A transform that mirrors turns the triangles round, so

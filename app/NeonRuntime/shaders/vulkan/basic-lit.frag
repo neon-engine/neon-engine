@@ -7,6 +7,9 @@
 layout (location = 0) in vec3 frag_coord;
 layout (location = 1) in vec3 normal_coord;
 layout (location = 2) in vec2 tex_coord;
+// the colour painted on the vertices, in linear light; white where a
+// model has none
+layout (location = 3) in vec4 vertex_color;
 
 layout (location = 0) out vec4 frag_color;
 
@@ -20,7 +23,7 @@ layout (set = 0, binding = 5) uniform sampler specular_sampler;
 vec3 GetDiffuseColor()
 {
     vec3 texture_color = texture(sampler2D(diffuse_texture, diffuse_sampler), tex_coord).rgb;
-    return mix(object.color.rgb, texture_color, object.material.y);
+    return vertex_color.rgb * mix(object.color.rgb, texture_color, object.material.y);
 }
 
 vec3 GetSpecularColor()

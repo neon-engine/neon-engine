@@ -207,9 +207,9 @@ backend to 16 lights of each kind.
 
 | Shader | Lights | What it draws |
 |---|---|---|
-| `pbr` | Yes | Physically based, with the metallic-roughness model of glTF (#59): Lambert for the scattered light and Cook-Torrance for the reflected, with GGX, Smith-GGX as Schlick approximates it, and Schlick's Fresnel. The material's `color` is the base colour, `metallic` and `roughness` say what the surface is, and the second texture is a glTF metallic-roughness map (green roughness, blue metallic). The shader for every surface of a game |
-| `basic-lit` | Yes | Blinn-Phong with `shininess`, the shader before `pbr`. Kept for the scenes that use it; nothing new should |
-| `unlit` | No | The texture or the colour as it is |
+| `pbr` | Yes | Physically based, with the metallic-roughness model of glTF (#59): Lambert for the scattered light and Cook-Torrance for the reflected, with GGX, Smith-GGX as Schlick approximates it, and Schlick's Fresnel. The material's `color`, the colour of the vertex, and the texture multiplied are the base colour, `metallic` and `roughness` say what the surface is, and the second texture is a glTF metallic-roughness map (green roughness, blue metallic). The shader for every surface of a game |
+| `basic-lit` | Yes | Blinn-Phong with `shininess`, the shader before `pbr`. The colour of the vertex tints the diffuse colour. Kept for the scenes that use it; nothing new should |
+| `unlit` | No | The texture, times the colour of the vertex, as it is |
 | `color` | No | The colour as it is |
 | `flat` | No | For what is drawn in two dimensions |
 
@@ -262,7 +262,7 @@ A library of its own, `neon-vulkan`.
 | `VK_Canvas` | Where the frame, or a render target, is drawn: its stages, its clear colour, its scene image, and the see-through models kept for the end of its scene. The frame and every render target own one |
 | `VK_Pipelines` | The pipelines of materials, one per variant of shader, covering, and culling, and the layout they share |
 | `VK_Capture` | Reads a finished frame back and writes it as a PNG |
-| `VK_Model`, `VK_Mesh` | Vertex and index buffers. `VK_Model` derives from the core `Model`, which does the loading through assimp for every renderer |
+| `VK_Model`, `VK_Mesh` | Vertex and index buffers. `VK_Model` derives from the core `Model`, which does the loading through assimp for every renderer. One vertex layout for every model, `Vertex` of neon-core field for field: position, normal, texture coordinates, and a colour, bound by `VK_Pipelines` |
 | `VK_Texture` | Image and view, and which way it is read |
 | `VK_ModelCache`, `VK_TextureCache` | What the render objects draw, held once each: a model for every path and fit, a texture for every image, counted and freed when the last object that drew it goes. See [what is shared](#what-is-shared) |
 | `VK_Samplers` | The five samplers every texture is read through, one for each way of reading, made once and shared |

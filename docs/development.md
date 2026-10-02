@@ -830,6 +830,7 @@ what it left behind.
 | `tests/` | `text-shaping` | 20 | Text with real fonts through the core: kerning, a ligature, Arabic, a second font for what the first does not have, quarters of a pixel, an atlas that grows |
 | `tests/` | `user-interface`, what was added | 211 | The properties of text, boxes, images, shaders of elements, and surfaces: what is handed to the renderer, where the pointer is on round corners and on what is moved and turned, what is wrong in a file |
 | `tests/` | `runtime-surfaces` | 4 | NeonRuntime without a window with the gallery, shaders at two times, and the scene with surfaces in the world |
+| `tests/` | `runtime-vertex-colours` | 4 | NeonRuntime without a window with a model painted by vertex: the colours unlit and lit, and a material the file marks double-sided seen from behind, with and without the scene's say |
 
 The headers that only declare an interface or a plain structure have no test
 of their own. There is nothing in them that can be wrong by itself.

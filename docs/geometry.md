@@ -87,7 +87,7 @@ and reads it pixel by pixel.
 
 | Piece | Location | Role |
 |---|---|---|
-| `MeshData` | neon-core, `neon/geometry/mesh-data.hpp` | Vertices and triangle indices, nothing else |
+| `MeshData` | neon-core, `neon/geometry/mesh-data.hpp` | Vertices and triangle indices, nothing else. A vertex has a colour, white from the builder, that a tool or an importer sets to paint a mesh by vertex (#192) |
 | `MeshBuilder` | `neon/geometry/mesh-builder.hpp` | `AddBox`, `AddPlane`, `AddRamp`, `AddPrism`, `AddQuad`, `InsideOut`, `Build` |
 | `ComputeFlatNormals`, `ComputeSmoothNormals` | `neon/geometry/mesh-normals.hpp` | Flat splits shared vertices so every edge is hard; smooth averages by area |
 | `ProjectUvs` | `neon/geometry/mesh-uvs.hpp` | The projection above |
@@ -116,5 +116,6 @@ talks to Vulkan or to Jolt.
 - **Changing a Geometry while the game runs.** The mesh is built once, when
   the entity is first drawn; a changed component is not rebuilt yet. A tool
   that edits a level live needs the rebuild and the renderer's object remade.
-- **Vertex colours and a second texture set** for painting a block-out
-  (#192), tangents for normal maps (#106).
+- **Painting a block-out by vertex.** A `Vertex` has a colour and the
+  shaders show it (#192), but a `Geometry` has no way to set one yet; a
+  second texture set and tangents for normal maps (#106) are open too.

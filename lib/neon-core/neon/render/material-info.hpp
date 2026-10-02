@@ -2,6 +2,8 @@
 #define MATERIAL_INFO_HPP
 #include "neon/common/color.hpp"
 
+#include "double-sided.hpp"
+
 namespace neon
 {
   /// How a surface covers what is behind it.
@@ -38,12 +40,10 @@ namespace neon
     /// metallic-roughness texture is laid out; both multiply these numbers.
     float roughness = 0.5f;
 
-    /// Whether both sides of every triangle are drawn. Most surfaces are
-    /// seen from one side only, the outside of a closed model, so the back
-    /// is left out and the graphics card skips it. A leaf, a flag, or a sheet
-    /// of glass that is seen from both sides draws both. As `doubleSided` in
-    /// the materials of glTF.
-    bool double_sided = false;
+    /// Whether both sides of every triangle are drawn: as the model file
+    /// says unless the scene says otherwise, see DoubleSided. A renderer
+    /// settles `Model` against the file before it draws.
+    DoubleSided double_sided = DoubleSided::Model;
   };
 } // neon
 

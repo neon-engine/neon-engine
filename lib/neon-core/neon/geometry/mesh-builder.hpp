@@ -12,7 +12,9 @@ namespace neon
   /// Builds a mesh from shapes, in metres, centred where each shape says.
   /// Every face is wound anticlockwise seen from outside and carries a flat
   /// normal; texture coordinates follow from ProjectUvs(), which the builder
-  /// applies at the end with the texels per metre it was given.
+  /// applies at the end with the texels per metre it was given. Every
+  /// vertex is white: a mesh painted by vertex sets `Vertex::color` on the
+  /// mesh it is handed.
   ///
   ///     const MeshData floor = MeshBuilder(2.0f).AddPlane({10, 10}, 4).Build();
   ///     const MeshData room = MeshBuilder().AddPrism({{-2, -2}, {2, -2}, {2, 2}, {-2, 2}}, 3.0f).Build();

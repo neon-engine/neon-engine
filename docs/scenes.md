@@ -112,7 +112,7 @@ keeps what the prefab says instead.
 | `shader` | Virtual path of the shader, without an extension | None. It has to be written |
 | `textures` | A list of virtual paths | None |
 | `scale_textures` | Whether textures repeat as the entity grows | `false` |
-| `material` | `color` as `[red, green, blue]` or with alpha as a fourth, `metallic` and `roughness` from 0 to 1 (the `pbr` shader), `shininess` (the `basic-lit` shader), `use_textures`, `alpha_mode`, and `double_sided` | white, `0`, `0.5`, `0`, `true`, `opaque`, `false` |
+| `material` | `color` as `[red, green, blue]` or with alpha as a fourth, `metallic` and `roughness` from 0 to 1 (the `pbr` shader), `shininess` (the `basic-lit` shader), `use_textures`, `alpha_mode`, and `double_sided` as `model`, `always`, or `never` | white, `0`, `0.5`, `0`, `true`, `opaque`, `model` |
 
 `color` is written as a screen shows it, in sRGB, like the colours of an
 image. The first texture holds colours, the second how much each part of a
@@ -123,8 +123,9 @@ from the farthest to the nearest.
 
 `model` is an `.obj` or a `.glb`. What the file says about its look fills in
 what the `Renderable` leaves out: the textures of the model are shown when
-`textures` is not written, and the base colour factor of a glTF material is
-multiplied into `color`. A model is drawn at its own size, as the file says:
+`textures` is not written, the base colour factor of a glTF material is
+multiplied into `color`, and a colour painted on the vertices of the model
+is multiplied in as well. A model is drawn at its own size, as the file says:
 a piece of a kit is in metres and stands on its origin. A model that is not
 in metres is drawn with `fit: unit`, scaled so that its longest side is 1,
 and `scale` then gives it a size; the `.obj` models of the demo scenes are
@@ -132,11 +133,13 @@ drawn so. See [models.md](models.md).
 
 The back of every triangle is left out, since most surfaces are seen from
 one side only: the outside of a closed model. The front is the side whose
-corners go round anticlockwise, as models are made. `double_sided: true`
+corners go round anticlockwise, as models are made. `double_sided: always`
 draws the back as well, for a leaf, a flag, or a pane of glass that is seen
-from both sides. As `doubleSided` in the materials of glTF. An entity whose
-`scale` mirrors it, with one or three of its axes below 0, is still drawn
-from the front.
+from both sides, and `never` leaves it out. `model`, the default, takes
+what the model file says, the `doubleSided` of a glTF material, and one
+side when the file says nothing or the entity has a `Geometry`. See
+[models.md](models.md#doublesided). An entity whose `scale` mirrors it,
+with one or three of its axes below 0, is still drawn from the front.
 
 **Geometry**
 

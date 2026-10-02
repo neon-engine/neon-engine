@@ -33,6 +33,7 @@ namespace
     unsigned int vertices = 0;
     unsigned int faces = 0;
     std::vector<glm::vec3> positions;
+    std::vector<glm::vec4> colors;
 
     /// The positions and indices once the node transform is applied, as a
     /// backend keeps them.
@@ -76,11 +77,11 @@ namespace
       loaded.faces = mesh->mNumFaces;
       loaded.transform = transform;
 
-      std::vector<Vertex> vertices;
-      for (unsigned int i = 0; i < mesh->mNumVertices; i++)
+      std::vector<Vertex> vertices = ReadVertices(mesh);
+      for (const auto &vertex : vertices)
       {
-        loaded.positions.emplace_back(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
-        vertices.push_back(Vertex{.position = loaded.positions.back()});
+        loaded.positions.push_back(vertex.position);
+        loaded.colors.push_back(vertex.color);
       }
       for (unsigned int i = 0; i < mesh->mNumFaces; i++)
       {
@@ -600,6 +601,33 @@ namespace
     EXPECT_THAT(model.GetDrawnMaterial()->textures, IsEmpty());
   }
 
+  TEST_F(ModelTest, ReadsWhetherAGlbMaterialIsDoubleSided)
+  {
+    constexpr auto two_sided = R"({"name": "sheet", "doubleSided": true})";
+    _file_system.AddNativeFile(
+      "/assets/models/cube.glb",
+      Glb(TriangleJson(one_node, one_mesh, two_sided, embedded_image), TriangleBuffer()));
+    TestModel model("assets://models/cube.glb", &_file_system, _logger);
+
+    ASSERT_TRUE(model.Initialize()) << _logger->Messages(LogLevel::Error);
+
+    ASSERT_NE(model.GetDrawnMaterial(), nullptr);
+    EXPECT_TRUE(model.GetDrawnMaterial()->double_sided);
+  }
+
+  TEST_F(ModelTest, LeavesAMaterialThatSaysNothingOneSided)
+  {
+    _file_system.AddNativeFile(
+      "/assets/models/cube.glb",
+      Glb(TriangleJson(one_node, one_mesh, textured_material, embedded_image), TriangleBuffer()));
+    TestModel model("assets://models/cube.glb", &_file_system, _logger);
+
+    ASSERT_TRUE(model.Initialize()) << _logger->Messages(LogLevel::Error);
+
+    ASSERT_NE(model.GetDrawnMaterial(), nullptr);
+    EXPECT_FALSE(model.GetDrawnMaterial()->double_sided);
+  }
+
   TEST_F(ModelTest, NamesTheImageFileOfAGlbFromTheFolderOfTheModel)
   {
     _file_system.AddNativeFile(
@@ -652,7 +680,7 @@ namespace
     EXPECT_THAT(model.meshes[0].placed_indices, ElementsAre(0u, 2u, 1u));
   }
 
-  TEST_F(ModelTest, WarnsAboutVertexColoursWhichTheShadersDoNotShow)
+  TEST_F(ModelTest, ReadsTheColourOfEveryVertexWithAnAlphaOfOne)
   {
     constexpr auto coloured_mesh =
       R"({"primitives": [{"attributes": {"POSITION": 0, "COLOR_0": 2}, "indices": 1, "material": 0}]})";
@@ -663,7 +691,24 @@ namespace
 
     ASSERT_TRUE(model.Initialize()) << _logger->Messages(LogLevel::Error);
 
-    EXPECT_TRUE(_logger->Contains(LogLevel::Warn, "vertex colours")) << _logger->Messages(LogLevel::Warn);
+    ASSERT_EQ(model.meshes.size(), 1u);
+    EXPECT_THAT(
+      model.meshes[0].colors,
+      ElementsAre(glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), glm::vec4(0.0f, 0.0f, 1.0f, 1.0f)));
+    EXPECT_EQ(_logger->Count(LogLevel::Warn), 0u) << _logger->Messages(LogLevel::Warn);
+  }
+
+  TEST_F(ModelTest, LeavesTheVerticesOfAMeshWithoutColoursWhite)
+  {
+    _file_system.AddNativeFile(
+      "/assets/models/cube.glb",
+      Glb(TriangleJson(one_node, one_mesh, textured_material, embedded_image), TriangleBuffer()));
+    TestModel model("assets://models/cube.glb", &_file_system, _logger);
+
+    ASSERT_TRUE(model.Initialize()) << _logger->Messages(LogLevel::Error);
+
+    ASSERT_EQ(model.meshes.size(), 1u);
+    EXPECT_THAT(model.meshes[0].colors, ElementsAre(glm::vec4(1.0f), glm::vec4(1.0f), glm::vec4(1.0f)));
   }
 
   TEST_F(ModelTest, SaysWhenAModelUsesSeveralMaterials)

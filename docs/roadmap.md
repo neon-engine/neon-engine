@@ -41,7 +41,8 @@ Principles that hold for both:
 | Resizing the window (#68) | The swapchain, and everything of the size of the frame, is made again when the window changes size |
 | Linear light (#67) | The world is lit and blended in linear light in a floating-point scene image, and a resolve step turns it into the colours of the screen. User interfaces blend in sRGB, as CSS does. See [vulkan-renderer.md](vulkan-renderer.md#colour-spaces) |
 | See-through materials (#67) | `alpha_mode: blend`, drawn after what is opaque, from the farthest to the nearest. The first of the alpha modes of #106 |
-| Back faces left out (#136) | The back of every triangle is left out unless a material is `double_sided`, and what is mirrored is still drawn from the front |
+| Back faces left out (#136, #194) | The back of every triangle is left out unless a material is double-sided, as the model file says or the scene's `double_sided` overrides, and what is mirrored is still drawn from the front |
+| Vertex colours (#192) | A `Vertex` carries a colour, white unless the model paints its vertices, and `pbr`, `basic-lit`, and `unlit` multiply it into the base colour. See [models.md](models.md#the-colours-of-the-vertices) |
 | `VK_RenderSystem` split (#163) | The swapchain, the pipelines of materials, the canvas a frame or a render target is drawn on, and the reading back of a frame are types of their own. The render system wires them. Done ahead of the programmable pipeline (#102) |
 | File system (#22) | Virtual paths with `assets://`, `user://`, and `output://`. See [file-systems.md](file-systems.md) |
 | Load a project (#41) | A project is a folder with a `project.yml` at its root: its name, its organization, its scenes, and the scene it starts with. The runtime runs the project next to it, and the names place `user://`. See [projects.md](projects.md) |

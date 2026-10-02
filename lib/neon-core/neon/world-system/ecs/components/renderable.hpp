@@ -74,10 +74,13 @@ namespace neon
             {"opaque", "blend"})
           .Describe("Whether the alpha of the colour lets what is behind show through");
 
-      material.Field(
+      material.Choice(
             "double_sided",
-            [](Renderable &renderable) -> bool & { return renderable.render_info.material_info.double_sided; })
-          .Describe("Whether the back of every triangle is drawn too. Off leaves it out");
+            [](Renderable &renderable) -> DoubleSided & { return renderable.render_info.material_info.double_sided; },
+            {"model", "always", "never"})
+          .Describe(
+            "Whether the back of every triangle is drawn too: model takes what the model file says, always draws "
+            "it, never leaves it out");
     });
   }
 } // neon

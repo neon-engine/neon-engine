@@ -125,7 +125,10 @@ namespace neon
     [[nodiscard]] AlphaMode GetAlphaMode() const { return _material_info.alpha_mode; }
     [[nodiscard]] const std::vector<VK_Texture> &Textures() const { return _textures; }
 
-    [[nodiscard]] bool IsDoubleSided() const { return _material_info.double_sided; }
+    /// Whether both sides are drawn. The render system settles `Model`
+    /// against the file before the material is made, so `Model` here is
+    /// one side.
+    [[nodiscard]] bool IsDoubleSided() const { return _material_info.double_sided == DoubleSided::Always; }
 
     /// The pipeline that draws an object with this material. A mirrored
     /// object, one whose transform turns it inside out, takes the other one,

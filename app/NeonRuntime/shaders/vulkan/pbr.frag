@@ -15,6 +15,9 @@
 layout (location = 0) in vec3 frag_coord;
 layout (location = 1) in vec3 normal_coord;
 layout (location = 2) in vec2 tex_coord;
+// the colour painted on the vertices, in linear light; white where a
+// model has none
+layout (location = 3) in vec4 vertex_color;
 
 layout (location = 0) out vec4 frag_color;
 
@@ -36,10 +39,12 @@ const float PI = 3.14159265359;
 // all of them: about 4 percent.
 const vec3 DIELECTRIC_F0 = vec3(0.04);
 
+// the material's colour, the vertex colour, and the texture multiplied, as
+// glTF's base colour is made
 vec3 BaseColor()
 {
     vec3 texture_color = texture(sampler2D(base_color_texture, base_color_sampler), tex_coord).rgb;
-    return object.color.rgb * mix(vec3(1.0), texture_color, object.material.y);
+    return object.color.rgb * vertex_color.rgb * mix(vec3(1.0), texture_color, object.material.y);
 }
 
 vec2 MetallicRoughness()

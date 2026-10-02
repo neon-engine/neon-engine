@@ -191,6 +191,12 @@ namespace neon
         loaded.color = Color{color.r, color.g, color.b, color.a};
       }
 
+      // doubleSided of glTF, which the scene may override, see docs/models.md
+      if (int two_sided = 0; material->Get(AI_MATKEY_TWOSIDED, two_sided) == aiReturn_SUCCESS)
+      {
+        loaded.double_sided = two_sided != 0;
+      }
+
       _materials.push_back(loaded);
     }
 
@@ -265,15 +271,6 @@ namespace neon
     }
   }
 
-  void Model::NoteWhatIsNotShown(const aiMesh *mesh)
-  {
-    if (mesh->HasVertexColors(0) && !_noted_vertex_colors)
-    {
-      _noted_vertex_colors = true;
-      _logger->Warn("Model {} has vertex colours, which the shaders do not show", _path);
-    }
-  }
-
   bool Model::ProcessNode(aiNode *root, const aiScene *scene)
   {
     // each node with where it stands, its own transform under its parents'
@@ -295,7 +292,6 @@ namespace neon
       for (unsigned int i = 0; i < node->mNumMeshes; i++) {
         aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
         if (_drawn_material < 0) { _drawn_material = static_cast<int>(mesh->mMaterialIndex); }
-        NoteWhatIsNotShown(mesh);
         if (!ProcessMesh(mesh, scene, placed)) {
           return false;
         }
@@ -308,6 +304,41 @@ namespace neon
     }
 
     return true;
+  }
+
+  std::vector<Vertex> Model::ReadVertices(const aiMesh *mesh)
+  {
+    std::vector<Vertex> vertices;
+    vertices.reserve(mesh->mNumVertices);
+    for (unsigned int i = 0; i < mesh->mNumVertices; i++)
+    {
+      Vertex vertex{};
+      vertex.position = {mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z};
+
+      if (mesh->HasNormals())
+      {
+        vertex.normal = {mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z};
+      }
+
+      if (mesh->HasTextureCoords(0))
+      {
+        vertex.tex_coords = {mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y};
+      }
+
+      // glTF keeps vertex colours in linear light, which is what the
+      // shaders multiply in, and assimp gives them as floats whatever the
+      // file stored. The alpha is not read: assimp leaves it at 0 for a
+      // colour of three components and does not say how many there were,
+      // so it is 1 for every vertex, see docs/models.md
+      if (mesh->HasVertexColors(0))
+      {
+        const aiColor4D &color = mesh->mColors[0][i];
+        vertex.color = {color.r, color.g, color.b, 1.0f};
+      }
+
+      vertices.push_back(vertex);
+    }
+    return vertices;
   }
 
   void Model::ApplyNodeTransform(
