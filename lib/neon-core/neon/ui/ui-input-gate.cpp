@@ -17,6 +17,7 @@ namespace neon
       _state.Reset();
       _state.ClearPointer();
       _state.SetComposition({});
+      _actions.Refresh(_source->GetInputMap(), _source->GetState(), _state);
       return;
     }
 
@@ -27,6 +28,7 @@ namespace neon
     if (consumed.pointer)
     {
       _state.ClearAction(Action::Pointer_Primary);
+      _state.ClearMouseButtons();
       _state.ClearPointer();
     }
 
@@ -40,6 +42,8 @@ namespace neon
         _state.ClearAction(action);
       }
     }
+
+    _actions.Refresh(_source->GetInputMap(), _source->GetState(), _state);
   }
 
   void UiInputGate::ApplyCursor()
@@ -67,6 +71,56 @@ namespace neon
   const InputState &UiInputGate::GetInputState()
   {
     return _state;
+  }
+
+  const InputMap &UiInputGate::GetInputMap()
+  {
+    return _source->GetInputMap();
+  }
+
+  bool UiInputGate::IsActionDown(const std::string &name)
+  {
+    return _actions.IsDown(name);
+  }
+
+  bool UiInputGate::WasActionPressed(const std::string &name)
+  {
+    return _actions.WasPressed(name);
+  }
+
+  glm::vec2 UiInputGate::ActionAxis(const std::string &name)
+  {
+    return _actions.GetAxis(name);
+  }
+
+  float UiInputGate::ActionAmount(const std::string &name)
+  {
+    return _actions.GetAmount(name);
+  }
+
+  glm::vec3 UiInputGate::ActionAxis3(const std::string &name)
+  {
+    return _actions.GetAxis3(name);
+  }
+
+  bool UiInputGate::SetSensorEnabled(const std::string &sensor, const bool enabled)
+  {
+    return _source->SetSensorEnabled(sensor, enabled);
+  }
+
+  bool UiInputGate::IsSensorEnabled(const std::string &sensor)
+  {
+    return _source->IsSensorEnabled(sensor);
+  }
+
+  bool UiInputGate::SetState(const std::string &name)
+  {
+    return _source->SetState(name);
+  }
+
+  const std::string &UiInputGate::GetState()
+  {
+    return _source->GetState();
   }
 
   void UiInputGate::CenterAndHideCursor()

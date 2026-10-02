@@ -185,11 +185,27 @@ add_library(${TARGET} STATIC
         neon/window/headless-window-system.hpp
 
         # input
+        neon/input/input-system.cpp
         neon/input/input-system.hpp
         neon/input/input-context.hpp
         neon/input/input-state.hpp
         neon/input/headless-input-system.cpp
         neon/input/headless-input-system.hpp
+
+        # input maps: the actions a project plays with
+        neon/input/controller-button.hpp
+        neon/input/input-action.hpp
+        neon/input/input-actions.cpp
+        neon/input/input-actions.hpp
+        neon/input/input-map.cpp
+        neon/input/input-map.hpp
+        neon/input/input-map-file.cpp
+        neon/input/input-map-file.hpp
+        neon/input/input-map-state.hpp
+        neon/input/mouse-button.hpp
+        neon/input/stick.hpp
+        neon/input/controller-trigger.hpp
+        neon/input/sensor.hpp
 
         # logging
         neon/logging/logging-system.cpp
@@ -397,6 +413,8 @@ neon_add_unit_test(${TARGET} neon/command-line/display-options.test.cpp)
   neon_add_unit_test(${TARGET} neon/filesystem/file-system.test.cpp)
   neon_add_unit_test(${TARGET} neon/random/entropy-seed.test.cpp)
   neon_add_unit_test(${TARGET} neon/input/headless-input-system.test.cpp)
+  neon_add_unit_test(${TARGET} neon/input/input-actions.test.cpp)
+  neon_add_unit_test(${TARGET} neon/input/input-map.test.cpp)
   neon_add_unit_test(${TARGET} neon/input/input-state.test.cpp)
   neon_add_unit_test(${TARGET} neon/layout/flex-layout-engine.test.cpp)
   neon_add_unit_test(${TARGET} neon/audio/headless-audio-system.test.cpp)

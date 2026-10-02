@@ -30,7 +30,6 @@ namespace
     Action::Ui_Left,
     Action::Ui_Accept,
     Action::Ui_Cancel,
-    Action::Pause,
     Action::Pointer_Primary
   };
 

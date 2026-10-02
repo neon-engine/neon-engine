@@ -41,6 +41,9 @@ world:
   steps_per_second: 60
   most_steps_per_frame: 8
 
+input:
+  gyro: false
+
 rendering:
   vulkan_version: "1.3"
   max_light_sources: 1024
@@ -61,6 +64,7 @@ The settings of the runtime are
 | `ui.settings_menu` | The menu the pause menu's `settings` button opens | None, and the button does nothing |
 | `world.steps_per_second` | Steps the world takes in a second. Above zero | 60 |
 | `world.most_steps_per_frame` | The most steps one frame takes. A whole number above zero | 8 |
+| `input.gyro` | The player's switch for the gyro of a controller, over what the input map says, see [input.md](input.md#sensors) | Left to the map, which has it off unless an action says `enabled: true` |
 | `rendering.vulkan_version` | The version of Vulkan to ask for, in quotes, since `1.10` as a number is `1.1` | `"1.3"` |
 | `rendering.max_light_sources` | How many lights a frame may hold. A whole number above zero | 1024 |
 
@@ -81,6 +85,7 @@ by a file a menu wrote.
 | What | Where it is decided | Why not a setting |
 |---|---|---|
 | The name and organization of the project, the scenes, the entry scene | `project.yml`, see [projects.md](projects.md) | They say what the project is. A player may not change them |
+| The actions of the game and what is bound to them | The input map, see [input.md](input.md) | A project's recipe. What a player rebinds will be a layer of its own, `user://input.yml`. Whether a sensor is on is a setting, `input.gyro` |
 | `--headless-renderer`, `--frames`, `--screenshot`, `--output-dir`, `--time-step`, `--input` | The command line only | They are for a run, not for a game |
 | The volume of the sound groups | Nothing yet | They belong in layer 3 once a settings menu writes it, through the audio interfaces of #71 |
 | The present mode, the renderer | Nothing yet | Open in [command-line.md](command-line.md#open-questions) |

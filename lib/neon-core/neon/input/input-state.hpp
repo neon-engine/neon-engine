@@ -6,11 +6,20 @@
 #include <string>
 #include <vector>
 
+#include "controller-button.hpp"
 #include "key.hpp"
+#include "mouse-button.hpp"
 #include "neon/logging/logger.hpp"
+#include "controller-trigger.hpp"
+#include "sensor.hpp"
 
 namespace neon
 {
+  /// What the devices are fixed to, which the user interface and the pointer
+  /// read. What a game reads is named by its input map instead, see
+  /// InputMap and InputActions, which take the keys, the buttons, and the
+  /// sticks below. L_* and R_* are the fixed map of before an input map
+  /// could say, and are kept while they have readers.
   enum class Action
   {
     L_Up,
@@ -33,10 +42,6 @@ namespace neon
     Ui_Left,
     Ui_Accept,
     Ui_Cancel,
-
-    /// Asks for the game to be paused: escape, or the start button of a
-    /// controller. What it does is up to the application.
-    Pause,
 
     /// The first button of the pointer, for as long as it is held down.
     Pointer_Primary,
@@ -67,6 +72,15 @@ namespace neon
   {
     double x = 0;
     double y = 0;
+  };
+
+  /// What a motion sensor of a controller read, about or along its x, y,
+  /// and z.
+  struct SensorState
+  {
+    double x = 0;
+    double y = 0;
+    double z = 0;
   };
 
   /// Text that is being put together by an input method and is not part of
@@ -112,6 +126,24 @@ namespace neon
 
     // kept from frame to frame, as where the pointer is
     InputDevice _device = InputDevice::KeyboardAndMouse;
+
+    // the devices as they are, for an input map to bind: the keys by where
+    // they are, the buttons, and the left stick
+    std::bitset<kKey_Size> _keys_down{};
+    std::bitset<kMouseButton_Size> _mouse_buttons{};
+    std::bitset<kControllerButton_Size> _controller_buttons{};
+    AxisState _left_stick;
+    double _left_trigger = 0.0;
+    double _right_trigger = 0.0;
+    SensorState _gyro;
+    SensorState _accelerometer;
+
+    // how much time the frame stands for, which what counts per second
+    // needs
+    double _frame_time = 0.0;
+
+    // actions held by name without a device, as a script does
+    std::vector<std::string> _held_actions;
 
   public:
     explicit InputState(const std::shared_ptr<Logger> &logger)
@@ -217,6 +249,7 @@ namespace neon
     {
       _action_map = _other_actions;
       _keyboard_actions.reset();
+      _keys_down.reset();
       _key_events.clear();
       _text.clear();
     }
@@ -293,10 +326,124 @@ namespace neon
       return _device;
     }
 
+    /// A key that is held down, by where it is on the keyboard. What an
+    /// input map binds a key by. It is released with the keyboard.
+    void SetKeyDown(const Key key)
+    {
+      _keys_down.set(static_cast<size_t>(key));
+    }
+
+    [[nodiscard]] bool IsKeyDown(const Key key) const
+    {
+      return _keys_down.test(static_cast<size_t>(key));
+    }
+
+    /// A button of the mouse that is held down. The left one is also
+    /// Action::Pointer_Primary, while there is a pointer.
+    void SetMouseButtonDown(const MouseButton button)
+    {
+      _mouse_buttons.set(static_cast<size_t>(button));
+    }
+
+    [[nodiscard]] bool IsMouseButtonDown(const MouseButton button) const
+    {
+      return _mouse_buttons.test(static_cast<size_t>(button));
+    }
+
+    /// Releases the buttons of the mouse, for what hands the input on after
+    /// a click was used.
+    void ClearMouseButtons()
+    {
+      _mouse_buttons.reset();
+    }
+
+    /// A button of a controller that is held down.
+    void SetControllerButtonDown(const ControllerButton button)
+    {
+      _controller_buttons.set(static_cast<size_t>(button));
+    }
+
+    [[nodiscard]] bool IsControllerButtonDown(const ControllerButton button) const
+    {
+      return _controller_buttons.test(static_cast<size_t>(button));
+    }
+
+    /// Where the left stick of a controller is, from -1 to 1, to the right
+    /// and down, as the right stick is.
+    void SetLeftStick(const double x, const double y)
+    {
+      _left_stick.x = x;
+      _left_stick.y = y;
+    }
+
+    [[nodiscard]] const AxisState &GetLeftStick() const
+    {
+      return _left_stick;
+    }
+
+    /// How far a trigger of a controller is pulled, from 0 to 1.
+    void SetTrigger(const ControllerTrigger trigger, const double value)
+    {
+      (trigger == ControllerTrigger::Left ? _left_trigger : _right_trigger) = value;
+    }
+
+    [[nodiscard]] double GetTrigger(const ControllerTrigger trigger) const
+    {
+      return trigger == ControllerTrigger::Left ? _left_trigger : _right_trigger;
+    }
+
+    /// What a motion sensor of a controller read in this frame. A backend
+    /// writes only a sensor that is on, so one that is off reads zero.
+    void SetSensor(const Sensor sensor, const double x, const double y, const double z)
+    {
+      (sensor == Sensor::Gyro ? _gyro : _accelerometer) = {x, y, z};
+    }
+
+    [[nodiscard]] const SensorState &GetSensor(const Sensor sensor) const
+    {
+      return sensor == Sensor::Gyro ? _gyro : _accelerometer;
+    }
+
+    /// How much time the frame stands for, in seconds, as the window
+    /// measured it or the time step says. For what counts per second, such
+    /// as a stick that turns the view. It stays until it is set again.
+    void SetFrameTime(const double seconds)
+    {
+      _frame_time = seconds;
+    }
+
+    [[nodiscard]] double GetFrameTime() const
+    {
+      return _frame_time;
+    }
+
+    /// Holds an action of the input map down by its name, without a device:
+    /// `hold jump` in a script. It fires when its state is the current one,
+    /// as a bound key would.
+    void HoldAction(const std::string &name)
+    {
+      if (!IsActionHeld(name)) { _held_actions.push_back(name); }
+    }
+
+    [[nodiscard]] bool IsActionHeld(const std::string &name) const
+    {
+      for (const auto &held : _held_actions)
+      {
+        if (held == name) { return true; }
+      }
+      return false;
+    }
+
+    [[nodiscard]] const std::vector<std::string> &GetHeldActions() const
+    {
+      return _held_actions;
+    }
+
     /// Releases every action, and forgets what happened in the frame: the
-    /// keys, the text, and the wheel. Where the pointer is does not change
-    /// by itself, so it is kept, and so are what an input method is putting
-    /// together and the device that was used last.
+    /// keys, the buttons, the text, the sticks, and the wheel. Where the
+    /// pointer is does not change by itself, so it is kept, and so are what
+    /// an input method is putting together and the device that was used
+    /// last.
     void Reset()
     {
       _action_map.reset();
@@ -307,6 +454,15 @@ namespace neon
       _wheel = {};
       _wheel_is_precise = false;
       _right_stick = {};
+      _left_stick = {};
+      _left_trigger = 0.0;
+      _right_trigger = 0.0;
+      _gyro = {};
+      _accelerometer = {};
+      _keys_down.reset();
+      _mouse_buttons.reset();
+      _controller_buttons.reset();
+      _held_actions.clear();
     }
 
     bool operator[](Action action) const

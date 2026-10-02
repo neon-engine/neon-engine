@@ -22,7 +22,6 @@
 
 namespace
 {
-  using neon::Action;
   using neon::Camera;
   using neon::Entity;
   using neon::EntityStore;
@@ -399,7 +398,8 @@ namespace
       seen = store.Get<Transform>(store.FindEntity("spectator"))->position;
     }));
     _world.Initialize();
-    _input.state.SetAction(Action::L_Up);
+    _input.state.SetKeyDown(neon::Key::W);
+    _input.Refresh();
 
     _world.Update();
 

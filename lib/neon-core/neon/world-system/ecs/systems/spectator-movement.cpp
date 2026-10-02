@@ -19,7 +19,10 @@ namespace neon
 
   void SpectatorMovement::Update(EntityStore &store, const double delta_time)
   {
-    const auto &input_state = _input_context->GetInputState();
+    // the actions of the input map, which the project binds: `move` is to
+    // the right and forward, `look` to the right and up
+    const glm::vec2 move = _input_context->ActionAxis("move");
+    const glm::vec2 look = _input_context->ActionAxis("look");
 
     store.Each(_query, [&](const EntityBlock &block)
     {
@@ -31,35 +34,13 @@ namespace neon
         auto &transform = transforms[i];
         const auto &spectator = spectators[i];
 
-        auto move_direction = glm::vec3{0.0f, 0.0f, 0.0f};
+        const glm::vec3 move_direction = (transform.Forward() * move.y + transform.Right() * move.x) *
+                                         spectator.move_speed;
 
-        if (input_state[Action::L_Up])
+        if (look.x != 0.0f || look.y != 0.0f)
         {
-          move_direction += transform.Forward() * spectator.move_speed;
-        }
-
-        if (input_state[Action::L_Down])
-        {
-          move_direction += transform.Forward() * -spectator.move_speed;
-        }
-
-        if (input_state[Action::L_Left])
-        {
-          move_direction += transform.Right() * -spectator.move_speed;
-        }
-
-        if (input_state[Action::L_Right])
-        {
-          move_direction += transform.Right() * spectator.move_speed;
-        }
-
-        if (input_state[Action::Mouse])
-        {
-          const auto x = input_state[Axis::Mouse].x;
-          const auto y = input_state[Axis::Mouse].y;
-
-          transform.rotation.yaw -= static_cast<float>(x) * spectator.look_speed;
-          transform.rotation.pitch -= static_cast<float>(y) * spectator.look_speed;
+          transform.rotation.yaw -= look.x * spectator.look_speed;
+          transform.rotation.pitch += look.y * spectator.look_speed;
           transform.rotation.pitch = std::clamp(transform.rotation.pitch, -89.f, 89.f);
         }
 

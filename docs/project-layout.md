@@ -16,7 +16,7 @@ and a file is found by its name alone.
 
 | Folder | Holds | Kind of file |
 |---|---|---|
-| `project.yml` | What the project is: name, organization, scenes, entry scene | [projects.md](projects.md) |
+| `project.yml` | What the project is: name, organization, scenes, entry scene, input map | [projects.md](projects.md) |
 | `settings.yml` | What the project chooses for itself and a player may change | [settings.md](settings.md) |
 | `CREDITS.md` | Where every third-party file came from, and its licence | See [credits](#credits-and-licences) |
 | `scenes/` | Scene recipes, `*.scene.yml` | [scenes.md](scenes.md) |
@@ -28,7 +28,7 @@ and a file is found by its name alone.
 | `fonts/` | Fonts, `*.ttf`, one folder per family with its licence | |
 | `shaders/` | Compiled shaders, `*.spv`, that materials name without an extension | Made by the build, see below |
 | `scripts/` | Game code, once Lua is there (#57) | Not there yet |
-| `input/` | Input maps and input scripts, `*.input`. Comes with #117 | Not there yet |
+| `input/` | Input maps, `*.input.yml`, and scripts of input for runs without a window | [input.md](input.md) |
 | `external/` | Assets that came from outside the project, kept as published, one folder per source and kit: `external/<source>/<kit>/` | See [external assets](#external-assets) |
 
 A folder that has nothing in it does not exist; there are no placeholder
@@ -69,7 +69,7 @@ The first use is Kenney's kits for the prototype game (#182, #183):
 | Rule | Example | Why |
 |---|---|---|
 | Lowercase letters, digits, and `-` between words | `settings-demo.scene.yml`, `reactor-room.wav` | A name has to be the same file on macOS, Linux, and Windows. Lowercase cannot be miscased; `-` is one separator for everything, as in the engine's code |
-| The kind of file is a second extension before the format | `.scene.yml`, `.prefab.yml`, `.ui.yml`, `.atlas.yml` | The format says how to parse it, the kind says what it is. A tool filters by the kind, and an editor opens the right one. These are the recipes, see [recipes.md](recipes.md) |
+| The kind of file is a second extension before the format | `.scene.yml`, `.prefab.yml`, `.ui.yml`, `.atlas.yml`, `.input.yml` | The format says how to parse it, the kind says what it is. A tool filters by the kind, and an editor opens the right one. These are the recipes, see [recipes.md](recipes.md) |
 | Virtual paths with forward slashes, from a scheme | `assets://scenes/demo.scene.yml` | The [path rules](development.md#path-rules) refuse anything else, on every platform |
 | Images of several densities carry the density | `gem-1x.png`, `gem-2x.png`, `gem-4x.png` | The user interface picks the one for the display, see [density](user-interface.md#points-pixels-and-density) |
 | A third-party file keeps the name it was published under | `Inter-Regular.ttf`, `NotoSansArabic-Regular.ttf`, and everything under `external/` | It ties the file to its source and its licence. Everything else about it, the folder it is in, follows the rules |
@@ -84,7 +84,7 @@ care, does not break on Linux, which does.
 | Written by hand | Made by a tool |
 |---|---|
 | `project.yml`, `settings.yml`, `CREDITS.md` | `shaders/*.spv`, by the build |
-| `*.scene.yml`, `*.prefab.yml`, `*.ui.yml`, `*.css`, `*.atlas.yml` | Models prepared from what assimp reads (#98), by the editor |
+| `*.scene.yml`, `*.prefab.yml`, `*.ui.yml`, `*.css`, `*.atlas.yml`, `*.input.yml` | Models prepared from what assimp reads (#98), by the editor |
 | The sources of images, models, and sounds, as the artist saved them | Packed assets (#81) and baked light maps (#63), by the exporter |
 
 A file a tool makes is not edited by hand and is not committed when the build

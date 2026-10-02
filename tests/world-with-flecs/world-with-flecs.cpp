@@ -31,7 +31,6 @@
 
 namespace
 {
-  using neon::Action;
   using neon::Camera;
   using neon::Entity;
   using neon::EntityBlock;
@@ -193,9 +192,11 @@ namespace
       _world.CleanUp();
     }
 
-    /// Runs one frame and returns what was drawn in it.
+    /// Runs one frame and returns what was drawn in it. The actions of the
+    /// input map are worked out from the keys first, as an input system does.
     std::vector<Drawn> Frame()
     {
+      _input.Refresh();
       _drawn.clear();
       _world.Update();
       return _drawn;
@@ -406,7 +407,7 @@ namespace
     _world.Initialize();
 
     // half a second at 2 units per second
-    _input.state.SetAction(Action::L_Up);
+    _input.state.SetKeyDown(neon::Key::W);
     ExpectPlace(Frame(), "spectator", {0.0f, 0.0f, -1.0f});
     ExpectPlace(Frame(), "spectator", {0.0f, 0.0f, -2.0f});
 
@@ -414,7 +415,7 @@ namespace
     _input.state.SetAxisMotion(neon::Axis::Mouse, -180.0, 0.0);
     ExpectPlace(Frame(), "spectator", {0.0f, 0.0f, -3.0f});
     _input.state.Reset();
-    _input.state.SetAction(Action::L_Up);
+    _input.state.SetKeyDown(neon::Key::W);
     ExpectPlace(Frame(), "spectator", {-1.0f, 0.0f, -3.0f});
 
     _input.state.Reset();

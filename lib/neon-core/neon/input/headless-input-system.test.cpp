@@ -54,6 +54,49 @@ namespace
     _input_system.CleanUp();
   }
 
+  TEST_F(HeadlessInputSystemTest, ReadsASensorOnlyWhileItIsOn)
+  {
+    neon::InputMap map;
+    map.Add({.name = "aim", .type = neon::InputActionType::Axis3, .sensor = neon::Sensor::Gyro});
+    map.Add(neon::InputMapState{.name = "playing", .actions = {"aim"}});
+    _input_system.SetInputMap(map);
+    _input_system.SetSensor(neon::Sensor::Gyro, 6.0, 0.0, 0.0);
+
+    // off until something turns it on, and a sixtieth of a second a frame
+    EXPECT_FALSE(_input_system.IsSensorEnabled("gyro"));
+    _input_system.ProcessInput();
+    EXPECT_EQ(_input_system.ActionAxis3("aim"), glm::vec3(0.0f, 0.0f, 0.0f));
+
+    EXPECT_TRUE(_input_system.SetSensorEnabled("gyro", true));
+    EXPECT_TRUE(_input_system.IsSensorEnabled("gyro"));
+    _input_system.ProcessInput();
+    EXPECT_FLOAT_EQ(_input_system.ActionAxis3("aim").x, 0.1f);
+
+    EXPECT_TRUE(_input_system.SetSensorEnabled("gyro", false));
+    _input_system.ProcessInput();
+    EXPECT_EQ(_input_system.ActionAxis3("aim"), glm::vec3(0.0f, 0.0f, 0.0f));
+  }
+
+  TEST_F(HeadlessInputSystemTest, TurnsASensorOnThatTheMapSaysIsEnabled)
+  {
+    neon::InputMap map;
+    map.Add({.name = "aim", .type = neon::InputActionType::Axis3, .sensor = neon::Sensor::Gyro, .enabled = true});
+    map.Add(neon::InputMapState{.name = "playing", .actions = {"aim"}});
+
+    _input_system.SetInputMap(map);
+
+    EXPECT_TRUE(_input_system.IsSensorEnabled("gyro"));
+    EXPECT_FALSE(_input_system.IsSensorEnabled("accelerometer"));
+    EXPECT_TRUE(_logger->Contains(LogLevel::Info, "The gyro is on"));
+  }
+
+  TEST_F(HeadlessInputSystemTest, RefusesASensorItDoesNotHave)
+  {
+    EXPECT_FALSE(_input_system.SetSensorEnabled("compass", true));
+    EXPECT_FALSE(_input_system.IsSensorEnabled("compass"));
+    EXPECT_TRUE(_logger->Contains(LogLevel::Error, "There is no sensor 'compass'"));
+  }
+
   TEST_F(HeadlessInputSystemTest, HandsOutTheSameStateEveryTime)
   {
     EXPECT_EQ(&_input_system.GetInputState(), &_input_system.GetInputState());

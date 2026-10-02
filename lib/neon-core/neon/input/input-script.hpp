@@ -35,7 +35,8 @@ namespace neon
   /// | `text TEXT` | Types the rest of the line. `\n` is a line feed, `\s` a space |
   /// | `compose TEXT` | What an input method is putting together. Without a text it ends |
   /// | `wheel X Y [precise]` | Turns the wheel, in notches to the right and down |
-  /// | `hold ACTION [FRAMES]` | Holds an action down, such as `ui-accept`, for one frame or more |
+  /// | `hold ACTION [FRAMES]` | Holds an action down for one frame or more: one of the user interface, such as `ui-accept`, or a button of the input map, such as `jump` |
+  /// | `hold-key KEY [FRAMES]` | Holds a key down by where it is, such as `w`, for the input map to read |
   /// | `stick X Y [FRAMES]` | Pushes the right stick, from -1 to 1 |
   /// | `device keyboard` or `device gamepad` | What the player uses from now on, which a user interface shows hints for |
   /// | `look X Y` | Moves the mouse by so much in one frame while the view is turned with it, to the right and down |
@@ -54,6 +55,7 @@ namespace neon
       Compose,
       Wheel,
       Hold,
+      HoldKey,
       Stick,
       Device,
       Look
@@ -68,7 +70,11 @@ namespace neon
       bool precise = false;
       KeyEvent key;
       std::string text;
+
+      /// For a hold: an action of the user interface, or, when `action_name`
+      /// is not empty, an action of the input map by its name.
       Action action = Action::Ui_Accept;
+      std::string action_name;
       std::size_t frames = 1;
       InputDevice device = InputDevice::KeyboardAndMouse;
     };
@@ -76,7 +82,10 @@ namespace neon
   private:
     struct Held
     {
+      Kind kind = Kind::Hold;
       Action action = Action::Ui_Accept;
+      std::string action_name;
+      Key key = Key::Unknown;
       std::size_t until = 0;
     };
 
@@ -95,6 +104,18 @@ namespace neon
     std::size_t _stick_until = 0;
     TextComposition _composition;
     InputDevice _device = InputDevice::KeyboardAndMouse;
+
+    static std::string Trimmed(const std::string &text);
+
+    static std::vector<std::string> Words(const std::string &text);
+
+    /// Read by hand, since the functions of the standard library follow the
+    /// language of the machine or are missing from a compiler.
+    static bool ReadNumber(const std::string &text, double &number);
+
+    static bool ReadCount(const std::string &text, std::size_t &count);
+
+    static std::string Unescaped(const std::string &text);
 
   public:
     /// Reads a script. `name` is what it is called in messages. Returns

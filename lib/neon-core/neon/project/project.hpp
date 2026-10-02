@@ -31,6 +31,10 @@ namespace neon
 
     /// The scene the project starts with. One of `scenes`.
     std::string entry_scene;
+
+    /// The input map the project plays with, as a virtual path, such as
+    /// `assets://input/default.input.yml`. Empty for the engine's default.
+    std::string input;
   };
 } // neon
 

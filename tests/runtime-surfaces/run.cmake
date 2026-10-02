@@ -31,7 +31,7 @@ elseif (CASE STREQUAL "small-text")
 elseif (CASE STREQUAL "pointing-at-a-screen")
   # the player walks up to the terminal, looks at its Unlock button, and
   # presses it
-  set(SCRIPT "1: hold l-up 15\n2: look -290 35\n40: hold pointer-primary 3")
+  set(SCRIPT "1: hold-key w 15\n2: look -290 35\n40: hold pointer-primary 3")
   run_headless(--output-dir shots --screenshot output://frame.png --screenshot-at 2,30,41
           --scene assets://scenes/surface-demo.scene.yml --input "${SCRIPT}")
 else ()

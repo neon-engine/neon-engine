@@ -147,8 +147,8 @@ namespace
     const InputState &state = Frame();
 
     EXPECT_TRUE(state[Action::Ui_Cancel]);
-    EXPECT_TRUE(state[Action::Pause]);
-    EXPECT_FALSE(state.IsHeldByOtherThanKeyboard(Action::Pause));
+    EXPECT_TRUE(state.IsKeyDown(Key::Escape));
+    EXPECT_TRUE(_input->IsActionDown("pause")) << "escape is bound to pause in the default map";
     EXPECT_FALSE(_context.was_told_to_close);
   }
 
@@ -156,10 +156,10 @@ namespace
   {
     PushKey(true, SDL_SCANCODE_LSHIFT, KMOD_LSHIFT);
     PushKey(true, SDL_SCANCODE_ESCAPE, KMOD_LSHIFT);
-    const InputState &state = Frame();
+    Frame();
 
     EXPECT_TRUE(_context.was_told_to_close);
-    EXPECT_FALSE(state[Action::Pause]);
+    EXPECT_FALSE(_input->IsActionDown("pause"));
   }
 
   TEST_F(SDL2InputSystemTest, StartsWithTheKeyboardAndTheMouseAsTheDevice)

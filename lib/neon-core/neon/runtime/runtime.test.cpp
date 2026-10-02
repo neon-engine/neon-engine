@@ -549,6 +549,10 @@ namespace
     NiceMock<FakeInputContext> _game{_logger};
     int _frame = 0;
 
+    // whether pause is down on the devices in this frame and the one before
+    bool _raw_pause = false;
+    bool _raw_pause_before = false;
+
     /// What each frame presses: the pause key as the devices see it, and
     /// whether the user interface let it through.
     std::function<void(int frame)> _press;
@@ -572,9 +576,18 @@ namespace
         _frame++;
         _raw.Reset();
         _game.state.Reset();
+        _raw_pause_before = _raw_pause;
+        _raw_pause = false;
         if (_press) { _press(_frame); }
+        _game.Refresh();
       });
       EXPECT_CALL(_input_system, GetInputState()).WillRepeatedly(ReturnRef(_raw));
+
+      // pressed, not held: as the action layer of an input system tells it
+      EXPECT_CALL(_input_system, WasActionPressed("pause")).WillRepeatedly([this]
+      {
+        return _raw_pause && !_raw_pause_before;
+      });
       EXPECT_CALL(_ui_system, GetGameInput()).WillRepeatedly(Return(&_game));
       EXPECT_CALL(_ui_system, Update()).Times(AnyNumber());
       EXPECT_CALL(_ui_system, Draw()).Times(AnyNumber());
@@ -586,10 +599,11 @@ namespace
       return runtime;
     }
 
+    /// Pause is pressed, and the user interface leaves it to the game.
     void PressPause()
     {
-      _raw.SetAction(Action::Pause);
-      _game.state.SetAction(Action::Pause);
+      _raw_pause = true;
+      _game.state.HoldAction("pause");
     }
   };
 
@@ -715,7 +729,7 @@ namespace
       // pressed, and the menu closes itself on the second press, which it
       // takes: the game does not see it. Held on, let go, pressed again
       if (frame == 1) { PressPause(); }
-      if (frame == 2 || frame == 3) { _raw.SetAction(Action::Pause); }
+      if (frame == 2 || frame == 3) { _raw_pause = true; }
       if (frame == 5) { PressPause(); }
     };
 
@@ -731,7 +745,7 @@ namespace
   TEST_F(PauseMenuTest, LeavesAPressAloneThatTheUserInterfaceUsed)
   {
     const auto runtime = CreateWithMenu(2);
-    _press = [this](const int frame) { if (frame == 1) { _raw.SetAction(Action::Pause); } };
+    _press = [this](const int frame) { if (frame == 1) { _raw_pause = true; } };
 
     EXPECT_CALL(_ui_system, Load(_)).Times(0);
     EXPECT_CALL(_world_system, SetPaused(false)).Times(2);

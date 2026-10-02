@@ -3,6 +3,7 @@
 
 #include <memory>
 
+#include <neon/input/input-actions.hpp>
 #include <neon/input/input-context.hpp>
 #include <neon/logging/logger.hpp>
 
@@ -36,6 +37,10 @@ namespace neon
   /// through it, and finds what the user interface has used of a frame
   /// released: a click on a button does not fire a weapon as well.
   ///
+  /// The actions of the input map are worked out again from what is left,
+  /// so that a key the user interface took does not fire an action either.
+  /// The map and the state the game is in are the source's.
+  ///
   /// It also decides whether the cursor is seen. A game that turns the
   /// view with the mouse hides it. While a user interface needs the
   /// pointer, it is shown whatever the game asked for, and hidden again
@@ -44,6 +49,7 @@ namespace neon
   {
     InputContext *_source;
     InputState _state;
+    InputActions _actions;
 
     bool _game_hides_cursor = false;
     bool _needs_pointer = false;
@@ -61,6 +67,26 @@ namespace neon
     void SetNeedsPointer(bool needs_pointer);
 
     const InputState &GetInputState() override;
+
+    const InputMap &GetInputMap() override;
+
+    bool IsActionDown(const std::string &name) override;
+
+    bool WasActionPressed(const std::string &name) override;
+
+    glm::vec2 ActionAxis(const std::string &name) override;
+
+    float ActionAmount(const std::string &name) override;
+
+    glm::vec3 ActionAxis3(const std::string &name) override;
+
+    bool SetSensorEnabled(const std::string &sensor, bool enabled) override;
+
+    bool IsSensorEnabled(const std::string &sensor) override;
+
+    bool SetState(const std::string &name) override;
+
+    const std::string &GetState() override;
 
     void CenterAndHideCursor() override;
 

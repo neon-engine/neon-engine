@@ -2,6 +2,7 @@
 #define WINDOW_INFO_HPP
 
 #include <cstddef>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -135,6 +136,11 @@ struct SettingsConfig
   /// 0 advances by the time that was measured. Without a window there is
   /// nothing to measure against, and 0 stands for a sixtieth of a second.
   double time_step = 0.0;
+
+  /// Whether the gyro of a controller is on, the player's switch over what
+  /// the input map says. Not set leaves it to the map, which has it off
+  /// unless an action says `enabled: true`. See docs/input.md.
+  std::optional<bool> gyro_enabled;
 
   /// Steps the world takes in a second. What a game is decided by, the
   /// physics first of all, advances in steps of this length, whatever the

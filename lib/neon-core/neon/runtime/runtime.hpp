@@ -30,10 +30,8 @@ namespace neon
     EntropyContext *_entropy = nullptr;
     std::shared_ptr<Logger> _logger;
 
-    // the pause menu while it is shown, and whether pause was held in the
-    // frame before, to tell when it is pressed
+    // the pause menu while it is shown
     int _pause_document = -1;
-    bool _pause_was_down = false;
 
     // the settings menu while the pause menu has it shown in its place
     int _settings_document = -1;

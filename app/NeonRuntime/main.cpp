@@ -11,6 +11,7 @@
 #include <neon/data/ryml-document-format.hpp>
 #include <neon/filesystem/sdl2-file-system.hpp>
 #include <neon/input/headless-input-system.hpp>
+#include <neon/input/input-map-file.hpp>
 #include <neon/input/input-script.hpp>
 #include <neon/input/sdl2-clipboard.hpp>
 #include <neon/input/sdl2-input-system.hpp>
@@ -204,9 +205,44 @@ int main(const int argc, char *argv[])
     input_system = &headless_input_system.emplace(
       settings_config,
       logging_system.CreateLogger("Headless_InputSystem"));
+  } else
+  {
+    window_system = &sdl2_window_system.emplace(
+      settings_config,
+      logging_system.CreateLogger("SDL2_WindowSystem"));
+    input_system = &sdl2_input_system.emplace(
+      settings_config,
+      window_system,
+      logging_system.CreateLogger("SDL2_InputSystem"));
+  }
 
+  // The input map of the project: the actions the game reads, and what is
+  // bound to each. Without one the engine's default applies. A mistake in
+  // it stops the runtime, since the game could not be played as meant.
+  if (!project.input.empty())
+  {
+    const neon::InputMapFile input_map_file(&file_system, &yaml, logging_system.CreateLogger("InputMapFile"));
+    neon::InputMap input_map;
+    if (std::vector<std::string> errors; !input_map_file.Read(project.input, input_map, errors))
+    {
+      for (const auto &error : errors) { std::cerr << error << "\n"; }
+      file_system.CleanUp();
+      return EXIT_FAILURE;
+    }
+    input_system->SetInputMap(input_map);
+  }
+
+  // the player's switch for the gyro, over what the map says. A settings
+  // menu will turn it later through the same call
+  if (settings_config.gyro_enabled.has_value())
+  {
+    input_system->SetSensorEnabled("gyro", *settings_config.gyro_enabled);
+  }
+
+  if (settings_config.headless_renderer)
+  {
     // input that is written down, in place of the devices a run without a
-    // window does not have
+    // window does not have. It names actions of the map, so it comes after
     std::string script_text = settings_config.input_script;
     std::string script_name = "--input";
 
@@ -224,23 +260,15 @@ int main(const int argc, char *argv[])
     if (!script_text.empty())
     {
       neon::InputScript script;
-      if (std::vector<std::string> errors; !neon::InputScript::Parse(script_text, script_name, script, errors))
+      std::vector<std::string> errors;
+      if (!neon::InputScript::Parse(script_text, script_name, script, errors) ||
+          !headless_input_system->SetScript(script, errors))
       {
         for (const auto &error : errors) { std::cerr << error << "\n"; }
         file_system.CleanUp();
         return EXIT_FAILURE;
       }
-      headless_input_system->SetScript(script);
     }
-  } else
-  {
-    window_system = &sdl2_window_system.emplace(
-      settings_config,
-      logging_system.CreateLogger("SDL2_WindowSystem"));
-    input_system = &sdl2_input_system.emplace(
-      settings_config,
-      window_system,
-      logging_system.CreateLogger("SDL2_InputSystem"));
   }
 
   switch (settings_config.selected_api)

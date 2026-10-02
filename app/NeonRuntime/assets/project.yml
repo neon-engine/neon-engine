@@ -3,7 +3,8 @@
 # `name` and `organization` place user://, the folder the project writes to,
 # so they are plain names that work as folder names on every platform. The
 # scenes are listed so that the editor and the exporter know what belongs to
-# the project. What the file holds is described in docs/projects.md.
+# the project. `input` names the input map the game is played with, see
+# docs/input.md. What the file holds is described in docs/projects.md.
 
 version: 1
 name: neon-runtime
@@ -21,3 +22,5 @@ scenes:
   - assets://scenes/prototype.scene.yml
 
 entry_scene: assets://scenes/demo.scene.yml
+
+input: assets://input/default.input.yml

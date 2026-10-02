@@ -27,6 +27,7 @@ scenes:
   - assets://scenes/physics.scene.yml
 
 entry_scene: assets://scenes/demo.scene.yml
+input: assets://input/default.input.yml
 ```
 
 The project of the runtime is
@@ -39,6 +40,7 @@ The project of the runtime is
 | `organization` | Who makes it, in the same plain form | `neon-engine`: a project without one is one of the engine's own |
 | `scenes` | The scenes of the project, as virtual paths. At least one | An error |
 | `entry_scene` | The scene the project starts with. One of `scenes` | The first of `scenes` |
+| `input` | The input map the game is played with, as a virtual path, see [input.md](input.md) | The engine's default map |
 
 A name that is not known is an error, as in every recipe, so that a name
 that was misspelled does not go unnoticed. Every problem is reported with its
@@ -69,7 +71,8 @@ folder each inside it. Two organizations never share one.
 | 4 | `user://` is placed under the organization and the name | `FileSystem::PlaceUserDirectory`. The SDL2 backend asks the platform for the folder and creates it |
 | 5 | The log file is opened under `user://` | What was logged before is written into it first, see [file-systems.md](file-systems.md#the-log-file) |
 | 6 | `assets://settings.yml`, then `user://settings.yml`, then the command line again | The layers of settings, see [settings.md](settings.md). The command line wins |
-| 7 | The rest of the systems start, and the entry scene is loaded | `--scene` names another scene for development. A shipped runtime runs what its project says (#143) |
+| 7 | The input map the project names is read, `InputMapFile` | The input system has it before a script of input is checked against it, see [input.md](input.md) |
+| 8 | The rest of the systems start, and the entry scene is loaded | `--scene` names another scene for development. A shipped runtime runs what its project says (#143) |
 
 The problems of the project go to the console, since the log file has no
 place yet when the project is read.
@@ -99,8 +102,8 @@ How the folder is organised is in [project-layout.md](project-layout.md).
   it, with the assets. `ProjectFile` then belongs to the editor, which wraps
   or grows out of NeonRuntime with its own command-line options; nothing is
   split in the build for that.
-- **More in the file**: a version of the project, the input maps (#117), the
-  scene manager's names for scenes (#118), and the icon of the window are
-  likely to come here. Each is added when its feature does.
+- **More in the file**: a version of the project, the scene manager's names
+  for scenes (#118), and the icon of the window are likely to come here. Each
+  is added when its feature does, as `input` was with the input maps.
 - **A shipped runtime** (#143) runs only its project. `--scene` and the other
   options that load content are then for the editor.

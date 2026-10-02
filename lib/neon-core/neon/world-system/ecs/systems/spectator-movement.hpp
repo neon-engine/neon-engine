@@ -6,7 +6,8 @@
 
 namespace neon
 {
-  /// Moves and turns every entity that carries a Spectator by the input.
+  /// Moves and turns every entity that carries a Spectator by the input: the
+  /// action `move` of the input map moves it, `look` turns it.
   class SpectatorMovement final : public EntitySystem
   {
     InputContext *_input_context;

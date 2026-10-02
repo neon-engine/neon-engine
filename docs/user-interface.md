@@ -1397,8 +1397,10 @@ ui.SetFlag("paused", true);
 | `Ui_Up`, `Ui_Right`, `Ui_Down`, `Ui_Left` | Arrow keys | Pad, left stick |
 | `Ui_Accept` | Return, space | The lower button |
 | `Ui_Cancel` | Backspace, escape | The right button |
-| `Pause` | Escape | Start. See [the pause menu](#the-pause-menu) |
 | `Pointer_Primary` | | The first button of the mouse |
+
+These are the engine's, the same for every project. What the game reads is
+named by its input map instead, `pause` among them, see [input.md](input.md).
 
 Something has the focus when an element writes `autofocus: true`, when a
 file is modal, when the pointer presses an element that takes the focus,
@@ -1409,8 +1411,9 @@ told when it changes.
 ### The pause menu
 
 `NeonRuntime` names a file in its settings, `assets://ui/pause.ui.yml`, and
-the runtime shows it when `Pause` is pressed and the user interface did not
-use the press. The file is modal with `cancel: close`, so escape or the
+the runtime shows it when the action `pause` of the input map is pressed —
+escape, or start on a controller, in the default map — and the user
+interface did not use the press. The file is modal with `cancel: close`, so escape or the
 right button of a controller take it away again, and so does its button
 `resume`; its button `quit` closes the window. While it is shown the world
 stands still: no system of the game runs, no time passes for the physics,
@@ -1449,8 +1452,11 @@ without what it has used. `main.cpp` gives the world
 | The wheel and the right stick | Something under the pointer, or what has the focus, scrolled by them | The wheel, the right stick |
 | Everything | A file is modal | Any action, the pointer, the motion of the mouse |
 
-Moving with W, A, S, and D is never used by a user interface that is not
-modal.
+The actions of the input map are worked out again from what is left, so a
+key or a button the user interface used fires no action either: a click on
+a button does not `shoot`, a text typed does not `move`, see
+[input.md](input.md#how-a-game-reads-it). Moving with W, A, S, and D is
+never used by a user interface that is not modal.
 
 **The cursor.** A game that turns the view with the mouse hides the cursor.
 While a modal file is shown the cursor is shown whatever the game asked for,

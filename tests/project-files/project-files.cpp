@@ -99,6 +99,29 @@ namespace
     EXPECT_THAT(_errors, IsEmpty());
   }
 
+  TEST_F(ProjectFilesTest, PlaysWithTheEnginesInputMapWhenNoneIsNamed)
+  {
+    Write(complete);
+
+    ASSERT_TRUE(Read()) << ::testing::PrintToString(_errors);
+    EXPECT_EQ(_project.input, "");
+  }
+
+  TEST_F(ProjectFilesTest, ReadsTheInputMapTheProjectPlaysWith)
+  {
+    Write(complete + "input: assets://input/game.input.yml\n");
+
+    ASSERT_TRUE(Read()) << ::testing::PrintToString(_errors);
+    EXPECT_EQ(_project.input, "assets://input/game.input.yml");
+  }
+
+  TEST_F(ProjectFilesTest, RefusesAnEmptyInputMap)
+  {
+    Write(complete + "input: \"\"\n");
+
+    ExpectRefused("assets://project.yml:10: 'input' is empty. It is the path of the input map, or left out");
+  }
+
   TEST_F(ProjectFilesTest, StartsWithTheFirstSceneWhenNoneIsNamed)
   {
     Write(

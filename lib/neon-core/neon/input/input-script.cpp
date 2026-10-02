@@ -23,125 +23,122 @@ namespace neon
       {Action::Ui_Left, "ui-left"},
       {Action::Ui_Accept, "ui-accept"},
       {Action::Ui_Cancel, "ui-cancel"},
-      {Action::Pause, "pause"},
       {Action::Pointer_Primary, "pointer-primary"}
     };
+  }
 
-    std::string Trimmed(const std::string &text)
+  std::string InputScript::Trimmed(const std::string &text)
+  {
+    std::size_t first = 0;
+    std::size_t last = text.size();
+
+    while (first < last && (text[first] == ' ' || text[first] == '\t' || text[first] == '\r')) { first++; }
+    while (last > first && (text[last - 1] == ' ' || text[last - 1] == '\t' || text[last - 1] == '\r')) { last--; }
+
+    return text.substr(first, last - first);
+  }
+
+  std::vector<std::string> InputScript::Words(const std::string &text)
+  {
+    std::vector<std::string> words;
+    std::string word;
+
+    for (const char letter : text)
     {
-      std::size_t first = 0;
-      std::size_t last = text.size();
-
-      while (first < last && (text[first] == ' ' || text[first] == '\t' || text[first] == '\r')) { first++; }
-      while (last > first && (text[last - 1] == ' ' || text[last - 1] == '\t' || text[last - 1] == '\r')) { last--; }
-
-      return text.substr(first, last - first);
+      if (letter == ' ' || letter == '\t')
+      {
+        if (!word.empty()) { words.push_back(word); }
+        word.clear();
+      } else
+      {
+        word += letter;
+      }
     }
 
-    std::vector<std::string> Words(const std::string &text)
-    {
-      std::vector<std::string> words;
-      std::string word;
+    if (!word.empty()) { words.push_back(word); }
+    return words;
+  }
 
-      for (const char letter : text)
+  bool InputScript::ReadNumber(const std::string &text, double &number)
+  {
+    if (text.empty()) { return false; }
+
+    std::size_t position = 0;
+    bool negative = false;
+    if (text[0] == '-' || text[0] == '+')
+    {
+      negative = text[0] == '-';
+      position = 1;
+    }
+
+    double value = 0.0;
+    double scale = 1.0;
+    bool has_digit = false;
+    bool after_point = false;
+
+    for (; position < text.size(); position++)
+    {
+      const char letter = text[position];
+      if (letter == '.' && !after_point)
       {
-        if (letter == ' ' || letter == '\t')
+        after_point = true;
+      } else if (letter >= '0' && letter <= '9')
+      {
+        has_digit = true;
+        if (after_point)
         {
-          if (!word.empty()) { words.push_back(word); }
-          word.clear();
+          scale /= 10.0;
+          value += (letter - '0') * scale;
         } else
         {
-          word += letter;
+          value = value * 10.0 + (letter - '0');
         }
+      } else
+      {
+        return false;
       }
-
-      if (!word.empty()) { words.push_back(word); }
-      return words;
     }
 
-    // Read by hand, since the functions of the standard library follow the
-    // language of the machine or are missing from a compiler.
-    bool ReadNumber(const std::string &text, double &number)
+    if (!has_digit) { return false; }
+
+    number = negative ? -value : value;
+    return true;
+  }
+
+  bool InputScript::ReadCount(const std::string &text, std::size_t &count)
+  {
+    const char *last = text.data() + text.size();
+    const auto [stopped_at, error] = std::from_chars(text.data(), last, count);
+    return !text.empty() && error == std::errc{} && stopped_at == last;
+  }
+
+  std::string InputScript::Unescaped(const std::string &text)
+  {
+    std::string result;
+
+    for (std::size_t i = 0; i < text.size(); i++)
     {
-      if (text.empty()) { return false; }
-
-      std::size_t position = 0;
-      bool negative = false;
-      if (text[0] == '-' || text[0] == '+')
+      if (text[i] == '\\' && i + 1 < text.size())
       {
-        negative = text[0] == '-';
-        position = 1;
-      }
-
-      double value = 0.0;
-      double scale = 1.0;
-      bool has_digit = false;
-      bool after_point = false;
-
-      for (; position < text.size(); position++)
-      {
-        const char letter = text[position];
-        if (letter == '.' && !after_point)
+        i++;
+        switch (text[i])
         {
-          after_point = true;
-        } else if (letter >= '0' && letter <= '9')
-        {
-          has_digit = true;
-          if (after_point)
-          {
-            scale /= 10.0;
-            value += (letter - '0') * scale;
-          } else
-          {
-            value = value * 10.0 + (letter - '0');
-          }
-        } else
-        {
-          return false;
+          case 'n': result += '\n';
+            break;
+          case 't': result += '\t';
+            break;
+          case 's': result += ' ';
+            break;
+          default: result += text[i];
+            break;
         }
-      }
-
-      if (!has_digit) { return false; }
-
-      number = negative ? -value : value;
-      return true;
-    }
-
-    bool ReadCount(const std::string &text, std::size_t &count)
-    {
-      const char *last = text.data() + text.size();
-      const auto [stopped_at, error] = std::from_chars(text.data(), last, count);
-      return !text.empty() && error == std::errc{} && stopped_at == last;
-    }
-
-    std::string Unescaped(const std::string &text)
-    {
-      std::string result;
-
-      for (std::size_t i = 0; i < text.size(); i++)
+      } else
       {
-        if (text[i] == '\\' && i + 1 < text.size())
-        {
-          i++;
-          switch (text[i])
-          {
-            case 'n': result += '\n';
-              break;
-            case 't': result += '\t';
-              break;
-            case 's': result += ' ';
-              break;
-            default: result += text[i];
-              break;
-          }
-        } else
-        {
-          result += text[i];
-        }
+        result += text[i];
       }
-
-      return result;
     }
+
+    return result;
   }
 
   std::string NameOf(const Action action)
@@ -300,6 +297,8 @@ namespace neon
       {
         step.kind = Kind::Hold;
 
+        // one of the user interface, or else a button of the input map,
+        // which is checked against the map when the script is set
         bool known = false;
         for (const auto &[action, action_name] : action_names)
         {
@@ -309,15 +308,30 @@ namespace neon
             known = true;
           }
         }
+        if (!known && !words.empty()) { step.action_name = words[0]; }
 
-        if (!known || words.size() > 2 || (words.size() == 2 && (!ReadCount(words[1], step.frames) || step.frames == 0)))
+        if (words.empty() || words.size() > 2 || (words.size() == 2 && (!ReadCount(words[1], step.frames) || step.frames == 0)))
         {
           report(std::format(
-            "'hold' is followed by '{}', where an action such as ui-accept was expected, and a number of "
+            "'hold' is followed by '{}', where an action such as ui-accept or jump was expected, and a number of "
             "frames after it or nothing",
             rest));
           continue;
         }
+      } else if (command == "hold-key")
+      {
+        step.kind = Kind::HoldKey;
+
+        if (words.empty() || KeyOf(words[0]) == Key::Unknown || words.size() > 2 ||
+            (words.size() == 2 && (!ReadCount(words[1], step.frames) || step.frames == 0)))
+        {
+          report(std::format(
+            "'hold-key' is followed by '{}', where the name of a key was expected, such as w or space, and a "
+            "number of frames after it or nothing",
+            rest));
+          continue;
+        }
+        step.key.key = KeyOf(words[0]);
       } else if (command == "stick")
       {
         step.kind = Kind::Stick;
@@ -354,8 +368,8 @@ namespace neon
       } else
       {
         report(std::format(
-          "'{}' is not known. Known are: pointer, down, up, click, key, text, compose, wheel, hold, stick, device, "
-          "look",
+          "'{}' is not known. Known are: pointer, down, up, click, key, text, compose, wheel, hold, hold-key, stick, "
+          "device, look",
           command));
         continue;
       }
@@ -391,7 +405,10 @@ namespace neon
     {
       std::size_t end = step.frame;
       if (step.kind == Kind::Click) { end = step.frame + 1; }
-      if (step.kind == Kind::Hold || step.kind == Kind::Stick) { end = step.frame + step.frames - 1; }
+      if (step.kind == Kind::Hold || step.kind == Kind::HoldKey || step.kind == Kind::Stick)
+      {
+        end = step.frame + step.frames - 1;
+      }
       last = std::max(last, end);
     }
     return last;
@@ -453,7 +470,10 @@ namespace neon
           if (is_now) { state.AddWheel(step.x, step.y, step.precise); }
           break;
         case Kind::Hold:
-          _held.push_back({step.action, step.frame + step.frames - 1});
+          _held.push_back({Kind::Hold, step.action, step.action_name, Key::Unknown, step.frame + step.frames - 1});
+          break;
+        case Kind::HoldKey:
+          _held.push_back({Kind::HoldKey, Action::Ui_Accept, "", step.key.key, step.frame + step.frames - 1});
           break;
         case Kind::Stick:
           _stick_x = step.x;
@@ -497,8 +517,17 @@ namespace neon
       state.ClearPointer();
     }
 
+    // the button of the pointer is the left button of the mouse, which an
+    // input map binds whether or not there is a pointer
     if (_is_down && _has_pointer) { state.SetAction(Action::Pointer_Primary); }
-    for (const auto &held : _held) { state.SetAction(held.action); }
+    if (_is_down) { state.SetMouseButtonDown(MouseButton::Left); }
+
+    for (const auto &held : _held)
+    {
+      if (held.kind == Kind::HoldKey) { state.SetKeyDown(held.key); }
+      else if (!held.action_name.empty()) { state.HoldAction(held.action_name); }
+      else { state.SetAction(held.action); }
+    }
 
     state.SetRightStick(_stick_x, _stick_y);
     state.SetComposition(_composition);

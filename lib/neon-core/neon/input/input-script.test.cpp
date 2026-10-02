@@ -185,6 +185,51 @@ namespace
     EXPECT_EQ(_script.GetLastFrame(), 7u);
   }
 
+  TEST_F(InputScriptTest, HoldsAnActionOfTheInputMapByItsName)
+  {
+    Read("2: hold jump 2\n3: hold pause");
+
+    EXPECT_FALSE(Frame(1).IsActionHeld("jump"));
+    EXPECT_TRUE(Frame(2).IsActionHeld("jump"));
+    EXPECT_TRUE(Frame(3).IsActionHeld("jump"));
+    EXPECT_TRUE(Frame(3).IsActionHeld("pause"));
+    EXPECT_FALSE(Frame(4).IsActionHeld("jump"));
+    EXPECT_FALSE(Frame(4).IsActionHeld("pause"));
+  }
+
+  TEST_F(InputScriptTest, HoldsAKeyByWhereItIs)
+  {
+    Read("2: hold-key w 3\n2: hold-key space");
+
+    EXPECT_FALSE(Frame(1).IsKeyDown(neon::Key::W));
+    EXPECT_TRUE(Frame(2).IsKeyDown(neon::Key::W));
+    EXPECT_TRUE(Frame(2).IsKeyDown(neon::Key::Space));
+    EXPECT_TRUE(Frame(4).IsKeyDown(neon::Key::W));
+    EXPECT_FALSE(Frame(4).IsKeyDown(neon::Key::Space));
+    EXPECT_FALSE(Frame(5).IsKeyDown(neon::Key::W));
+    EXPECT_EQ(_script.GetLastFrame(), 4u);
+  }
+
+  TEST_F(InputScriptTest, RefusesAKeyThatIsNotKnownToHold)
+  {
+    EXPECT_THAT(
+      ProblemsOf("1: hold-key f13\n2: hold-key w soon"),
+      ElementsAre(
+        "script:1: 'hold-key' is followed by 'f13', where the name of a key was expected, such as w or space, and a "
+        "number of frames after it or nothing",
+        "script:2: 'hold-key' is followed by 'w soon', where the name of a key was expected, such as w or space, "
+        "and a number of frames after it or nothing"));
+  }
+
+  TEST_F(InputScriptTest, HoldsTheLeftButtonOfTheMouseWhileThePointerIsDown)
+  {
+    Read("1: down\n3: up");
+
+    EXPECT_TRUE(Frame(1).IsMouseButtonDown(neon::MouseButton::Left));
+    EXPECT_TRUE(Frame(2).IsMouseButtonDown(neon::MouseButton::Left));
+    EXPECT_FALSE(Frame(3).IsMouseButtonDown(neon::MouseButton::Left));
+  }
+
   TEST_F(InputScriptTest, KnowsEveryActionByItsName)
   {
     for (std::size_t action = 0; action < neon::kAction_Size; action++)
@@ -276,21 +321,21 @@ namespace
         "3: key f13\n"
         "3: key left hyper\n"
         "4: wheel 1\n"
-        "5: hold fire\n"
+        "5: hold fire soon\n"
         "6: click twice\n"
         "7: stick 1\n"),
       ElementsAre(
         "script:1: 'pointer' is followed by 'here', where two numbers or none was expected",
         "script:2: 'jump' is not known. Known are: pointer, down, up, click, key, text, compose, wheel, hold, "
-        "stick, device, look",
+        "hold-key, stick, device, look",
         "script:4: the frame is '0', where a whole number above 0 was expected",
         "script:5: 'key' is followed by 'f13', where the name of a key was expected, such as left, enter, or a",
         "script:6: 'hyper' is held with the key, where shift, control, alt, super, shortcut, or word was "
         "expected",
         "script:7: 'wheel' is followed by '1', where two numbers were expected, and precise after them or "
         "nothing",
-        "script:8: 'hold' is followed by 'fire', where an action such as ui-accept was expected, and a number "
-        "of frames after it or nothing",
+        "script:8: 'hold' is followed by 'fire soon', where an action such as ui-accept or jump was expected, and "
+        "a number of frames after it or nothing",
         "script:9: 'click' is followed by 'twice', where nothing was expected",
         "script:10: 'stick' is followed by '1', where two numbers from -1 to 1 were expected, and a number of "
         "frames after them or nothing"));
@@ -301,7 +346,8 @@ namespace
     Read("1: pointer 100 200\n2: click\n3: text hi");
 
     Headless_InputSystem input(SettingsConfig{}, _logger);
-    input.SetScript(_script);
+    std::vector<std::string> errors;
+    ASSERT_TRUE(input.SetScript(_script, errors)) << ::testing::PrintToString(errors);
 
     input.ProcessInput();
     EXPECT_TRUE(input.GetInputState().HasPointer());

@@ -2,13 +2,16 @@
 #define SDL_2_INPUT_SYSTEM_HPP
 
 #include <array>
+#include <bitset>
+#include <cstdint>
 
 #include <neon/input/input-state.hpp>
 #include <neon/input/input-system.hpp>
 #include <neon/window/window-context.hpp>
 
-// an event of SDL, which only the backend knows
+// an event of SDL and the key of one, which only the backend knows
 union SDL_Event;
+struct SDL_Keysym;
 
 namespace neon
 {
@@ -23,6 +26,12 @@ namespace neon
     // as many as SDL has scancodes
     static constexpr std::size_t key_count = 512;
 
+    // how far a stick has to be pushed to count, of 32767
+    static constexpr int stick_threshold = 16000;
+
+    // below this the right stick is at rest, of 32767
+    static constexpr int stick_dead_zone = 8000;
+
     WindowContext* _context;
     InputState _input_state;
     bool _window_focus = false;
@@ -34,6 +43,16 @@ namespace neon
     // the controller that was plugged in first, as SDL_GameController
     void *_controller = nullptr;
 
+    // which sensors the controller was found not to have, said once each
+    std::bitset<kSensor_Size> _sensor_missing_said{};
+
+    /// Asks the controller for a sensor that is on, or stops asking.
+    void ApplySensor(Sensor sensor, bool enabled);
+
+    void ReadSensors();
+
+    void OnSensorEnabled(Sensor sensor, bool enabled) override;
+
     // the keys that are held down, by their scancode
     std::array<bool, key_count> _keys{};
 
@@ -43,12 +62,26 @@ namespace neon
     double _pointer_x = 0.0;
     double _pointer_y = 0.0;
     bool _primary_down = false;
+    bool _secondary_down = false;
+    bool _middle_down = false;
 
     TextComposition _composition;
     bool _text_input_active = false;
 
     // what the player touched last, told by the events
     InputDevice _device = InputDevice::KeyboardAndMouse;
+
+    /// The key of the engine for a key event of SDL: the keys that editing
+    /// a text and moving through a user interface ask for. The keys that
+    /// move are told by where they are, the letters of the shortcuts by
+    /// what they type, so that a shortcut is where the layout of the
+    /// keyboard has its letter. A key that only types is left out, and
+    /// arrives as text.
+    static Key KeyOf(const SDL_Keysym &keysym);
+
+    static KeyModifiers ModifiersOf(std::uint16_t held);
+
+    static double StickValue(int value);
 
     void ReadKeyboard();
 

@@ -127,6 +127,13 @@ namespace neon
       read.entry_scene = read.scenes.front();
     }
 
+    // the map is read later, by InputMapFile, so only that it is named with
+    // a path is checked here
+    if (reader.Read("input", read.input) && read.input.empty())
+    {
+      reader.Report(*document.Find("input"), "'input' is empty. It is the path of the input map, or left out");
+    }
+
     reader.Finish();
 
     if (errors.size() > before) { return false; }

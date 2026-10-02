@@ -127,11 +127,10 @@ namespace neon
     // Pressed, not held: the key that closed the menu is still down in the
     // frame after, and must not open it again. The menu itself takes the
     // press that closes it, so what the game is left is looked at as well.
-    const bool is_down = _input_system->GetInputState()[Action::Pause];
-    const bool is_pressed = is_down && !_pause_was_down;
-    _pause_was_down = is_down;
+    // `pause` is an action of the input map, bound by the project.
+    const bool is_pressed = _input_system->WasActionPressed("pause");
 
-    if (is_pressed && !was_shown && _ui_system->GetGameInput()->GetInputState()[Action::Pause]) { ShowPauseMenu(); }
+    if (is_pressed && !was_shown && _ui_system->GetGameInput()->IsActionDown("pause")) { ShowPauseMenu(); }
 
     _world_system->SetPaused(_pause_document >= 0 || _settings_document >= 0);
   }

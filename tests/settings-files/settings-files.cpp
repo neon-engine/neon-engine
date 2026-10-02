@@ -47,6 +47,9 @@ namespace
     "  steps_per_second: 120\n"
     "  most_steps_per_frame: 4\n"
     "\n"
+    "input:\n"
+    "  gyro: true\n"
+    "\n"
     "rendering:\n"
     "  vulkan_version: \"1.2\"\n"
     "  max_light_sources: 64\n";
@@ -125,6 +128,7 @@ namespace
     EXPECT_EQ(_settings.pause_menu, "assets://ui/pause.ui.yml");
     EXPECT_EQ(_settings.settings_menu, "assets://ui/settings.ui.yml");
     EXPECT_DOUBLE_EQ(_settings.steps_per_second, 120.0);
+    EXPECT_EQ(_settings.gyro_enabled, true);
     EXPECT_EQ(_settings.most_steps_per_frame, 4u);
     EXPECT_EQ(_settings.vulkan_version, (ApiVersion{1, 2}));
     EXPECT_EQ(_settings.max_light_sources, 64u);
@@ -177,6 +181,20 @@ namespace
   }
 
   // what is refused
+
+  TEST_F(SettingsFilesTest, LeavesTheGyroToTheInputMapWhenTheFileDoesNotSay)
+  {
+    WriteOfTheProject("version: 1\nworld:\n  steps_per_second: 30\n");
+
+    ASSERT_TRUE(ReadOfTheProject()) << ::testing::PrintToString(_errors);
+    EXPECT_FALSE(_settings.gyro_enabled.has_value());
+
+    // the player's file says, over the project's
+    WriteOfThePlayer("version: 1\ninput:\n  gyro: false\n");
+
+    ASSERT_TRUE(ReadOfThePlayer()) << ::testing::PrintToString(_errors);
+    EXPECT_EQ(_settings.gyro_enabled, false);
+  }
 
   TEST_F(SettingsFilesTest, RefusesAMissingVersion)
   {

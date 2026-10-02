@@ -11,18 +11,12 @@ namespace neon
 {
   namespace
   {
-    // how far a stick has to be pushed to count, of 32767
-    constexpr int stick_threshold = 16000;
-
-    // below this the right stick is at rest, of 32767
-    constexpr int stick_dead_zone = 8000;
-
-    /// The key of the engine for a key of SDL. The keys that move are told
-    /// by where they are, the letters by what they type, so that a
-    /// shortcut is where the layout of the keyboard has its letter.
-    Key KeyOf(const SDL_Keysym &keysym)
+    /// The key of the engine at a place of the keyboard, as the US layout
+    /// has it. What an input map binds: a game is played by where the keys
+    /// are, so that W, A, S, and D are the same four keys on every layout.
+    Key KeyAt(const SDL_Scancode scancode)
     {
-      switch (keysym.scancode)
+      switch (scancode)
       {
         case SDL_SCANCODE_LEFT: return Key::Left;
         case SDL_SCANCODE_RIGHT: return Key::Right;
@@ -39,46 +33,150 @@ namespace neon
         case SDL_SCANCODE_TAB: return Key::Tab;
         case SDL_SCANCODE_ESCAPE: return Key::Escape;
         case SDL_SCANCODE_SPACE: return Key::Space;
-        default: break;
-      }
-
-      switch (keysym.sym)
-      {
-        case SDLK_a: return Key::A;
-        case SDLK_c: return Key::C;
-        case SDLK_v: return Key::V;
-        case SDLK_x: return Key::X;
-        case SDLK_y: return Key::Y;
-        case SDLK_z: return Key::Z;
+        case SDL_SCANCODE_A: return Key::A;
+        case SDL_SCANCODE_B: return Key::B;
+        case SDL_SCANCODE_C: return Key::C;
+        case SDL_SCANCODE_D: return Key::D;
+        case SDL_SCANCODE_E: return Key::E;
+        case SDL_SCANCODE_F: return Key::F;
+        case SDL_SCANCODE_G: return Key::G;
+        case SDL_SCANCODE_H: return Key::H;
+        case SDL_SCANCODE_I: return Key::I;
+        case SDL_SCANCODE_J: return Key::J;
+        case SDL_SCANCODE_K: return Key::K;
+        case SDL_SCANCODE_L: return Key::L;
+        case SDL_SCANCODE_M: return Key::M;
+        case SDL_SCANCODE_N: return Key::N;
+        case SDL_SCANCODE_O: return Key::O;
+        case SDL_SCANCODE_P: return Key::P;
+        case SDL_SCANCODE_Q: return Key::Q;
+        case SDL_SCANCODE_R: return Key::R;
+        case SDL_SCANCODE_S: return Key::S;
+        case SDL_SCANCODE_T: return Key::T;
+        case SDL_SCANCODE_U: return Key::U;
+        case SDL_SCANCODE_V: return Key::V;
+        case SDL_SCANCODE_W: return Key::W;
+        case SDL_SCANCODE_X: return Key::X;
+        case SDL_SCANCODE_Y: return Key::Y;
+        case SDL_SCANCODE_Z: return Key::Z;
+        case SDL_SCANCODE_0: return Key::Digit0;
+        case SDL_SCANCODE_1: return Key::Digit1;
+        case SDL_SCANCODE_2: return Key::Digit2;
+        case SDL_SCANCODE_3: return Key::Digit3;
+        case SDL_SCANCODE_4: return Key::Digit4;
+        case SDL_SCANCODE_5: return Key::Digit5;
+        case SDL_SCANCODE_6: return Key::Digit6;
+        case SDL_SCANCODE_7: return Key::Digit7;
+        case SDL_SCANCODE_8: return Key::Digit8;
+        case SDL_SCANCODE_9: return Key::Digit9;
+        case SDL_SCANCODE_F1: return Key::F1;
+        case SDL_SCANCODE_F2: return Key::F2;
+        case SDL_SCANCODE_F3: return Key::F3;
+        case SDL_SCANCODE_F4: return Key::F4;
+        case SDL_SCANCODE_F5: return Key::F5;
+        case SDL_SCANCODE_F6: return Key::F6;
+        case SDL_SCANCODE_F7: return Key::F7;
+        case SDL_SCANCODE_F8: return Key::F8;
+        case SDL_SCANCODE_F9: return Key::F9;
+        case SDL_SCANCODE_F10: return Key::F10;
+        case SDL_SCANCODE_F11: return Key::F11;
+        case SDL_SCANCODE_F12: return Key::F12;
+        case SDL_SCANCODE_LSHIFT: return Key::LeftShift;
+        case SDL_SCANCODE_RSHIFT: return Key::RightShift;
+        case SDL_SCANCODE_LCTRL: return Key::LeftControl;
+        case SDL_SCANCODE_RCTRL: return Key::RightControl;
+        case SDL_SCANCODE_LALT: return Key::LeftAlt;
+        case SDL_SCANCODE_RALT: return Key::RightAlt;
         default: return Key::Unknown;
       }
     }
 
-    KeyModifiers ModifiersOf(const Uint16 held)
+    /// The button of the engine for a button of SDL, which names them by
+    /// the letters of one maker.
+    bool ButtonOf(const SDL_GameControllerButton button, ControllerButton &named)
     {
-      KeyModifiers modifiers;
-      modifiers.shift = (held & KMOD_SHIFT) != 0;
-      modifiers.control = (held & KMOD_CTRL) != 0;
-      modifiers.alt = (held & KMOD_ALT) != 0;
-      modifiers.super = (held & KMOD_GUI) != 0;
+      switch (button)
+      {
+        case SDL_CONTROLLER_BUTTON_A: named = ControllerButton::South; return true;
+        case SDL_CONTROLLER_BUTTON_B: named = ControllerButton::East; return true;
+        case SDL_CONTROLLER_BUTTON_X: named = ControllerButton::West; return true;
+        case SDL_CONTROLLER_BUTTON_Y: named = ControllerButton::North; return true;
+        case SDL_CONTROLLER_BUTTON_LEFTSHOULDER: named = ControllerButton::LeftShoulder; return true;
+        case SDL_CONTROLLER_BUTTON_RIGHTSHOULDER: named = ControllerButton::RightShoulder; return true;
+        case SDL_CONTROLLER_BUTTON_LEFTSTICK: named = ControllerButton::LeftStick; return true;
+        case SDL_CONTROLLER_BUTTON_RIGHTSTICK: named = ControllerButton::RightStick; return true;
+        case SDL_CONTROLLER_BUTTON_START: named = ControllerButton::Start; return true;
+        case SDL_CONTROLLER_BUTTON_BACK: named = ControllerButton::Back; return true;
+        case SDL_CONTROLLER_BUTTON_GUIDE: named = ControllerButton::Guide; return true;
+        case SDL_CONTROLLER_BUTTON_DPAD_UP: named = ControllerButton::DpadUp; return true;
+        case SDL_CONTROLLER_BUTTON_DPAD_DOWN: named = ControllerButton::DpadDown; return true;
+        case SDL_CONTROLLER_BUTTON_DPAD_LEFT: named = ControllerButton::DpadLeft; return true;
+        case SDL_CONTROLLER_BUTTON_DPAD_RIGHT: named = ControllerButton::DpadRight; return true;
+        default: return false;
+      }
+    }
+  }
 
-      // what a shortcut is made with, and what moves by a word, is a
-      // matter of the platform
+  Key SDL2_InputSystem::KeyOf(const SDL_Keysym &keysym)
+  {
+    switch (keysym.sym)
+    {
+      case SDLK_a: return Key::A;
+      case SDLK_c: return Key::C;
+      case SDLK_v: return Key::V;
+      case SDLK_x: return Key::X;
+      case SDLK_y: return Key::Y;
+      case SDLK_z: return Key::Z;
+      default: break;
+    }
+
+    switch (keysym.scancode)
+    {
+      case SDL_SCANCODE_LEFT:
+      case SDL_SCANCODE_RIGHT:
+      case SDL_SCANCODE_UP:
+      case SDL_SCANCODE_DOWN:
+      case SDL_SCANCODE_HOME:
+      case SDL_SCANCODE_END:
+      case SDL_SCANCODE_PAGEUP:
+      case SDL_SCANCODE_PAGEDOWN:
+      case SDL_SCANCODE_BACKSPACE:
+      case SDL_SCANCODE_DELETE:
+      case SDL_SCANCODE_RETURN:
+      case SDL_SCANCODE_KP_ENTER:
+      case SDL_SCANCODE_TAB:
+      case SDL_SCANCODE_ESCAPE:
+      case SDL_SCANCODE_SPACE:
+        return KeyAt(keysym.scancode);
+      default:
+        return Key::Unknown;
+    }
+  }
+
+  KeyModifiers SDL2_InputSystem::ModifiersOf(const std::uint16_t held)
+  {
+    KeyModifiers modifiers;
+    modifiers.shift = (held & KMOD_SHIFT) != 0;
+    modifiers.control = (held & KMOD_CTRL) != 0;
+    modifiers.alt = (held & KMOD_ALT) != 0;
+    modifiers.super = (held & KMOD_GUI) != 0;
+
+    // what a shortcut is made with, and what moves by a word, is a
+    // matter of the platform
 #if defined(__APPLE__)
-      modifiers.shortcut = modifiers.super;
-      modifiers.word = modifiers.alt;
+    modifiers.shortcut = modifiers.super;
+    modifiers.word = modifiers.alt;
 #else
-      modifiers.shortcut = modifiers.control;
-      modifiers.word = modifiers.control;
+    modifiers.shortcut = modifiers.control;
+    modifiers.word = modifiers.control;
 #endif
-      return modifiers;
-    }
+    return modifiers;
+  }
 
-    double StickValue(const int value)
-    {
-      if (std::abs(value) < stick_dead_zone) { return 0.0; }
-      return std::clamp(static_cast<double>(value) / 32767.0, -1.0, 1.0);
-    }
+  double SDL2_InputSystem::StickValue(const int value)
+  {
+    if (std::abs(value) < stick_dead_zone) { return 0.0; }
+    return std::clamp(static_cast<double>(value) / 32767.0, -1.0, 1.0);
   }
 
   void SDL2_InputSystem::Initialize()
@@ -104,6 +202,8 @@ namespace neon
   {
     _keys.fill(false);
     _primary_down = false;
+    _secondary_down = false;
+    _middle_down = false;
   }
 
   void SDL2_InputSystem::HandleEvent(const SDL_Event &event)
@@ -189,7 +289,10 @@ namespace neon
         _pointer_x = event.button.x;
         _pointer_y = event.button.y;
 
-        if (event.button.button == SDL_BUTTON_LEFT) { _primary_down = event.type == SDL_MOUSEBUTTONDOWN; }
+        const bool is_down = event.type == SDL_MOUSEBUTTONDOWN;
+        if (event.button.button == SDL_BUTTON_LEFT) { _primary_down = is_down; }
+        if (event.button.button == SDL_BUTTON_RIGHT) { _secondary_down = is_down; }
+        if (event.button.button == SDL_BUTTON_MIDDLE) { _middle_down = is_down; }
         break;
       }
 
@@ -286,6 +389,13 @@ namespace neon
             const char *name = SDL_GameControllerName(static_cast<SDL_GameController *>(_controller));
             const auto controller_name = std::string(name != nullptr ? name : "without a name");
             _logger->Info("Using the controller {}", controller_name);
+
+            // the sensors that are on are asked of this controller now
+            _sensor_missing_said.reset();
+            for (std::size_t i = 0; i < kSensor_Size; i++)
+            {
+              if (IsSensorEnabled(static_cast<Sensor>(i))) { ApplySensor(static_cast<Sensor>(i), true); }
+            }
           }
         }
         break;
@@ -322,6 +432,8 @@ namespace neon
     ReadController();
 
     _input_state.SetComposition(_text_input_active ? _composition : TextComposition{});
+
+    RefreshActions(_input_state, _context->GetDeltaTime());
   }
 
   void SDL2_InputSystem::ReadKeyboard()
@@ -340,7 +452,19 @@ namespace neon
       } else
       {
         _input_state.SetKeyboardAction(Action::Ui_Cancel);
-        _input_state.SetKeyboardAction(Action::Pause);
+      }
+    }
+
+    // every key that is held, by where it is, for the input map. Escape
+    // with shift is the window's, not the game's
+    for (std::size_t scancode = 0; scancode < key_count; scancode++)
+    {
+      if (!state[scancode]) { continue; }
+      if (scancode == SDL_SCANCODE_ESCAPE && (state[SDL_SCANCODE_LSHIFT] || state[SDL_SCANCODE_RSHIFT])) { continue; }
+
+      if (const Key key = KeyAt(static_cast<SDL_Scancode>(scancode)); key != Key::Unknown)
+      {
+        _input_state.SetKeyDown(key);
       }
     }
 
@@ -380,6 +504,15 @@ namespace neon
 
   void SDL2_InputSystem::ReadPointer()
   {
+    // the buttons are held whether or not there is a pointer, since a game
+    // that hides the cursor shoots with them
+    if (_window_focus)
+    {
+      if (_primary_down) { _input_state.SetMouseButtonDown(MouseButton::Left); }
+      if (_secondary_down) { _input_state.SetMouseButtonDown(MouseButton::Right); }
+      if (_middle_down) { _input_state.SetMouseButtonDown(MouseButton::Middle); }
+    }
+
     if (!_pointer_inside || _cursor_hidden || !_window_focus)
     {
       _input_state.ClearPointer();
@@ -409,6 +542,8 @@ namespace neon
     {
       return SDL_GameControllerGetButton(controller, button) != 0;
     };
+
+    ReadSensors();
 
     const int stick_x = SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_LEFTX);
     const int stick_y = SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_LEFTY);
@@ -440,12 +575,96 @@ namespace neon
     // named by where the button is, which is the lower one and the right one
     if (pressed(SDL_CONTROLLER_BUTTON_A)) { _input_state.SetAction(Action::Ui_Accept); }
     if (pressed(SDL_CONTROLLER_BUTTON_B)) { _input_state.SetAction(Action::Ui_Cancel); }
-    if (pressed(SDL_CONTROLLER_BUTTON_START)) { _input_state.SetAction(Action::Pause); }
 
-    // the right stick scrolls what is under the focus
+    // every button that is held, by where it is, for the input map. The
+    // triggers are buttons when pulled past the threshold
+    for (int button = SDL_CONTROLLER_BUTTON_A; button < SDL_CONTROLLER_BUTTON_MAX; button++)
+    {
+      ControllerButton named;
+      if (pressed(static_cast<SDL_GameControllerButton>(button)) &&
+          ButtonOf(static_cast<SDL_GameControllerButton>(button), named))
+      {
+        _input_state.SetControllerButtonDown(named);
+      }
+    }
+    if (SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_TRIGGERLEFT) > stick_threshold)
+    {
+      _input_state.SetControllerButtonDown(ControllerButton::LeftTrigger);
+    }
+    if (SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_TRIGGERRIGHT) > stick_threshold)
+    {
+      _input_state.SetControllerButtonDown(ControllerButton::RightTrigger);
+    }
+
+    // the triggers as they are, from 0 to 1, for an axis of the input map
+    _input_state.SetTrigger(
+      ControllerTrigger::Left,
+      std::clamp(SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_TRIGGERLEFT) / 32767.0, 0.0, 1.0));
+    _input_state.SetTrigger(
+      ControllerTrigger::Right,
+      std::clamp(SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_TRIGGERRIGHT) / 32767.0, 0.0, 1.0));
+
+    // the sticks as they are, for the input map; the right one also scrolls
+    // what is under the focus
+    _input_state.SetLeftStick(StickValue(stick_x), StickValue(stick_y));
     _input_state.SetRightStick(
       StickValue(SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_RIGHTX)),
       StickValue(SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_RIGHTY)));
+  }
+
+  void SDL2_InputSystem::ApplySensor(const Sensor sensor, const bool enabled)
+  {
+    auto *controller = static_cast<SDL_GameController *>(_controller);
+    if (controller == nullptr) { return; }
+
+    const SDL_SensorType type = sensor == Sensor::Gyro ? SDL_SENSOR_GYRO : SDL_SENSOR_ACCEL;
+    if (!SDL_GameControllerHasSensor(controller, type))
+    {
+      // said once per controller, and the action reads zero
+      if (enabled && !_sensor_missing_said.test(static_cast<std::size_t>(sensor)))
+      {
+        const std::string name = NameOf(sensor);
+        _logger->Warn("The controller has no {}, what is bound to it reads zero", name);
+        _sensor_missing_said.set(static_cast<std::size_t>(sensor));
+      }
+      return;
+    }
+
+    // off, the controller does not report it, so it costs nothing
+    if (SDL_GameControllerSetSensorEnabled(controller, type, enabled ? SDL_TRUE : SDL_FALSE) != 0)
+    {
+      const auto error = std::string(SDL_GetError());
+      const std::string name = NameOf(sensor);
+      const std::string state = enabled ? "on" : "off";
+      _logger->Warn("The {} cannot be turned {}: {}", name, state, error);
+    }
+  }
+
+  void SDL2_InputSystem::OnSensorEnabled(const Sensor sensor, const bool enabled)
+  {
+    ApplySensor(sensor, enabled);
+  }
+
+  void SDL2_InputSystem::ReadSensors()
+  {
+    auto *controller = static_cast<SDL_GameController *>(_controller);
+
+    for (std::size_t i = 0; i < kSensor_Size; i++)
+    {
+      const auto sensor = static_cast<Sensor>(i);
+      if (!IsSensorEnabled(sensor)) { continue; }
+
+      // SDL's axes: x to the right, y up, z toward the player. The gyro is
+      // radians a second about them, the accelerometer metres a second
+      // squared along them
+      const SDL_SensorType type = sensor == Sensor::Gyro ? SDL_SENSOR_GYRO : SDL_SENSOR_ACCEL;
+      float data[3] = {0.0f, 0.0f, 0.0f};
+      if (SDL_GameControllerHasSensor(controller, type) &&
+          SDL_GameControllerGetSensorData(controller, type, data, 3) == 0)
+      {
+        _input_state.SetSensor(sensor, data[0], data[1], data[2]);
+      }
+    }
   }
 
   void SDL2_InputSystem::CleanUp()

@@ -1,6 +1,11 @@
 #ifndef INPUT_CONTEXT_HPP
 #define INPUT_CONTEXT_HPP
 
+#include <string>
+
+#include <glm/glm.hpp>
+
+#include "input-map.hpp"
 #include "input-state.hpp"
 
 namespace neon
@@ -17,6 +22,10 @@ namespace neon
     bool operator==(const TextInputArea &other) const = default;
   };
 
+  /// The input as the engine reads it. The devices as they are, in
+  /// GetInputState(), are for the user interface and the pointer; a game
+  /// reads the actions of its input map by their names, which only fire in
+  /// the state the game is in.
   class InputContext
   {
   protected:
@@ -25,6 +34,48 @@ namespace neon
 
   public:
     virtual const InputState& GetInputState() = 0;
+
+    /// The map the actions are read with: the project's, or the engine's
+    /// default.
+    virtual const InputMap &GetInputMap() = 0;
+
+    /// Whether an action of the map is down in this frame. False for a name
+    /// the map does not have, and for an action outside the current state.
+    virtual bool IsActionDown(const std::string &name) = 0;
+
+    /// Whether an action went down in this frame and was not down in the
+    /// one before.
+    virtual bool WasActionPressed(const std::string &name) = 0;
+
+    /// Where an axis of two of the map is: x to the right, y forward, from
+    /// -1 to 1 from keys and sticks, in pixels moved from the mouse.
+    virtual glm::vec2 ActionAxis(const std::string &name) = 0;
+
+    /// Where an axis of one of the map is: from -1 to 1 from two keys or
+    /// buttons, from 0 to 1 from a trigger. The largest wins when several
+    /// are used at once.
+    virtual float ActionAmount(const std::string &name) = 0;
+
+    /// Where an axis of three of the map is, from a motion sensor of a
+    /// controller: about x, y, and z, which are pitch, yaw, and roll. A
+    /// gyro gives radians turned in the frame. Zero while the sensor is off
+    /// or the controller has none.
+    virtual glm::vec3 ActionAxis3(const std::string &name) = 0;
+
+    /// Turns a motion sensor on or off: `gyro` or `accelerometer`. Off, an
+    /// action bound to it reads zero, and the controller is not asked for
+    /// it. Returns false for a name that is no sensor.
+    virtual bool SetSensorEnabled(const std::string &sensor, bool enabled) = 0;
+
+    [[nodiscard]] virtual bool IsSensorEnabled(const std::string &sensor) = 0;
+
+    /// Puts the game into a state of the map, such as `menu`, from the next
+    /// frame on. Returns false and changes nothing when the map has no such
+    /// state.
+    virtual bool SetState(const std::string &name) = 0;
+
+    /// The state the game is in.
+    virtual const std::string &GetState() = 0;
 
     virtual void CenterAndHideCursor() = 0;
 
