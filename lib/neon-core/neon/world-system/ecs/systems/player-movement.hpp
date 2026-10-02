@@ -12,10 +12,14 @@ namespace neon
   /// Once a frame it turns the body by `look`, sets the velocity of the
   /// body from `move` in the direction the body faces, at the walking or
   /// the running speed, and starts a jump when `jump` is pressed while the
-  /// body stands on the ground. The physics moves the body by that in the
-  /// steps that follow, and stops it at walls. The camera, a child of the
-  /// body with a Camera, is lifted to `eye_height` above the feet and
-  /// pitched by `look`, within `max_pitch`.
+  /// body stands on the ground. In the air the body keeps the velocity it
+  /// left the ground with, and `move` steers it by `air_control`. The
+  /// physics moves the body by that in the steps that follow, and stops it
+  /// at walls. The camera, a child of the body with a Camera, is lifted to
+  /// `eye_height` above the feet, moved by `camera_offset`, and pitched by
+  /// `look`, within `max_pitch`. A step the physics took the body up or
+  /// down is seen over a few frames: the eyes lag behind it and catch up
+  /// at `step_smoothing`.
   class PlayerMovement final : public EntitySystem
   {
     InputContext *_input_context;

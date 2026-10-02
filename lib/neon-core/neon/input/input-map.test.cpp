@@ -98,7 +98,7 @@ namespace
     ASSERT_NE(run, nullptr);
     EXPECT_EQ(run->type, InputActionType::Button);
     EXPECT_EQ(run->keys, (std::vector<Chord<Key>>{Key::LeftShift}));
-    EXPECT_TRUE(run->buttons.empty());
+    EXPECT_EQ(run->buttons, (std::vector<Chord<ControllerButton>>{ControllerButton::LeftStick}));
 
     const auto *pause = map.FindAction("pause");
     ASSERT_NE(pause, nullptr);

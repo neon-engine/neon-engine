@@ -1,5 +1,6 @@
 #include "player-movement.hpp"
 
+#include <cmath>
 #include <memory>
 
 #include <gtest/gtest.h>
@@ -19,6 +20,7 @@ namespace
   using neon::Camera;
   using neon::CharacterBody;
   using neon::Collider;
+  using neon::ControllerButton;
   using neon::Entity;
   using neon::Key;
   using neon::Player;
@@ -57,16 +59,23 @@ namespace
       _system.Initialize(_store);
     }
 
-    /// A player that walks 2 metres a second, runs 3, jumps with 5, and
-    /// turns a hundredth of a radian for every pixel, standing on the
-    /// ground in a capsule of 1.8, with its camera below it.
+    /// A player that walks 2 metres a second, runs 3, jumps with 5, steers
+    /// half as much in the air, and turns a hundredth of a radian for every
+    /// pixel, standing on the ground in a capsule of 1.8, with its camera
+    /// below it.
     Entity CreatePlayer(const float yaw = 0.0f, const bool on_floor = true)
     {
       const Entity entity = _store.CreateEntity("player");
       Transform transform;
       transform.rotation.yaw = yaw;
       _store.Set(entity, transform);
-      _store.Set(entity, Player{.walk_speed = 2.0f, .run_speed = 3.0f, .jump_speed = 5.0f, .look_speed = 0.01f});
+      _store.Set(entity, Player{
+        .walk_speed = 2.0f,
+        .run_speed = 3.0f,
+        .jump_speed = 5.0f,
+        .air_control = 0.5f,
+        .look_speed = 0.01f
+      });
       _store.Set(entity, CharacterBody{.on_floor = on_floor});
       _store.Set(entity, Collider{.shape = ShapeKind::Capsule, .radius = 0.4f, .height = 1.8f});
 
@@ -91,10 +100,18 @@ namespace
       return *_store.Get<CharacterBody>(entity);
     }
 
+    /// What the physics did with the body in the steps between two frames:
+    /// where it put it, and whether it stands on the ground.
+    void PhysicsPlaced(const Entity player, const float height, const bool on_floor)
+    {
+      _store.Get<Transform>(player)->position.y = height;
+      _store.Get<CharacterBody>(player)->on_floor = on_floor;
+    }
+
     /// A frame: the actions are worked out from the keys, and the system
     /// runs. The map is the engine's default, with `move` on W, A, S, D
     /// and the left stick, `look` on the mouse, `jump` on space, and `run`
-    /// on the left shift.
+    /// on the left shift and the click of the left stick.
     void Update()
     {
       _input.Refresh();
@@ -200,6 +217,17 @@ namespace
     const Entity player = CreatePlayer();
     _input.state.SetKeyDown(Key::W);
     _input.state.SetKeyDown(Key::LeftShift);
+
+    Update();
+
+    ExpectVector(BodyOf(player).velocity, 0.0f, 0.0f, -3.0f);
+  }
+
+  TEST_F(PlayerMovementTest, RunsWhileTheLeftStickIsPressedIn)
+  {
+    const Entity player = CreatePlayer();
+    _input.state.SetLeftStick(0.0, -1.0);
+    _input.state.SetControllerButtonDown(ControllerButton::LeftStick);
 
     Update();
 
@@ -408,6 +436,216 @@ namespace
     ExpectVector(BodyOf(player).fall_velocity, 0.0f, 5.0f, 0.0f);
   }
 
+  // in the air
+
+  TEST_F(PlayerMovementTest, KeepsTheVelocityItLeftTheGroundWithInTheAir)
+  {
+    const Entity player = CreatePlayer();
+    _store.Get<Player>(player)->air_control = 0.0f;
+    _input.state.SetKeyDown(Key::W);
+    Update();
+
+    // the key is released over the gap, and the body goes on
+    PhysicsPlaced(player, 0.5f, false);
+    _input.state.Reset();
+    Update();
+    ExpectVector(BodyOf(player).velocity, 0.0f, 0.0f, -2.0f);
+
+    _input.state.SetKeyDown(Key::S);
+    Update();
+    ExpectVector(BodyOf(player).velocity, 0.0f, 0.0f, -2.0f);
+  }
+
+  TEST_F(PlayerMovementTest, SteersInTheAirByAirControl)
+  {
+    // half the control: the keys pull the take-off velocity halfway to
+    // what they ask for
+    const Entity player = CreatePlayer();
+    _input.state.SetKeyDown(Key::W);
+    Update();
+    PhysicsPlaced(player, 0.5f, false);
+
+    _input.state.Reset();
+    Update();
+    ExpectVector(BodyOf(player).velocity, 0.0f, 0.0f, -1.0f);
+
+    _input.state.SetKeyDown(Key::S);
+    Update();
+    ExpectVector(BodyOf(player).velocity, 0.0f, 0.0f, 0.0f);
+
+    _input.state.Reset();
+    _input.state.SetKeyDown(Key::D);
+    Update();
+    ExpectVector(BodyOf(player).velocity, 1.0f, 0.0f, -1.0f);
+  }
+
+  TEST_F(PlayerMovementTest, SteersNoFurtherFrameAfterFrameInTheAir)
+  {
+    // the pull is from the take-off velocity every frame, not from the
+    // frame before, so a long jump with the keys released does not slow
+    // to a stop
+    const Entity player = CreatePlayer();
+    _input.state.SetKeyDown(Key::W);
+    Update();
+    PhysicsPlaced(player, 0.5f, false);
+    _input.state.Reset();
+
+    for (int frame = 0; frame < 30; frame++) { Update(); }
+
+    ExpectVector(BodyOf(player).velocity, 0.0f, 0.0f, -1.0f);
+  }
+
+  TEST_F(PlayerMovementTest, SteersAsOnTheGroundWithFullAirControl)
+  {
+    const Entity player = CreatePlayer();
+    _store.Get<Player>(player)->air_control = 1.0f;
+    _input.state.SetKeyDown(Key::W);
+    Update();
+    PhysicsPlaced(player, 0.5f, false);
+
+    _input.state.Reset();
+    _input.state.SetKeyDown(Key::D);
+    Update();
+
+    ExpectVector(BodyOf(player).velocity, 2.0f, 0.0f, 0.0f);
+  }
+
+  TEST_F(PlayerMovementTest, WalksAsTheKeysSayOnceItLands)
+  {
+    const Entity player = CreatePlayer();
+    _input.state.SetKeyDown(Key::W);
+    Update();
+    PhysicsPlaced(player, 0.5f, false);
+    _input.state.Reset();
+    Update();
+
+    PhysicsPlaced(player, 0.0f, true);
+    Update();
+    ExpectVector(BodyOf(player).velocity, 0.0f, 0.0f, 0.0f);
+
+    _input.state.SetKeyDown(Key::A);
+    Update();
+    ExpectVector(BodyOf(player).velocity, -2.0f, 0.0f, 0.0f);
+  }
+
+  TEST_F(PlayerMovementTest, KeepsRunningInTheAirWhenRunWasDownAtTakeOff)
+  {
+    const Entity player = CreatePlayer();
+    _store.Get<Player>(player)->air_control = 0.0f;
+    _input.state.SetKeyDown(Key::W);
+    _input.state.SetKeyDown(Key::LeftShift);
+    Update();
+    PhysicsPlaced(player, 0.5f, false);
+
+    _input.state.Reset();
+    Update();
+
+    ExpectVector(BodyOf(player).velocity, 0.0f, 0.0f, -3.0f);
+  }
+
+  // the glide over steps
+
+  TEST_F(PlayerMovementTest, GlidesTheEyesUpAStep)
+  {
+    // the physics lifted the body a quarter of a metre between two frames
+    // on the floor: the eyes stay where they were in that frame, and catch
+    // up at step_smoothing, a tenth of the way left every sixtieth
+    const Entity player = CreatePlayer();
+    _store.Get<Player>(player)->step_smoothing = 10.0f;
+    Update();
+
+    PhysicsPlaced(player, 0.25f, true);
+    Update();
+    ExpectVector(TransformOf(CameraOf(player)).position, 0.0f, 0.45f, 0.0f);
+
+    Update();
+    const float left = 0.25f * std::exp(-10.0f / 60.0f);
+    ExpectVector(TransformOf(CameraOf(player)).position, 0.0f, 0.7f - left, 0.0f);
+
+    for (int frame = 0; frame < 120; frame++) { Update(); }
+    ExpectVector(TransformOf(CameraOf(player)).position, 0.0f, 0.7f, 0.0f);
+  }
+
+  TEST_F(PlayerMovementTest, GlidesTheEyesDownAStepToo)
+  {
+    const Entity player = CreatePlayer();
+    _store.Get<Player>(player)->step_smoothing = 10.0f;
+    PhysicsPlaced(player, 0.25f, true);
+    Update();
+
+    PhysicsPlaced(player, 0.0f, true);
+    Update();
+
+    ExpectVector(TransformOf(CameraOf(player)).position, 0.0f, 0.95f, 0.0f);
+  }
+
+  TEST_F(PlayerMovementTest, LiftsTheEyesWithTheBodyWithoutSmoothing)
+  {
+    const Entity player = CreatePlayer();
+    _store.Get<Player>(player)->step_smoothing = 0.0f;
+    Update();
+
+    PhysicsPlaced(player, 0.25f, true);
+    Update();
+
+    ExpectVector(TransformOf(CameraOf(player)).position, 0.0f, 0.7f, 0.0f);
+  }
+
+  TEST_F(PlayerMovementTest, DoesNotGlideThroughAJumpOrOnLanding)
+  {
+    const Entity player = CreatePlayer();
+    _store.Get<Player>(player)->step_smoothing = 10.0f;
+    Update();
+
+    // up in the air, and down again onto a step that was not there before
+    PhysicsPlaced(player, 1.0f, false);
+    Update();
+    ExpectVector(TransformOf(CameraOf(player)).position, 0.0f, 0.7f, 0.0f);
+
+    PhysicsPlaced(player, 0.25f, true);
+    Update();
+    ExpectVector(TransformOf(CameraOf(player)).position, 0.0f, 0.7f, 0.0f);
+  }
+
+  TEST_F(PlayerMovementTest, GlidesInTheUnitsOfABodyThatIsScaled)
+  {
+    // the body is twice as large: a step of 0.5 in the world is 0.25 of its
+    // units, below the eyes at -0.1
+    const Entity player = CreatePlayer();
+    _store.Get<Player>(player)->step_smoothing = 10.0f;
+    _store.Get<Transform>(player)->scale = glm::vec3{2.0f};
+    Update();
+
+    PhysicsPlaced(player, 0.5f, true);
+    Update();
+
+    ExpectVector(TransformOf(CameraOf(player)).position, 0.0f, -0.35f, 0.0f);
+  }
+
+  // the offset of the camera
+
+  TEST_F(PlayerMovementTest, MovesTheCameraByTheOffset)
+  {
+    // to the right, up, and back from the eyes, in the frame of the body
+    const Entity player = CreatePlayer();
+    _store.Get<Player>(player)->camera_offset = {0.2f, 0.1f, 1.5f};
+
+    Update();
+
+    ExpectVector(TransformOf(CameraOf(player)).position, 0.2f, 0.8f, 1.5f);
+  }
+
+  TEST_F(PlayerMovementTest, MeasuresTheOffsetInTheUnitsOfABodyThatIsScaled)
+  {
+    const Entity player = CreatePlayer();
+    _store.Get<Player>(player)->camera_offset = {1.0f, 0.0f, 2.0f};
+    _store.Get<Transform>(player)->scale = glm::vec3{2.0f};
+
+    Update();
+
+    ExpectVector(TransformOf(CameraOf(player)).position, 0.5f, -0.1f, 1.0f);
+  }
+
   // what is left alone
 
   TEST_F(PlayerMovementTest, LeavesACharacterThatIsNoPlayerAlone)
@@ -432,7 +670,7 @@ namespace
     const Entity second = _store.CreateEntity("second");
     _store.Set(second, Transform{});
     _store.Set(second, Player{.walk_speed = 10.0f});
-    _store.Set(second, CharacterBody{});
+    _store.Set(second, CharacterBody{.on_floor = true});
     _input.state.SetKeyDown(Key::W);
 
     Update();

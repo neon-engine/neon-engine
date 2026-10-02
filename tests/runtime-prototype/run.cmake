@@ -28,6 +28,22 @@ elseif (CASE STREQUAL "the-kit-pieces-are-loaded-once")
   # nothing is loaded again
   run(--headless-renderer --window-size 320x180 --render-scale 1 --time-step 0.05 --frames 2
           --scene assets://scenes/prototype.scene.yml)
+elseif (CASE STREQUAL "the-player-keeps-its-speed-through-a-jump")
+  # the player walks for a third of a second, a metre and a bit, jumps in
+  # the last frame of it, and releases W in the air. Once more without the
+  # jump, to compare
+  run(--headless-renderer --window-size 1920x1080 --render-scale 1 --time-step 0.05
+          --output-dir jump --screenshot output://frame.png --screenshot-at 5,16,60
+          --scene assets://scenes/prototype.scene.yml --input "1: hold-key w 6\n6: hold jump 1")
+  set(JUMP_EXIT_CODE "${EXIT_CODE}")
+  set(JUMP_OUTPUT "${OUTPUT}")
+  run(--headless-renderer --window-size 1920x1080 --render-scale 1 --time-step 0.05
+          --output-dir walk --screenshot output://frame.png --screenshot-at 60
+          --scene assets://scenes/prototype.scene.yml --input "1: hold-key w 6")
+  if (NOT JUMP_EXIT_CODE STREQUAL 0)
+    set(EXIT_CODE "${JUMP_EXIT_CODE}")
+    set(OUTPUT "${JUMP_OUTPUT}")
+  endif ()
 else ()
   run(--headless-renderer --window-size 1920x1080 --render-scale 1 --time-step 0.05 --frames 5
           --output-dir shots --screenshot output://frame.png --scene assets://scenes/prototype.scene.yml)
@@ -87,6 +103,39 @@ if (CASE STREQUAL "the-level-is-drawn-from-the-kit-pieces")
   expect_pixel("the floor of the corridor" 960 1040 141 144 167)
   expect_pixel("the west wall of the corridor" 300 500 126 131 160)
   expect_pixel("the frame of the doorway" 750 700 73 77 96)
+elseif (CASE STREQUAL "the-player-keeps-its-speed-through-a-jump")
+  # The body kept the velocity it took off with (#219): once it has landed
+  # it stands nearer the doorway than where W was released, so the frame
+  # three seconds in is not the one of the walk alone, and it is a
+  # different view from the one before the jump.
+  expect_image("jump/frame-0005.png")
+  expect_image("jump/frame-0060.png")
+  expect_image("walk/frame-0060.png")
+  file(SHA256 "${DIRECTORY}/jump/frame-0005.png" BEFORE)
+  file(SHA256 "${DIRECTORY}/jump/frame-0060.png" AFTER)
+  file(SHA256 "${DIRECTORY}/walk/frame-0060.png" WITHOUT)
+  if (BEFORE STREQUAL AFTER)
+    fail("Expected the player to have moved through the jump, and frame 5 is the same as frame 60")
+  endif ()
+  if (WITHOUT STREQUAL AFTER)
+    fail("Expected the jump to carry the player on after W was released, and frame 60 is the same without it")
+  endif ()
+
+  # It landed in the doorway, four metres from where it started, which is
+  # where a second of walking takes it: the same pixels as after the walk,
+  # read at the same frame, since the walker's shadow moves with time.
+  set(FRAME "jump/frame-0060.png")
+  expect_pixel("the sky above the room after the jump" 960 160 0 0 0)
+  expect_pixel("the north wall of the room after the jump" 700 500 155 154 173)
+  expect_pixel("the target on the north wall after the jump" 960 580 217 84 57)
+  expect_pixel("the blue crate to the right after the jump" 1180 700 41 45 117)
+  expect_pixel("the floor of the room after the jump" 1000 1000 156 157 175)
+
+  # halfway through the jump the eyes are above the walls, and the black
+  # behind them has taken the place of the north wall
+  set(FRAME "jump/frame-0016.png")
+  expect_image("${FRAME}")
+  expect_pixel("the black above the walls in the air" 700 500 0 0 0)
 elseif (CASE STREQUAL "the-player-walks-into-the-room")
   # In the first frame the player stands where the scene put it, with the
   # black behind the walls above the doorway. A second later it stands in

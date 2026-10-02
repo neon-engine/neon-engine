@@ -60,6 +60,26 @@ entities:
       Collider:
         shape: mesh
 
+  # a ledge of 0.2 along the north wall, west of the crate: a box the
+  # character walks up without a jump, since it is below its step_height
+  - name: step
+    components:
+      Transform:
+        position: [-2, 0.1, -3.5]
+      Geometry:
+        shape: box
+        size: [3, 0.2, 1]
+      Renderable:
+        shader: assets://shaders/pbr
+        textures: [assets://textures/concrete.png]
+        material:
+          roughness: 0.9
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [3, 0.2, 1]
+
   - name: crate
     components:
       Transform:
@@ -97,8 +117,9 @@ entities:
       Collider:
         shape: convex_hull
 
-  # the player walks the room: up the ramp, onto the platform, and against
-  # the crate. A capsule of 1.8 that the physics stands on the floor
+  # the player walks the room: up the ramp, onto the platform, up the step,
+  # and against the crate. A capsule of 1.8 that the physics stands on the
+  # floor
   - name: player
     components:
       Transform:

@@ -38,8 +38,7 @@ metres, without the centring and scaling a file gets.
 
 The scene of the runtime that is built this way is
 [blockout.scene.yml](../app/NeonRuntime/assets/scenes/blockout.scene.yml):
-a room seen from within, a platform, a crate, and a ramp, with nothing from a
-model file.
+a room seen from within, a platform, a crate, a ramp, and a step, with nothing from a model file.
 
 **Geometry**
 

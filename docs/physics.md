@@ -258,13 +258,16 @@ entity with a `Camera`, which the system lifts to the eyes and pitches.
 | `walk_speed` | Metres per second along the ground | `4` |
 | `run_speed` | Metres per second along the ground while `run` is down | `6` |
 | `jump_speed` | Metres per second upward that a jump starts with | `5` |
+| `air_control` | How much `move` steers the body while it is in the air, from 0 to 1. The body keeps the velocity it left the ground with, and the keys pull it by this much towards what they ask for: 0 keeps the take-off velocity whatever is pressed, 1 steers as on the ground | `0.3` |
 | `look_speed` | Radians the view turns for every pixel of `look` | `0.0025` |
 | `eye_height` | Metres from the feet to the eyes, where the camera is put | `1.6` |
+| `camera_offset` | `[right, up, back]`, metres the camera is moved from the eyes in the frame of the entity, so it turns with the body. A lean is `[0.3, 0, 0]`, a view from behind the shoulder `[0.5, 0.3, 2]` | `[0, 0, 0]` |
+| `step_smoothing` | How quickly the eyes catch up with a step, per second. A step up of `step_height` lifts the body at once; the eyes stay where they were in that frame and glide up after the body, a tenth of what is left every sixtieth of a second at `10`. 0 lifts the eyes with the body | `10` |
 | `max_pitch` | Degrees the view can turn up or down, from 0 to 90 | `89` |
 
 | Action | Does |
 |---|---|
-| `move` | Sets `velocity` of the body along the ground in the direction the body faces, at `walk_speed`, or `run_speed` while `run` is down. Two keys together walk no faster than one, and a stick pushed halfway walks at half the speed. Nothing pressed stops the body |
+| `move` | On the ground, sets `velocity` of the body in the direction the body faces, at `walk_speed`, or `run_speed` while `run` is down. Two keys together walk no faster than one, and a stick pushed halfway walks at half the speed. Nothing pressed stops the body. In the air, see `air_control` |
 | `look` | Its `x` turns the entity's `Transform` around its up, by the yaw alone, so that the capsule stays upright. Its `y` pitches the camera's `Transform`, within `max_pitch` either way |
 | `jump` | Once per press, while `on_floor` of the body is set: `fall_velocity` becomes `jump_speed` upward, and the physics lets it fall back |
 | `run` | Walking is at `run_speed` while it is down |
@@ -272,7 +275,9 @@ entity with a `Camera`, which the system lifts to the eyes and pitches.
 | | |
 |---|---|
 | Where the player looks at the start | The `rotation` of the entity's `Transform` holds the yaw and that of the camera's the pitch, so a scene writes them. The component keeps nothing of its own |
-| Where the camera is | At `eye_height` above the feet, which are the bottom of the entity's `Collider` (a capsule of 1.8 stands 0.9 below the origin). Measured from the origin without a `Collider`, and in the units of the entity when it is scaled. Written every frame, so the camera's `position` in a scene is not kept |
+| Where the camera is | At `eye_height` above the feet, which are the bottom of the entity's `Collider` (a capsule of 1.8 stands 0.9 below the origin), moved by `camera_offset`. Measured from the origin without a `Collider`, and in the units of the entity when it is scaled, the offset too. Written every frame, so the camera's `position` in a scene is not kept: a scene that wants the camera elsewhere writes `camera_offset` |
+| In the air | Decided with #219: the body keeps the velocity it took off with, as most shooters do, so a jump over a gap goes on when W is released, and the keys steer it by `air_control`. A game that wants the keys to rule in the air as on the ground sets `air_control: 1`; one that wants a jump that cannot be turned sets `0`. Walking off a ledge keeps the velocity the same way |
+| Over a step | The physics lifts the body by up to `step_height` in one step. The eyes do not follow at once: `PlayerMovement` keeps how far they lag behind, adds what the body rose or sank by between two frames on the floor, and lets it fade at `step_smoothing`, so a step, and a slope, is seen as a glide. Nothing is added while the body is in the air or in the frame it lands, so a jump is seen as it is |
 | What the physics gives it | `on_floor` says whether a jump is allowed. Walking up steps, sliding along walls, slopes that are too steep, falling, and pushing crates come from the `CharacterBody` |
 | What is drawn | The body is placed between the last two steps as every character is, and the camera below it goes with it |
 | While the pause menu is shown | The world does not update its systems, so the player neither turns nor moves, and the user interface takes the input first, see [user-interface.md](user-interface.md#input-and-focus) |

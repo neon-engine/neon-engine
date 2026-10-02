@@ -15,7 +15,7 @@ actions:
   move:  { type: axis2, keys: [w, s, a, d], stick: left }
   look:  { type: axis2, mouse: motion, stick: right, rate: 600 }
   jump:  { type: button, keys: [space], buttons: [south] }
-  run:   { type: button, keys: [left-shift] }
+  run:   { type: button, keys: [left-shift], buttons: [left-stick] }
   pause: { type: button, keys: [escape], buttons: [start] }
 
 states:

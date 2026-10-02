@@ -733,8 +733,11 @@ namespace
     map.Set("walk_speed", DataValue::Number(3.0f));
     map.Set("run_speed", DataValue::Number(7.0f));
     map.Set("jump_speed", DataValue::Number(4.0f));
+    map.Set("air_control", DataValue::Number(0.5f));
     map.Set("look_speed", DataValue::Number(0.01f));
     map.Set("eye_height", DataValue::Number(1.2f));
+    map.Set("camera_offset", Numbers({0.5f, 0.2f, 2.0f}));
+    map.Set("step_smoothing", DataValue::Number(6.0f));
     map.Set("max_pitch", DataValue::Number(60.0f));
 
     Read("Player", map);
@@ -744,8 +747,11 @@ namespace
     EXPECT_EQ(player->walk_speed, 3.0f);
     EXPECT_EQ(player->run_speed, 7.0f);
     EXPECT_EQ(player->jump_speed, 4.0f);
+    EXPECT_EQ(player->air_control, 0.5f);
     EXPECT_EQ(player->look_speed, 0.01f);
     EXPECT_EQ(player->eye_height, 1.2f);
+    EXPECT_EQ(player->camera_offset, glm::vec3(0.5f, 0.2f, 2.0f));
+    EXPECT_EQ(player->step_smoothing, 6.0f);
     EXPECT_EQ(player->max_pitch, 60.0f);
     EXPECT_THAT(_errors, IsEmpty());
   }
@@ -759,10 +765,24 @@ namespace
     EXPECT_EQ(player->walk_speed, 4.0f);
     EXPECT_EQ(player->run_speed, 6.0f);
     EXPECT_EQ(player->jump_speed, 5.0f);
+    EXPECT_EQ(player->air_control, 0.3f);
     EXPECT_EQ(player->look_speed, 0.0025f);
     EXPECT_EQ(player->eye_height, 1.6f);
+    EXPECT_EQ(player->camera_offset, glm::vec3(0.0f));
+    EXPECT_EQ(player->step_smoothing, 10.0f);
     EXPECT_EQ(player->max_pitch, 89.0f);
     EXPECT_THAT(_errors, IsEmpty());
+  }
+
+  TEST_F(EngineComponentFormatsTest, RefusesAPlayerWithMoreThanFullAirControl)
+  {
+    auto map = DataValue::Map();
+    map.Set("air_control", DataValue::Number(1.5f));
+
+    Read("Player", map);
+
+    EXPECT_THAT(_errors, SizeIs(1));
+    EXPECT_THAT(_errors.front(), ::testing::HasSubstr("'air_control'"));
   }
 
   TEST_F(EngineComponentFormatsTest, RefusesAPlayerThatLooksPastStraightUp)

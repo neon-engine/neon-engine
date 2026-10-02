@@ -189,8 +189,11 @@ to its eyes. How it is driven is in [physics.md](physics.md#the-player).
 | `walk_speed` | Metres per second along the ground | `4` |
 | `run_speed` | Metres per second along the ground while `run` is down | `6` |
 | `jump_speed` | Metres per second upward that a jump starts with | `5` |
+| `air_control` | How much `move` steers the body in the air, from 0 to 1: 0 keeps the take-off velocity, 1 steers as on the ground | `0.3` |
 | `look_speed` | Radians the view turns for every pixel of `look` | `0.0025` |
 | `eye_height` | Metres from the feet to the eyes, where the camera is put | `1.6` |
+| `camera_offset` | `[right, up, back]`, metres the camera is moved from the eyes in the frame of the entity | `[0, 0, 0]` |
+| `step_smoothing` | How quickly the eyes catch up with a step, per second. 0 lifts them with the body | `10` |
 | `max_pitch` | Degrees the view can turn up or down, from 0 to 90 | `89` |
 
 **Persistent**

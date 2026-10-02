@@ -11,4 +11,5 @@ neon_add_application_test(runtime-prototype NeonRuntime run.cmake
         the-level-is-drawn-from-the-kit-pieces
         the-player-walks-into-the-room
         the-kit-pieces-are-loaded-once
+        the-player-keeps-its-speed-through-a-jump
 )

@@ -7,4 +7,5 @@ neon_add_application_test(runtime-geometry NeonRuntime run.cmake
         CASES
         a-room-built-from-a-prism-is-seen-from-within
         a-box-and-a-plane-are-textured-once-a-metre
+        the-eyes-glide-up-a-step-after-the-body-stops
 )

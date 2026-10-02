@@ -93,6 +93,7 @@ and Windows.
 |---|---|---|
 | A level to walk through | #183 | Import glTF, `external/kenney/` in the project, see [project-layout.md](project-layout.md#external-assets), and a first level as a scene recipe |
 | Walking, looking, shooting | #117 | Input maps with states: named actions a project binds, and maps for walking and for a menu |
+| The feel of the player | #217, #218, #219, #220 | Done. `run` on the click of the left stick as well as the left shift. The eyes glide over a step and a slope at `step_smoothing`. In the air the body keeps the velocity it took off with and the keys steer it by `air_control`, decided with #219 as most shooters do. `camera_offset` moves the camera from the eyes for a lean or a view from behind. See [physics.md](physics.md#the-player) |
 | Enemies, pickups, doors | #146 | Prefabs: an entity described once in a `*.prefab.yml` and placed many times |
 | The game's own logic | #57 | Lua, see [Scripting](#world) |
 | From one level to the next | #118 | A scene manager with a loading screen and what carries over |

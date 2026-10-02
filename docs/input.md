@@ -268,7 +268,7 @@ And what came with the player, see [physics.md](physics.md#the-player):
 | Action | Is | Default binding | Read by |
 |---|---|---|---|
 | `jump` | A button | Space; south | `PlayerMovement`, once per press, while the player stands on the ground |
-| `run` | A button | Left shift | `PlayerMovement`, which walks at `run_speed` while it is down. A controller has no binding: the stick says how fast to walk |
+| `run` | A button | Left shift; the left stick pressed in | `PlayerMovement`, which walks at `run_speed` while it is down. The stick pushed halfway still walks at half the speed |
 
 The `playing` state of the default map has `move`, `look`, `jump`, `run`, and
 `pause`; `menu` has `pause` alone.

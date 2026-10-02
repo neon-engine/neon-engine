@@ -97,12 +97,13 @@ namespace neon
       .buttons = {ControllerButton::South}
     });
 
-    // running is holding a key. A controller has no binding yet; the stick
-    // says how fast to walk
+    // running is holding the shift, or pressing the left stick in, as most
+    // games on a controller do
     map.Add({
       .name = "run",
       .type = InputActionType::Button,
-      .keys = {Key::LeftShift}
+      .keys = {Key::LeftShift},
+      .buttons = {ControllerButton::LeftStick}
     });
 
     map.Add({
