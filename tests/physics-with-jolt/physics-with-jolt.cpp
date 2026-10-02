@@ -906,7 +906,8 @@ entities:
         shape: convex_hull
 )");
 
-    EXPECT_THROW(world.world->Initialize(), std::runtime_error);
+    // a scene with a mistake is said, and the world goes on with the rest
+    world.world->Initialize();
 
     const auto said = world.logger->Messages(LogLevel::Error);
     const std::string file = "assets://scenes/physics.scene.yml";
@@ -927,7 +928,8 @@ entities:
                   file + ":17: 'mask' of Trigger of entity 'gate' holds 40, where a layer from 1 to 32 was "
                   "expected"));
     EXPECT_THAT(said, HasSubstr("Collider of entity 'gate' needs a 'model' for the shape convex_hull"));
-    EXPECT_EQ(world.logger->Count(LogLevel::Error), 7u) << said;
+    // the seven problems, the line that counts them, and the world saying it goes on
+    EXPECT_EQ(world.logger->Count(LogLevel::Error), 9u) << said;
   }
 
   // a scene that is written

@@ -340,10 +340,10 @@ int main(const int argc, char *argv[])
   // frame, before anything was placed
   world.AddSystemAfterPlacing(
     std::make_unique<neon::AudioPlayback>(&audio_system, logging_system.CreateLogger("AudioPlayback")));
-  world.AddSystem(std::make_unique<neon::UiViewLoading>(&ui_system));
+  world.AddSystem(std::make_unique<neon::UiViewLoading>(&ui_system, logging_system.CreateLogger("UiViewLoading")));
   world.AddSystem(std::make_unique<neon::UiClock>(&ui_system));
   world.AddSystem(std::make_unique<neon::UiAudio>(&ui_system, &audio_system));
-  world.AddSystem(std::make_unique<neon::UiSurfaceLoading>(&ui_system));
+  world.AddSystem(std::make_unique<neon::UiSurfaceLoading>(&ui_system, logging_system.CreateLogger("UiSurfaceLoading")));
   world.AddSystem(std::make_unique<neon::UiSurfacePointing>(&ui_system, ui_system.GetGameInput()));
 
   // The physics. The world steps at a fixed rate, and the system that is

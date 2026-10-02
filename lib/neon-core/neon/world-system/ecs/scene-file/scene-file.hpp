@@ -73,10 +73,11 @@ namespace neon
     /// known. A game adds its own.
     [[nodiscard]] ComponentFormats &GetComponentFormats();
 
-    /// Reads the file and creates its entities. Throws when the file cannot
-    /// be read or something in it is wrong. Every problem that was found is
-    /// logged with its line, not only the first.
-    void Populate(EntityStore &store) override;
+    /// Reads the file and creates its entities. Returns false when the file
+    /// cannot be read or something in it is wrong; what could be read is in
+    /// the store, and every problem that was found is logged with its line,
+    /// not only the first, so that a file is corrected in one pass.
+    bool Populate(EntityStore &store) override;
 
     /// Writes every entity of the store to a file, as a scene of the given
     /// name. Components without a format are left out. Returns false when

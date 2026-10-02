@@ -215,11 +215,11 @@ elseif (CASE STREQUAL "user-interface-of-a-scene")
   expect_no_output("[error]")
   expect_image("shots/frame.png")
 elseif (CASE STREQUAL "user-interface-that-is-missing")
-  # nothing is rendered, and the run says why and fails
+  # the run goes on without it and renders, says why, and fails all the same
   expect_exit_code(1)
   expect_output("assets://ui/missing.ui.yml: the file cannot be read")
-  expect_output("The user interface assets://ui/missing.ui.yml cannot be used")
-  expect_no_file("shots/frame.png")
+  expect_output("The user interface assets://ui/missing.ui.yml cannot be used, nothing is shown from the start")
+  expect_image("shots/frame.png")
 elseif (CASE STREQUAL "vulkan-version")
   # what is asked for is the most that is used, and the log says what was
   expect_exit_code(0)

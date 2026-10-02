@@ -17,7 +17,11 @@ namespace neon
   public:
     /// Creates the entities of the scene. The components of the engine are
     /// registered by the time this is called. A scene registers its own.
-    virtual void Populate(EntityStore &store) = 0;
+    ///
+    /// Returns false when something of the scene could not be made: the
+    /// store then holds what could be, every problem is in the log, and the
+    /// world goes on with it. A scene never ends the game.
+    virtual bool Populate(EntityStore &store) = 0;
   };
 } // neon
 

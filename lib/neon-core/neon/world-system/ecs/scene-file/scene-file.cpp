@@ -1,7 +1,6 @@
 #include "scene-file.hpp"
 
 #include <format>
-#include <stdexcept>
 
 namespace neon
 {
@@ -32,14 +31,15 @@ namespace neon
     return _component_formats;
   }
 
-  void SceneFile::Populate(EntityStore &store)
+  bool SceneFile::Populate(EntityStore &store)
   {
     _logger->Info("Loading the scene from {}", _path);
 
     std::string text;
     if (!_file_system->ReadText(_path, text))
     {
-      throw std::runtime_error("The scene " + _path + " cannot be read");
+      _logger->Error("The scene {} cannot be read, the world starts empty", _path);
+      return false;
     }
 
     std::vector<std::string> errors;
@@ -83,13 +83,16 @@ namespace neon
       reader.Finish();
     }
 
-    if (errors.empty()) { return; }
+    if (errors.empty()) { return true; }
 
     for (const auto &error : errors) { _logger->Error("{}", error); }
 
-    throw std::runtime_error(std::format(
-      "The scene {} has {} {}, the first is: {}",
-      _path, errors.size(), errors.size() == 1 ? "problem" : "problems", errors.front()));
+    // the game goes on with what could be read, and the exit code says that
+    // not everything could
+    const std::size_t count = errors.size();
+    const std::string problems = count == 1 ? "problem" : "problems";
+    _logger->Error("The scene {} has {} {}, the world holds what could be read", _path, count, problems);
+    return false;
   }
 
   void SceneFile::ReadEntity(

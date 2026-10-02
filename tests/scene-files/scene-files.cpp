@@ -117,7 +117,7 @@ namespace
     {
       Write(text);
       _logger->Clear();
-      EXPECT_THROW(_scene.Populate(_world.store), std::runtime_error) << text;
+      EXPECT_FALSE(_scene.Populate(_world.store)) << text;
       return _logger->Messages(LogLevel::Error);
     }
 
@@ -218,9 +218,32 @@ namespace
     EXPECT_EQ(_world.store.Get<Health>(_world.store.FindEntity("hero"))->points, 40);
   }
 
-  TEST_F(SceneFilesTest, AFileThatDoesNotExistIsReported)
+  TEST_F(SceneFilesTest, AFileThatDoesNotExistIsReportedAndTheWorldStartsEmpty)
   {
-    EXPECT_THROW(_scene.Populate(_world.store), std::runtime_error);
+    EXPECT_FALSE(_scene.Populate(_world.store));
+    EXPECT_TRUE(_logger->Contains(
+      LogLevel::Error, "The scene assets://scenes/test.scene.yml cannot be read, the world starts empty"))
+      << _logger->Messages(LogLevel::Error);
+  }
+
+  TEST_F(SceneFilesTest, AFileWithAProblemGivesWhatCouldBeReadAndSaysSo)
+  {
+    Write(
+      "scene: test\n"
+      "entities:\n"
+      "  - name: good\n"
+      "    components:\n"
+      "      Transform: Default\n"
+      "  - name: bad\n"
+      "    components:\n"
+      "      Transform:\n"
+      "        postion: [1, 2, 3]\n");
+
+    EXPECT_FALSE(_scene.Populate(_world.store));
+    EXPECT_NE(_world.store.FindEntity("good"), neon::No_Entity);
+    EXPECT_TRUE(_logger->Contains(
+      LogLevel::Error, "The scene assets://scenes/test.scene.yml has 1 problem, the world holds what could be read"))
+      << _logger->Messages(LogLevel::Error);
   }
 
   // what is wrong with a file
@@ -308,22 +331,19 @@ namespace
       "entities:\n  - name: a\n    components:\n      Transform:\n        postion: [1]\n"
       "        scale: big\n      Nope: {}\n");
 
-    EXPECT_EQ(_logger->Count(LogLevel::Error), 3u) << _logger->Messages(LogLevel::Error);
+    // the three problems, and the line that counts them
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 4u) << _logger->Messages(LogLevel::Error);
   }
 
-  TEST_F(SceneFilesTest, WhatIsThrownNamesTheFileAndTheFirstProblem)
+  TEST_F(SceneFilesTest, SaysHowManyProblemsAFileHasAndGoesOn)
   {
     Write("entites: []\n");
 
-    try
-    {
-      _scene.Populate(_world.store);
-      FAIL() << "nothing was thrown";
-    } catch (const std::runtime_error &error)
-    {
-      EXPECT_THAT(error.what(), HasSubstr("The scene assets://scenes/test.scene.yml has 1 problem"));
-      EXPECT_THAT(error.what(), HasSubstr("'entites' is not known"));
-    }
+    EXPECT_FALSE(_scene.Populate(_world.store));
+
+    const std::string said = _logger->Messages(LogLevel::Error);
+    EXPECT_THAT(said, HasSubstr("'entites' is not known"));
+    EXPECT_THAT(said, HasSubstr("The scene assets://scenes/test.scene.yml has 1 problem, the world holds what could be read"));
   }
 
   // saving

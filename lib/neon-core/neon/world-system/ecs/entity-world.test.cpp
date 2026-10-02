@@ -115,7 +115,11 @@ namespace
     /// Lets the scene create what a test asks for.
     void PopulateWith(const std::function<void(EntityStore &)> &populate)
     {
-      ON_CALL(_scene, Populate(_)).WillByDefault(populate);
+      ON_CALL(_scene, Populate(_)).WillByDefault([populate](EntityStore &store)
+      {
+        populate(store);
+        return true;
+      });
     }
   };
 
@@ -155,6 +159,17 @@ namespace
     EXPECT_EQ(_store.IdOf<Light>(), _store.FindComponent("Light"));
     EXPECT_EQ(_store.IdOf<Spectator>(), _store.FindComponent("Spectator"));
     EXPECT_EQ(_store.IdOf<Renderable>(), _store.FindComponent("Renderable"));
+  }
+
+  TEST_F(EntityWorldTest, GoesOnWithWhatCouldBeReadWhenTheSceneHasProblems)
+  {
+    EXPECT_CALL(_scene, Populate(_)).WillOnce(::testing::Return(false));
+
+    _world.Initialize();
+
+    EXPECT_TRUE(_logger->Contains(
+      neon::testing::LogLevel::Error, "The world runs with what could be read of its scene"))
+      << _logger->Messages(neon::testing::LogLevel::Error);
   }
 
   TEST_F(EntityWorldTest, PopulatesTheSceneOnceWithTheStore)

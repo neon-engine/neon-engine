@@ -88,7 +88,12 @@ namespace neon
     for (const auto &system : _after) { system->Initialize(*_store); }
     for (const auto &system : _added_after_placing) { system->Initialize(*_store); }
 
-    _scene->Populate(*_store);
+    // a scene with problems is said in the log, and the world runs with
+    // what could be read: a game is not ended by a file
+    if (!_scene->Populate(*_store))
+    {
+      _logger->Error("The world runs with what could be read of its scene");
+    }
     _initialized = true;
 
     _logger->Info("Initialized the world!");

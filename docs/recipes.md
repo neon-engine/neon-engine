@@ -48,6 +48,7 @@ note of one kind lists only what is its own on top of them.
 | Decision | Reason |
 |---|---|
 | A name that is not known is an error | `postion` would otherwise be ignored, and the entity would sit at the origin without a word. The message is `'postion' is not known to Transform of entity 'a'. Known are: position, rotation, scale` |
+| A problem does not end the game | What could be read is used, the log says what could not with its line, and the run's exit code says that something was wrong (see the [development guide](development.md#command-line)). A game is not ended by a file (#179) |
 | A message names the file, the line, and what was expected | `demo.scene.yml:5: 'position' of Transform of entity 'a' is text, where a list of 3 numbers was expected` |
 | Every problem of a file is reported, not only the first | A file is corrected in one pass |
 | What is left out keeps its default | A file holds what was decided and nothing else |

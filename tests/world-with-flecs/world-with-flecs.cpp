@@ -72,9 +72,10 @@ namespace
   public:
     std::function<void(EntityStore &)> populate;
 
-    void Populate(EntityStore &store) override
+    bool Populate(EntityStore &store) override
     {
       if (populate) { populate(store); }
+      return true;
     }
   };
 

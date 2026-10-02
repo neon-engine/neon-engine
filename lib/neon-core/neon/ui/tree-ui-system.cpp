@@ -4,7 +4,6 @@
 #include <cmath>
 #include <format>
 #include <limits>
-#include <stdexcept>
 
 namespace neon
 {
@@ -88,9 +87,10 @@ namespace neon
 
     if (_settings.start_path.empty()) { return; }
 
+    // the game goes on without it, and the exit code says it was missing
     if (Load(_settings.start_path) < 0)
     {
-      throw std::runtime_error("The user interface " + _settings.start_path + " cannot be used");
+      _logger->Error("The user interface {} cannot be used, nothing is shown from the start", _settings.start_path);
     }
   }
 

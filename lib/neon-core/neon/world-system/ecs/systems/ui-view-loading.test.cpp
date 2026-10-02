@@ -1,12 +1,11 @@
 #include "ui-view-loading.hpp"
 
-#include <stdexcept>
-
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <neon/testing/fake-entity-store.hpp>
 #include <neon/testing/mock-ui-system.hpp>
+#include <neon/testing/recording-logger.hpp>
 #include <neon/world-system/ecs/components/ui-view.hpp>
 
 namespace
@@ -28,7 +27,8 @@ namespace
     // a store that is cleaned up tells it to stop showing what is left
     StrictMock<MockUiContext> _ui;
     FakeEntityStore _store;
-    UiViewLoading _system{&_ui};
+    std::shared_ptr<neon::testing::RecordingLogger> _logger = std::make_shared<neon::testing::RecordingLogger>();
+    UiViewLoading _system{&_ui, _logger};
 
     void SetUp() override
     {
@@ -161,20 +161,18 @@ namespace
     _store.DestroyEntity(hud);
   }
 
-  TEST_F(UiViewLoadingTest, ThrowsWhenAFileCannotBeUsed)
+  TEST_F(UiViewLoadingTest, SaysWhenAFileCannotBeUsedAndGoesOn)
   {
     (void) CreateView("assets://ui/broken.ui.yml");
 
     EXPECT_CALL(_ui, Load("assets://ui/broken.ui.yml")).WillOnce(Return(-1));
 
-    try
-    {
-      _system.Update(_store, 0.016);
-      FAIL() << "Expected the system to throw";
-    } catch (const std::runtime_error &error)
-    {
-      EXPECT_STREQ(error.what(), "The user interface assets://ui/broken.ui.yml cannot be used");
-    }
+    _system.Update(_store, 0.016);
+
+    EXPECT_TRUE(_logger->Contains(
+      neon::testing::LogLevel::Error,
+      "The user interface assets://ui/broken.ui.yml cannot be used, the entity shows nothing"))
+      << _logger->Messages(neon::testing::LogLevel::Error);
   }
 
   TEST_F(UiViewLoadingTest, DoesNotReadAFileAgainThatCouldNotBeUsed)
@@ -182,11 +180,12 @@ namespace
     const Entity hud = CreateView("assets://ui/broken.ui.yml");
 
     EXPECT_CALL(_ui, Load(_)).WillOnce(Return(-1));
-    EXPECT_THROW(_system.Update(_store, 0.016), std::runtime_error);
+    _system.Update(_store, 0.016);
 
-    // for a game that goes on all the same
+    // for a game that goes on all the same, and is told once
     _system.Update(_store, 0.016);
     _system.Update(_store, 0.016);
+    EXPECT_EQ(_logger->Count(neon::testing::LogLevel::Error), 1u) << _logger->Messages(neon::testing::LogLevel::Error);
 
     EXPECT_EQ(_store.Get<UiView>(hud)->document, -1);
   }

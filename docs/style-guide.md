@@ -189,11 +189,21 @@ Google asks for a public virtual destructor instead.
 
 ### Errors
 
+**While a game runs, the engine never throws.** A problem is a result — a
+`bool`, a struct, a list of messages — that the caller handles where it
+happens, and the game goes on: a scene with a mistake is loaded without what
+was wrong, a user interface that cannot be made leaves its entity showing
+nothing, an asset that cannot be read is not drawn. Every such problem is
+logged as an error, and the runtime turns the count of errors into its exit
+code, so that a script or a test learns that something went wrong even though
+the run went on (`LoggingSystem::CountErrors`, `Runtime::HasFailed`). A file
+never ends a game (#179).
+
 | Situation | What the code does | Google |
 |---|---|---|
-| A system cannot start, in `Initialize()` | Logs with `Critical`, then throws `std::runtime_error` | Differs, no exceptions |
-| A programming mistake, such as an id that holds nothing | Throws, `std::out_of_range` in `DataBuffer` | Differs |
-| Something that can fail while the engine runs, such as reading a file | Logs the reason, returns `false`. The result comes back through a reference parameter | Same in spirit |
+| Something that can fail while the game runs: reading a file, a recipe with a mistake, a user interface that cannot be made | Logs the reason as an error, returns `false` or a result, and goes on with what it has | Same in spirit |
+| A system cannot start, in `Initialize()`: no window, no graphics device, no folder for the executable | Logs with `Critical`, then throws `std::runtime_error`, which `main.cpp` catches. Whether these become results too is open (#179) | Differs, no exceptions |
+| A programming mistake, such as an id that holds nothing or a component that was never registered | Throws, `std::out_of_range` in `DataBuffer`, `std::runtime_error` in the store. To be decided with scripting, which makes these reachable at run time (#179) | Differs |
 
 `main.cpp` is the only place that catches.
 

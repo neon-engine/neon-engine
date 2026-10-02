@@ -19,7 +19,7 @@ namespace neon::testing
   class MockScene : public Scene
   {
   public:
-    MOCK_METHOD(void, Populate, (EntityStore &store), (override));
+    MOCK_METHOD(bool, Populate, (EntityStore &store), (override));
   };
 } // neon::testing
 

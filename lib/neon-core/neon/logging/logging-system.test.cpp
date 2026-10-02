@@ -43,6 +43,26 @@ namespace
     }
   };
 
+  TEST_F(LoggingSystemTest, CountsWhatWasLoggedAsAnErrorOrWorse)
+  {
+    LoggingSystem logging_system(_settings);
+    Start(logging_system);
+    const auto one = logging_system.CreateLogger("one");
+    const auto two = logging_system.CreateLogger("two");
+
+    EXPECT_EQ(logging_system.CountErrors(), 0u);
+
+    one->Info("all is well");
+    one->Warn("not quite");
+    EXPECT_EQ(logging_system.CountErrors(), 0u);
+
+    one->Error("something went wrong");
+    two->Critical("and worse");
+    EXPECT_EQ(logging_system.CountErrors(), 2u);
+
+    logging_system.CleanUp();
+  }
+
   TEST_F(LoggingSystemTest, WritesNoFileBeforeItIsInitialized)
   {
     {

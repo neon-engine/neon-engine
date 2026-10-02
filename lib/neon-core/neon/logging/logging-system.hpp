@@ -3,6 +3,7 @@
 #include <memory>
 
 #include "deferred-file-sink.hpp"
+#include "error-count-sink.hpp"
 #include "log-file-target.hpp"
 #include "logger.hpp"
 #include "logging-context.hpp"
@@ -22,6 +23,7 @@ namespace neon
   {
     SettingsConfig _settings_config;
     std::shared_ptr<DeferredFileSink> _file_sink;
+    std::shared_ptr<ErrorCountSink> _error_count;
     std::vector<spdlog::sink_ptr> _sinks;
     std::shared_ptr<spdlog::logger> _logger;
   public:
@@ -38,6 +40,11 @@ namespace neon
 
     /// Call after Initialize().
     void GoWithoutLogFile() override;
+
+    /// How many messages were logged at Error or above since Initialize(),
+    /// by every logger. A run that logged one did not do all it was asked
+    /// to, however far it got, and its exit code says so.
+    [[nodiscard]] std::size_t CountErrors() const;
   };
 } // neon
 

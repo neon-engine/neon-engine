@@ -931,7 +931,7 @@ namespace
       UiSurfaceTest::SetUp();
 
       _store.Initialize();
-      _loading = std::make_unique<UiSurfaceLoading>(_ui.get());
+      _loading = std::make_unique<UiSurfaceLoading>(_ui.get(), _logger);
       _loading->Register(_store);
       _loading->Initialize(_store);
     }
@@ -950,14 +950,7 @@ namespace
       SceneFile scene(&_file_system, &_yaml, "assets://scenes/test.scene.yml", _logger);
       scene.GetComponentFormats().Add(neon::UiSurfaceFormat());
 
-      try
-      {
-        scene.Populate(_store);
-      } catch (const std::exception &)
-      {
-        return false;
-      }
-      return true;
+      return scene.Populate(_store);
     }
   };
 
@@ -1042,12 +1035,12 @@ namespace
       "        ui: assets://ui/terminal.ui.yml\n"
       "        name: terminal\n"));
 
-    EXPECT_THROW(_loading->Update(_store, 0.016), std::runtime_error);
+    _loading->Update(_store, 0.016);
 
-    // and is not tried again
+    // and is not tried again; the game goes on, told once
     _loading->Update(_store, 0.016);
     EXPECT_EQ(_renderer.targets_created, 1u);
-    EXPECT_EQ(Errors().size(), 1u) << _logger->Messages(LogLevel::Error);
+    EXPECT_EQ(Errors().size(), 2u) << _logger->Messages(LogLevel::Error);
   }
 
   TEST_F(UiSurfaceSceneTest, SaysWhatIsWrongWithTheComponent)

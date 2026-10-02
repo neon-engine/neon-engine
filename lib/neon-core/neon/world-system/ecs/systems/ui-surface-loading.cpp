@@ -1,15 +1,15 @@
 #include "ui-surface-loading.hpp"
 
 #include <format>
-#include <stdexcept>
 
 #include <neon/world-system/ecs/components/ui-surface-view.hpp>
 
 namespace neon
 {
-  UiSurfaceLoading::UiSurfaceLoading(UiContext *ui_context)
+  UiSurfaceLoading::UiSurfaceLoading(UiContext *ui_context, const std::shared_ptr<Logger> &logger)
   {
     _ui_context = ui_context;
+    _logger = logger;
   }
 
   void UiSurfaceLoading::Register(EntityStore &store)
@@ -43,16 +43,19 @@ namespace neon
         view.is_tried = true;
         view.surface = _ui_context->CreateSurface(view.name, view.width, view.height, view.scale);
 
+        // said once, since is_tried keeps it from being tried again; the
+        // entity shows nothing and the game goes on
         if (view.surface < 0)
         {
-          throw std::runtime_error("The surface '" + view.name + "' of a user interface cannot be made");
+          _logger->Error("The surface '{}' of a user interface cannot be made, the entity shows nothing", view.name);
+          continue;
         }
 
         view.document = _ui_context->LoadOnto(view.surface, view.ui);
 
         if (view.document < 0)
         {
-          throw std::runtime_error("The user interface " + view.ui + " cannot be used");
+          _logger->Error("The user interface {} cannot be used, the surface '{}' shows nothing", view.ui, view.name);
         }
       }
     });

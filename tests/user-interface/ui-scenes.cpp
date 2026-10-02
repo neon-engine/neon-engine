@@ -37,7 +37,7 @@ namespace
         "  text: \"Health: {health}\"\n");
 
       _store.Initialize();
-      _loading = std::make_unique<UiViewLoading>(_ui.get());
+      _loading = std::make_unique<UiViewLoading>(_ui.get(), _logger);
       _loading->Register(_store);
       _loading->Initialize(_store);
     }
@@ -50,13 +50,14 @@ namespace
     }
 
     /// Reads a scene the way the runtime does.
-    void Populate(const std::string &yaml)
+    /// Returns what the scene returns: whether everything could be read.
+    bool Populate(const std::string &yaml)
     {
       WriteAsset("scenes/test.scene.yml", yaml);
 
       SceneFile scene(&_file_system, &_yaml, "assets://scenes/test.scene.yml", _logger);
       scene.GetComponentFormats().Add(neon::UiViewFormat());
-      scene.Populate(_store);
+      return scene.Populate(_store);
     }
   };
 
@@ -136,25 +137,22 @@ namespace
     EXPECT_EQ(_ui->Find("health"), nullptr);
   }
 
-  TEST_F(UiSceneTest, ASceneThatNamesAFileThatIsWrongEndsTheRun)
+  TEST_F(UiSceneTest, ASceneThatNamesAFileThatIsWrongIsSaidAndTheRunGoesOn)
   {
     WriteAsset("ui/broken.ui.yml", "root:\n  type: lable\n");
 
-    Populate(
+    EXPECT_TRUE(Populate(
       "entities:\n"
       "  - name: hud\n"
       "    components:\n"
       "      Ui:\n"
-      "        file: assets://ui/broken.ui.yml\n");
+      "        file: assets://ui/broken.ui.yml\n"));
 
-    try
-    {
-      _loading->Update(_store, 0.016);
-      FAIL() << "Expected the system to throw";
-    } catch (const std::runtime_error &error)
-    {
-      EXPECT_STREQ(error.what(), "The user interface assets://ui/broken.ui.yml cannot be used");
-    }
+    _loading->Update(_store, 0.016);
+
+    EXPECT_TRUE(_logger->Contains(
+      LogLevel::Error, "The user interface assets://ui/broken.ui.yml cannot be used, the entity shows nothing"))
+      << _logger->Messages(LogLevel::Error);
 
     EXPECT_TRUE(_logger->Contains(
       LogLevel::Error,
@@ -164,17 +162,11 @@ namespace
 
   TEST_F(UiSceneTest, SaysThatTheComponentNamesNoFile)
   {
-    try
-    {
-      Populate(
-        "entities:\n"
-        "  - name: hud\n"
-        "    components:\n"
-        "      Ui: {}\n");
-      FAIL() << "Expected the scene to throw";
-    } catch (const std::runtime_error &)
-    {
-    }
+    EXPECT_FALSE(Populate(
+      "entities:\n"
+      "  - name: hud\n"
+      "    components:\n"
+      "      Ui: {}\n"));
 
     EXPECT_TRUE(_logger->Contains(
       LogLevel::Error,
@@ -184,15 +176,14 @@ namespace
 
   TEST_F(UiSceneTest, SaysThatANameOfTheComponentIsNotKnown)
   {
-    EXPECT_THROW(
+    EXPECT_FALSE(
       Populate(
         "entities:\n"
         "  - name: hud\n"
         "    components:\n"
         "      Ui:\n"
         "        file: assets://ui/hud.ui.yml\n"
-        "        modal: true\n"),
-      std::runtime_error);
+        "        modal: true\n"));
 
     EXPECT_TRUE(_logger->Contains(
       LogLevel::Error,
@@ -244,7 +235,7 @@ namespace
 
     SceneFile scene(&_file_system, &_yaml, "assets://scenes/test.scene.yml", _logger);
 
-    EXPECT_THROW(scene.Populate(_store), std::runtime_error);
+    EXPECT_FALSE(scene.Populate(_store));
     EXPECT_TRUE(_logger->Contains(LogLevel::Error, "component 'Ui' of entity 'hud' is not known"));
   }
 
@@ -270,27 +261,27 @@ namespace
     EXPECT_FALSE(_renderer.batches.empty());
   }
 
-  TEST_F(UiSceneTest, AFileFromTheStartThatIsWrongEndsTheRun)
+  TEST_F(UiSceneTest, AFileFromTheStartThatIsWrongIsSaidAndTheRunGoesOn)
   {
     WriteAsset("ui/broken.ui.yml", "root:\n  type: lable\n");
     Create("assets://ui/broken.ui.yml");
 
-    try
-    {
-      _ui->Initialize();
-      FAIL() << "Expected the user interface to throw";
-    } catch (const std::runtime_error &error)
-    {
-      EXPECT_STREQ(error.what(), "The user interface assets://ui/broken.ui.yml cannot be used");
-    }
+    _ui->Initialize();
+
+    EXPECT_TRUE(_logger->Contains(
+      LogLevel::Error, "The user interface assets://ui/broken.ui.yml cannot be used, nothing is shown from the start"))
+      << _logger->Messages(LogLevel::Error);
   }
 
-  TEST_F(UiSceneTest, AFileFromTheStartThatIsMissingEndsTheRun)
+  TEST_F(UiSceneTest, AFileFromTheStartThatIsMissingIsSaidAndTheRunGoesOn)
   {
     Create("assets://ui/missing.ui.yml");
 
-    EXPECT_THROW(_ui->Initialize(), std::runtime_error);
+    _ui->Initialize();
+
     EXPECT_TRUE(_logger->Contains(LogLevel::Error, "assets://ui/missing.ui.yml: the file cannot be read"));
+    EXPECT_TRUE(_logger->Contains(
+      LogLevel::Error, "The user interface assets://ui/missing.ui.yml cannot be used, nothing is shown from the start"));
   }
 
   TEST_F(UiSceneTest, CanBeCleanedUpTwiceAndStartedAgain)

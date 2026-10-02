@@ -195,11 +195,7 @@ add_library(${TARGET} STATIC
         neon/logging/logging-system.cpp
         neon/logging/logging-system.hpp
         neon/logging/logger.hpp
-        neon/logging/logging-system.cpp
-        neon/logging/logging-system.hpp
-        neon/logging/logging-system.cpp
-        neon/logging/logging-system.hpp
-        neon/logging/logger.hpp
+        neon/logging/error-count-sink.hpp
         neon/logging/spd-logger.cpp
         neon/logging/spd-logger.hpp
         neon/logging/spd-logger.cpp

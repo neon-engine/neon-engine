@@ -79,9 +79,11 @@ namespace neon
 
     void CleanUp();
 
-    /// Whether something the run was asked to do did not happen, such as a
-    /// screenshot that could not be written. An application turns this into
-    /// its exit code.
+    /// Whether something the run was asked to do did not happen: a
+    /// screenshot that could not be written, a scene or a user interface
+    /// with a problem, anything that was logged as an error. The run goes on
+    /// all the same, as a game does; an application turns this into its exit
+    /// code, so that a script learns of it.
     [[nodiscard]] bool HasFailed() const;
   };
 } // neon

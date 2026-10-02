@@ -311,7 +311,7 @@ with exit code 1. See [versions of Vulkan](vulkan-renderer.md#versions-of-vulkan
 | Exit code | Meaning |
 |---|---|
 | 0 | The run did what it was asked to |
-| 1 | The command line was not understood, a screenshot could not be written, or the run ended with an exception. The log says which |
+| 1 | The command line was not understood, something was logged as an error — a scene or a user interface with a problem, a screenshot that could not be written — or the run ended with an exception. The run goes on after an error, as a game does; the exit code says it happened, and the log says what |
 
 A folder that cannot be created or written to is only found out when the
 file system starts or the frame is written. The run then still renders, logs

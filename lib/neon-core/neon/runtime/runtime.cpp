@@ -73,7 +73,9 @@ namespace neon
 
   bool Runtime::HasFailed() const
   {
-    return _failed;
+    // a run that logged an error went on, as a game does, and still did not
+    // do all it was asked to
+    return _failed || (_logging_system != nullptr && _logging_system->CountErrors() > 0);
   }
 
   Runtime::~Runtime()
