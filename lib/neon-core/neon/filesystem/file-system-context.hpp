@@ -55,6 +55,13 @@ namespace neon
 
     /// Writes a whole file as text. See WriteBytes.
     virtual bool WriteText(const std::string &path, const std::string &contents) = 0;
+
+    /// Lists the files in a folder and in every folder below it, as virtual
+    /// paths. The files of a folder come in the order of their names, and
+    /// the folders below come after them, each in turn, so that the order is
+    /// the same on every platform. Returns false when the folder cannot be
+    /// listed, which includes one that is not there.
+    virtual bool ListFiles(const std::string &directory, std::vector<std::string> &paths) = 0;
   };
 }
 

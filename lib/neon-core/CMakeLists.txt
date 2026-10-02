@@ -130,6 +130,13 @@ add_library(${TARGET} STATIC
         neon/reflection/type-info.cpp
         neon/reflection/type-info.hpp
 
+        # scripting: what a script declares, laid out as components of the engine
+        neon/scripting/script-component-layout.cpp
+        neon/scripting/script-component-layout.hpp
+        neon/scripting/script-context.hpp
+        neon/scripting/script-field.hpp
+        neon/scripting/script-system.hpp
+
         # layout
         neon/layout/layout-style.hpp
         neon/layout/layout-engine.hpp
@@ -317,6 +324,8 @@ add_library(${TARGET} STATIC
         neon/world-system/ecs/components/trigger.hpp
         neon/world-system/ecs/systems/physics-simulation.cpp
         neon/world-system/ecs/systems/physics-simulation.hpp
+        neon/world-system/ecs/systems/script-running.cpp
+        neon/world-system/ecs/systems/script-running.hpp
         neon/world-system/ecs/systems/player-movement.cpp
         neon/world-system/ecs/systems/player-movement.hpp
         neon/world-system/ecs/components/ui-view.hpp
@@ -390,6 +399,7 @@ if (NEON_BUILD_TESTS)
           neon/testing/mock-entity-store.hpp
           neon/testing/mock-entity-world.hpp
           neon/testing/mock-file-system-context.hpp
+          neon/testing/mock-script-context.hpp
           neon/testing/mock-input-system.hpp
           neon/testing/mock-render-2d-context.hpp
           neon/testing/mock-render-context.hpp
@@ -412,6 +422,8 @@ if (NEON_BUILD_TESTS)
   # Unit tests. Each one sits next to the file it tests.
   neon_add_unit_test(${TARGET} neon/ui/ui-cascade.test.cpp)
 neon_add_unit_test(${TARGET} neon/ui/ui-text-measure.test.cpp)
+neon_add_unit_test(${TARGET} neon/scripting/script-component-layout.test.cpp)
+neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/script-running.test.cpp)
 neon_add_unit_test(${TARGET} neon/command-line/display-options.test.cpp)
   neon_add_unit_test(${TARGET} neon/input/input-script.test.cpp)
   neon_add_unit_test(${TARGET} neon/reflection/field-text.test.cpp)

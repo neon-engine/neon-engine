@@ -1,5 +1,6 @@
 #include "file-system.hpp"
 
+#include <algorithm>
 #include <cctype>
 #include <vector>
 
@@ -286,4 +287,42 @@ namespace neon
 
     return target.OpenLogFile(native_path);
   }
+
+  bool FileSystem::ListFiles(const std::string &directory, std::vector<std::string> &paths)
+  {
+    // a folder may be written with a slash at its end, which names nothing
+    // on its own; a scheme alone keeps its two
+    std::string folder = directory;
+    while (!folder.empty() && folder.back() == '/' && !folder.ends_with("://")) { folder.pop_back(); }
+
+    // a scheme alone is the folder behind it, which Locate has no name for
+    std::string native_directory;
+    if (folder == assets_scheme) { native_directory = _assets_directory; }
+    else if (folder == user_scheme) { native_directory = _user_directory; }
+    else if (folder == output_scheme) { native_directory = _output_directory; }
+    else if (!Locate(folder, native_directory)) { return false; }
+    if (native_directory.empty()) { return false; }
+    while (native_directory.size() > 1 && native_directory.back() == _native_separator) { native_directory.pop_back(); }
+
+    std::vector<std::string> names;
+    if (!ListDirectory(native_directory, names)) { return false; }
+    std::ranges::sort(names);
+
+    const std::string prefix = folder.ends_with('/') ? folder : folder + '/';
+
+    // the files of this folder first, then the folders below it, each in turn
+    std::vector<std::string> folders;
+    for (const auto &name : names)
+    {
+      std::vector<std::string> inside;
+      if (ListDirectory(native_directory + _native_separator + name, inside)) { folders.push_back(name); }
+      else { paths.push_back(prefix + name); }
+    }
+    for (const auto &name : folders)
+    {
+      if (!ListFiles(prefix + name, paths)) { return false; }
+    }
+    return true;
+  }
+
 } // neon

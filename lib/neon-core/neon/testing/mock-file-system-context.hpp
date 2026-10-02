@@ -22,6 +22,8 @@ namespace neon::testing
     MOCK_METHOD(bool, WriteBytes, (const std::string &path, const std::vector<unsigned char> &contents), (override));
 
     MOCK_METHOD(bool, WriteText, (const std::string &path, const std::string &contents), (override));
+
+    MOCK_METHOD(bool, ListFiles, (const std::string &directory, std::vector<std::string> &paths), (override));
   };
 } // neon::testing
 

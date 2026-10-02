@@ -79,10 +79,10 @@ namespace
     EXPECT_EQ(info.name, "");
     EXPECT_EQ(info.size, 0u);
     EXPECT_EQ(info.alignment, 0u);
-    EXPECT_EQ(info.construct, nullptr);
-    EXPECT_EQ(info.destruct, nullptr);
-    EXPECT_EQ(info.copy, nullptr);
-    EXPECT_EQ(info.move, nullptr);
+    EXPECT_FALSE(info.construct);
+    EXPECT_FALSE(info.destruct);
+    EXPECT_FALSE(info.copy);
+    EXPECT_FALSE(info.move);
     EXPECT_FALSE(info.on_remove);
   }
 
@@ -106,10 +106,10 @@ namespace
   {
     const auto info = ComponentInfo::Of<Named>("Named");
 
-    EXPECT_NE(info.construct, nullptr);
-    EXPECT_NE(info.destruct, nullptr);
-    EXPECT_NE(info.copy, nullptr);
-    EXPECT_NE(info.move, nullptr);
+    EXPECT_TRUE(info.construct);
+    EXPECT_TRUE(info.destruct);
+    EXPECT_TRUE(info.copy);
+    EXPECT_TRUE(info.move);
     EXPECT_FALSE(info.on_remove);
   }
 
@@ -289,8 +289,17 @@ namespace
     const auto counted = ComponentInfo::Of<Counted>("Counted");
 
     EXPECT_NE(named.size, counted.size);
-    EXPECT_NE(named.construct, counted.construct);
-    EXPECT_NE(named.destruct, counted.destruct);
+
+    // the functions are those of their own type: constructing a Counted
+    // counts, constructing a Named does not
+    Counted::constructed = 0;
+    alignas(Counted) unsigned char memory[sizeof(Counted) > sizeof(Named) ? sizeof(Counted) : sizeof(Named)];
+    named.construct(memory, 1);
+    EXPECT_EQ(Counted::constructed, 0);
+    named.destruct(memory, 1);
+    counted.construct(memory, 1);
+    EXPECT_EQ(Counted::constructed, 1);
+    counted.destruct(memory, 1);
   }
 
   TEST(ComponentInfo, CanBeCopiedWithItsFunctions)
@@ -304,7 +313,7 @@ namespace
     copy.on_remove(1, &component);
 
     EXPECT_EQ(copy.name, "Named");
-    EXPECT_EQ(copy.construct, info.construct);
+    EXPECT_TRUE(copy.construct);
     EXPECT_EQ(removed, 1);
   }
 }

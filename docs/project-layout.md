@@ -27,7 +27,7 @@ and a file is found by its name alone.
 | `sounds/` | Sounds and music, `*.wav`, in folders by their use: `music/`, `ambience/`, and the sounds of things next to the top | [audio.md](audio.md) |
 | `fonts/` | Fonts, `*.ttf`, one folder per family with its licence | |
 | `shaders/` | Compiled shaders, `*.spv`, that materials name without an extension | Made by the build, see below |
-| `scripts/` | Game code, once Lua is there (#57) | Not there yet |
+| `scripts/` | Game code in Lua, `*.lua`: a component and its system per file, or `*.component.lua` and `*.system.lua`, and modules for `require`. The engine loads every `*.lua` anywhere under the assets, so this folder is where to keep them, not where they have to be | [scripting.md](scripting.md) |
 | `input/` | Input maps, `*.input.yml`, and scripts of input for runs without a window | [input.md](input.md) |
 | `external/` | Assets that came from outside the project, kept as published, one folder per source and kit: `external/<source>/<kit>/` | See [external assets](#external-assets) |
 
@@ -126,8 +126,8 @@ inside, so that what belongs together is together. Not the other way round:
 
 ## Open questions
 
-- **Scripts** (#57) get their folder with their first files; their names
-  follow this guide.
+- **Scripts** name their component: `door.lua` declares `Door`, so a file
+  is named for what it declares, in `kebab-case` or `snake_case`.
 - **Where `external/` ends**: whether a kit that is used all over the game
   is better sorted by kind, as the fonts are, or kept under its source. The
   first kits decide it.

@@ -760,4 +760,47 @@ namespace
     EXPECT_EQ(target.gone_without, 1);
     EXPECT_TRUE(_logger->Contains(LogLevel::Error, unknown_scheme)) << _logger->Messages(LogLevel::Error);
   }
+
+  TEST_F(FileSystemTest, ListsTheFilesOfAFolderAndOfTheFoldersBelowItInTheOrderOfTheirNames)
+  {
+    _file_system.AddNativeFile("/assets/scripts/zed.lua", "");
+    _file_system.AddNativeFile("/assets/scripts/door.lua", "");
+    _file_system.AddNativeFile("/assets/scripts/lib/tween.lua", "");
+    _file_system.AddNativeFile("/assets/scripts/lib/a/deep.lua", "");
+    _file_system.AddNativeFile("/assets/scripts/enemies/turret.lua", "");
+
+    std::vector<std::string> paths;
+    EXPECT_TRUE(_file_system.ListFiles("assets://scripts", paths));
+    EXPECT_THAT(
+      paths,
+      ElementsAre(
+        "assets://scripts/door.lua",
+        "assets://scripts/zed.lua",
+        "assets://scripts/enemies/turret.lua",
+        "assets://scripts/lib/tween.lua",
+        "assets://scripts/lib/a/deep.lua"));
+
+    // a slash at the end names the same folder
+    paths.clear();
+    EXPECT_TRUE(_file_system.ListFiles("assets://scripts/", paths));
+    EXPECT_THAT(paths, ::testing::SizeIs(5));
+  }
+
+  TEST_F(FileSystemTest, CannotListAFolderThatIsNotThereOrAFile)
+  {
+    std::vector<std::string> paths;
+    EXPECT_FALSE(_file_system.ListFiles("assets://scripts", paths));
+    EXPECT_FALSE(_file_system.ListFiles("assets://models/cube.obj", paths));
+    EXPECT_THAT(paths, IsEmpty());
+  }
+
+  TEST_F(FileSystemTest, ListsTheWholeOfASchemeWhenGivenTheSchemeAlone)
+  {
+    _file_system.AddNativeFile("/assets/scripts/door.lua", "");
+    _file_system.AddNativeFile("/assets/README.md", "");
+
+    std::vector<std::string> paths;
+    EXPECT_TRUE(_file_system.ListFiles("assets://", paths));
+    EXPECT_THAT(paths, ElementsAre("assets://README.md", "assets://models/cube.obj", "assets://scripts/door.lua"));
+  }
 }

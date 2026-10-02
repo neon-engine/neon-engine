@@ -18,6 +18,7 @@
 #include <neon/physics/jolt-physics-system.hpp>
 #include <neon/project/project-file.hpp>
 #include <neon/random/os-entropy.hpp>
+#include <neon/scripting/lua-script-system.hpp>
 #include <neon/settings/settings-file.hpp>
 #include <neon/layout/flex-layout-engine.hpp>
 #include <neon/render/forward-render-pipeline.hpp>
@@ -35,6 +36,7 @@
 #include <neon/world-system/ecs/systems/geometry-building.hpp>
 #include <neon/world-system/ecs/systems/physics-simulation.hpp>
 #include <neon/world-system/ecs/systems/player-movement.hpp>
+#include <neon/world-system/ecs/systems/script-running.hpp>
 #include <neon/world-system/ecs/scene-file/ui-view-format.hpp>
 #include <neon/world-system/ecs/components/ui-sound-switch.hpp>
 #include <neon/world-system/ecs/components/ui-volume.hpp>
@@ -378,15 +380,29 @@ int main(const int argc, char *argv[])
   world.AddSystem(std::make_unique<neon::UiSurfaceLoading>(&ui_system, logging_system.CreateLogger("UiSurfaceLoading")));
   world.AddSystem(std::make_unique<neon::UiSurfacePointing>(&ui_system, ui_system.GetGameInput()));
 
-  // the player, driven by what the user interface left of the input. It
-  // sets the velocity of its body, which the physics moves by
-  world.AddSystem(std::make_unique<neon::PlayerMovement>(ui_system.GetGameInput()));
-
   // The physics. The world steps at a fixed rate, and the system that is
-  // added here takes a step of the physics in each. Systems of a game are
+  // added below takes a step of the physics in each. Systems of a game are
   // added before it, so that what they ask for in a step is part of it.
   neon::Jolt_PhysicsSystem physics_system(settings_config, logging_system.CreateLogger("Jolt_PhysicsSystem"));
   physics_system.Initialize();
+
+  // The game's own code: scripts in Lua anywhere under assets://, which
+  // declare components and systems as the engine's code does. They read
+  // the input the user interface left, and may ask for another scene.
+  neon::Lua_ScriptSystem script_system(&file_system, logging_system.CreateLogger("Lua_ScriptSystem"));
+  script_system.Initialize();
+  script_system.SetInput(ui_system.GetGameInput());
+  script_system.SetWorld(&world);
+  world.AddSystem(std::make_unique<neon::ScriptRunning>(
+    &script_system,
+    &physics_system,
+    &scene.GetComponentFormats(),
+    "assets://",
+    logging_system.CreateLogger("ScriptRunning")));
+
+  // the player, driven by what the user interface left of the input. It
+  // sets the velocity of its body, which the physics moves by
+  world.AddSystem(std::make_unique<neon::PlayerMovement>(ui_system.GetGameInput()));
 
   world.GetFixedClock().SetStepsPerSecond(settings_config.steps_per_second);
   world.GetFixedClock().SetMostStepsPerFrame(settings_config.most_steps_per_frame);
@@ -432,6 +448,7 @@ int main(const int argc, char *argv[])
   // CleanUp is safe to call more than once. Doing it here guarantees the
   // systems shut down before the file system they depend on.
   app.CleanUp();
+  script_system.CleanUp();
   audio_system.CleanUp();
   physics_system.CleanUp();
   file_system.CleanUp();

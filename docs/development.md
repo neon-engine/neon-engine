@@ -59,7 +59,7 @@ The engine's dependencies are git submodules. Fetch the ones the build uses:
 git submodule update --init --recursive \
   external/glm external/sdl2 external/assimp external/jolt-physics \
   external/spdlog external/rapidyaml external/stb external/googletest \
-  external/freetype external/harfbuzz external/lunasvg
+  external/freetype external/harfbuzz external/lunasvg external/lua
 ```
 
 LunaSVG brings PlutoVG as a folder of its own, not as a submodule.

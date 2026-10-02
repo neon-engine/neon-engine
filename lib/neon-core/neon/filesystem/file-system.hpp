@@ -106,6 +106,10 @@ namespace neon
 
     bool WriteText(const std::string &path, const std::string &contents) override;
 
+    /// Walks the folder with ListDirectory, so that every backend lists the
+    /// same way. A name that can be listed is a folder.
+    bool ListFiles(const std::string &directory, std::vector<std::string> &paths) override;
+
     /// Tells a log file target where its file goes, at a virtual path in a
     /// writable scheme such as `user://logs/neon-engine.log`. The folders
     /// that lead to it are created. Call after Initialize().

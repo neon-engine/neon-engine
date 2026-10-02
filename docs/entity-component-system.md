@@ -73,7 +73,7 @@ A frame runs them in this order.
 |---|---|---|
 | 1 | `FixedUpdate` of every system | Once for every step of the world that the time of the frame asks for, which can be never |
 | 2 | `SpectatorMovement` | Moves and turns entities with a `Spectator` by the input |
-| 3 | Systems a game added | In the order they were added |
+| 3 | Systems a game added | In the order they were added. `ScriptRunning` is one of them: it runs the systems the scripts declare, see [scripting.md](scripting.md) |
 | 4 | `TransformPropagation` | Places every entity in the world, parents before children |
 | 5 | `Interpolate` of every system | Places what is drawn between the last two steps |
 | 6 | `RenderSubmission` | Hands the camera, the lights, and what is visible to the render pipeline |

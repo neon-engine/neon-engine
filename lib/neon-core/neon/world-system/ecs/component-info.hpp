@@ -24,17 +24,20 @@ namespace neon
     std::size_t size = 0;
     std::size_t alignment = 0;
 
-    /// Creates `count` components in memory that holds none.
-    void (*construct)(void *at, std::size_t count) = nullptr;
+    /// Creates `count` components in memory that holds none. The four
+    /// functions may hold state, so that a component whose layout is only
+    /// known while the game runs, one a script declares, can be described
+    /// too.
+    std::function<void(void *at, std::size_t count)> construct;
 
     /// Ends `count` components. The memory is released by the store.
-    void (*destruct)(void *at, std::size_t count) = nullptr;
+    std::function<void(void *at, std::size_t count)> destruct;
 
     /// Assigns `count` components from others that stay as they are.
-    void (*copy)(void *to, const void *from, std::size_t count) = nullptr;
+    std::function<void(void *to, const void *from, std::size_t count)> copy;
 
     /// Assigns `count` components from others that are given up.
-    void (*move)(void *to, void *from, std::size_t count) = nullptr;
+    std::function<void(void *to, void *from, std::size_t count)> move;
 
     /// Called before a component leaves an entity, which includes the entity
     /// being destroyed and the store being cleaned up. It is the place to
