@@ -8,13 +8,18 @@
 namespace neon
 {
   /// The groups every audio system has. Each has a volume of its own, which
-  /// is what a settings menu changes. A game adds more with
-  /// AudioContext::AddGroup().
+  /// is what a settings menu changes. A project declares more in its
+  /// settings file, and a game adds more with AudioContext::AddGroup().
   namespace sound_group
   {
     constexpr auto music = "music";
     constexpr auto effects = "effects";
     constexpr auto voices = "voices";
+
+    /// What a place sounds like: wind, a hum, rain. Not music, since it
+    /// is held still with the game, and not an effect, since it is not
+    /// stopped with them.
+    constexpr auto ambience = "ambience";
   }
 
   /// What a sound is created from.

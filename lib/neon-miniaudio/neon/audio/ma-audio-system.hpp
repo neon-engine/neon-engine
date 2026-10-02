@@ -19,8 +19,11 @@ namespace neon
   /// many sounds are created from it. It is decoded while it plays.
   ///
   /// Every group is a sound group of miniaudio, which the sounds of the group
-  /// are mixed into. The groups and their volumes are kept when the system
-  /// is cleaned up, as what a player chose in the settings is.
+  /// are mixed into. The groups come from the settings, with their volumes,
+  /// and are kept when the system is cleaned up, as what a player chose in
+  /// the settings is. A sound that is held while the game is paused is
+  /// stopped where it is and started from there again, which miniaudio
+  /// does without seeking.
   // ReSharper disable once CppInconsistentNaming
   class MA_AudioSystem final : public AudioSystem
   {
@@ -74,6 +77,10 @@ namespace neon
     void SetMasterVolume(float volume) override;
 
     void AddGroup(const std::string &group) override;
+
+    void StopGroup(const std::string &group) override;
+
+    void SetPaused(bool paused) override;
 
     void SetGroupVolume(const std::string &group, float volume) override;
 

@@ -22,6 +22,7 @@ namespace
   using neon::ApiVersion;
   using neon::RYML_DocumentFormat;
   using neon::SettingsFile;
+  using neon::SoundGroupSetting;
   using neon::testing::LogLevel;
   using neon::testing::MemoryFileSystem;
   using neon::testing::RecordingLogger;
@@ -52,7 +53,17 @@ namespace
     "\n"
     "rendering:\n"
     "  vulkan_version: \"1.2\"\n"
-    "  max_light_sources: 64\n";
+    "  max_light_sources: 64\n"
+    "\n"
+    "audio:\n"
+    "  groups:\n"
+    "    - radio\n"
+    "    - name: crowd\n"
+    "      volume: 0.5\n"
+    "  volumes:\n"
+    "    music: 0.6\n"
+    "    ambience: 0.25\n"
+    "    radio: 0.75\n";
 
   class SettingsFilesTest : public ::testing::Test
   {
@@ -100,6 +111,17 @@ namespace
       EXPECT_THAT(_errors.front(), HasSubstr(text));
     }
 
+    /// The volume of a group of the settings, or -1 for a group that is
+    /// not there.
+    float VolumeOf(const std::string &group) const
+    {
+      for (const auto &setting : _settings.sound_groups)
+      {
+        if (setting.name == group) { return setting.volume; }
+      }
+      return -1.0f;
+    }
+
     static std::string FileOfTheRuntime()
     {
       const std::ifstream file(NEON_RUNTIME_SETTINGS);
@@ -132,6 +154,13 @@ namespace
     EXPECT_EQ(_settings.most_steps_per_frame, 4u);
     EXPECT_EQ(_settings.vulkan_version, (ApiVersion{1, 2}));
     EXPECT_EQ(_settings.max_light_sources, 64u);
+    EXPECT_EQ(VolumeOf("music"), 0.6f);
+    EXPECT_EQ(VolumeOf("effects"), 1.0f);
+    EXPECT_EQ(VolumeOf("voices"), 1.0f);
+    EXPECT_EQ(VolumeOf("ambience"), 0.25f);
+    EXPECT_EQ(VolumeOf("radio"), 0.75f);
+    EXPECT_EQ(VolumeOf("crowd"), 0.5f);
+    EXPECT_EQ(_settings.sound_groups.size(), 6u);
     EXPECT_THAT(_errors, IsEmpty());
   }
 
@@ -259,9 +288,116 @@ namespace
 
   TEST_F(SettingsFilesTest, RefusesAPartItDoesNotKnow)
   {
-    WriteOfTheProject("version: 1\naudio:\n  volume: 1\n");
+    WriteOfTheProject("version: 1\nnetwork:\n  port: 1\n");
 
-    ExpectRefused("assets://settings.yml:2: 'audio' is not known to the settings. Known are: ");
+    ExpectRefused("assets://settings.yml:2: 'network' is not known to the settings. Known are: ");
+  }
+
+  // the groups of sounds
+
+  TEST_F(SettingsFilesTest, HasTheGroupsOfTheEngineWithoutAFile)
+  {
+    EXPECT_EQ(VolumeOf("music"), 1.0f);
+    EXPECT_EQ(VolumeOf("effects"), 1.0f);
+    EXPECT_EQ(VolumeOf("voices"), 1.0f);
+    EXPECT_EQ(VolumeOf("ambience"), 1.0f);
+    EXPECT_EQ(_settings.sound_groups.size(), 4u);
+  }
+
+  TEST_F(SettingsFilesTest, AGroupOfTheProjectPausesWithTheGameAsTheEffectsDo)
+  {
+    WriteOfTheProject("version: 1\naudio:\n  groups: [radio]\n");
+
+    ASSERT_TRUE(ReadOfTheProject()) << ::testing::PrintToString(_errors);
+    ASSERT_EQ(_settings.sound_groups.size(), 5u);
+    EXPECT_EQ(_settings.sound_groups.back().name, "radio");
+    EXPECT_TRUE(_settings.sound_groups.back().pauses);
+    EXPECT_FALSE(_settings.sound_groups.front().pauses);
+  }
+
+  TEST_F(SettingsFilesTest, ThePlayersFileSetsTheVolumeOfAGroupOfTheProject)
+  {
+    WriteOfTheProject("version: 1\naudio:\n  groups:\n    - radio\n  volumes:\n    radio: 0.5\n");
+    WriteOfThePlayer("version: 1\naudio:\n  volumes:\n    radio: 0.25\n    ambience: 0\n");
+
+    ASSERT_TRUE(ReadOfTheProject()) << ::testing::PrintToString(_errors);
+    EXPECT_EQ(VolumeOf("radio"), 0.5f);
+
+    ASSERT_TRUE(ReadOfThePlayer()) << ::testing::PrintToString(_errors);
+    EXPECT_EQ(VolumeOf("radio"), 0.25f);
+    EXPECT_EQ(VolumeOf("ambience"), 0.0f);
+    EXPECT_EQ(VolumeOf("music"), 1.0f);
+  }
+
+  TEST_F(SettingsFilesTest, RefusesAGroupThatIsDeclaredTwice)
+  {
+    WriteOfTheProject("version: 1\naudio:\n  groups:\n    - radio\n    - name: radio\n      volume: 0.5\n");
+
+    ExpectRefused("assets://settings.yml:5: 'groups' of 'audio' of the settings declares 'radio', which is a "
+                  "group already. There are: music, effects, voices, ambience, radio");
+  }
+
+  TEST_F(SettingsFilesTest, RefusesAGroupOfTheEngineDeclaredAgain)
+  {
+    WriteOfTheProject("version: 1\naudio:\n  groups:\n    - ambience\n");
+
+    ExpectRefused("assets://settings.yml:4: 'groups' of 'audio' of the settings declares 'ambience', which is a "
+                  "group already. There are: music, effects, voices, ambience");
+  }
+
+  TEST_F(SettingsFilesTest, RefusesAVolumeOfAGroupThatIsNotThere)
+  {
+    WriteOfTheProject("version: 1\naudio:\n  volumes:\n    musik: 0.5\n");
+
+    ExpectRefused("assets://settings.yml:4: 'musik' of 'volumes' of 'audio' of the settings is not a group. "
+                  "There are: music, effects, voices, ambience");
+  }
+
+  TEST_F(SettingsFilesTest, RefusesANameAGroupDoesNotKnow)
+  {
+    WriteOfTheProject("version: 1\naudio:\n  groups:\n    - name: radio\n      loudness: 0.5\n");
+
+    ExpectRefused("assets://settings.yml:5: 'loudness' is not known to group 1 of 'groups' of 'audio' of the "
+                  "settings. Known are: name, volume");
+  }
+
+  TEST_F(SettingsFilesTest, RefusesAGroupWithoutAName)
+  {
+    WriteOfTheProject("version: 1\naudio:\n  groups:\n    - volume: 0.5\n");
+
+    ExpectRefused("assets://settings.yml:4: 'name' is missing. It holds the name of the group");
+  }
+
+  TEST_F(SettingsFilesTest, RefusesAGroupThatIsNeitherANameNorAMap)
+  {
+    WriteOfTheProject("version: 1\naudio:\n  groups:\n    - [radio]\n");
+
+    ExpectRefused("assets://settings.yml:4: 'groups' of 'audio' of the settings holds a list, where the name of "
+                  "a group was expected, or a map with its name and volume");
+  }
+
+  TEST_F(SettingsFilesTest, RefusesGroupsThatAreNotAList)
+  {
+    WriteOfTheProject("version: 1\naudio:\n  groups: radio\n");
+
+    ExpectRefused("assets://settings.yml:3: 'groups' of 'audio' of the settings is text, where a list of names "
+                  "was expected");
+  }
+
+  TEST_F(SettingsFilesTest, RefusesAVolumeBelowSilence)
+  {
+    WriteOfTheProject("version: 1\naudio:\n  volumes:\n    music: -1\n");
+
+    ExpectRefused("assets://settings.yml:4: 'music' of 'volumes' of 'audio' of the settings is -1, where a number "
+                  "of at least 0 was expected, 1 being the loudness of the sounds");
+  }
+
+  TEST_F(SettingsFilesTest, AFileWithAGroupThatIsRefusedDeclaresNone)
+  {
+    WriteOfTheProject("version: 1\naudio:\n  groups:\n    - radio\n    - music\n");
+
+    EXPECT_FALSE(ReadOfTheProject());
+    EXPECT_EQ(_settings.sound_groups.size(), 4u);
   }
 
   TEST_F(SettingsFilesTest, ReportsEveryProblemNotOnlyTheFirst)

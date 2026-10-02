@@ -34,11 +34,19 @@ namespace neon
       std::shared_ptr<FileContents> file;
       ma_decoder decoder{};
       ma_sound sound{};
+
+      // the group it was put in, which is the effects for one that is not
+      // there
+      std::string group;
+
+      // held where it is while the game is paused
+      bool paused = false;
     };
 
     struct Group
     {
       float volume = 1.0f;
+      bool pauses = true;
 
       // made when the engine is, as it is a part of it
       bool is_made = false;
@@ -71,12 +79,13 @@ namespace neon
     std::map<std::string, std::weak_ptr<FileContents>> files;
 
     std::map<std::string, Group> groups;
+    bool paused = false;
 
-    State()
+    explicit State(const std::vector<SoundGroupSetting> &settings)
     {
-      for (const auto *name : {sound_group::music, sound_group::effects, sound_group::voices})
+      for (const auto &group : settings)
       {
-        groups.try_emplace(name);
+        groups.try_emplace(group.name, Group{.volume = std::max(group.volume, 0.0f), .pauses = group.pauses});
       }
     }
 
@@ -123,7 +132,7 @@ namespace neon
     const std::shared_ptr<Logger> &logger)
     : AudioSystem(settings_config, file_system, logger)
   {
-    _state = std::make_unique<State>();
+    _state = std::make_unique<State>(_settings_config.sound_groups);
   }
 
   MA_AudioSystem::~MA_AudioSystem()
@@ -313,6 +322,7 @@ namespace neon
       return -1;
     }
 
+    sound->group = group->first;
     ma_sound_set_looping(&sound->sound, sound_info.looping ? MA_TRUE : MA_FALSE);
     ma_sound_set_volume(&sound->sound, sound_info.volume);
     ma_sound_set_pitch(&sound->sound, sound_info.pitch);
@@ -350,6 +360,7 @@ namespace neon
     ma_sound_set_fade_in_pcm_frames(&sound->sound, 1.0f, 1.0f, 0);
 
     ma_sound_seek_to_pcm_frame(&sound->sound, 0);
+    sound->paused = false;
 
     if (const auto result = ma_sound_start(&sound->sound); result != MA_SUCCESS)
     {
@@ -362,14 +373,16 @@ namespace neon
   {
     if (auto *sound = _state->Find(sound_id); sound != nullptr)
     {
+      sound->paused = false;
       ma_sound_stop(&sound->sound);
     }
   }
 
   bool MA_AudioSystem::IsPlaying(const int sound_id)
   {
+    // a sound that is held is playing, and goes on when the game does
     auto *sound = _state->Find(sound_id);
-    return sound != nullptr && ma_sound_is_playing(&sound->sound) == MA_TRUE;
+    return sound != nullptr && (sound->paused || ma_sound_is_playing(&sound->sound) == MA_TRUE);
   }
 
   void MA_AudioSystem::FadeIn(const int sound_id, const double seconds)
@@ -465,6 +478,41 @@ namespace neon
     {
       const std::string reason = ma_result_description(made);
       _logger->Error("Group {} could not be made, its sounds go straight to the output: {}", group, reason);
+    }
+  }
+
+  void MA_AudioSystem::StopGroup(const std::string &group)
+  {
+    if (!_state->groups.contains(group))
+    {
+      _logger->Warn("The sounds of group {} cannot be stopped, as there is no such group", group);
+      return;
+    }
+
+    for (auto &[id, sound] : _state->sounds)
+    {
+      if (sound.group == group) { Stop(id); }
+    }
+  }
+
+  void MA_AudioSystem::SetPaused(const bool paused)
+  {
+    if (paused == _state->paused) { return; }
+    _state->paused = paused;
+
+    for (auto &[id, sound] : _state->sounds)
+    {
+      if (paused)
+      {
+        // stopped without seeking, so that it goes on from where it is
+        if (!_state->groups.at(sound.group).pauses || ma_sound_is_playing(&sound.sound) == MA_FALSE) { continue; }
+        ma_sound_stop(&sound.sound);
+        sound.paused = true;
+      } else if (sound.paused)
+      {
+        sound.paused = false;
+        ma_sound_start(&sound.sound);
+      }
     }
   }
 

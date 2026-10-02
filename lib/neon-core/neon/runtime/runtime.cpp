@@ -40,6 +40,11 @@ namespace neon
     return _entropy;
   }
 
+  void Runtime::SetAudio(AudioContext *audio_context)
+  {
+    _audio_context = audio_context;
+  }
+
   void Runtime::Initialize() const
   {
     // order here matters
@@ -132,7 +137,9 @@ namespace neon
 
     if (is_pressed && !was_shown && _ui_system->GetGameInput()->IsActionDown("pause")) { ShowPauseMenu(); }
 
-    _world_system->SetPaused(_pause_document >= 0 || _settings_document >= 0);
+    const bool paused = _pause_document >= 0 || _settings_document >= 0;
+    _world_system->SetPaused(paused);
+    if (_audio_context != nullptr) { _audio_context->SetPaused(paused); }
   }
 
   void Runtime::ShowPauseMenu()

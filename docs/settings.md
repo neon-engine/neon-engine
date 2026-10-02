@@ -47,6 +47,15 @@ input:
 rendering:
   vulkan_version: "1.3"
   max_light_sources: 1024
+
+audio:
+  groups:
+    - radio
+    - name: crowd
+      volume: 0.5
+  volumes:
+    music: 0.6
+    ambience: 0.5
 ```
 
 The settings of the runtime are
@@ -67,6 +76,8 @@ The settings of the runtime are
 | `input.gyro` | The player's switch for the gyro of a controller, over what the input map says, see [input.md](input.md#sensors) | Left to the map, which has it off unless an action says `enabled: true` |
 | `rendering.vulkan_version` | The version of Vulkan to ask for, in quotes, since `1.10` as a number is `1.1` | `"1.3"` |
 | `rendering.max_light_sources` | How many lights a frame may hold. A whole number above zero | 1024 |
+| `audio.groups` | The [groups of sounds](audio.md#groups) the project has besides those of the engine: a list of names, or of maps with a `name` and the `volume` the group starts at. A name that is there already is an error. A group of the project is held still while the game is paused, as the effects are | None. The groups of the engine are `music`, `effects`, `voices`, and `ambience` |
+| `audio.volumes` | The volume of a group by its name, 0 for silence and 1 for the loudness of its sounds, not below 0. A name that is not a group of the engine or of the project, declared above or in a file read before, is an error | 1 for every group |
 
 A name that is not known is an error, as in every recipe: the file is a
 configuration file, not a recipe, since its name says no kind, and the rules
@@ -87,7 +98,6 @@ by a file a menu wrote.
 | The name and organization of the project, the scenes, the entry scene | `project.yml`, see [projects.md](projects.md) | They say what the project is. A player may not change them |
 | The actions of the game and what is bound to them | The input map, see [input.md](input.md) | A project's recipe. What a player rebinds will be a layer of its own, `user://input.yml`. Whether a sensor is on is a setting, `input.gyro` |
 | `--headless-renderer`, `--frames`, `--screenshot`, `--output-dir`, `--time-step`, `--input` | The command line only | They are for a run, not for a game |
-| The volume of the sound groups | Nothing yet | They belong in layer 3 once a settings menu writes it, through the audio interfaces of #71 |
 | The present mode, the renderer | Nothing yet | Open in [command-line.md](command-line.md#open-questions) |
 
 ## How it is built
@@ -107,7 +117,8 @@ runtime read as it is in the repository.
 - **A settings menu that writes layer 3** (#125 follow-up): the menu of
   `settings.ui.yml` changes volumes today and keeps nothing. Writing
   `user://settings.yml` needs `DocumentFormat::Write` on the values that
-  changed, and the volumes of the sound groups as settings.
+  changed. The volumes of the sound groups are settings now, `audio.volumes`,
+  and the menu's sliders start at the values of its file, not at them.
 - **Which command-line options become settings**: `--window-size`,
   `--ui-scale`, `--vulkan-version`, and `--renderer` have a place here now;
   whether a shipped runtime keeps the options is #143.

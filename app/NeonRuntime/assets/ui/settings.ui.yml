@@ -28,6 +28,7 @@ values:
   vsync: true
   volume: 80
   music: 60
+  ambience: 50
   track: chilled
   quality: high
   difficulty: normal
@@ -103,6 +104,20 @@ root:
                   children:
                     - {type: slider, name: music, min: 0, max: 100, step: 5, value: "{music}"}
                     - {type: label, class: value, text: "{music}"}
+
+            # the volumes of the groups of sounds: each slider is a value
+            # that a UiVolume of the scene hands to its group. A project
+            # with a group of its own adds a row like this one, with a
+            # value named after the group
+            - type: panel
+              class: row
+              children:
+                - {type: label, class: row-label, text: Ambience}
+                - type: panel
+                  class: with-value
+                  children:
+                    - {type: slider, name: ambience, min: 0, max: 100, step: 5, value: "{ambience}"}
+                    - {type: label, class: value, text: "{ambience}"}
 
             # which piece of music plays: the scene fades from one to the
             # next when another is chosen

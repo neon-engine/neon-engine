@@ -37,6 +37,14 @@ namespace neon
   ///     rendering:
   ///       vulkan_version: "1.3"
   ///
+  ///     audio:
+  ///       groups:
+  ///         - radio
+  ///         - {name: crowd, volume: 0.5}
+  ///       volumes:
+  ///         music: 0.6
+  ///         ambience: 0.5
+  ///
   /// What a file leaves out keeps the value it had, so that the files are
   /// read in layers, each on top of the one before: the defaults in code,
   /// the file of the project at `assets://settings.yml`, the file of the

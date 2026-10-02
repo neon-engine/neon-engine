@@ -214,11 +214,26 @@ namespace
 
   // Groups
 
-  TEST_F(HeadlessAudioSystemTest, HasMusicEffectsAndVoicesFromTheStart)
+  TEST_F(HeadlessAudioSystemTest, HasMusicEffectsVoicesAndAmbienceFromTheStart)
   {
     EXPECT_EQ(_audio.GetGroupVolume(neon::sound_group::music), 1.0f);
     EXPECT_EQ(_audio.GetGroupVolume(neon::sound_group::effects), 1.0f);
     EXPECT_EQ(_audio.GetGroupVolume(neon::sound_group::voices), 1.0f);
+    EXPECT_EQ(_audio.GetGroupVolume(neon::sound_group::ambience), 1.0f);
+  }
+
+  TEST_F(HeadlessAudioSystemTest, StartsWithTheGroupsOfTheSettingsAtTheirVolumes)
+  {
+    SettingsConfig settings;
+    settings.sound_groups.front().volume = 0.25f;
+    settings.sound_groups.push_back({.name = "radio", .volume = 0.5f});
+
+    Headless_AudioSystem audio{settings, nullptr, _logger};
+
+    EXPECT_EQ(audio.GetGroupVolume(neon::sound_group::music), 0.25f);
+    EXPECT_EQ(audio.GetGroupVolume("radio"), 0.5f);
+    EXPECT_GE(audio.CreateSound({.path = "assets://sounds/news.ogg", .group = "radio"}), 0);
+    EXPECT_FALSE(_logger->Contains(LogLevel::Warn, "is of group radio"));
   }
 
   TEST_F(HeadlessAudioSystemTest, KeepsTheVolumeOfAGroup)
@@ -270,6 +285,125 @@ namespace
 
     EXPECT_EQ(_audio.GetGroupVolume(neon::sound_group::music), 0.25f);
     EXPECT_EQ(_audio.GetGroupVolume("ambience"), 1.0f);
+  }
+
+  // Pausing and stopping groups
+
+  TEST_F(HeadlessAudioSystemTest, HoldsTheAmbienceWhilePausedAndLetsItGoOnAfter)
+  {
+    // a sound that does not loop ends at the next frame, unless it is held
+    const int hum = _audio.CreateSound({.path = "assets://sounds/hum.wav", .group = neon::sound_group::ambience});
+    _audio.Play(hum);
+
+    _audio.SetPaused(true);
+    _audio.Advance(0.0);
+    _audio.Advance(1.0);
+
+    EXPECT_TRUE(_audio.IsPlaying(hum));
+
+    _audio.SetPaused(false);
+    EXPECT_TRUE(_audio.IsPlaying(hum));
+    _audio.Advance(1.0 / 60.0);
+    EXPECT_FALSE(_audio.IsPlaying(hum));
+  }
+
+  TEST_F(HeadlessAudioSystemTest, HoldsTheEffectsAndTheGroupsOfAGameWhilePaused)
+  {
+    _audio.AddGroup("radio");
+    const int step = _audio.CreateSound({.path = "assets://sounds/step.wav"});
+    const int news = _audio.CreateSound({.path = "assets://sounds/news.ogg", .group = "radio"});
+    _audio.Play(step);
+    _audio.Play(news);
+
+    _audio.SetPaused(true);
+    _audio.Advance(1.0);
+
+    EXPECT_TRUE(_audio.IsPlaying(step));
+    EXPECT_TRUE(_audio.IsPlaying(news));
+  }
+
+  TEST_F(HeadlessAudioSystemTest, LetsTheMusicPlayOnWhilePaused)
+  {
+    const int music = _audio.CreateSound({.path = "assets://sounds/theme.ogg", .group = neon::sound_group::music});
+    _audio.Play(music);
+
+    _audio.SetPaused(true);
+    _audio.Advance(1.0);
+
+    EXPECT_FALSE(_audio.IsPlaying(music));
+  }
+
+  TEST_F(HeadlessAudioSystemTest, DoesNotFadeOutASoundThatIsHeld)
+  {
+    const int hum = _audio.CreateSound({.path = "assets://sounds/hum.wav", .looping = true});
+    _audio.Play(hum);
+    _audio.FadeOut(hum, 1.0);
+
+    _audio.SetPaused(true);
+    _audio.Advance(2.0);
+    EXPECT_TRUE(_audio.IsPlaying(hum));
+
+    _audio.SetPaused(false);
+    _audio.Advance(2.0);
+    EXPECT_FALSE(_audio.IsPlaying(hum));
+  }
+
+  TEST_F(HeadlessAudioSystemTest, DoesNotHoldASoundThatIsPlayedWhilePaused)
+  {
+    const int step = _audio.CreateSound({.path = "assets://sounds/step.wav"});
+
+    _audio.SetPaused(true);
+    _audio.Play(step);
+    _audio.Advance(1.0 / 60.0);
+
+    EXPECT_FALSE(_audio.IsPlaying(step));
+  }
+
+  TEST_F(HeadlessAudioSystemTest, StopsTheMusicAndLeavesTheAmbience)
+  {
+    const int music = _audio.CreateSound({.path = "assets://sounds/theme.ogg", .looping = true, .group = neon::sound_group::music});
+    const int hum = _audio.CreateSound({.path = "assets://sounds/hum.wav", .looping = true, .group = neon::sound_group::ambience});
+    _audio.Play(music);
+    _audio.Play(hum);
+
+    _audio.StopGroup(neon::sound_group::music);
+
+    EXPECT_FALSE(_audio.IsPlaying(music));
+    EXPECT_TRUE(_audio.IsPlaying(hum));
+  }
+
+  TEST_F(HeadlessAudioSystemTest, StopsTheEffectsAndLeavesTheAmbience)
+  {
+    const int step = _audio.CreateSound({.path = "assets://sounds/step.wav", .looping = true});
+    const int hum = _audio.CreateSound({.path = "assets://sounds/hum.wav", .looping = true, .group = neon::sound_group::ambience});
+    _audio.Play(step);
+    _audio.Play(hum);
+
+    _audio.StopGroup(neon::sound_group::effects);
+
+    EXPECT_FALSE(_audio.IsPlaying(step));
+    EXPECT_TRUE(_audio.IsPlaying(hum));
+  }
+
+  TEST_F(HeadlessAudioSystemTest, StopsASoundOfAGroupThatIsNotThereWithTheEffects)
+  {
+    const int sound = _audio.CreateSound({.path = "assets://sounds/theme.ogg", .looping = true, .group = "musik"});
+    _audio.Play(sound);
+
+    _audio.StopGroup(neon::sound_group::effects);
+
+    EXPECT_FALSE(_audio.IsPlaying(sound));
+  }
+
+  TEST_F(HeadlessAudioSystemTest, ReportsStoppingAGroupThatIsNotThere)
+  {
+    const int step = _audio.CreateSound({.path = "assets://sounds/step.wav", .looping = true});
+    _audio.Play(step);
+
+    _audio.StopGroup("musik");
+
+    EXPECT_TRUE(_audio.IsPlaying(step));
+    EXPECT_TRUE(_logger->Contains(LogLevel::Warn, "The sounds of group musik cannot be stopped, as there is no such group"));
   }
 
   TEST_F(HeadlessAudioSystemTest, ForgetsEverySoundWhenCleanedUp)

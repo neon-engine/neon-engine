@@ -430,6 +430,8 @@ int main(const int argc, char *argv[])
 
   app.SetUiSystem(&ui_system);
   app.SetEntropy(&entropy);
+  // the sounds that pause with the game are held while a menu is shown
+  app.SetAudio(&audio_system);
 
   // a script that starts the runtime learns from the exit code whether the
   // run did what it was asked to

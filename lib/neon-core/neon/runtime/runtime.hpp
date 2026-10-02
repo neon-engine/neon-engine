@@ -2,6 +2,7 @@
 #define RUNTIME_HPP
 
 #include "settings-config.hpp"
+#include "neon/audio/audio-context.hpp"
 #include "neon/input/input-system.hpp"
 #include "neon/logging/logging-system.hpp"
 #include "neon/random/entropy-context.hpp"
@@ -28,6 +29,7 @@ namespace neon
     WorldSystem* _world_system;
     UiSystem *_ui_system = nullptr;
     EntropyContext *_entropy = nullptr;
+    AudioContext *_audio_context = nullptr;
     std::shared_ptr<Logger> _logger;
 
     // the pause menu while it is shown
@@ -39,7 +41,8 @@ namespace neon
     /// Shows the pause menu when pause is pressed, takes it away when
     /// resume is chosen, closes the window on quit, opens the settings menu
     /// in its place when settings is chosen and shows it again when that is
-    /// closed, and holds the world still while either is shown.
+    /// closed, and holds the world and the sounds that pause with it still
+    /// while either is shown.
     void UpdatePauseMenu();
 
     /// Loads the pause menu, and says when it cannot be shown.
@@ -74,6 +77,11 @@ namespace neon
 
     /// The random numbers of the operating system, or null without any.
     [[nodiscard]] EntropyContext *GetEntropy() const;
+
+    /// Gives the runtime the audio, so that the sounds that pause with the
+    /// game are held while a menu holds the world still. Without it the
+    /// sounds play on.
+    void SetAudio(AudioContext *audio_context);
 
     virtual void Run();
 

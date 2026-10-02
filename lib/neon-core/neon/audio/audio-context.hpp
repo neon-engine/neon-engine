@@ -75,9 +75,23 @@ namespace neon
     /// on top of the volumes of the groups.
     virtual void SetMasterVolume(float volume) = 0;
 
-    /// Adds a group of sounds, at a volume of 1. Music, effects, and voices
-    /// are there from the start. Adding a group that is there does nothing.
+    /// Adds a group of sounds, at a volume of 1, which is held still while
+    /// the game is paused, as the effects are. Music, effects, voices, and
+    /// ambience are there from the start, with the groups the settings
+    /// declare. Adding a group that is there does nothing.
     virtual void AddGroup(const std::string &group) = 0;
+
+    /// Stops every sound of a group. The sounds of the other groups go on;
+    /// stopping the music leaves the ambience as it is, and so does
+    /// stopping the effects. A group that is not there is reported.
+    virtual void StopGroup(const std::string &group) = 0;
+
+    /// Holds the sounds of the groups that pause with the game where they
+    /// are: the effects, the voices, the ambience, and the groups of a
+    /// game. The music plays on. With false they go on from where they
+    /// were. A sound that is held counts as playing, so that nothing takes
+    /// it for ended.
+    virtual void SetPaused(bool paused) = 0;
 
     /// The loudness of every sound of a group. 1 leaves them as they are, 0
     /// is silence. A group that is not there is reported and left alone.

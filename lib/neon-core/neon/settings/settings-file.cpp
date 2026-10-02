@@ -1,5 +1,6 @@
 #include "settings-file.hpp"
 
+#include <algorithm>
 #include <format>
 
 #include <neon/data/data-reader.hpp>
@@ -105,6 +106,134 @@ namespace neon
       reader.Finish();
     }
 
+    /// The names of the groups, for a message.
+    std::string names_of(const std::vector<SoundGroupSetting> &groups)
+    {
+      std::string names;
+      for (const auto &group : groups)
+      {
+        if (!names.empty()) { names += ", "; }
+        names += group.name;
+      }
+      return names;
+    }
+
+    SoundGroupSetting *find_group(std::vector<SoundGroupSetting> &groups, const std::string &name)
+    {
+      const auto it = std::ranges::find(groups, name, &SoundGroupSetting::name);
+      return it == groups.end() ? nullptr : &*it;
+    }
+
+    /// A volume of a group: 0 for silence, 1 for the loudness of its sounds,
+    /// not below 0.
+    bool read_volume(const DataReader &reader, const std::string &name, float &volume)
+    {
+      float number = 0.0f;
+      if (!reader.Read(name, number)) { return false; }
+
+      if (number < 0.0f)
+      {
+        reader.Report(*reader.ReadValue(name), std::format(
+                        "'{}' of {} is {}, where a number of at least 0 was expected, 1 being the loudness "
+                        "of the sounds",
+                        name, reader.GetWhere(), number));
+        return false;
+      }
+
+      volume = number;
+      return true;
+    }
+
+    /// The groups a project declares: a list of names, or of maps with a
+    /// name and the volume the group starts at. Each is one more than the
+    /// groups of the engine and the ones declared before it.
+    void read_groups(const DataReader &reader, SettingsConfig &settings)
+    {
+      const DataValue *written = reader.ReadValue("groups");
+      if (written == nullptr) { return; }
+
+      if (!written->IsList())
+      {
+        reader.Report(*written, std::format(
+                        "'groups' of {} is {}, where a list of names was expected",
+                        reader.GetWhere(), DataValue::Describe(written->GetKind())));
+        return;
+      }
+
+      std::size_t position = 0;
+      for (const auto &item : written->GetItems())
+      {
+        position++;
+        SoundGroupSetting group;
+
+        if (item.IsMap())
+        {
+          const DataReader entry(item, reader.GetDocument(),
+                                 std::format("group {} of 'groups' of {}", position, reader.GetWhere()),
+                                 reader.GetErrors());
+          const bool named = entry.Read("name", group.name);
+          if (!named && !entry.Has("name")) { entry.Report("'name' is missing. It holds the name of the group"); }
+          read_volume(entry, "volume", group.volume);
+          entry.Finish();
+          if (!named) { continue; }
+        } else if (!item.GetText(group.name))
+        {
+          reader.Report(item, std::format(
+                          "'groups' of {} holds {}, where the name of a group was expected, or a map with "
+                          "its name and volume",
+                          reader.GetWhere(), DataValue::Describe(item.GetKind())));
+          continue;
+        }
+
+        if (group.name.empty())
+        {
+          reader.Report(item, std::format("'groups' of {} holds a group without a name", reader.GetWhere()));
+          continue;
+        }
+
+        if (find_group(settings.sound_groups, group.name) != nullptr)
+        {
+          reader.Report(item, std::format(
+                          "'groups' of {} declares '{}', which is a group already. There are: {}",
+                          reader.GetWhere(), group.name, names_of(settings.sound_groups)));
+          continue;
+        }
+
+        settings.sound_groups.push_back(group);
+      }
+    }
+
+    /// The volumes of the groups, by name: those of the engine, and those
+    /// the project declared, in this file or one read before it.
+    void read_volumes(const DataReader &reader, SettingsConfig &settings)
+    {
+      bool found = false;
+      const DataReader volumes = reader.ReadMap("volumes", found);
+      if (!found) { return; }
+
+      for (const auto &[name, value] : reader.ReadValue("volumes")->GetEntries())
+      {
+        SoundGroupSetting *group = find_group(settings.sound_groups, name);
+        if (group == nullptr)
+        {
+          volumes.Report(value, std::format(
+                           "'{}' of {} is not a group. There are: {}",
+                           name, volumes.GetWhere(), names_of(settings.sound_groups)));
+          continue;
+        }
+
+        read_volume(volumes, name, group->volume);
+      }
+    }
+
+    void read_audio(const DataReader &reader, SettingsConfig &settings)
+    {
+      // the groups first, so that a volume may name a group declared above it
+      read_groups(reader, settings);
+      read_volumes(reader, settings);
+      reader.Finish();
+    }
+
     /// Reads the map under a name, when it is written.
     void read_part(
       const DataReader &reader,
@@ -181,6 +310,7 @@ namespace neon
     read_part(reader, "world", read, read_world);
     read_part(reader, "input", read, read_input);
     read_part(reader, "rendering", read, read_rendering);
+    read_part(reader, "audio", read, read_audio);
     reader.Finish();
 
     if (errors.size() > before) { return false; }

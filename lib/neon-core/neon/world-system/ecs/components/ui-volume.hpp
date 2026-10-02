@@ -16,7 +16,8 @@ namespace neon
     /// The name of the value, as files write it in `{music}`.
     std::string value;
 
-    /// The group of sounds: music, effects, voices, or one of the game.
+    /// The group of sounds: music, effects, voices, ambience, or one of
+    /// the game.
     std::string group;
 
     /// What the value is at the full volume of the group. 100 for a slider
@@ -39,7 +40,7 @@ namespace neon
 
     type.Field("group", &UiVolume::group)
         .Required()
-        .Describe("The group of sounds: music, effects, voices, or one of the game");
+        .Describe("The group of sounds: music, effects, voices, ambience, or one of the game");
 
     type.Field("full", &UiVolume::full)
         .Above(0)

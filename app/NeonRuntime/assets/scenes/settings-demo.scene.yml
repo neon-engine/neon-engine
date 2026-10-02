@@ -5,10 +5,10 @@
 # The menu is a component of an entity, as the HUD of hud-demo is. Escape
 # and a controller's cancel close it, as its file says.
 #
-# The menu sets what is heard. The Effects and Music sliders are the volumes
-# of those groups of sounds, through UiVolume, and choosing a track fades
-# from one piece of music to another, through UiSoundSwitch. The reactor
-# hums by the bear, among the effects.
+# The menu sets what is heard. The Effects, Music, and Ambience sliders are
+# the volumes of those groups of sounds, through UiVolume, and choosing a
+# track fades from one piece of music to another, through UiSoundSwitch.
+# The reactor hums by the bear, as ambience.
 #
 # The music and the reactor come from a paid Humble Bundle, which is kept in
 # Git LFS and may not be passed on as it is.
@@ -74,7 +74,9 @@ entities:
           Camera: Default
           SoundListener: Default
 
-  # the sliders of the menu are the volumes of two groups, from 0 to 100
+  # the sliders of the menu are the volumes of three groups, from 0 to 100.
+  # A project with a group of its own adds an entity like these, with the
+  # name of its group, and a row for it in the menu
   - name: effects volume
     components:
       UiVolume:
@@ -86,6 +88,12 @@ entities:
       UiVolume:
         value: music
         group: music
+
+  - name: ambience volume
+    components:
+      UiVolume:
+        value: ambience
+        group: ambience
 
   # one entity for each piece of music. The one the menu chooses plays, and
   # a new choice fades from it to the next over two seconds
@@ -122,7 +130,7 @@ entities:
         equals: hollow
         fade: 2
 
-  # an effect with a place: louder close to the bear, and heard from the
+  # ambience with a place: louder close to the bear, and heard from the
   # side it is on
   - name: reactor
     components:
@@ -132,3 +140,4 @@ entities:
         looping: true
         spatial: true
         max_distance: 20
+        group: ambience

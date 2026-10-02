@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+#include "neon/audio/sound-group-setting.hpp"
 #include "neon/render/api-version.hpp"
 
 enum class RenderingApi
@@ -103,6 +104,11 @@ struct SettingsConfig
   static constexpr neon::ApiVersion default_vulkan_version{1, 3};
   neon::ApiVersion vulkan_version = default_vulkan_version;
   AudioOutput audio_output = AudioOutput::Device;
+
+  /// The groups of sounds and their volumes: the groups of the engine,
+  /// then those the project declares in its settings file. The audio
+  /// system starts with them, and a settings menu changes the volumes.
+  std::vector<neon::SoundGroupSetting> sound_groups = neon::built_in_sound_groups();
   WindowMode window_mode = WindowMode::Windowed;
 
   /// Virtual path of the log file. The log file is opened once the file

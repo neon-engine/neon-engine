@@ -8,6 +8,7 @@
 
 #include <neon/input/input-state.hpp>
 #include <neon/testing/fake-entropy-context.hpp>
+#include <neon/testing/mock-audio-context.hpp>
 #include <neon/testing/mock-input-system.hpp>
 #include <neon/testing/mock-render-pipeline.hpp>
 #include <neon/testing/mock-render-system.hpp>
@@ -24,6 +25,7 @@ namespace
   using neon::testing::FakeEntropyContext;
   using neon::testing::FakeInputContext;
   using neon::testing::LogLevel;
+  using neon::testing::MockAudioContext;
   using neon::testing::MockInputSystem;
   using neon::testing::MockRenderPipeline;
   using neon::testing::MockRenderSystem;
@@ -625,6 +627,27 @@ namespace
       InSequence in_order;
       EXPECT_CALL(_world_system, SetPaused(false));
       EXPECT_CALL(_world_system, SetPaused(true)).Times(2);
+    }
+
+    runtime->Run();
+    ExpectCleanUp();
+  }
+
+  TEST_F(PauseMenuTest, HoldsTheSoundsThatPauseWithTheGameWhileTheMenuIsShown)
+  {
+    const auto runtime = CreateWithMenu(3);
+    _press = [this](const int frame) { if (frame == 2) { PressPause(); } };
+
+    StrictMock<MockAudioContext> audio;
+    runtime->SetAudio(&audio);
+
+    EXPECT_CALL(_ui_system, Load(menu)).WillOnce(Return(7));
+    EXPECT_CALL(_ui_system, IsShown(7)).WillRepeatedly(Return(true));
+    EXPECT_CALL(_world_system, SetPaused(_)).Times(AnyNumber());
+    {
+      InSequence in_order;
+      EXPECT_CALL(audio, SetPaused(false));
+      EXPECT_CALL(audio, SetPaused(true)).Times(2);
     }
 
     runtime->Run();

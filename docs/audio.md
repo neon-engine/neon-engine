@@ -77,13 +77,14 @@ Setting it to true again plays the sound from its start.
 ### Groups
 
 Every sound belongs to a group, and is played at the volume of its group on
-top of its own. There are three from the start:
+top of its own. There are four from the start:
 
-| Group | For |
-|---|---|
-| `music` | Music |
-| `effects` | Everything else that is heard, and what a sound belongs to unless it says otherwise |
-| `voices` | Speech |
+| Group | For | While the game is paused |
+|---|---|---|
+| `music` | Music | Plays on |
+| `effects` | Everything else that is heard, and what a sound belongs to unless it says otherwise | Held still |
+| `voices` | Speech | Held still |
+| `ambience` | What a place sounds like: a hum, wind, rain. Not music, since it is held still with the game, and not an effect, since it goes on when the effects are stopped | Held still |
 
 The volume of everything, which the `SoundListener` sets, is on top of the
 groups. A sound of a group that is not there is reported and played among the
@@ -91,24 +92,53 @@ effects, which finds a name that is misspelt, also in a run without sound.
 The group of a sound is read when the sound is created. Changing `group`
 later does not move it.
 
-A settings menu changes the volume of a group through the `AudioContext`,
-which a system of a game is handed when it is made, as it is handed the
-physics:
+While the pause menu or the settings menu is shown, the runtime holds the
+world still and the sounds of the groups that pause with it, where they are:
+a step that was half heard goes on from there. A sound that is held counts as
+playing. The music plays on through the menu.
+
+A game stops the sounds of one group through the `AudioContext`, which a
+system of a game is handed when it is made, as it is handed the physics.
+Stopping the music leaves the ambience as it is, and so does stopping the
+effects:
+
+```cpp
+audio->StopGroup(neon::sound_group::music);
+```
+
+A settings menu changes the volume of a group the same way:
 
 ```cpp
 audio->SetGroupVolume(neon::sound_group::music, 0.4f);
 float music_volume = audio->GetGroupVolume(neon::sound_group::music);
 ```
 
-A game adds groups of its own before the scene that uses them is played:
+A project declares groups of its own in its settings file, under
+`audio.groups`, with the volume each starts at, and sets the volumes of every
+group under `audio.volumes`, see [settings.md](settings.md#the-file). A group
+of a project is held still with the game, as the effects are. The player's
+settings file sets the volumes on top, which is what a settings menu will
+write.
+
+```yaml
+audio:
+  groups:
+    - radio
+    - {name: crowd, volume: 0.5}
+  volumes:
+    ambience: 0.5
+```
+
+A game can also add a group from code, before the scene that uses it is
+played:
 
 ```cpp
-audio->AddGroup("ambience");
+audio->AddGroup("radio");
 ```
 
 The groups and their volumes are kept while the game runs, also when the
-audio is started again. Keeping them from one run to the next is up to the
-settings of the game.
+audio is started again. The audio starts with the groups and the volumes of
+the settings, so a volume the player's file holds is heard from the start.
 
 ### Fading
 
@@ -187,6 +217,12 @@ settings demo does this:
 NeonRuntime --scene assets://scenes/settings-demo.scene.yml
 ```
 
+The menu of the runtime, `settings.ui.yml`, has a row for the effects, the
+music, and the ambience, each a slider whose value is named after its group.
+A project with a group of its own adds a row like them to its menu, with a
+value named after the group, and an entity with a `UiVolume` for that value
+and group to the scene, as the settings demo does for the three.
+
 ### Files
 
 | Format | Read by |
@@ -202,7 +238,8 @@ NeonRuntime --scene assets://scenes/settings-demo.scene.yml
 |---|---|---|
 | `AudioContext` | neon-core | What the rest of the engine sees: create, play, stop, place, and listen |
 | `AudioSystem` | neon-core | Base class of backends. Adds the lifecycle |
-| `Headless_AudioSystem` | neon-core | Plays nothing and reads no files. It keeps track of what it is told: what plays, the volumes of the groups, and when a sound that fades out stops |
+| `Headless_AudioSystem` | neon-core | Plays nothing and reads no files. It keeps track of what it is told: what plays, what is held, the volumes of the groups, and when a sound that fades out stops |
+| `SoundGroupSetting` | neon-core | A group as the settings know it: its name, the volume it starts at, and whether it pauses with the game |
 | `MA_AudioSystem` | neon-miniaudio | The implementation |
 | `SoundSource`, `SoundListener` | neon-core | The components |
 | `AudioPlayback` | neon-core | The system that keeps the audio in line with the components, and hands on the fades a game asks for |
@@ -253,7 +290,10 @@ They could be backends of their own, which the interface allows.
 | A sound that cannot be created is tried once | Trying every frame would read the file and report it every frame |
 | The world tells the audio how far it advanced | Audio without a sound card has no clock of its own |
 | A source releases its sound when it leaves the world | Through the hook of the component, as `Renderable` does |
-| Groups are known by name, with three from the start | A game adds groups of its own without the engine knowing them, and a scene recipe names a group as it names a sound |
+| Groups are known by name, with four from the start | A project declares groups of its own in its settings without the engine knowing them, and a scene recipe names a group as it names a sound |
+| The audio starts with the groups of the settings | The volumes a player chose are in the settings, so they are heard from the first sound, and the groups a project declares are there before a scene names them |
+| A group says whether it pauses with the game | The music plays on through a menu, and everything else is held where it is: an effect that goes on while the world stands still would be heard out of place. A sound that is held counts as playing, so that `AudioPlayback` does not take it for ended |
+| Ambience is a group of its own | The hum of a room is neither music nor an effect: it is held still with the game, and it goes on when the effects are stopped, as between two rooms of one place |
 | A group is a sound group of miniaudio | The sounds of a group are mixed into it, and its volume is set once for all of them. It has no place in the world, so its sounds are placed each for itself |
 | A fade is on top of the volume of a sound | `AudioPlayback` hands the volume of a source over every frame, which would undo a fade that set the volume |
 | A game fades a source through its component | So that `playing` stays true to what is heard. A fade in through the audio would play a sound that the component says is not playing |
@@ -297,6 +337,12 @@ other silent.
 - Fading a whole group, such as music that is lowered while a voice speaks.
   miniaudio can fade a sound group as it fades a sound. Groups within groups
   are left out as well.
+- A group of a project that plays on through a menu, as the music does: a
+  radio in a menu, say. `SoundGroupSetting` has the switch, and the settings
+  file does not write it yet.
+- A sound that fades out while it is held. With a sound card, miniaudio
+  counts the fade in its own time, and the sound is gone when the game goes
+  on. Without one no time passes, and the fade goes on from where it was.
 - Sounds that are played once and forgotten, such as a shot, without an entity
   for each.
 - An option to run without audio, and one to choose the sound card.

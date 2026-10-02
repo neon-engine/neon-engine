@@ -121,10 +121,10 @@ namespace neon
         .AtLeast(0)
         .Describe("From this distance on it does not get quieter");
 
-    // a game can add groups, so a name is not checked here. The audio says
-    // when a sound is of a group that is not there
+    // a project declares groups of its own, so a name is not checked here.
+    // The audio says when a sound is of a group that is not there
     type.Field("group", [](SoundSource &source) -> std::string & { return source.sound.group; })
-        .Describe("The group whose volume the sound is played at: music, effects, voices, or one of the game");
+        .Describe("The group whose volume the sound is played at: music, effects, voices, ambience, or one of the game");
   }
 } // neon
 

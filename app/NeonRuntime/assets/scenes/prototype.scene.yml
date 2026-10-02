@@ -6,7 +6,7 @@
 # A room of 6 by 6 with a doorway in its south wall, and a corridor of 2 by 6
 # behind the doorway. Columns stand in the corners of the room, a crate and a
 # supply crate with a blaster on it stand in the room, and a target hangs on
-# each end wall. The reactor hums. The player starts in the corridor, facing
+# each end wall. The reactor hums, as ambience. The player starts in the corridor, facing
 # the doorway, and walks with the actions of the input map: W, A, S, D, the
 # mouse to look, space to jump, and the left shift to run. A walker crosses
 # the room and slides along its north wall, as the character of
@@ -285,13 +285,16 @@ entities:
         linear: 0.14
         quadratic: 0.07
 
-  # the hum of the reactor, heard the same everywhere
+  # the hum of the reactor, heard the same everywhere. It is ambience: it
+  # is held still with the game, as an effect is, and plays on when the
+  # music or the effects are stopped
   - name: reactor
     components:
       SoundSource:
         sound: assets://sounds/ambience/reactor-room.wav
         looping: true
         volume: 0.5
+        group: ambience
 
   # the character of physics.scene.yml: it walks north across the room into
   # the wall, and slides along it

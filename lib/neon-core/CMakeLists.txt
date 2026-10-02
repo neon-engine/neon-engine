@@ -110,6 +110,7 @@ add_library(${TARGET} STATIC
         neon/audio/audio-system.hpp
         neon/audio/headless-audio-system.cpp
         neon/audio/headless-audio-system.hpp
+        neon/audio/sound-group-setting.hpp
         neon/audio/sound-info.hpp
 
         # data

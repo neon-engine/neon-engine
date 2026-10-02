@@ -17,7 +17,8 @@ namespace neon
   /// It keeps track of what it is told, so that a game behaves as it does
   /// with sound. A sound that does not loop has no length here, and counts
   /// as ended at the next frame. A sound that fades out stops when the fade
-  /// is over, as the time Advance() is told says.
+  /// is over, as the time Advance() is told says. A sound that is held
+  /// while the game is paused neither ends nor fades until it goes on.
   // ReSharper disable once CppInconsistentNaming
   class Headless_AudioSystem final : public AudioSystem
   {
@@ -26,28 +27,37 @@ namespace neon
       bool playing = false;
       bool looping = false;
 
+      // the group it was put in, which is the effects for one that is not
+      // there
+      std::string group;
+
+      // held where it is while the game is paused
+      bool paused = false;
+
       // how long a fade out has to go before the sound stops, below 0
       // without one
       double stops_in = -1.0;
     };
 
+    struct Group
+    {
+      float volume = 1.0f;
+      bool pauses = true;
+    };
+
     std::map<int, Sound> _sounds;
     int _next_id = 0;
+    bool _paused = false;
 
     // kept when the system is cleaned up, as what a player chose in the
     // settings is
-    std::map<std::string, float> _group_volumes{
-      {sound_group::music, 1.0f},
-      {sound_group::effects, 1.0f},
-      {sound_group::voices, 1.0f}
-    };
+    std::map<std::string, Group> _groups;
 
   public:
     Headless_AudioSystem(
       const SettingsConfig &settings_config,
       FileSystemContext *file_system,
-      const std::shared_ptr<Logger> &logger)
-      : AudioSystem(settings_config, file_system, logger) {}
+      const std::shared_ptr<Logger> &logger);
 
     void Initialize() override;
 
@@ -84,6 +94,10 @@ namespace neon
     void SetMasterVolume(float volume) override;
 
     void AddGroup(const std::string &group) override;
+
+    void StopGroup(const std::string &group) override;
+
+    void SetPaused(bool paused) override;
 
     void SetGroupVolume(const std::string &group, float volume) override;
 

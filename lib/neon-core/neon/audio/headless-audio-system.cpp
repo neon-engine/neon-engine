@@ -4,6 +4,18 @@
 
 namespace neon
 {
+  Headless_AudioSystem::Headless_AudioSystem(
+    const SettingsConfig &settings_config,
+    FileSystemContext *file_system,
+    const std::shared_ptr<Logger> &logger)
+    : AudioSystem(settings_config, file_system, logger)
+  {
+    for (const auto &group : settings_config.sound_groups)
+    {
+      _groups.try_emplace(group.name, Group{.volume = std::max(group.volume, 0.0f), .pauses = group.pauses});
+    }
+  }
+
   void Headless_AudioSystem::Initialize()
   {
     _logger->Info("Initializing headless audio system");
@@ -13,6 +25,9 @@ namespace neon
   {
     for (auto &[id, sound] : _sounds)
     {
+      // no time passes for a sound that is held
+      if (sound.paused) { continue; }
+
       if (!sound.looping) { sound.playing = false; }
 
       if (sound.stops_in >= 0.0)
@@ -37,16 +52,18 @@ namespace neon
   {
     // said here as well, so that a run without sound finds a group that is
     // misspelt
-    if (!_group_volumes.contains(sound_info.group))
+    std::string group = sound_info.group;
+    if (!_groups.contains(group))
     {
       _logger->Warn(
         "Sound {} is of group {}, which is not there. It is put among the effects",
         sound_info.path,
         sound_info.group);
+      group = sound_group::effects;
     }
 
     const int id = _next_id++;
-    _sounds[id] = {.playing = false, .looping = sound_info.looping};
+    _sounds[id] = {.playing = false, .looping = sound_info.looping, .group = group};
     return id;
   }
 
@@ -60,6 +77,7 @@ namespace neon
     if (const auto it = _sounds.find(sound_id); it != _sounds.end())
     {
       it->second.playing = true;
+      it->second.paused = false;
       it->second.stops_in = -1.0;
     }
   }
@@ -69,6 +87,7 @@ namespace neon
     if (const auto it = _sounds.find(sound_id); it != _sounds.end())
     {
       it->second.playing = false;
+      it->second.paused = false;
       it->second.stops_in = -1.0;
     }
   }
@@ -116,25 +135,56 @@ namespace neon
 
   void Headless_AudioSystem::AddGroup(const std::string &group)
   {
-    _group_volumes.try_emplace(group, 1.0f);
+    _groups.try_emplace(group);
+  }
+
+  void Headless_AudioSystem::StopGroup(const std::string &group)
+  {
+    if (!_groups.contains(group))
+    {
+      _logger->Warn("The sounds of group {} cannot be stopped, as there is no such group", group);
+      return;
+    }
+
+    for (auto &[id, sound] : _sounds)
+    {
+      if (sound.group == group) { Stop(id); }
+    }
+  }
+
+  void Headless_AudioSystem::SetPaused(const bool paused)
+  {
+    if (paused == _paused) { return; }
+    _paused = paused;
+
+    for (auto &[id, sound] : _sounds)
+    {
+      if (paused)
+      {
+        sound.paused = sound.playing && _groups.at(sound.group).pauses;
+      } else
+      {
+        sound.paused = false;
+      }
+    }
   }
 
   void Headless_AudioSystem::SetGroupVolume(const std::string &group, const float volume)
   {
-    const auto it = _group_volumes.find(group);
-    if (it == _group_volumes.end())
+    const auto it = _groups.find(group);
+    if (it == _groups.end())
     {
       _logger->Warn("The volume of group {} cannot be set, as there is no such group", group);
       return;
     }
 
-    it->second = std::max(volume, 0.0f);
+    it->second.volume = std::max(volume, 0.0f);
   }
 
   float Headless_AudioSystem::GetGroupVolume(const std::string &group)
   {
-    const auto it = _group_volumes.find(group);
-    return it == _group_volumes.end() ? 0.0f : it->second;
+    const auto it = _groups.find(group);
+    return it == _groups.end() ? 0.0f : it->second.volume;
   }
 
   float Headless_AudioSystem::GetOutputLevel()

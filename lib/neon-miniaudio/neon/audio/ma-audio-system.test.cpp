@@ -486,6 +486,146 @@ namespace
     EXPECT_NEAR(LevelAfter(0.1), 0.25f, 0.02f);
   }
 
+  TEST_F(MaAudioSystemTest, HasAmbienceFromTheStart)
+  {
+    Playing({.path = "assets://sounds/tone.wav", .group = neon::sound_group::ambience});
+
+    _audio.SetGroupVolume(neon::sound_group::ambience, 0.5f);
+
+    EXPECT_NEAR(LevelAfter(0.1), 0.25f, 0.02f);
+    EXPECT_FALSE(_logger->Contains(LogLevel::Warn, "is of group ambience"));
+  }
+
+  TEST_F(MaAudioSystemTest, StartsWithTheGroupsOfTheSettingsAtTheirVolumes)
+  {
+    auto settings = WithoutASoundCard();
+    settings.sound_groups.front().volume = 0.25f;
+    settings.sound_groups.push_back({.name = "radio", .volume = 0.5f});
+
+    MA_AudioSystem audio{settings, &_files, _logger};
+    audio.Initialize();
+
+    EXPECT_EQ(audio.GetGroupVolume(neon::sound_group::music), 0.25f);
+    EXPECT_EQ(audio.GetGroupVolume("radio"), 0.5f);
+
+    const int sound = audio.CreateSound({.path = "assets://sounds/tone.wav", .group = "radio"});
+    audio.Play(sound);
+    audio.Advance(0.1);
+    EXPECT_NEAR(audio.GetOutputLevel(), 0.25f, 0.02f);
+    EXPECT_FALSE(_logger->Contains(LogLevel::Warn, "is of group radio"));
+
+    audio.CleanUp();
+  }
+
+  // Pausing and stopping groups
+
+  TEST_F(MaAudioSystemTest, HoldsTheAmbienceWhilePausedAndLetsItGoOnAfter)
+  {
+    const int hum = Playing({.path = "assets://sounds/tone.wav", .looping = true, .group = neon::sound_group::ambience});
+
+    _audio.SetPaused(true);
+
+    EXPECT_EQ(LevelAfter(0.1), 0.0f);
+    EXPECT_TRUE(_audio.IsPlaying(hum));
+
+    _audio.SetPaused(false);
+
+    EXPECT_NEAR(LevelAfter(0.1), 0.5f, 0.02f);
+  }
+
+  TEST_F(MaAudioSystemTest, HoldsTheEffectsAndTheVoicesAndTheGroupsOfAGameWhilePaused)
+  {
+    _audio.AddGroup("radio");
+    Playing({.path = "assets://sounds/tone.wav", .looping = true, .group = neon::sound_group::effects});
+    Playing({.path = "assets://sounds/tone.wav", .looping = true, .group = neon::sound_group::voices});
+    Playing({.path = "assets://sounds/tone.wav", .looping = true, .group = "radio"});
+
+    _audio.SetPaused(true);
+
+    EXPECT_EQ(LevelAfter(0.1), 0.0f);
+  }
+
+  TEST_F(MaAudioSystemTest, LetsTheMusicPlayOnWhilePaused)
+  {
+    Playing({.path = "assets://sounds/tone.wav", .looping = true, .group = neon::sound_group::music});
+
+    _audio.SetPaused(true);
+
+    EXPECT_NEAR(LevelAfter(0.1), 0.5f, 0.02f);
+  }
+
+  TEST_F(MaAudioSystemTest, GoesOnFromWhereASoundWasHeld)
+  {
+    // 0.2 seconds long: held after 0.1, it would have ended while paused
+    const int sound = Playing({.path = "assets://sounds/short.wav"});
+    LevelAfter(0.1);
+
+    _audio.SetPaused(true);
+    LevelAfter(0.5);
+    EXPECT_TRUE(_audio.IsPlaying(sound));
+
+    _audio.SetPaused(false);
+
+    EXPECT_NEAR(LevelAfter(0.05), 0.5f, 0.02f);
+    EXPECT_TRUE(_audio.IsPlaying(sound));
+    LevelAfter(0.2);
+    EXPECT_FALSE(_audio.IsPlaying(sound));
+  }
+
+  TEST_F(MaAudioSystemTest, DoesNotHoldASoundThatIsPlayedWhilePaused)
+  {
+    const int sound = _audio.CreateSound({.path = "assets://sounds/tone.wav", .looping = true});
+    _audio.SetPaused(true);
+
+    _audio.Play(sound);
+
+    EXPECT_NEAR(LevelAfter(0.1), 0.5f, 0.02f);
+  }
+
+  TEST_F(MaAudioSystemTest, StopsTheMusicAndLeavesTheAmbience)
+  {
+    const int music = Playing({.path = "assets://sounds/tone.wav", .looping = true, .group = neon::sound_group::music});
+    const int hum = Playing({.path = "assets://sounds/quiet.wav", .looping = true, .group = neon::sound_group::ambience});
+    EXPECT_NEAR(LevelAfter(0.1), 0.75f, 0.03f);
+
+    _audio.StopGroup(neon::sound_group::music);
+
+    EXPECT_NEAR(LevelAfter(0.1), 0.25f, 0.02f);
+    EXPECT_FALSE(_audio.IsPlaying(music));
+    EXPECT_TRUE(_audio.IsPlaying(hum));
+  }
+
+  TEST_F(MaAudioSystemTest, StopsTheEffectsAndLeavesTheAmbience)
+  {
+    const int step = Playing({.path = "assets://sounds/tone.wav", .looping = true});
+    const int hum = Playing({.path = "assets://sounds/quiet.wav", .looping = true, .group = neon::sound_group::ambience});
+
+    _audio.StopGroup(neon::sound_group::effects);
+
+    EXPECT_NEAR(LevelAfter(0.1), 0.25f, 0.02f);
+    EXPECT_FALSE(_audio.IsPlaying(step));
+    EXPECT_TRUE(_audio.IsPlaying(hum));
+  }
+
+  TEST_F(MaAudioSystemTest, StopsASoundOfAGroupThatIsNotThereWithTheEffects)
+  {
+    const int sound = Playing({.path = "assets://sounds/tone.wav", .looping = true, .group = "musik"});
+
+    _audio.StopGroup(neon::sound_group::effects);
+
+    EXPECT_FALSE(_audio.IsPlaying(sound));
+  }
+
+  TEST_F(MaAudioSystemTest, ReportsStoppingAGroupThatIsNotThere)
+  {
+    const int sound = Playing({.path = "assets://sounds/tone.wav", .looping = true});
+
+    _audio.StopGroup("musik");
+
+    EXPECT_TRUE(_audio.IsPlaying(sound));
+    EXPECT_TRUE(_logger->Contains(LogLevel::Warn, "The sounds of group musik cannot be stopped, as there is no such group"));
+  }
+
   // Playing and ending
 
   TEST_F(MaAudioSystemTest, DoesNotPlayASoundThatWasOnlyCreated)

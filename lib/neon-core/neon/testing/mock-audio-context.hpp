@@ -40,6 +40,10 @@ namespace neon::testing
 
     MOCK_METHOD(void, AddGroup, (const std::string &group), (override));
 
+    MOCK_METHOD(void, StopGroup, (const std::string &group), (override));
+
+    MOCK_METHOD(void, SetPaused, (bool paused), (override));
+
     MOCK_METHOD(void, SetGroupVolume, (const std::string &group, float volume), (override));
 
     MOCK_METHOD(float, GetGroupVolume, (const std::string &group), (override));

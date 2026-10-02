@@ -53,6 +53,7 @@ Principles that hold for both:
 | Runtime class (#25) | The core class an application is built from is `neon::Runtime` |
 | Sound (#33) | Sound effects and music with miniaudio, behind an interface. Sounds have a place in the world. See [audio.md](audio.md) |
 | Groups and fading of sounds (#71) | Music, effects, voices, and groups of a game, each with a volume, and fades from one piece of music to another. A settings menu sets them from its file with `UiVolume` and `UiSoundSwitch`. Merged in #139 |
+| Ambience and the groups of a project (#195) | `ambience` is a fourth group, held still with the game and left alone when the music or the effects are stopped. A project declares groups of its own in `settings.yml` under `audio.groups`, and the volumes of every group are settings under `audio.volumes`, which the player's file sets on top |
 | Physics described with reflection (#58) | The components of the physics are read and written through their descriptions, which gained fields that belong to a shape only, rules across fields, and layers. Merged in #140 |
 | Reflection (#35) | A component is described once, next to itself. Scene recipes follow from it, and the editor and scripts will. See [reflection.md](reflection.md) |
 | Scenes in files (#29) | A scene is a recipe, a YAML file of entities and components, made to be changed by hand. The rules every recipe shares are in [recipes.md](recipes.md), the scene's own in [scenes.md](scenes.md) |
