@@ -11,6 +11,7 @@
 
 namespace neon
 {
+  // Helpers of UiTextField, for this file alone.
   namespace
   {
     // seconds the caret is seen, and then not seen

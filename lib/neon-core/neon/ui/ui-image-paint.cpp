@@ -6,6 +6,7 @@
 
 namespace neon
 {
+  // Helpers of ui-image-paint.cpp, for this file alone.
   namespace
   {
     // more tiles than this are not drawn, and the image is stretched

@@ -11,6 +11,7 @@
 
 namespace neon
 {
+  // Helpers of UiSelect, for this file alone.
   namespace
   {
     // the room around a text of the box and of a row, in units of the file

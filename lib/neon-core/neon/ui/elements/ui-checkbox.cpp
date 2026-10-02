@@ -10,6 +10,7 @@
 
 namespace neon
 {
+  // Helpers of UiCheckbox, for this file alone.
   namespace
   {
     // between the box and the text, in units of the file

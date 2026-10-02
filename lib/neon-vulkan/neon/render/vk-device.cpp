@@ -12,6 +12,7 @@
 
 namespace neon
 {
+  // Helpers of VK_Device, for this file alone.
   namespace
   {
     bool has_extension(const std::vector<VkExtensionProperties> &available, const char *name)

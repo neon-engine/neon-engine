@@ -13,6 +13,7 @@
 
 namespace neon
 {
+  // Helpers of UiTextMeasure, for this file alone.
   namespace
   {
     Color Faded(const Color &color, const float opacity)

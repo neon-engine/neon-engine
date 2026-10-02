@@ -6,239 +6,245 @@
 
 namespace neon
 {
+  // Helpers of InputMapFile, for this file alone.
   namespace
   {
     const std::string what_is_read = "the input map";
-  }
 
-  template <typename Enum>
-  std::string InputMapFile::NamesOf(const std::size_t count)
-  {
-    std::string names;
-    for (std::size_t i = 0; i < count; i++)
+    /// Every name of a kind, for a message that says what is known.
+    template <typename Enum>
+    std::string NamesOf(const std::size_t count)
     {
-      if (!names.empty()) { names += ", "; }
-      names += NameOf(static_cast<Enum>(i));
-    }
-    return names;
-  }
-
-  std::string InputMapFile::KeyNames()
-  {
-    std::string names;
-    for (std::size_t i = 1; i < kKey_Size; i++)
-    {
-      if (!names.empty()) { names += ", "; }
-      names += NameOf(static_cast<Key>(i));
-    }
-    return names;
-  }
-
-  template <typename Value>
-  void InputMapFile::ReadNames(
-    const DataReader &reader,
-    const std::string &name,
-    std::vector<Value> &values,
-    const auto &of,
-    const std::string &known)
-  {
-    const DataValue *list = reader.ReadValue(name);
-    if (list == nullptr) { return; }
-
-    if (!list->IsList())
-    {
-      reader.Report(*list, std::format("'{}' is {}, where a list of names was expected", name,
-                                       DataValue::Describe(list->GetKind())));
-      return;
-    }
-
-    for (const auto &item : list->GetItems())
-    {
-      // a digit is written without quotes, and a format reads it as a
-      // number, which is the key it names
-      std::string text;
-      double digit = 0.0;
-      if (item.GetNumber(digit) && digit >= 0.0 && digit <= 9.0 && digit == static_cast<int>(digit))
+      std::string names;
+      for (std::size_t i = 0; i < count; i++)
       {
-        text = std::to_string(static_cast<int>(digit));
-      } else if (!item.GetText(text))
+        if (!names.empty()) { names += ", "; }
+        names += NameOf(static_cast<Enum>(i));
+      }
+      return names;
+    }
+
+    /// The names of the keys start at 1, since 0 is the unknown key.
+    std::string KeyNames()
+    {
+      std::string names;
+      for (std::size_t i = 1; i < kKey_Size; i++)
       {
-        reader.Report(item, std::format("'{}' holds {}, where a name was expected", name,
-                                        DataValue::Describe(item.GetKind())));
-        continue;
+        if (!names.empty()) { names += ", "; }
+        names += NameOf(static_cast<Key>(i));
+      }
+      return names;
+    }
+
+    /// Reads a list of names under `name` into `values` with `of`, which
+    /// turns a name into a value or returns false. What is not a name, or
+    /// not known, is reported with its line.
+    template <typename Value>
+    void ReadNames(
+      const DataReader &reader,
+      const std::string &name,
+      std::vector<Value> &values,
+      const auto &of,
+      const std::string &known)
+    {
+      const DataValue *list = reader.ReadValue(name);
+      if (list == nullptr) { return; }
+
+      if (!list->IsList())
+      {
+        reader.Report(*list, std::format("'{}' is {}, where a list of names was expected", name,
+                                         DataValue::Describe(list->GetKind())));
+        return;
       }
 
-      Value value{};
-      if (!of(text, value))
+      for (const auto &item : list->GetItems())
       {
-        reader.Report(item, std::format("'{}' names '{}', which is not known. Known are: {}", name, text, known));
-        continue;
-      }
-
-      values.push_back(value);
-    }
-  }
-
-  void InputMapFile::ReadAction(const DataReader &reader, const DataValue &written, InputAction &action)
-  {
-    std::size_t type = 0;
-    if (reader.ReadChoice("type", {"button", "axis", "axis2", "axis3"}, type))
-    {
-      action.type = static_cast<InputActionType>(type);
-    } else if (!reader.Has("type"))
-    {
-      reader.Report(written, std::format(
-                      "'type' is missing for the action '{}'. It is button, axis, axis2, or axis3", action.name));
-    }
-
-    const bool is_axis2 = action.type == InputActionType::Axis2;
-    const bool is_axis = action.type == InputActionType::Axis;
-    const bool is_axis3 = action.type == InputActionType::Axis3;
-    const std::string what_it_is = is_axis3 ? "an axis3" : is_axis2 ? "an axis2" : is_axis ? "an axis" : "a button";
-
-    ReadNames(reader, "keys", action.keys, [](const std::string &name, Key &key)
-    {
-      key = KeyOf(name);
-      return key != Key::Unknown;
-    }, KeyNames());
-
-    ReadNames(reader, "buttons", action.buttons, [](const std::string &name, ControllerButton &button)
-    {
-      return ControllerButtonOf(name, button);
-    }, NamesOf<ControllerButton>(kControllerButton_Size));
-
-    // `mouse` is a button for a button and `motion` for an axis of two
-    if (std::string mouse; reader.Read("mouse", mouse))
-    {
-      MouseButton button;
-      if (mouse == "motion" && is_axis2)
-      {
-        action.mouse_motion = true;
-      } else if (mouse != "motion" && action.IsButton() && MouseButtonOf(mouse, button))
-      {
-        action.mouse_button = button;
-      } else if (is_axis || is_axis3)
-      {
-        reader.Report(*reader.ReadValue("mouse"), std::format(
-                        "'mouse' is for a button or an axis2, and this action is {}", what_it_is));
-      } else
-      {
-        reader.Report(*reader.ReadValue("mouse"), is_axis2
-                        ? std::format("'mouse' is '{}', where motion was expected for an axis2", mouse)
-                        : std::format("'mouse' is '{}', where a button was expected. Known are: {}", mouse,
-                                      NamesOf<MouseButton>(kMouseButton_Size)));
-      }
-    }
-
-    if (std::string stick; reader.Read("stick", stick))
-    {
-      Stick which;
-      if (!is_axis2)
-      {
-        reader.Report(*reader.ReadValue("stick"), std::format("'stick' is for an axis2, and this action is {}", what_it_is));
-      } else if (!StickOf(stick, which))
-      {
-        reader.Report(*reader.ReadValue("stick"), std::format("'stick' is '{}', where left or right was expected", stick));
-      } else
-      {
-        action.stick = which;
-      }
-    }
-
-    if (std::string trigger; reader.Read("trigger", trigger))
-    {
-      ControllerTrigger which;
-      if (!is_axis)
-      {
-        reader.Report(*reader.ReadValue("trigger"), std::format("'trigger' is for an axis, and this action is {}", what_it_is));
-      } else if (!TriggerOf(trigger, which))
-      {
-        reader.Report(*reader.ReadValue("trigger"), std::format(
-                        "'trigger' is '{}', where left or right was expected", trigger));
-      } else
-      {
-        action.trigger = which;
-      }
-    }
-
-    // a motion sensor is the one source of an axis of three, and is off
-    // until the player or the action turns it on
-    if (std::string sensor; reader.Read("sensor", sensor))
-    {
-      Sensor which;
-      if (!is_axis3)
-      {
-        reader.Report(*reader.ReadValue("sensor"), std::format("'sensor' is for an axis3, and this action is {}", what_it_is));
-      } else if (!SensorOf(sensor, which))
-      {
-        reader.Report(*reader.ReadValue("sensor"), std::format(
-                        "'sensor' is '{}', where gyro or accelerometer was expected", sensor));
-      } else
-      {
-        action.sensor = which;
-      }
-    } else if (is_axis3)
-    {
-      reader.Report(written, std::format("'sensor' is missing for the axis3 '{}'. It is gyro or accelerometer", action.name));
-    }
-
-    if (bool enabled = false; reader.Read("enabled", enabled))
-    {
-      if (!is_axis3)
-      {
-        reader.Report(*reader.ReadValue("enabled"), std::format(
-                        "'enabled' turns a sensor on from the start, and this action is {}", what_it_is));
-      } else
-      {
-        action.enabled = enabled;
-      }
-    }
-
-    // a rate makes a stick or a trigger count per second
-    if (float rate = 0.0f; reader.Read("rate", rate))
-    {
-      if (action.IsButton())
-      {
-        reader.Report(*reader.ReadValue("rate"), "'rate' is for an axis, an axis2, or an axis3, and this action is a button");
-      } else if (rate <= 0.0f)
-      {
-        reader.Report(*reader.ReadValue("rate"), std::format("'rate' is {}, where a number above 0 was expected", rate));
-      } else
-      {
-        action.rate = rate;
-      }
-    }
-
-    // an axis2 is put together from four, in the order up, down, left,
-    // right; an axis from two, positive and negative
-    const std::size_t count = is_axis2 ? 4 : 2;
-    const std::string order = is_axis2 ? "up, down, left, right" : "positive, negative";
-    if (is_axis3)
-    {
-      for (const char *name : {"keys", "buttons"})
-      {
-        if (const DataValue *bound = reader.ReadValue(name); bound != nullptr)
+        // a digit is written without quotes, and a format reads it as a
+        // number, which is the key it names
+        std::string text;
+        double digit = 0.0;
+        if (item.GetNumber(digit) && digit >= 0.0 && digit <= 9.0 && digit == static_cast<int>(digit))
         {
-          reader.Report(*bound, std::format("'{}' is for a button, an axis, or an axis2, and this action is an axis3", name));
+          text = std::to_string(static_cast<int>(digit));
+        } else if (!item.GetText(text))
+        {
+          reader.Report(item, std::format("'{}' holds {}, where a name was expected", name,
+                                          DataValue::Describe(item.GetKind())));
+          continue;
+        }
+
+        Value value{};
+        if (!of(text, value))
+        {
+          reader.Report(item, std::format("'{}' names '{}', which is not known. Known are: {}", name, text, known));
+          continue;
+        }
+
+        values.push_back(value);
+      }
+    }
+
+    void ReadAction(const DataReader &reader, const DataValue &written, InputAction &action)
+    {
+      std::size_t type = 0;
+      if (reader.ReadChoice("type", {"button", "axis", "axis2", "axis3"}, type))
+      {
+        action.type = static_cast<InputActionType>(type);
+      } else if (!reader.Has("type"))
+      {
+        reader.Report(written, std::format(
+                        "'type' is missing for the action '{}'. It is button, axis, axis2, or axis3", action.name));
+      }
+
+      const bool is_axis2 = action.type == InputActionType::Axis2;
+      const bool is_axis = action.type == InputActionType::Axis;
+      const bool is_axis3 = action.type == InputActionType::Axis3;
+      const std::string what_it_is = is_axis3 ? "an axis3" : is_axis2 ? "an axis2" : is_axis ? "an axis" : "a button";
+
+      ReadNames(reader, "keys", action.keys, [](const std::string &name, Key &key)
+      {
+        key = KeyOf(name);
+        return key != Key::Unknown;
+      }, KeyNames());
+
+      ReadNames(reader, "buttons", action.buttons, [](const std::string &name, ControllerButton &button)
+      {
+        return ControllerButtonOf(name, button);
+      }, NamesOf<ControllerButton>(kControllerButton_Size));
+
+      // `mouse` is a button for a button and `motion` for an axis of two
+      if (std::string mouse; reader.Read("mouse", mouse))
+      {
+        MouseButton button;
+        if (mouse == "motion" && is_axis2)
+        {
+          action.mouse_motion = true;
+        } else if (mouse != "motion" && action.IsButton() && MouseButtonOf(mouse, button))
+        {
+          action.mouse_button = button;
+        } else if (is_axis || is_axis3)
+        {
+          reader.Report(*reader.ReadValue("mouse"), std::format(
+                          "'mouse' is for a button or an axis2, and this action is {}", what_it_is));
+        } else
+        {
+          reader.Report(*reader.ReadValue("mouse"), is_axis2
+                          ? std::format("'mouse' is '{}', where motion was expected for an axis2", mouse)
+                          : std::format("'mouse' is '{}', where a button was expected. Known are: {}", mouse,
+                                        NamesOf<MouseButton>(kMouseButton_Size)));
         }
       }
-    } else if (!action.IsButton())
-    {
-      if (!action.keys.empty() && action.keys.size() != count)
-      {
-        reader.Report(*reader.ReadValue("keys"), std::format(
-                        "'keys' holds {} for an {}, where {} were expected: {}",
-                        action.keys.size(), is_axis2 ? "axis2" : "axis", is_axis2 ? "four" : "two", order));
-      }
-      if (!action.buttons.empty() && action.buttons.size() != count)
-      {
-        reader.Report(*reader.ReadValue("buttons"), std::format(
-                        "'buttons' holds {} for an {}, where {} were expected: {}",
-                        action.buttons.size(), is_axis2 ? "axis2" : "axis", is_axis2 ? "four" : "two", order));
-      }
-    }
 
-    reader.Finish();
+      if (std::string stick; reader.Read("stick", stick))
+      {
+        Stick which;
+        if (!is_axis2)
+        {
+          reader.Report(*reader.ReadValue("stick"), std::format("'stick' is for an axis2, and this action is {}", what_it_is));
+        } else if (!StickOf(stick, which))
+        {
+          reader.Report(*reader.ReadValue("stick"), std::format("'stick' is '{}', where left or right was expected", stick));
+        } else
+        {
+          action.stick = which;
+        }
+      }
+
+      if (std::string trigger; reader.Read("trigger", trigger))
+      {
+        ControllerTrigger which;
+        if (!is_axis)
+        {
+          reader.Report(*reader.ReadValue("trigger"), std::format("'trigger' is for an axis, and this action is {}", what_it_is));
+        } else if (!TriggerOf(trigger, which))
+        {
+          reader.Report(*reader.ReadValue("trigger"), std::format(
+                          "'trigger' is '{}', where left or right was expected", trigger));
+        } else
+        {
+          action.trigger = which;
+        }
+      }
+
+      // a motion sensor is the one source of an axis of three, and is off
+      // until the player or the action turns it on
+      if (std::string sensor; reader.Read("sensor", sensor))
+      {
+        Sensor which;
+        if (!is_axis3)
+        {
+          reader.Report(*reader.ReadValue("sensor"), std::format("'sensor' is for an axis3, and this action is {}", what_it_is));
+        } else if (!SensorOf(sensor, which))
+        {
+          reader.Report(*reader.ReadValue("sensor"), std::format(
+                          "'sensor' is '{}', where gyro or accelerometer was expected", sensor));
+        } else
+        {
+          action.sensor = which;
+        }
+      } else if (is_axis3)
+      {
+        reader.Report(written, std::format("'sensor' is missing for the axis3 '{}'. It is gyro or accelerometer", action.name));
+      }
+
+      if (bool enabled = false; reader.Read("enabled", enabled))
+      {
+        if (!is_axis3)
+        {
+          reader.Report(*reader.ReadValue("enabled"), std::format(
+                          "'enabled' turns a sensor on from the start, and this action is {}", what_it_is));
+        } else
+        {
+          action.enabled = enabled;
+        }
+      }
+
+      // a rate makes a stick or a trigger count per second
+      if (float rate = 0.0f; reader.Read("rate", rate))
+      {
+        if (action.IsButton())
+        {
+          reader.Report(*reader.ReadValue("rate"), "'rate' is for an axis, an axis2, or an axis3, and this action is a button");
+        } else if (rate <= 0.0f)
+        {
+          reader.Report(*reader.ReadValue("rate"), std::format("'rate' is {}, where a number above 0 was expected", rate));
+        } else
+        {
+          action.rate = rate;
+        }
+      }
+
+      // an axis2 is put together from four, in the order up, down, left,
+      // right; an axis from two, positive and negative
+      const std::size_t count = is_axis2 ? 4 : 2;
+      const std::string order = is_axis2 ? "up, down, left, right" : "positive, negative";
+      if (is_axis3)
+      {
+        for (const char *name : {"keys", "buttons"})
+        {
+          if (const DataValue *bound = reader.ReadValue(name); bound != nullptr)
+          {
+            reader.Report(*bound, std::format("'{}' is for a button, an axis, or an axis2, and this action is an axis3", name));
+          }
+        }
+      } else if (!action.IsButton())
+      {
+        if (!action.keys.empty() && action.keys.size() != count)
+        {
+          reader.Report(*reader.ReadValue("keys"), std::format(
+                          "'keys' holds {} for an {}, where {} were expected: {}",
+                          action.keys.size(), is_axis2 ? "axis2" : "axis", is_axis2 ? "four" : "two", order));
+        }
+        if (!action.buttons.empty() && action.buttons.size() != count)
+        {
+          reader.Report(*reader.ReadValue("buttons"), std::format(
+                          "'buttons' holds {} for an {}, where {} were expected: {}",
+                          action.buttons.size(), is_axis2 ? "axis2" : "axis", is_axis2 ? "four" : "two", order));
+        }
+      }
+
+      reader.Finish();
+    }
   }
 
   InputMapFile::InputMapFile(

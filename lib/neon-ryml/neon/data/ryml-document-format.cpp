@@ -9,6 +9,7 @@
 
 namespace neon
 {
+  // Helpers of RYML_DocumentFormat, for this file alone.
   namespace
   {
     /// What rapidyaml reports. It must not return to rapidyaml, so it is

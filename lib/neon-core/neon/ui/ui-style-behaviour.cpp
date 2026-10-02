@@ -15,6 +15,7 @@
 
 namespace neon
 {
+  // Helpers of ui-style-behaviour.cpp, for this file alone.
   namespace
   {
     const std::vector<std::string> visibilities = {"visible", "hidden"};

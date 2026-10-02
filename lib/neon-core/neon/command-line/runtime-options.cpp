@@ -8,6 +8,7 @@
 
 namespace neon
 {
+  // Helpers of RuntimeOptions, for this file alone.
   namespace
   {
     const std::string scene = "scene";

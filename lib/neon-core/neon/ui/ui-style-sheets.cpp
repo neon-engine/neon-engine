@@ -7,6 +7,7 @@
 
 namespace neon
 {
+  // Helpers of UiStyleSheets, for this file alone.
   namespace
   {
     /// The line a message names behind the path of its sheet.

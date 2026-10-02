@@ -5,6 +5,7 @@
 
 namespace neon
 {
+  // Helpers of GlyphEffect, for this file alone.
   namespace
   {
     // kept free around every picture

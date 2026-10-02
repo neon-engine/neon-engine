@@ -11,6 +11,7 @@
 
 namespace neon
 {
+  // Helpers of UiDeclarationContext, for this file alone.
   namespace
   {
     std::string Trimmed(const std::string &text)

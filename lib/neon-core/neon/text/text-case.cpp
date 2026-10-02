@@ -2,6 +2,7 @@
 
 namespace neon
 {
+  // Helpers of text-case.cpp, for this file alone.
   namespace
   {
     /// Letters that come in pairs next to each other, the capital first:

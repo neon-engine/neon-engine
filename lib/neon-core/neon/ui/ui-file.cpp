@@ -11,6 +11,7 @@
 
 namespace neon
 {
+  // Helpers of UiFile, for this file alone.
   namespace
   {
     const std::vector<std::string> scale_modes = {"fit", "width", "height", "none"};

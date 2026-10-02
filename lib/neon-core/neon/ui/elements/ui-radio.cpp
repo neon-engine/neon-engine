@@ -10,6 +10,7 @@
 
 namespace neon
 {
+  // Helpers of UiRadio, for this file alone.
   namespace
   {
     constexpr float box_size = 18.0f;

@@ -6,6 +6,7 @@
 
 namespace neon
 {
+  // Helpers of CssElement, for this file alone.
   namespace
   {
     const std::vector<std::string> state_names = {

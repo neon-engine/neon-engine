@@ -9,8 +9,15 @@
 
 namespace neon
 {
+  // Helpers of SDL2_InputSystem, for this file alone.
   namespace
   {
+    // how far a stick has to be pushed to count, of 32767
+    constexpr int stick_threshold = 16000;
+
+    // below this the right stick is at rest, of 32767
+    constexpr int stick_dead_zone = 8000;
+
     /// The key of the engine at a place of the keyboard, as the US layout
     /// has it. What an input map binds: a game is played by where the keys
     /// are, so that W, A, S, and D are the same four keys on every layout.
@@ -91,6 +98,48 @@ namespace neon
       }
     }
 
+    /// The key of the engine for a key event of SDL: the keys that editing
+    /// a text and moving through a user interface ask for. The keys that
+    /// move are told by where they are, the letters of the shortcuts by
+    /// what they type, so that a shortcut is where the layout of the
+    /// keyboard has its letter. A key that only types is left out, and
+    /// arrives as text.
+    Key KeyOf(const SDL_Keysym &keysym)
+    {
+      switch (keysym.sym)
+      {
+        case SDLK_a: return Key::A;
+        case SDLK_c: return Key::C;
+        case SDLK_v: return Key::V;
+        case SDLK_x: return Key::X;
+        case SDLK_y: return Key::Y;
+        case SDLK_z: return Key::Z;
+        default: break;
+      }
+
+      switch (keysym.scancode)
+      {
+        case SDL_SCANCODE_LEFT:
+        case SDL_SCANCODE_RIGHT:
+        case SDL_SCANCODE_UP:
+        case SDL_SCANCODE_DOWN:
+        case SDL_SCANCODE_HOME:
+        case SDL_SCANCODE_END:
+        case SDL_SCANCODE_PAGEUP:
+        case SDL_SCANCODE_PAGEDOWN:
+        case SDL_SCANCODE_BACKSPACE:
+        case SDL_SCANCODE_DELETE:
+        case SDL_SCANCODE_RETURN:
+        case SDL_SCANCODE_KP_ENTER:
+        case SDL_SCANCODE_TAB:
+        case SDL_SCANCODE_ESCAPE:
+        case SDL_SCANCODE_SPACE:
+          return KeyAt(keysym.scancode);
+        default:
+          return Key::Unknown;
+      }
+    }
+
     /// The button of the engine for a button of SDL, which names them by
     /// the letters of one maker.
     bool ButtonOf(const SDL_GameControllerButton button, ControllerButton &named)
@@ -115,68 +164,32 @@ namespace neon
         default: return false;
       }
     }
-  }
 
-  Key SDL2_InputSystem::KeyOf(const SDL_Keysym &keysym)
-  {
-    switch (keysym.sym)
+    KeyModifiers ModifiersOf(const Uint16 held)
     {
-      case SDLK_a: return Key::A;
-      case SDLK_c: return Key::C;
-      case SDLK_v: return Key::V;
-      case SDLK_x: return Key::X;
-      case SDLK_y: return Key::Y;
-      case SDLK_z: return Key::Z;
-      default: break;
-    }
+      KeyModifiers modifiers;
+      modifiers.shift = (held & KMOD_SHIFT) != 0;
+      modifiers.control = (held & KMOD_CTRL) != 0;
+      modifiers.alt = (held & KMOD_ALT) != 0;
+      modifiers.super = (held & KMOD_GUI) != 0;
 
-    switch (keysym.scancode)
-    {
-      case SDL_SCANCODE_LEFT:
-      case SDL_SCANCODE_RIGHT:
-      case SDL_SCANCODE_UP:
-      case SDL_SCANCODE_DOWN:
-      case SDL_SCANCODE_HOME:
-      case SDL_SCANCODE_END:
-      case SDL_SCANCODE_PAGEUP:
-      case SDL_SCANCODE_PAGEDOWN:
-      case SDL_SCANCODE_BACKSPACE:
-      case SDL_SCANCODE_DELETE:
-      case SDL_SCANCODE_RETURN:
-      case SDL_SCANCODE_KP_ENTER:
-      case SDL_SCANCODE_TAB:
-      case SDL_SCANCODE_ESCAPE:
-      case SDL_SCANCODE_SPACE:
-        return KeyAt(keysym.scancode);
-      default:
-        return Key::Unknown;
-    }
-  }
-
-  KeyModifiers SDL2_InputSystem::ModifiersOf(const std::uint16_t held)
-  {
-    KeyModifiers modifiers;
-    modifiers.shift = (held & KMOD_SHIFT) != 0;
-    modifiers.control = (held & KMOD_CTRL) != 0;
-    modifiers.alt = (held & KMOD_ALT) != 0;
-    modifiers.super = (held & KMOD_GUI) != 0;
-
-    // what a shortcut is made with, and what moves by a word, is a
-    // matter of the platform
+      // what a shortcut is made with, and what moves by a word, is a
+      // matter of the platform
 #if defined(__APPLE__)
-    modifiers.shortcut = modifiers.super;
-    modifiers.word = modifiers.alt;
+      modifiers.shortcut = modifiers.super;
+      modifiers.word = modifiers.alt;
 #else
-    modifiers.shortcut = modifiers.control;
-    modifiers.word = modifiers.control;
+      modifiers.shortcut = modifiers.control;
+      modifiers.word = modifiers.control;
 #endif
-    return modifiers;
-  }
+      return modifiers;
+    }
 
-  double SDL2_InputSystem::StickValue(const int value)
-  {
-    if (std::abs(value) < stick_dead_zone) { return 0.0; }
-    return std::clamp(static_cast<double>(value) / 32767.0, -1.0, 1.0);
+    double StickValue(const int value)
+    {
+      if (std::abs(value) < stick_dead_zone) { return 0.0; }
+      return std::clamp(static_cast<double>(value) / 32767.0, -1.0, 1.0);
+    }
   }
 
   void SDL2_InputSystem::Initialize()

@@ -5,6 +5,7 @@
 
 namespace neon
 {
+  // Helpers of FileSystem, for this file alone.
   namespace
   {
     // Characters that at least one supported platform forbids in a file name.
@@ -63,6 +64,7 @@ namespace neon
     }
   }
 
+  // Helpers of FileSystem, for this file alone.
   namespace
   {
     // Good enough to tell the author what went wrong. Whether a name matches
@@ -81,6 +83,7 @@ namespace neon
     }
   }
 
+  // Helpers of FileSystem, for this file alone.
   namespace
   {
     enum class Match

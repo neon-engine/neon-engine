@@ -13,8 +13,6 @@
 
 namespace neon
 {
-  class DataReader;
-
   /// A file of settings: what a game chooses for itself, and what a player
   /// may change, as opposed to what the project is (ProjectFile).
   ///
@@ -52,30 +50,6 @@ namespace neon
     FileSystemContext *_file_system;
     DocumentFormat *_format;
     std::shared_ptr<Logger> _logger;
-
-    /// A whole number above zero, read into a value of any integral type.
-    template <typename Number>
-    static void ReadCount(const DataReader &reader, const std::string &name, Number &value);
-
-    /// A number above zero, read into a double.
-    static void ReadAmount(const DataReader &reader, const std::string &name, double &value);
-
-    static void ReadWindow(const DataReader &reader, SettingsConfig &settings);
-
-    static void ReadUi(const DataReader &reader, SettingsConfig &settings);
-
-    static void ReadWorld(const DataReader &reader, SettingsConfig &settings);
-
-    static void ReadInput(const DataReader &reader, SettingsConfig &settings);
-
-    static void ReadRendering(const DataReader &reader, SettingsConfig &settings);
-
-    /// Reads the map under a name, when it is written.
-    static void ReadPart(
-      const DataReader &reader,
-      const std::string &name,
-      SettingsConfig &settings,
-      void (*read)(const DataReader &, SettingsConfig &));
 
   public:
     /// The version of the layout of the file that is read, and the highest

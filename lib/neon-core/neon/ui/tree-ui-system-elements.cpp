@@ -11,6 +11,7 @@
 
 namespace neon
 {
+  // Helpers of tree-ui-system-elements.cpp, for this file alone.
   namespace
   {
     bool IsInside(const UiElement *element, const UiElement *other)

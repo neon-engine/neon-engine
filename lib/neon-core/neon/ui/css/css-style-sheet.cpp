@@ -8,6 +8,7 @@
 
 namespace neon
 {
+  // Helpers of CssDeclaration, for this file alone.
   namespace
   {
     bool IsSpace(const char letter)

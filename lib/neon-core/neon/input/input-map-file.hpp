@@ -13,8 +13,6 @@
 
 namespace neon
 {
-  class DataReader;
-
   /// A file of an input map, `assets://input/<name>.input.yml`, which a
   /// project names in its `project.yml` as `input`.
   ///
@@ -41,26 +39,6 @@ namespace neon
     FileSystemContext *_file_system;
     DocumentFormat *_format;
     std::shared_ptr<Logger> _logger;
-
-    /// Every name of a kind, for a message that says what is known.
-    template <typename Enum>
-    static std::string NamesOf(std::size_t count);
-
-    /// The names of the keys start at 1, since 0 is the unknown key.
-    static std::string KeyNames();
-
-    /// Reads a list of names under `name` into `values` with `of`, which
-    /// turns a name into a value or returns false. What is not a name, or
-    /// not known, is reported with its line.
-    template <typename Value>
-    static void ReadNames(
-      const DataReader &reader,
-      const std::string &name,
-      std::vector<Value> &values,
-      const auto &of,
-      const std::string &known);
-
-    static void ReadAction(const DataReader &reader, const DataValue &written, InputAction &action);
 
   public:
     /// The version of the layout of the file that is read, and the highest

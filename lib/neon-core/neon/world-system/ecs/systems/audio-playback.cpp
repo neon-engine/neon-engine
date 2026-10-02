@@ -6,6 +6,7 @@
 
 namespace neon
 {
+  // Helpers of AudioPlayback, for this file alone.
   namespace
   {
     /// How fast something moves, from where it was a frame ago.

@@ -10,6 +10,7 @@
 
 namespace neon
 {
+  // Helpers of UiSlider, for this file alone.
   namespace
   {
     constexpr float thumb_size = 16.0f;

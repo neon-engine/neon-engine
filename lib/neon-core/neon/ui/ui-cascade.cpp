@@ -9,6 +9,7 @@
 
 namespace neon
 {
+  // Helpers of UiCascadeSettings, for this file alone.
   namespace
   {
     // in the order a later one wins over an earlier one

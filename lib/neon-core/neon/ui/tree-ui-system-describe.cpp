@@ -9,6 +9,7 @@
 
 namespace neon
 {
+  // Helpers of tree-ui-system-describe.cpp, for this file alone.
   namespace
   {
     /// What the kinds of the engine are for, in a sentence each.

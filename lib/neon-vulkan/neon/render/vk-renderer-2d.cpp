@@ -7,6 +7,7 @@
 
 namespace neon
 {
+  // Helpers of VK_Renderer2D, for this file alone.
   namespace
   {
     // A user interface is drawn at the size of its images, and a text must

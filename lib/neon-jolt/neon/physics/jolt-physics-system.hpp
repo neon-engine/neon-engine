@@ -24,23 +24,6 @@ namespace neon
 
     std::unique_ptr<State> _state;
 
-    /// Sets up what Jolt shares between every physics of a process, with
-    /// the first physics that is initialized.
-    static void AcquireShared();
-
-    /// Takes down what Jolt shares, with the last physics that is cleaned
-    /// up.
-    static void ReleaseShared();
-
-    [[nodiscard]] static bool IsFinite(const glm::vec3 &value);
-
-    [[nodiscard]] static std::string Name(ShapeKind kind);
-
-    [[nodiscard]] static std::string Name(JointKind kind);
-
-    /// Whether shapes can be on a body. Says why not in `error`.
-    static bool ShapesFit(const std::vector<ShapeInfo> &shapes, BodyKind kind, bool trigger, std::string &error);
-
   public:
     Jolt_PhysicsSystem(const SettingsConfig &settings_config, const std::shared_ptr<Logger> &logger);
 

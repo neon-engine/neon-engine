@@ -6,112 +6,116 @@
 
 namespace neon
 {
+  // Helpers of SettingsFile, for this file alone.
   namespace
   {
     const std::string what_is_read = "the settings";
-  }
 
-  template <typename Number>
-  void SettingsFile::ReadCount(const DataReader &reader, const std::string &name, Number &value)
-  {
-    int number = 0;
-    if (!reader.Read(name, number)) { return; }
-
-    if (number <= 0)
+    /// A whole number above zero, read into a value of any integral type.
+    template <typename Number>
+    void read_count(const DataReader &reader, const std::string &name, Number &value)
     {
-      reader.Report(*reader.ReadValue(name), std::format(
-                      "'{}' of {} is {}, where a whole number above zero was expected",
-                      name, reader.GetWhere(), number));
-      return;
-    }
+      int number = 0;
+      if (!reader.Read(name, number)) { return; }
 
-    value = static_cast<Number>(number);
-  }
-
-  void SettingsFile::ReadAmount(const DataReader &reader, const std::string &name, double &value)
-  {
-    float number = 0.0f;
-    if (!reader.Read(name, number)) { return; }
-
-    if (number <= 0.0f)
-    {
-      reader.Report(*reader.ReadValue(name), std::format(
-                      "'{}' of {} is {}, where a number above zero was expected",
-                      name, reader.GetWhere(), number));
-      return;
-    }
-
-    value = number;
-  }
-
-  void SettingsFile::ReadWindow(const DataReader &reader, SettingsConfig &settings)
-  {
-    reader.Read("title", settings.title);
-    ReadCount(reader, "width", settings.width);
-    ReadCount(reader, "height", settings.height);
-
-    if (std::size_t mode = 0; reader.ReadChoice("mode", {"windowed", "borderless", "fullscreen"}, mode))
-    {
-      settings.window_mode = static_cast<WindowMode>(mode);
-    }
-
-    reader.Finish();
-  }
-
-  void SettingsFile::ReadUi(const DataReader &reader, SettingsConfig &settings)
-  {
-    ReadAmount(reader, "scale", settings.ui_scale);
-    reader.Read("start", settings.ui_path);
-    reader.Read("pause_menu", settings.pause_menu);
-    reader.Read("settings_menu", settings.settings_menu);
-    reader.Finish();
-  }
-
-  void SettingsFile::ReadWorld(const DataReader &reader, SettingsConfig &settings)
-  {
-    ReadAmount(reader, "steps_per_second", settings.steps_per_second);
-    ReadCount(reader, "most_steps_per_frame", settings.most_steps_per_frame);
-    reader.Finish();
-  }
-
-  void SettingsFile::ReadInput(const DataReader &reader, SettingsConfig &settings)
-  {
-    // the player's switch for a sensor, which the map decides without
-    if (bool gyro = false; reader.Read("gyro", gyro)) { settings.gyro_enabled = gyro; }
-    reader.Finish();
-  }
-
-  void SettingsFile::ReadRendering(const DataReader &reader, SettingsConfig &settings)
-  {
-    // Written in quotes, since 1.10 as a number is 1.1
-    if (const DataValue *written = reader.ReadValue("vulkan_version"); written != nullptr)
-    {
-      std::string text;
-      ApiVersion version;
-      if (!written->GetText(text) || !ApiVersion::Parse(text, version) || version.major != 1)
+      if (number <= 0)
       {
-        reader.Report(*written, std::format(
-                        "'vulkan_version' of {} is not a version of Vulkan 1 in quotes, such as \"1.3\"",
-                        reader.GetWhere()));
-      } else
-      {
-        settings.vulkan_version = version;
+        reader.Report(*reader.ReadValue(name), std::format(
+                        "'{}' of {} is {}, where a whole number above zero was expected",
+                        name, reader.GetWhere(), number));
+        return;
       }
+
+      value = static_cast<Number>(number);
     }
 
-    ReadCount(reader, "max_light_sources", settings.max_light_sources);
-    reader.Finish();
-  }
+    /// A number above zero, read into a double.
+    void read_amount(const DataReader &reader, const std::string &name, double &value)
+    {
+      float number = 0.0f;
+      if (!reader.Read(name, number)) { return; }
 
-  void SettingsFile::ReadPart(
-    const DataReader &reader,
-    const std::string &name,
-    SettingsConfig &settings,
-    void (*read)(const DataReader &, SettingsConfig &))
-  {
-    bool found = false;
-    const DataReader part = reader.ReadMap(name, found);
-    if (found) { read(part, settings); }
+      if (number <= 0.0f)
+      {
+        reader.Report(*reader.ReadValue(name), std::format(
+                        "'{}' of {} is {}, where a number above zero was expected",
+                        name, reader.GetWhere(), number));
+        return;
+      }
+
+      value = number;
+    }
+
+    void read_window(const DataReader &reader, SettingsConfig &settings)
+    {
+      reader.Read("title", settings.title);
+      read_count(reader, "width", settings.width);
+      read_count(reader, "height", settings.height);
+
+      if (std::size_t mode = 0; reader.ReadChoice("mode", {"windowed", "borderless", "fullscreen"}, mode))
+      {
+        settings.window_mode = static_cast<WindowMode>(mode);
+      }
+
+      reader.Finish();
+    }
+
+    void read_ui(const DataReader &reader, SettingsConfig &settings)
+    {
+      read_amount(reader, "scale", settings.ui_scale);
+      reader.Read("start", settings.ui_path);
+      reader.Read("pause_menu", settings.pause_menu);
+      reader.Read("settings_menu", settings.settings_menu);
+      reader.Finish();
+    }
+
+    void read_world(const DataReader &reader, SettingsConfig &settings)
+    {
+      read_amount(reader, "steps_per_second", settings.steps_per_second);
+      read_count(reader, "most_steps_per_frame", settings.most_steps_per_frame);
+      reader.Finish();
+    }
+
+    void read_input(const DataReader &reader, SettingsConfig &settings)
+    {
+      // the player's switch for a sensor, which the map decides without
+      if (bool gyro = false; reader.Read("gyro", gyro)) { settings.gyro_enabled = gyro; }
+      reader.Finish();
+    }
+
+    void read_rendering(const DataReader &reader, SettingsConfig &settings)
+    {
+      // Written in quotes, since 1.10 as a number is 1.1
+      if (const DataValue *written = reader.ReadValue("vulkan_version"); written != nullptr)
+      {
+        std::string text;
+        ApiVersion version;
+        if (!written->GetText(text) || !ApiVersion::Parse(text, version) || version.major != 1)
+        {
+          reader.Report(*written, std::format(
+                          "'vulkan_version' of {} is not a version of Vulkan 1 in quotes, such as \"1.3\"",
+                          reader.GetWhere()));
+        } else
+        {
+          settings.vulkan_version = version;
+        }
+      }
+
+      read_count(reader, "max_light_sources", settings.max_light_sources);
+      reader.Finish();
+    }
+
+    /// Reads the map under a name, when it is written.
+    void read_part(
+      const DataReader &reader,
+      const std::string &name,
+      SettingsConfig &settings,
+      void (*read)(const DataReader &, SettingsConfig &))
+    {
+      bool found = false;
+      const DataReader part = reader.ReadMap(name, found);
+      if (found) { read(part, settings); }
+    }
   }
 
   SettingsFile::SettingsFile(
@@ -172,11 +176,11 @@ namespace neon
 
     // read on top of a copy, so that a file with a mistake changes nothing
     SettingsConfig read = settings;
-    ReadPart(reader, "window", read, ReadWindow);
-    ReadPart(reader, "ui", read, ReadUi);
-    ReadPart(reader, "world", read, ReadWorld);
-    ReadPart(reader, "input", read, ReadInput);
-    ReadPart(reader, "rendering", read, ReadRendering);
+    read_part(reader, "window", read, read_window);
+    read_part(reader, "ui", read, read_ui);
+    read_part(reader, "world", read, read_world);
+    read_part(reader, "input", read, read_input);
+    read_part(reader, "rendering", read, read_rendering);
     reader.Finish();
 
     if (errors.size() > before) { return false; }

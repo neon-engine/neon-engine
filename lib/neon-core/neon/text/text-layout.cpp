@@ -5,6 +5,7 @@
 
 namespace neon
 {
+  // Helpers of TextOptions, for this file alone.
   namespace
   {
     constexpr float epsilon = 0.01f;

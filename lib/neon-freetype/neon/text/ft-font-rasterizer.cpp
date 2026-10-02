@@ -14,6 +14,7 @@
 
 namespace neon
 {
+  // Helpers of FT_FontRasterizer, for this file alone.
   namespace
   {
     // FreeType counts in parts of 64 of a pixel

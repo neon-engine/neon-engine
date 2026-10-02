@@ -1,7 +1,6 @@
 #ifndef PHYSICS_SIMULATION_HPP
 #define PHYSICS_SIMULATION_HPP
 
-#include <cstdint>
 #include <map>
 #include <memory>
 #include <set>
@@ -150,16 +149,8 @@ namespace neon
 
     [[nodiscard]] static std::string PathOf(EntityStore &store, Entity entity);
 
-    [[nodiscard]] static glm::mat4 LocalMatrixOf(const Transform &transform);
-
     /// Where the parent of an entity places what is below it.
     [[nodiscard]] static glm::mat4 ParentMatrixOf(EntityStore &store, Entity entity);
-
-    /// Takes a matrix apart into where it moves to, how it turns, and how
-    /// it sizes. A matrix that shears, which a parent with different sizes
-    /// along its axes and a child that is turned make together, comes out
-    /// without the shear.
-    static void TakeApart(const glm::mat4 &matrix, glm::vec3 &position, glm::quat &rotation, glm::vec3 &size);
 
     [[nodiscard]] static Pose WorldPoseOf(EntityStore &store, Entity entity, const Transform &transform);
 
@@ -167,8 +158,6 @@ namespace neon
     static void WriteLocal(EntityStore &store, Entity entity, const Pose &world, Transform &transform, Record &record);
 
     [[nodiscard]] const ModelGeometry *GeometryOf(const std::string &path);
-
-    [[nodiscard]] static std::string Describe(ShapeKind shape);
 
     bool CollectShapes(
       EntityStore &store,
@@ -195,20 +184,12 @@ namespace neon
     /// change to them is noticed.
     void Claim(Record &record, Entity owner, const std::vector<Entity> &colliders, EntityStore &store);
 
-    /// The axes a component names, as the bits the physics takes. A word
-    /// that is no axis was refused when the component was read.
-    [[nodiscard]] static std::uint8_t AxisBits(const std::vector<std::string> &axes);
-
     void CreateMissing(EntityStore &store);
 
     /// Makes the joints whose bodies are both there.
     void CreateJoints(EntityStore &store);
 
     void FindLooseColliders(EntityStore &store);
-
-    [[nodiscard]] static bool SameRotation(const Rotation &left, const Rotation &right);
-
-    [[nodiscard]] static bool SameCollider(const Collider &left, const Collider &right);
 
     /// Finds the Colliders that a game changed since the shapes were read.
     void WatchColliders(EntityStore &store);

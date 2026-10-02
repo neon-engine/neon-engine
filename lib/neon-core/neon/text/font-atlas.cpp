@@ -8,6 +8,7 @@
 
 namespace neon
 {
+  // Helpers of CharacterRange, for this file alone.
   namespace
   {
     // kept free around every picture

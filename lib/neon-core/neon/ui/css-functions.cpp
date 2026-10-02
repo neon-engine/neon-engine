@@ -7,6 +7,7 @@
 
 namespace neon
 {
+  // Helpers of css-functions.cpp, for this file alone.
   namespace
   {
     std::string Trimmed(const std::string &text)

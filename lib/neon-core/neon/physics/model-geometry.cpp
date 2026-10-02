@@ -5,6 +5,7 @@
 
 namespace neon
 {
+  // Helpers of ModelGeometry, for this file alone.
   namespace
   {
     /// A mesh that is kept in memory and never drawn.

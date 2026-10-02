@@ -4,6 +4,7 @@
 
 namespace neon
 {
+  // Helpers of SceneFile, for this file alone.
   namespace
   {
     /// What a component is written as when it keeps all of its defaults.

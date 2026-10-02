@@ -8,6 +8,7 @@
 
 namespace neon
 {
+  // Helpers of tree-ui-system-scroll.cpp, for this file alone.
   namespace
   {
     // how far a notch of the wheel scrolls, in units of the file: three

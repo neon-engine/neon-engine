@@ -139,23 +139,27 @@ explicit VK_RenderSystem(
 This differs from Google, which starts with `public:`. `private:` is written
 only when something private has to follow the public part.
 
-### Helpers are private members, not file-local functions
+### Helpers of a file go in an anonymous namespace, with a comment
 
-A function that serves a class is a private member of it, static when it
-needs nothing of the object. A constant that serves a class is a private
-`static constexpr` member. A type that serves a class is a private nested
-type, or has a header of its own. **There are no anonymous namespaces**: a
-file is a class (see [one type per file](#one-type-per-file)), so everything
-in it belongs to the class and is declared in its header, where a reader
-sees everything the class is made of and finds a helper like any member. A
-module of free functions that share helpers becomes a class of static
-members. A backend's header may include its own library when a helper's
-signature needs it: nothing outside the backend includes that header.
+A function, a constant, or a type that only one `.cpp` uses goes in an
+anonymous namespace at the top of that file, as Google does, so that it has
+internal linkage and stays out of the header. The namespace opens with a
+comment that says what it holds and for whom, since a bare `namespace {`
+tells a reader nothing:
 
-This differs from Google, which puts file-local helpers in an unnamed
-namespace for internal linkage. The pattern came into the code base by
-imitation from the first pull requests and was never decided; decided on
-2026-10-02, with no exception, and the sweep of the files is #214.
+```cpp
+namespace neon
+{
+  // Helpers of SettingsFile: one reader per part of the file.
+  namespace
+  {
+    ...
+  }
+```
+
+A helper that needs the object is a private member. Decided 2026-10-02,
+after a day under the opposite rule: moving every helper into its class made
+the headers longer without making anything easier to find.
 
 ## Language use
 

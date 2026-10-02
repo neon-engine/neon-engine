@@ -11,6 +11,7 @@
 
 namespace neon
 {
+  // Helpers of UiTimingFunction, for this file alone.
   namespace
   {
     std::string Tidied(const std::string &text)

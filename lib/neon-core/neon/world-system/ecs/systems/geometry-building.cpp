@@ -33,7 +33,7 @@ namespace neon
     }
 
     MeshData mesh = builder.InsideOut(geometry.inside).Build();
-    if (geometry.smooth) { MeshNormals::ComputeSmooth(mesh); }
+    if (geometry.smooth) { ComputeSmoothNormals(mesh); }
     return mesh;
   }
 

@@ -54,6 +54,7 @@
 
 namespace neon
 {
+  // Helpers of Jolt_PhysicsSystem, for this file alone.
   namespace
   {
     // What Jolt can hold at most. Reaching one of these is reported, and
@@ -82,6 +83,26 @@ namespace neon
       return factory;
     }
 
+    void AcquireShared()
+    {
+      const std::scoped_lock lock(shared_mutex);
+      if (shared_users++ > 0) { return; }
+
+      JPH::RegisterDefaultAllocator();
+      JPH::Factory::sInstance = &SharedFactory();
+      JPH::RegisterTypes();
+    }
+
+    void ReleaseShared()
+    {
+      const std::scoped_lock lock(shared_mutex);
+      if (--shared_users > 0) { return; }
+
+      // unregistering empties the factory
+      JPH::UnregisterTypes();
+      JPH::Factory::sInstance = nullptr;
+    }
+
     JPH::Vec3 ToJolt(const glm::vec3 &value) { return {value.x, value.y, value.z}; }
 
     JPH::Quat ToJolt(const glm::quat &value)
@@ -92,6 +113,11 @@ namespace neon
     glm::vec3 ToGlm(const JPH::Vec3 &value) { return {value.GetX(), value.GetY(), value.GetZ()}; }
 
     glm::quat ToGlm(const JPH::Quat &value) { return {value.GetW(), value.GetX(), value.GetY(), value.GetZ()}; }
+
+    bool IsFinite(const glm::vec3 &value)
+    {
+      return std::isfinite(value.x) && std::isfinite(value.y) && std::isfinite(value.z);
+    }
 
     /// What a body is free to do, which is everything but what is locked.
     JPH::EAllowedDOFs AllowedDegrees(const std::uint8_t locked_position, const std::uint8_t locked_rotation)
@@ -104,6 +130,23 @@ namespace neon
       if ((locked_rotation & Axis_Y) == 0) { allowed |= JPH::EAllowedDOFs::RotationY; }
       if ((locked_rotation & Axis_Z) == 0) { allowed |= JPH::EAllowedDOFs::RotationZ; }
       return allowed;
+    }
+
+    std::string Name(const ShapeKind kind)
+    {
+      switch (kind)
+      {
+        case ShapeKind::Box: return "box";
+        case ShapeKind::Sphere: return "sphere";
+        case ShapeKind::Capsule: return "capsule";
+        case ShapeKind::Cylinder: return "cylinder";
+        case ShapeKind::TaperedCapsule: return "tapered capsule";
+        case ShapeKind::TaperedCylinder: return "tapered cylinder";
+        case ShapeKind::Plane: return "plane";
+        case ShapeKind::ConvexHull: return "convex hull";
+        case ShapeKind::Mesh: return "mesh";
+      }
+      return "shape";
     }
 
     /// What a body is in and looks for. Jolt keeps a number of 16 bits
@@ -251,6 +294,29 @@ namespace neon
       JPH::EAllowedDOFs allowed = JPH::EAllowedDOFs::All;
     };
 
+    /// Whether shapes can be on a body. Says why not in `error`.
+    bool ShapesFit(const std::vector<ShapeInfo> &shapes, const BodyKind kind, const bool trigger, std::string &error)
+    {
+      const bool dynamic = kind == BodyKind::Dynamic && !trigger;
+
+      for (const auto &shape : shapes)
+      {
+        if (shape.kind == ShapeKind::Mesh && dynamic)
+        {
+          error = "a dynamic body cannot have a mesh. A mesh is a surface without an inside, so it has no "
+                  "mass. Make the body static or kinematic, or give it a convex hull";
+          return false;
+        }
+
+        if (shape.kind == ShapeKind::Plane && (kind != BodyKind::Static || trigger))
+        {
+          error = "only a static body can have a plane, which has no end and cannot move";
+          return false;
+        }
+      }
+      return true;
+    }
+
     /// What is kept of a joint. Jolt makes the constraint itself, and
     /// counts references to it. This is one of them.
     struct JointRecord
@@ -259,6 +325,18 @@ namespace neon
       BodyId body = No_Body;
       BodyId other = No_Body;
     };
+
+    std::string Name(const JointKind kind)
+    {
+      switch (kind)
+      {
+        case JointKind::Fixed: return "fixed";
+        case JointKind::Hinge: return "hinge";
+        case JointKind::Slider: return "slider";
+        case JointKind::Point: return "point";
+      }
+      return "joint";
+    }
 
     /// What is kept of a character. The character of Jolt is a part of the
     /// record, built in place in a map, whose nodes do not move, so that
@@ -970,86 +1048,6 @@ namespace neon
     }
 
     return events;
-  }
-
-  void Jolt_PhysicsSystem::AcquireShared()
-  {
-    const std::scoped_lock lock(shared_mutex);
-    if (shared_users++ > 0) { return; }
-
-    JPH::RegisterDefaultAllocator();
-    JPH::Factory::sInstance = &SharedFactory();
-    JPH::RegisterTypes();
-  }
-
-  void Jolt_PhysicsSystem::ReleaseShared()
-  {
-    const std::scoped_lock lock(shared_mutex);
-    if (--shared_users > 0) { return; }
-
-    // unregistering empties the factory
-    JPH::UnregisterTypes();
-    JPH::Factory::sInstance = nullptr;
-  }
-
-  bool Jolt_PhysicsSystem::IsFinite(const glm::vec3 &value)
-  {
-    return std::isfinite(value.x) && std::isfinite(value.y) && std::isfinite(value.z);
-  }
-
-  std::string Jolt_PhysicsSystem::Name(const ShapeKind kind)
-  {
-    switch (kind)
-    {
-      case ShapeKind::Box: return "box";
-      case ShapeKind::Sphere: return "sphere";
-      case ShapeKind::Capsule: return "capsule";
-      case ShapeKind::Cylinder: return "cylinder";
-      case ShapeKind::TaperedCapsule: return "tapered capsule";
-      case ShapeKind::TaperedCylinder: return "tapered cylinder";
-      case ShapeKind::Plane: return "plane";
-      case ShapeKind::ConvexHull: return "convex hull";
-      case ShapeKind::Mesh: return "mesh";
-    }
-    return "shape";
-  }
-
-  std::string Jolt_PhysicsSystem::Name(const JointKind kind)
-  {
-    switch (kind)
-    {
-      case JointKind::Fixed: return "fixed";
-      case JointKind::Hinge: return "hinge";
-      case JointKind::Slider: return "slider";
-      case JointKind::Point: return "point";
-    }
-    return "joint";
-  }
-
-  bool Jolt_PhysicsSystem::ShapesFit(
-    const std::vector<ShapeInfo> &shapes,
-    const BodyKind kind,
-    const bool trigger,
-    std::string &error)
-  {
-    const bool dynamic = kind == BodyKind::Dynamic && !trigger;
-
-    for (const auto &shape : shapes)
-    {
-      if (shape.kind == ShapeKind::Mesh && dynamic)
-      {
-        error = "a dynamic body cannot have a mesh. A mesh is a surface without an inside, so it has no "
-                "mass. Make the body static or kinematic, or give it a convex hull";
-        return false;
-      }
-
-      if (shape.kind == ShapeKind::Plane && (kind != BodyKind::Static || trigger))
-      {
-        error = "only a static body can have a plane, which has no end and cannot move";
-        return false;
-      }
-    }
-    return true;
   }
 
   Jolt_PhysicsSystem::Jolt_PhysicsSystem(

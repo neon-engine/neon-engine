@@ -10,6 +10,7 @@
 
 namespace neon
 {
+  // Helpers of CssValueContext, for this file alone.
   namespace
   {
     constexpr int max_depth = 32;

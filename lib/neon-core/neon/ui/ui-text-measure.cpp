@@ -9,6 +9,7 @@
 
 namespace neon
 {
+  // Helpers of UiTextMeasure, for this file alone.
   namespace
   {
     constexpr float epsilon = 0.01f;

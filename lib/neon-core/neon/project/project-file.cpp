@@ -7,6 +7,7 @@
 
 namespace neon
 {
+  // Helpers of ProjectFile, for this file alone.
   namespace
   {
     const std::string what_is_read = "the project";

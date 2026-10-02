@@ -140,8 +140,6 @@ namespace neon
     // names that were refused, each said once
     std::vector<std::string> _refused_targets;
 
-    static VkDeviceSize AlignUp(VkDeviceSize size, VkDeviceSize alignment);
-
     bool WriteDescriptorSet(const VK_Material &material, VkDescriptorSet set) const;
 
     [[nodiscard]] bool FindSurface(const std::string &name, VK_Texture &texture) const;

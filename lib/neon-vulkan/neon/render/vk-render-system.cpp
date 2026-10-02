@@ -11,6 +11,7 @@
 
 namespace neon
 {
+  // Helpers of VK_RenderSystem, for this file alone.
   namespace
   {
     // The image that is shown holds sRGB colours as bytes: what the resolve
@@ -29,11 +30,11 @@ namespace neon
       0.0f, 1.0f, 0.0f, 0.0f,
       0.0f, 0.0f, 0.5f, 0.0f,
       0.0f, 0.0f, 0.5f, 1.0f);
-  }
 
-  VkDeviceSize VK_RenderSystem::AlignUp(const VkDeviceSize size, const VkDeviceSize alignment)
-  {
-    return alignment == 0 ? size : (size + alignment - 1) / alignment * alignment;
+    VkDeviceSize align_up(const VkDeviceSize size, const VkDeviceSize alignment)
+    {
+      return alignment == 0 ? size : (size + alignment - 1) / alignment * alignment;
+    }
   }
 
   void VK_RenderSystem::Initialize()
@@ -301,7 +302,7 @@ namespace neon
   {
     // entries are picked by an offset, which has to respect the alignment
     // the graphics card asks for
-    buffer.entry_size = AlignUp(entry_size, _device.Properties().limits.minUniformBufferOffsetAlignment);
+    buffer.entry_size = align_up(entry_size, _device.Properties().limits.minUniformBufferOffsetAlignment);
     buffer.capacity = capacity;
     buffer.used = 0;
 

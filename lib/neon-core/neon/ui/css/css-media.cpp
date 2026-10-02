@@ -9,6 +9,7 @@
 
 namespace neon
 {
+  // Helpers of CssEnvironment, for this file alone.
   namespace
   {
     constexpr float epsilon = 0.0001f;

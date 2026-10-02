@@ -4,6 +4,7 @@
 
 namespace neon
 {
+  // Helpers of VK_ApiVersion, for this file alone.
   namespace
   {
     /// The major and minor version, which is what decides what may be used.

@@ -4,6 +4,7 @@
 
 namespace neon
 {
+  // Helpers of UiTextEditor, for this file alone.
   namespace
   {
     // what stands for a character of a password

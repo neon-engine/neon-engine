@@ -89,7 +89,7 @@ and reads it pixel by pixel.
 |---|---|---|
 | `MeshData` | neon-core, `neon/geometry/mesh-data.hpp` | Vertices and triangle indices, nothing else |
 | `MeshBuilder` | `neon/geometry/mesh-builder.hpp` | `AddBox`, `AddPlane`, `AddRamp`, `AddPrism`, `AddQuad`, `InsideOut`, `Build` |
-| `MeshNormals` | `neon/geometry/mesh-normals.hpp` | `ComputeFlat` splits shared vertices so every edge is hard; `ComputeSmooth` averages by area |
+| `ComputeFlatNormals`, `ComputeSmoothNormals` | `neon/geometry/mesh-normals.hpp` | Flat splits shared vertices so every edge is hard; smooth averages by area |
 | `ProjectUvs` | `neon/geometry/mesh-uvs.hpp` | The projection above |
 | `Geometry`, `GeometryShape` | `neon/world-system/ecs/components/` | The component, described with reflection |
 | `GeometryBuilding` | `neon/world-system/ecs/systems/` | Builds the mesh once into `RenderInfo::mesh`; `Build()` is what the physics calls too |

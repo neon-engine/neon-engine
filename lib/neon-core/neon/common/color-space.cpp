@@ -6,6 +6,7 @@
 
 namespace neon
 {
+  // Helpers of color-space.cpp, for this file alone.
   namespace
   {
     std::array<float, 256> MakeByteTable()

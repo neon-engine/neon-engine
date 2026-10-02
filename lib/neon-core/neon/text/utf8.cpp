@@ -4,6 +4,7 @@
 
 namespace neon
 {
+  // Helpers of utf8.cpp, for this file alone.
   namespace
   {
     bool IsContinuation(const unsigned char byte)

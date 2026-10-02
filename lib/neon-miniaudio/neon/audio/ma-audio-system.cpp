@@ -12,6 +12,7 @@
 
 namespace neon
 {
+  // Helpers of MA_AudioSystem, for this file alone.
   namespace
   {
     constexpr ma_uint32 channels = 2;

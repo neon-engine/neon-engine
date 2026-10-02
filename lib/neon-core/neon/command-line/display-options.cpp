@@ -5,6 +5,7 @@
 
 namespace neon
 {
+  // Helpers of DisplayOptions, for this file alone.
   namespace
   {
     const std::string window_size = "window-size";

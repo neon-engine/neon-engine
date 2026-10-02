@@ -105,18 +105,6 @@ namespace neon
     TextComposition _composition;
     InputDevice _device = InputDevice::KeyboardAndMouse;
 
-    static std::string Trimmed(const std::string &text);
-
-    static std::vector<std::string> Words(const std::string &text);
-
-    /// Read by hand, since the functions of the standard library follow the
-    /// language of the machine or are missing from a compiler.
-    static bool ReadNumber(const std::string &text, double &number);
-
-    static bool ReadCount(const std::string &text, std::size_t &count);
-
-    static std::string Unescaped(const std::string &text);
-
   public:
     /// Reads a script. `name` is what it is called in messages. Returns
     /// false when a line cannot be read, with a message for every such line

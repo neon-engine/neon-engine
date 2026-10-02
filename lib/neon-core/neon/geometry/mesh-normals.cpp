@@ -1,22 +1,30 @@
 #include "mesh-normals.hpp"
 
+#include <glm/glm.hpp>
+
 namespace neon
 {
-  glm::vec3 MeshNormals::AreaNormal(const MeshData &mesh, const std::size_t triangle)
+  // Helpers of mesh-normals.cpp, for this file alone.
+  namespace
   {
-    const glm::vec3 &a = mesh.vertices[mesh.indices[triangle * 3]].position;
-    const glm::vec3 &b = mesh.vertices[mesh.indices[triangle * 3 + 1]].position;
-    const glm::vec3 &c = mesh.vertices[mesh.indices[triangle * 3 + 2]].position;
-    return cross(b - a, c - a);
+    /// The normal of a triangle, with the length of twice its area, which
+    /// is what weights a smooth normal by the triangle's size.
+    glm::vec3 AreaNormal(const MeshData &mesh, const std::size_t triangle)
+    {
+      const glm::vec3 &a = mesh.vertices[mesh.indices[triangle * 3]].position;
+      const glm::vec3 &b = mesh.vertices[mesh.indices[triangle * 3 + 1]].position;
+      const glm::vec3 &c = mesh.vertices[mesh.indices[triangle * 3 + 2]].position;
+      return cross(b - a, c - a);
+    }
+
+    glm::vec3 NormalizedOrUp(const glm::vec3 &vector)
+    {
+      // a degenerate triangle has no normal of its own; up is as good as any
+      return dot(vector, vector) > 0.0f ? normalize(vector) : glm::vec3(0.0f, 1.0f, 0.0f);
+    }
   }
 
-  glm::vec3 MeshNormals::NormalizedOrUp(const glm::vec3 &vector)
-  {
-    // a degenerate triangle has no normal of its own; up is as good as any
-    return dot(vector, vector) > 0.0f ? normalize(vector) : glm::vec3(0.0f, 1.0f, 0.0f);
-  }
-
-  void MeshNormals::ComputeFlat(MeshData &mesh)
+  void ComputeFlatNormals(MeshData &mesh)
   {
     // every triangle gets vertices of its own, so that an edge between two
     // faces stays a hard edge
@@ -38,7 +46,7 @@ namespace neon
     for (std::size_t i = 0; i < mesh.indices.size(); i++) { mesh.indices[i] = static_cast<unsigned int>(i); }
   }
 
-  void MeshNormals::ComputeSmooth(MeshData &mesh)
+  void ComputeSmoothNormals(MeshData &mesh)
   {
     for (auto &vertex : mesh.vertices) { vertex.normal = glm::vec3(0.0f); }
 

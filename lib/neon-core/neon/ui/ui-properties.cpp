@@ -10,6 +10,7 @@
 
 namespace neon
 {
+  // Helpers of UiPropertyValue, for this file alone.
   namespace
   {
     const std::vector<std::string> displays = {"flex", "none"};

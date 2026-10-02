@@ -14,29 +14,36 @@
 
 namespace neon
 {
-  template<typename T>
-  ComponentFormat ComponentFormats::PhysicsFormat()
+  // Helpers of physics-component-formats.cpp, for this file alone.
+  namespace
   {
-    auto format = ComponentFormat::Of<T>();
-
-    format.read = [type = format.type](const DataReader &reader, EntityStore &store, const Entity entity)
+    /// The format of a component that the physics registers. A world
+    /// without physics does not know the component, which is said instead
+    /// of giving the entity something the store cannot hold.
+    template<typename T>
+    ComponentFormat PhysicsFormat()
     {
-      // read first, so that what is wrong with it is said as well
-      T component{};
-      ReadFields(*type, reader, &component);
+      auto format = ComponentFormat::Of<T>();
 
-      if (store.FindComponent(type->name) == No_Component)
+      format.read = [type = format.type](const DataReader &reader, EntityStore &store, const Entity entity)
       {
-        reader.Report({}, std::format(
-                        "{} needs the physics, which is not part of this world",
-                        reader.GetWhere()));
-        return;
-      }
+        // read first, so that what is wrong with it is said as well
+        T component{};
+        ReadFields(*type, reader, &component);
 
-      store.Set(entity, component);
-    };
+        if (store.FindComponent(type->name) == No_Component)
+        {
+          reader.Report({}, std::format(
+                          "{} needs the physics, which is not part of this world",
+                          reader.GetWhere()));
+          return;
+        }
 
-    return format;
+        store.Set(entity, component);
+      };
+
+      return format;
+    }
   }
 
   void ComponentFormats::AddPhysicsComponents()

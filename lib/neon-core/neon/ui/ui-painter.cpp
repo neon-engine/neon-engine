@@ -7,6 +7,7 @@
 
 namespace neon
 {
+  // Helpers of UiRectangle, for this file alone.
   namespace
   {
     /// A part of an image as a part of its texture. They are the same but

@@ -5,6 +5,7 @@
 
 namespace neon
 {
+  // Helpers of UiAnimator, for this file alone.
   namespace
   {
     /// The value of a list of CSS at a place, which goes through the list

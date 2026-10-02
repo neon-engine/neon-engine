@@ -11,6 +11,7 @@
 
 namespace neon
 {
+  // Helpers of UiTransitions, for this file alone.
   namespace
   {
     const std::vector<std::string> displays = {"flex", "none"};

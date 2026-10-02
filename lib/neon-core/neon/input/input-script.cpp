@@ -6,6 +6,7 @@
 
 namespace neon
 {
+  // Helpers of InputScript, for this file alone.
   namespace
   {
     const std::pair<Action, const char *> action_names[] = {
@@ -25,120 +26,122 @@ namespace neon
       {Action::Ui_Cancel, "ui-cancel"},
       {Action::Pointer_Primary, "pointer-primary"}
     };
-  }
 
-  std::string InputScript::Trimmed(const std::string &text)
-  {
-    std::size_t first = 0;
-    std::size_t last = text.size();
-
-    while (first < last && (text[first] == ' ' || text[first] == '\t' || text[first] == '\r')) { first++; }
-    while (last > first && (text[last - 1] == ' ' || text[last - 1] == '\t' || text[last - 1] == '\r')) { last--; }
-
-    return text.substr(first, last - first);
-  }
-
-  std::vector<std::string> InputScript::Words(const std::string &text)
-  {
-    std::vector<std::string> words;
-    std::string word;
-
-    for (const char letter : text)
+    std::string Trimmed(const std::string &text)
     {
-      if (letter == ' ' || letter == '\t')
-      {
-        if (!word.empty()) { words.push_back(word); }
-        word.clear();
-      } else
-      {
-        word += letter;
-      }
+      std::size_t first = 0;
+      std::size_t last = text.size();
+
+      while (first < last && (text[first] == ' ' || text[first] == '\t' || text[first] == '\r')) { first++; }
+      while (last > first && (text[last - 1] == ' ' || text[last - 1] == '\t' || text[last - 1] == '\r')) { last--; }
+
+      return text.substr(first, last - first);
     }
 
-    if (!word.empty()) { words.push_back(word); }
-    return words;
-  }
-
-  bool InputScript::ReadNumber(const std::string &text, double &number)
-  {
-    if (text.empty()) { return false; }
-
-    std::size_t position = 0;
-    bool negative = false;
-    if (text[0] == '-' || text[0] == '+')
+    std::vector<std::string> Words(const std::string &text)
     {
-      negative = text[0] == '-';
-      position = 1;
-    }
+      std::vector<std::string> words;
+      std::string word;
 
-    double value = 0.0;
-    double scale = 1.0;
-    bool has_digit = false;
-    bool after_point = false;
-
-    for (; position < text.size(); position++)
-    {
-      const char letter = text[position];
-      if (letter == '.' && !after_point)
+      for (const char letter : text)
       {
-        after_point = true;
-      } else if (letter >= '0' && letter <= '9')
-      {
-        has_digit = true;
-        if (after_point)
+        if (letter == ' ' || letter == '\t')
         {
-          scale /= 10.0;
-          value += (letter - '0') * scale;
+          if (!word.empty()) { words.push_back(word); }
+          word.clear();
         } else
         {
-          value = value * 10.0 + (letter - '0');
+          word += letter;
         }
-      } else
-      {
-        return false;
       }
+
+      if (!word.empty()) { words.push_back(word); }
+      return words;
     }
 
-    if (!has_digit) { return false; }
-
-    number = negative ? -value : value;
-    return true;
-  }
-
-  bool InputScript::ReadCount(const std::string &text, std::size_t &count)
-  {
-    const char *last = text.data() + text.size();
-    const auto [stopped_at, error] = std::from_chars(text.data(), last, count);
-    return !text.empty() && error == std::errc{} && stopped_at == last;
-  }
-
-  std::string InputScript::Unescaped(const std::string &text)
-  {
-    std::string result;
-
-    for (std::size_t i = 0; i < text.size(); i++)
+    // Read by hand, since the functions of the standard library follow the
+    // language of the machine or are missing from a compiler.
+    bool ReadNumber(const std::string &text, double &number)
     {
-      if (text[i] == '\\' && i + 1 < text.size())
+      if (text.empty()) { return false; }
+
+      std::size_t position = 0;
+      bool negative = false;
+      if (text[0] == '-' || text[0] == '+')
       {
-        i++;
-        switch (text[i])
-        {
-          case 'n': result += '\n';
-            break;
-          case 't': result += '\t';
-            break;
-          case 's': result += ' ';
-            break;
-          default: result += text[i];
-            break;
-        }
-      } else
-      {
-        result += text[i];
+        negative = text[0] == '-';
+        position = 1;
       }
+
+      double value = 0.0;
+      double scale = 1.0;
+      bool has_digit = false;
+      bool after_point = false;
+
+      for (; position < text.size(); position++)
+      {
+        const char letter = text[position];
+        if (letter == '.' && !after_point)
+        {
+          after_point = true;
+        } else if (letter >= '0' && letter <= '9')
+        {
+          has_digit = true;
+          if (after_point)
+          {
+            scale /= 10.0;
+            value += (letter - '0') * scale;
+          } else
+          {
+            value = value * 10.0 + (letter - '0');
+          }
+        } else
+        {
+          return false;
+        }
+      }
+
+      if (!has_digit) { return false; }
+
+      number = negative ? -value : value;
+      return true;
     }
 
-    return result;
+    bool ReadCount(const std::string &text, std::size_t &count)
+    {
+      const char *last = text.data() + text.size();
+      const auto [stopped_at, error] = std::from_chars(text.data(), last, count);
+      return !text.empty() && error == std::errc{} && stopped_at == last;
+    }
+
+    std::string Unescaped(const std::string &text)
+    {
+      std::string result;
+
+      for (std::size_t i = 0; i < text.size(); i++)
+      {
+        if (text[i] == '\\' && i + 1 < text.size())
+        {
+          i++;
+          switch (text[i])
+          {
+            case 'n': result += '\n';
+              break;
+            case 't': result += '\t';
+              break;
+            case 's': result += ' ';
+              break;
+            default: result += text[i];
+              break;
+          }
+        } else
+        {
+          result += text[i];
+        }
+      }
+
+      return result;
+    }
   }
 
   std::string NameOf(const Action action)

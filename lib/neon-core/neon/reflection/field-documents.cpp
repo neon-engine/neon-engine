@@ -6,6 +6,7 @@
 
 namespace neon
 {
+  // Helpers of field-documents.cpp, for this file alone.
   namespace
   {
     DataValue ListOf(const std::vector<float> &numbers)

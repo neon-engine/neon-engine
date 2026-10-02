@@ -4,6 +4,7 @@
 
 namespace neon
 {
+  // Helpers of entity-fields.cpp, for this file alone.
   namespace
   {
     /// Finds the component and the field, or says what is missing.

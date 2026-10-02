@@ -7,6 +7,7 @@
 
 namespace neon
 {
+  // Helpers of VK_Capabilities, for this file alone.
   namespace
   {
     bool has_features(const VkFormatProperties &format, const VkFormatFeatureFlags wanted)

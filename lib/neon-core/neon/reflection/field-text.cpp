@@ -7,6 +7,7 @@
 
 namespace neon
 {
+  // Helpers of field-text.cpp, for this file alone.
   namespace
   {
     std::string Trimmed(const std::string &text)

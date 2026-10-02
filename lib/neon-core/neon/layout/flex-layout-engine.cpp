@@ -10,6 +10,7 @@
 
 namespace neon
 {
+  // Helpers of Flex_LayoutEngine, for this file alone.
   namespace
   {
     const float undefined = std::numeric_limits<float>::quiet_NaN();

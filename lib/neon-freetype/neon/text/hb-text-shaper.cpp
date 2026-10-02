@@ -8,6 +8,7 @@
 
 namespace neon
 {
+  // Helpers of HB_TextShaper, for this file alone.
   namespace
   {
     // HarfBuzz counts in whole numbers, which are parts of 64 of a pixel

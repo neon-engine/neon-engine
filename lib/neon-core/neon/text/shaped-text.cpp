@@ -7,6 +7,7 @@
 
 namespace neon
 {
+  // Helpers of TextFont, for this file alone.
   namespace
   {
     constexpr float epsilon = 0.01f;
@@ -380,6 +381,7 @@ namespace neon
     return shaped;
   }
 
+  // Helpers of ShapedText, for this file alone.
   namespace
   {
     struct Line

@@ -6,6 +6,7 @@
 
 namespace neon
 {
+  // Helpers of TypeBuilder, for this file alone.
   namespace
   {
     std::string Join(const std::vector<std::string> &words)

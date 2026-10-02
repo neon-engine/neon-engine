@@ -7,6 +7,7 @@
 
 namespace neon
 {
+  // Helpers of UiElement, for this file alone.
   namespace
   {
     constexpr float far_away = 1.0e7f;

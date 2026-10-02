@@ -7,6 +7,7 @@
 
 namespace neon
 {
+  // Helpers of CommandLineOption, for this file alone.
   namespace
   {
     constexpr std::string_view help_option = "help";

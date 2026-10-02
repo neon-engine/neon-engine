@@ -14,72 +14,78 @@
 
 namespace neon
 {
-  glm::mat4 PhysicsSimulation::LocalMatrixOf(const Transform &transform)
+  // Helpers of PhysicsSimulation, for this file alone.
+  namespace
   {
-    return translate(glm::mat4{1.0f}, transform.position)
-           * mat4_cast(transform.rotation.GetQuaternion())
-           * scale(glm::mat4{1.0f}, transform.scale);
-  }
-
-  void PhysicsSimulation::TakeApart(
-    const glm::mat4 &matrix,
-    glm::vec3 &position,
-    glm::quat &rotation,
-    glm::vec3 &size)
-  {
-    position = matrix[3];
-
-    glm::mat3 axes{matrix};
-    size = {length(axes[0]), length(axes[1]), length(axes[2])};
-
-    for (int axis = 0; axis < 3; axis++)
+    glm::mat4 LocalMatrixOf(const Transform &transform)
     {
-      if (size[axis] > 0.0f) { axes[axis] /= size[axis]; }
+      return translate(glm::mat4{1.0f}, transform.position)
+             * mat4_cast(transform.rotation.GetQuaternion())
+             * scale(glm::mat4{1.0f}, transform.scale);
     }
 
-    // a mirrored matrix is no rotation. The mirror goes into the size
-    if (determinant(axes) < 0.0f)
+    /// Takes a matrix apart into where it moves to, how it turns, and how
+    /// it sizes. A matrix that shears, which a parent with different sizes
+    /// along its axes and a child that is turned make together, comes out
+    /// without the shear.
+    void TakeApart(const glm::mat4 &matrix, glm::vec3 &position, glm::quat &rotation, glm::vec3 &size)
     {
-      axes[0] = -axes[0];
-      size.x = -size.x;
+      position = matrix[3];
+
+      glm::mat3 axes{matrix};
+      size = {length(axes[0]), length(axes[1]), length(axes[2])};
+
+      for (int axis = 0; axis < 3; axis++)
+      {
+        if (size[axis] > 0.0f) { axes[axis] /= size[axis]; }
+      }
+
+      // a mirrored matrix is no rotation. The mirror goes into the size
+      if (determinant(axes) < 0.0f)
+      {
+        axes[0] = -axes[0];
+        size.x = -size.x;
+      }
+
+      rotation = normalize(quat_cast(axes));
     }
 
-    rotation = normalize(quat_cast(axes));
-  }
-
-  bool PhysicsSimulation::SameRotation(const Rotation &left, const Rotation &right)
-  {
-    return left.pitch == right.pitch && left.yaw == right.yaw && left.roll == right.roll;
-  }
-
-  bool PhysicsSimulation::SameCollider(const Collider &left, const Collider &right)
-  {
-    return left.shape == right.shape
-           && left.size == right.size
-           && left.radius == right.radius
-           && left.height == right.height
-           && left.top_radius == right.top_radius
-           && left.bottom_radius == right.bottom_radius
-           && left.model == right.model
-           && left.offset == right.offset
-           && SameRotation(left.rotation, right.rotation);
-  }
-
-  std::string PhysicsSimulation::Describe(const ShapeKind shape)
-  {
-    return shape == ShapeKind::ConvexHull ? "convex hull" : "mesh";
-  }
-
-  std::uint8_t PhysicsSimulation::AxisBits(const std::vector<std::string> &axes)
-  {
-    std::uint8_t bits = 0;
-    for (const auto &axis : axes)
+    bool SameRotation(const Rotation &left, const Rotation &right)
     {
-      if (axis == "x") { bits |= Axis_X; }
-      if (axis == "y") { bits |= Axis_Y; }
-      if (axis == "z") { bits |= Axis_Z; }
+      return left.pitch == right.pitch && left.yaw == right.yaw && left.roll == right.roll;
     }
-    return bits;
+
+    bool SameCollider(const Collider &left, const Collider &right)
+    {
+      return left.shape == right.shape
+             && left.size == right.size
+             && left.radius == right.radius
+             && left.height == right.height
+             && left.top_radius == right.top_radius
+             && left.bottom_radius == right.bottom_radius
+             && left.model == right.model
+             && left.offset == right.offset
+             && SameRotation(left.rotation, right.rotation);
+    }
+
+    std::string Describe(const ShapeKind shape)
+    {
+      return shape == ShapeKind::ConvexHull ? "convex hull" : "mesh";
+    }
+
+    /// The axes a component names, as the bits the physics takes. A word
+    /// that is no axis was refused when the component was read.
+    std::uint8_t AxisBits(const std::vector<std::string> &axes)
+    {
+      std::uint8_t bits = 0;
+      for (const auto &axis : axes)
+      {
+        if (axis == "x") { bits |= Axis_X; }
+        if (axis == "y") { bits |= Axis_Y; }
+        if (axis == "z") { bits |= Axis_Z; }
+      }
+      return bits;
+    }
   }
 
   PhysicsSimulation::PhysicsSimulation(

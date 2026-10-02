@@ -5,6 +5,7 @@
 
 namespace neon
 {
+  // Helpers of UiBoxPaint, for this file alone.
   namespace
   {
     Color Faded(const Color &color, const float opacity)

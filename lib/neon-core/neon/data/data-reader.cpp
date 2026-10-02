@@ -6,6 +6,7 @@
 
 namespace neon
 {
+  // Helpers of DataReader, for this file alone.
   namespace
   {
     const DataValue empty_map = DataValue::Map();

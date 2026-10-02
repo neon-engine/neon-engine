@@ -9,6 +9,7 @@
 
 namespace neon
 {
+  // Helpers of ecs_world_t, for this file alone.
   namespace
   {
     // Components live under an entity of their own, so that their names do

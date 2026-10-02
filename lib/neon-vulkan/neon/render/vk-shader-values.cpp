@@ -5,6 +5,7 @@
 
 namespace neon
 {
+  // Helpers of VK_ShaderValue, for this file alone.
   namespace
   {
     // what SPIR-V starts with

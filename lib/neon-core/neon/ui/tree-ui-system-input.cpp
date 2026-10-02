@@ -8,6 +8,7 @@
 
 namespace neon
 {
+  // Helpers of tree-ui-system-input.cpp, for this file alone.
   namespace
   {
     // seconds and pixels within which a second press counts as one more of

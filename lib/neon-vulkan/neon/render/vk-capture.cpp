@@ -9,6 +9,7 @@
 
 namespace neon
 {
+  // Helpers of VK_Capture, for this file alone.
   namespace
   {
     void append_png_bytes(void *context, void *data, const int size)

@@ -8,7 +8,8 @@
 
 namespace
 {
-  using neon::MeshNormals;
+  using neon::ComputeFlatNormals;
+  using neon::ComputeSmoothNormals;
   using neon::MeshData;
   using neon::Vertex;
 
@@ -33,7 +34,7 @@ namespace
   {
     MeshData roof = Roof();
 
-    MeshNormals::ComputeFlat(roof);
+    ComputeFlatNormals(roof);
 
     EXPECT_EQ(roof.vertices.size(), 6u);
     EXPECT_EQ(roof.TriangleCount(), 2u);
@@ -51,7 +52,7 @@ namespace
   {
     MeshData roof = Roof();
 
-    MeshNormals::ComputeSmooth(roof);
+    ComputeSmoothNormals(roof);
 
     EXPECT_EQ(roof.vertices.size(), 5u);
 
@@ -77,7 +78,7 @@ namespace
     };
     mesh.indices = {0, 1, 2, 0, 3, 1};
 
-    MeshNormals::ComputeSmooth(mesh);
+    ComputeSmoothNormals(mesh);
 
     // the shared vertices lean far towards the large triangle's normal
     const glm::vec3 shared = mesh.vertices[0].normal;
@@ -94,10 +95,10 @@ namespace
     };
     mesh.indices = {0, 1, 2};
 
-    MeshNormals::ComputeFlat(mesh);
+    ComputeFlatNormals(mesh);
     EXPECT_EQ(mesh.vertices[0].normal, glm::vec3(0.0f, 1.0f, 0.0f));
 
-    MeshNormals::ComputeSmooth(mesh);
+    ComputeSmoothNormals(mesh);
     EXPECT_EQ(mesh.vertices[0].normal, glm::vec3(0.0f, 1.0f, 0.0f));
   }
 } // namespace

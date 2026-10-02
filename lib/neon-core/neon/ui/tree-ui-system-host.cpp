@@ -9,6 +9,7 @@
 
 namespace neon
 {
+  // Helpers of tree-ui-system-host.cpp, for this file alone.
   namespace
   {
     std::size_t DepthOf(const UiElement *element)

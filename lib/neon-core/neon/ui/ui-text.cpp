@@ -8,6 +8,7 @@
 
 namespace neon
 {
+  // Helpers of UiText, for this file alone.
   namespace
   {
     /// The size of a font in pixels of the frame. It is a whole number, so
@@ -202,6 +203,7 @@ namespace neon
     return {std::ceil(placed.width) / frame.scale, placed.height / frame.scale};
   }
 
+  // Helpers of UiText, for this file alone.
   namespace
   {
     Color Faded(const Color &color, const float opacity)

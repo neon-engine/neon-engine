@@ -6,6 +6,7 @@
 
 namespace neon
 {
+  // Helpers of tree-ui-system-events.cpp, for this file alone.
   namespace
   {
     /// Events that stay at the element they happened to, as in the DOM.

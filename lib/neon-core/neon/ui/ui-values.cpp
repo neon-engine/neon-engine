@@ -9,6 +9,7 @@
 
 namespace neon
 {
+  // Helpers of UiValue, for this file alone.
   namespace
   {
     /// Letters, digits, underscores, hyphens, and dots, with a letter or an
