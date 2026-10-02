@@ -20,6 +20,7 @@
 #include "vk-render-target.hpp"
 #include "vk-renderer-2d.hpp"
 #include "vk-resolve.hpp"
+#include "vk-samplers.hpp"
 #include "vk-shader-data.hpp"
 #include "vk-swapchain.hpp"
 
@@ -59,6 +60,9 @@ namespace neon
     static constexpr uint32_t kMax_Scenes_Per_Frame = 8;
 
     VK_Device _device;
+
+    // what every texture is read through, one sampler for each way
+    VK_Samplers _samplers;
     std::optional<RenderResolution> _render_resolution;
     VkExtent2D _extent{};
 

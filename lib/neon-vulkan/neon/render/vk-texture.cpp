@@ -247,34 +247,9 @@ namespace neon
       return false;
     }
 
-    VkPhysicalDeviceFeatures features;
-    vkGetPhysicalDeviceFeatures(_device->PhysicalDevice(), &features);
-
-    VkSamplerCreateInfo sampler{};
-    sampler.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-    sampler.magFilter = VK_FILTER_LINEAR;
-    sampler.minFilter = VK_FILTER_LINEAR;
-    sampler.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-    const VkSamplerAddressMode address_mode = options.repeat
-      ? VK_SAMPLER_ADDRESS_MODE_REPEAT
-      : VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-
-    sampler.addressModeU = address_mode;
-    sampler.addressModeV = address_mode;
-    sampler.addressModeW = address_mode;
-    sampler.anisotropyEnable = features.samplerAnisotropy;
-    sampler.maxAnisotropy = features.samplerAnisotropy
-      ? std::min(8.0f, _device->Properties().limits.maxSamplerAnisotropy)
-      : 1.0f;
-    sampler.maxLod = static_cast<float>(mip_levels);
-
-    if (vkCreateSampler(device, &sampler, nullptr, &_sampler) != VK_SUCCESS)
-    {
-      _logger->Error("Could not create the sampler of texture {}", _texture_path);
-      CleanUp();
-      return false;
-    }
-
+    // read smoothly, and from the side without blurring, as the surface
+    // of a model is seen
+    _sampling = options.repeat ? VK_Sampling::AnisotropicRepeat : VK_Sampling::AnisotropicClamp;
     _width = width;
     _height = height;
     _initialized = true;
@@ -384,29 +359,9 @@ namespace neon
       return false;
     }
 
-    VkSamplerCreateInfo sampler{};
-    sampler.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-    sampler.magFilter = VK_FILTER_LINEAR;
-    sampler.minFilter = VK_FILTER_LINEAR;
-    sampler.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-
-    const VkSamplerAddressMode address_mode = options.repeat
-      ? VK_SAMPLER_ADDRESS_MODE_REPEAT
-      : VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-
-    sampler.addressModeU = address_mode;
-    sampler.addressModeV = address_mode;
-    sampler.addressModeW = address_mode;
-    sampler.maxAnisotropy = 1.0f;
-    sampler.maxLod = static_cast<float>(mip_levels);
-
-    if (vkCreateSampler(device, &sampler, nullptr, &_sampler) != VK_SUCCESS)
-    {
-      _logger->Error("Could not create the sampler of texture {}", _texture_path);
-      CleanUp();
-      return false;
-    }
-
+    // read smoothly and straight on, as an image of a user interface is
+    // seen
+    _sampling = options.repeat ? VK_Sampling::LinearRepeat : VK_Sampling::LinearClamp;
     _width = width;
     _height = height;
     _mip_levels = mip_levels;
@@ -494,13 +449,13 @@ namespace neon
 
   VK_Texture VK_Texture::Borrowed(
     const VkImageView view,
-    const VkSampler sampler,
+    const VK_Sampling sampling,
     const uint32_t width,
     const uint32_t height)
   {
     VK_Texture texture;
     texture._view = view;
-    texture._sampler = sampler;
+    texture._sampling = sampling;
     texture._width = width;
     texture._height = height;
     texture._is_borrowed = true;
@@ -518,7 +473,6 @@ namespace neon
     if (_is_borrowed)
     {
       _view = VK_NULL_HANDLE;
-      _sampler = VK_NULL_HANDLE;
       _initialized = false;
       return;
     }
@@ -526,12 +480,10 @@ namespace neon
     if (_device == nullptr) { return; }
     const VkDevice device = _device->Device();
 
-    if (_sampler != VK_NULL_HANDLE) { vkDestroySampler(device, _sampler, nullptr); }
     if (_view != VK_NULL_HANDLE) { vkDestroyImageView(device, _view, nullptr); }
     if (_image != VK_NULL_HANDLE) { vkDestroyImage(device, _image, nullptr); }
     if (_memory != VK_NULL_HANDLE) { vkFreeMemory(device, _memory, nullptr); }
 
-    _sampler = VK_NULL_HANDLE;
     _view = VK_NULL_HANDLE;
     _image = VK_NULL_HANDLE;
     _memory = VK_NULL_HANDLE;

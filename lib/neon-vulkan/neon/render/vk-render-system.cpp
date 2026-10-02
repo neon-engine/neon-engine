@@ -79,8 +79,9 @@ namespace neon
       throw std::runtime_error("Failed to set up the Vulkan frame");
     }
 
-    if (!CreateRenderPasses() ||
-        !_resolve.Initialize(&_device, _file_system_context, _frame_pass, max_scene_images, _logger) ||
+    if (!_samplers.Initialize(&_device, _logger) ||
+        !CreateRenderPasses() ||
+        !_resolve.Initialize(&_device, _file_system_context, _frame_pass, &_samplers, max_scene_images, _logger) ||
         !CreateDescriptors())
     {
       throw std::runtime_error("Failed to set up the Vulkan renderer");
@@ -102,7 +103,7 @@ namespace neon
     if (!CreateFrameImages()) { throw std::runtime_error("Failed to set up the Vulkan renderer"); }
 
     // drawn on top of the resolved scene, in the sRGB colours CSS blends in
-    _renderer_2d.Initialize(&_device, _file_system_context, _frame_pass, _extent, _logger);
+    _renderer_2d.Initialize(&_device, _file_system_context, _frame_pass, &_samplers, _extent, _logger);
 
     _white_texture = VK_Texture("a plain white texture", _file_system_context, &_device, _logger);
     if (!_white_texture.InitializeWithColor(255, 255, 255, 255))
@@ -343,10 +344,12 @@ namespace neon
 
     if (!_pipelines.Initialize(&_device, _file_system_context, _scene_pass, _logger)) { return false; }
 
-    // one set for each material
-    constexpr std::array<VkDescriptorPoolSize, 2> sizes{{
+    // one set for each material, with its textures and their samplers
+    constexpr uint32_t textures = VK_Pipelines::kTexture_Count * kMax_Render_Objects;
+    constexpr std::array<VkDescriptorPoolSize, 3> sizes{{
       {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 2 * kMax_Render_Objects},
-      {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2 * kMax_Render_Objects},
+      {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, textures},
+      {VK_DESCRIPTOR_TYPE_SAMPLER, textures},
     }};
 
     VkDescriptorPoolCreateInfo pool{};
@@ -393,6 +396,8 @@ namespace neon
     // A material with a single texture uses it for both. One with none gets
     // plain white.
     // A render target that is not there is drawn as plain white as well.
+    // Each is read through the shared sampler of its way, bound two
+    // bindings on from the texture.
     const auto &textures = material.Textures();
     const auto usable = [this](const VK_Texture &texture) -> const VK_Texture &
     {
@@ -405,26 +410,29 @@ namespace neon
     const VkDescriptorBufferInfo scene{_scene_buffer.buffer, 0, sizeof(VK_SceneData)};
     const VkDescriptorBufferInfo object{_object_buffer.buffer, 0, sizeof(VK_ObjectData)};
     const VkDescriptorImageInfo diffuse_image{
-      diffuse.Sampler(), diffuse.View(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
+      VK_NULL_HANDLE, diffuse.View(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
     const VkDescriptorImageInfo specular_image{
-      specular.Sampler(), specular.View(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
+      VK_NULL_HANDLE, specular.View(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
+    const VkDescriptorImageInfo diffuse_sampler{
+      _samplers.Of(diffuse.Sampling()), VK_NULL_HANDLE, VK_IMAGE_LAYOUT_UNDEFINED};
+    const VkDescriptorImageInfo specular_sampler{
+      _samplers.Of(specular.Sampling()), VK_NULL_HANDLE, VK_IMAGE_LAYOUT_UNDEFINED};
 
-    std::array<VkWriteDescriptorSet, 4> writes{};
-    for (uint32_t i = 0; i < writes.size(); i++)
+    std::array<VkWriteDescriptorSet, VK_Pipelines::kBindings.size()> writes{};
+    for (std::size_t i = 0; i < writes.size(); i++)
     {
       writes[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
       writes[i].dstSet = set;
-      writes[i].dstBinding = i;
+      writes[i].dstBinding = VK_Pipelines::kBindings[i].binding;
+      writes[i].descriptorType = VK_Pipelines::kBindings[i].descriptorType;
       writes[i].descriptorCount = 1;
     }
-    writes[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
     writes[0].pBufferInfo = &scene;
-    writes[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
     writes[1].pBufferInfo = &object;
-    writes[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     writes[2].pImageInfo = &diffuse_image;
-    writes[3].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     writes[3].pImageInfo = &specular_image;
+    writes[4].pImageInfo = &diffuse_sampler;
+    writes[5].pImageInfo = &specular_sampler;
 
     vkUpdateDescriptorSets(_device.Device(), static_cast<uint32_t>(writes.size()), writes.data(), 0, nullptr);
     return true;
@@ -477,6 +485,7 @@ namespace neon
 
     DestroyFrameImages();
     _resolve.CleanUp();
+    _samplers.CleanUp();
     if (_scene_pass != VK_NULL_HANDLE) { vkDestroyRenderPass(device, _scene_pass, nullptr); }
     if (_frame_pass != VK_NULL_HANDLE) { vkDestroyRenderPass(device, _frame_pass, nullptr); }
 
@@ -497,7 +506,7 @@ namespace neon
 
       const VK_RenderTarget &target = _targets[id].target;
       texture = VK_Texture::Borrowed(
-        target.View(), target.Sampler(), target.Extent().width, target.Extent().height);
+        target.View(), VK_RenderTarget::kSampling, target.Extent().width, target.Extent().height);
       return true;
     }
     return false;
@@ -1185,7 +1194,7 @@ namespace neon
     if (kept.texture == No_Texture)
     {
       kept.texture = _renderer_2d.KeepBorrowed(
-        kept.target.BytesView(), kept.target.Sampler(), kept.target.Extent().width, kept.target.Extent().height);
+        kept.target.BytesView(), VK_RenderTarget::kSampling, kept.target.Extent().width, kept.target.Extent().height);
     }
 
     return kept.texture;

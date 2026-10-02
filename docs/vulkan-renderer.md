@@ -150,6 +150,51 @@ Scene recipes therefore do not change with the renderer.
 How the same sources reach Metal, DirectX 12, and WebGPU, and the tools that
 do it, is in [shaders.md](shaders.md).
 
+### What the shaders bind
+
+Every texture is bound apart from the sampler it is read through, as a
+`texture2D` and a `sampler`, and a shader puts them together where it reads:
+`texture(sampler2D(diffuse_texture, diffuse_sampler), tex_coord)`. WGSL has
+no combined image sampler, and the tools that split one make up bindings of
+their own; written apart, every target binds what the source says
+([shaders.md](shaders.md#what-the-sources-keep-to), #212). The layouts are
+constants of the backend, `VK_Pipelines::kBindings`, `VK_Resolve::kBindings`,
+and `VK_Renderer2D::kBindings`, and tests hold them to what the shaders
+declare.
+
+| Shaders | Set | Binding | Type | What |
+|---|---|---|---|---|
+| Models: `pbr`, `basic-lit`, `unlit`, `color` | 0 | 0 | Uniform buffer, dynamic | `SceneData`: the camera and the lights, `scene-data.glsl` |
+| | 0 | 1 | Uniform buffer, dynamic | `ObjectData`: the object, `scene-data.glsl` |
+| | 0 | 2 | Sampled image | The first texture: the colours of the surface |
+| | 0 | 3 | Sampled image | The second texture: the metallic-roughness map, or the specular map |
+| | 0 | 4 | Sampler | What the first texture is read through |
+| | 0 | 5 | Sampler | What the second texture is read through |
+| Resolve: `resolve` | 0 | 0 | Sampled image | The scene image |
+| | 0 | 1 | Sampler | What it is read through, pixel by pixel |
+| User interface: `flat`, `ui/*` | 0 | 0 | Sampled image | The texture of the call, `ui-shader.glsl` |
+| | 0 | 1 | Sampler | What it is read through |
+| | 1 | 0 | Storage buffer | The shapes of the frame |
+| | 2 | 0 | Uniform buffer, dynamic | `Values`: what the shader of an element is given, see [user-interface.md](user-interface.md#shaders-of-elements) |
+| | push constant | | | `Frame`: what both halves are told about the call, `ui-frame.glsl` |
+
+A model has a sampler for each of its textures, and not one for the set,
+because a material may read a render target, whose edge is drawn on past
+it, next to a texture from a file, which starts again past its edge.
+
+The samplers are made once by the render system, in `VK_Samplers`, one for
+every way a texture is read, and a `VK_Texture` says which way it is read
+(`VK_Sampling`) in place of owning a sampler of its own. There are five
+ways, which is every sampler the renderer ever made:
+
+| Way | Filter | Smaller copies | Past the edge | From the side | Read that way |
+|---|---|---|---|---|---|
+| `AnisotropicRepeat` | Linear | Blended | Starts again | Up to 8 samples, when the graphics card can | The textures of a model |
+| `AnisotropicClamp` | Linear | Blended | The edge is drawn on | Up to 8 samples | A render target, shown by a model or a user interface; an image of a user interface read from a file or from memory |
+| `LinearRepeat` | Linear | Blended | Starts again | No | An image of a user interface made with its smaller copies, that repeats |
+| `LinearClamp` | Linear | Blended | The edge is drawn on | No | An image of a user interface made with its smaller copies |
+| `NearestClamp` | Nearest | The image alone | The edge is drawn on | No | `image_rendering: pixelated`, and the scene image in the resolve, which reads whole pixels |
+
 Light data is held in a uniform buffer, not in individual uniforms. That
 removes the limit on uniforms per shader, which is what had held the OpenGL
 backend to 16 lights of each kind.
@@ -211,7 +256,8 @@ A library of its own, `neon-vulkan`.
 | `VK_Pipelines` | The pipelines of materials, one per variant of shader, covering, and culling, and the layout they share |
 | `VK_Capture` | Reads a finished frame back and writes it as a PNG |
 | `VK_Model`, `VK_Mesh` | Vertex and index buffers. `VK_Model` derives from the core `Model`, which does the loading through assimp for every renderer |
-| `VK_Texture` | Image, view, and sampler |
+| `VK_Texture` | Image and view, and which way it is read |
+| `VK_Samplers` | The five samplers every texture is read through, one for each way of reading, made once and shared |
 | `VK_Shader` | Shader modules from SPIR-V |
 | `VK_Material` | Textures, descriptor set, per-object data, and which pipelines draw it |
 | `VK_SceneImage` | The image of linear light a scene is lit in, with its depth |

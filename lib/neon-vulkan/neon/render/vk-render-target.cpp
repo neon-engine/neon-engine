@@ -98,30 +98,6 @@ namespace neon
       return false;
     }
 
-    VkPhysicalDeviceFeatures features;
-    vkGetPhysicalDeviceFeatures(_device->PhysicalDevice(), &features);
-
-    VkSamplerCreateInfo sampler{};
-    sampler.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-    sampler.magFilter = VK_FILTER_LINEAR;
-    sampler.minFilter = VK_FILTER_LINEAR;
-    sampler.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-    sampler.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-    sampler.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-    sampler.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-    sampler.anisotropyEnable = features.samplerAnisotropy;
-    sampler.maxAnisotropy = features.samplerAnisotropy
-      ? std::min(8.0f, _device->Properties().limits.maxSamplerAnisotropy)
-      : 1.0f;
-    sampler.maxLod = static_cast<float>(_mip_levels);
-
-    if (vkCreateSampler(device, &sampler, nullptr, &_sampler) != VK_SUCCESS)
-    {
-      _logger->Error("Could not create the sampler of the render target '{}'", _name);
-      CleanUp();
-      return false;
-    }
-
     // What shows the target before it was drawn to reads an image, and
     // not what happens to be in the memory.
     const VkCommandBuffer commands = _device->BeginCommands();
@@ -211,7 +187,6 @@ namespace neon
 
     const VkDevice device = _device->Device();
 
-    if (_sampler != VK_NULL_HANDLE) { vkDestroySampler(device, _sampler, nullptr); }
     if (_framebuffer != VK_NULL_HANDLE) { vkDestroyFramebuffer(device, _framebuffer, nullptr); }
     if (_view != VK_NULL_HANDLE) { vkDestroyImageView(device, _view, nullptr); }
     if (_bytes_view != VK_NULL_HANDLE) { vkDestroyImageView(device, _bytes_view, nullptr); }
@@ -219,7 +194,6 @@ namespace neon
     if (_color_image != VK_NULL_HANDLE) { vkDestroyImage(device, _color_image, nullptr); }
     if (_color_memory != VK_NULL_HANDLE) { vkFreeMemory(device, _color_memory, nullptr); }
 
-    _sampler = VK_NULL_HANDLE;
     _framebuffer = VK_NULL_HANDLE;
     _view = VK_NULL_HANDLE;
     _bytes_view = VK_NULL_HANDLE;

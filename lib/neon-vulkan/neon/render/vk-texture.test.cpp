@@ -40,8 +40,16 @@ namespace
     const VK_Texture texture("assets://textures/wood.png", &_file_system, &_device, _logger);
 
     EXPECT_EQ(texture.View(), VK_NULL_HANDLE);
-    EXPECT_EQ(texture.Sampler(), VK_NULL_HANDLE);
     EXPECT_EQ(_logger->Count(LogLevel::Error), 0u);
+  }
+
+  TEST_F(VkTextureTest, IsReadAsTheSurfaceOfAModelUnlessToldOtherwise)
+  {
+    // smooth, from the side, and starting again past its edge, which the
+    // shared sampler of that way does; a texture owns no sampler
+    const VK_Texture texture("assets://textures/wood.png", &_file_system, &_device, _logger);
+
+    EXPECT_EQ(texture.Sampling(), neon::VK_Sampling::AnisotropicRepeat);
   }
 
   TEST_F(VkTextureTest, FailsAndSaysSoWhenTheFileIsMissing)

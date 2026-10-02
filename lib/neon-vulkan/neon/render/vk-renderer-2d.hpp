@@ -1,6 +1,7 @@
 #ifndef VK_RENDERER_2D_HPP
 #define VK_RENDERER_2D_HPP
 
+#include <array>
 #include <map>
 #include <memory>
 #include <string>
@@ -10,6 +11,7 @@
 #include <neon/render/render-2d-context.hpp>
 
 #include "vk-device.hpp"
+#include "vk-samplers.hpp"
 #include "vk-shader.hpp"
 #include "vk-shader-values.hpp"
 #include "vk-texture.hpp"
@@ -66,6 +68,7 @@ namespace neon
 
     VK_Device *_device = nullptr;
     FileSystemContext *_file_system_context = nullptr;
+    const VK_Samplers *_samplers = nullptr;
     std::shared_ptr<Logger> _logger;
     VkRenderPass _render_pass = VK_NULL_HANDLE;
     VkExtent2D _extent{};
@@ -97,7 +100,6 @@ namespace neon
     VkDescriptorSetLayout _values_layout = VK_NULL_HANDLE;
     VkDescriptorSet _shapes_set = VK_NULL_HANDLE;
     VkDescriptorSet _values_set = VK_NULL_HANDLE;
-    VkSampler _pixelated_sampler = VK_NULL_HANDLE;
 
     FrameBuffer _shape_buffer;
     FrameBuffer _values_buffer;
@@ -125,6 +127,9 @@ namespace neon
     void DestroyFrameBuffer(FrameBuffer &buffer) const;
 
     [[nodiscard]] VkDescriptorSet SetOf(int texture, TextureFilter2D filter);
+
+    /// Writes a set that reads `view` through the sampler of `sampling`.
+    void WriteSet(VkDescriptorSet set, VkImageView view, VK_Sampling sampling) const;
 
     bool Create();
 
@@ -168,13 +173,27 @@ namespace neon
     /// `flat.frag`.
     static constexpr const char *kShader_Path = "assets://shaders/flat";
 
+    /// The bindings of the first set of the shader, which have to match
+    /// ui-shader.glsl: the texture, and the sampler it is read through,
+    /// bound apart, see shaders.md. The second set holds the shapes of
+    /// the frame and the third the values of the shader of an element.
+    static constexpr uint32_t kImage_Binding = 0;
+    static constexpr uint32_t kSampler_Binding = 1;
+
+    static constexpr std::array<VkDescriptorSetLayoutBinding, 2> kBindings{{
+      {kImage_Binding, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
+      {kSampler_Binding, VK_DESCRIPTOR_TYPE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
+    }};
+
     VK_Renderer2D() : _textures(kMax_Textures) {}
 
-    /// Remembers what it draws with. Creates nothing.
+    /// Remembers what it draws with, among it the samplers the textures
+    /// are read through. Creates nothing.
     void Initialize(
       VK_Device *device,
       FileSystemContext *file_system_context,
       VkRenderPass render_pass,
+      const VK_Samplers *samplers,
       VkExtent2D extent,
       const std::shared_ptr<Logger> &logger);
 
@@ -214,8 +233,9 @@ namespace neon
       const TextureOptions2D &options);
 
     /// Keeps a texture that reads an image of something else, such as a
-    /// render target. Returns what it is known as, or No_Texture.
-    int KeepBorrowed(VkImageView view, VkSampler sampler, uint32_t width, uint32_t height);
+    /// render target, the way `sampling` says. Returns what it is known
+    /// as, or No_Texture.
+    int KeepBorrowed(VkImageView view, VK_Sampling sampling, uint32_t width, uint32_t height);
 
     int CreateMaterial(const std::string &shader_path);
 

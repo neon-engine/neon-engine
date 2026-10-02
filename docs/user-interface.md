@@ -997,7 +997,7 @@ void main()
 | Where the pixel is in the box of the element, from 0 to 1 | `ui_element_uv()` |
 | The size of the box in pixels | `ui_element_size()` |
 | Seconds since the user interface was started | `ui_time()` |
-| The place in the texture, the colour of the corner, the texture | `tex_coord`, `color`, `image` |
+| The place in the texture, the colour of the corner, the texture, and the sampler it is read through | `tex_coord`, `color`, `image`, `image_sampler`. The texture and the sampler are bound apart, as every shader of the engine binds them ([shaders.md](shaders.md#what-the-sources-keep-to)): a shader that reads the texture itself writes `texture(sampler2D(image, image_sampler), tex_coord)` |
 | What `shader_values` holds | The members of the block `Values`, by their names |
 
 | Rule | Reason |
@@ -1020,6 +1020,18 @@ void main()
 | `assets://shaders/ui/cooldown` | A shade that is wiped off clockwise | `progress`, `shade` |
 
 Every element with a shader is a draw call of its own.
+
+What a shader of an element is bound to, in the order of `ui-shader.glsl`:
+
+| Set | Binding | What |
+|---|---|---|
+| 0 | 0 | `image`, a `texture2D`: the texture of the call |
+| 0 | 1 | `image_sampler`, a `sampler`: what it is read through, smooth or pixel by pixel as `image_rendering` says |
+| 1 | 0 | The shapes of the frame, which `ui_base()` reads |
+| 2 | 0 | `Values`, what the shader is given |
+
+`ui-shader.glsl` declares the first two and the shapes; a shader of an
+element declares only `Values`.
 
 ## Surfaces
 

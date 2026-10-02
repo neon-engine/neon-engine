@@ -7,6 +7,7 @@
 #include <neon/image/image-pixels.hpp>
 
 #include "vk-device.hpp"
+#include "vk-sampling.hpp"
 
 namespace neon
 {
@@ -49,7 +50,10 @@ namespace neon
     VkImage _image = VK_NULL_HANDLE;
     VkDeviceMemory _memory = VK_NULL_HANDLE;
     VkImageView _view = VK_NULL_HANDLE;
-    VkSampler _sampler = VK_NULL_HANDLE;
+
+    // how it is read, which names one of the samplers the render system
+    // shares
+    VK_Sampling _sampling = VK_Sampling::AnisotropicRepeat;
     uint32_t _width = 0;
     uint32_t _height = 0;
     uint32_t _mip_levels = 1;
@@ -112,8 +116,9 @@ namespace neon
       bool premultiply_alpha);
 
     /// A texture that reads an image it does not own, such as what a
-    /// render target was drawn to. CleanUp() leaves the image alone.
-    [[nodiscard]] static VK_Texture Borrowed(VkImageView view, VkSampler sampler, uint32_t width, uint32_t height);
+    /// render target was drawn to, the way `sampling` says. CleanUp()
+    /// leaves the image alone.
+    [[nodiscard]] static VK_Texture Borrowed(VkImageView view, VK_Sampling sampling, uint32_t width, uint32_t height);
 
     /// The format a texture is kept in: sRGB for colours, so that they are
     /// read as linear light, and plain bytes for anything else.
@@ -126,7 +131,10 @@ namespace neon
     static constexpr VkFormat kData_Format = VK_FORMAT_R8G8B8A8_UNORM;
 
     [[nodiscard]] VkImageView View() const { return _view; }
-    [[nodiscard]] VkSampler Sampler() const { return _sampler; }
+
+    /// How the texture is read: smooth and starting again past its edge
+    /// for the surface of a model, unless the options said otherwise.
+    [[nodiscard]] VK_Sampling Sampling() const { return _sampling; }
     [[nodiscard]] uint32_t Width() const { return _width; }
     [[nodiscard]] uint32_t Height() const { return _height; }
   };

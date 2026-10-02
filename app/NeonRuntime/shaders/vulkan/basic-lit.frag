@@ -9,18 +9,22 @@ layout (location = 2) in vec2 tex_coord;
 
 layout (location = 0) out vec4 frag_color;
 
-layout (set = 0, binding = 2) uniform sampler2D diffuse_texture;
-layout (set = 0, binding = 3) uniform sampler2D specular_texture;
+// Every texture is read through a sampler bound next to it, two bindings
+// on: the one the texture asks for, shared with all that are read alike.
+layout (set = 0, binding = 2) uniform texture2D diffuse_texture;
+layout (set = 0, binding = 3) uniform texture2D specular_texture;
+layout (set = 0, binding = 4) uniform sampler diffuse_sampler;
+layout (set = 0, binding = 5) uniform sampler specular_sampler;
 
 vec3 GetDiffuseColor()
 {
-    vec3 texture_color = texture(diffuse_texture, tex_coord).rgb;
+    vec3 texture_color = texture(sampler2D(diffuse_texture, diffuse_sampler), tex_coord).rgb;
     return mix(object.color.rgb, texture_color, object.material.y);
 }
 
 vec3 GetSpecularColor()
 {
-    vec3 texture_color = texture(specular_texture, tex_coord).rgb;
+    vec3 texture_color = texture(sampler2D(specular_texture, specular_sampler), tex_coord).rgb;
     return mix(vec3(0.0), texture_color, object.material.y);
 }
 

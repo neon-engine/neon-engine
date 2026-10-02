@@ -6,6 +6,7 @@
 #include <neon/logging/logger.hpp>
 
 #include "vk-device.hpp"
+#include "vk-sampling.hpp"
 
 namespace neon
 {
@@ -42,9 +43,12 @@ namespace neon
     VkImageView _bytes_view = VK_NULL_HANDLE;
 
     VkFramebuffer _framebuffer = VK_NULL_HANDLE;
-    VkSampler _sampler = VK_NULL_HANDLE;
 
   public:
+    /// How a target is read: smoothly, from the side without blurring,
+    /// and with its edge drawn on past it.
+    static constexpr VK_Sampling kSampling = VK_Sampling::AnisotropicClamp;
+
     /// The largest target, along each side.
     static constexpr int kMax_Size = 8192;
 
@@ -92,7 +96,6 @@ namespace neon
 
     /// What is drawn in two dimensions reads, as the bytes they are.
     [[nodiscard]] VkImageView BytesView() const { return _bytes_view; }
-    [[nodiscard]] VkSampler Sampler() const { return _sampler; }
   };
 } // neon
 

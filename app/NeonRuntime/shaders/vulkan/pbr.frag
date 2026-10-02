@@ -18,11 +18,16 @@ layout (location = 2) in vec2 tex_coord;
 layout (location = 0) out vec4 frag_color;
 
 // the base colour, in sRGB as an image keeps it, read as linear light
-layout (set = 0, binding = 2) uniform sampler2D base_color_texture;
+layout (set = 0, binding = 2) uniform texture2D base_color_texture;
 
 // as glTF lays it out: green is roughness, blue is metallic, both multiply
 // the material's numbers. Read as numbers, not colours.
-layout (set = 0, binding = 3) uniform sampler2D metallic_roughness_texture;
+layout (set = 0, binding = 3) uniform texture2D metallic_roughness_texture;
+
+// Every texture is read through a sampler bound next to it, two bindings
+// on: the one the texture asks for, shared with all that are read alike.
+layout (set = 0, binding = 4) uniform sampler base_color_sampler;
+layout (set = 0, binding = 5) uniform sampler metallic_roughness_sampler;
 
 const float PI = 3.14159265359;
 
@@ -32,13 +37,13 @@ const vec3 DIELECTRIC_F0 = vec3(0.04);
 
 vec3 BaseColor()
 {
-    vec3 texture_color = texture(base_color_texture, tex_coord).rgb;
+    vec3 texture_color = texture(sampler2D(base_color_texture, base_color_sampler), tex_coord).rgb;
     return object.color.rgb * mix(vec3(1.0), texture_color, object.material.y);
 }
 
 vec2 MetallicRoughness()
 {
-    vec2 from_texture = texture(metallic_roughness_texture, tex_coord).bg;
+    vec2 from_texture = texture(sampler2D(metallic_roughness_texture, metallic_roughness_sampler), tex_coord).bg;
     vec2 factors = mix(vec2(1.0), from_texture, object.material.y);
     float metallic = clamp(object.surface.x * factors.x, 0.0, 1.0);
 

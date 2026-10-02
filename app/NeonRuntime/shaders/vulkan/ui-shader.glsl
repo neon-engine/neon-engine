@@ -32,8 +32,11 @@ layout (location = 4) in vec2 local;
 
 layout (location = 0) out vec4 frag_color;
 
-// alpha is multiplied into its colours
-layout (set = 0, binding = 0) uniform sampler2D image;
+// The texture, with alpha multiplied into its colours, and the sampler it
+// is read through, bound apart so that every target of the shaders binds
+// what the source says: texture(sampler2D(image, image_sampler), uv).
+layout (set = 0, binding = 0) uniform texture2D image;
+layout (set = 0, binding = 1) uniform sampler image_sampler;
 
 // has to match Shape2D of the core
 struct Shape
@@ -301,7 +304,7 @@ vec4 ui_base()
 {
     // read where every pixel passes, which is what working out how fast
     // the place in the texture changes asks for
-    vec4 sampled = texture(image, tex_coord);
+    vec4 sampled = texture(sampler2D(image, image_sampler), tex_coord);
 
     // a corner that reads no texture is white where the texture would be
     vec4 texel = mix(vec4(1.0), sampled, clamp(textured, 0.0, 1.0));
@@ -320,7 +323,7 @@ vec4 ui_base()
     {
         // distances without a shape: the pixels they reach over follow
         // from how fast the place in the texture changes
-        vec2 texels = fwidth(tex_coord) * vec2(textureSize(image, 0));
+        vec2 texels = fwidth(tex_coord) * vec2(textureSize(sampler2D(image, image_sampler), 0));
         float reach = 8.0 / max(max(texels.x, texels.y), 0.0001);
         result = tint * clamp((sampled.a - 0.5) * 2.0 * reach + 0.5, 0.0, 1.0);
     } else

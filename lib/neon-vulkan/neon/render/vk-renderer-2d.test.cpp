@@ -32,14 +32,15 @@ namespace
     std::shared_ptr<RecordingLogger> _logger = std::make_shared<RecordingLogger>();
     MemoryFileSystem _file_system{SettingsConfig{}, _logger};
 
-    // never initialized, so it stands for no graphics card
+    // never initialized, so they stand for no graphics card
     VK_Device _device;
+    neon::VK_Samplers _samplers;
     VK_Renderer2D _renderer;
 
     void SetUp() override
     {
       _file_system.Initialize();
-      _renderer.Initialize(&_device, &_file_system, VK_NULL_HANDLE, {1920, 1080}, _logger);
+      _renderer.Initialize(&_device, &_file_system, VK_NULL_HANDLE, &_samplers, {1920, 1080}, _logger);
     }
 
     static Triangles2D ClippedAt(const int x, const int y, const int width, const int height)
@@ -63,6 +64,20 @@ namespace
       EXPECT_EQ(scissor.extent.height, height);
     }
   };
+
+  TEST_F(VkRenderer2DTest, BindsTheTextureApartFromTheSamplerItIsReadThrough)
+  {
+    // what ui-shader.glsl declares: the texture at 0 and the sampler at 1,
+    // so that every target of the shaders binds what the source says
+    EXPECT_EQ(VK_Renderer2D::kBindings[0].binding, VK_Renderer2D::kImage_Binding);
+    EXPECT_EQ(VK_Renderer2D::kBindings[0].descriptorType, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE);
+    EXPECT_EQ(VK_Renderer2D::kBindings[0].stageFlags, VK_SHADER_STAGE_FRAGMENT_BIT);
+    EXPECT_EQ(VK_Renderer2D::kBindings[1].binding, VK_Renderer2D::kSampler_Binding);
+    EXPECT_EQ(VK_Renderer2D::kBindings[1].descriptorType, VK_DESCRIPTOR_TYPE_SAMPLER);
+    EXPECT_EQ(VK_Renderer2D::kBindings[1].stageFlags, VK_SHADER_STAGE_FRAGMENT_BIT);
+    EXPECT_EQ(VK_Renderer2D::kImage_Binding, 0u);
+    EXPECT_EQ(VK_Renderer2D::kSampler_Binding, 1u);
+  }
 
   TEST_F(VkRenderer2DTest, ACornerIsAsLargeAsTheShaderExpects)
   {

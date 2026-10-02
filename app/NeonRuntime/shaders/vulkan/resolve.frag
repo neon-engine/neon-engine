@@ -5,7 +5,12 @@
 // what is bright is added to the scene image before this, and a curve for
 // light brighter than white replaces shown() below.
 
-layout (set = 0, binding = 0) uniform sampler2D scene_image;
+// The scene image, and the sampler it is read through, bound apart so
+// that every target of the shaders binds what the source says. The read
+// below is pixel by pixel, so the sampler does nothing but has to be
+// there.
+layout (set = 0, binding = 0) uniform texture2D scene_image;
+layout (set = 0, binding = 1) uniform sampler scene_sampler;
 
 layout (location = 0) out vec4 frag_color;
 
@@ -26,7 +31,7 @@ vec3 encode_srgb(vec3 linear)
 
 void main()
 {
-    vec4 light = texelFetch(scene_image, ivec2(gl_FragCoord.xy), 0);
+    vec4 light = texelFetch(sampler2D(scene_image, scene_sampler), ivec2(gl_FragCoord.xy), 0);
 
     // Alpha is multiplied into the light. It is taken out before the curve
     // and put back after it, so that what is drawn on top, and what shows

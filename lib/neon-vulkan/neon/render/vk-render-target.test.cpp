@@ -79,12 +79,11 @@ namespace
   {
     // what stands for the image of a target, which the target releases
     const auto view = reinterpret_cast<VkImageView>(static_cast<std::uintptr_t>(0x1234));
-    const auto sampler = reinterpret_cast<VkSampler>(static_cast<std::uintptr_t>(0x5678));
 
-    VK_Texture texture = VK_Texture::Borrowed(view, sampler, 640, 480);
+    VK_Texture texture = VK_Texture::Borrowed(view, VK_RenderTarget::kSampling, 640, 480);
 
     EXPECT_EQ(texture.View(), view);
-    EXPECT_EQ(texture.Sampler(), sampler);
+    EXPECT_EQ(texture.Sampling(), neon::VK_Sampling::AnisotropicClamp);
     EXPECT_EQ(texture.Width(), 640u);
     EXPECT_EQ(texture.Height(), 480u);
 
@@ -119,8 +118,7 @@ namespace
         if (!_has_target) { return false; }
 
         const auto view = reinterpret_cast<VkImageView>(static_cast<std::uintptr_t>(0x1234));
-        const auto sampler = reinterpret_cast<VkSampler>(static_cast<std::uintptr_t>(0x5678));
-        texture = VK_Texture::Borrowed(view, sampler, 64, 64);
+        texture = VK_Texture::Borrowed(view, VK_RenderTarget::kSampling, 64, 64);
         return true;
       });
 

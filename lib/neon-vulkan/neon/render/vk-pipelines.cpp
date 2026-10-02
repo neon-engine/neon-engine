@@ -19,19 +19,10 @@ namespace neon
     _scene_pass = scene_pass;
     _logger = logger;
 
-    // has to match the bindings in scene-data.glsl and the shaders
-    constexpr VkShaderStageFlags both = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-    constexpr std::array<VkDescriptorSetLayoutBinding, 4> bindings{{
-      {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, both, nullptr},
-      {1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, both, nullptr},
-      {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
-      {3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
-    }};
-
     VkDescriptorSetLayoutCreateInfo layout{};
     layout.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    layout.bindingCount = static_cast<uint32_t>(bindings.size());
-    layout.pBindings = bindings.data();
+    layout.bindingCount = static_cast<uint32_t>(kBindings.size());
+    layout.pBindings = kBindings.data();
 
     if (vkCreateDescriptorSetLayout(_device->Device(), &layout, nullptr, &_descriptor_layout) != VK_SUCCESS)
     {

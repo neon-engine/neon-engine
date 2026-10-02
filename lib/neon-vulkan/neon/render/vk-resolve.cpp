@@ -8,10 +8,12 @@ namespace neon
     VK_Device *device,
     FileSystemContext *file_system_context,
     const VkRenderPass render_pass,
+    const VK_Samplers *samplers,
     const uint32_t max_images,
     const std::shared_ptr<Logger> &logger)
   {
     _device = device;
+    _samplers = samplers;
     _logger = logger;
 
     const VkDevice vk_device = _device->Device();
@@ -19,43 +21,32 @@ namespace neon
     _shader = VK_Shader(kShader_Path, file_system_context, _device, _logger);
     if (!_shader.Initialize()) { return false; }
 
-    constexpr VkDescriptorSetLayoutBinding binding{
-      0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr};
-
     VkDescriptorSetLayoutCreateInfo layout{};
     layout.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    layout.bindingCount = 1;
-    layout.pBindings = &binding;
+    layout.bindingCount = static_cast<uint32_t>(kBindings.size());
+    layout.pBindings = kBindings.data();
 
     VkPipelineLayoutCreateInfo pipeline_layout{};
     pipeline_layout.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     pipeline_layout.setLayoutCount = 1;
     pipeline_layout.pSetLayouts = &_descriptor_layout;
 
-    const VkDescriptorPoolSize size{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, max_images};
+    // every scene image, and the sampler bound next to it
+    const std::array<VkDescriptorPoolSize, 2> sizes{{
+      {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, max_images},
+      {VK_DESCRIPTOR_TYPE_SAMPLER, max_images},
+    }};
 
     VkDescriptorPoolCreateInfo pool{};
     pool.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     pool.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
     pool.maxSets = max_images;
-    pool.poolSizeCount = 1;
-    pool.pPoolSizes = &size;
-
-    // the scene image is read pixel by pixel, at the place it is written to
-    VkSamplerCreateInfo sampler{};
-    sampler.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-    sampler.magFilter = VK_FILTER_NEAREST;
-    sampler.minFilter = VK_FILTER_NEAREST;
-    sampler.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
-    sampler.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-    sampler.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-    sampler.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-    sampler.maxAnisotropy = 1.0f;
+    pool.poolSizeCount = static_cast<uint32_t>(sizes.size());
+    pool.pPoolSizes = sizes.data();
 
     if (vkCreateDescriptorSetLayout(vk_device, &layout, nullptr, &_descriptor_layout) != VK_SUCCESS ||
         vkCreatePipelineLayout(vk_device, &pipeline_layout, nullptr, &_pipeline_layout) != VK_SUCCESS ||
-        vkCreateDescriptorPool(vk_device, &pool, nullptr, &_descriptor_pool) != VK_SUCCESS ||
-        vkCreateSampler(vk_device, &sampler, nullptr, &_sampler) != VK_SUCCESS)
+        vkCreateDescriptorPool(vk_device, &pool, nullptr, &_descriptor_pool) != VK_SUCCESS)
     {
       _logger->Critical("Could not set up the resolve step");
       return false;
@@ -146,14 +137,12 @@ namespace neon
     const VkDevice device = _device->Device();
 
     if (_pipeline != VK_NULL_HANDLE) { vkDestroyPipeline(device, _pipeline, nullptr); }
-    if (_sampler != VK_NULL_HANDLE) { vkDestroySampler(device, _sampler, nullptr); }
     if (_descriptor_pool != VK_NULL_HANDLE) { vkDestroyDescriptorPool(device, _descriptor_pool, nullptr); }
     if (_pipeline_layout != VK_NULL_HANDLE) { vkDestroyPipelineLayout(device, _pipeline_layout, nullptr); }
     if (_descriptor_layout != VK_NULL_HANDLE) { vkDestroyDescriptorSetLayout(device, _descriptor_layout, nullptr); }
     _shader.CleanUp();
 
     _pipeline = VK_NULL_HANDLE;
-    _sampler = VK_NULL_HANDLE;
     _descriptor_pool = VK_NULL_HANDLE;
     _pipeline_layout = VK_NULL_HANDLE;
     _descriptor_layout = VK_NULL_HANDLE;
@@ -174,17 +163,24 @@ namespace neon
       return VK_NULL_HANDLE;
     }
 
-    const VkDescriptorImageInfo image{_sampler, scene_view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
+    // the scene image is read pixel by pixel, at the place it is written to
+    const VkDescriptorImageInfo image{VK_NULL_HANDLE, scene_view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
+    const VkDescriptorImageInfo sampler{
+      _samplers->Of(VK_Sampling::NearestClamp), VK_NULL_HANDLE, VK_IMAGE_LAYOUT_UNDEFINED};
 
-    VkWriteDescriptorSet write{};
-    write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    write.dstSet = set;
-    write.dstBinding = 0;
-    write.descriptorCount = 1;
-    write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    write.pImageInfo = &image;
+    std::array<VkWriteDescriptorSet, kBindings.size()> writes{};
+    for (std::size_t i = 0; i < writes.size(); i++)
+    {
+      writes[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+      writes[i].dstSet = set;
+      writes[i].dstBinding = kBindings[i].binding;
+      writes[i].descriptorType = kBindings[i].descriptorType;
+      writes[i].descriptorCount = 1;
+    }
+    writes[0].pImageInfo = &image;
+    writes[1].pImageInfo = &sampler;
 
-    vkUpdateDescriptorSets(_device->Device(), 1, &write, 0, nullptr);
+    vkUpdateDescriptorSets(_device->Device(), static_cast<uint32_t>(writes.size()), writes.data(), 0, nullptr);
     return set;
   }
 

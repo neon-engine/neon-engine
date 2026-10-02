@@ -26,11 +26,13 @@ namespace neon
     VK_Device *device,
     FileSystemContext *file_system_context,
     const VkRenderPass render_pass,
+    const VK_Samplers *samplers,
     const VkExtent2D extent,
     const std::shared_ptr<Logger> &logger)
   {
     _device = device;
     _file_system_context = file_system_context;
+    _samplers = samplers;
     _render_pass = render_pass;
     _extent = extent;
     _logger = logger;
@@ -95,13 +97,10 @@ namespace neon
 
     const VkDevice device = _device->Device();
 
-    constexpr VkDescriptorSetLayoutBinding binding{
-      0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr};
-
     VkDescriptorSetLayoutCreateInfo layout{};
     layout.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    layout.bindingCount = 1;
-    layout.pBindings = &binding;
+    layout.bindingCount = static_cast<uint32_t>(kBindings.size());
+    layout.pBindings = kBindings.data();
 
     if (vkCreateDescriptorSetLayout(device, &layout, nullptr, &_descriptor_layout) != VK_SUCCESS)
     {
@@ -115,6 +114,7 @@ namespace neon
     constexpr VkDescriptorSetLayoutBinding values_binding{
       0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr};
 
+    layout.bindingCount = 1;
     layout.pBindings = &shapes_binding;
     if (vkCreateDescriptorSetLayout(device, &layout, nullptr, &_shapes_layout) != VK_SUCCESS)
     {
@@ -148,10 +148,11 @@ namespace neon
       return false;
     }
 
-    // two sets for each texture: one that blends its pixels, and one that
-    // reads them as they are
-    constexpr std::array<VkDescriptorPoolSize, 3> sizes{{
-      {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2 * kMax_Textures},
+    // two sets for each texture, each with the texture and its sampler:
+    // one that blends its pixels, and one that reads them as they are
+    constexpr std::array<VkDescriptorPoolSize, 4> sizes{{
+      {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 2 * kMax_Textures},
+      {VK_DESCRIPTOR_TYPE_SAMPLER, 2 * kMax_Textures},
       {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1},
       {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1},
     }};
@@ -170,22 +171,6 @@ namespace neon
     }
 
     if (!CreatePipeline() || !CreateBuffers()) { return false; }
-
-    VkSamplerCreateInfo sampler{};
-    sampler.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-    sampler.magFilter = VK_FILTER_NEAREST;
-    sampler.minFilter = VK_FILTER_NEAREST;
-    sampler.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
-    sampler.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-    sampler.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-    sampler.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-    sampler.maxAnisotropy = 1.0f;
-
-    if (vkCreateSampler(device, &sampler, nullptr, &_pixelated_sampler) != VK_SUCCESS)
-    {
-      _logger->Error("Could not create the sampler for images that are drawn pixel by pixel");
-      return false;
-    }
 
     // what a batch without a texture is drawn with, so that the shader
     // always has something to read
@@ -461,18 +446,7 @@ namespace neon
       return No_Texture;
     }
 
-    const VkDescriptorImageInfo image{
-      texture.Sampler(), texture.View(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
-
-    VkWriteDescriptorSet write{};
-    write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    write.dstSet = kept.descriptor_set;
-    write.dstBinding = 0;
-    write.descriptorCount = 1;
-    write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    write.pImageInfo = &image;
-
-    vkUpdateDescriptorSets(_device->Device(), 1, &write, 0, nullptr);
+    WriteSet(kept.descriptor_set, texture.View(), texture.Sampling());
 
     const int id = _textures.Add(kept);
     if (id < 0)
@@ -615,11 +589,11 @@ namespace neon
 
   int VK_Renderer2D::KeepBorrowed(
     const VkImageView view,
-    const VkSampler sampler,
+    const VK_Sampling sampling,
     const uint32_t width,
     const uint32_t height)
   {
-    VK_Texture texture = VK_Texture::Borrowed(view, sampler, width, height);
+    VK_Texture texture = VK_Texture::Borrowed(view, sampling, width, height);
     return Keep(texture);
   }
 
@@ -642,21 +616,30 @@ namespace neon
         return kept.descriptor_set;
       }
 
-      const VkDescriptorImageInfo image{
-        _pixelated_sampler, kept.texture.View(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
-
-      VkWriteDescriptorSet write{};
-      write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-      write.dstSet = kept.pixelated_set;
-      write.dstBinding = 0;
-      write.descriptorCount = 1;
-      write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-      write.pImageInfo = &image;
-
-      vkUpdateDescriptorSets(_device->Device(), 1, &write, 0, nullptr);
+      WriteSet(kept.pixelated_set, kept.texture.View(), VK_Sampling::NearestClamp);
     }
 
     return kept.pixelated_set;
+  }
+
+  void VK_Renderer2D::WriteSet(const VkDescriptorSet set, const VkImageView view, const VK_Sampling sampling) const
+  {
+    const VkDescriptorImageInfo image{VK_NULL_HANDLE, view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
+    const VkDescriptorImageInfo sampler{_samplers->Of(sampling), VK_NULL_HANDLE, VK_IMAGE_LAYOUT_UNDEFINED};
+
+    std::array<VkWriteDescriptorSet, kBindings.size()> writes{};
+    for (std::size_t i = 0; i < writes.size(); i++)
+    {
+      writes[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+      writes[i].dstSet = set;
+      writes[i].dstBinding = kBindings[i].binding;
+      writes[i].descriptorType = kBindings[i].descriptorType;
+      writes[i].descriptorCount = 1;
+    }
+    writes[0].pImageInfo = &image;
+    writes[1].pImageInfo = &sampler;
+
+    vkUpdateDescriptorSets(_device->Device(), static_cast<uint32_t>(writes.size()), writes.data(), 0, nullptr);
   }
 
   int VK_Renderer2D::CreateMaterial(const std::string &shader_path)
@@ -1023,11 +1006,9 @@ namespace neon
     DestroyFrameBuffer(_shape_buffer);
     DestroyFrameBuffer(_values_buffer);
 
-    if (_pixelated_sampler != VK_NULL_HANDLE) { vkDestroySampler(device, _pixelated_sampler, nullptr); }
     if (_shapes_layout != VK_NULL_HANDLE) { vkDestroyDescriptorSetLayout(device, _shapes_layout, nullptr); }
     if (_values_layout != VK_NULL_HANDLE) { vkDestroyDescriptorSetLayout(device, _values_layout, nullptr); }
 
-    _pixelated_sampler = VK_NULL_HANDLE;
     _shapes_layout = VK_NULL_HANDLE;
     _values_layout = VK_NULL_HANDLE;
     _shapes_set = VK_NULL_HANDLE;
