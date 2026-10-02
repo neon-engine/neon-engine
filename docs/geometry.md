@@ -21,7 +21,7 @@ metres, without the centring and scaling a file gets.
 ```yaml
 - name: room
   components:
-    Transform: {}
+    Transform: Default
     Geometry:
       shape: prism
       size: [0, 3, 0]

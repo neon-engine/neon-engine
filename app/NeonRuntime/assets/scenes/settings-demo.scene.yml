@@ -24,7 +24,7 @@ entities:
 
   - name: bear
     components:
-      Transform: {}
+      Transform: Default
       Renderable:
         model: assets://models/bear.obj
         fit: unit
@@ -66,13 +66,13 @@ entities:
     components:
       Transform:
         position: [0, 0, 2]
-      Spectator: {}
+      Spectator: Default
     children:
       - name: camera
         components:
-          Transform: {}
-          Camera: {}
-          SoundListener: {}
+          Transform: Default
+          Camera: Default
+          SoundListener: Default
 
   # the sliders of the menu are the volumes of two groups, from 0 to 100
   - name: effects volume
@@ -126,7 +126,7 @@ entities:
   # side it is on
   - name: reactor
     components:
-      Transform: {}
+      Transform: Default
       SoundSource:
         sound: assets://sounds/ambience/reactor-room.wav
         looping: true

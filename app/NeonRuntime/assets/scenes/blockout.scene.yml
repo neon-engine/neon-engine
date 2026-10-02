@@ -13,7 +13,7 @@ version: 1
 entities:
   - name: light
     components:
-      Transform: {}
+      Transform: Default
       Light:
         type: direction
         direction: [-0.4, -1, -0.3]

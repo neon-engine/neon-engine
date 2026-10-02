@@ -31,9 +31,9 @@ camera.
   children:
     - name: camera
       components:
-        Transform: {}
-        Camera: {}
-        SoundListener: {}
+        Transform: Default
+        Camera: Default
+        SoundListener: Default
 ```
 
 **SoundSource**

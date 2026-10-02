@@ -16,7 +16,7 @@ entities:
     components:
       Transform:
         position: [0, 0, 5]
-      Camera: {}
+      Camera: Default
 
   # seen from the front, so drawn
   - name: front

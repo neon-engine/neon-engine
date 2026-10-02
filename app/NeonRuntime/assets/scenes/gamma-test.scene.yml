@@ -22,7 +22,7 @@ entities:
     components:
       Transform:
         position: [0, 0, 5]
-      Camera: {}
+      Camera: Default
 
   # black on the left and white on the right
   - name: black

@@ -20,7 +20,7 @@ entities:
 
   - name: bear
     components:
-      Transform: {}
+      Transform: Default
       Renderable:
         model: assets://models/bear.obj
         fit: unit
@@ -106,9 +106,9 @@ entities:
     components:
       Transform:
         position: [0, 0.3, 3.2]
-      Spectator: {}
+      Spectator: Default
     children:
       - name: camera
         components:
-          Transform: {}
-          Camera: {}
+          Transform: Default
+          Camera: Default

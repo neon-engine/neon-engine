@@ -16,12 +16,12 @@ entities:
     components:
       Transform:
         position: [0, 0, 5]
-      Camera: {}
+      Camera: Default
 
   # from the camera onto the planes, white, and nothing from the sides
   - name: light
     components:
-      Transform: {}
+      Transform: Default
       Light:
         type: direction
         direction: [0, 0, -1]

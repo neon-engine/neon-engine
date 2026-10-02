@@ -87,9 +87,10 @@ name is changed. The rules are in [prefabs.md](prefabs.md#what-differs).
 ### Components
 
 What a component leaves out keeps its default. A component that keeps all of
-its defaults is written as `Default`, as in `Spectator: Default`. `{}` means
-the same. On an entity placed from a prefab, what is left out keeps what the
-prefab says instead.
+its defaults is written as `Default`, as in `Spectator: Default`. The reader
+takes `{}` as well, but `Default` is the spelling of the recipes, since it
+reads as a sentence. On an entity placed from a prefab, what is left out
+keeps what the prefab says instead.
 
 **Transform**
 
@@ -190,7 +191,7 @@ to its eyes. How it is driven is in [physics.md](physics.md#the-player).
 
 The entity stays when the world [changes scene](#changing-the-scene), with
 everything below it. The component holds nothing that matters; being there
-is what it says, so it is written as `Persistent: {}` or `Persistent: Default`.
+is what it says, so it is written as `Persistent: Default`.
 
 | Name | Holds | Default |
 |---|---|---|

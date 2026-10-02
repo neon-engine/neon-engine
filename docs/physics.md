@@ -38,7 +38,7 @@ that carries more is refused, which is said in the log.
   components:
     Transform:
       position: [0, 1, -5]
-    Trigger: {}
+    Trigger: Default
     Collider:
       shape: sphere
       radius: 2
@@ -356,7 +356,7 @@ A body of several shapes is an entity with children that each carry a
   components:
     Transform:
       position: [0, 1, 0]
-    RigidBody: {}
+    RigidBody: Default
   children:
     - name: top
       components:
