@@ -344,6 +344,7 @@ Wanted, and not for 1.0.
 | Item | Detail |
 |---|---|
 | Virtual coordinates with a floating origin (#113) | The world is loaded and unloaded around the player and shifted back to the origin without the player noticing, for worlds that may as well be endless |
+| Fewer draw calls (#169) | Opaque draws sorted by pipeline and material, instancing for objects that share a model, per-object data in one buffer, and indirect draws. Measured first, on a scene of thousands of objects |
 
 ## Known bugs and debts
 
