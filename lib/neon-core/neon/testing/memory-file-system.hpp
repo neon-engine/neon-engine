@@ -107,6 +107,9 @@ namespace neon::testing
       _native_separator = native_separator;
     }
 
+    /// Unlike a real backend this one has `user://` from the start, so that
+    /// a test of something else need not place it. PlaceUserDirectory()
+    /// keeps the same folder, whatever the names.
     void Initialize() override
     {
       const std::string separator(1, _native_separator);
@@ -123,6 +126,18 @@ namespace neon::testing
         AddDirectories(_output_directory);
       }
     }
+
+    bool PlaceUserDirectory(const std::string &organization, const std::string &application) override
+    {
+      placed_organization = organization;
+      placed_application = application;
+      return true;
+    }
+
+    /// The names PlaceUserDirectory() was last given, for a test of who
+    /// places `user://`.
+    std::string placed_organization;
+    std::string placed_application;
 
     void CleanUp() override
     {

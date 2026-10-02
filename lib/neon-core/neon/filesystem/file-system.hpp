@@ -30,7 +30,8 @@ namespace neon
     std::string _assets_directory;
 
     /// Native folder behind `user://`, ending with a native separator.
-    /// Backends set this in Initialize() and make sure it exists.
+    /// Backends set this in PlaceUserDirectory() and make sure it exists.
+    /// Until then every `user://` path is rejected.
     std::string _user_directory;
 
     /// Native folder behind `output://`, ending with a native separator.
@@ -87,7 +88,17 @@ namespace neon
       _logger = logger;
     }
 
+    /// Finds the folders behind `assets://` and `output://`. `user://` has
+    /// no folder yet, see PlaceUserDirectory().
     virtual void Initialize() = 0;
+
+    /// Gives `user://` its folder: the one the platform keeps for an
+    /// application, under `organization` and `application`, created when it
+    /// is missing. Both are plain names, see ProjectFile::IsPlainName. The
+    /// names come from the project, which is read from `assets://` first,
+    /// so this is a step of its own after Initialize(). Returns false when
+    /// the folder cannot be found or created, and says why.
+    virtual bool PlaceUserDirectory(const std::string &organization, const std::string &application) = 0;
 
     virtual void CleanUp() = 0;
 

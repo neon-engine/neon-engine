@@ -41,7 +41,8 @@ entities:
           Camera: Default
 ```
 
-The scene of the runtime is
+The runtime starts with the entry scene of its project, see
+[projects.md](projects.md), which is
 [demo.scene.yml](../app/NeonRuntime/assets/scenes/demo.scene.yml). Another one
 is chosen with `--scene`:
 

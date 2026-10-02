@@ -387,7 +387,8 @@ several, such as one option needing another, belong in `Apply()`.
 
 The window mode is chosen through `SettingsConfig::window_mode`, defined in
 [settings-config.hpp](../lib/neon-core/neon/runtime/settings-config.hpp).
-It defaults to `Windowed`. NeonRuntime sets `Borderless` in its `main.cpp`.
+It defaults to `Windowed`. NeonRuntime's [settings.yml](../app/NeonRuntime/assets/settings.yml)
+sets `borderless` as `window.mode`, see [settings.md](settings.md).
 
 | Mode | Behaviour | `width` and `height` |
 |---|---|---|
@@ -440,8 +441,9 @@ also never depends on the directory the app was started from.
 | `output://` | A folder chosen with `--output-dir` when the app is started, for what a run hands back, such as screenshots | Read and write. Rejected when no folder was chosen |
 
 Where `user://` lives depends on the platform, and on the `organization` and
-`application` names in `SettingsConfig`, so that applications do not share a
-folder.
+`name` of the project (`assets://project.yml`, see
+[projects.md](projects.md)), so that projects do not share a folder. Until the
+project is read, `user://` has no folder and every path in it is refused.
 
 | Platform | `user://` |
 |---|---|

@@ -300,6 +300,9 @@ not have a file of the same path.
 Third-party code lives in `external/` as git submodules. No tool and no rule
 of this guide applies to it.
 
+The assets of a project, such as `app/NeonRuntime/assets`, follow a guide of
+their own: [project-layout.md](project-layout.md).
+
 ### One type per file
 
 Every class and struct at namespace scope has a file of its own, named after

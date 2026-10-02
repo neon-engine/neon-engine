@@ -23,6 +23,8 @@ namespace neon
 
     void Initialize() override;
 
+    bool PlaceUserDirectory(const std::string &organization, const std::string &application) override;
+
     void CleanUp() override;
 
     bool Exists(const std::string &path) override;

@@ -37,20 +37,29 @@ enum class WindowMode
   Fullscreen
 };
 
+/// Everything the runtime is told at start-up: what is compiled in as a
+/// default, what the settings files of the project and of the player change
+/// (SettingsFile), and what the command line sets last.
 struct SettingsConfig
 {
-  int width;
-  int height;
+  /// The size of the window in points, and what it shows for a run without
+  /// a window.
+  int width = 1280;
+  int height = 720;
+
+  /// The title of the window. Empty takes the name of the project.
   std::string title;
 
   /// Who makes the application, and what it is called. Together they decide
-  /// where `user://` lives, so that applications do not share a folder. Use
-  /// plain lowercase names without spaces.
+  /// where `user://` lives, so that applications do not share a folder. They
+  /// come from the project, see ProjectFile, which is why they are plain
+  /// names. The defaults are for tests that have no project.
   std::string organization = "neon-engine";
   std::string application = "neon-runtime";
 
-  /// Virtual path of the scene the application starts with.
-  std::string scene_path = "assets://scenes/demo.scene.yml";
+  /// Virtual path of the scene the application starts with. Empty starts
+  /// with the entry scene of the project.
+  std::string scene_path;
 
   /// Virtual path of a user interface that is shown from the start, on top
   /// of what the scene shows. Empty shows none.

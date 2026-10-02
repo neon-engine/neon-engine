@@ -44,6 +44,9 @@ Principles that hold for both:
 | Back faces left out (#136) | The back of every triangle is left out unless a material is `double_sided`, and what is mirrored is still drawn from the front |
 | `VK_RenderSystem` split (#163) | The swapchain, the pipelines of materials, the canvas a frame or a render target is drawn on, and the reading back of a frame are types of their own. The render system wires them. Done ahead of the programmable pipeline (#102) |
 | File system (#22) | Virtual paths with `assets://`, `user://`, and `output://`. See [file-systems.md](file-systems.md) |
+| Load a project (#41) | A project is a folder with a `project.yml` at its root: its name, its organization, its scenes, and the scene it starts with. The runtime runs the project next to it, and the names place `user://`. See [projects.md](projects.md) |
+| The layout of a project (#147) | A style guide for the folders and names of a project, which the editor, export, and agents rely on: by kind at the top, by area inside, lowercase with dashes, the kind of a file before its format. See [project-layout.md](project-layout.md) |
+| Settings from `settings.yml` (#125) | In layers: the defaults in code, `assets://settings.yml` of the project, `user://settings.yml` of the player, then the command line. The window, the user interface, the steps of the world, and the renderer. See [settings.md](settings.md) |
 | Log file (#44) | Written to `user://logs/neon-engine.log`, with what was logged before the file system started. See [file-systems.md](file-systems.md#the-log-file) |
 | Window modes (#22) | Windowed, borderless, and fullscreen |
 | Command line (#24) | An abstraction with a set of options for each application |
@@ -72,8 +75,6 @@ Work that builds directly on what exists.
 
 | Item | Detail |
 |---|---|
-| Load a project (#41) | The runtime takes a project to run. It takes a scene today, with `--scene`. What a project is on disk is open |
-| Settings from `settings.yml` (#125) | The runtime reads its settings from `assets://settings.yml`, then what the player changed from `user://settings.yml`, then the command line. Today they are defaults in code and command-line options. The file names the folder of `user://`, which is fixed at `neon-engine/neon-runtime` today |
 | Vulkan version and capabilities (#42) | A setting for the version to ask for, and a way for the engine to learn what the graphics card can do, so that menus only offer what works |
 | Run on Windows (#43) | The build works. It has not been run |
 
@@ -92,7 +93,6 @@ These come first, because everything after them is cheaper with them in place.
 | The TODOs in the repository (#46) | Listed [below](#todos-in-the-repository) |
 | Architecture document (#45) | How the libraries, interfaces, and applications fit together, and why |
 | Random numbers of true entropy (#160) | From the operating system's secure generator, through an interface a game asks: `getentropy`, `BCryptGenRandom`, and in the browser `crypto.getRandomValues` |
-| How a project is organised (#147) | A style guide for the folders and names of a project, which the editor, export, and agents rely on |
 | A document for each major feature (#45) | In the way [file-systems.md](file-systems.md) describes the file system: what it does, how it is used, and what is open |
 
 ### World
@@ -138,11 +138,15 @@ and a system. A script declares components and systems of its own.
 | Projected and area lights (#133) | Lights that throw a picture, and lights from a rectangle, such as a screen or a window |
 | Frustum and occlusion culling (#115) | Draw what the camera sees: bounds against the frustum, and occlusion by occluder volumes or a hierarchical depth buffer |
 
-**Shaders are written once.** They are compiled to SPIR-V, and
-[SPIRV-Cross](https://github.com/KhronosGroup/SPIRV-Cross) turns that into
-what Metal and WebGPU want. A second renderer adds a step to the build, not a
-second set of shaders. [Slang](https://shader-slang.org) is the alternative if
-shaders grow numerous.
+**Shaders are written once**, in GLSL, and SPIR-V is the one intermediate
+form (#89, decided 2026-10-02). glslang produces it, and the other renderers
+start from it: [SPIRV-Cross](https://github.com/KhronosGroup/SPIRV-Cross) for
+MSL and HLSL, and Tint or Naga for WGSL in a browser. A second renderer adds a
+step to the build, not a second set of shaders. [Slang](https://shader-slang.org)
+(#110) was weighed and set aside while its Metal and WGSL targets are
+experimental. A tool of our own that stitches includes and wraps material
+shaders into complete stages, as Godot's compiler does, is the likely next
+step and the first of the compiler tools (#83).
 
 Every technique above has to be built once for each renderer. The more of them
 exist before Metal and WebGPU are started, the more there is to port. The more
@@ -367,10 +371,7 @@ Wanted, and not for 1.0.
 |---|---|
 | When the Metal and WebGPU renderers are started (#87) | How much is to be ported, against how much is to be built three times |
 | Whether WebGPU also serves the desktop (#88) | If it does on macOS, the Metal renderer has less to justify it |
-| Shaders in GLSL or in Slang (#89) | How many shaders there will be. Cheap to change now, expensive later |
 | Which technique for global illumination (#90) | What the target hardware is, and whether the web has to be able to run it |
 | How agents reach the editor (#91) | What the editor turns out to be |
-| What a project is on disk (#92) | Needed before the runtime can load one |
 | How game code is loaded (#93) | Scripts are decided. Whether libraries loaded at run time are offered as well is open |
-| YAML, JSON, or BSON for scenes and user interfaces (#94) | YAML is used and can be changed by hand; JSON with BSON for shipping was weighed |
 | The license of the engine (#95) | MIT was removed; what replaces it is not decided |

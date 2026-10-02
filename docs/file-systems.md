@@ -100,8 +100,8 @@ started from, and a run from an IDE, a shell, or a script each left a
 | Linux | `~/.local/share/neon-engine/neon-runtime/logs/neon-engine.log` |
 | Windows | `%APPDATA%\neon-engine\neon-runtime\logs\neon-engine.log` |
 
-The folder follows the `organization` and `application` names in
-`SettingsConfig`, as everything else in `user://` does. The log says where
+The folder follows the `organization` and `name` of the project, see
+[projects.md](projects.md), as everything else in `user://` does. The log says where
 it is, in its line `Logging to ...`.
 
 | Decision | Reason |
@@ -276,8 +276,8 @@ The first two are the point at which PhysFS pays for itself.
 
 ## Open questions
 
-- `user://` is per application, placed by the `organization` and
-  `application` names in `SettingsConfig`. Is a second, shared scheme needed
+- `user://` is per project, placed by the `organization` and `name` of
+  `project.yml`. Is a second, shared scheme needed
   for settings that belong to the engine?
 - Is a custom archive format needed at all, or is zip enough?
 - Should editor builds read loose files while shipped builds read archives?

@@ -54,24 +54,13 @@ namespace neon
     }
 
     /// Reads a version of Vulkan, such as `1.3`. Returns false when it is
-    /// not two whole numbers with a dot between them, or not of Vulkan 1.
+    /// not a version, or not of Vulkan 1.
     bool read_vulkan_version(const std::string_view text, ApiVersion &version)
     {
-      const std::size_t dot = text.find('.');
-      if (dot == std::string_view::npos) { return false; }
+      ApiVersion read;
+      if (!ApiVersion::Parse(text, read) || read.major != 1) { return false; }
 
-      const auto read = [](const std::string_view part, int &number)
-      {
-        const char *last = part.data() + part.size();
-        const auto [stopped_at, error] = std::from_chars(part.data(), last, number);
-        return !part.empty() && error == std::errc{} && stopped_at == last && number >= 0;
-      };
-
-      int major = 0;
-      int minor = 0;
-      if (!read(text.substr(0, dot), major) || !read(text.substr(dot + 1), minor) || major != 1) { return false; }
-
-      version = {major, minor};
+      version = read;
       return true;
     }
   }
@@ -215,6 +204,9 @@ namespace neon
         return false;
       }
 
+      // read afresh, so that applying the same command line twice, as the
+      // application does around its settings files, gives the same frames
+      settings.screenshot_frames.clear();
       if (!read_frames(command_line.GetValue(screenshot_at), settings.screenshot_frames))
       {
         error = "Option '--" + screenshot_at + "' needs whole numbers above zero, separated by commas";

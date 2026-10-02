@@ -123,6 +123,15 @@ namespace neon
       writable = false;
     } else if (path.starts_with(user_scheme))
     {
+      if (_user_directory.empty())
+      {
+        _logger->Error(
+          "Invalid path '{}': {} has no folder yet. It is placed once the project says who makes it and what it is called",
+          path,
+          user_scheme);
+        return false;
+      }
+
       scheme = user_scheme;
       scheme_directory = _user_directory;
       writable = true;

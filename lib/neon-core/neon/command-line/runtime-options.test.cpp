@@ -395,6 +395,17 @@ namespace
     EXPECT_EQ(_settings.screenshot_path, "user://frame.png");
   }
 
+  TEST_F(RuntimeOptionsTest, ScreenshotAtGivesTheSameFramesWhenAppliedTwice)
+  {
+    // the application applies the command line again after its settings
+    // files, so that the command line wins
+    ASSERT_TRUE(Apply({"--screenshot", "user://frame.png", "--screenshot-at", "1,30,60"}));
+    ASSERT_TRUE(_options.Apply(_command_line, _settings, _error));
+
+    EXPECT_THAT(_settings.screenshot_frames, ElementsAre(1u, 30u, 60u));
+    EXPECT_EQ(_settings.max_frames, 60u);
+  }
+
   TEST_F(RuntimeOptionsTest, ScreenshotAtAcceptsOneFrame)
   {
     ASSERT_TRUE(Apply({"--screenshot", "user://frame.png", "--screenshot-at=7"}));

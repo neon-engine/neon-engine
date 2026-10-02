@@ -100,6 +100,9 @@ namespace
 
       _file_system = std::make_unique<SDL2_FileSystem>(settings, _logger);
       _file_system->Initialize();
+
+      // the names an application takes from its project
+      _file_system->PlaceUserDirectory(settings.organization, settings.application);
     }
 
     void ExpectNoErrors() const
@@ -134,6 +137,18 @@ namespace
   TEST_F(Sdl2FileSystemTest, CreatesTheFolderOfTheUser)
   {
     EXPECT_TRUE(_directory.HasDirectory(_user));
+  }
+
+  TEST_F(Sdl2FileSystemTest, RefusesUserPathsUntilTheFolderIsPlaced)
+  {
+    _logger->Clear();
+    SDL2_FileSystem file_system(SettingsConfig{}, _logger);
+    file_system.Initialize();
+
+    EXPECT_FALSE(file_system.Exists("user://save.dat"));
+    ExpectError("Invalid path 'user://save.dat': user:// has no folder yet");
+
+    file_system.CleanUp();
   }
 
   TEST_F(Sdl2FileSystemTest, GivesEveryApplicationAFolderOfItsOwn)
@@ -591,6 +606,7 @@ namespace
     _file_system->CleanUp();
     _file_system->CleanUp();
     _file_system->Initialize();
+    ASSERT_TRUE(_file_system->PlaceUserDirectory("neon-engine-tests", "sdl2-file-system"));
 
     std::string contents;
     ASSERT_TRUE(_file_system->ReadText("user://save.dat", contents));

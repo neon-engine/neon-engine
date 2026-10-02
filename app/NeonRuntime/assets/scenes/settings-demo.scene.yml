@@ -91,7 +91,7 @@ entities:
     components:
       Transform: {}
       SoundSource:
-        sound: assets://sounds/Electronic/Chilled (RT 3.428)/Electronic Chilled main.wav
+        sound: assets://sounds/music/electronic-chilled.wav
         group: music
         looping: true
       UiSoundSwitch:
@@ -103,7 +103,7 @@ entities:
     components:
       Transform: {}
       SoundSource:
-        sound: assets://sounds/Electronic/Fight (RT 2.5)/Electronic Fight main.wav
+        sound: assets://sounds/music/electronic-fight.wav
         group: music
         looping: true
       UiSoundSwitch:
@@ -115,7 +115,7 @@ entities:
     components:
       Transform: {}
       SoundSource:
-        sound: assets://sounds/Electronic/Hollow (RT 5)/Electronic Hollow main.wav
+        sound: assets://sounds/music/electronic-hollow.wav
         group: music
         looping: true
       UiSoundSwitch:
@@ -129,7 +129,7 @@ entities:
     components:
       Transform: {}
       SoundSource:
-        sound: assets://sounds/Sci-Fi/Ambience/Reactor Room.wav
+        sound: assets://sounds/ambience/reactor-room.wav
         looping: true
         spatial: true
         max_distance: 20

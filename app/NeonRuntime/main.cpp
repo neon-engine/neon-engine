@@ -15,6 +15,8 @@
 #include <neon/input/sdl2-clipboard.hpp>
 #include <neon/input/sdl2-input-system.hpp>
 #include <neon/physics/jolt-physics-system.hpp>
+#include <neon/project/project-file.hpp>
+#include <neon/settings/settings-file.hpp>
 #include <neon/layout/flex-layout-engine.hpp>
 #include <neon/render/forward-render-pipeline.hpp>
 #include <neon/render/vk-render-system.hpp>
@@ -69,21 +71,26 @@ int main(const int argc, char *argv[])
     return EXIT_SUCCESS;
   }
 
-  auto settings_config = SettingsConfig{
-    .width = 1920,
-    .height = 1080,
-    .pause_menu = "assets://ui/pause.ui.yml",
-    .settings_menu = "assets://ui/settings.ui.yml",
-    .selected_api = RenderingApi::Vulkan,
-    .window_mode = WindowMode::Borderless
+  // The settings come in layers, each on top of the one before: these
+  // defaults, the settings of the project, the settings of the player, and
+  // the command line. The command line is applied here already, since the
+  // file system needs what it says to come up, and again after the files,
+  // so that it wins.
+  auto settings_config = SettingsConfig{.selected_api = RenderingApi::Vulkan};
+
+  const auto apply_command_line = [&]
+  {
+    std::string error;
+    if (runtime_options.Apply(command_line, settings_config, error) &&
+        display_options.Apply(command_line, settings_config, error))
+    {
+      return true;
+    }
+    std::cerr << error << "\n\n" << command_line.GetHelp();
+    return false;
   };
 
-  if (std::string error; !runtime_options.Apply(command_line, settings_config, error) ||
-                         !display_options.Apply(command_line, settings_config, error))
-  {
-    std::cerr << error << "\n\n" << command_line.GetHelp();
-    return EXIT_FAILURE;
-  }
+  if (!apply_command_line()) { return EXIT_FAILURE; }
 
   neon::LoggingSystem logging_system(settings_config);
 
@@ -94,10 +101,76 @@ int main(const int argc, char *argv[])
   neon::SDL2_FileSystem file_system(settings_config, logging_system.CreateLogger("SDL2_FileSystem"));
   file_system.Initialize();
 
+  neon::RYML_DocumentFormat yaml;
+
+  // The project is the folder behind assets://. Its file says who makes it
+  // and what it is called, which is what places user://, so it is read
+  // before anything is written. Its problems go to the console, since the
+  // log file has no place yet.
+  neon::Project project;
+  {
+    const neon::ProjectFile project_file(&file_system, &yaml, logging_system.CreateLogger("ProjectFile"));
+    if (std::vector<std::string> errors; !project_file.Read(project, errors))
+    {
+      for (const auto &error : errors) { std::cerr << error << "\n"; }
+      file_system.CleanUp();
+      return EXIT_FAILURE;
+    }
+  }
+
+  settings_config.organization = project.organization;
+  settings_config.application = project.name;
+
+  // the command line may start another scene, which is for development: a
+  // shipped runtime runs what its project says
+  if (settings_config.scene_path.empty()) { settings_config.scene_path = project.entry_scene; }
+
+  if (!file_system.PlaceUserDirectory(settings_config.organization, settings_config.application))
+  {
+    std::cerr << "The folder of the user cannot be placed, see the log\n";
+    file_system.CleanUp();
+    return EXIT_FAILURE;
+  }
+
   // The log file belongs under user://, and only the file system knows where
   // that is. Until now everything went to the console, and was held back for
   // the file, which gets it first.
   file_system.PlaceLogFile(settings_config.logpath, logging_system);
+
+  // The settings of the project, then what the player changed. A mistake in
+  // the project's file stops the runtime, since the game would not be what
+  // its author meant. A mistake in the player's file is said in the log and
+  // the file is left out, since a player should not be locked out of the
+  // game by a file a menu wrote.
+  {
+    const neon::SettingsFile settings_file(&file_system, &yaml, logging_system.CreateLogger("SettingsFile"));
+    const auto settings_logger = logging_system.CreateLogger("NeonRuntime");
+
+    bool found = false;
+    std::vector<std::string> errors;
+    if (!settings_file.Read(std::string(neon::SettingsFile::of_the_project), settings_config, found, errors))
+    {
+      for (const auto &error : errors) { std::cerr << error << "\n"; }
+      file_system.CleanUp();
+      return EXIT_FAILURE;
+    }
+
+    if (!settings_file.Read(std::string(neon::SettingsFile::of_the_player), settings_config, found, errors))
+    {
+      for (const auto &error : errors) { settings_logger->Warn("{}", error); }
+      settings_logger->Warn("The settings of the player are left out until they are corrected");
+    }
+  }
+
+  // the command line wins over the files
+  if (!apply_command_line())
+  {
+    file_system.CleanUp();
+    return EXIT_FAILURE;
+  }
+
+  // the window is named after the project unless the settings say otherwise
+  if (settings_config.title.empty()) { settings_config.title = project.name; }
 
   // Without a window there is no one to hear anything. Sounds are still read
   // and mixed, so that a run without a window finds a sound that is broken.
@@ -194,7 +267,6 @@ int main(const int argc, char *argv[])
     logging_system.CreateLogger("Forward_RenderPipeline"));
 
   neon::Flecs_EntityStore entity_store(logging_system.CreateLogger("Flecs_EntityStore"));
-  neon::RYML_DocumentFormat yaml;
 
   // The user interface: menus, and what is shown during play. Its text is
   // drawn with Inter unless a file names another font. Glyphs are drawn

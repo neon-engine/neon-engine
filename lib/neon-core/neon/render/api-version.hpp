@@ -1,8 +1,10 @@
 #ifndef API_VERSION_HPP
 #define API_VERSION_HPP
 
+#include <charconv>
 #include <compare>
 #include <string>
+#include <string_view>
 
 namespace neon
 {
@@ -27,6 +29,29 @@ namespace neon
       std::string text = std::to_string(major) + "." + std::to_string(minor);
       if (patch != 0) { text += "." + std::to_string(patch); }
       return text;
+    }
+
+    /// Reads a version as it is written, such as `1.3`: two whole numbers
+    /// with a dot between them. Returns false for anything else, and leaves
+    /// `version` as it is.
+    static bool Parse(const std::string_view text, ApiVersion &version)
+    {
+      const std::size_t dot = text.find('.');
+      if (dot == std::string_view::npos) { return false; }
+
+      const auto read = [](const std::string_view part, int &number)
+      {
+        const char *last = part.data() + part.size();
+        const auto [stopped_at, error] = std::from_chars(part.data(), last, number);
+        return !part.empty() && error == std::errc{} && stopped_at == last && number >= 0;
+      };
+
+      int major = 0;
+      int minor = 0;
+      if (!read(text.substr(0, dot), major) || !read(text.substr(dot + 1), minor)) { return false; }
+
+      version = {major, minor};
+      return true;
     }
   };
 } // neon

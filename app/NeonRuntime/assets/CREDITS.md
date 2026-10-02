@@ -1,13 +1,15 @@
 # Third Party Asset Credits
 
-- Prototyping Asset Textures by hansonry
+- Prototyping Asset Textures by hansonry, in `textures/`, with its own [README.md](textures/README.md)
     - https://opengameart.org/content/prototyping-textures
     - License: https://creativecommons.org/licenses/by/4.0/
 
 - `sounds/hum.wav`
     - Made for Neon Engine by a script, from sine waves. It is part of the engine and under its license.
 
-- Music and sounds in `sounds/Electronic/` and `sounds/Sci-Fi/`, by Ovani Sound
+- `sounds/music/electronic-chilled.wav`, `sounds/music/electronic-fight.wav`, `sounds/music/electronic-hollow.wav`,
+  and `sounds/ambience/reactor-room.wav`, by Ovani Sound, from the packs Electronic (Chilled, Fight, Hollow,
+  the main tracks) and Sci-Fi Ambience (Reactor Room)
     - Proprietary. Licensed to the owner of this repository, not to anyone who gets a copy of it.
     - They may not be passed on in their raw form, as the files are here. They may be passed on once they
       are converted to another binary format and built into a game.

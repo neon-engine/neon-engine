@@ -69,6 +69,15 @@ add_library(${TARGET} STATIC
         neon/runtime/frame-capture.cpp
         neon/runtime/frame-capture.hpp
 
+        # project
+        neon/project/project.hpp
+        neon/project/project-file.cpp
+        neon/project/project-file.hpp
+
+        # settings
+        neon/settings/settings-file.cpp
+        neon/settings/settings-file.hpp
+
         # command line
         neon/command-line/command-line.cpp
         neon/command-line/command-line.hpp

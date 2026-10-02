@@ -158,7 +158,7 @@ through two components that `UiAudio` acts on:
   components:
     Transform: {}
     SoundSource:
-      sound: assets://sounds/Electronic/Chilled (RT 3.428)/Electronic Chilled main.wav
+      sound: assets://sounds/music/electronic-chilled.wav
       group: music
       looping: true
     UiSoundSwitch:

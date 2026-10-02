@@ -30,21 +30,25 @@ namespace neon
 
     _logger->Info("assets:// is {}", _assets_directory);
 
+    InitializeOutputDirectory();
+  }
+
+  bool SDL2_FileSystem::PlaceUserDirectory(const std::string &organization, const std::string &application)
+  {
     // a folder of the current user, which SDL creates if it is missing
-    char *user_path = SDL_GetPrefPath(_settings_config.organization.c_str(), _settings_config.application.c_str());
+    char *user_path = SDL_GetPrefPath(organization.c_str(), application.c_str());
     if (user_path == nullptr)
     {
       auto error = std::string(SDL_GetError());
-      _logger->Critical("Failed to find the user directory: {}", error);
-      throw std::runtime_error("Failed to find the user directory");
+      _logger->Error("Failed to find the user directory of {}/{}: {}", organization, application, error);
+      return false;
     }
 
     _user_directory = user_path;
     SDL_free(user_path);
 
     _logger->Info("user:// is {}", _user_directory);
-
-    InitializeOutputDirectory();
+    return true;
   }
 
   void SDL2_FileSystem::InitializeOutputDirectory()
