@@ -20,6 +20,8 @@ scenes:
   - assets://scenes/gamma-test.scene.yml
   - assets://scenes/culling-test.scene.yml
   - assets://scenes/pbr-test.scene.yml
+  - assets://scenes/shadow-test.scene.yml
+  - assets://scenes/shadow-test-unshadowed.scene.yml
   - assets://scenes/title.scene.yml
   - assets://scenes/prototype.scene.yml
   - assets://scenes/end.scene.yml

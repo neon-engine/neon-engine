@@ -8,6 +8,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "vk-culling.hpp"
+#include "vk-shadow-fit.hpp"
 
 namespace neon
 {
@@ -74,6 +75,7 @@ namespace neon
 
     if (vkAllocateCommandBuffers(_device.Device(), &allocation, &_commands) != VK_SUCCESS ||
         vkAllocateCommandBuffers(_device.Device(), &allocation, &_target_commands) != VK_SUCCESS ||
+        vkAllocateCommandBuffers(_device.Device(), &allocation, &_shadow_commands) != VK_SUCCESS ||
         vkCreateFence(_device.Device(), &fence, nullptr, &_frame_done) != VK_SUCCESS)
     {
       throw std::runtime_error("Failed to set up the Vulkan frame");
@@ -81,6 +83,7 @@ namespace neon
 
     if (!_samplers.Initialize(&_device, _logger) ||
         !CreateRenderPasses() ||
+        !_shadow_map.Initialize(&_device, _logger) ||
         !_resolve.Initialize(&_device, _file_system_context, _frame_pass, &_samplers, max_scene_images, _logger) ||
         !CreateDescriptors())
     {
@@ -342,10 +345,14 @@ namespace neon
       return false;
     }
 
-    if (!_pipelines.Initialize(&_device, _file_system_context, _scene_pass, _logger)) { return false; }
+    if (!_pipelines.Initialize(&_device, _file_system_context, _scene_pass, _shadow_map.RenderPass(), _logger))
+    {
+      return false;
+    }
 
-    // one set for each material, with its textures and their samplers
-    constexpr uint32_t textures = VK_Pipelines::kTexture_Count * kMax_Render_Objects;
+    // one set for each material, with its textures and their samplers,
+    // and the shadow map with its sampler
+    constexpr uint32_t textures = (VK_Pipelines::kTexture_Count + 1) * kMax_Render_Objects;
     constexpr std::array<VkDescriptorPoolSize, 3> sizes{{
       {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 2 * kMax_Render_Objects},
       {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, textures},
@@ -417,6 +424,9 @@ namespace neon
       _samplers.Of(diffuse.Sampling()), VK_NULL_HANDLE, VK_IMAGE_LAYOUT_UNDEFINED};
     const VkDescriptorImageInfo specular_sampler{
       _samplers.Of(specular.Sampling()), VK_NULL_HANDLE, VK_IMAGE_LAYOUT_UNDEFINED};
+    const VkDescriptorImageInfo shadow_map{VK_NULL_HANDLE, _shadow_map.View(), VK_ShadowMap::kRead_Layout};
+    const VkDescriptorImageInfo shadow_sampler{
+      _samplers.Of(VK_Sampling::ShadowCompare), VK_NULL_HANDLE, VK_IMAGE_LAYOUT_UNDEFINED};
 
     std::array<VkWriteDescriptorSet, VK_Pipelines::kBindings.size()> writes{};
     for (std::size_t i = 0; i < writes.size(); i++)
@@ -433,6 +443,8 @@ namespace neon
     writes[3].pImageInfo = &specular_image;
     writes[4].pImageInfo = &diffuse_sampler;
     writes[5].pImageInfo = &specular_sampler;
+    writes[6].pImageInfo = &shadow_map;
+    writes[7].pImageInfo = &shadow_sampler;
 
     vkUpdateDescriptorSets(_device.Device(), static_cast<uint32_t>(writes.size()), writes.data(), 0, nullptr);
     return true;
@@ -485,6 +497,7 @@ namespace neon
 
     DestroyFrameImages();
     _resolve.CleanUp();
+    _shadow_map.CleanUp();
     _samplers.CleanUp();
     if (_scene_pass != VK_NULL_HANDLE) { vkDestroyRenderPass(device, _scene_pass, nullptr); }
     if (_frame_pass != VK_NULL_HANDLE) { vkDestroyRenderPass(device, _frame_pass, nullptr); }
@@ -494,6 +507,8 @@ namespace neon
     _scene_pass = VK_NULL_HANDLE;
     _frame_pass = VK_NULL_HANDLE;
     _commands = VK_NULL_HANDLE;
+    _shadow_commands = VK_NULL_HANDLE;
+    _shadow_open = false;
 
     _device.CleanUp();
   }
@@ -602,6 +617,12 @@ namespace neon
     _has_last_scene = false;
     _renderer_2d.PrepareFrame();
 
+    // the shadow map is fitted and drawn again by the first scene that
+    // casts
+    _shadow_open = false;
+    _shadow_fitted = false;
+    _shadow_target = No_Render_Target;
+
     vkResetCommandBuffer(_commands, 0);
 
     VkCommandBufferBeginInfo begin{};
@@ -637,9 +658,18 @@ namespace neon
 
     vkEndCommandBuffer(_commands);
 
-    // what draws into render targets runs first, and what shows them after
-    std::array<VkCommandBuffer, 2> buffers{};
+    // The shadow map is drawn first, since every scene reads it. Then
+    // what draws into render targets, and what shows them after.
+    std::array<VkCommandBuffer, 3> buffers{};
     uint32_t buffer_count = 0;
+
+    if (_shadow_open)
+    {
+      _shadow_map.End(_shadow_commands);
+      vkEndCommandBuffer(_shadow_commands);
+      buffers[buffer_count++] = _shadow_commands;
+      _shadow_open = false;
+    }
 
     if (_target_commands_open)
     {
@@ -809,6 +839,21 @@ namespace neon
     // where the camera stands, which the view matrix holds in reverse
     scene.view_position = glm::inverse(view)[3];
 
+    // the shadow map is fitted around the first camera of the frame that
+    // draws with a light that casts, and every later camera reads it
+    const auto fit_shadow = [this, &scene](const LightSource &light)
+    {
+      if (!_shadow_fitted)
+      {
+        _shadow_view_projection = depth_correction * VK_ShadowFit::ViewProjection(
+          light.direction, glm::vec3(scene.view_position), static_cast<float>(VK_ShadowMap::kSize));
+        _shadow_fitted = true;
+      }
+      scene.direction_light.light_view_projection = _shadow_view_projection;
+      scene.direction_light.shadow = {
+        1.0f, 1.0f / static_cast<float>(VK_ShadowMap::kSize), VK_ShadowSettings::kBias, 0.0f};
+    };
+
     int point_lights = 0;
     int spot_lights = 0;
     bool dropped = false;
@@ -827,6 +872,9 @@ namespace neon
           scene.direction_light.ambient = glm::vec4(light.ambient, 0.0f);
           scene.direction_light.diffuse = glm::vec4(light.diffuse, 0.0f);
           scene.direction_light.specular = glm::vec4(light.specular, 0.0f);
+
+          // a light with no direction lights nothing, and shadows nothing
+          if (light.casts_shadows && glm::dot(light.direction, light.direction) > 0.0f) { fit_shadow(light); }
           break;
         }
         case LightType::Point:
@@ -958,6 +1006,16 @@ namespace neon
     const std::array offsets{_last_scene_offset, object_offset};
     const VkDescriptorSet set = material.DescriptorSet();
 
+    // The shadow map holds what the first scene that casts draws, as its
+    // light sees it. What is see-through casts no shadow for now.
+    if (scene.direction_light.shadow.x > 0.5f && (!_shadow_open || _shadow_target == _current_target))
+    {
+      if ((_shadow_open || BeginShadowPass()) && material.GetAlphaMode() != AlphaMode::Blend)
+      {
+        DrawShadow(model, material, mirrored, offsets);
+      }
+    }
+
     // what is see-through is drawn when the scene is finished, over what
     // is opaque, from the farthest to the nearest
     if (material.GetAlphaMode() == AlphaMode::Blend)
@@ -985,6 +1043,57 @@ namespace neon
       offsets.data());
 
     model.Use();
+  }
+
+  bool VK_RenderSystem::BeginShadowPass()
+  {
+    vkResetCommandBuffer(_shadow_commands, 0);
+
+    VkCommandBufferBeginInfo begin{};
+    begin.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    begin.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+    if (vkBeginCommandBuffer(_shadow_commands, &begin) != VK_SUCCESS)
+    {
+      _logger->Error("Could not record the shadow pass");
+      return false;
+    }
+
+    _shadow_map.Begin(_shadow_commands);
+    _shadow_open = true;
+    _shadow_target = _current_target;
+    return true;
+  }
+
+  void VK_RenderSystem::DrawShadow(
+    const VK_Model &model,
+    VK_Material &material,
+    const bool mirrored,
+    const std::array<uint32_t, 2> &offsets)
+  {
+    // the pipeline of the pass is made when the first object that casts
+    // is drawn with the material, culled as the material is
+    VkPipeline pipeline = material.ShadowPipeline(mirrored);
+    if (pipeline == VK_NULL_HANDLE)
+    {
+      if (!_pipelines.GetShadow(material.IsDoubleSided(), mirrored, pipeline)) { return; }
+      material.SetShadowPipeline(mirrored, pipeline);
+    }
+
+    const VkDescriptorSet set = material.DescriptorSet();
+
+    vkCmdBindPipeline(_shadow_commands, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+    vkCmdBindDescriptorSets(
+      _shadow_commands,
+      VK_PIPELINE_BIND_POINT_GRAPHICS,
+      _pipelines.Layout(),
+      0,
+      1,
+      &set,
+      static_cast<uint32_t>(offsets.size()),
+      offsets.data());
+
+    model.Draw(_shadow_commands);
   }
 
   void VK_RenderSystem::DestroyRenderObject(const int render_object_id)

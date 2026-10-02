@@ -36,6 +36,8 @@ namespace neon
     type.Field("quadratic", [](Light &light) -> float & { return light.source.quadratic; });
     type.Field("cutoff", [](Light &light) -> float & { return light.source.cutoff; });
     type.Field("outer_cutoff", [](Light &light) -> float & { return light.source.outer_cutoff; });
+    type.Field("casts_shadows", [](Light &light) -> bool & { return light.source.casts_shadows; })
+        .Describe("Whether what stands in the light shadows what is behind it; a direction light alone so far");
   }
 } // neon
 

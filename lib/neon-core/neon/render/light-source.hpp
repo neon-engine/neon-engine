@@ -27,6 +27,11 @@ namespace neon
     glm::vec3 ambient{};
     glm::vec3 diffuse{};
     glm::vec3 specular{};
+
+    /// Whether what stands in the light shadows what is behind it. A
+    /// direction light draws a shadow map; a point or a spot light casts
+    /// no shadow yet, whatever this says.
+    bool casts_shadows = true;
   };
 } // neon
 

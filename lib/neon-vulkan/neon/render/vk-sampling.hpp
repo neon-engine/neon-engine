@@ -34,10 +34,16 @@ namespace neon
     /// smoothing, and the scene image, which the resolve reads whole
     /// pixels of.
     NearestClamp,
+
+    /// Compared, not read: the shadow map, where a shader asks whether a
+    /// depth is in front of what the map holds and gets a 1 or a 0, blended
+    /// between the four texels around the place. Past its edge it is all
+    /// lit, which the border white says.
+    ShadowCompare,
   };
 
   /// How many ways there are.
-  constexpr int kSampling_Count = 5;
+  constexpr int kSampling_Count = 6;
 } // neon
 
 #endif //VK_SAMPLING_HPP

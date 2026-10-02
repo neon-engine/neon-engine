@@ -95,5 +95,31 @@ namespace
     EXPECT_EQ(description.addressModeU, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
     EXPECT_EQ(description.anisotropyEnable, VK_FALSE);
     EXPECT_FLOAT_EQ(description.maxLod, 0.0f);
+    EXPECT_EQ(description.compareEnable, VK_FALSE);
+  }
+
+  TEST(VkSamplersTest, ComparesTheShadowMapAndLightsWhatIsPastItsEdge)
+  {
+    const VkSamplerCreateInfo description = VK_Samplers::DescriptionOf(VK_Sampling::ShadowCompare, 16.0f);
+
+    EXPECT_EQ(description.compareEnable, VK_TRUE);
+    EXPECT_EQ(description.compareOp, VK_COMPARE_OP_LESS_OR_EQUAL);
+    EXPECT_EQ(description.magFilter, VK_FILTER_LINEAR);
+    EXPECT_EQ(description.minFilter, VK_FILTER_LINEAR);
+    EXPECT_EQ(description.addressModeU, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER);
+    EXPECT_EQ(description.addressModeV, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER);
+    EXPECT_EQ(description.borderColor, VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE);
+    EXPECT_EQ(description.anisotropyEnable, VK_FALSE);
+    EXPECT_FLOAT_EQ(description.maxLod, 0.0f);
+  }
+
+  TEST(VkSamplersTest, ComparesNothingButTheShadowMap)
+  {
+    for (const auto sampling : {
+           VK_Sampling::AnisotropicRepeat, VK_Sampling::AnisotropicClamp, VK_Sampling::LinearRepeat,
+           VK_Sampling::LinearClamp, VK_Sampling::NearestClamp})
+    {
+      EXPECT_EQ(VK_Samplers::DescriptionOf(sampling, 16.0f).compareEnable, VK_FALSE);
+    }
   }
 }

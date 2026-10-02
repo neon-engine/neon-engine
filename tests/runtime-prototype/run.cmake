@@ -5,10 +5,14 @@
 # the doorway in the middle, and the black behind the walls at the top.
 #
 # The frame these pixels were read from had the SHA-256
+# 729da412537aed1dc854f24d93fc81291aaa0a3a85e0021f08eea8bebb05533b, drawn
+# since the direction light casts shadows (#60): the walls and the crate
+# shadow the floor, and none of the pixels below lies in a shadow, so they
+# are the same as they were. With `casts_shadows: false` on the light the
+# frame is byte for byte the one from before,
 # 34931d891c96276e64a019ef5484c80f2b5a549924a630e1643ab810d4c63550, drawn
 # since the kit pieces stand at their own size and on their own origin
-# (#190): the room is the same room, and the pixels below are the same as
-# they were. The hash itself is not checked, since another graphics card
+# (#190). The hash itself is not checked, since another graphics card
 # rounds a little differently; the pixels are, within 2 of each channel.
 
 include("${CMAKE_CURRENT_LIST_DIR}/../../cmake/scripts/run-application.cmake")

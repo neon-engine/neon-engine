@@ -632,7 +632,8 @@ namespace
 
     EXPECT_THAT(_errors, ElementsAre(
                   "scene.yml: 'id' is not known to Light of entity 'thing'. Known are: "
-                  "type, direction, ambient, diffuse, specular, constant, linear, quadratic, cutoff, outer_cutoff"));
+                  "type, direction, ambient, diffuse, specular, constant, linear, quadratic, cutoff, outer_cutoff, "
+                  "casts_shadows"));
   }
 
   TEST_F(EngineComponentFormatsTest, WritesTheTypeOfALightEvenWhenItIsTheDefault)

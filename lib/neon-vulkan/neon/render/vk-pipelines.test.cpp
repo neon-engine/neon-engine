@@ -56,6 +56,28 @@ namespace
     }
   }
 
+  TEST(VkPipelinesTest, BindsTheShadowMapApartFromItsSamplerAfterTheTextures)
+  {
+    EXPECT_EQ(VK_Pipelines::kShadow_Map_Binding, VK_Pipelines::kFirst_Sampler_Binding + VK_Pipelines::kTexture_Count);
+    EXPECT_EQ(VK_Pipelines::kShadow_Sampler_Binding, VK_Pipelines::kShadow_Map_Binding + 1);
+
+    const auto &map = VK_Pipelines::kBindings[VK_Pipelines::kShadow_Map_Binding];
+    const auto &sampler = VK_Pipelines::kBindings[VK_Pipelines::kShadow_Sampler_Binding];
+
+    EXPECT_EQ(map.binding, VK_Pipelines::kShadow_Map_Binding);
+    EXPECT_EQ(map.descriptorType, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE);
+    EXPECT_EQ(map.stageFlags, VK_SHADER_STAGE_FRAGMENT_BIT);
+    EXPECT_EQ(sampler.binding, VK_Pipelines::kShadow_Sampler_Binding);
+    EXPECT_EQ(sampler.descriptorType, VK_DESCRIPTOR_TYPE_SAMPLER);
+    EXPECT_EQ(sampler.stageFlags, VK_SHADER_STAGE_FRAGMENT_BIT);
+  }
+
+  TEST(VkPipelinesTest, NamesTheShaderOfTheShadowPassWithoutAnExtension)
+  {
+    EXPECT_STREQ(VK_Pipelines::kShadow_Shader_Path, "assets://shaders/shadow");
+    EXPECT_GT(VK_Pipelines::kShadow_Slope_Bias, 0.0f);
+  }
+
   TEST(VkPipelinesTest, BindsNothingAsACombinedImageSampler)
   {
     for (const auto &binding : VK_Pipelines::kBindings)

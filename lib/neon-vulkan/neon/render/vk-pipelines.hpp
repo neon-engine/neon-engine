@@ -20,8 +20,13 @@ namespace neon
   /// asked for, made when it is first asked for, and kept until the end.
   ///
   /// The layout is what every material's descriptor set is made to: the
-  /// camera and the lights, the object, two textures, and the two samplers
-  /// they are read through.
+  /// camera and the lights, the object, two textures, the two samplers
+  /// they are read through, and the shadow map with the sampler it is
+  /// compared through.
+  ///
+  /// The pass that draws the shadow map has variants of its own, which
+  /// write depth alone with the one shader of the pass, and are told
+  /// apart by how they are culled.
   // ReSharper disable once CppInconsistentNaming
   class VK_Pipelines
   {
@@ -36,9 +41,22 @@ namespace neon
     std::shared_ptr<Logger> _logger;
 
     VkRenderPass _scene_pass = VK_NULL_HANDLE;
+    VkRenderPass _shadow_pass = VK_NULL_HANDLE;
     VkDescriptorSetLayout _descriptor_layout = VK_NULL_HANDLE;
     VkPipelineLayout _pipeline_layout = VK_NULL_HANDLE;
     std::map<std::string, Entry> _pipelines;
+
+    /// Makes the pipeline of a variant, or finds the one that was made.
+    /// A shadow variant draws into the pass of the shadow map, depth
+    /// alone, with a bias along the slope of a surface.
+    bool Make(
+      const std::string &key,
+      const std::string &shader_path,
+      AlphaMode alpha_mode,
+      bool double_sided,
+      bool mirrored,
+      bool shadow,
+      VkPipeline &pipeline);
 
   public:
     /// The bindings of the one set of every shader of a model, which have
@@ -52,7 +70,12 @@ namespace neon
     static constexpr uint32_t kFirst_Sampler_Binding = 4;
     static constexpr uint32_t kTexture_Count = 2;
 
-    static constexpr std::array<VkDescriptorSetLayoutBinding, 6> kBindings{{
+    /// The shadow map of the direction light, and the sampler it is
+    /// compared through, after the textures of the material: shadows.glsl.
+    static constexpr uint32_t kShadow_Map_Binding = 6;
+    static constexpr uint32_t kShadow_Sampler_Binding = 7;
+
+    static constexpr std::array<VkDescriptorSetLayoutBinding, 8> kBindings{{
       {kScene_Binding, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1,
         VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
       {kObject_Binding, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1,
@@ -61,14 +84,28 @@ namespace neon
       {kFirst_Texture_Binding + 1, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
       {kFirst_Sampler_Binding, VK_DESCRIPTOR_TYPE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
       {kFirst_Sampler_Binding + 1, VK_DESCRIPTOR_TYPE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
+      {kShadow_Map_Binding, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
+      {kShadow_Sampler_Binding, VK_DESCRIPTOR_TYPE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
     }};
 
+    /// The shader of the pass that draws the shadow map.
+    static constexpr const char *kShadow_Shader_Path = "assets://shaders/shadow";
+
+    /// The bias of the pass that draws the shadow map, along the slope of
+    /// a surface: how many texels of depth, as the surface falls away
+    /// from the light, a caster is pushed back by. Two cover the texels
+    /// the nine-texel comparison of the shaders reaches across, so that a
+    /// surface that slopes away from the light does not shadow itself.
+    static constexpr float kShadow_Slope_Bias = 2.0f;
+
     /// Makes the layout. The pipelines are made for `scene_pass`, which
-    /// draws into the scene image.
+    /// draws into the scene image, and those of the shadow pass for
+    /// `shadow_pass`, which draws the shadow map.
     bool Initialize(
       VK_Device *device,
       FileSystemContext *file_system_context,
       VkRenderPass scene_pass,
+      VkRenderPass shadow_pass,
       const std::shared_ptr<Logger> &logger);
 
     void CleanUp();
@@ -77,6 +114,11 @@ namespace neon
     /// culled. Returns false when its shader cannot be loaded or the
     /// pipeline cannot be made.
     bool Get(const std::string &shader_path, AlphaMode alpha_mode, bool double_sided, bool mirrored, VkPipeline &pipeline);
+
+    /// The pipeline that draws a caster into the shadow map, culled as
+    /// the material is drawn: a plane that is seen from one side casts
+    /// from that side alone, and a double-sided one from both.
+    bool GetShadow(bool double_sided, bool mirrored, VkPipeline &pipeline);
 
     [[nodiscard]] VkDescriptorSetLayout DescriptorLayout() const { return _descriptor_layout; }
     [[nodiscard]] VkPipelineLayout Layout() const { return _pipeline_layout; }

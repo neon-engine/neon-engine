@@ -43,6 +43,10 @@ namespace neon
     /// Draws the model as part of the frame that is being recorded.
     void Use() const override;
 
+    /// Draws the model into `commands`, which the shadow pass records
+    /// apart from the frame.
+    void Draw(VkCommandBuffer commands) const;
+
     void CleanUp() override;
   };
 } // neon

@@ -2,6 +2,7 @@
 #extension GL_GOOGLE_include_directive : require
 
 #include "scene-data.glsl"
+#include "shadows.glsl"
 
 // Physically based shading, with the metallic-roughness model of glTF:
 // Lambert for the diffuse light and Cook-Torrance for the specular, with the
@@ -129,7 +130,8 @@ void main()
     // the ambient light reaches the diffuse colour alone, from every side
     vec3 result = scene.direction_light.ambient.rgb * base_color * (1.0 - metallic);
 
-    result += Shade(
+    // the direction light reaches what its shadow map says it reaches
+    result += direction_light_visibility(frag_coord) * Shade(
         normalize(-scene.direction_light.direction.xyz),
         normal,
         view_dir,

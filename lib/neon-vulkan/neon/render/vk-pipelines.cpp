@@ -12,11 +12,13 @@ namespace neon
     VK_Device *device,
     FileSystemContext *file_system_context,
     const VkRenderPass scene_pass,
+    const VkRenderPass shadow_pass,
     const std::shared_ptr<Logger> &logger)
   {
     _device = device;
     _file_system_context = file_system_context;
     _scene_pass = scene_pass;
+    _shadow_pass = shadow_pass;
     _logger = logger;
 
     VkDescriptorSetLayoutCreateInfo layout{};
@@ -70,11 +72,30 @@ namespace neon
     const bool mirrored,
     VkPipeline &pipeline)
   {
-    const bool blends = alpha_mode == AlphaMode::Blend;
-
     // materials that name the same shader, and cover and are culled alike,
     // share a pipeline
     const std::string key = VK_Culling::PipelineKey(shader_path, alpha_mode, double_sided, mirrored);
+    return Make(key, shader_path, alpha_mode, double_sided, mirrored, false, pipeline);
+  }
+
+  bool VK_Pipelines::GetShadow(const bool double_sided, const bool mirrored, VkPipeline &pipeline)
+  {
+    // one shader for every caster, so the culling alone tells them apart
+    const std::string key = VK_Culling::PipelineKey(kShadow_Shader_Path, AlphaMode::Opaque, double_sided, mirrored);
+    return Make(key, kShadow_Shader_Path, AlphaMode::Opaque, double_sided, mirrored, true, pipeline);
+  }
+
+  bool VK_Pipelines::Make(
+    const std::string &key,
+    const std::string &shader_path,
+    const AlphaMode alpha_mode,
+    const bool double_sided,
+    const bool mirrored,
+    const bool shadow,
+    VkPipeline &pipeline)
+  {
+    const bool blends = alpha_mode == AlphaMode::Blend;
+
     if (const auto existing = _pipelines.find(key); existing != _pipelines.end())
     {
       pipeline = existing->second.pipeline;
@@ -128,6 +149,13 @@ namespace neon
     rasterization.frontFace = VK_Culling::FrontFaceFor(mirrored);
     rasterization.lineWidth = 1.0f;
 
+    // A caster is pushed back from the light along the slope of its
+    // surface, so that the surface does not shadow itself where the map
+    // rounds. The constant part is left to the shaders: in a map of whole
+    // floats the unit of it is too small to matter.
+    rasterization.depthBiasEnable = shadow ? VK_TRUE : VK_FALSE;
+    rasterization.depthBiasSlopeFactor = shadow ? kShadow_Slope_Bias : 0.0f;
+
     VkPipelineMultisampleStateCreateInfo multisample{};
     multisample.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
     multisample.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
@@ -166,10 +194,11 @@ namespace neon
     blend_attachment.colorWriteMask =
       VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 
+    // the shadow map has no colour to write
     VkPipelineColorBlendStateCreateInfo blend{};
     blend.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-    blend.attachmentCount = 1;
-    blend.pAttachments = &blend_attachment;
+    blend.attachmentCount = shadow ? 0 : 1;
+    blend.pAttachments = shadow ? nullptr : &blend_attachment;
 
     constexpr std::array dynamic_states{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
     VkPipelineDynamicStateCreateInfo dynamic{};
@@ -190,7 +219,7 @@ namespace neon
     info.pColorBlendState = &blend;
     info.pDynamicState = &dynamic;
     info.layout = _pipeline_layout;
-    info.renderPass = _scene_pass;
+    info.renderPass = shadow ? _shadow_pass : _scene_pass;
     info.subpass = 0;
 
     if (vkCreateGraphicsPipelines(

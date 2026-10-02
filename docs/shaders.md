@@ -54,7 +54,7 @@ cross-compilers never meet a feature they cannot express:
 | No 8- and 16-bit types, no 64-bit floats | WGSL has none of them; Metal has no doubles | Kept |
 | `layout(set, binding)` as the one binding model | MSL argument indices, HLSL register spaces, and WGSL `@group/@binding` are all made from it by the tools; nothing is bound by name | Kept |
 | Push constants small, and only for what changes every draw | WGSL has none; Tint and Naga emulate them with a uniform buffer | One push constant block today (`ui-frame.glsl`); keep it so |
-| **Separate textures and samplers**, `texture2D` and `sampler`, in place of `sampler2D` | WGSL has no combined image sampler. Tint and Naga split a combined one for us, SPIRV-Cross for MSL too, but each makes up a sampler and the bindings move; written apart, every target binds what the source says | Kept (#212): every shader declares a `texture2D` and a `sampler` apart and reads through `sampler2D(texture, sampler)`; the render system shares five samplers among all textures, see [vulkan-renderer.md](vulkan-renderer.md#what-the-shaders-bind) |
+| **Separate textures and samplers**, `texture2D` and `sampler`, in place of `sampler2D` | WGSL has no combined image sampler. Tint and Naga split a combined one for us, SPIRV-Cross for MSL too, but each makes up a sampler and the bindings move; written apart, every target binds what the source says | Kept (#212): every shader declares a `texture2D` and a `sampler` apart and reads through `sampler2D(texture, sampler)`, and the shadow map a `texture2D` and a `samplerShadow` read through `sampler2DShadow(texture, sampler)`; the render system shares six samplers among all textures, see [vulkan-renderer.md](vulkan-renderer.md#what-the-shaders-bind) |
 | Matrices column-major, `std140` for uniform buffers | What every target agrees on; the Vulkan backend lays its structures out so already (`vk-shader-data.hpp`) | Kept |
 | Depth from 0 to 1, Y of the clip space as Vulkan has it | Metal and DirectX agree on depth; Vulkan's clip Y points down, theirs up, which SPIRV-Cross fixes with a flag (`--flip-vert-y`) or the renderer with its projection | Kept; the Vulkan backend uses a negative-height viewport, see [vulkan-renderer.md](vulkan-renderer.md#versions-of-vulkan) |
 | No `gl_FragCoord` origin assumptions, no `gl_VertexIndex` tricks | The origin differs between Vulkan and Metal; SPIRV-Cross fixes `gl_FragCoord`, but a shader that computes with it is safer not to | Kept |
@@ -104,7 +104,7 @@ a source.
 |---|---|---|
 | The sources | `app/NeonRuntime/shaders/vulkan/*.vert`, `*.frag`, `*.glsl`, `ui/*.frag` | GLSL 450, Vulkan's dialect |
 | `cmake/CompileShaders.cmake` | The build | Finds `glslang` or `glslangValidator`, compiles every `.vert` and `.frag` to `assets/shaders/<name>.<stage>.spv`, copies the result next to the binary |
-| `VK_Shader` | neon-vulkan | Loads `<name>.vert.spv` and `<name>.frag.spv` through the file system |
+| `VK_Shader` | neon-vulkan | Loads `<name>.vert.spv` and `<name>.frag.spv` through the file system. Every shader is a pair, the depth-only `shadow` of the shadow pass too, whose fragment half does nothing |
 | A material's `shader` | A scene recipe | Names a shader without an extension, `assets://shaders/pbr`; the renderer adds what it needs |
 
 ## Open questions

@@ -22,6 +22,7 @@
 #include "vk-resolve.hpp"
 #include "vk-samplers.hpp"
 #include "vk-shader-data.hpp"
+#include "vk-shadow-map.hpp"
 #include "vk-swapchain.hpp"
 
 namespace neon
@@ -37,6 +38,11 @@ namespace neon
   /// resolve step turns that into the sRGB colours of the image that is
   /// shown, and what is drawn in two dimensions goes on top of it. A render
   /// target is drawn the same way.
+  ///
+  /// Before any of that, the shadow map of the direction light is drawn in
+  /// a pass of its own, into commands that run before those of the
+  /// frame and the render targets: the opaque models of the first scene
+  /// of the frame whose light casts, as the light sees them.
   ///
   /// It draws the models of a scene as a RenderContext, and triangles in
   /// two dimensions on top of them as a Render2DContext.
@@ -94,6 +100,17 @@ namespace neon
     VkFence _frame_done = VK_NULL_HANDLE;
     bool _frame_open = false;
     bool _frame_finished = false;
+
+    // The shadow map of the direction light, and the commands that draw
+    // it, which run before every other command of the frame. The map is
+    // fitted once a frame, around the first camera that draws with a
+    // light that casts, and holds what that camera's scene draws.
+    VK_ShadowMap _shadow_map;
+    VkCommandBuffer _shadow_commands = VK_NULL_HANDLE;
+    bool _shadow_open = false;
+    bool _shadow_fitted = false;
+    glm::mat4 _shadow_view_projection{1.0f};
+    int _shadow_target = No_Render_Target;
 
     VK_Pipelines _pipelines;
     VkDescriptorPool _descriptor_pool = VK_NULL_HANDLE;
@@ -175,6 +192,14 @@ namespace neon
       const glm::mat4 &view,
       const glm::mat4 &projection,
       const std::vector<LightSource> &lights);
+
+    /// Begins the pass that draws the shadow map, for the scene that is
+    /// being drawn. Returns false when it cannot be recorded.
+    bool BeginShadowPass();
+
+    /// Draws an opaque object into the shadow map, with the scene and the
+    /// object data at `offsets` that its draw into the scene uses.
+    void DrawShadow(const VK_Model &model, VK_Material &material, bool mirrored, const std::array<uint32_t, 2> &offsets);
 
   public:
     explicit VK_RenderSystem(

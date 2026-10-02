@@ -50,10 +50,13 @@ namespace neon
     const bool from_the_side = max_anisotropy > 0.0f &&
       (sampling == VK_Sampling::AnisotropicRepeat || sampling == VK_Sampling::AnisotropicClamp);
     const bool pixel_by_pixel = sampling == VK_Sampling::NearestClamp;
+    const bool compared = sampling == VK_Sampling::ShadowCompare;
 
     const VkFilter filter = pixel_by_pixel ? VK_FILTER_NEAREST : VK_FILTER_LINEAR;
     const VkSamplerAddressMode address_mode = repeats
       ? VK_SAMPLER_ADDRESS_MODE_REPEAT
+      : compared
+      ? VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER
       : VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 
     VkSamplerCreateInfo description{};
@@ -68,7 +71,15 @@ namespace neon
     description.maxAnisotropy = from_the_side ? std::min(kMax_Anisotropy, max_anisotropy) : 1.0f;
 
     // every smaller copy a texture has is read, however many that is
-    description.maxLod = pixel_by_pixel ? 0.0f : VK_LOD_CLAMP_NONE;
+    description.maxLod = pixel_by_pixel || compared ? 0.0f : VK_LOD_CLAMP_NONE;
+
+    // The shadow map is not read but compared: a depth is lit when it is
+    // no further than what the map holds, and the linear filter blends the
+    // four answers around the place. Past the edge of the map everything
+    // is lit, which a border of white says.
+    description.compareEnable = compared ? VK_TRUE : VK_FALSE;
+    description.compareOp = compared ? VK_COMPARE_OP_LESS_OR_EQUAL : VK_COMPARE_OP_NEVER;
+    description.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
     return description;
   }
 } // neon

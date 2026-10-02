@@ -31,6 +31,10 @@ namespace neon
     /// Draws the mesh as part of the frame that is being recorded.
     void Use() const override;
 
+    /// Draws the mesh into `commands`, which the shadow pass records apart
+    /// from the frame.
+    void Draw(VkCommandBuffer commands) const;
+
     void CleanUp() override;
   };
 } // neon

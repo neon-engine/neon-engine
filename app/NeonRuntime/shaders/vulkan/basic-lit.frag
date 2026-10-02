@@ -2,6 +2,7 @@
 #extension GL_GOOGLE_include_directive : require
 
 #include "scene-data.glsl"
+#include "shadows.glsl"
 
 layout (location = 0) in vec3 frag_coord;
 layout (location = 1) in vec3 normal_coord;
@@ -28,8 +29,11 @@ vec3 GetSpecularColor()
     return mix(vec3(0.0), texture_color, object.material.y);
 }
 
-// the part every kind of light shares, given the direction towards the light
-vec3 Shade(vec3 light_dir, vec3 normal, vec3 view_dir, vec3 ambient, vec3 diffuse, vec3 specular, float strength)
+// The part every kind of light shares, given the direction towards the
+// light. `visibility` is how much of the light reaches the point, which a
+// shadow takes away from the diffuse and the specular light, never from
+// the ambient.
+vec3 Shade(vec3 light_dir, vec3 normal, vec3 view_dir, vec3 ambient, vec3 diffuse, vec3 specular, float strength, float visibility)
 {
     float diff = max(dot(normal, light_dir), 0.0);
 
@@ -47,8 +51,8 @@ vec3 Shade(vec3 light_dir, vec3 normal, vec3 view_dir, vec3 ambient, vec3 diffus
 
     return strength * (
         ambient * diffuse_sample +
-        diffuse * diff * diffuse_sample +
-        specular * spec * specular_sample);
+        visibility * diffuse * diff * diffuse_sample +
+        visibility * specular * spec * specular_sample);
 }
 
 float Attenuation(vec4 attenuation, vec3 light_position)
@@ -69,7 +73,8 @@ void main()
         scene.direction_light.ambient.rgb,
         scene.direction_light.diffuse.rgb,
         scene.direction_light.specular.rgb,
-        1.0);
+        1.0,
+        direction_light_visibility(frag_coord));
 
     for (int i = 0; i < scene.light_counts.x; i++) {
         PointLight light = scene.point_lights[i];
@@ -80,7 +85,8 @@ void main()
             light.ambient.rgb,
             light.diffuse.rgb,
             light.specular.rgb,
-            Attenuation(light.attenuation, light.position.xyz));
+            Attenuation(light.attenuation, light.position.xyz),
+            1.0);
     }
 
     for (int i = 0; i < scene.light_counts.y; i++) {
@@ -98,7 +104,8 @@ void main()
             light.ambient.rgb,
             light.diffuse.rgb,
             light.specular.rgb,
-            Attenuation(light.attenuation, light.position.xyz) * intensity);
+            Attenuation(light.attenuation, light.position.xyz) * intensity,
+            1.0);
     }
 
     frag_color = vec4(object.color.rgb * result, object_alpha(object.color.a));

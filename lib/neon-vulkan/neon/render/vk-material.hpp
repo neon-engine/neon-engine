@@ -36,6 +36,8 @@ namespace neon
 
     VkPipeline _pipeline = VK_NULL_HANDLE;
     VkPipeline _mirrored_pipeline = VK_NULL_HANDLE;
+    VkPipeline _shadow_pipeline = VK_NULL_HANDLE;
+    VkPipeline _mirrored_shadow_pipeline = VK_NULL_HANDLE;
     VkDescriptorSet _descriptor_set = VK_NULL_HANDLE;
 
     static glm::vec2 GetMaxPositiveComponents(const glm::vec3 &vector);
@@ -114,8 +116,22 @@ namespace neon
     }
     [[nodiscard]] VkDescriptorSet DescriptorSet() const { return _descriptor_set; }
 
+    /// The pipeline that draws an object with this material into the
+    /// shadow map, and the one for a mirrored object. Each is
+    /// VK_NULL_HANDLE until the render system makes it, when the first
+    /// object that casts is drawn with the material.
+    [[nodiscard]] VkPipeline ShadowPipeline(const bool mirrored) const
+    {
+      return mirrored ? _mirrored_shadow_pipeline : _shadow_pipeline;
+    }
+
     void SetPipeline(const VkPipeline pipeline) { _pipeline = pipeline; }
     void SetMirroredPipeline(const VkPipeline pipeline) { _mirrored_pipeline = pipeline; }
+
+    void SetShadowPipeline(const bool mirrored, const VkPipeline pipeline)
+    {
+      (mirrored ? _mirrored_shadow_pipeline : _shadow_pipeline) = pipeline;
+    }
     void SetDescriptorSet(const VkDescriptorSet descriptor_set) { _descriptor_set = descriptor_set; }
   };
 } // neon

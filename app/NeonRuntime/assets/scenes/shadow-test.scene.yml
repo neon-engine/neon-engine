@@ -1,0 +1,62 @@
+# A scene for checking the shadow of the direction light, which tests read
+# pixel by pixel:
+#
+#   NeonRuntime --scene assets://scenes/shadow-test.scene.yml
+#
+# A white floor, a white box of 1 metre on it, and one light from above at
+# 45 degrees, from the side of positive x, so that the box throws a shadow
+# of exactly its height onto the floor on its other side, from x = -0.5 to
+# x = -1.5. The camera stands 5 above and 5 in front of the box, looking
+# down at it at 45 degrees. Everything is drawn with basic-lit in plain
+# white and without shininess, so that what the floor shows is a sum: in
+# the light, the ambient and the diffuse light times the cosine of 45
+# degrees; in the shadow, the ambient light alone. See
+# tests/runtime-shadows/run.cmake for the numbers.
+#
+# shadow-test-unshadowed.scene.yml is this scene with a light that casts no
+# shadow, which shows the floor lit everywhere.
+
+scene: shadow-test
+version: 1
+
+entities:
+  - name: camera
+    components:
+      Transform:
+        position: [0, 5, 5]
+        rotation: [-45, 0, 0]
+      Camera: Default
+
+  # from above at 45 degrees, from the side of positive x
+  - name: light
+    components:
+      Transform: Default
+      Light:
+        type: direction
+        direction: [-1, -1, 0]
+        ambient: [0.2, 0.2, 0.2]
+        diffuse: [0.8, 0.8, 0.8]
+        specular: [0, 0, 0]
+
+  - name: floor
+    components:
+      Transform: Default
+      Geometry:
+        shape: plane
+        size: [10, 0, 10]
+      Renderable:
+        shader: assets://shaders/basic-lit
+        material:
+          color: [1, 1, 1]
+
+  - name: box
+    components:
+      Transform:
+        position: [0, 0.5, 0]
+      Geometry:
+        shape: box
+        size: [1, 1, 1]
+      Renderable:
+        shader: assets://shaders/basic-lit
+        material:
+          color: [1, 1, 1]

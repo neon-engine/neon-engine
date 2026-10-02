@@ -13,6 +13,18 @@ namespace neon
   constexpr int kMax_Point_Lights = 64;
   constexpr int kMax_Spot_Lights = 64;
 
+  /// What the shaders are told about the shadow map of the direction
+  /// light, in VK_DirectionLight::shadow.
+  // ReSharper disable once CppInconsistentNaming
+  struct VK_ShadowSettings
+  {
+    /// The bias a depth is moved towards the light by before it is
+    /// compared, as a part of the depth of the box, so that a surface
+    /// does not shadow itself where the map rounds. The slope of a
+    /// surface is covered by the bias of the pipeline of the pass.
+    static constexpr float kBias = 0.0002f;
+  };
+
   // ReSharper disable once CppInconsistentNaming
   struct VK_DirectionLight
   {
@@ -20,6 +32,12 @@ namespace neon
     glm::vec4 ambient{0.0f};
     glm::vec4 diffuse{0.0f};
     glm::vec4 specular{0.0f};
+    // where the shadow map looks: the world as the light sees it
+    glm::mat4 light_view_projection{1.0f};
+    // x is 1 when the shadow map is to be compared against and 0 when the
+    // light casts no shadow, y the size of a texel of the map across it,
+    // z the bias
+    glm::vec4 shadow{0.0f};
   };
 
   // ReSharper disable once CppInconsistentNaming
@@ -78,10 +96,10 @@ namespace neon
     glm::vec4 surface{0.0f};
   };
 
-  static_assert(sizeof(VK_DirectionLight) == 64);
+  static_assert(sizeof(VK_DirectionLight) == 144);
   static_assert(sizeof(VK_PointLight) == 80);
   static_assert(sizeof(VK_SpotLight) == 112);
-  static_assert(sizeof(VK_SceneData) == 224 + kMax_Point_Lights * 80 + kMax_Spot_Lights * 112);
+  static_assert(sizeof(VK_SceneData) == 304 + kMax_Point_Lights * 80 + kMax_Spot_Lights * 112);
   static_assert(sizeof(VK_ObjectData) == 192);
 } // neon
 

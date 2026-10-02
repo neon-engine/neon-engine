@@ -1,0 +1,53 @@
+# shadow-test.scene.yml with a light that casts no shadow, which tests read
+# pixel by pixel next to it:
+#
+#   NeonRuntime --scene assets://scenes/shadow-test-unshadowed.scene.yml
+#
+# The same floor, box, camera, and light, with `casts_shadows: false` on
+# the light: the floor beside the box is lit where the other scene shows
+# the shadow of the box. See tests/runtime-shadows/run.cmake.
+
+scene: shadow-test-unshadowed
+version: 1
+
+entities:
+  - name: camera
+    components:
+      Transform:
+        position: [0, 5, 5]
+        rotation: [-45, 0, 0]
+      Camera: Default
+
+  - name: light
+    components:
+      Transform: Default
+      Light:
+        type: direction
+        direction: [-1, -1, 0]
+        ambient: [0.2, 0.2, 0.2]
+        diffuse: [0.8, 0.8, 0.8]
+        specular: [0, 0, 0]
+        casts_shadows: false
+
+  - name: floor
+    components:
+      Transform: Default
+      Geometry:
+        shape: plane
+        size: [10, 0, 10]
+      Renderable:
+        shader: assets://shaders/basic-lit
+        material:
+          color: [1, 1, 1]
+
+  - name: box
+    components:
+      Transform:
+        position: [0, 0.5, 0]
+      Geometry:
+        shape: box
+        size: [1, 1, 1]
+      Renderable:
+        shader: assets://shaders/basic-lit
+        material:
+          color: [1, 1, 1]

@@ -9,6 +9,14 @@ struct DirectionLight {
     vec4 ambient;
     vec4 diffuse;
     vec4 specular;
+    // where the shadow map looks: the world as the light sees it, with
+    // the depth from 0 to 1 as Vulkan has it
+    mat4 light_view_projection;
+    // x is 1 when the shadow map is to be compared against and 0 when the
+    // light casts no shadow, y the size of a texel of the map across it,
+    // z the bias a depth is moved towards the light by before it is
+    // compared, see shadows.glsl
+    vec4 shadow;
 };
 
 struct PointLight {

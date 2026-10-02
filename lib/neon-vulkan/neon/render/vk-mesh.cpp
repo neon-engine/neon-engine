@@ -80,7 +80,11 @@ namespace neon
 
   void VK_Mesh::Use() const
   {
-    const VkCommandBuffer commands = _device->FrameCommands();
+    Draw(_device->FrameCommands());
+  }
+
+  void VK_Mesh::Draw(const VkCommandBuffer commands) const
+  {
     if (commands == VK_NULL_HANDLE || !_initialized) { return; }
 
     constexpr VkDeviceSize offset = 0;

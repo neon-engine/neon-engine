@@ -144,6 +144,7 @@ shape. The fields are in [geometry.md](geometry.md).
 | `ambient`, `diffuse`, `specular` | `[red, green, blue]`, amounts of light: 0.5 is half the light of 1. For the `pbr` shader `diffuse` is the light's colour and `specular` is not read, see [vulkan-renderer.md](vulkan-renderer.md#the-shaders-that-ship) | `[0, 0, 0]` |
 | `constant`, `linear`, `quadratic` | How the light fades with distance | `0` |
 | `cutoff`, `outer_cutoff` | The cone of a spot light | `0` |
+| `casts_shadows` | Whether what stands in the light shadows what is behind it. A `direction` light draws a shadow map, see [vulkan-renderer.md](vulkan-renderer.md#shadows); a `point` or `spot` light casts nothing yet, whatever this says | `true` |
 
 The position of a light is that of its `Transform`. The renderer knows a
 light by the name of its entity.

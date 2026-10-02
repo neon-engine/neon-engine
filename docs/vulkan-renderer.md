@@ -170,6 +170,9 @@ declare.
 | | 0 | 3 | Sampled image | The second texture: the metallic-roughness map, or the specular map |
 | | 0 | 4 | Sampler | What the first texture is read through |
 | | 0 | 5 | Sampler | What the second texture is read through |
+| | 0 | 6 | Sampled image | The shadow map of the direction light, `shadows.glsl` |
+| | 0 | 7 | Sampler | What the shadow map is compared through |
+| Shadow pass: `shadow` | 0 | 0, 1 | As above | The same set as the models; the vertex half reads the light's matrix from `SceneData` and the object's from `ObjectData`, the fragment half does nothing |
 | Resolve: `resolve` | 0 | 0 | Sampled image | The scene image |
 | | 0 | 1 | Sampler | What it is read through, pixel by pixel |
 | User interface: `flat`, `ui/*` | 0 | 0 | Sampled image | The texture of the call, `ui-shader.glsl` |
@@ -184,7 +187,7 @@ it, next to a texture from a file, which starts again past its edge.
 
 The samplers are made once by the render system, in `VK_Samplers`, one for
 every way a texture is read, and a `VK_Texture` says which way it is read
-(`VK_Sampling`) in place of owning a sampler of its own. There are five
+(`VK_Sampling`) in place of owning a sampler of its own. There are six
 ways, which is every sampler the renderer ever made:
 
 | Way | Filter | Smaller copies | Past the edge | From the side | Read that way |
@@ -194,6 +197,7 @@ ways, which is every sampler the renderer ever made:
 | `LinearRepeat` | Linear | Blended | Starts again | No | An image of a user interface made with its smaller copies, that repeats |
 | `LinearClamp` | Linear | Blended | The edge is drawn on | No | An image of a user interface made with its smaller copies |
 | `NearestClamp` | Nearest | The image alone | The edge is drawn on | No | `image_rendering: pixelated`, and the scene image in the resolve, which reads whole pixels |
+| `ShadowCompare` | Linear, compared | The image alone | A border of white: lit | No | The shadow map, see [Shadows](#shadows). A depth is compared with the four texels around it and the answers are blended |
 
 Light data is held in a uniform buffer, not in individual uniforms. That
 removes the limit on uniforms per shader, which is what had held the OpenGL
@@ -224,9 +228,12 @@ angle in the shading is known — a white matte dielectric shows 0.963 of the
 light (sRGB 250), a white matte metal 0.080 (sRGB 80), a red matte dielectric
 red with the 4 percent it reflects in white (250, 11, 11).
 
+Both lit shaders take the shadow of the direction light into account, see
+[Shadows](#shadows).
+
 What `pbr` does not do yet: normal maps, emissive (#129), occlusion, image
-based lighting from an environment (#64), shadows (#60). The ubershader of
-#106 adds them as variants.
+based lighting from an environment (#64). The ubershader of #106 adds them
+as variants.
 
 ## Changes to neon-core
 
@@ -261,10 +268,11 @@ A library of its own, `neon-vulkan`.
 | `VK_Shader` | Shader modules from SPIR-V |
 | `VK_Material` | Textures, descriptor set, per-object data, and which pipelines draw it |
 | `VK_SceneImage` | The image of linear light a scene is lit in, with its depth |
+| `VK_ShadowMap` | The depth of the scene as the direction light sees it, with the pass that draws it |
 | `VK_Resolve` | The resolve step, which turns a scene image into the colours of the image that is shown |
 | `VK_RenderTarget` | An image that is drawn to like the frame, and read as a texture |
 | `VK_Renderer2D` | What is drawn in two dimensions, on top of the resolved scene |
-| `VK_SwapchainSizing`, `VK_FrameStages`, `VK_DrawOrder`, `VK_Culling` | The decisions of the renderer, kept apart from the graphics card so that they are tested |
+| `VK_SwapchainSizing`, `VK_FrameStages`, `VK_DrawOrder`, `VK_Culling`, `VK_ShadowFit` | The decisions of the renderer, kept apart from the graphics card so that they are tested |
 
 **Render to an image first, always.** Every frame is drawn into an offscreen
 image. With a window, that image is then copied to the swapchain. Headless,
@@ -275,6 +283,7 @@ what a screenshot shows is what a window would show.
 
 | Stage | Drawn into | What happens |
 |---|---|---|
+| Shadow pass | The shadow map, `D32_SFLOAT`, 2048 by 2048 | The opaque models of the first scene of the frame whose direction light casts, as the light sees them, depth alone. Recorded apart and run before everything below, so that every scene of the frame reads the finished map. Left out when no light casts. See [Shadows](#shadows) |
 | Render targets | Each target, in the order they are drawn | Each goes through the stages below on its own: a camera that draws into a texture lights a scene in a scene image of the target, a user interface on a surface draws on top. A target that shows only a user interface has no scene image |
 | Scene | The scene image, `R16G16B16A16_SFLOAT`, and its depth | Opaque models as they come, then see-through ones from the farthest to the nearest, tested against depth but not writing it. The back of every triangle is left out unless the material is double-sided. Lighting and blending are in linear light. An opaque model replaces what is behind it and leaves the alpha of the scene image at 1, whatever its shader wrote |
 | Resolve | The image that is shown, `R8G8B8A8_UNORM` | A triangle that covers it reads the scene image pixel by pixel, clamps it, and writes it in sRGB. The one place where light becomes the colours of a screen |
@@ -299,6 +308,45 @@ The resolve is where what changes how light looks on a screen goes. Light
 that bleeds around what is bright is added to the scene image just before
 it. A curve for light brighter than white replaces the clamp in
 `resolve.frag`. The scene image keeps such light until then.
+
+## Shadows
+
+The direction light casts shadows (#60): what stands in it keeps its light
+off what is behind. A `Light` says whether it does with `casts_shadows`,
+true unless written, see [scenes.md](scenes.md). Point and spot lights
+cast nothing yet.
+
+| Part | What it is |
+|---|---|
+| The map | One depth image of 2048 by 2048 in whole floats, `VK_ShadowMap`, drawn once a frame and read by every scene of it. It is left all lit when it is made, so that a frame in which nothing casts reads it and lights everything |
+| The pass | Before the scene, in commands of its own that are submitted first. Every opaque model of the first scene that casts is drawn with the depth-only `shadow` shader through a variant of `VK_Pipelines`, culled as its material is: a plane seen from one side casts from that side alone, and a double-sided material from both. See-through models cast nothing for now |
+| The fit | `VK_ShadowFit`: a box of 40 metres across and 40 to either side of the camera along the light, seen along the light without perspective, around the camera of the scene that casts. Its corners are moved onto whole texels of the map, so that the edge of a shadow stays where it is while the camera moves by less than one and does not shimmer. One texel is about 2 centimetres |
+| The bias | Two parts. The pipeline of the pass pushes a caster back along the slope of its surface by two texels of depth (`depthBiasSlopeFactor`), which covers the texels the comparison reaches across on a surface that slopes away from the light. The shaders move the compared depth by 0.0002 of the depth of the box, about 1.6 centimetres, which covers a surface that faces the light. With whole floats the constant bias of the pipeline is too fine to be of use, which is why that part is in the shaders |
+| The comparison | `shadows.glsl`, bound to every lit shader: the place in the map and the depth of the point, compared through a sampler that compares (`VK_Sampling::ShadowCompare`), which blends the answers of the four texels around the place. Nine such comparisons one texel apart are averaged, which softens the edge of a shadow over about three texels. Past the edge of the map, and further from the light than the box reaches, everything is lit |
+| What it dims | The diffuse and the specular light of the direction light, never its ambient. A point in full shadow shows the ambient light alone |
+
+Why culling as the material is, and a bias, rather than drawing the backs
+of casters into the map: the engine draws planes with one side, as the
+floors of `tests/runtime-shadows` and the platforms of the built geometry
+are, and those have no back to draw. A bias along the slope leaves a
+caster where it is, to within two texels.
+
+`tests/runtime-shadows` checks the numbers: a white box on a white floor
+under one light at 45 degrees, where the floor beside the box shows the
+ambient light alone, and the same scene with `casts_shadows: false` shows
+the floor lit. The frames of every scene whose light does not cast are
+byte for byte what they were before the pass existed, since the shaders
+skip the comparison for such a light.
+
+What is open:
+
+| Open | Detail |
+|---|---|
+| Cascades | One box of 40 metres around the camera: what is further away is lit, and the texels are 2 centimetres whatever the distance. Cascaded maps, two or four boxes of growing size picked by the depth of the point, are the next step |
+| Point and spot lights | A spot light needs a map with perspective, a point light six of them in a cube, or a map of two paraboloids. The scene data and the bindings have room, the shaders do not read any yet |
+| Soft shadows | The nine comparisons give a fixed softness of three texels. Percentage-closer soft shadows, which widen with the distance between the caster and the receiver, or a Poisson disc, are later |
+| One map a frame | The map is fitted around the first camera of the frame that draws with a light that casts, which is the camera of a render target when one is drawn before the frame. A map per camera, or per light, is later |
+| Where the camera looks | The box is centred on the camera and not on what it looks at, so half of it lies behind the camera. Fitting the box to the frustum of the camera is part of the cascades |
 
 ## Colour spaces
 
