@@ -4,6 +4,7 @@
 #include "settings-config.hpp"
 #include "neon/input/input-system.hpp"
 #include "neon/logging/logging-system.hpp"
+#include "neon/random/entropy-context.hpp"
 #include "neon/world-system/world-system.hpp"
 #include "neon/render/render-pipeline.hpp"
 #include "neon/render/render-system.hpp"
@@ -26,6 +27,7 @@ namespace neon
     LoggingSystem *_logging_system;
     WorldSystem* _world_system;
     UiSystem *_ui_system = nullptr;
+    EntropyContext *_entropy = nullptr;
     std::shared_ptr<Logger> _logger;
 
     // the pause menu while it is shown, and whether pause was held in the
@@ -62,6 +64,14 @@ namespace neon
     /// the world and drawn on top of it. Call it before Initialize(). A
     /// runtime without one draws the world alone.
     void SetUiSystem(UiSystem *ui_system);
+
+    /// Gives the runtime the random numbers of the operating system, for the
+    /// games it runs. The runtime draws none itself. A game reaches them
+    /// through GetEntropy(), and through Lua once there is one (#57).
+    void SetEntropy(EntropyContext *entropy);
+
+    /// The random numbers of the operating system, or null without any.
+    [[nodiscard]] EntropyContext *GetEntropy() const;
 
     virtual void Run();
 

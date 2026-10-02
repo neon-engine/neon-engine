@@ -30,6 +30,16 @@ namespace neon
     _ui_system = ui_system;
   }
 
+  void Runtime::SetEntropy(EntropyContext *entropy)
+  {
+    _entropy = entropy;
+  }
+
+  EntropyContext *Runtime::GetEntropy() const
+  {
+    return _entropy;
+  }
+
   void Runtime::Initialize() const
   {
     // order here matters

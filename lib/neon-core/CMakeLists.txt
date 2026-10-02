@@ -168,6 +168,11 @@ add_library(${TARGET} STATIC
         neon/ui/tree-ui-system.cpp
         neon/ui/tree-ui-system.hpp
 
+        # random numbers of the operating system
+        neon/random/entropy-context.hpp
+        neon/random/entropy-seed.cpp
+        neon/random/entropy-seed.hpp
+
         # filesystem
         neon/filesystem/file-system.cpp
         neon/filesystem/file-system.hpp
@@ -337,6 +342,7 @@ if (NEON_BUILD_TESTS)
   # every library. They are headers, and are compiled into tests only.
   add_library(neon-testing INTERFACE
           neon/testing/fake-entity-store.hpp
+          neon/testing/fake-entropy-context.hpp
           neon/testing/mock-audio-context.hpp
           neon/testing/fake-physics-context.hpp
           neon/testing/fake-font-rasterizer.hpp
@@ -392,6 +398,7 @@ neon_add_unit_test(${TARGET} neon/command-line/display-options.test.cpp)
   neon_add_unit_test(${TARGET} neon/common/util.test.cpp)
   neon_add_unit_test(${TARGET} neon/data/data-reader.test.cpp)
   neon_add_unit_test(${TARGET} neon/filesystem/file-system.test.cpp)
+  neon_add_unit_test(${TARGET} neon/random/entropy-seed.test.cpp)
   neon_add_unit_test(${TARGET} neon/input/headless-input-system.test.cpp)
   neon_add_unit_test(${TARGET} neon/input/input-state.test.cpp)
   neon_add_unit_test(${TARGET} neon/layout/flex-layout-engine.test.cpp)

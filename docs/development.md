@@ -753,6 +753,7 @@ A mock checks what it is asked to do. A fake does the work in a simple way.
 | `fake-entity-store.hpp` | `FakeEntityStore`, a store that is as simple as one can be | `EntityStore` |
 | `mock-entity-world.hpp` | `MockEntitySystem`, `MockScene` | `EntitySystem`, `Scene` |
 | `fake-physics-context.hpp` | `FakePhysicsContext`, a physics in which nothing collides, and which writes down what it was asked | `PhysicsContext` |
+| `fake-entropy-context.hpp` | `FakeEntropyContext`, an entropy whose bytes a test chooses | `EntropyContext` |
 | `temporary-directory.hpp` | `TemporaryDirectory`, a folder that is removed with the object | |
 
 `TemporaryDirectory` uses `std::filesystem`, which the engine itself must not.
@@ -776,10 +777,11 @@ what it left behind.
 | neon-core | `logging/deferred-file-sink` | 9 | What is held back until the file is opened, the limit, a file that cannot be opened |
 | neon-core | `logging/logging-system` | 15 | The log file, in a temporary folder, what was logged before it was opened, the console when it cannot be |
 | neon-core | `physics/model-geometry` | 7 | The points and triangles of a model, moved and sized as the renderer does it |
+| neon-core | `random/entropy-seed` | 4 | The seed of known bytes, with the first byte lowest, and nothing without entropy. See [random-numbers.md](random-numbers.md) |
 | neon-core | `render/forward-render-pipeline` | 24 | What is drawn in which order, the projection, lights and their limit |
 | neon-core | `render/model` | 25 | Loading from a file system in memory, material files, textures, the normalization matrix. 1 disabled |
 | neon-core | `runtime/frame-capture` | 21 | `NumberedPath`, and which frames are saved |
-| neon-core | `runtime/runtime` | 24 | The order of `Initialize` and `CleanUp`, the loop, `HasFailed`, with and without a user interface |
+| neon-core | `runtime/runtime` | 34 | The order of `Initialize` and `CleanUp`, the loop, `HasFailed`, with and without a user interface, the entropy it is given |
 | neon-core | `window/headless-window-system` | 16 | Closing, the time step, the size |
 | neon-core | `world-system/ecs/component-info` | 15 | `ComponentInfo::Of` with a type that owns memory |
 | neon-core | `world-system/ecs/entity-store` | 16 | What the templates of `EntityStore` ask a backend for, and `EntityBlock` |
@@ -820,6 +822,7 @@ what it left behind.
 | neon-freetype | `text/ft-font-rasterizer`, `text/hb-text-shaper` | 30 | Glyphs of Inter and of Noto Sans Arabic, which are compiled into the tests: parts of a pixel, hinting, distances, the line around a glyph, kerning, a ligature, Arabic in its order and joined |
 | neon-lunasvg | `image/luna-vector-image-rasterizer` | 14 | An SVG at several sizes, as sharp at each, and what is refused |
 | neon-stb | `image/stb-image-decoder` | 9 | PNG, JPEG, BMP, TGA, and PSD with 8 and 16 bits |
+| neon-platform | `random/os-entropy` | 5 | Bytes of the operating system are filled and differ between two fills, nothing to fill, more than one call's worth, a seed |
 | neon-vulkan | `render/vk-shader-values`, `render/vk-render-target` | 19 | The values a compiled shader declares, and what needs no graphics card of a render target |
 | `tests/` | `text-shaping` | 20 | Text with real fonts through the core: kerning, a ligature, Arabic, a second font for what the first does not have, quarters of a pixel, an atlas that grows |
 | `tests/` | `user-interface`, what was added | 211 | The properties of text, boxes, images, shaders of elements, and surfaces: what is handed to the renderer, where the pointer is on round corners and on what is moved and turned, what is wrong in a file |

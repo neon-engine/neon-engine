@@ -16,6 +16,7 @@
 #include <neon/input/sdl2-input-system.hpp>
 #include <neon/physics/jolt-physics-system.hpp>
 #include <neon/project/project-file.hpp>
+#include <neon/random/os-entropy.hpp>
 #include <neon/settings/settings-file.hpp>
 #include <neon/layout/flex-layout-engine.hpp>
 #include <neon/render/forward-render-pipeline.hpp>
@@ -358,6 +359,11 @@ int main(const int argc, char *argv[])
     &file_system,
     logging_system.CreateLogger("PhysicsSimulation")));
 
+  // The random numbers of the operating system, for the game. The engine
+  // draws none itself, and no option or setting seeds them: a game that is
+  // to repeat a run keeps the seed it took from here.
+  neon::OS_Entropy entropy(logging_system.CreateLogger("OS_Entropy"));
+
   const auto app_logger = logging_system.CreateLogger("NeonRuntime");
 
   NeonRuntime app(
@@ -371,6 +377,7 @@ int main(const int argc, char *argv[])
     app_logger);
 
   app.SetUiSystem(&ui_system);
+  app.SetEntropy(&entropy);
 
   // a script that starts the runtime learns from the exit code whether the
   // run did what it was asked to

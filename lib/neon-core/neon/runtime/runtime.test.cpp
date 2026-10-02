@@ -7,6 +7,7 @@
 #include <gtest/gtest.h>
 
 #include <neon/input/input-state.hpp>
+#include <neon/testing/fake-entropy-context.hpp>
 #include <neon/testing/mock-input-system.hpp>
 #include <neon/testing/mock-render-pipeline.hpp>
 #include <neon/testing/mock-render-system.hpp>
@@ -19,6 +20,7 @@ namespace
 {
   using neon::Action;
   using neon::InputState;
+  using neon::testing::FakeEntropyContext;
   using neon::testing::FakeInputContext;
   using neon::testing::LogLevel;
   using neon::testing::MockInputSystem;
@@ -242,6 +244,20 @@ namespace
 
     runtime->Run();
 
+    ExpectCleanUp();
+  }
+
+  TEST_F(RuntimeTest, HasNoEntropyUntilItIsGivenOne)
+  {
+    const auto runtime = Create({});
+
+    EXPECT_EQ(runtime->GetEntropy(), nullptr);
+
+    FakeEntropyContext entropy;
+    runtime->SetEntropy(&entropy);
+    EXPECT_EQ(runtime->GetEntropy(), &entropy);
+
+    // the runtime cleans up when it goes
     ExpectCleanUp();
   }
 
