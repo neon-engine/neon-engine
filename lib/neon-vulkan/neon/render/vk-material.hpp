@@ -7,6 +7,7 @@
 #include <neon/common/transform.hpp>
 #include <neon/filesystem/file-system-context.hpp>
 #include <neon/render/material-info.hpp>
+#include <neon/render/texture-info.hpp>
 
 #include "vk-shader-data.hpp"
 #include "vk-texture.hpp"
@@ -21,6 +22,9 @@ namespace neon
   {
     std::string _shader_path;
     std::vector<std::string> _texture_paths;
+
+    // what the model names, which is shown when the scene names no texture
+    std::vector<TextureInfo> _model_textures;
     std::vector<VK_Texture> _textures{};
     MaterialInfo _material_info;
     bool _scale_textures = false;
@@ -62,6 +66,10 @@ namespace neon
 
     /// Loads the textures.
     bool Initialize();
+
+    /// Hands over the textures the model file names, which are shown when
+    /// the scene names none. Call it before Initialize().
+    void SetModelTextures(const std::vector<TextureInfo> &textures);
 
     /// Says where the textures come from that are no files: those whose
     /// path starts with `surface://`. Call it before Initialize().

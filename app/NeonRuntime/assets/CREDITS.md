@@ -4,6 +4,13 @@
     - https://opengameart.org/content/prototyping-textures
     - License: https://creativecommons.org/licenses/by/4.0/
 
+- Prototype Kit and Blaster Kit by Kenney, the pieces the prototype level uses, in
+  `external/kenney/prototype-kit/` and `external/kenney/blaster-kit/`, each with its `License.txt`
+    - https://kenney.nl
+    - License: CC0 1.0, https://creativecommons.org/publicdomain/zero/1.0/
+    - The files keep their published names, and the folder `Textures/` its published name too, since
+      every GLB names its texture as `Textures/colormap.png`
+
 - `sounds/hum.wav`
     - Made for Neon Engine by a script, from sine waves. It is part of the engine and under its license.
 

@@ -1,0 +1,403 @@
+# The first level of the prototype game, blocked out from Kenney's Prototype
+# Kit and Blaster Kit (assets/external/kenney, CC0). Start it with
+#
+#   NeonRuntime --scene assets://scenes/prototype.scene.yml
+#
+# A room of 6 by 6 with a doorway in its south wall, and a corridor of 2 by 6
+# behind the doorway. Columns stand in the corners of the room, a crate and a
+# supply crate with a blaster on it stand in the room, and a target hangs on
+# each end wall. The reactor hums. The player starts in the corridor, facing
+# the doorway, and flies with the Spectator's controls: W, A, S, D and the
+# mouse. A walker crosses the room and slides along its north wall, as the
+# character of physics.scene.yml does.
+#
+# The kit pieces are metres, but the loader scales every model so that its
+# longest side is 1 and puts its middle at the origin. The scale of each
+# Transform below gives the piece its size back, and its position lifts it
+# onto the floor. A wall of the kit is 1 wide and 1 high along z, 0.2 thick
+# along x; the walls here are 2.5 high. The colliders are boxes of the same
+# sizes, so that nothing falls through or walks through them.
+#
+# The components and what they hold are listed in docs/scenes.md, and what
+# the loader reads of a GLB in docs/models.md.
+
+scene: prototype
+version: 1
+
+entities:
+  # the room
+
+  - name: room-floor
+    components:
+      Transform:
+        position: [0, 0, 0]
+        scale: [6, 1, 6]
+      Renderable:
+        model: assets://external/kenney/prototype-kit/floor-square.glb
+        shader: assets://shaders/basic-lit
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [6, 0.2, 6]
+        offset: [0, -0.1, 0]
+
+  - name: room-north-wall
+    components:
+      Transform:
+        position: [0, 1.25, -3]
+        rotation: [0, 90, 0]
+        scale: [1, 2.5, 6]
+      Renderable:
+        model: assets://external/kenney/prototype-kit/wall.glb
+        shader: assets://shaders/basic-lit
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [0.2, 2.5, 6]
+
+  - name: room-east-wall
+    components:
+      Transform:
+        position: [3, 1.25, 0]
+        scale: [1, 2.5, 6]
+      Renderable:
+        model: assets://external/kenney/prototype-kit/wall.glb
+        shader: assets://shaders/basic-lit
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [0.2, 2.5, 6]
+
+  - name: room-west-wall
+    components:
+      Transform:
+        position: [-3, 1.25, 0]
+        scale: [1, 2.5, 6]
+      Renderable:
+        model: assets://external/kenney/prototype-kit/wall.glb
+        shader: assets://shaders/basic-lit
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [0.2, 2.5, 6]
+
+  # the south wall, in two parts with the doorway between them. The opening
+  # of the doorway piece is 0.6 of its width and 0.8 of its height, so at
+  # 2 wide and 2.5 high it is 1.2 by 2, which the walker fits through. Its
+  # colliders are the two posts and the lintel.
+  - name: room-south-wall-west
+    components:
+      Transform:
+        position: [-2, 1.25, 3]
+        rotation: [0, 90, 0]
+        scale: [1, 2.5, 2]
+      Renderable:
+        model: assets://external/kenney/prototype-kit/wall.glb
+        shader: assets://shaders/basic-lit
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [2, 2.5, 0.2]
+
+  - name: room-south-wall-east
+    components:
+      Transform:
+        position: [2, 1.25, 3]
+        rotation: [0, 90, 0]
+        scale: [1, 2.5, 2]
+      Renderable:
+        model: assets://external/kenney/prototype-kit/wall.glb
+        shader: assets://shaders/basic-lit
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [2, 2.5, 0.2]
+
+  - name: doorway
+    components:
+      Transform:
+        position: [0, 1.25, 3]
+        rotation: [0, 90, 0]
+        scale: [1, 2.5, 2]
+      Renderable:
+        model: assets://external/kenney/prototype-kit/wall-doorway.glb
+        shader: assets://shaders/basic-lit
+      RigidBody:
+        kind: static
+    children:
+      - name: west-post
+        components:
+          Transform:
+            position: [-0.8, 0, 0]
+          Collider:
+            shape: box
+            size: [0.4, 2.5, 0.3]
+      - name: east-post
+        components:
+          Transform:
+            position: [0.8, 0, 0]
+          Collider:
+            shape: box
+            size: [0.4, 2.5, 0.3]
+      - name: lintel
+        components:
+          Transform:
+            position: [0, 1, 0]
+          Collider:
+            shape: box
+            size: [2, 0.5, 0.3]
+
+  - name: columns
+    children:
+      - name: north-west
+        components:
+          Transform:
+            position: [-2.7, 1.25, -2.7]
+            scale: [2.5, 2.5, 2.5]
+          Renderable:
+            model: assets://external/kenney/prototype-kit/column.glb
+            shader: assets://shaders/basic-lit
+          RigidBody:
+            kind: static
+          Collider:
+            shape: box
+            size: [0.5, 2.5, 0.5]
+      - name: north-east
+        components:
+          Transform:
+            position: [2.7, 1.25, -2.7]
+            scale: [2.5, 2.5, 2.5]
+          Renderable:
+            model: assets://external/kenney/prototype-kit/column.glb
+            shader: assets://shaders/basic-lit
+          RigidBody:
+            kind: static
+          Collider:
+            shape: box
+            size: [0.5, 2.5, 0.5]
+      - name: south-west
+        components:
+          Transform:
+            position: [-2.7, 1.25, 2.7]
+            scale: [2.5, 2.5, 2.5]
+          Renderable:
+            model: assets://external/kenney/prototype-kit/column.glb
+            shader: assets://shaders/basic-lit
+          RigidBody:
+            kind: static
+          Collider:
+            shape: box
+            size: [0.5, 2.5, 0.5]
+      - name: south-east
+        components:
+          Transform:
+            position: [2.7, 1.25, 2.7]
+            scale: [2.5, 2.5, 2.5]
+          Renderable:
+            model: assets://external/kenney/prototype-kit/column.glb
+            shader: assets://shaders/basic-lit
+          RigidBody:
+            kind: static
+          Collider:
+            shape: box
+            size: [0.5, 2.5, 0.5]
+
+  # the props
+
+  - name: crate
+    components:
+      Transform:
+        position: [-1.8, 0.25, -1.8]
+        rotation: [0, 20, 0]
+        scale: 0.5
+      Renderable:
+        model: assets://external/kenney/prototype-kit/crate.glb
+        shader: assets://shaders/basic-lit
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: 0.5
+
+  # a supply crate of the Blaster Kit, 1 long, 0.55 wide, and 0.23 high,
+  # with a blaster lying on it
+  - name: supply-crate
+    components:
+      Transform:
+        position: [1.8, 0.115, -1.6]
+        rotation: [0, 90, 0]
+      Renderable:
+        model: assets://external/kenney/blaster-kit/crate-medium.glb
+        shader: assets://shaders/basic-lit
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [1, 0.23, 0.55]
+
+  - name: blaster
+    components:
+      Transform:
+        position: [1.8, 0.4, -1.6]
+        rotation: [0, 160, 0]
+        scale: 0.8
+      Renderable:
+        model: assets://external/kenney/blaster-kit/blaster-a.glb
+        shader: assets://shaders/basic-lit
+
+  # a target on the north wall of the room, and a small one at the end of
+  # the corridor
+  - name: room-target
+    components:
+      Transform:
+        position: [0, 1.4, -2.85]
+        rotation: [0, 90, 0]
+        scale: 0.5
+      Renderable:
+        model: assets://external/kenney/prototype-kit/target-a-round.glb
+        shader: assets://shaders/basic-lit
+
+  - name: corridor-target
+    components:
+      Transform:
+        position: [0, 1.4, 8.85]
+        rotation: [0, -90, 0]
+        scale: 0.4
+      Renderable:
+        model: assets://external/kenney/blaster-kit/target-small.glb
+        shader: assets://shaders/basic-lit
+
+  # the corridor, south of the doorway
+
+  - name: corridor-floor
+    components:
+      Transform:
+        position: [0, 0, 6]
+        scale: [2, 1, 6]
+      Renderable:
+        model: assets://external/kenney/prototype-kit/floor-square.glb
+        shader: assets://shaders/basic-lit
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [2, 0.2, 6]
+        offset: [0, -0.1, 0]
+
+  - name: corridor-east-wall
+    components:
+      Transform:
+        position: [1, 1.25, 6]
+        scale: [1, 2.5, 6]
+      Renderable:
+        model: assets://external/kenney/prototype-kit/wall.glb
+        shader: assets://shaders/basic-lit
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [0.2, 2.5, 6]
+
+  - name: corridor-west-wall
+    components:
+      Transform:
+        position: [-1, 1.25, 6]
+        scale: [1, 2.5, 6]
+      Renderable:
+        model: assets://external/kenney/prototype-kit/wall.glb
+        shader: assets://shaders/basic-lit
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [0.2, 2.5, 6]
+
+  - name: corridor-end-wall
+    components:
+      Transform:
+        position: [0, 1.25, 9]
+        rotation: [0, 90, 0]
+        scale: [1, 2.5, 2]
+      Renderable:
+        model: assets://external/kenney/prototype-kit/wall.glb
+        shader: assets://shaders/basic-lit
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [2, 2.5, 0.2]
+
+  # the lights: daylight from above, and a lamp in the middle of the room
+
+  - name: daylight
+    components:
+      Transform: Default
+      Light:
+        type: direction
+        direction: [-0.3, -1, -0.2]
+        ambient: [0.35, 0.35, 0.4]
+        diffuse: [0.5, 0.5, 0.45]
+        specular: [0.2, 0.2, 0.2]
+
+  - name: lamp
+    components:
+      Transform:
+        position: [0, 2.2, 0]
+      Light:
+        type: point
+        ambient: [0.05, 0.04, 0.02]
+        diffuse: [0.8, 0.6, 0.3]
+        specular: [0.3, 0.3, 0.3]
+        constant: 1
+        linear: 0.14
+        quadratic: 0.07
+
+  # the hum of the reactor, heard the same everywhere
+  - name: reactor
+    components:
+      SoundSource:
+        sound: assets://sounds/ambience/reactor-room.wav
+        looping: true
+        volume: 0.5
+
+  # the character of physics.scene.yml: it walks north across the room into
+  # the wall, and slides along it
+  - name: walker
+    components:
+      Transform:
+        position: [-0.5, 1, 1.5]
+      CharacterBody:
+        velocity: [0.5, 0, -1.5]
+      Collider:
+        shape: capsule
+        radius: 0.4
+        height: 1.8
+    children:
+      - name: looks
+        components:
+          Transform:
+            scale: [0.8, 1.8, 0.8]
+          Renderable:
+            model: assets://models/cube.obj
+            shader: assets://shaders/basic-lit
+            textures:
+              - assets://textures/water.png
+
+  # the player, who starts in the corridor and looks through the doorway
+  - name: player
+    components:
+      Transform:
+        position: [0, 1.6, 7.5]
+      Spectator: Default
+    children:
+      - name: camera
+        components:
+          Transform: Default
+          Camera: Default
+          SoundListener: Default

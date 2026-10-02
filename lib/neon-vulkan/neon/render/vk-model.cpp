@@ -48,7 +48,7 @@ namespace neon
     _model_matrix = ComputeNormalizationMatrix(meshes);
   }
 
-  bool VK_Model::ProcessMesh(aiMesh *mesh, const aiScene *scene)
+  bool VK_Model::ProcessMesh(aiMesh *mesh, const aiScene *scene, const glm::mat4 &transform)
   {
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
@@ -79,9 +79,11 @@ namespace neon
       for (unsigned int j = 0; j < face.mNumIndices; j++) { indices.push_back(face.mIndices[j]); }
     }
 
+    ApplyNodeTransform(transform, vertices, indices);
+
     const aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
-    LoadMaterialTextures(material, aiTextureType_DIFFUSE, textures);
-    LoadMaterialTextures(material, aiTextureType_SPECULAR, textures);
+    LoadMaterialTextures(scene, material, aiTextureType_DIFFUSE, textures);
+    LoadMaterialTextures(scene, material, aiTextureType_SPECULAR, textures);
 
     VK_Mesh vulkan_mesh(vertices, indices, textures, _device, _logger);
     if (!vulkan_mesh.Initialize()) { return false; }

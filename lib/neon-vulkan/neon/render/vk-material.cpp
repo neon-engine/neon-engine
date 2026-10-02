@@ -33,6 +33,28 @@ namespace neon
       return true;
     }
 
+    // the scene has the last word, the model fills in what it leaves out
+    if (_texture_paths.empty())
+    {
+      for (std::size_t i = 0; i < _model_textures.size(); i++)
+      {
+        const TextureInfo &info = _model_textures[i];
+        _surface_names.emplace_back();
+
+        VK_Texture texture(info.path, _file_system_context, _device, _logger);
+        const bool loaded = info.IsEmbedded()
+          ? texture.InitializeWithFile(*info.file, TextureOptionsFor(i))
+          : texture.Initialize(TextureOptionsFor(i));
+        if (!loaded)
+        {
+          _logger->Error("Could not initialize the texture {} of the model", info.path);
+          CleanUp();
+          return false;
+        }
+        _textures.push_back(texture);
+      }
+    }
+
     for (std::size_t i = 0; i < _texture_paths.size(); i++)
     {
       const std::string &texture_path = _texture_paths[i];
@@ -89,6 +111,11 @@ namespace neon
     }
     _surface_names.clear();
     _initialized = false;
+  }
+
+  void VK_Material::SetModelTextures(const std::vector<TextureInfo> &textures)
+  {
+    _model_textures = textures;
   }
 
   void VK_Material::SetSurfaceLookup(const SurfaceLookup &lookup)

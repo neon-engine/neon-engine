@@ -18,5 +18,6 @@ scenes:
   - assets://scenes/gamma-test.scene.yml
   - assets://scenes/culling-test.scene.yml
   - assets://scenes/pbr-test.scene.yml
+  - assets://scenes/prototype.scene.yml
 
 entry_scene: assets://scenes/demo.scene.yml

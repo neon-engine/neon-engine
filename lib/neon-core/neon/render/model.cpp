@@ -12,6 +12,7 @@
 #include <assimp/IOSystem.hpp>
 #include <assimp/postprocess.h>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 namespace
 {
@@ -141,10 +142,70 @@ namespace neon
       return false;
     }
 
+    // what a glTF file may carry that the renderer does not draw yet, said
+    // once so that nobody wonders why a model stands still
+    if (scene->HasAnimations())
+    {
+      _logger->Info("Model {} has animations, which are not played", _path);
+    }
+    if (scene->HasCameras() || scene->HasLights())
+    {
+      _logger->Info("Model {} has cameras or lights, which are left out", _path);
+    }
+
+    _drawn_material = -1;
+    LoadMaterials(scene);
     return ProcessNode(scene->mRootNode, scene);
   }
 
+  const ModelMaterial *Model::GetDrawnMaterial() const
+  {
+    if (_drawn_material < 0 || static_cast<size_t>(_drawn_material) >= _materials.size()) { return nullptr; }
+    return &_materials[_drawn_material];
+  }
+
+  std::string Model::FolderOf(const std::string &model_path)
+  {
+    const size_t slash = model_path.rfind('/');
+    if (slash == std::string::npos) { return ""; }
+    return model_path.substr(0, slash + 1);
+  }
+
+  void Model::LoadMaterials(const aiScene *scene)
+  {
+    _materials.clear();
+    for (unsigned int i = 0; i < scene->mNumMaterials; i++)
+    {
+      const aiMaterial *material = scene->mMaterials[i];
+      ModelMaterial loaded;
+      LoadMaterialTextures(scene, material, aiTextureType_DIFFUSE, loaded.textures);
+      LoadMaterialTextures(scene, material, aiTextureType_SPECULAR, loaded.textures);
+
+      // The base colour factor of glTF, which multiplies the texture. The
+      // diffuse colour of an .obj is not read: the scenes that exist set the
+      // colour themselves, and a Kd of grey would darken them.
+      if (aiColor4D color; material->Get(AI_MATKEY_BASE_COLOR, color) == aiReturn_SUCCESS)
+      {
+        loaded.color = Color{color.r, color.g, color.b, color.a};
+      }
+
+      _materials.push_back(loaded);
+    }
+
+    // the renderer draws a model with one material, see docs/models.md
+    bool several_used = false;
+    for (unsigned int i = 0; i < scene->mNumMeshes; i++)
+    {
+      several_used = several_used || scene->mMeshes[i]->mMaterialIndex != scene->mMeshes[0]->mMaterialIndex;
+    }
+    if (several_used)
+    {
+      _logger->Info("Model {} uses several materials, it is drawn with the first", _path);
+    }
+  }
+
   void Model::LoadMaterialTextures(
+    const aiScene *scene,
     const aiMaterial *material,
     const aiTextureType &type,
     std::vector<TextureInfo> &textures) const
@@ -154,7 +215,6 @@ namespace neon
       aiString str;
       material->GetTexture(type, i, &str);
       TextureInfo texture;
-      texture.path = str.C_Str();
       switch (type)
       {
         case aiTextureType_DIFFUSE:
@@ -174,35 +234,99 @@ namespace neon
           continue;
         }
       }
+
+      // an image the file carries itself is named by its place in the file
+      if (const aiTexture *embedded = scene->GetEmbeddedTexture(str.C_Str()); embedded != nullptr)
+      {
+        texture.path = str.C_Str();
+
+        // A height of 0 marks an image file, PNG or JPEG, of as many bytes
+        // as the width says. Anything else is raw pixels, which no format
+        // the loader reads writes into a model.
+        if (embedded->mHeight != 0)
+        {
+          _logger->Warn("Model {} carries texture {} as raw pixels, which is not read", _path, texture.path);
+          continue;
+        }
+
+        const auto *bytes = reinterpret_cast<const unsigned char *>(embedded->pcData);
+        texture.file = std::make_shared<const std::vector<unsigned char>>(bytes, bytes + embedded->mWidth);
+        textures.push_back(texture);
+        continue;
+      }
+
+      // a file next to the model, named from the folder of the model
+      std::string name = str.C_Str();
+      while (name.rfind("./", 0) == 0) { name.erase(0, 2); }
+      texture.path = FolderOf(_path) + name;
       textures.push_back(texture);
+    }
+  }
+
+  void Model::NoteWhatIsNotShown(const aiMesh *mesh)
+  {
+    if (mesh->HasVertexColors(0) && !_noted_vertex_colors)
+    {
+      _noted_vertex_colors = true;
+      _logger->Warn("Model {} has vertex colours, which the shaders do not show", _path);
     }
   }
 
   bool Model::ProcessNode(aiNode *root, const aiScene *scene)
   {
-    std::stack<aiNode *> node_stack;
-    node_stack.push(root);
+    // each node with where it stands, its own transform under its parents'
+    std::stack<std::pair<aiNode *, aiMatrix4x4>> node_stack;
+    node_stack.emplace(root, aiMatrix4x4());
 
     while (!node_stack.empty()) {
-      const aiNode *node = node_stack.top();
+      auto [node, parent_transform] = node_stack.top();
       node_stack.pop();
 
       if (node == nullptr) { continue; }
 
+      const aiMatrix4x4 transform = parent_transform * node->mTransformation;
+
+      // assimp keeps its matrices by rows, glm by columns
+      const glm::mat4 placed = glm::transpose(glm::make_mat4(&transform.a1));
+
       // Process all meshes in this node
       for (unsigned int i = 0; i < node->mNumMeshes; i++) {
-        if (aiMesh *mesh = scene->mMeshes[node->mMeshes[i]]; !ProcessMesh(mesh, scene)) {
+        aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
+        if (_drawn_material < 0) { _drawn_material = static_cast<int>(mesh->mMaterialIndex); }
+        NoteWhatIsNotShown(mesh);
+        if (!ProcessMesh(mesh, scene, placed)) {
           return false;
         }
       }
 
       // Push all children onto the stack for later processing
       for (unsigned int i = 0; i < node->mNumChildren; i++) {
-        node_stack.push(node->mChildren[i]);
+        node_stack.emplace(node->mChildren[i], transform);
       }
     }
 
     return true;
+  }
+
+  void Model::ApplyNodeTransform(
+    const glm::mat4 &transform, std::vector<Vertex> &vertices, std::vector<unsigned int> &indices)
+  {
+    // a node that leaves its mesh where it is, which most do, costs nothing
+    if (transform == glm::mat4(1.0f)) { return; }
+
+    const auto normal_matrix = glm::mat3(glm::transpose(glm::inverse(transform)));
+    for (auto &vertex : vertices)
+    {
+      vertex.position = glm::vec3(transform * glm::vec4(vertex.position, 1.0f));
+      vertex.normal = normal_matrix * vertex.normal;
+    }
+
+    // the sign of the volume the transform gives a unit cube, which is below
+    // 0 when the mesh is turned inside out
+    if (glm::determinant(glm::mat3(transform)) < 0.0f)
+    {
+      for (size_t i = 0; i + 2 < indices.size(); i += 3) { std::swap(indices[i + 1], indices[i + 2]); }
+    }
   }
 
   glm::mat4 Model::ComputeNormalizationMatrix(const std::vector<const Mesh *> &meshes)

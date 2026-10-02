@@ -77,6 +77,11 @@ namespace neon
 
     bool Initialize(const VK_TextureOptions &options);
 
+    /// Makes the texture from the bytes of an image file, PNG or JPEG, that
+    /// were read already: an image a model carries inside it. The path the
+    /// texture was created with only names it in the log.
+    bool InitializeWithFile(const std::vector<unsigned char> &file_contents, const VK_TextureOptions &options);
+
     /// Makes the texture from pixels in memory: red, green, blue, and alpha
     /// for each, row after row from the top.
     bool InitializeWithPixels(

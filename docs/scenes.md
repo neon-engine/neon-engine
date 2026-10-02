@@ -101,6 +101,12 @@ surface shines. `alpha_mode` is `opaque`, which covers what is behind, or
 behind show through. See-through surfaces are drawn after the opaque ones,
 from the farthest to the nearest.
 
+`model` is an `.obj` or a `.glb`. What the file says about its look fills in
+what the `Renderable` leaves out: the textures of the model are shown when
+`textures` is not written, and the base colour factor of a glTF material is
+multiplied into `color`. Every model is scaled so that its longest side is 1,
+so `scale` gives a piece of a kit its size back. See [models.md](models.md).
+
 The back of every triangle is left out, since most surfaces are seen from
 one side only: the outside of a closed model. The front is the side whose
 corners go round anticlockwise, as models are made. `double_sided: true`

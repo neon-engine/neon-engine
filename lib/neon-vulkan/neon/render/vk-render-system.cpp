@@ -698,20 +698,37 @@ namespace neon
   int VK_RenderSystem::CreateRenderObject(const RenderInfo &render_info)
   {
     VK_Model model(render_info.model_path, _file_system_context, &_device, _logger);
-    VK_Material material(
-      render_info.shader_path,
-      render_info.texture_paths,
-      render_info.material_info,
-      render_info.scale_textures,
-      _file_system_context,
-      &_device,
-      _logger);
-
     if (!model.Initialize())
     {
       _logger->Error("Could not initialize model {}", render_info.model_path);
       return -1;
     }
+
+    // What the model file says about its look fills in what the scene does
+    // not: its colour factor multiplies the colour of the material, and its
+    // textures are shown when the scene names none. A model with several
+    // materials is drawn with its first, see docs/models.md.
+    MaterialInfo material_info = render_info.material_info;
+    const ModelMaterial *model_material = model.GetDrawnMaterial();
+    if (model_material != nullptr)
+    {
+      const Color &factor = model_material->color;
+      material_info.color = {
+        material_info.color.r * factor.r,
+        material_info.color.g * factor.g,
+        material_info.color.b * factor.b,
+        material_info.color.a * factor.a};
+    }
+
+    VK_Material material(
+      render_info.shader_path,
+      render_info.texture_paths,
+      material_info,
+      render_info.scale_textures,
+      _file_system_context,
+      &_device,
+      _logger);
+    if (model_material != nullptr) { material.SetModelTextures(model_material->textures); }
 
     material.SetSurfaceLookup([this](const std::string &name, VK_Texture &texture)
     {
@@ -720,7 +737,6 @@ namespace neon
 
     // The pipeline for a mirrored object, which turns its triangles round,
     // is left until one is drawn: most materials never have one.
-    const MaterialInfo &material_info = render_info.material_info;
     VkPipeline pipeline = VK_NULL_HANDLE;
     if (!material.Initialize() ||
         !_pipelines.Get(

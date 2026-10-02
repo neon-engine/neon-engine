@@ -14,7 +14,7 @@ namespace neon
     std::vector<VK_Mesh> _meshes{};
 
   protected:
-    bool ProcessMesh(aiMesh *mesh, const aiScene *scene) override;
+    bool ProcessMesh(aiMesh *mesh, const aiScene *scene, const glm::mat4 &transform) override;
 
     void GenerateNormalizationMatrix() override;
 

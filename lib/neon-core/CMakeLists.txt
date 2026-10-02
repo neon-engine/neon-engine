@@ -231,6 +231,7 @@ add_library(${TARGET} STATIC
         neon/render/model.cpp
         neon/render/model.hpp
         neon/render/texture-info.hpp
+        neon/render/model-material.hpp
         neon/render/texture-type.hpp
         neon/render/light-source.hpp
         neon/render/material-info.hpp

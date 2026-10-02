@@ -42,7 +42,7 @@ namespace
     const VK_Mesh mesh(
       _triangle,
       {0, 1, 2},
-      {TextureInfo{"textures/wood.png", TextureType::Diffuse}},
+      {TextureInfo{.path = "textures/wood.png", .texture_type = TextureType::Diffuse}},
       &_device,
       _logger);
 

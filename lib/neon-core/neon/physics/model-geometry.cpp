@@ -29,7 +29,7 @@ namespace neon
       std::vector<PlainMesh> _meshes;
 
     protected:
-      bool ProcessMesh(aiMesh *mesh, const aiScene *) override
+      bool ProcessMesh(aiMesh *mesh, const aiScene *, const glm::mat4 &transform) override
       {
         std::vector<Vertex> vertices;
         std::vector<unsigned int> indices;
@@ -51,6 +51,9 @@ namespace neon
 
           for (unsigned int j = 0; j < 3; j++) { indices.push_back(face.mIndices[j]); }
         }
+
+        // the collider has to sit where the renderer draws the mesh
+        ApplyNodeTransform(transform, vertices, indices);
 
         _meshes.emplace_back(vertices, indices, std::vector<TextureInfo>{}, _logger);
         return true;

@@ -19,7 +19,7 @@
 
 include("${CMAKE_CURRENT_LIST_DIR}/../../cmake/scripts/run-application.cmake")
 
-run(--headless --window-size 1920x1080 --render-scale 1 --time-step 0.05 --frames 2
+run(--headless-renderer --window-size 1920x1080 --render-scale 1 --time-step 0.05 --frames 2
         --output-dir shots --screenshot output://frame.png --scene assets://scenes/pbr-test.scene.yml)
 
 expect_exit_code(0)

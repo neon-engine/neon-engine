@@ -67,6 +67,17 @@ namespace neon
       return false;
     }
 
+    return InitializeWithFile(file_contents, options);
+  }
+
+  bool VK_Texture::InitializeWithFile(const std::vector<unsigned char> &file_contents, const VK_TextureOptions &options)
+  {
+    if (_initialized)
+    {
+      _logger->Warn("Texture {} was already initialized", _texture_path);
+      return true;
+    }
+
     int width, height, channels;
     stbi_set_flip_vertically_on_load(false);
     unsigned char *pixels = stbi_load_from_memory(
