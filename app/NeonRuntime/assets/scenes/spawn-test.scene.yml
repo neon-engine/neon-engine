@@ -1,0 +1,33 @@
+# A scene for checking that a prefab is spawned while the game plays, which
+# tests read pixel by pixel:
+#
+#   NeonRuntime --scene assets://scenes/spawn-test.scene.yml --spawn assets://prefabs/target.prefab.yml
+#
+# It holds a camera and a light and nothing to look at, so the middle of
+# the frame is black until something is spawned at the origin, where the
+# camera looks. The target of the prototype, spawned there as a script
+# would spawn it (docs/prefabs.md#spawning-at-run-time), fills the middle.
+
+scene: spawn-test
+version: 1
+
+entities:
+  # 0.25 above the floor is the middle of the target, which is 0.5 high
+  # from its origin at its foot and faces -x, so the camera stands there
+  # and looks back along +x at its face
+  - name: camera
+    components:
+      Transform:
+        position: [-1.5, 0.25, 0]
+        rotation: [0, -90, 0]
+      Camera: Default
+
+  - name: daylight
+    components:
+      Transform: Default
+      Light:
+        type: direction
+        direction: [-0.3, -1, -0.5]
+        ambient: [0.4, 0.4, 0.4]
+        diffuse: [0.6, 0.6, 0.6]
+        specular: [0.2, 0.2, 0.2]

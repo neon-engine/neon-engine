@@ -18,6 +18,10 @@ namespace neon
     /// What the Prefab component is registered under.
     const std::string prefab_component = "Prefab";
 
+    /// The names an entity is written with, which a child that is taken
+    /// away cannot be called.
+    const std::vector<std::string> entity_names = {"name", "prefab", "components", "children"};
+
     /// The name written for an entity, or empty.
     std::string NameOf(const DataValue &entity)
     {
@@ -28,6 +32,32 @@ namespace neon
       }
       return name;
     }
+
+    /// Whether an item of a list of children takes a child away, written
+    /// as `- shade: ~`: a map of one name with nothing as its value. The
+    /// name comes out in `taken`.
+    bool TakesAway(const DataValue &item, std::string &taken)
+    {
+      if (!item.IsMap() || item.GetEntries().size() != 1) { return false; }
+
+      const auto &[name, value] = item.GetEntries().front();
+      if (!value.IsEmpty() || std::ranges::find(entity_names, name) != entity_names.end()) { return false; }
+
+      taken = name;
+      return true;
+    }
+
+    /// The names of the entities below a parent, joined for a message.
+    std::string NamesBelow(EntityStore &store, const Entity parent)
+    {
+      std::string names;
+      for (const auto child : store.GetChildren(parent))
+      {
+        if (!names.empty()) { names += ", "; }
+        names += store.GetName(child);
+      }
+      return names;
+    }
   }
 
   SceneFile::SceneFile(
@@ -35,6 +65,7 @@ namespace neon
     DocumentFormat *format,
     const std::string &path,
     const std::shared_ptr<Logger> &logger)
+    : _prefabs(file_system, format)
   {
     _file_system = file_system;
     _format = format;
@@ -68,6 +99,10 @@ namespace neon
   bool SceneFile::Read(EntityStore &store)
   {
     _logger->Info("Loading the scene from {}", _path);
+
+    // the prefabs of the scene before are forgotten, so that a file that
+    // changed is read anew
+    _prefabs.Clear();
 
     std::string text;
     if (!_file_system->ReadText(_path, text))
@@ -109,10 +144,7 @@ namespace neon
                           DataValue::Describe(entities->GetKind())));
         } else
         {
-          // the prefabs are kept for this load alone, so that a file that
-          // changed is read anew the next time
-          PrefabFiles prefabs(_file_system, _format);
-          ReadEntities(*entities, _path, "", store, No_Entity, false, prefabs, errors);
+          ReadEntities(*entities, _path, "", store, No_Entity, false, _prefabs, errors);
         }
       }
 
@@ -121,14 +153,58 @@ namespace neon
 
     if (errors.empty()) { return true; }
 
+    ReportProblems(errors, std::format("The scene {}", _path), "the world holds what could be read");
+    return false;
+  }
+
+  void SceneFile::ReportProblems(
+    const std::vector<std::string> &errors,
+    const std::string &what,
+    const std::string &goes_on) const
+  {
     for (const auto &error : errors) { _logger->Error("{}", error); }
 
     // the game goes on with what could be read, and the exit code says that
     // not everything could
     const std::size_t count = errors.size();
     const std::string problems = count == 1 ? "problem" : "problems";
-    _logger->Error("The scene {} has {} {}, the world holds what could be read", _path, count, problems);
-    return false;
+    _logger->Error("{} has {} {}, {}", what, count, problems, goes_on);
+  }
+
+  Entity SceneFile::Spawn(
+    EntityStore &store,
+    const std::string &path,
+    const Entity parent,
+    const DataValue &overrides)
+  {
+    store.Register<Prefab>(prefab_component);
+
+    // what is spawned is read as an entity of a scene would be: the prefab
+    // first, then the overrides on top, as the components written next to
+    // `prefab:` in a file
+    auto written = DataValue::Map();
+    if (!overrides.IsEmpty()) { written.Set("components", overrides); }
+
+    std::vector<std::string> errors;
+    const DataReader reader(written, std::format("spawn of {}", path), "the spawned entity", errors);
+
+    const Entity entity = store.CreateEntity("", parent);
+    const bool placed = PlacePrefab(path, DataValue::Text(path), reader, store, entity, false, _prefabs);
+    if (!placed)
+    {
+      store.DestroyEntity(entity);
+      ReportProblems(errors, std::format("The prefab {}", path), "nothing is spawned");
+      return No_Entity;
+    }
+
+    ReadComponents(reader, written, store, entity);
+    reader.Finish();
+
+    if (!errors.empty())
+    {
+      ReportProblems(errors, std::format("The spawn of {}", path), "the entity holds what could be read");
+    }
+    return entity;
   }
 
   void SceneFile::ReadEntities(
@@ -148,9 +224,12 @@ namespace neon
       const auto label = of.empty() ? std::format("entity {}", number) : std::format("child {} of {}", number, of);
       number++;
 
+      std::string taken;
+      const bool takes_away = TakesAway(item, taken);
+
       // a name twice in one list is a mistake even where a name that is
       // there already is read onto, since the second would change the first
-      if (const auto name = NameOf(item); !name.empty())
+      if (const auto name = takes_away ? taken : NameOf(item); !name.empty())
       {
         if (std::ranges::find(names, name) != names.end())
         {
@@ -161,8 +240,51 @@ namespace neon
         names.push_back(name);
       }
 
+      if (takes_away)
+      {
+        TakeAwayChild(item, taken, document, of, store, parent, onto_existing, errors);
+        continue;
+      }
+
       ReadEntity(item, document, label, store, parent, onto_existing, prefabs, errors);
     }
+  }
+
+  void SceneFile::TakeAwayChild(
+    const DataValue &item,
+    const std::string &name,
+    const std::string &document,
+    const std::string &of,
+    EntityStore &store,
+    const Entity parent,
+    const bool onto_existing,
+    std::vector<std::string> &errors) const
+  {
+    const std::string where = of.empty() ? std::format("entity '{}'", name) : std::format("child '{}' of {}", name, of);
+    const DataReader reader(item, document, where, errors);
+
+    // only what a prefab gave can be taken away: anywhere else there is
+    // nothing of that name yet, and at the top of a scene an entity of a
+    // scene before may stay, which a scene must not take away by name
+    if (!onto_existing)
+    {
+      reader.Report(item, std::format("{} is taken away, and only a child of a prefab can be", where));
+      return;
+    }
+
+    for (const auto child : store.GetChildren(parent))
+    {
+      if (store.GetName(child) != name) { continue; }
+
+      store.DestroyEntity(child);
+      return;
+    }
+
+    // the same as a component that is not known, with what is known
+    const std::string known = NamesBelow(store, parent);
+    reader.Report(item, known.empty()
+                    ? std::format("{} is not known. {} has no children", where, of)
+                    : std::format("{} is not known. Known are: {}", where, known));
   }
 
   void SceneFile::ReadEntity(
@@ -388,7 +510,48 @@ namespace neon
     return known;
   }
 
-  DataValue SceneFile::WriteEntity(EntityStore &store, const Entity entity) const
+  void SceneFile::ChildrenOfPrefab(
+    const std::string &path,
+    std::vector<std::string> &names,
+    std::vector<std::string> &seen)
+  {
+    // a loop was refused when the prefab was placed; here it is only not
+    // followed
+    if (std::ranges::find(seen, path) != seen.end()) { return; }
+    seen.push_back(path);
+
+    // a prefab that cannot be read was said where it was placed, and gave
+    // no children
+    std::vector<std::string> errors;
+    const auto *prefab = _prefabs.Find(path, errors);
+    if (prefab == nullptr) { return; }
+
+    const auto &entity = prefab->GetEntity();
+
+    // the children of the prefab it starts from come first, as they are
+    // placed first
+    if (const auto *base = entity.Find("prefab"); base != nullptr)
+    {
+      if (std::string base_path; base->GetText(base_path)) { ChildrenOfPrefab(base_path, names, seen); }
+    }
+
+    const auto *children = entity.Find("children");
+    if (children == nullptr || !children->IsList()) { return; }
+
+    for (const auto &item : children->GetItems())
+    {
+      if (std::string taken; TakesAway(item, taken))
+      {
+        std::erase(names, taken);
+        continue;
+      }
+
+      const auto name = NameOf(item);
+      if (!name.empty() && std::ranges::find(names, name) == names.end()) { names.push_back(name); }
+    }
+  }
+
+  DataValue SceneFile::WriteEntity(EntityStore &store, const Entity entity)
   {
     auto value = DataValue::Map();
 
@@ -398,11 +561,13 @@ namespace neon
     }
 
     // the prefab it came from is written next to its name, as it is read
+    std::string prefab_path;
     if (const auto id = store.FindComponent(prefab_component); id != No_Component)
     {
       if (const auto *prefab = static_cast<const Prefab *>(store.GetComponent(entity, id)); prefab != nullptr)
       {
-        value.Set("prefab", DataValue::Text(prefab->path));
+        prefab_path = prefab->path;
+        value.Set("prefab", DataValue::Text(prefab_path));
       }
     }
 
@@ -421,6 +586,29 @@ namespace neon
     value.Set("components", components);
 
     auto children = DataValue::List();
+
+    // a child the prefab gave that the entity does not have is written as
+    // taken away, so that loading the file gives the same world
+    if (!prefab_path.empty())
+    {
+      std::vector<std::string> given;
+      std::vector<std::string> seen;
+      ChildrenOfPrefab(prefab_path, given, seen);
+
+      for (const auto &given_name : given)
+      {
+        const bool has = std::ranges::any_of(store.GetChildren(entity), [&](const Entity child)
+        {
+          return store.GetName(child) == given_name;
+        });
+        if (has) { continue; }
+
+        auto taken = DataValue::Map();
+        taken.Set(given_name, DataValue{});
+        children.Add(taken);
+      }
+    }
+
     for (const auto child : store.GetChildren(entity))
     {
       children.Add(WriteEntity(store, child));
@@ -430,7 +618,7 @@ namespace neon
     return value;
   }
 
-  bool SceneFile::Save(EntityStore &store, const std::string &name, const std::string &path) const
+  bool SceneFile::Save(EntityStore &store, const std::string &name, const std::string &path)
   {
     auto document = DataValue::Map();
     document.Set("scene", DataValue::Text(name));

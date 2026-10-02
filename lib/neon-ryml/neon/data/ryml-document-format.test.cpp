@@ -366,7 +366,7 @@ namespace
     document.Set("list", DataValue::List());
     document.Set("nothing", DataValue{});
 
-    EXPECT_EQ(_format.Write(document), "map: {}\nlist: []\nnothing: null\n");
+    EXPECT_EQ(_format.Write(document), "map: {}\nlist: []\nnothing: ~\n");
   }
 
   TEST_F(RymlDocumentFormatTest, WritesNestedMapsWithTwoSpacesForALevel)

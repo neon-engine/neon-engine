@@ -1,11 +1,14 @@
 # A round target of Kenney's Prototype Kit, 0.5 high from its origin at its
 # foot. It is something to look at and nothing stands in its way yet, so it
 # has no body; a scene that wants another target writes its model on top.
+# The Transform is carried from the start so that a target spawned in play
+# stands where its parent is, see docs/prefabs.md#spawning-at-run-time.
 version: 1
 prefab: target
 
 entity:
   components:
+    Transform: Default
     Renderable:
       model: assets://external/kenney/prototype-kit/target-a-round.glb
       shader: assets://shaders/basic-lit

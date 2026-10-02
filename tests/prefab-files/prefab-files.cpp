@@ -646,4 +646,324 @@ namespace
     EXPECT_EQ(second.store.Get<Transform>(wall)->scale.y, 2.5f);
     EXPECT_EQ(second.store.Get<Prefab>(wall)->path, "assets://prefabs/wall.prefab.yml");
   }
+
+  // taking a child away
+
+  TEST_F(PrefabFilesTest, NothingTakesAChildAway)
+  {
+    WritePrefab(
+      "lamp",
+      "entity:\n"
+      "  children:\n"
+      "    - name: bulb\n"
+      "      components:\n"
+      "        Light: Default\n"
+      "      children:\n"
+      "        - name: filament\n"
+      "    - name: shade\n"
+      "    - name: post\n");
+
+    Load(
+      "entities:\n"
+      "  - name: lamp\n"
+      "    prefab: assets://prefabs/lamp.prefab.yml\n"
+      "    children:\n"
+      "      - bulb: ~\n"
+      "      - name: switch\n");
+
+    // in no particular order: the store does not keep the order of creation
+    // once an entity among them was destroyed
+    EXPECT_THAT(_world.NamesBelow(Find("lamp")), ::testing::UnorderedElementsAre("shade", "post", "switch"));
+    EXPECT_EQ(_world.store.FindEntity("lamp/bulb/filament"), No_Entity) << "with everything below it";
+  }
+
+  TEST_F(PrefabFilesTest, AChildOfAChildIsTakenAwayThroughItsParent)
+  {
+    WritePrefab(
+      "lamp",
+      "entity:\n"
+      "  children:\n"
+      "    - name: bulb\n"
+      "      children:\n"
+      "        - name: filament\n"
+      "        - name: glass\n");
+
+    Load(
+      "entities:\n"
+      "  - name: lamp\n"
+      "    prefab: assets://prefabs/lamp.prefab.yml\n"
+      "    children:\n"
+      "      - name: bulb\n"
+      "        children:\n"
+      "          - filament: ~\n");
+
+    EXPECT_THAT(_world.NamesBelow(Find("lamp/bulb")), ElementsAre("glass"));
+  }
+
+  TEST_F(PrefabFilesTest, TakingAwayAChildThePrefabDoesNotHaveIsReportedWithTheOnesItHas)
+  {
+    WritePrefab("lamp", "entity:\n  children:\n    - name: bulb\n    - name: shade\n");
+
+    EXPECT_THAT(
+      ProblemsOf(
+        "entities:\n"
+        "  - name: lamp\n"
+        "    prefab: assets://prefabs/lamp.prefab.yml\n"
+        "    children:\n"
+        "      - post: ~\n"),
+      HasSubstr("test.scene.yml:5: child 'post' of entity 'lamp' is not known. Known are: bulb, shade"));
+  }
+
+  TEST_F(PrefabFilesTest, TakingAwayAChildOfAPrefabWithoutChildrenIsReported)
+  {
+    WritePrefab("thing", "entity:\n  components:\n    Spectator: Default\n");
+
+    EXPECT_THAT(
+      ProblemsOf(
+        "entities:\n"
+        "  - name: a\n"
+        "    prefab: assets://prefabs/thing.prefab.yml\n"
+        "    children:\n"
+        "      - post: ~\n"),
+      HasSubstr("test.scene.yml:5: child 'post' of entity 'a' is not known. entity 'a' has no children"));
+  }
+
+  TEST_F(PrefabFilesTest, OnlyAChildOfAPrefabCanBeTakenAway)
+  {
+    const auto problems = ProblemsOf(
+      "entities:\n"
+      "  - name: a\n"
+      "    children:\n"
+      "      - name: x\n"
+      "      - y: ~\n"
+      "  - b: ~\n");
+
+    EXPECT_THAT(problems, HasSubstr(
+                  "test.scene.yml:5: child 'y' of entity 'a' is taken away, and only a child of a prefab can be"));
+    EXPECT_THAT(problems, HasSubstr(
+                  "test.scene.yml:6: entity 'b' is taken away, and only a child of a prefab can be"));
+    EXPECT_NE(_world.store.FindEntity("a/x"), No_Entity) << "the child stays";
+  }
+
+  TEST_F(PrefabFilesTest, AChildTakenAwayAndWrittenAgainSharesItsName)
+  {
+    WritePrefab("lamp", "entity:\n  children:\n    - name: bulb\n");
+
+    EXPECT_THAT(
+      ProblemsOf(
+        "entities:\n"
+        "  - name: lamp\n"
+        "    prefab: assets://prefabs/lamp.prefab.yml\n"
+        "    children:\n"
+        "      - bulb: ~\n"
+        "      - name: bulb\n"),
+      HasSubstr("test.scene.yml:6: entity 'bulb' shares its name with another entity next to it"));
+  }
+
+  TEST_F(PrefabFilesTest, SavesAChildThatWasTakenAwayTheSameWay)
+  {
+    WritePrefab(
+      "lamp",
+      "entity:\n"
+      "  components:\n"
+      "    Spectator: Default\n"
+      "  children:\n"
+      "    - name: bulb\n"
+      "      components:\n"
+      "        Spectator: Default\n"
+      "    - name: shade\n"
+      "      components:\n"
+      "        Spectator: Default\n");
+    Load(
+      "entities:\n"
+      "  - name: lamp\n"
+      "    prefab: assets://prefabs/lamp.prefab.yml\n"
+      "    children:\n"
+      "      - bulb: ~\n");
+
+    ASSERT_TRUE(_scene.Save(_world.store, "saved", "user://saved.scene.yml"));
+
+    EXPECT_EQ(
+      ReadFile("user://saved.scene.yml"),
+      "scene: saved\n"
+      "version: 1\n"
+      "\n"
+      "entities:\n"
+      "  - name: lamp\n"
+      "    prefab: assets://prefabs/lamp.prefab.yml\n"
+      "    components:\n"
+      "      Spectator: Default\n"
+      "    children:\n"
+      "      - bulb: ~\n"
+      "      - name: shade\n"
+      "        components:\n"
+      "          Spectator: Default\n");
+
+    World second(_logger);
+    SceneFile saved(&_files, &_yaml, "user://saved.scene.yml", _logger);
+    EXPECT_TRUE(saved.Populate(second.store)) << _logger->Messages(LogLevel::Error);
+    EXPECT_THAT(second.NamesBelow(second.store.FindEntity("lamp")), ElementsAre("shade"));
+  }
+
+  TEST_F(PrefabFilesTest, SavesAChildOfTheBasePrefabThatWasTakenAwayAndNotOneTheDerivedPrefabTookAway)
+  {
+    WritePrefab("lamp", "entity:\n  children:\n    - name: bulb\n    - name: shade\n    - name: post\n");
+    WritePrefab(
+      "short-lamp",
+      "entity:\n"
+      "  prefab: assets://prefabs/lamp.prefab.yml\n"
+      "  children:\n"
+      "    - post: ~\n"
+      "    - name: base\n");
+    Load(
+      "entities:\n"
+      "  - name: lamp\n"
+      "    prefab: assets://prefabs/short-lamp.prefab.yml\n"
+      "    children:\n"
+      "      - shade: ~\n");
+    EXPECT_THAT(_world.NamesBelow(Find("lamp")), ::testing::UnorderedElementsAre("bulb", "base"));
+
+    ASSERT_TRUE(_scene.Save(_world.store, "saved", "user://saved.scene.yml"));
+
+    // the child the scene took away is written as taken away, before the
+    // ones the entity has; the one the derived prefab took away is not,
+    // since the prefab takes it away on every load
+    const auto saved = ReadFile("user://saved.scene.yml");
+    EXPECT_THAT(saved, HasSubstr(
+                  "    prefab: assets://prefabs/short-lamp.prefab.yml\n"
+                  "    components: {}\n"
+                  "    children:\n"
+                  "      - shade: ~\n"
+                  "      - name: "));
+    EXPECT_THAT(saved, HasSubstr("      - name: bulb\n"));
+    EXPECT_THAT(saved, HasSubstr("      - name: base\n"));
+    EXPECT_THAT(saved, Not(HasSubstr("post")));
+  }
+
+  // spawning
+
+  TEST_F(PrefabFilesTest, SpawnsAPrefabAtTheTopAsThePrefabDescribesIt)
+  {
+    WriteWall();
+    Load("entities: []\n");
+
+    const Entity wall = _scene.Spawn(_world.store, "assets://prefabs/wall.prefab.yml", No_Entity, DataValue{});
+
+    ASSERT_NE(wall, No_Entity);
+    EXPECT_EQ(_world.store.GetParent(wall), No_Entity);
+    EXPECT_EQ(_world.store.GetName(wall), "");
+    EXPECT_EQ(_world.store.Get<Transform>(wall)->scale.y, 2.5f);
+    EXPECT_EQ(_world.store.Get<Renderable>(wall)->render_info.model_path, "assets://models/wall.obj");
+    EXPECT_TRUE(_world.store.Has<Spectator>(wall));
+    EXPECT_EQ(_world.store.Get<Prefab>(wall)->path, "assets://prefabs/wall.prefab.yml");
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 0u) << _logger->Messages(LogLevel::Error);
+  }
+
+  TEST_F(PrefabFilesTest, SpawnsBelowAParentWithTheOverridesOnTop)
+  {
+    WriteWall();
+    Load("entities:\n  - name: room\n");
+    const Entity room = Find("room");
+
+    auto transform = DataValue::Map();
+    auto position = DataValue::List();
+    position.Add(DataValue::Number(1));
+    position.Add(DataValue::Number(2));
+    position.Add(DataValue::Number(3));
+    transform.Set("position", position);
+    auto overrides = DataValue::Map();
+    overrides.Set("Transform", transform);
+    overrides.Set("Spectator", DataValue{});
+
+    const Entity wall = _scene.Spawn(_world.store, "assets://prefabs/wall.prefab.yml", room, overrides);
+
+    ASSERT_NE(wall, No_Entity);
+    EXPECT_EQ(_world.store.GetParent(wall), room);
+    EXPECT_EQ(_world.store.Get<Transform>(wall)->position, glm::vec3(1.0f, 2.0f, 3.0f));
+    EXPECT_EQ(_world.store.Get<Transform>(wall)->scale.y, 2.5f) << "what the overrides leave out is the prefab's";
+    EXPECT_FALSE(_world.store.Has<Spectator>(wall)) << "nothing takes a component away";
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 0u) << _logger->Messages(LogLevel::Error);
+  }
+
+  TEST_F(PrefabFilesTest, SpawnsWithTheChildrenOfThePrefab)
+  {
+    WritePrefab("lamp", "entity:\n  children:\n    - name: bulb\n      components:\n        Light: Default\n");
+    Load("entities: []\n");
+
+    const Entity lamp = _scene.Spawn(_world.store, "assets://prefabs/lamp.prefab.yml", No_Entity, DataValue{});
+
+    ASSERT_NE(lamp, No_Entity);
+    EXPECT_THAT(_world.NamesBelow(lamp), ElementsAre("bulb"));
+  }
+
+  TEST_F(PrefabFilesTest, SpawningAPrefabThatCannotBeReadSpawnsNothingAndSaysSo)
+  {
+    Load("entities: []\n");
+    _logger->Clear();
+
+    const Entity nothing = _scene.Spawn(_world.store, "assets://prefabs/nope.prefab.yml", No_Entity, DataValue{});
+
+    EXPECT_EQ(nothing, No_Entity);
+    EXPECT_THAT(_world.NamesBelow(No_Entity), ::testing::IsEmpty());
+    EXPECT_THAT(_logger->Messages(LogLevel::Error), HasSubstr(
+                  "spawn of assets://prefabs/nope.prefab.yml: 'prefab' of the spawned entity is "
+                  "assets://prefabs/nope.prefab.yml, which cannot be read"));
+    EXPECT_THAT(_logger->Messages(LogLevel::Error), HasSubstr(
+                  "The prefab assets://prefabs/nope.prefab.yml has 1 problem, nothing is spawned"));
+  }
+
+  TEST_F(PrefabFilesTest, WhatIsWrongWithTheOverridesIsSaidWithThePrefab)
+  {
+    WriteWall();
+    Load("entities: []\n");
+    auto overrides = DataValue::Map();
+    overrides.Set("Spectre", DataValue::Text("Default"));
+
+    const Entity wall = _scene.Spawn(_world.store, "assets://prefabs/wall.prefab.yml", No_Entity, overrides);
+
+    EXPECT_NE(wall, No_Entity) << "the entity holds what could be read";
+    EXPECT_THAT(_logger->Messages(LogLevel::Error), HasSubstr(
+                  "spawn of assets://prefabs/wall.prefab.yml: component 'Spectre' of the spawned entity is not known"));
+    EXPECT_THAT(_logger->Messages(LogLevel::Error), HasSubstr(
+                  "The spawn of assets://prefabs/wall.prefab.yml has 1 problem, the entity holds what could be read"));
+  }
+
+  TEST_F(PrefabFilesTest, ASpawnReadsThePrefabTheSceneLoadedFromMemoryNotFromItsFile)
+  {
+    WriteWall();
+    Load("entities:\n  - name: wall\n    prefab: assets://prefabs/wall.prefab.yml\n");
+
+    // the file changes under the scene, which a spawn does not see
+    WritePrefab("wall", "entity:\n  components:\n    Transform:\n      scale: [1, 9, 1]\n");
+
+    const Entity spawned = _scene.Spawn(_world.store, "assets://prefabs/wall.prefab.yml", No_Entity, DataValue{});
+    ASSERT_NE(spawned, No_Entity);
+    EXPECT_EQ(_world.store.Get<Transform>(spawned)->scale.y, 2.5f);
+
+    // the next load reads the file anew
+    World second(_logger);
+    ASSERT_TRUE(_scene.Load(second.store, "assets://scenes/test.scene.yml")) << _logger->Messages(LogLevel::Error);
+    const Entity again = _scene.Spawn(second.store, "assets://prefabs/wall.prefab.yml", No_Entity, DataValue{});
+    ASSERT_NE(again, No_Entity);
+    EXPECT_EQ(second.store.Get<Transform>(again)->scale.y, 9.0f);
+  }
+
+  TEST_F(PrefabFilesTest, ASpawnedEntityIsSavedAsAPlacedOne)
+  {
+    WritePrefab("thing", "entity:\n  components:\n    Spectator: Default\n");
+    Load("entities: []\n");
+    ASSERT_NE(_scene.Spawn(_world.store, "assets://prefabs/thing.prefab.yml", No_Entity, DataValue{}), No_Entity);
+
+    ASSERT_TRUE(_scene.Save(_world.store, "saved", "user://saved.scene.yml"));
+
+    EXPECT_EQ(
+      ReadFile("user://saved.scene.yml"),
+      "scene: saved\n"
+      "version: 1\n"
+      "\n"
+      "entities:\n"
+      "  - prefab: assets://prefabs/thing.prefab.yml\n"
+      "    components:\n"
+      "      Spectator: Default\n");
+  }
 }

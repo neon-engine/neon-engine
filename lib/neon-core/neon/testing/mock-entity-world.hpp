@@ -21,6 +21,9 @@ namespace neon::testing
   public:
     MOCK_METHOD(bool, Populate, (EntityStore &store), (override));
     MOCK_METHOD(bool, Load, (EntityStore &store, const std::string &path), (override));
+    MOCK_METHOD(
+      Entity, Spawn, (EntityStore &store, const std::string &path, Entity parent, const DataValue &overrides),
+      (override));
   };
 } // neon::testing
 

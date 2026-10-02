@@ -1,5 +1,6 @@
 #include "entity-world.hpp"
 
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -8,8 +9,11 @@
 #include <gtest/gtest.h>
 
 #include <neon/common/transform.hpp>
+#include <neon/data/data-value.hpp>
+#include <neon/data/document-format.hpp>
 #include <neon/testing/fake-entity-store.hpp>
 #include <neon/testing/mock-entity-world.hpp>
+#include <neon/testing/mock-file-system-context.hpp>
 #include <neon/testing/mock-input-system.hpp>
 #include <neon/testing/mock-render-pipeline.hpp>
 #include <neon/testing/mock-window-system.hpp>
@@ -17,23 +21,29 @@
 
 #include "components/camera.hpp"
 #include "components/light.hpp"
+#include "components/prefab.hpp"
 #include "components/renderable.hpp"
 #include "components/persistent.hpp"
 #include "components/player.hpp"
 #include "components/scene-exit.hpp"
 #include "components/trigger.hpp"
 #include "components/spectator.hpp"
+#include "scene-file/scene-file.hpp"
 
 namespace
 {
   using neon::Camera;
+  using neon::DataValue;
   using neon::Player;
   using neon::Entity;
   using neon::EntityStore;
   using neon::EntitySystem;
   using neon::EntityWorld;
   using neon::Light;
+  using neon::No_Entity;
   using neon::Persistent;
+  using neon::Prefab;
+  using neon::SceneFile;
   using neon::SceneExit;
   using neon::Trigger;
   using neon::No_Component;
@@ -44,6 +54,7 @@ namespace
   using neon::testing::FakeInputContext;
   using neon::testing::LogLevel;
   using neon::testing::MockEntitySystem;
+  using neon::testing::MockFileSystemContext;
   using neon::testing::MockRenderPipeline;
   using neon::testing::MockScene;
   using neon::testing::MockWindowContext;
@@ -1055,5 +1066,213 @@ namespace
     _world.Update();
 
     EXPECT_THAT(_calls, ElementsAre("game registered", "game initialized", "game updated"));
+  }
+
+  // spawning
+
+  TEST_F(EntityWorldTest, SpawnsAPrefabThroughTheSceneBelowTheParentWithTheOverrides)
+  {
+    Entity room = 0;
+    PopulateWith([&](EntityStore &store) { room = store.CreateEntity("room"); });
+    _world.Initialize();
+
+    auto overrides = DataValue::Map();
+    overrides.Set("Transform", DataValue::Text("Default"));
+    EXPECT_CALL(_scene, Spawn(Ref(_store), "assets://prefabs/wall.prefab.yml", room, ::testing::Truly(
+                  [](const DataValue &value) { return value.Find("Transform") != nullptr; })))
+      .WillOnce(Return(42));
+
+    EXPECT_EQ(_world.Spawn("assets://prefabs/wall.prefab.yml", room, overrides), 42u);
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 0u) << _logger->Messages(LogLevel::Error);
+  }
+
+  TEST_F(EntityWorldTest, SpawnsNothingBeforeItIsInitialized)
+  {
+    EXPECT_CALL(_scene, Spawn(_, _, _, _)).Times(0);
+
+    EXPECT_EQ(_world.Spawn("assets://prefabs/wall.prefab.yml", No_Entity, DataValue{}), No_Entity);
+    EXPECT_TRUE(_logger->Contains(
+      LogLevel::Error,
+      "The prefab assets://prefabs/wall.prefab.yml was asked for before the world was initialized, nothing is spawned"));
+  }
+
+  TEST_F(EntityWorldTest, SpawnsNothingWithoutAPath)
+  {
+    _world.Initialize();
+    EXPECT_CALL(_scene, Spawn(_, _, _, _)).Times(0);
+
+    EXPECT_EQ(_world.Spawn("", No_Entity, DataValue{}), No_Entity);
+    EXPECT_TRUE(_logger->Contains(LogLevel::Error, "A prefab without a path was asked for, nothing is spawned"));
+  }
+
+  TEST_F(EntityWorldTest, SpawnsNothingBelowAnEntityThatIsGone)
+  {
+    Entity crate = 0;
+    PopulateWith([&](EntityStore &store) { crate = store.CreateEntity("crate"); });
+    _world.Initialize();
+    _store.DestroyEntity(crate);
+    EXPECT_CALL(_scene, Spawn(_, _, _, _)).Times(0);
+
+    EXPECT_EQ(_world.Spawn("assets://prefabs/wall.prefab.yml", crate, DataValue{}), No_Entity);
+    EXPECT_TRUE(_logger->Contains(
+      LogLevel::Error,
+      "The prefab assets://prefabs/wall.prefab.yml was asked for below an entity that is gone, nothing is spawned"));
+  }
+
+  /// A format whose documents are values the test put in, under the name
+  /// they are read by, so that the world reads a scene and its prefabs
+  /// without a format of text.
+  class FakeDocumentFormat final : public neon::DocumentFormat
+  {
+  public:
+    std::map<std::string, DataValue> documents;
+
+    bool Read(const std::string &name, const std::string &, DataValue &document, std::string &error) override
+    {
+      const auto found = documents.find(name);
+      if (found == documents.end())
+      {
+        error = name + ": not a document the test wrote";
+        return false;
+      }
+      document = found->second;
+      return true;
+    }
+
+    std::string Write(const DataValue &) override
+    {
+      return "";
+    }
+  };
+
+  /// The world with the scene an application gives it, a SceneFile, over a
+  /// file system that counts what is read.
+  class EntityWorldSpawnTest : public ::testing::Test
+  {
+  protected:
+    std::shared_ptr<RecordingLogger> _logger = std::make_shared<RecordingLogger>();
+    FakeEntityStore _store;
+    NiceMock<MockFileSystemContext> _files;
+    FakeDocumentFormat _format;
+    SceneFile _scene{&_files, &_format, "assets://scenes/test.scene.yml", _logger};
+    NiceMock<MockRenderPipeline> _pipeline{_logger};
+    NiceMock<FakeInputContext> _input{_logger};
+    NiceMock<MockWindowContext> _window;
+    EntityWorld _world{&_store, &_scene, &_pipeline, &_input, &_window, _logger};
+
+    const std::string _wall = "assets://prefabs/wall.prefab.yml";
+
+    void SetUp() override
+    {
+      ON_CALL(_window, GetDeltaTime()).WillByDefault(Return(0.5));
+
+      // a file is there when the test wrote its document
+      ON_CALL(_files, ReadText(_, _)).WillByDefault([this](const std::string &path, std::string &text)
+      {
+        text = path;
+        return _format.documents.contains(path);
+      });
+
+      auto scene = DataValue::Map();
+      scene.Set("entities", DataValue::List());
+      _format.documents["assets://scenes/test.scene.yml"] = scene;
+      _format.documents["assets://scenes/next.scene.yml"] = scene;
+
+      // a wall: a Transform with a scale, and a Spectator
+      auto scale = DataValue::List();
+      scale.Add(DataValue::Number(1));
+      scale.Add(DataValue::Number(2.5));
+      scale.Add(DataValue::Number(1));
+      auto transform = DataValue::Map();
+      transform.Set("scale", scale);
+      auto components = DataValue::Map();
+      components.Set("Transform", transform);
+      components.Set("Spectator", DataValue::Text("Default"));
+      auto entity = DataValue::Map();
+      entity.Set("components", components);
+      auto wall = DataValue::Map();
+      wall.Set("entity", entity);
+      _format.documents[_wall] = wall;
+    }
+
+    void TearDown() override
+    {
+      _world.CleanUp();
+    }
+  };
+
+  TEST_F(EntityWorldSpawnTest, SpawnsTwiceFromOnePathAndReadsTheFileOnce)
+  {
+    _world.Initialize();
+    EXPECT_CALL(_files, ReadText(_, _)).Times(::testing::AnyNumber());
+    EXPECT_CALL(_files, ReadText(_wall, _)).Times(1);
+
+    const Entity first = _world.Spawn(_wall, No_Entity, DataValue{});
+    const Entity second = _world.Spawn(_wall, No_Entity, DataValue{});
+
+    ASSERT_NE(first, No_Entity);
+    ASSERT_NE(second, No_Entity);
+    EXPECT_NE(first, second);
+    for (const Entity wall : {first, second})
+    {
+      EXPECT_EQ(_store.GetParent(wall), No_Entity);
+      EXPECT_EQ(_store.Get<Transform>(wall)->scale.y, 2.5f);
+      EXPECT_TRUE(_store.Has<Spectator>(wall));
+      EXPECT_EQ(_store.Get<Prefab>(wall)->path, _wall) << "as a placed entity carries it";
+    }
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 0u) << _logger->Messages(LogLevel::Error);
+  }
+
+  TEST_F(EntityWorldSpawnTest, SpawnsWithTheOverridesOnTopOfThePrefab)
+  {
+    Entity room = 0;
+    _world.Initialize();
+    room = _store.CreateEntity("room");
+
+    auto position = DataValue::List();
+    position.Add(DataValue::Number(1));
+    position.Add(DataValue::Number(2));
+    position.Add(DataValue::Number(3));
+    auto transform = DataValue::Map();
+    transform.Set("position", position);
+    auto overrides = DataValue::Map();
+    overrides.Set("Transform", transform);
+    overrides.Set("Spectator", DataValue{});
+
+    const Entity wall = _world.Spawn(_wall, room, overrides);
+
+    ASSERT_NE(wall, No_Entity);
+    EXPECT_EQ(_store.GetParent(wall), room);
+    EXPECT_EQ(_store.Get<Transform>(wall)->position, glm::vec3(1.0f, 2.0f, 3.0f));
+    EXPECT_EQ(_store.Get<Transform>(wall)->scale.y, 2.5f) << "what the overrides leave out stays the prefab's";
+    EXPECT_FALSE(_store.Has<Spectator>(wall)) << "nothing takes a component away";
+  }
+
+  TEST_F(EntityWorldSpawnTest, SpawnsNothingFromAFileThatIsNotThereAndSaysSo)
+  {
+    _world.Initialize();
+
+    EXPECT_EQ(_world.Spawn("assets://prefabs/nope.prefab.yml", No_Entity, DataValue{}), No_Entity);
+
+    EXPECT_TRUE(_store.GetChildren(No_Entity).empty());
+    EXPECT_THAT(_logger->Messages(LogLevel::Error), ::testing::HasSubstr(
+                  "The prefab assets://prefabs/nope.prefab.yml has 1 problem, nothing is spawned"));
+  }
+
+  TEST_F(EntityWorldSpawnTest, ReadsThePrefabAgainAfterTheSceneChanged)
+  {
+    _world.Initialize();
+
+    // the scene is read as well, which is not what is counted
+    EXPECT_CALL(_files, ReadText(_, _)).Times(::testing::AnyNumber());
+    EXPECT_CALL(_files, ReadText(_wall, _)).Times(2);
+
+    ASSERT_NE(_world.Spawn(_wall, No_Entity, DataValue{}), No_Entity);
+
+    _world.LoadScene("assets://scenes/next.scene.yml");
+    _world.Update();
+
+    ASSERT_NE(_world.Spawn(_wall, No_Entity, DataValue{}), No_Entity);
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 0u) << _logger->Messages(LogLevel::Error);
   }
 }

@@ -27,6 +27,7 @@ scenes:
   - assets://scenes/end.scene.yml
   - assets://scenes/blockout.scene.yml
   - assets://scenes/scripting-demo.scene.yml
+  - assets://scenes/spawn-test.scene.yml
 
 entry_scene: assets://scenes/demo.scene.yml
 

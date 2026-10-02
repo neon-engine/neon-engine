@@ -167,6 +167,17 @@ namespace neon
   {
     Initialize();
 
+    // what a script would spawn once the scene is there, for a check of a
+    // prefab on its own; a prefab that cannot be spawned is in the log
+    if (!_settings_config.spawn_path.empty())
+    {
+      _logger->Info("Spawning {} as the command line asked", _settings_config.spawn_path);
+      if (_world_system->Spawn(_settings_config.spawn_path, No_Entity, DataValue{}) == No_Entity)
+      {
+        _failed = true;
+      }
+    }
+
     const FrameCapture frame_capture(_settings_config, _render_system);
     std::size_t frames_rendered = 0;
 

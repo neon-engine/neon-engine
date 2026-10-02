@@ -14,8 +14,11 @@
 
 namespace neon
 {
-  /// The prefabs a scene places, read once each and kept while the scene
-  /// loads, so that a wall placed forty times is read from its file once.
+  /// The prefabs a scene places, read once each and kept for the life of
+  /// the scene, so that a wall placed forty times is read from its file
+  /// once, and a prefab spawned while the game plays is not read again.
+  /// Clear() forgets them when another scene is loaded, so that a file that
+  /// changed is read anew.
   ///
   /// It also keeps which prefabs are being placed at the moment, from the
   /// scene down, so that a prefab that places itself, through others or
@@ -49,8 +52,12 @@ namespace neon
     /// again would be a loop.
     [[nodiscard]] bool IsPlacing(const std::string &path) const;
 
-    /// Whether the prefab was placed before, in this load.
+    /// Whether the prefab was placed before, since the last Clear().
     [[nodiscard]] bool WasPlaced(const std::string &path) const;
+
+    /// Forgets every prefab that was read and placed, so that the next
+    /// Find() reads the file again: at the start of a scene load.
+    void Clear();
 
     /// Says that the prefab is being placed, from a line of a document,
     /// until EndPlacing().

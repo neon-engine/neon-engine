@@ -82,6 +82,12 @@ namespace
       // a scene written in code knows no other
       return false;
     }
+
+    neon::Entity Spawn(EntityStore &, const std::string &, neon::Entity, const neon::DataValue &) override
+    {
+      // and no recipes
+      return neon::No_Entity;
+    }
   };
 
   /// A system of a game that does what the test tells it to.

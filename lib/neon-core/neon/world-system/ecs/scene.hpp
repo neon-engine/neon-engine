@@ -3,6 +3,8 @@
 
 #include <string>
 
+#include <neon/data/data-value.hpp>
+
 #include "entity-store.hpp"
 
 namespace neon
@@ -30,6 +32,21 @@ namespace neon
     /// What Populate() says about problems holds here too. A scene that
     /// is written in code and knows no paths returns false and says so.
     virtual bool Load(EntityStore &store, const std::string &path) = 0;
+
+    /// Creates the entity of a prefab recipe, named by its virtual path,
+    /// below `parent`, which is No_Entity for the top, while the game
+    /// plays. `overrides` is read on top of it, in the form of the
+    /// `components` of an entity in a scene file: a map of components, each
+    /// with the values that differ, or nothing to override none. Returns
+    /// the entity, which holds what could be read when something in the
+    /// recipe or the overrides is wrong, with every problem in the log; or
+    /// No_Entity when the recipe cannot be read at all. A scene that is
+    /// written in code and knows no recipes returns No_Entity and says so.
+    virtual Entity Spawn(
+      EntityStore &store,
+      const std::string &path,
+      Entity parent,
+      const DataValue &overrides) = 0;
   };
 } // neon
 

@@ -67,6 +67,11 @@ struct SettingsConfig
   /// of what the scene shows. Empty shows none.
   std::string ui_path;
 
+  /// Virtual path of a prefab recipe that is spawned at the top of the
+  /// world once the scene is read, as a script would spawn it, for checking
+  /// a prefab without a scene that places it. Empty spawns none.
+  std::string spawn_path;
+
   /// Virtual path of the menu that is shown when the player pauses, with
   /// escape or the start button of a controller. The world stands still
   /// while it is shown. Empty shows none, and pause does nothing.

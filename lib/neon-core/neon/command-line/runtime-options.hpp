@@ -17,6 +17,7 @@ namespace neon
   ///   --output-dir DIR          Folder of this machine that output:// stands for
   ///   --time-step SECONDS       Advance the game by this much in every frame
   ///   --headless-renderer       Render without a window
+  ///   --spawn PATH              Spawn this prefab once the scene is read
   ///   --headless                Run as a dedicated server. Refused until there is one (#144)
   class RuntimeOptions final : public CommandLineOptions
   {

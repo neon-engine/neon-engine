@@ -135,7 +135,7 @@ These come first, because everything after them is cheaper with them in place.
 | Meshes with collision, generated (#97) | **First step done:** `MeshData`, `MeshBuilder` (box, plane, ramp, prism), flat and smooth normals, textures projected once a metre, the `Geometry` component drawn by its `Renderable` and collided with through a `Collider`, a level blocked out in `blockout.scene.yml`. Open: concave outlines, brushes and booleans, rebuilding while the game runs. See [geometry.md](geometry.md) |
 | Scenes and resources serialized to binary and text (#96) | As Godot does with resources, so that saved games are the same machinery. Not decided; to be discussed |
 | A scene manager (#118) | Changes between whole scenes, with a loading screen and what carries over |
-| Prefabs (#146) | An entity, or a tree of them, described once in a `*.prefab.yml`, placed in scenes with what differs written on top, and made at run time. A prefab is not a scene |
+| Prefabs (#146) | **Done:** an entity, or a tree of them, described once in a `*.prefab.yml`, placed in scenes with what differs written on top, a child taken away with `~` (#228), and spawned at run time through `WorldSystem::Spawn` (#229), see [prefabs.md](prefabs.md). A prefab is not a scene. Open: a Lua binding once scripts come (#57) |
 | Assets streamed by distance (#114) | Loaded as the player comes near and released as the player leaves, in the background |
 | Input maps with states (#117) | Named actions bound by a project, and maps for walking, driving, swimming, a menu |
 

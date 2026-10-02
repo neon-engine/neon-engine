@@ -60,9 +60,20 @@ namespace neon
     DocumentFormat *_format;
     std::string _path;
     ComponentFormats _component_formats;
+    std::shared_ptr<Logger> _logger;
+
+    // the prefabs the scene placed, kept for the life of the scene so that
+    // a spawn does not read its file again, and forgotten by the next load
+    PrefabFiles _prefabs;
 
     bool Read(EntityStore &store);
-    std::shared_ptr<Logger> _logger;
+
+    /// Logs every problem of a read, with its line, and a last line that
+    /// counts them: `<what> has N problems, <goes_on>`.
+    void ReportProblems(
+      const std::vector<std::string> &errors,
+      const std::string &what,
+      const std::string &goes_on) const;
 
     /// Reads a list of entities below a parent. `of` names the parent in
     /// messages, and is empty at the top. When `onto_existing` is set, an
@@ -78,6 +89,19 @@ namespace neon
       Entity parent,
       bool onto_existing,
       PrefabFiles &prefabs,
+      std::vector<std::string> &errors) const;
+
+    /// Takes a child that a prefab gave away, written as `- shade: ~` among
+    /// the children. `item` is what was written, for its line. A child that
+    /// is not there, or one not below a prefab, is reported.
+    void TakeAwayChild(
+      const DataValue &item,
+      const std::string &name,
+      const std::string &document,
+      const std::string &of,
+      EntityStore &store,
+      Entity parent,
+      bool onto_existing,
       std::vector<std::string> &errors) const;
 
     void ReadEntity(
@@ -133,7 +157,11 @@ namespace neon
     /// The names of the components the file can hold, for a message.
     [[nodiscard]] std::string KnownComponents() const;
 
-    [[nodiscard]] DataValue WriteEntity(EntityStore &store, Entity entity) const;
+    /// The names of the children of a prefab's entity, those of the prefab
+    /// it starts from included, for the children a scene took away.
+    void ChildrenOfPrefab(const std::string &path, std::vector<std::string> &names, std::vector<std::string> &seen);
+
+    [[nodiscard]] DataValue WriteEntity(EntityStore &store, Entity entity);
 
   public:
     /// The version of the layout of the file that is written, and the
@@ -164,15 +192,23 @@ namespace neon
     /// so that Save() and messages name the scene that is shown.
     bool Load(EntityStore &store, const std::string &path) override;
 
+    /// Places a prefab below `parent` while the game plays, through the
+    /// same reading a scene file goes through, so that a spawned entity is
+    /// what a placed one is: it carries the Prefab component too. The
+    /// prefab is read from its file once for the life of the scene. See
+    /// Scene::Spawn for `overrides` and what is returned.
+    Entity Spawn(EntityStore &store, const std::string &path, Entity parent, const DataValue &overrides) override;
+
     /// The virtual path of the scene that was read last.
     [[nodiscard]] const std::string &GetPath() const;
 
     /// Writes every entity of the store to a file, as a scene of the given
     /// name. Components without a format are left out. An entity that was
     /// placed from a prefab is written with its `prefab` and with every
-    /// component it has, not only what differs from the prefab. Returns
+    /// component it has, not only what differs from the prefab, and a child
+    /// of the prefab it does not have is written as taken away. Returns
     /// false when the file cannot be written.
-    bool Save(EntityStore &store, const std::string &name, const std::string &path) const;
+    bool Save(EntityStore &store, const std::string &name, const std::string &path);
   };
 } // neon
 

@@ -43,7 +43,7 @@ and inspected by an agent.
 | `EntityStore` | neon-core | The interface. Entities, components, hierarchy, and queries |
 | `EntitySystem` | neon-core | The interface of behaviour |
 | `Scene` | neon-core | The interface of what fills a store |
-| `EntityWorld` | neon-core | Runs the systems every frame, and changes the scene when one is asked for. It is the `WorldSystem` of the runtime |
+| `EntityWorld` | neon-core | Runs the systems every frame, changes the scene when one is asked for, and spawns a prefab through the scene when a game asks, see [prefabs.md](prefabs.md#spawning-at-run-time). It is the `WorldSystem` of the runtime |
 | Components and systems of the engine | neon-core | Listed below |
 | `Flecs_EntityStore` | neon-flecs | The implementation |
 | `SceneFile` | neon-core | The scene that is read from a file. See [scenes.md](scenes.md) |

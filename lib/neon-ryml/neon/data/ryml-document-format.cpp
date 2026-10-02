@@ -214,7 +214,8 @@ namespace neon
     {
       switch (value.GetKind())
       {
-        case DataValue::Kind::Empty: return "null";
+        // the spelling of the recipes, as in `Component: ~`
+        case DataValue::Kind::Empty: return "~";
         case DataValue::Kind::Bool:
         {
           bool result = false;

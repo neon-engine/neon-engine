@@ -123,6 +123,30 @@ namespace neon
     return !_scene_to_load.empty();
   }
 
+  Entity EntityWorld::Spawn(const std::string &path, const Entity parent, const DataValue &overrides)
+  {
+    if (!_initialized)
+    {
+      _logger->Error("The prefab {} was asked for before the world was initialized, nothing is spawned", path);
+      return No_Entity;
+    }
+
+    if (path.empty())
+    {
+      _logger->Error("A prefab without a path was asked for, nothing is spawned");
+      return No_Entity;
+    }
+
+    if (parent != No_Entity && !_store->IsAlive(parent))
+    {
+      _logger->Error("The prefab {} was asked for below an entity that is gone, nothing is spawned", path);
+      return No_Entity;
+    }
+
+    // what is wrong with the prefab is said by the scene
+    return _scene->Spawn(*_store, path, parent, overrides);
+  }
+
   void EntityWorld::ChangeScene()
   {
     const std::string path = _scene_to_load;

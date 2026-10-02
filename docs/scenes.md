@@ -66,7 +66,7 @@ NeonRuntime --scene assets://scenes/other.scene.yml
 | `name` | What the entity is called. Unique among the entities next to it, and without a `/` | It has no name and cannot be found by one |
 | `prefab` | The virtual path of a prefab recipe the entity starts as, see [prefabs.md](prefabs.md). What is written next to it goes on top | The entity is described here alone |
 | `components` | The components, each under the name it was registered with | It carries none |
-| `children` | A list of entities below it | It has none |
+| `children` | A list of entities below it. Below a prefab, `- shade: ~` takes the child `shade` of the prefab away | It has none |
 
 A child moves, turns, and grows with its parent. It is found by the names from
 the top, such as `player/camera`.
@@ -81,8 +81,11 @@ the top, such as `player/camera`.
 
 An entity with a `prefab` has every component and child of the prefab, and
 what is written next to it changes only what it names: a component is read
-into the one the prefab gave, `~` takes one away, and a child of the same
-name is changed. The rules are in [prefabs.md](prefabs.md#what-differs).
+into the one the prefab gave, `~` takes a component or a child away, and a
+child of the same name is changed. The rules are in
+[prefabs.md](prefabs.md#what-differs). A game places a prefab while it
+plays with `WorldSystem::Spawn`, see
+[prefabs.md](prefabs.md#spawning-at-run-time).
 
 ### Components
 
@@ -343,7 +346,7 @@ use.
 | Rule | Reason |
 |---|---|
 | A value that is the default is left out | The file stays short and a change to it shows up as one line |
-| An entity placed from a prefab is written with its `prefab:` and every component it has | Loading it gives the same world. Leaving out what the prefab says is open, see [prefabs.md](prefabs.md#open-questions) |
+| An entity placed from a prefab is written with its `prefab:` and every component it has, and a child of the prefab it lacks as `- name: ~` | Loading it gives the same world. Leaving out what the prefab says is open, see [prefabs.md](prefabs.md#open-questions) |
 | Lists of numbers are written on one line | `[0, 0, 2]` |
 | Entities are set apart by a blank line | They are found at a glance |
 | Entities keep the order they were created in | The file does not reorder itself between two saves |

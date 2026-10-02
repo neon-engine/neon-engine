@@ -76,6 +76,8 @@ namespace
       "  --time-step SECONDS       Advance the game by this much time in every frame, for example 0.016667, "
       "so that a run gives the same frames every time\n"
       "  --headless-renderer       Render without a window, for screenshots and checks on a machine with no display\n"
+      "  --spawn PATH              Spawn this prefab at the top of the world once the scene is read, as a script "
+      "would, for example assets://prefabs/target.prefab.yml\n"
       "  --headless                Run as a dedicated server. Not available yet, see --headless-renderer\n");
   }
 
@@ -123,7 +125,7 @@ namespace
   TEST_F(RuntimeOptionsTest, EveryOptionButTheHeadlessOnesNeedsAValue)
   {
     for (const char *option : {"--ui", "--renderer", "--frames", "--screenshot", "--screenshot-at",
-                               "--output-dir", "--time-step", "--vulkan-version"})
+                               "--output-dir", "--time-step", "--vulkan-version", "--spawn"})
     {
       EXPECT_FALSE(Parse({option})) << option;
       EXPECT_EQ(_command_line.GetError(), "Option '" + std::string(option) + "' needs a value");
@@ -225,6 +227,22 @@ namespace
     ASSERT_TRUE(Apply({"--output-dir", "../some where/shots"}));
 
     EXPECT_EQ(_settings.output_directory, "../some where/shots");
+  }
+
+  // --spawn
+
+  TEST_F(RuntimeOptionsTest, SpawnIsCarriedOverAsItWasGiven)
+  {
+    ASSERT_TRUE(Apply({"--spawn", "assets://prefabs/target.prefab.yml"}));
+
+    EXPECT_EQ(_settings.spawn_path, "assets://prefabs/target.prefab.yml");
+  }
+
+  TEST_F(RuntimeOptionsTest, SpawnsNothingUnlessAsked)
+  {
+    ASSERT_TRUE(Apply({}));
+
+    EXPECT_TRUE(_settings.spawn_path.empty());
   }
 
   // --frames

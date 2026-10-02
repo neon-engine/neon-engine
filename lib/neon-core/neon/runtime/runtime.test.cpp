@@ -390,6 +390,65 @@ namespace
     ExpectCleanUp();
   }
 
+  TEST_F(RuntimeTest, SpawnsThePrefabItWasAskedForAfterTheWorldIsThereAndBeforeTheFirstFrame)
+  {
+    const auto runtime = Create({.spawn_path = "assets://prefabs/target.prefab.yml", .max_frames = 1});
+
+    EXPECT_CALL(_window_system, Initialize());
+    EXPECT_CALL(_input_system, Initialize());
+    EXPECT_CALL(_render_system, Initialize());
+    EXPECT_CALL(_render_pipeline, Initialize());
+    {
+      InSequence in_order;
+      EXPECT_CALL(_world_system, Initialize());
+      EXPECT_CALL(_world_system, Spawn("assets://prefabs/target.prefab.yml", neon::No_Entity, _))
+        .WillOnce(Return(42));
+      EXPECT_CALL(_world_system, Update());
+    }
+    EXPECT_CALL(_input_system, ProcessInput());
+    EXPECT_CALL(_render_system, PrepareFrame());
+    EXPECT_CALL(_render_system, FinishFrame());
+    EXPECT_CALL(_window_system, Update());
+    LetTheWindowRunUntilItIsClosed();
+
+    runtime->Run();
+
+    EXPECT_FALSE(runtime->HasFailed());
+    EXPECT_TRUE(_logger->Contains(
+      LogLevel::Info, "Spawning assets://prefabs/target.prefab.yml as the command line asked"));
+    ExpectCleanUp();
+  }
+
+  TEST_F(RuntimeTest, SpawnsNothingUnlessAsked)
+  {
+    const auto runtime = Create({.max_frames = 1});
+
+    ExpectInitialize();
+    LetTheWindowRunUntilItIsClosed();
+    ExpectFrames(1);
+    EXPECT_CALL(_world_system, Spawn(_, _, _)).Times(0);
+
+    runtime->Run();
+
+    ExpectCleanUp();
+  }
+
+  TEST_F(RuntimeTest, HasFailedWhenThePrefabItWasAskedForCouldNotBeSpawned)
+  {
+    const auto runtime = Create({.spawn_path = "assets://prefabs/nope.prefab.yml", .max_frames = 1});
+
+    ExpectInitialize();
+    LetTheWindowRunUntilItIsClosed();
+    ExpectFrames(1);
+    EXPECT_CALL(_world_system, Spawn("assets://prefabs/nope.prefab.yml", neon::No_Entity, _))
+      .WillOnce(Return(neon::No_Entity));
+
+    runtime->Run();
+
+    EXPECT_TRUE(runtime->HasFailed()) << "the world said why";
+    ExpectCleanUp();
+  }
+
   TEST_F(RuntimeTest, StopsAfterTheFramesItWasGiven)
   {
     const auto runtime = Create({.max_frames = 5});

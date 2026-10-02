@@ -35,6 +35,7 @@ The last column is a proposal, to be decided in #143:
 | `--headless` | Development | A dedicated server (#144): no display, no renderer, no sound, no input devices. Not available yet, the option is refused and points at `--headless-renderer` | Decide with #144, which may make the server a third kind of runtime |
 | `--input SCRIPT` | Development | Input from a script in place of devices | Editor only. It plays the game without a player |
 | `--input-script PATH` | Development | The same from a file | Editor only |
+| `--spawn PATH` | Development | Spawns this prefab at the top of the world once the scene is read, as a script would, see [prefabs.md](prefabs.md#spawning-at-run-time) | Editor only. It is for checking a prefab on its own |
 | `--window-size WxH` | Display | The size of the window in points, over `window` of the settings | Decide. Usually a menu's choice, but useful for displays a game does not expect |
 | `--render-scale NUMBER` | Display | Pixels for each point, without a window | Editor only. It needs `--headless-renderer` |
 | `--ui-scale NUMBER` | Display | Makes the user interface larger or smaller, over `ui.scale` of the settings | Decide. It helps players who need larger text, which a settings menu may offer instead |

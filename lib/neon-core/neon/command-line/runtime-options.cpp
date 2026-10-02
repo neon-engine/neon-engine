@@ -22,6 +22,7 @@ namespace neon
     const std::string headless = "headless";
     const std::string time_step = "time-step";
     const std::string output_dir = "output-dir";
+    const std::string spawn = "spawn";
 
     const std::string vulkan = "vulkan";
 
@@ -140,6 +141,14 @@ namespace neon
       .group = development
     });
 
+    command_line.Add({
+      .name = spawn,
+      .value_name = "PATH",
+      .description = "Spawn this prefab at the top of the world once the scene is read, as a script would, "
+                     "for example assets://prefabs/target.prefab.yml",
+      .group = development
+    });
+
     // declared so that it is understood and refused with a pointer to the
     // right option, instead of being an unknown one. Applying it is for the
     // dedicated server, #144
@@ -190,6 +199,11 @@ namespace neon
     if (command_line.IsSet(output_dir))
     {
       settings.output_directory = command_line.GetValue(output_dir);
+    }
+
+    if (command_line.IsSet(spawn))
+    {
+      settings.spawn_path = command_line.GetValue(spawn);
     }
 
     if (command_line.IsSet(frames))

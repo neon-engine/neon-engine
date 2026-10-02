@@ -35,6 +35,13 @@ namespace neon
     return std::ranges::find(_placed, path) != _placed.end();
   }
 
+  void PrefabFiles::Clear()
+  {
+    _files.clear();
+    _placing.clear();
+    _placed.clear();
+  }
+
   void PrefabFiles::BeginPlacing(const std::string &path, const std::string &document, const std::size_t line)
   {
     _placing.emplace_back(path, std::format("{}:{}", document, line));

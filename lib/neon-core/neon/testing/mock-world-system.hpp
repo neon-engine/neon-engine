@@ -29,6 +29,8 @@ namespace neon::testing
 
     MOCK_METHOD(void, LoadScene, (const std::string &file_path), (override));
 
+    MOCK_METHOD(Entity, Spawn, (const std::string &path, Entity parent, const DataValue &overrides), (override));
+
     MOCK_METHOD(void, CleanUp, (), (override));
   };
 } // neon::testing

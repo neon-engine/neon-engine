@@ -103,6 +103,14 @@ namespace neon
     /// Whether a scene was asked for and not read yet.
     [[nodiscard]] bool IsChangingScene() const;
 
+    /// Places a prefab below `parent` at once, through the scene, so that
+    /// what is spawned is what the scene would have placed: it carries the
+    /// Prefab component, and the file is read once for the life of the
+    /// scene. A world that is not initialized, a path that is empty, and a
+    /// parent that is not alive are refused and said in the log. See
+    /// WorldSystem::Spawn.
+    Entity Spawn(const std::string &path, Entity parent, const DataValue &overrides) override;
+
     void Initialize() override;
 
     void Update() override;
