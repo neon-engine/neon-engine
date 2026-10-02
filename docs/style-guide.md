@@ -139,6 +139,21 @@ explicit VK_RenderSystem(
 This differs from Google, which starts with `public:`. `private:` is written
 only when something private has to follow the public part.
 
+### Helpers are private members, not file-local functions
+
+A function that serves one class is a private member of it, static when it
+needs nothing of the object, and not a function in an anonymous namespace of
+the `.cpp`. A file is a class (see [one type per file](#one-type-per-file)),
+so a reader of its header sees everything the class is made of, and the
+helper is tested, named, and found like any member. An anonymous namespace
+is for what belongs to no class at all: a constant of the file, a free
+function that several free functions of the file share.
+
+This differs from Google, which puts file-local helpers in an unnamed
+namespace for internal linkage. The pattern came into the code base by
+imitation from the first pull requests and was never decided; decided on
+2026-10-02, with the sweep of the files that still do it as #214.
+
 ## Language use
 
 | Rule | Example | Google |
