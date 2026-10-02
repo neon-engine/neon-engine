@@ -64,17 +64,32 @@ NeonRuntime --scene assets://scenes/other.scene.yml
 | Name | Holds | When it is left out |
 |---|---|---|
 | `name` | What the entity is called. Unique among the entities next to it, and without a `/` | It has no name and cannot be found by one |
+| `prefab` | The virtual path of a prefab recipe the entity starts as, see [prefabs.md](prefabs.md). What is written next to it goes on top | The entity is described here alone |
 | `components` | The components, each under the name it was registered with | It carries none |
 | `children` | A list of entities below it | It has none |
 
 A child moves, turns, and grows with its parent. It is found by the names from
 the top, such as `player/camera`.
 
+```yaml
+  - name: north-wall
+    prefab: assets://prefabs/wall.prefab.yml
+    components:
+      Transform:
+        position: [0, 0, -3]
+```
+
+An entity with a `prefab` has every component and child of the prefab, and
+what is written next to it changes only what it names: a component is read
+into the one the prefab gave, `~` takes one away, and a child of the same
+name is changed. The rules are in [prefabs.md](prefabs.md#what-differs).
+
 ### Components
 
 What a component leaves out keeps its default. A component that keeps all of
 its defaults is written as `Default`, as in `Spectator: Default`. `{}` means
-the same.
+the same. On an entity placed from a prefab, what is left out keeps what the
+prefab says instead.
 
 **Transform**
 
@@ -327,6 +342,7 @@ use.
 | Rule | Reason |
 |---|---|
 | A value that is the default is left out | The file stays short and a change to it shows up as one line |
+| An entity placed from a prefab is written with its `prefab:` and every component it has | Loading it gives the same world. Leaving out what the prefab says is open, see [prefabs.md](prefabs.md#open-questions) |
 | Lists of numbers are written on one line | `[0, 0, 2]` |
 | Entities are set apart by a blank line | They are found at a glance |
 | Entities keep the order they were created in | The file does not reorder itself between two saves |
@@ -409,7 +425,8 @@ those exist.
 
 - Comments and the order of names are lost when the engine writes a file that
   was changed by hand, see [recipes.md](recipes.md#open-questions).
-- One scene inside another, such as a tree that is placed a hundred times.
-  Flecs has prefabs for it.
+- One scene inside another. An entity that is placed a hundred times is a
+  prefab now, see [prefabs.md](prefabs.md); a whole scene inside another is
+  not.
 - An entity that refers to another, such as a door to its switch. Paths such
   as `player/camera` are the likely answer.

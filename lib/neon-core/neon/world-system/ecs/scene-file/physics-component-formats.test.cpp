@@ -150,10 +150,22 @@ namespace
       return value;
     }
 
-    /// The only problem that was found with a value.
+    /// Takes the component away, so that the next read starts from the
+    /// defaults and not from what an earlier read left.
+    void Clear(const std::string &name)
+    {
+      if (const auto id = _store.FindComponent(name); _store.HasComponent(_entity, id))
+      {
+        _store.RemoveComponent(_entity, id);
+      }
+    }
+
+    /// The only problem that was found with a value, read onto an entity
+    /// that has no such component yet.
     std::string ProblemOf(const std::string &component, const std::string &name, const DataValue &value)
     {
       _errors.clear();
+      Clear(component);
 
       auto map = DataValue::Map();
       map.Set(name, At(7, value));
@@ -854,6 +866,7 @@ namespace
     const auto problem = [&](const std::string &shape, const std::string &name, const DataValue &value)
     {
       _errors.clear();
+      Clear("Collider");
       auto map = DataValue::Map();
       map.Set("shape", DataValue::Text(shape));
       map.Set(name, At(7, value));
@@ -897,6 +910,7 @@ namespace
     for (const std::string shape : {"convex_hull", "mesh"})
     {
       _errors.clear();
+      Clear("Collider");
       auto map = DataValue::Map();
       map.Set("shape", DataValue::Text(shape));
 
@@ -1224,6 +1238,7 @@ namespace
     const auto problem = [this](const std::string &type, const std::string &name, const DataValue &value)
     {
       _errors.clear();
+      Clear("Joint");
       auto map = DataValue::Map();
       map.Set("type", DataValue::Text(type));
       map.Set(name, At(9, value));

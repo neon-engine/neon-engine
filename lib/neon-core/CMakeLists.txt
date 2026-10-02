@@ -290,6 +290,10 @@ add_library(${TARGET} STATIC
         neon/world-system/ecs/scene-file/component-format.hpp
         neon/world-system/ecs/scene-file/engine-component-formats.cpp
         neon/world-system/ecs/scene-file/physics-component-formats.cpp
+        neon/world-system/ecs/scene-file/prefab-file.cpp
+        neon/world-system/ecs/scene-file/prefab-file.hpp
+        neon/world-system/ecs/scene-file/prefab-files.cpp
+        neon/world-system/ecs/scene-file/prefab-files.hpp
         neon/world-system/ecs/scene-file/scene-file.cpp
         neon/world-system/ecs/scene-file/scene-file.hpp
         neon/world-system/ecs/entity-world.cpp
@@ -300,6 +304,7 @@ add_library(${TARGET} STATIC
         neon/world-system/ecs/components/joint.hpp
         neon/world-system/ecs/components/light.hpp
         neon/world-system/ecs/components/player.hpp
+        neon/world-system/ecs/components/prefab.hpp
         neon/world-system/ecs/components/renderable.hpp
         neon/world-system/ecs/components/rigid-body.hpp
         neon/world-system/ecs/components/spectator.hpp

@@ -11,6 +11,7 @@
 #include <neon/world-system/ecs/scene.hpp>
 
 #include "component-format.hpp"
+#include "prefab-files.hpp"
 
 namespace neon
 {
@@ -34,9 +35,22 @@ namespace neon
   ///               Transform: Default
   ///               Camera: Default
   ///
+  ///       - name: north-wall
+  ///         prefab: assets://prefabs/wall.prefab.yml
+  ///         components:
+  ///           Transform:
+  ///             position: [0, 0, -3]
+  ///
   /// What a component leaves out keeps its default, and `Default` keeps all of
   /// them. `{}` means the same. A name that is not known
   /// is an error, so that a name that was misspelled does not go unnoticed.
+  ///
+  /// An entity with a `prefab` starts as the entity of that prefab recipe,
+  /// see PrefabFile, and what is written next to it goes on top: a
+  /// component is read into the one the prefab gave, so that only the
+  /// values that are written change, `~` takes a component away, and a
+  /// child of the same name as one of the prefab's is read onto it. Every
+  /// such entity carries a Prefab component that names the file.
   ///
   /// Which format the file has is up to the DocumentFormat that is handed
   /// in. The file is read and written through the file system.
@@ -50,12 +64,74 @@ namespace neon
     bool Read(EntityStore &store);
     std::shared_ptr<Logger> _logger;
 
+    /// Reads a list of entities below a parent. `of` names the parent in
+    /// messages, and is empty at the top. When `onto_existing` is set, an
+    /// entity whose name is there already is read onto that entity, which
+    /// is how a scene changes the children of a prefab; otherwise such a
+    /// name is reported. A name twice in the list itself is always
+    /// reported.
+    void ReadEntities(
+      const DataValue &list,
+      const std::string &document,
+      const std::string &of,
+      EntityStore &store,
+      Entity parent,
+      bool onto_existing,
+      PrefabFiles &prefabs,
+      std::vector<std::string> &errors) const;
+
     void ReadEntity(
       const DataValue &value,
+      const std::string &document,
       const std::string &label,
       EntityStore &store,
       Entity parent,
+      bool onto_existing,
+      PrefabFiles &prefabs,
       std::vector<std::string> &errors) const;
+
+    /// Reads what is written for an entity onto it: its prefab first, then
+    /// its components, then its children. `reader` reads `value`, and says
+    /// where the problems go.
+    void ReadOnto(
+      const DataReader &reader,
+      const DataValue &value,
+      EntityStore &store,
+      Entity entity,
+      bool onto_existing,
+      PrefabFiles &prefabs) const;
+
+    /// Places the prefab at a path onto an entity. `written` is the value
+    /// that names it, for the line of a message. Returns false when nothing
+    /// was placed, which was reported.
+    bool PlacePrefab(
+      const std::string &path,
+      const DataValue &written,
+      const DataReader &reader,
+      EntityStore &store,
+      Entity entity,
+      bool onto_existing,
+      PrefabFiles &prefabs) const;
+
+    void ReadComponents(
+      const DataReader &reader,
+      const DataValue &value,
+      EntityStore &store,
+      Entity entity) const;
+
+    /// Reads one component onto the entity. `components` reads the map the
+    /// component was written in, and says where a problem goes; `where`
+    /// names the entity in a message.
+    void ReadComponent(
+      const DataReader &components,
+      const std::string &where,
+      const std::string &name,
+      const DataValue &component,
+      EntityStore &store,
+      Entity entity) const;
+
+    /// The names of the components the file can hold, for a message.
+    [[nodiscard]] std::string KnownComponents() const;
 
     [[nodiscard]] DataValue WriteEntity(EntityStore &store, Entity entity) const;
 
@@ -78,7 +154,9 @@ namespace neon
     /// Reads the file and creates its entities. Returns false when the file
     /// cannot be read or something in it is wrong; what could be read is in
     /// the store, and every problem that was found is logged with its line,
-    /// not only the first, so that a file is corrected in one pass.
+    /// not only the first, so that a file is corrected in one pass. The
+    /// prefabs the scene places are read once each, and the Prefab
+    /// component is registered with the store.
     bool Populate(EntityStore &store) override;
 
     /// Reads another scene file in place of the one the world started with,
@@ -90,8 +168,10 @@ namespace neon
     [[nodiscard]] const std::string &GetPath() const;
 
     /// Writes every entity of the store to a file, as a scene of the given
-    /// name. Components without a format are left out. Returns false when
-    /// the file cannot be written.
+    /// name. Components without a format are left out. An entity that was
+    /// placed from a prefab is written with its `prefab` and with every
+    /// component it has, not only what differs from the prefab. Returns
+    /// false when the file cannot be written.
     bool Save(EntityStore &store, const std::string &name, const std::string &path) const;
   };
 } // neon

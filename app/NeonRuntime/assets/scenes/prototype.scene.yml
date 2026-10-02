@@ -26,8 +26,11 @@
 # docs/scenes.md#changing-the-scene. The title screen, title.scene.yml,
 # comes before the level.
 #
-# The components and what they hold are listed in docs/scenes.md, and what
-# the loader reads of a GLB in docs/models.md.
+# The walls, the floors, the columns, and the targets are prefabs from
+# assets/prefabs, described once there with their model, body, and collider;
+# the scene places each with `prefab:` and writes only its Transform on top,
+# see docs/prefabs.md. The components and what they hold are listed in
+# docs/scenes.md, and what the loader reads of a GLB in docs/models.md.
 
 scene: prototype
 version: 1
@@ -36,65 +39,33 @@ entities:
   # the room
 
   - name: room-floor
+    prefab: assets://prefabs/floor-tile.prefab.yml
     components:
       Transform:
         position: [0, 0, 0]
         scale: [6, 1, 6]
-      Renderable:
-        model: assets://external/kenney/prototype-kit/floor-square.glb
-        shader: assets://shaders/basic-lit
-      RigidBody:
-        kind: static
-      Collider:
-        shape: box
-        size: [1, 0.2, 1]
-        offset: [0, -0.1, 0]
 
   - name: room-north-wall
+    prefab: assets://prefabs/wall.prefab.yml
     components:
       Transform:
         position: [0, 0, -3]
         rotation: [0, 90, 0]
         scale: [1, 2.5, 6]
-      Renderable:
-        model: assets://external/kenney/prototype-kit/wall.glb
-        shader: assets://shaders/basic-lit
-      RigidBody:
-        kind: static
-      Collider:
-        shape: box
-        size: [0.2, 1, 1]
-        offset: [0, 0.5, 0]
 
   - name: room-east-wall
+    prefab: assets://prefabs/wall.prefab.yml
     components:
       Transform:
         position: [3, 0, 0]
         scale: [1, 2.5, 6]
-      Renderable:
-        model: assets://external/kenney/prototype-kit/wall.glb
-        shader: assets://shaders/basic-lit
-      RigidBody:
-        kind: static
-      Collider:
-        shape: box
-        size: [0.2, 1, 1]
-        offset: [0, 0.5, 0]
 
   - name: room-west-wall
+    prefab: assets://prefabs/wall.prefab.yml
     components:
       Transform:
         position: [-3, 0, 0]
         scale: [1, 2.5, 6]
-      Renderable:
-        model: assets://external/kenney/prototype-kit/wall.glb
-        shader: assets://shaders/basic-lit
-      RigidBody:
-        kind: static
-      Collider:
-        shape: box
-        size: [0.2, 1, 1]
-        offset: [0, 0.5, 0]
 
   # the south wall, in two parts with the doorway between them. The opening
   # of the doorway piece is 0.6 of its width, along its z, and 0.8 of its
@@ -102,36 +73,20 @@ entities:
   # through. Its colliders are the two posts and the lintel, in the metres
   # of the piece like every collider here.
   - name: room-south-wall-west
+    prefab: assets://prefabs/wall.prefab.yml
     components:
       Transform:
         position: [-2, 0, 3]
         rotation: [0, 90, 0]
         scale: [1, 2.5, 2]
-      Renderable:
-        model: assets://external/kenney/prototype-kit/wall.glb
-        shader: assets://shaders/basic-lit
-      RigidBody:
-        kind: static
-      Collider:
-        shape: box
-        size: [0.2, 1, 1]
-        offset: [0, 0.5, 0]
 
   - name: room-south-wall-east
+    prefab: assets://prefabs/wall.prefab.yml
     components:
       Transform:
         position: [2, 0, 3]
         rotation: [0, 90, 0]
         scale: [1, 2.5, 2]
-      Renderable:
-        model: assets://external/kenney/prototype-kit/wall.glb
-        shader: assets://shaders/basic-lit
-      RigidBody:
-        kind: static
-      Collider:
-        shape: box
-        size: [0.2, 1, 1]
-        offset: [0, 0.5, 0]
 
   - name: doorway
     components:
@@ -170,61 +125,29 @@ entities:
   - name: columns
     children:
       - name: north-west
+        prefab: assets://prefabs/column.prefab.yml
         components:
           Transform:
             position: [-2.7, 0, -2.7]
             scale: 2.5
-          Renderable:
-            model: assets://external/kenney/prototype-kit/column.glb
-            shader: assets://shaders/basic-lit
-          RigidBody:
-            kind: static
-          Collider:
-            shape: box
-            size: [0.2, 1, 0.2]
-            offset: [0, 0.5, 0]
       - name: north-east
+        prefab: assets://prefabs/column.prefab.yml
         components:
           Transform:
             position: [2.7, 0, -2.7]
             scale: 2.5
-          Renderable:
-            model: assets://external/kenney/prototype-kit/column.glb
-            shader: assets://shaders/basic-lit
-          RigidBody:
-            kind: static
-          Collider:
-            shape: box
-            size: [0.2, 1, 0.2]
-            offset: [0, 0.5, 0]
       - name: south-west
+        prefab: assets://prefabs/column.prefab.yml
         components:
           Transform:
             position: [-2.7, 0, 2.7]
             scale: 2.5
-          Renderable:
-            model: assets://external/kenney/prototype-kit/column.glb
-            shader: assets://shaders/basic-lit
-          RigidBody:
-            kind: static
-          Collider:
-            shape: box
-            size: [0.2, 1, 0.2]
-            offset: [0, 0.5, 0]
       - name: south-east
+        prefab: assets://prefabs/column.prefab.yml
         components:
           Transform:
             position: [2.7, 0, 2.7]
             scale: 2.5
-          Renderable:
-            model: assets://external/kenney/prototype-kit/column.glb
-            shader: assets://shaders/basic-lit
-          RigidBody:
-            kind: static
-          Collider:
-            shape: box
-            size: [0.2, 1, 0.2]
-            offset: [0, 0.5, 0]
 
   # the props
 
@@ -274,13 +197,11 @@ entities:
   # foot, and a small one at the end of the corridor, 0.2 across its middle
   # and made twice as big
   - name: room-target
+    prefab: assets://prefabs/target.prefab.yml
     components:
       Transform:
         position: [0, 1.15, -2.85]
         rotation: [0, 90, 0]
-      Renderable:
-        model: assets://external/kenney/prototype-kit/target-a-round.glb
-        shader: assets://shaders/basic-lit
 
   # The way out of the level: a trigger in the north-east corner, behind the
   # supply crate, that changes to the end scene when a body is inside it. A
@@ -299,6 +220,7 @@ entities:
         scene: assets://scenes/end.scene.yml
 
   - name: corridor-target
+    prefab: assets://prefabs/target.prefab.yml
     components:
       Transform:
         position: [0, 1.4, 8.85]
@@ -306,70 +228,37 @@ entities:
         scale: 2
       Renderable:
         model: assets://external/kenney/blaster-kit/target-small.glb
-        shader: assets://shaders/basic-lit
 
   # the corridor, south of the doorway
 
   - name: corridor-floor
+    prefab: assets://prefabs/floor-tile.prefab.yml
     components:
       Transform:
         position: [0, 0, 6]
         scale: [2, 1, 6]
-      Renderable:
-        model: assets://external/kenney/prototype-kit/floor-square.glb
-        shader: assets://shaders/basic-lit
-      RigidBody:
-        kind: static
-      Collider:
-        shape: box
-        size: [1, 0.2, 1]
-        offset: [0, -0.1, 0]
 
   - name: corridor-east-wall
+    prefab: assets://prefabs/wall.prefab.yml
     components:
       Transform:
         position: [1, 0, 6]
         scale: [1, 2.5, 6]
-      Renderable:
-        model: assets://external/kenney/prototype-kit/wall.glb
-        shader: assets://shaders/basic-lit
-      RigidBody:
-        kind: static
-      Collider:
-        shape: box
-        size: [0.2, 1, 1]
-        offset: [0, 0.5, 0]
 
   - name: corridor-west-wall
+    prefab: assets://prefabs/wall.prefab.yml
     components:
       Transform:
         position: [-1, 0, 6]
         scale: [1, 2.5, 6]
-      Renderable:
-        model: assets://external/kenney/prototype-kit/wall.glb
-        shader: assets://shaders/basic-lit
-      RigidBody:
-        kind: static
-      Collider:
-        shape: box
-        size: [0.2, 1, 1]
-        offset: [0, 0.5, 0]
 
   - name: corridor-end-wall
+    prefab: assets://prefabs/wall.prefab.yml
     components:
       Transform:
         position: [0, 0, 9]
         rotation: [0, 90, 0]
         scale: [1, 2.5, 2]
-      Renderable:
-        model: assets://external/kenney/prototype-kit/wall.glb
-        shader: assets://shaders/basic-lit
-      RigidBody:
-        kind: static
-      Collider:
-        shape: box
-        size: [0.2, 1, 1]
-        offset: [0, 0.5, 0]
 
   # the lights: daylight from above, and a lamp in the middle of the room
 

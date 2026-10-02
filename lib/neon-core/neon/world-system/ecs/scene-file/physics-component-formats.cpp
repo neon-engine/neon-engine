@@ -28,7 +28,7 @@ namespace neon
       format.read = [type = format.type](const DataReader &reader, EntityStore &store, const Entity entity)
       {
         // read first, so that what is wrong with it is said as well
-        T component{};
+        T component = ComponentFormat::StartFrom<T>(store, type->name, entity);
         ReadFields(*type, reader, &component);
 
         if (store.FindComponent(type->name) == No_Component)

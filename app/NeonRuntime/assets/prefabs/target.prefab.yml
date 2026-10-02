@@ -1,0 +1,11 @@
+# A round target of Kenney's Prototype Kit, 0.5 high from its origin at its
+# foot. It is something to look at and nothing stands in its way yet, so it
+# has no body; a scene that wants another target writes its model on top.
+version: 1
+prefab: target
+
+entity:
+  components:
+    Renderable:
+      model: assets://external/kenney/prototype-kit/target-a-round.glb
+      shader: assets://shaders/basic-lit

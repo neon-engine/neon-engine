@@ -20,7 +20,7 @@ and a file is found by its name alone.
 | `settings.yml` | What the project chooses for itself and a player may change | [settings.md](settings.md) |
 | `CREDITS.md` | Where every third-party file came from, and its licence | See [credits](#credits-and-licences) |
 | `scenes/` | Scene recipes, `*.scene.yml` | [scenes.md](scenes.md) |
-| `prefabs/` | Prefab recipes, entities described once and placed in scenes, `*.prefab.yml` (#146) | Not there yet |
+| `prefabs/` | Prefab recipes, entities described once and placed in scenes, `*.prefab.yml` | [prefabs.md](prefabs.md) |
 | `ui/` | UI recipes, `*.ui.yml`, their style sheets `*.css`, their atlas recipes `*.atlas.yml`, and the images they show | [user-interface.md](user-interface.md) |
 | `models/` | Meshes, `*.obj` today, glTF once models are prepared ahead of time (#98) | |
 | `textures/` | Images that materials show, `*.png` and `*.jpg` | |
@@ -126,8 +126,8 @@ inside, so that what belongs together is together. Not the other way round:
 
 ## Open questions
 
-- **Prefabs** (#146), **input** (#117), and **scripts** (#57) get their
-  folders with their first files; their names follow this guide.
+- **Scripts** (#57) get their folder with their first files; their names
+  follow this guide.
 - **Where `external/` ends**: whether a kit that is used all over the game
   is better sorted by kind, as the fonts are, or kept under its source. The
   first kits decide it.

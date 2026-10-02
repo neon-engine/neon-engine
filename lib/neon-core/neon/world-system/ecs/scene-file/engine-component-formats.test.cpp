@@ -136,6 +136,54 @@ namespace
     }
   };
 
+  // reading starts from what the entity has
+
+  TEST_F(EngineComponentFormatsTest, ReadsIntoTheComponentTheEntityHas)
+  {
+    _store.Set(_entity, Transform{.position = {1.0f, 2.0f, 3.0f}, .scale = glm::vec3(2.0f)});
+    auto value = DataValue::Map();
+    value.Set("rotation", Numbers({0.0f, 90.0f, 0.0f}));
+
+    Read("Transform", value);
+
+    const auto *transform = _store.Get<Transform>(_entity);
+    EXPECT_EQ(transform->position, glm::vec3(1.0f, 2.0f, 3.0f)) << "what is not written is kept";
+    EXPECT_EQ(transform->scale, glm::vec3(2.0f));
+    EXPECT_EQ(transform->rotation.yaw, 90.0f);
+    EXPECT_THAT(_errors, IsEmpty());
+  }
+
+  TEST_F(EngineComponentFormatsTest, StartsFromTheDefaultsWhenTheEntityHasNone)
+  {
+    auto value = DataValue::Map();
+    value.Set("rotation", Numbers({0.0f, 90.0f, 0.0f}));
+
+    Read("Transform", value);
+
+    EXPECT_EQ(_store.Get<Transform>(_entity)->scale, glm::vec3(1.0f));
+  }
+
+  TEST_F(EngineComponentFormatsTest, AListThatIsWrittenReplacesTheOneTheEntityHasWhole)
+  {
+    Renderable renderable;
+    renderable.render_info.shader_path = "assets://shaders/basic-lit";
+    renderable.render_info.texture_paths = {"assets://textures/a.png", "assets://textures/b.png"};
+    _store.Set(_entity, renderable);
+
+    auto kept = DataValue::Map();
+    kept.Set("scale_textures", DataValue::Bool(true));
+    Read("Renderable", kept);
+    EXPECT_THAT(
+      _store.Get<Renderable>(_entity)->render_info.texture_paths,
+      ElementsAre("assets://textures/a.png", "assets://textures/b.png")) << "a list that is not written is kept";
+
+    auto replaced = DataValue::Map();
+    replaced.Set("textures", Texts({"assets://textures/c.png"}));
+    Read("Renderable", replaced);
+    EXPECT_THAT(_store.Get<Renderable>(_entity)->render_info.texture_paths, ElementsAre("assets://textures/c.png"));
+    EXPECT_THAT(_errors, IsEmpty());
+  }
+
   // what is known
 
   TEST_F(EngineComponentFormatsTest, KnowsTheComponentsOfTheEngine)

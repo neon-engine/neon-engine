@@ -32,6 +32,22 @@ namespace neon
     /// It is what tells the editor and a script which fields there are.
     std::shared_ptr<const TypeInfo> type;
 
+    /// The component that reading starts from: the one the entity has, so
+    /// that a file that writes on top of a prefab changes only what it
+    /// names, or one with the defaults of the type when the entity has
+    /// none. `name` is what the component was registered under; a type
+    /// that is not registered gives the defaults, and what is wrong with
+    /// the values is then still read and said.
+    template<typename T>
+    [[nodiscard]] static T StartFrom(EntityStore &store, const std::string &name, const Entity entity)
+    {
+      const auto id = store.FindComponent(name);
+      if (id == No_Component) { return T{}; }
+
+      const auto *existing = static_cast<const T *>(store.GetComponent(entity, id));
+      return existing == nullptr ? T{} : *existing;
+    }
+
     /// The format of a C++ type that is described. How it is read and
     /// written follows from the description, see TypeBuilder.
     template<typename T>
@@ -45,7 +61,7 @@ namespace neon
 
       format.read = [type](const DataReader &reader, EntityStore &store, const Entity entity)
       {
-        T component{};
+        T component = StartFrom<T>(store, type->name, entity);
         ReadFields(*type, reader, &component);
         store.Set(entity, component);
       };
@@ -66,8 +82,8 @@ namespace neon
 
     /// The format of a C++ type that is read and written by hand, for what
     /// a description cannot say. `read` fills in a component that starts
-    /// with its defaults, so that what a file leaves out keeps them. `write`
-    /// adds to a map.
+    /// with what the entity has, or with its defaults, so that what a file
+    /// leaves out keeps them. `write` adds to a map.
     template<typename T>
     static ComponentFormat Of(
       const std::string &name,
@@ -77,9 +93,9 @@ namespace neon
       ComponentFormat format;
       format.name = name;
 
-      format.read = [read](const DataReader &reader, EntityStore &store, const Entity entity)
+      format.read = [read, name](const DataReader &reader, EntityStore &store, const Entity entity)
       {
-        T component{};
+        T component = StartFrom<T>(store, name, entity);
         read(reader, component);
         store.Set(entity, component);
       };

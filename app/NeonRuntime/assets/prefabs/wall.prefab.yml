@@ -1,0 +1,18 @@
+# A wall of Kenney's Prototype Kit: 1 wide and 1 high along z and 0.2 thick
+# along x, standing on its origin. The scene that places it gives it its
+# place and its size with a Transform; the collider is in the piece's own
+# metres and is sized with it.
+version: 1
+prefab: wall
+
+entity:
+  components:
+    Renderable:
+      model: assets://external/kenney/prototype-kit/wall.glb
+      shader: assets://shaders/basic-lit
+    RigidBody:
+      kind: static
+    Collider:
+      shape: box
+      size: [0.2, 1, 1]
+      offset: [0, 0.5, 0]

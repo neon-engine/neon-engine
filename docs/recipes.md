@@ -6,7 +6,7 @@ is still open. What one kind of recipe holds is in the note of that kind, see
 
 **Current decision:** a YAML file whose name says its kind, as
 `demo.scene.yml` and `hud.ui.yml` do, is a **recipe**: a scene, a user
-interface, an atlas, an input map, later a prefab, geometry, entities,
+interface, an atlas, an input map, a prefab, later geometry, entities,
 anything the engine turns into something live. A YAML file without a kind,
 `project.yml` and `settings.yml`, is a **configuration file**: it says what
 the project is and how it is set up. The name decides, nothing else: one
@@ -24,7 +24,7 @@ documentation and for talking about the files.
 | UI recipe | `*.ui.yml` | The elements of a menu or of what is shown during play | [user-interface.md](user-interface.md) |
 | Atlas recipe | `*.atlas.yml` | An image that holds several, and where each one is | [user-interface.md](user-interface.md#atlases) |
 | Input recipe | `*.input.yml` | The actions a game reads, what is bound to each, and the states they are live in | Coming with #117 |
-| Prefab recipe | `*.prefab.yml` | An entity, or a tree of them, described once and placed in scenes | Not yet (#146) |
+| Prefab recipe | `*.prefab.yml` | An entity, or a tree of them, described once and placed in scenes | [prefabs.md](prefabs.md) |
 
 A recipe is named `<name>.<kind>.yml`: lowercase letters, digits, and dashes,
 the kind as a second extension before the format, as in
@@ -114,7 +114,7 @@ writes, and writes a number with the digits that type needs, `0.31` and not
 | [projects.md](projects.md) | The configuration file `project.yml` |
 | [settings.md](settings.md) | The configuration file `settings.yml` |
 | Input | Coming with #117, `docs/input.md` |
-| Prefabs | Not yet (#146) |
+| [prefabs.md](prefabs.md) | The prefab recipe: an entity described once, how a scene places it, and what it may write on top |
 
 ## How it is built
 
@@ -135,9 +135,6 @@ second `DocumentFormat`, see [scenes.md](scenes.md#a-binary-form).
   turned into a binary form when the game is exported, as a second
   `DocumentFormat`. Not needed yet; where it goes is in
   [scenes.md](scenes.md#a-binary-form).
-- **Prefabs** (#146): the first recipe that is placed inside another. What a
-  prefab recipe holds, and how what differs is written on top, comes with
-  the feature.
 - **Whether `project.yml` and `settings.yml` get a word of their own.** They
   follow every rule above and are read by the same reader, but describe the
   project and not the game. "Recipe" is kept for what is in the game.

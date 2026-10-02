@@ -306,7 +306,7 @@ namespace
     EXPECT_THAT(
       ProblemsOf("entities:\n  - name: a\n    component: {}\n"),
       HasSubstr("test.scene.yml:3: 'component' is not known to entity 'a'. "
-        "Known are: name, components, children"));
+        "Known are: name, prefab, components, children"));
   }
 
   TEST_F(SceneFilesTest, ANameAtTheTopThatIsNotKnownIsReported)
