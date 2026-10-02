@@ -48,6 +48,8 @@ Principles that hold for both:
 | Command line (#24) | An abstraction with a set of options for each application |
 | Runtime class (#25) | The core class an application is built from is `neon::Runtime` |
 | Sound (#33) | Sound effects and music with miniaudio, behind an interface. Sounds have a place in the world. See [audio.md](audio.md) |
+| Groups and fading of sounds (#71) | Music, effects, voices, and groups of a game, each with a volume, and fades from one piece of music to another. A settings menu sets them from its file with `UiVolume` and `UiSoundSwitch`. Merged in #139 |
+| Physics described with reflection (#58) | The components of the physics are read and written through their descriptions, which gained fields that belong to a shape only, rules across fields, and layers. Merged in #140 |
 | Reflection (#35) | A component is described once, next to itself. Scene files follow from it, and the editor and scripts will. See [reflection.md](reflection.md) |
 | Scenes in files (#29) | A scene is a YAML file of entities and components, made to be changed by hand. See [scenes.md](scenes.md) |
 | Entities and components (#27) | The world is made of entities, components, and systems, with Flecs behind an interface. See [entity-component-system.md](entity-component-system.md) |
@@ -60,6 +62,8 @@ Principles that hold for both:
 | Unit tests (#31) | GoogleTest, with tests for the four libraries and for the runtime as a whole. See the [development guide](development.md#tests) |
 | User interface (#37) | Menus and what is shown during play, from YAML files with the properties of CSS: layout by flexbox, text, values of the game, input and focus, events. It is the first version. See [user-interface.md](user-interface.md) |
 | Drawing in two dimensions (#37) | Triangles in pixels through an interface of the renderer, which is all a user interface needs of it |
+| Drawing user interfaces (#39) | Text, images, shapes, and shaders, on the screen and on surfaces in the world. Merged in #18 |
+| Behaviour of user interfaces (#40) | Style sheets, scrolling, typing, choosing, animation, scripts, and displays of high density. Merged in #20 |
 
 ## Next
 
@@ -86,6 +90,8 @@ These come first, because everything after them is cheaper with them in place.
 | clang-tidy (#30) | Checks that code follows the conventions the code base already has, such as naming. Run in the build and in the editor |
 | The TODOs in the repository (#46) | Listed [below](#todos-in-the-repository) |
 | Architecture document (#45) | How the libraries, interfaces, and applications fit together, and why |
+| Random numbers of true entropy (#160) | From the operating system's secure generator, through an interface a game asks: `getentropy`, `BCryptGenRandom`, and in the browser `crypto.getRandomValues` |
+| How a project is organised (#147) | A style guide for the folders and names of a project, which the editor, export, and agents rely on |
 | A document for each major feature (#45) | In the way [file-systems.md](file-systems.md) describes the file system: what it does, how it is used, and what is open |
 
 ### World
@@ -101,6 +107,7 @@ These come first, because everything after them is cheaper with them in place.
 | Meshes with collision, generated (#97) | Geometry built at run time and in the editor, with its collider, for level editing |
 | Scenes and resources serialized to binary and text (#96) | As Godot does with resources, so that saved games are the same machinery. Not decided; to be discussed |
 | A scene manager (#118) | Changes between whole scenes, with a loading screen and what carries over |
+| Prefabs (#146) | An entity, or a tree of them, described once in a `*.prefab.yml`, placed in scenes with what differs written on top, and made at run time. A prefab is not a scene |
 | Assets streamed by distance (#114) | Loaded as the player comes near and released as the player leaves, in the background |
 | Input maps with states (#117) | Named actions bound by a project, and maps for walking, driving, swimming, a menu |
 
@@ -122,6 +129,7 @@ and a system. A script declares components and systems of its own.
 | Programmable rendering pipeline (#102) | A game describes passes, targets, and order in place of the fixed forward pipeline |
 | Compute in the pipeline (#107) | Compute passes next to draw passes, with shared buffers and images |
 | PBR and an ubershader out of the box (#106) | One shader that covers a traditionally rendered game, chosen by variants |
+| Skeletal animation (#149) | Skinned meshes, skeletons, and animations, read from glTF, with skinning on the graphics card and animations that blend |
 | Emissive materials (#129) | Screens and holograms that glow. A screen shows a render target and makes it emissive; a CRT look is a material shader |
 | Bloom (#130) | What is brighter than white bleeds into a soft glow. The first post-processing step |
 | Tonemapping and exposure (#131) | Light above white mapped into what a screen shows, in place of clipping. The user interface is drawn after it and keeps its colours |
@@ -144,7 +152,6 @@ renderers exist, the more each new technique costs. See [order](#order).
 | Item | Detail |
 |---|---|
 | Spatial audio with Steam Audio (#70) | Sounds that are shaped by the room they are in. Sounds already have a place in the world, with miniaudio |
-| Groups and fading (#71) | A volume for music, effects, and voices each. Fading between pieces of music |
 
 ### User interface
 
@@ -153,15 +160,11 @@ left:
 
 | Item | Detail |
 |---|---|
-| Text, images, shapes, shaders, and surfaces (#39) | In review as pull request 18 |
-| Style sheets, scrolling, typing, choosing, animation, scripts, hi-DPI (#40) | In review as pull request 20 |
 | Yoga as the layout engine (#77) | The engine places elements with an implementation of flexbox of its own. Yoga is tested against the specification by many more users |
-| Scrolling and text input (#40) | Lists that are longer than their box, and fields to type into |
-| More elements (#40) | Slider, checkbox, list, tabs |
-| Styles that are shared (#40) | A style block with selectors, which is the step towards CSS |
 | Animation, themes, localisation, rich text (#75) | |
 | A library with a language of its own (#78) | RmlUi is the candidate. The interface for drawing in two dimensions takes what it hands over |
 | Text that mixes directions (#74) | The Unicode Bidirectional Algorithm. SheenBidi is the candidate |
+| A keyboard on the screen (#158) | For typing with a controller: moved over with the D-pad and stick, made from a `*.ui.yml` file, and the platform's own keyboard where there is one |
 | WebP, colour emoji, variable fonts, fonts as several distances (#76) | Each needs a library, or a font to try it with |
 | `filter`, `backdrop_filter`, opacity of a group (#76) | Built from render targets, which are there |
 | Surfaces that are drawn when something changed | Every surface is drawn in every frame |
@@ -180,7 +183,7 @@ makes them a supported way to run a game, for automated checks and for agents.
 | Item | Detail |
 |---|---|
 | Setting the state of a game (#79) | Options to start from a given state, such as a scene, a saved game, or values of the game's own. Waits for scenes that load from files |
-| Fixed random numbers (#80) | A seed given on the command line, so that a game that uses random numbers gives the same image on every run. Nothing in the engine draws random numbers yet |
+| Input and test scripts in Lua (#80) | Relative frames and waits, loops, comments, and checks along the way, for longer runs. Waits on Lua (#57) |
 | A debug mode of the runtime (#116) | The loop as a function that is stepped, and a terminal or a file of commands: step, send input, take a screenshot, read values |
 
 ### NeonEditor
@@ -194,7 +197,7 @@ makes them a supported way to run a game, for automated checks and for agents.
 | Compiler tools (#83) | The tools that prepare a project are packaged with the editor: compiling shaders, preparing models and textures, and baking light maps |
 | Command line (#24) | The options of the runtime, plus a set only the editor has |
 | Agent support (#85) | A Model Context Protocol server. See below |
-| Import through assimp, run without it (#98) | The editor converts anything assimp reads to glTF or a format of the engine's; the runtime reads only that |
+| Import through assimp, run without it (#98) | The editor converts anything assimp reads to glTF or a format of the engine's; the runtime reads only that. An animated model becomes a skinned mesh, its skeleton, and each animation in a file of its own |
 | Interface beyond Dear ImGui (#103) | A stretch goal: the editor's interface behind an abstraction |
 
 ### Exporting games
@@ -325,8 +328,14 @@ Wanted, and not for 1.0.
 |---|---|
 | Sanitizer builds hang at startup on macOS | #54 |
 | clang-tidy findings in the test code, clang-format violations | #52, #53 |
-| The audio and physics components are read and written by hand, not described | #58 |
 | Pointing at a user interface on a surface in the world needs the ray cast | #73 |
+| Two raw `new` remain in the Jolt backend, for the factory and for characters | #148 |
+| Reflection cannot describe a field of type `double` | #151 |
+| A `SoundSource` without a `Transform` is never heard, and nothing says so | #152 |
+| The log file may not open on Windows under a user folder with letters outside ASCII | #156 |
+| An opaque 3D shader that writes an alpha below 1 comes out brighter | #157 |
+| 55 headers hold several types, against the rule of one type per file | #168 |
+| The settings menu cannot be used all the way through with a controller | #159 |
 
 ## Open decisions
 
