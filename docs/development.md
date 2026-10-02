@@ -189,7 +189,7 @@ neon-core and sees no Vulkan type, so another renderer can be added next to it.
 
 A material names its shader without an extension, such as
 `assets://shaders/basic-lit`, and the renderer adds `.vert.spv` and
-`.frag.spv`. Scene files therefore never mention a shader format.
+`.frag.spv`. Scene recipes therefore never mention a shader format.
 
 | Shader | Draws |
 |---|---|
@@ -431,7 +431,7 @@ backend's file calls directly. That keeps the implementation replaceable.
 
 Files are named by virtual paths, in the style of Godot. A virtual path is
 written the same way on macOS, Linux, and Windows, so anything that refers to
-files, such as a scene file, can be moved between platforms unchanged. Loading
+files, such as a scene recipe, can be moved between platforms unchanged. Loading
 also never depends on the directory the app was started from.
 
 | Scheme | Points at | Status |
@@ -577,7 +577,7 @@ files from an archive without the loaders changing.
 
 ### Rules for new code
 
-- Write virtual paths, in code and in scene files, following the rules above.
+- Write virtual paths, in code and in scene recipes, following the rules above.
 - Never build or store a native path outside a backend.
 - Take a `FileSystemContext *` through the constructor and read through it.
 - Keep the stored path in its scheme form so log messages stay readable.
@@ -809,8 +809,8 @@ what it left behind.
 | `tests/` | `world-with-flecs` | 16 | The world as an application puts it together, with the store of Flecs and the forward pipeline |
 | `tests/` | `runtime-command-line` | 11 | NeonRuntime with a command line it refuses: exit code and message |
 | `tests/` | `runtime-headless` | 8 | NeonRuntime without a window: exit code, and the images it saved, with and without a user interface |
-| `tests/` | `user-interface` | 300 | Files of YAML through the whole user interface: every element, every message for a file that is wrong, layout in frames of several sizes, values, input, focus, events, and what is drawn |
-| `tests/` | `physics-with-jolt` | 21 | The physics as an application puts it together, with Flecs, Jolt, and a scene in YAML. The same state after the same steps at every frame rate |
+| `tests/` | `user-interface` | 300 | UI recipes through the whole user interface: every element, every message for a file that is wrong, layout in frames of several sizes, values, input, focus, events, and what is drawn |
+| `tests/` | `physics-with-jolt` | 21 | The physics as an application puts it together, with Flecs, Jolt, and a scene recipe. The same state after the same steps at every frame rate |
 | `tests/` | `runtime-physics` | 2 | NeonRuntime with the scene of the physics: the same images twice, and at every frame rate |
 | neon-core | `text/glyph-atlas`, `text/shaped-text`, `text/text-case` | 75 | Glyphs that are drawn on demand into pages, parts of a text by font, script, and direction, lines, quarters of a pixel, capitals |
 | neon-core | `ui/css-functions`, `ui/ui-paint`, `ui/ui-box-paint`, `ui/ui-values-fallback` | 69 | Gradients, shadows, and transforms as CSS writes them, the shape of a box, where an image goes, values that fall back on others |

@@ -253,7 +253,7 @@ They could be backends of their own, which the interface allows.
 | A sound that cannot be created is tried once | Trying every frame would read the file and report it every frame |
 | The world tells the audio how far it advanced | Audio without a sound card has no clock of its own |
 | A source releases its sound when it leaves the world | Through the hook of the component, as `Renderable` does |
-| Groups are known by name, with three from the start | A game adds groups of its own without the engine knowing them, and a scene file names a group as it names a sound |
+| Groups are known by name, with three from the start | A game adds groups of its own without the engine knowing them, and a scene recipe names a group as it names a sound |
 | A group is a sound group of miniaudio | The sounds of a group are mixed into it, and its volume is set once for all of them. It has no place in the world, so its sounds are placed each for itself |
 | A fade is on top of the volume of a sound | `AudioPlayback` hands the volume of a source over every frame, which would undo a fade that set the volume |
 | A game fades a source through its component | So that `playing` stays true to what is heard. A fade in through the audio would play a sound that the component says is not playing |

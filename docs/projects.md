@@ -34,15 +34,18 @@ The project of the runtime is
 
 | Name | Holds | When it is left out |
 |---|---|---|
-| `version` | The version of this layout, which is 1, as in a scene | An error. A file of a later layout is refused with its version |
+| `version` | The version of this layout, which is 1, as in every recipe, see [recipes.md](recipes.md#the-version) | An error. A file of a later layout is refused with its version |
 | `name` | What the project is called. A plain name: lowercase letters, digits, and dashes, starting with a letter | An error, as is an empty name |
 | `organization` | Who makes it, in the same plain form | `neon-engine`: a project without one is one of the engine's own |
 | `scenes` | The scenes of the project, as virtual paths. At least one | An error |
 | `entry_scene` | The scene the project starts with. One of `scenes` | The first of `scenes` |
 
-A name that is not known is an error, as in a scene file, so that a name that
-was misspelled does not go unnoticed. Every problem is reported with its
+A name that is not known is an error, as in every recipe, so that a name
+that was misspelled does not go unnoticed. Every problem is reported with its
 line, not only the first, and the runtime stops before anything else starts.
+The file is a configuration file, not a recipe, since its name says no
+kind; it is read by the same reader as every recipe and follows the rules of
+[recipes.md](recipes.md#made-to-be-changed-by-hand).
 
 ### Why plain names
 

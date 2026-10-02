@@ -48,14 +48,14 @@ speculative. Functions are added when a feature requires them.
 ### Portable paths
 
 Cross-compatibility is the philosophy of the project. Content that refers to
-files, such as a scene file, has to work unchanged on macOS, Linux, and
+files, such as a scene recipe, has to work unchanged on macOS, Linux, and
 Windows. The file system therefore enforces one form of path everywhere.
 
 | Decision | Reason |
 |---|---|
 | Virtual paths use forward slashes on every platform | One spelling for all three. Windows accepts it too, but the engine does not rely on that |
-| Backslashes are rejected, not converted | A scene file written with backslashes would otherwise spread and only be corrected silently. Rejecting keeps files in one canonical form |
-| `..` is rejected | A path cannot leave the folder of its scheme, which matters once scene files and mods supply paths |
+| Backslashes are rejected, not converted | A scene recipe written with backslashes would otherwise spread and only be corrected silently. Rejecting keeps files in one canonical form |
+| `..` is rejected | A path cannot leave the folder of its scheme, which matters once scene recipes and mods supply paths |
 | Paths without a scheme are rejected | Absolute and working-directory-relative paths are tied to one machine |
 | Characters and name endings that any platform forbids are rejected everywhere | A file that cannot exist on Windows should not be usable on Linux either |
 | Letter case has to match the name on disk, on every platform | Windows and macOS ignore case and Linux does not, which is a classic source of bugs that only appear after moving to another platform |
@@ -179,7 +179,7 @@ every row.
 |---|---|
 | Packed assets | Shipping thousands of loose files is slow to install and easy to tamper with. Engines normally ship a few archives |
 | Layering | Mods, patches, and downloadable content work by mounting a second source over the first, so a newer file shadows an older one |
-| Listing folders | There is no way to enumerate files, which an asset browser or a scan for scene files would need |
+| Listing folders | There is no way to enumerate files, which an asset browser or a scan for scene recipes would need |
 | Streaming | Files are read whole into memory. Large audio or video would need to be read in pieces |
 | Asynchronous loading | Large assets should load without stalling the frame. This is a separate concern from where files live |
 

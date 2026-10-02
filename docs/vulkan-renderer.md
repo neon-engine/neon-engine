@@ -146,7 +146,9 @@ Vulkan consumes SPIR-V, not GLSL text.
 | Compiled at build time | glslang turns each source into a `.spv` file placed in the app's assets folder |
 | Named without an extension | A material names `assets://shaders/basic-lit` and the renderer adds `.vert.spv` and `.frag.spv` |
 
-Scene files therefore do not change with the renderer.
+Scene recipes therefore do not change with the renderer.
+How the same sources reach Metal, DirectX 12, and WebGPU, and the tools that
+do it, is in [shaders.md](shaders.md).
 
 Light data is held in a uniform buffer, not in individual uniforms. That
 removes the limit on uniforms per shader, which is what had held the OpenGL
@@ -226,7 +228,7 @@ it. A curve for light brighter than white replaces the clamp in
 ## Colour spaces
 
 Colours are written the way a screen shows them, in sRGB: in image files, in
-scene files, and in the style sheets of a user interface. Light adds up and
+scene recipes, and in the style sheets of a user interface. Light adds up and
 blends in linear terms, where 0.5 is half the light of 1. In sRGB, 0.5 is
 about a fifth of it. The scene is therefore lit in linear light, and user
 interfaces are drawn in sRGB, which is what CSS blends in.

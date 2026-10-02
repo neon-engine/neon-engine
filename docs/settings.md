@@ -51,7 +51,7 @@ The settings of the runtime are
 
 | Name | Holds | Default |
 |---|---|---|
-| `version` | The version of this layout, which is 1, as in a scene | Required |
+| `version` | The version of this layout, which is 1, as in every recipe, see [recipes.md](recipes.md#the-version) | Required |
 | `window.title` | The title of the window | The name of the project |
 | `window.width`, `window.height` | The size of the window in points, and of the frame without a window. Whole numbers above zero | 1280 by 720 |
 | `window.mode` | `windowed`, `borderless`, or `fullscreen`, see the [development guide](development.md#window-modes) | `windowed` |
@@ -64,10 +64,12 @@ The settings of the runtime are
 | `rendering.vulkan_version` | The version of Vulkan to ask for, in quotes, since `1.10` as a number is `1.1` | `"1.3"` |
 | `rendering.max_light_sources` | How many lights a frame may hold. A whole number above zero | 1024 |
 
-A name that is not known is an error, as in a scene file. Every problem is
-reported with its line, not only the first, and a file with a mistake changes
-nothing: the settings are read on top of a copy, so that a file does not
-apply by halves.
+A name that is not known is an error, as in every recipe: the file is a
+configuration file, not a recipe, since its name says no kind, and the rules
+of [recipes.md](recipes.md#made-to-be-changed-by-hand) hold for it. Every
+problem is reported with its line, not only the first, and a file with a
+mistake changes nothing: the settings are read on top of a copy, so that a
+file does not apply by halves.
 
 A mistake in the project's file stops the runtime, since the game would not
 be what its author meant. A mistake in the player's file is said in the log

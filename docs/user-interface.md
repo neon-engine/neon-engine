@@ -3,14 +3,15 @@
 This note records how menus and what is shown during play are made, why they
 are made that way, and what is still open.
 
-**Current decision:** a user interface is a YAML file that lists elements.
-It is meant to be read and changed by hand. What the file says follows web
+**Current decision:** a user interface is a recipe, a YAML file that lists
+elements, see [recipes.md](recipes.md). It is meant to be read and changed by
+hand, under the rules every recipe shares. What the file says follows web
 standards: the names and the meanings of its properties are those of CSS, so
 that what a property does is said by a specification and not by the engine.
 Elements are placed by the rules of CSS Flexible Box Layout.
 
 This is the second version. It draws, lays out, reacts to input, scrolls,
-takes text, animates, and is defined in files: elements in YAML, and their
+takes text, animates, and is defined in files: elements in a UI recipe, and their
 look in style sheets that are CSS. It is separate from the interface of the
 editor, which will use Dear ImGui.
 
@@ -103,11 +104,11 @@ and hides files itself with `UiContext::Load` and `Unload`.
 
 | What | How | Example |
 |---|---|---|
-| A property | As in CSS, with an underscore where CSS has a hyphen. Scene files write names the same way | `background_color`, `flex_direction` |
+| A property | As in CSS, with an underscore where CSS has a hyphen. Scene recipes write names the same way | `background_color`, `flex_direction` |
 | A keyword | As in CSS, hyphen included | `space-between`, `row-reverse`, `border-box` |
 | A length | A number, which counts as pixels, or text with `px` or `%` | `200`, `200px`, `50%`, `auto` |
 | Several values | Text with spaces between them, or a list | `8 16`, `[8, 16]` |
-| A colour | As in CSS, in quotes. **Preferred.** A list as in scene files is read as well | `"#ff8000"`, `"#ff800080"`, `"#f80"`, `rgb(255, 128, 0)`, `rgba(255, 128, 0, 0.5)`, `[1, 0.5, 0]` |
+| A colour | As in CSS, in quotes. **Preferred.** A list as in scene recipes is read as well | `"#ff8000"`, `"#ff800080"`, `"#f80"`, `rgb(255, 128, 0)`, `rgba(255, 128, 0, 0.5)`, `[1, 0.5, 0]` |
 
 A `#` starts a comment in YAML, so a value with one in it needs quotes as a
 whole: `border: "2px solid #4c566a"`.
@@ -431,7 +432,7 @@ the file writes a `hover` for it.
 | CSS | Here |
 |---|---|
 | A pixel of CSS | A unit of the file, which is as many pixels of the frame as the [scale](#scaling) says |
-| Units | `px`, `%`, `em`, `rem`, `vw`, `vh`, `vmin`, `vmax`, and `calc()` of those, in style sheets. A file of YAML takes `px` and `%`. A number without a unit counts as pixels, which CSS allows for 0 alone. No `ch`, `ex`, `cm`, `in`, `pt` |
+| Units | `px`, `%`, `em`, `rem`, `vw`, `vh`, `vmin`, `vmax`, and `calc()` of those, in style sheets. A UI recipe takes `px` and `%`. A number without a unit counts as pixels, which CSS allows for 0 alone. No `ch`, `ex`, `cm`, `in`, `pt` |
 | `display` | `flex` and `none`. Every element is a flex container. No `block`, `inline`, `grid` |
 | `position` | `relative` and `absolute`. It starts as `relative` and not as `static`, so an absolute element is always placed against its parent. No `fixed`, `sticky` |
 | `min-width: auto` of a flex item is the size of its content | It is 0. An element shrinks below its content unless `min_width` says otherwise. Yoga does the same |
@@ -446,11 +447,11 @@ the file writes a `hover` for it.
 | `border-image-slice` keeps the middle out unless `fill` is written | The middle is always drawn |
 | `border-image-width` starts as the width of the border | It starts as the width the parts have in the image |
 | `border-style` | `solid` and `none`. All four sides have one colour |
-| Colours | The notations with `#`, `rgb()`, `rgba()`, `hsl()`, `hsla()`, and the 148 names, in style sheets. A file of YAML takes `#`, `rgb()`, `rgba()`, and `transparent`, `black`, `white`. No `color()`, `lab()`, `oklch()` |
+| Colours | The notations with `#`, `rgb()`, `rgba()`, `hsl()`, `hsla()`, and the 148 names, in style sheets. A UI recipe takes `#`, `rgb()`, `rgba()`, and `transparent`, `black`, `white`. No `color()`, `lab()`, `oklch()` |
 | `white-space: normal` joins spaces and line feeds | They are kept. Lines are broken at spaces, as `pre-wrap`. A `textarea` breaks a word that is wider than a line, as `overflow-wrap: anywhere` |
 | `pointer-events` is inherited | It is not inherited. It starts as `none` for everything but what takes input: a button, and what is typed into and chosen |
-| A shorthand and the property it stands for apply in the order they are written | In a file of YAML the shorthand is read first, wherever it is written. In a style sheet the order holds |
-| `:hover` and the other pseudo-classes have the order of the style sheet | In a file of YAML the order of its states is `focus`, `hover`, `active`. In a style sheet the order holds |
+| A shorthand and the property it stands for apply in the order they are written | In a UI recipe the shorthand is read first, wherever it is written. In a style sheet the order holds |
+| `:hover` and the other pseudo-classes have the order of the style sheet | In a UI recipe the order of its states is `focus`, `hover`, `active`. In a style sheet the order holds |
 | `disabled` and `hidden` of HTML | `enabled`, since `disabled` names the state. `hidden` is as in HTML |
 | The cascade: origins, layers, `@scope`, `@container`, `@supports`, `@property` | The origins are the defaults of the engine, style sheets, and the element. No layers and no other at-rules than those listed under [style sheets](#style-sheets) |
 | Selectors: `:nth-of-type()`, `:has()`, `:lang()`, `:target`, `:visited`, `::before`, `::after` | Not read. Pseudo-elements name the parts of elements |
@@ -494,19 +495,23 @@ the file writes a `hover` for it.
 
 ## Made to be changed by hand
 
+The rules every recipe shares, that a name that is not known is an error,
+that every problem is reported with its line, that what is left out keeps its
+default, how numbers are written, and that anchors, aliases, and tags are
+refused, are in [recipes.md](recipes.md#made-to-be-changed-by-hand). On top
+of them:
+
 | Decision | Reason |
 |---|---|
-| A name that is not known is an error | `colour` would otherwise be ignored without a word |
-| A message names the file, the line, and what was expected | `hud.ui.yml:9: 'width' of label 'health' is 'wide', where a number of pixels, a percentage such as 50%, or auto was expected` |
-| Every problem of a file is reported, from the top of the file to its end | A file is corrected in one pass |
+| A message names the element as well | `hud.ui.yml:9: 'width' of label 'health' is 'wide', where a number of pixels, a percentage such as 50%, or auto was expected` |
+| Problems are reported from the top of the file to its end | A file is corrected in one pass, in the order it is read |
 | A file that is wrong is not shown at all | Half a menu is worse than none |
-| What is left out keeps its default | A file holds what was decided and nothing else |
-| Anchors, aliases, and tags are refused | As in scenes |
+| A style sheet that cannot be read fails the file | As a UI recipe that is wrong does. A declaration that cannot be read is skipped and logged, see [style sheets](#style-sheets) |
 
 ## Style sheets
 
 A file names its style sheets at the top, and they are CSS as it is written
-anywhere. What an element writes on itself in YAML still wins over a sheet,
+anywhere. What an element writes on itself in the recipe still wins over a sheet,
 as the attribute `style` of HTML does.
 
 ```yaml
@@ -548,8 +553,8 @@ select::list { background-color: #3b4252; }
 |---|---|
 | Where a sheet is | A path without a scheme is next to the file that names it. `@import` is next to the sheet it is written in. A virtual path is taken as it is |
 | What is read | [CSS Syntax](https://www.w3.org/TR/css-syntax-3/): rules, declarations, comments, `!important`, strings, escapes, and `@charset`, `@import`, `@font-face`, `@keyframes`, `@media`. Any other at-rule is skipped with a warning |
-| Names of properties | As in CSS, with hyphens. The same properties as in a file of YAML, and each keeps its meaning |
-| What is wrong | A declaration that cannot be read is skipped and logged once as a warning, as `settings.css:14: 'colour' is not a property that is known`. A selector that cannot be read skips its rule. A sheet that cannot be read at all fails the file, as a file of YAML that is wrong does |
+| Names of properties | As in CSS, with hyphens. The same properties as in a UI recipe, and each keeps its meaning |
+| What is wrong | A declaration that cannot be read is skipped and logged once as a warning, as `settings.css:14: 'colour' is not a property that is known`. A selector that cannot be read skips its rule. A sheet that cannot be read at all fails the file, as a UI recipe that is wrong does |
 | Changing a sheet while the game runs | `UiContext::ReloadStyles()` reads the sheets again and keeps everything else. The runtime does not watch files |
 
 ### Selectors
@@ -581,7 +586,7 @@ What an element ends up with is decided in this order, the later winning:
 |---|---|
 | The defaults of the engine for the kind of element, and for its state | As listed under [elements](#elements) |
 | Style sheets, without `!important` | By specificity, then by the order of the sheets and of the rules in them |
-| What the file of YAML writes on the element, and its states | As before: `focus`, `hover`, `active` |
+| What the UI recipe writes on the element, and its states | As before: `focus`, `hover`, `active` |
 | What a script set with `Set()` | The last value set |
 | Style sheets, with `!important` | By specificity, then by order |
 
@@ -864,7 +869,8 @@ The first four are read by `src`, `background_image`, and
 
 ### Atlases
 
-An atlas is an image that holds several, and a description that says where
+An atlas is an image that holds several, and an atlas recipe, `*.atlas.yml`,
+that says where
 each one is. It is what artists hand over for the icons of a game.
 
 ```yaml
@@ -1782,7 +1788,7 @@ ui_system.GetElementTypes().Add<Minimap>("minimap");
 
 | | Language | Licence | Draws through the renderer of the application |
 |---|---|---|---|
-| **Own YAML files with the vocabulary of CSS, and Yoga. Chosen for now**, with the engine's own layout in place of Yoga | YAML | Own. Yoga is MIT | Yes |
+| **Own recipes in YAML with the vocabulary of CSS, and Yoga. Chosen for now**, with the engine's own layout in place of Yoga | YAML | Own. Yoga is MIT | Yes |
 | [RmlUi](https://github.com/mikke89/RmlUi) | A dialect of HTML and CSS | MIT | Yes, through an interface the application implements. It has data binding, animation, and bindings for Lua |
 | [NoesisGUI](https://www.noesisengine.com) | XAML | Proprietary | Yes, through an interface the application implements |
 | [Ultralight](https://ultralig.ht) | HTML and CSS | Proprietary | Yes, or into a bitmap |
@@ -1804,7 +1810,7 @@ engine.
 | The demo at 1280 by 1024 and at 3440 by 1440 | The corners hold, everything is smaller and larger by the scale. The size was changed in `main.cpp` for it, since the runtime has no option for it |
 | The demo with a window, 3 frames | Runs and ends with exit code 0. The window was not looked at |
 | 120 checks of layout, worked out by hand from the specification | Pass |
-| 300 checks of the user interface with files of YAML | Pass |
+| 300 checks of the user interface with UI recipes | Pass |
 | 1574 tests in all, before what follows | Pass, 3 disabled as before |
 | 2052 tests in all, with what follows | Pass, 3 disabled as before |
 | The scene with surfaces in the world with a window, 5 frames | Runs and ends with exit code 0. The window was not looked at |
@@ -1817,7 +1823,7 @@ engine.
 | The terminal in the world | The right way up and the right way around: its red corner is at the left top, its green one at the right top, its blue one at the left bottom. Its colours are those of the file |
 | What the second camera sees | Is shown on the second monitor. The terminal is seen from behind there, and is mirrored, as a sheet of glass is |
 | Arabic | Joined, and from right to left. Next to English in one line, each in its order |
-| 704 checks of the user interface with files of YAML and style sheets: styles, dirtiness, scrolling, scripting, animation, typing, choosing, describing, the display, navigation | Pass |
+| 704 checks of the user interface with UI recipes and style sheets: styles, dirtiness, scrolling, scripting, animation, typing, choosing, describing, the display, navigation | Pass |
 | The settings menu at 1920 by 1080, without a window, looked at | The window opens by its animation, the list, the fields, the switch, the sliders, the dropdowns, and the buttons are drawn as the theme says, the focus is on Apply |
 | The settings menu at 800 by 600, at 1280 by 720 with a render scale of 2, and at 1920 by 1080 with a user scale of 1.5 | At 800 by 600 the rows go under their labels by the media query and the list scrolls with a thin bar. At the render scale of 2 the image is 2560 by 1440 and sharp. At 1.5 everything is half as large again and still fits |
 | The settings menu driven by `--input`: a click into the name, typing, and a click on the dropdown | The name reads what was typed, the dropdown is open on top of the rows under it with its choice highlighted, the border of the field that has the focus is the accent colour |
@@ -1900,7 +1906,7 @@ Standards to consider next:
 - **Roles for accessibility**, named as in WAI-ARIA, so that a screen reader
   can say what an element is.
 - **RmlUi**, as the alternative of taking over a whole stack of standards in
-  place of YAML files.
+  place of recipes.
 
 Others:
 

@@ -3,10 +3,11 @@
 This note records how a scene is kept in a file, why it is kept that way, and
 what is still open.
 
-**Current decision:** a scene is a YAML file that lists entities and their
-components. It is meant to be read and changed by hand. NeonEditor will write
-the same file. A binary form is not needed yet, and has a place to go when it
-is.
+**Current decision:** a scene is a recipe, a YAML file that lists entities
+and their components, see [recipes.md](recipes.md). It is meant to be read
+and changed by hand, under the rules every recipe shares. NeonEditor will
+write the same file. A binary form is not needed yet, and has a place to go
+when it is.
 
 ## The file
 
@@ -186,18 +187,19 @@ components of the physics. What they hold is listed in
 
 ## Made to be changed by hand
 
+The rules every recipe shares, that a name that is not known is an error,
+that every problem is reported with its line, that what is left out keeps its
+default, how numbers and their precision are written, and that anchors,
+aliases, and tags are refused, are in
+[recipes.md](recipes.md#made-to-be-changed-by-hand). On top of them:
+
 | Decision | Reason |
 |---|---|
-| A name that is not known is an error | `postion` would otherwise be ignored, and the entity would sit at the origin without a word |
-| A message names the file, the line, and what was expected | `demo.scene.yml:5: 'position' of Transform of entity 'a' is text, where a list of 3 numbers was expected` |
-| Every problem of a file is reported, not only the first | A file is corrected in one pass |
-| What is left out keeps its default | A file holds what was decided and nothing else |
-| Paths need no quotes | `assets://models/cube.obj` is plain text to YAML |
-| A number with a fraction may say its precision: `0.5f` is a float, `2.0d` a double | For the person reading the file. The engine knows the type of every field, reads a plain number in that type, and never writes a suffix. A whole number takes no suffix. `2.0d` into a `float` field is refused, since it would lose the precision that was asked for; `0.5f` into a `double` field is fine |
-| Numbers are written as people write them: `29`, `-0.5`, `1e3` | Hexadecimal and octal, `0x1d` and `0o17`, are the computer's forms and are text, never a number by surprise. A field that wants one, such as a colour, reads the text |
-| Comments are allowed | YAML has them. They are lost when the engine writes the file, see the open questions |
-| Anchors, aliases, and tags are refused | They make a file harder to follow, and harder for a tool to write back as it was |
-| Names are written the way the components of the engine are | `Transform` in a file is `Transform` in code |
+| A message names the component and the entity | `demo.scene.yml:5: 'position' of Transform of entity 'a' is text, where a list of 3 numbers was expected` |
+| A component with all of its defaults is `Default`, or `{}` | `Spectator: Default` says the component is there without listing anything |
+| The name of an entity is unique next to its siblings, and has no `/` | `player/camera` finds a child by the names from the top |
+| `scale` takes one number for all three axes | `scale: 2` is `[2, 2, 2]` |
+| Components are written under the name they were registered with | `Transform` in a file is `Transform` in code, see [reflection.md](reflection.md) |
 
 ## When the engine writes
 
@@ -288,12 +290,8 @@ those exist.
 ## Open questions
 
 - Comments and the order of names are lost when the engine writes a file that
-  was changed by hand. Keeping them needs the writer to work on the text that
-  is there and not on values.
-- Whether a number that has to be whole, such as a count, is its own kind.
-  Every number is read as one kind today.
+  was changed by hand, see [recipes.md](recipes.md#open-questions).
 - One scene inside another, such as a tree that is placed a hundred times.
   Flecs has prefabs for it.
 - An entity that refers to another, such as a door to its switch. Paths such
   as `player/camera` are the likely answer.
-- What a project is on disk, of which scenes are one part.

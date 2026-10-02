@@ -81,7 +81,7 @@ is at least as high as it is wide, is a rule of the description. See
 | `can_sleep` | A body that came to rest stops being simulated until something touches it | `true` |
 | `layers`, `mask` | See [layers](#layers-and-masks) | `1` |
 
-In code it has two more, which the engine fills in and a scene file never
+In code it has two more, which the engine fills in and a scene recipe never
 holds: `body`, the id the physics knows the body by, and `failed`, which is
 set when the body could not be created.
 
@@ -161,7 +161,7 @@ in the way. And `character` and `failed`, as the others.
 | Jumping | `velocity.y = 5` | `fall_velocity = {0, 5, 0}` |
 | Turning | The script turns the node | The game turns the `Transform`. The shape stays upright |
 
-So a scene file alone makes a character walk, which is what the scene of the
+So a scene recipe alone makes a character walk, which is what the scene of the
 runtime does.
 
 ## Shapes
@@ -639,7 +639,7 @@ Jolt Physics is a submodule in `external/jolt-physics`. Its options are set in
 | 43 checks of the formats of the components | Pass. Reading, writing, reading what was written, and every message |
 | 21 checks of `Rotation` | Pass |
 | 19 checks of `FixedClock` | Pass |
-| 21 checks of the world with Flecs, Jolt, and a scene in YAML | Pass |
+| 21 checks of the world with Flecs, Jolt, and a scene recipe | Pass |
 | The same scene at 30, 60, 144, and 1000 frames per second, for four seconds, with a force that a system of a game asks for | 240 steps each. Every body is in the same state after every step, down to the last bit |
 | The same scene with frames between 0.1 and 120 milliseconds | The steps of the time that passed, and the same state after every one of them |
 | A frame of ten seconds | 8 steps, and 592 given up. The state is that of 8 steps of any other run |

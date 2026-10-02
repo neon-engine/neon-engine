@@ -54,8 +54,8 @@ Principles that hold for both:
 | Sound (#33) | Sound effects and music with miniaudio, behind an interface. Sounds have a place in the world. See [audio.md](audio.md) |
 | Groups and fading of sounds (#71) | Music, effects, voices, and groups of a game, each with a volume, and fades from one piece of music to another. A settings menu sets them from its file with `UiVolume` and `UiSoundSwitch`. Merged in #139 |
 | Physics described with reflection (#58) | The components of the physics are read and written through their descriptions, which gained fields that belong to a shape only, rules across fields, and layers. Merged in #140 |
-| Reflection (#35) | A component is described once, next to itself. Scene files follow from it, and the editor and scripts will. See [reflection.md](reflection.md) |
-| Scenes in files (#29) | A scene is a YAML file of entities and components, made to be changed by hand. See [scenes.md](scenes.md) |
+| Reflection (#35) | A component is described once, next to itself. Scene recipes follow from it, and the editor and scripts will. See [reflection.md](reflection.md) |
+| Scenes in files (#29) | A scene is a recipe, a YAML file of entities and components, made to be changed by hand. The rules every recipe shares are in [recipes.md](recipes.md), the scene's own in [scenes.md](scenes.md) |
 | Entities and components (#27) | The world is made of entities, components, and systems, with Flecs behind an interface. See [entity-component-system.md](entity-component-system.md) |
 | Running without a window (#28) | `--headless`, `--frames`, and `--screenshot` render a number of frames and save the last one |
 | Screenshots where the caller wants them (#28) | `--output-dir` chooses the folder behind `output://` |
@@ -64,7 +64,7 @@ Principles that hold for both:
 | Exit codes (#28) | The runtime returns a failing exit code when a screenshot could not be written or the run ended with an exception |
 | Physics (#34) | Static, kinematic, and dynamic bodies, triggers, and characters that move and slide, with Jolt Physics behind an interface. The world steps at a fixed rate. See [physics.md](physics.md) |
 | Unit tests (#31) | GoogleTest, with tests for the four libraries and for the runtime as a whole. See the [development guide](development.md#tests) |
-| User interface (#37) | Menus and what is shown during play, from YAML files with the properties of CSS: layout by flexbox, text, values of the game, input and focus, events. It is the first version. See [user-interface.md](user-interface.md) |
+| User interface (#37) | Menus and what is shown during play, from UI recipes with the properties of CSS: layout by flexbox, text, values of the game, input and focus, events. It is the first version. See [user-interface.md](user-interface.md) |
 | Drawing in two dimensions (#37) | Triangles in pixels through an interface of the renderer, which is all a user interface needs of it |
 | Drawing user interfaces (#39) | Text, images, shapes, and shaders, on the screen and on surfaces in the world. Merged in #18 |
 | Behaviour of user interfaces (#40) | Style sheets, scrolling, typing, choosing, animation, scripts, and displays of high density. Merged in #20 |
@@ -73,10 +73,35 @@ Principles that hold for both:
 
 Work that builds directly on what exists.
 
+### The prototype game (#182)
+
+A small, complete first-person shooter in the way of Doom and Half-Life 2,
+built from Kenney's kits with NeonRuntime, recipes, and later Lua alone, no
+editor. It is the test of the engine: everything a game needs and the runtime
+cannot do is a gap, and every gap becomes an issue. It is what the order of
+work serves from here: each feature below is built when the prototype needs
+it, and the prototype shows whether the feature is enough. It is done when a
+person can play it from start to end from an exported build on macOS, Linux,
+and Windows.
+
+| Step | Issue | Detail |
+|---|---|---|
+| A level to walk through | #183 | Import glTF, `external/kenney/` in the project, see [project-layout.md](project-layout.md#external-assets), and a first level as a scene recipe |
+| Walking, looking, shooting | #117 | Input maps with states: named actions a project binds, and maps for walking and for a menu |
+| Enemies, pickups, doors | #146 | Prefabs: an entity described once in a `*.prefab.yml` and placed many times |
+| The game's own logic | #57 | Lua, see [Scripting](#world) |
+| From one level to the next | #118 | A scene manager with a loading screen and what carries over |
+| How it looks | #59, #60, #149, #129 | Physically based materials, shadow mapping, skeletal animation, emissive materials |
+| How it sounds | #71 | Weapon sounds, footsteps, music by area, through the groups that exist |
+| Shipping it | #143, #84 | A shipped runtime that runs only its game, and exporting a project, run on a machine without the repository |
+
+### The rest of Next
+
 | Item | Detail |
 |---|---|
 | Vulkan version and capabilities (#42) | A setting for the version to ask for, and a way for the engine to learn what the graphics card can do, so that menus only offer what works |
 | Run on Windows (#43) | The build works. It has not been run |
+| `--headless-renderer` and `--headless` (#180) | Decided 2026-10-02. What `--headless` does today, frames rendered without a window for checks and the editor's tools, becomes `--headless-renderer`. `--headless` is kept for a dedicated server (#144): no display, no renderer, no sound, no input devices. Until the server exists it is refused with a message that points at `--headless-renderer` |
 
 ## Planned
 
@@ -91,16 +116,17 @@ These come first, because everything after them is cheaper with them in place.
 |---|---|
 | clang-tidy (#30) | Checks that code follows the conventions the code base already has, such as naming. Run in the build and in the editor |
 | The TODOs in the repository (#46) | Listed [below](#todos-in-the-repository) |
-| Architecture document (#45) | How the libraries, interfaces, and applications fit together, and why |
+| Throw sparingly (#179) | The engine never throws while a game runs: a problem is a result that is logged and dealt with where it happens, and the game goes on. An asset that fails to load is not drawn, a scene with a mistake loads without the entities that are wrong, a user interface that cannot be made leaves its surface empty. Whether start-up throws at all, for what keeps the engine from coming up, is part of the decision. 46 `throw` sites to go through, scenes and user interfaces first |
 | Random numbers of true entropy (#160) | From the operating system's secure generator, through an interface a game asks: `getentropy`, `BCryptGenRandom`, and in the browser `crypto.getRandomValues` |
-| A document for each major feature (#45) | In the way [file-systems.md](file-systems.md) describes the file system: what it does, how it is used, and what is open |
+| A document for each major feature (#45) | In the way [file-systems.md](file-systems.md) describes the file system: what it does, how it is used, and what is open. The feature documents so far: [recipes.md](recipes.md), [scenes.md](scenes.md), [user-interface.md](user-interface.md), [projects.md](projects.md), [settings.md](settings.md), [project-layout.md](project-layout.md), [reflection.md](reflection.md), [entity-component-system.md](entity-component-system.md), [physics.md](physics.md), [audio.md](audio.md), [vulkan-renderer.md](vulkan-renderer.md), [file-systems.md](file-systems.md), [command-line.md](command-line.md) |
 
 ### World
 
 | Item | Detail |
 |---|---|
 | More of the physics (#56) | Joints, locked axes, shapes that are cast along a way, and shapes that change while a body lives. See [physics.md](physics.md#limits) |
-| Scripting (#57) | Lua first. Game code is loaded by the runtime, not compiled into it. Bindings for other languages can follow the same interface |
+| Scripting (#57) | **Decided (#93):** Lua 5.4. Scripts are data: they live in `scripts/` of the project, `entry_script` in `project.yml` names the first, and they ship as loose files, or as bytecode or embedded, when the game is exported. The bindings are written by hand over the engine's interfaces, not generated from the headers. The unit is a system over components, not a script on an entity. Scripts are sandboxed |
+| Games in C++, and other languages (#93) | A game in C++ is an application that links the engine, as NeonRuntime does. Native libraries loaded at run time are deferred to the editor, which needs them for hot reload. Other languages come after 1.0 through the same interface as Lua. [Pallene](https://github.com/pallene-lang/pallene), typed Lua compiled to C, is a watch item for scripts that have to be fast |
 | Lua with almost no overhead (#99) | Components reached without copying, no allocation between engine and script, updates over the store's arrays |
 | Components from Lua (#100) | A script declares a component that takes part in scenes, reflection, and systems |
 | Script everything (#101) | As Godot does, in a design that fits an ECS: the unit is a system over components |
@@ -146,7 +172,8 @@ step to the build, not a second set of shaders. [Slang](https://shader-slang.org
 (#110) was weighed and set aside while its Metal and WGSL targets are
 experimental. A tool of our own that stitches includes and wraps material
 shaders into complete stages, as Godot's compiler does, is the likely next
-step and the first of the compiler tools (#83).
+step and the first of the compiler tools (#83). The pipeline, the tools for
+each target, and what the sources keep to are in [shaders.md](shaders.md).
 
 Every technique above has to be built once for each renderer. The more of them
 exist before Metal and WebGPU are started, the more there is to port. The more
@@ -312,8 +339,8 @@ A proposal. Each step builds on the ones before it.
 | Step | What | Why here |
 |---|---|---|
 | 1 | clang-tidy, the TODOs | Small, and they protect everything that follows. Unit tests are done, and new code comes with tests |
-| 2 | Architecture document | Writing it down exposes what the next steps have to change |
-| 3 | Load a project, and the rest of [Next](#next) | The runtime has to run something other than a scene written in code |
+| 2 | The prototype game, step by step | It decides what is needed next and shows whether a feature is enough. See [the prototype game](#the-prototype-game-182) |
+| 3 | Load a project, and the rest of [Next](#next) | Loading a project is done. The rest is what the prototype asks for first |
 | 4 | Entities and components, and scenes in files | Done |
 | 5 | Scripting with Lua | Physics is done. With both, a game can be written without touching the engine |
 | 6 | Running without a window, in full | Makes every later feature checkable by a script or an agent |
@@ -349,6 +376,8 @@ Wanted, and not for 1.0.
 |---|---|
 | Virtual coordinates with a floating origin (#113) | The world is loaded and unloaded around the player and shifted back to the origin without the player noticing, for worlds that may as well be endless |
 | Fewer draw calls (#169) | Opaque draws sorted by pipeline and material, instancing for objects that share a model, per-object data in one buffer, and indirect draws. Measured first, on a scene of thousands of objects |
+| Architecture document (#45) | How the libraries, interfaces, and applications fit together, and why. Written once the architecture has settled; until then the feature documents and this roadmap are the record |
+| An administrator's console (#181) | For a dedicated server, see [networking](#networking): a text console the server exposes on purpose, on a terminal or a socket, off unless the game turns it on. Who may log in, which commands come with the engine and how a game adds its own, which points at Lua, and whether it shares a console with the debug mode's terminal (#116). The shape is decided before #144 builds the server |
 
 ## Known bugs and debts
 
@@ -373,5 +402,4 @@ Wanted, and not for 1.0.
 | Whether WebGPU also serves the desktop (#88) | If it does on macOS, the Metal renderer has less to justify it |
 | Which technique for global illumination (#90) | What the target hardware is, and whether the web has to be able to run it |
 | How agents reach the editor (#91) | What the editor turns out to be |
-| How game code is loaded (#93) | Scripts are decided. Whether libraries loaded at run time are offered as well is open |
 | The license of the engine (#95) | MIT was removed; what replaces it is not decided |

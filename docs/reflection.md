@@ -4,7 +4,7 @@ This note records how the engine knows what is inside a component, why it
 needs to, and what is still open.
 
 **Current decision:** a type is described once, next to itself, in C++. How it
-is written in a scene file follows from the description. So will what the
+is written in a scene recipe follows from the description. So will what the
 editor shows and what a script can reach. The description is the engine's
 own. It does not come from Flecs.
 
@@ -16,7 +16,7 @@ by hand, each in its own way.
 
 | Who | Needs |
 |---|---|
-| A scene file | The name of every field, to read and to write it |
+| A scene recipe | The name of every field, to read and to write it |
 | The editor | The name, what it holds, what it may hold, and what it is for |
 | A script | A way to read and change a field by its name |
 
@@ -48,13 +48,13 @@ inline void Describe(TypeBuilder<Spectator> &type)
 The function is called `Describe` and sits next to the type, in the same
 header and the same namespace. That is how it is found.
 
-`ComponentFormat::Of<Spectator>()` makes the format for scene files from it.
+`ComponentFormat::Of<Spectator>()` makes the format for scene recipes from it.
 
 ### What a field holds
 
 It is deduced from the member.
 
-| Member in C++ | Kind | In a scene file |
+| Member in C++ | Kind | In a scene recipe |
 |---|---|---|
 | `bool` | Bool | `true` or `false` |
 | `int` | Whole | A number without a fraction |
@@ -156,7 +156,7 @@ field says `AtLeast(0)` and a rule says the rest.
 ### What is left out
 
 A member that is not described is not seen from outside. That is how what the
-engine keeps for itself stays out of a scene file: the id the renderer knows
+engine keeps for itself stays out of a scene recipe: the id the renderer knows
 an entity by, and where a `Transform` puts an entity in the world.
 
 ### Values as text
@@ -239,12 +239,12 @@ say.
 
 | Decision | Reason |
 |---|---|
-| The engine's own, not that of Flecs | One description serves scene files, the editor, and scripts, whatever keeps the entities. Flecs is started without its addons, and stays replaceable |
+| The engine's own, not that of Flecs | One description serves scene recipes, the editor, and scripts, whatever keeps the entities. Flecs is started without its addons, and stays replaceable |
 | Written in C++ by hand, not generated | No step in the build and no tool to keep. C++ gains reflection of its own with C++26, which no compiler of the toolchain offers yet |
 | Next to the type | It is changed when the type is changed, by whoever changes it |
 | A field is reached through functions, not through its place in memory | It works for a member of a member and for a value that is kept as something else. It does not depend on how the compiler lays out a struct |
 | A value is one of eleven types | Code that works with any component needs a closed set to handle. A new kind is added in one place |
-| A scene file is the same as before | Descriptions replace how components are read and written, not what is read and written |
+| A scene recipe is the same as before | Descriptions replace how components are read and written, not what is read and written |
 | A refused number is told as the rest of the engine tells it | `is 0, where a number above 0 was expected` says what was written. `has to be above 0`, which descriptions said at first, did not, and the physics said it the first way |
 | Layers are a kind of their own | One layer may be written without a list, and a message names layers. A list of numbers with limits could say neither |
 | What breaks a rule is kept | No one field is to blame, so none is set back to its default |
