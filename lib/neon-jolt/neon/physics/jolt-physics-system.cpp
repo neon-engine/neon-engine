@@ -279,6 +279,18 @@ namespace neon
     };
 
     /// What is kept of a body.
+    /// What tells the shared shapes of models apart.
+    struct SharedShapeKey
+    {
+      std::string source;
+      ShapeKind kind = ShapeKind::Mesh;
+      float scale_x = 1.0f;
+      float scale_y = 1.0f;
+      float scale_z = 1.0f;
+
+      auto operator<=>(const SharedShapeKey &) const = default;
+    };
+
     struct BodyRecord
     {
       JPH::BodyID jolt;
@@ -519,6 +531,12 @@ namespace neon
     // by the two numbers Jolt knows the bodies as
     std::map<std::pair<std::uint32_t, std::uint32_t>, Touch> touches;
 
+    // The shape of every model, by what its points were read from, its
+    // kind, and its scale: held once, and given to every body whose
+    // collider names the same. Jolt counts who holds a shape, so one that
+    // no body holds any more is let go.
+    std::map<SharedShapeKey, JPH::RefConst<JPH::Shape>> shared_shapes;
+
     BodyId next_body = 1;
     CharacterId next_character = 1;
     JointId next_joint = 1;
@@ -534,11 +552,15 @@ namespace neon
       return it == bodies.end() ? nullptr : &it->second;
     }
 
-    /// Makes the shape Jolt works with. Returns nullptr and says why when
-    /// it cannot be made.
-    JPH::RefConst<JPH::Shape> MakeShape(const ShapeInfo &info, std::string &error) const;
+    /// Makes the shape Jolt works with, or hands over the one that was made
+    /// for the same model already. Returns nullptr and says why when it
+    /// cannot be made.
+    JPH::RefConst<JPH::Shape> MakeShape(const ShapeInfo &info, std::string &error);
 
-    JPH::RefConst<JPH::Shape> MakeShapes(const std::vector<ShapeInfo> &shapes, std::string &error) const;
+    JPH::RefConst<JPH::Shape> MakeShapes(const std::vector<ShapeInfo> &shapes, std::string &error);
+
+    /// Lets go of every shared shape that no body holds any more.
+    void ForgetUnusedShapes();
 
     /// Makes the shape of a query, which is held where the query says and
     /// has an inside. Returns nullptr and says why in the log when it
@@ -547,7 +569,7 @@ namespace neon
     JPH::RefConst<JPH::Shape> MakeQueryShape(
       const ShapeInfo &info,
       const std::string &what,
-      const std::shared_ptr<Logger> &logger) const;
+      const std::shared_ptr<Logger> &logger);
 
     [[nodiscard]] bool IsResting(const std::pair<std::uint32_t, std::uint32_t> &pair, const Touch &touch) const;
 
@@ -591,7 +613,7 @@ namespace neon
     }
   }
 
-  JPH::RefConst<JPH::Shape> Jolt_PhysicsSystem::State::MakeShape(const ShapeInfo &info, std::string &error) const
+  JPH::RefConst<JPH::Shape> Jolt_PhysicsSystem::State::MakeShape(const ShapeInfo &info, std::string &error)
   {
     const auto name = Name(info.kind);
 
@@ -601,6 +623,15 @@ namespace neon
         "the {} is scaled by [{}, {}, {}], where no axis can be 0",
         name, info.scale.x, info.scale.y, info.scale.z);
       return nullptr;
+    }
+
+    // the shape of a model is made once for every scale it is used at
+    const bool of_model = !info.source.empty() &&
+                          (info.kind == ShapeKind::ConvexHull || info.kind == ShapeKind::Mesh);
+    const SharedShapeKey key{info.source, info.kind, info.scale.x, info.scale.y, info.scale.z};
+    if (of_model)
+    {
+      if (const auto it = shared_shapes.find(key); it != shared_shapes.end()) { return it->second; }
     }
 
     JPH::ShapeSettings::ShapeResult result;
@@ -816,12 +847,28 @@ namespace neon
       shape = scaled.Get();
     }
 
+    if (of_model) { shared_shapes[key] = shape; }
     return shape;
+  }
+
+  void Jolt_PhysicsSystem::State::ForgetUnusedShapes()
+  {
+    for (auto it = shared_shapes.begin(); it != shared_shapes.end();)
+    {
+      // the map holds the one reference that is left
+      if (it->second->GetRefCount() == 1)
+      {
+        it = shared_shapes.erase(it);
+      } else
+      {
+        ++it;
+      }
+    }
   }
 
   JPH::RefConst<JPH::Shape> Jolt_PhysicsSystem::State::MakeShapes(
     const std::vector<ShapeInfo> &shapes,
-    std::string &error) const
+    std::string &error)
   {
     if (shapes.empty())
     {
@@ -883,7 +930,7 @@ namespace neon
   JPH::RefConst<JPH::Shape> Jolt_PhysicsSystem::State::MakeQueryShape(
     const ShapeInfo &info,
     const std::string &what,
-    const std::shared_ptr<Logger> &logger) const
+    const std::shared_ptr<Logger> &logger)
   {
     if (info.kind == ShapeKind::Mesh || info.kind == ShapeKind::Plane)
     {
@@ -1253,6 +1300,7 @@ namespace neon
 
     _state->bodies.erase(it);
     _state->body_count--;
+    _state->ForgetUnusedShapes();
   }
 
   bool Jolt_PhysicsSystem::SetShape(const BodyId body, const std::vector<ShapeInfo> &shapes, std::string &error)
@@ -1279,6 +1327,7 @@ namespace neon
 
     auto &interface = _state->physics.GetBodyInterface();
     interface.SetShape(record->jolt, shape, false, JPH::EActivation::Activate);
+    _state->ForgetUnusedShapes();
 
     // Jolt would give the body the mass of its new shape. The body keeps the
     // mass it was created with, spread over the new shape.
@@ -1306,6 +1355,11 @@ namespace neon
   std::size_t Jolt_PhysicsSystem::GetBodyCount()
   {
     return _state == nullptr ? 0 : _state->body_count;
+  }
+
+  std::size_t Jolt_PhysicsSystem::GetSharedShapeCount() const
+  {
+    return _state == nullptr ? 0 : _state->shared_shapes.size();
   }
 
   bool Jolt_PhysicsSystem::GetBodyState(const BodyId body, BodyState &state)

@@ -11,6 +11,7 @@
 
 #include "vk-shader-data.hpp"
 #include "vk-texture.hpp"
+#include "vk-texture-cache.hpp"
 
 namespace neon
 {
@@ -23,9 +24,26 @@ namespace neon
     std::string _shader_path;
     std::vector<std::string> _texture_paths;
 
-    // what the model names, which is shown when the scene names no texture
+    // what the model names, which is shown when the scene names no texture,
+    // and the model that names it
     std::vector<TextureInfo> _model_textures;
+    std::string _model_path;
     std::vector<VK_Texture> _textures{};
+
+    // Where the textures come from, which holds each once for every
+    // material that reads it. Without one the material loads its own.
+    VK_TextureCache *_texture_cache = nullptr;
+
+    // for each texture the key it is held under in the cache, or empty
+    // for one the material loaded itself or that a render target owns
+    std::vector<std::string> _texture_keys;
+
+    /// Loads one texture, or takes it from the cache when there is one.
+    /// `file` is the image a model carries, or nothing.
+    bool LoadTexture(
+      const std::string &path,
+      const std::shared_ptr<const std::vector<unsigned char>> &file,
+      const VK_TextureOptions &options);
     MaterialInfo _material_info;
     bool _scale_textures = false;
     bool _initialized = false;
@@ -69,9 +87,13 @@ namespace neon
     /// Loads the textures.
     bool Initialize();
 
-    /// Hands over the textures the model file names, which are shown when
-    /// the scene names none. Call it before Initialize().
-    void SetModelTextures(const std::vector<TextureInfo> &textures);
+    /// Hands over the textures the model file at `model_path` names, which
+    /// are shown when the scene names none. Call it before Initialize().
+    void SetModelTextures(const std::vector<TextureInfo> &textures, const std::string &model_path = "");
+
+    /// Says where the textures are held, so that one is loaded once for
+    /// every material that reads it. Call it before Initialize().
+    void SetTextureCache(VK_TextureCache *cache);
 
     /// Says where the textures come from that are no files: those whose
     /// path starts with `surface://`. Call it before Initialize().

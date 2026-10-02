@@ -10,4 +10,5 @@ neon_add_application_test(runtime-prototype NeonRuntime run.cmake
         CASES
         the-level-is-drawn-from-the-kit-pieces
         the-player-walks-into-the-room
+        the-kit-pieces-are-loaded-once
 )

@@ -1,6 +1,7 @@
 #ifndef VK_RENDER_SYSTEM_HPP
 #define VK_RENDER_SYSTEM_HPP
 
+#include <cstddef>
 #include <memory>
 #include <optional>
 #include <string>
@@ -15,7 +16,7 @@
 #include "vk-device.hpp"
 #include "vk-draw-order.hpp"
 #include "vk-material.hpp"
-#include "vk-model.hpp"
+#include "vk-model-cache.hpp"
 #include "vk-pipelines.hpp"
 #include "vk-render-target.hpp"
 #include "vk-renderer-2d.hpp"
@@ -24,6 +25,7 @@
 #include "vk-shader-data.hpp"
 #include "vk-shadow-map.hpp"
 #include "vk-swapchain.hpp"
+#include "vk-texture-cache.hpp"
 
 namespace neon
 {
@@ -125,8 +127,24 @@ namespace neon
 
     VK_Texture _white_texture;
 
-    DataBuffer<VK_Model> _model_refs;
+    // What the render objects draw: each model and each texture is held
+    // once, however many objects draw it, and a material of its own for
+    // every object.
+    VK_ModelCache _models;
+    VK_TextureCache _textures;
     DataBuffer<VK_Material> _material_refs;
+
+    // what was created since the last frame said so, and what the caches
+    // had done by then
+    std::size_t _objects_created = 0;
+    std::size_t _model_loads_reported = 0;
+    std::size_t _model_shares_reported = 0;
+    std::size_t _texture_loads_reported = 0;
+    std::size_t _texture_shares_reported = 0;
+
+    /// Says in the log what the render objects created since the last
+    /// frame loaded, and what they shared. Nothing is said when none was.
+    void ReportCreated();
 
     VK_Renderer2D _renderer_2d;
 
@@ -208,7 +226,7 @@ namespace neon
       const SettingsConfig &settings_config,
       const std::shared_ptr<Logger> &logger)
       : RenderSystem(window_context, file_system_context, settings_config, kMax_Render_Objects, logger),
-        _model_refs(kMax_Render_Objects),
+        _models(kMax_Render_Objects),
         _material_refs(kMax_Render_Objects) {}
 
     void Initialize() override;

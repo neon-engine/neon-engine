@@ -264,6 +264,7 @@ A library of its own, `neon-vulkan`.
 | `VK_Capture` | Reads a finished frame back and writes it as a PNG |
 | `VK_Model`, `VK_Mesh` | Vertex and index buffers. `VK_Model` derives from the core `Model`, which does the loading through assimp for every renderer |
 | `VK_Texture` | Image and view, and which way it is read |
+| `VK_ModelCache`, `VK_TextureCache` | What the render objects draw, held once each: a model for every path and fit, a texture for every image, counted and freed when the last object that drew it goes. See [what is shared](#what-is-shared) |
 | `VK_Samplers` | The five samplers every texture is read through, one for each way of reading, made once and shared |
 | `VK_Shader` | Shader modules from SPIR-V |
 | `VK_Material` | Textures, descriptor set, per-object data, and which pipelines draw it |
@@ -273,6 +274,40 @@ A library of its own, `neon-vulkan`.
 | `VK_RenderTarget` | An image that is drawn to like the frame, and read as a texture |
 | `VK_Renderer2D` | What is drawn in two dimensions, on top of the resolved scene |
 | `VK_SwapchainSizing`, `VK_FrameStages`, `VK_DrawOrder`, `VK_Culling`, `VK_ShadowFit` | The decisions of the renderer, kept apart from the graphics card so that they are tested |
+
+### What is shared
+
+A render object is one entity that is drawn: it has a material of its own,
+with the colour, the shader, and the descriptor set the scene gave it. What
+it draws with is held once (#241):
+
+| What | Held once for every | By | Freed |
+|---|---|---|---|
+| A model from a file: its vertex and index buffers | Path and `fit` | `VK_ModelCache` | When the last render object that drew it is destroyed, and at clean-up |
+| A texture: an image file, or an image a model carries | Image path and how it is kept (colours or numbers, smaller copies, repeating), and the model's path for an image it carries, since two models may each call theirs `*0` | `VK_TextureCache` | When the last material that read it is cleaned up, and at clean-up |
+| A mesh a `Geometry` built | Nothing: it belongs to its entity | The model cache, uncounted | With its render object |
+| A render target a material shows | The target | The target | With the target |
+
+`VK_ModelCache` is a `DataBuffer<VK_Model>`, which gives every model the
+id a render object keeps, with a key and a count for every model from a
+file on top. `DataBuffer` stays the store of what is not shared, the render
+objects, the materials, the render targets, and the images of the user
+interface, so the counting lives beside it and not in it. The texture cache
+is a map by key, since a material holds a `VK_Texture` and not an id.
+
+So the 17 walls, floors, columns, and targets the prototype level places
+from four prefabs read four GLB files and one colormap, not seventeen of
+each, and a scene that writes the same model on two entities in full gets
+the same. `CreateRenderObject()` takes a reference and
+`DestroyRenderObject()` gives it back. The log says at the end of the
+frame that created render objects how many models and textures were loaded
+and how many were shared, once a scene, and names each model and texture
+that is shared or freed at the level of debugging.
+
+The images of the user interface, loaded through `LoadTexture()`, are held
+by `UiResources` once for every path already and are not in the cache.
+Drawing the objects that share a model with one call is instancing (#169),
+which is not done.
 
 **Render to an image first, always.** Every frame is drawn into an offscreen
 image. With a window, that image is then copied to the swapchain. Headless,

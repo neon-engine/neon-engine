@@ -524,6 +524,11 @@ namespace
 
     ASSERT_EQ(_physics.created.size(), 2u);
     EXPECT_EQ(_physics.created[0].shapes[0].points, _physics.created[1].shapes[0].points);
+
+    // and the physics is told where the points came from, so that it may
+    // hold one shape for both
+    EXPECT_EQ(_physics.created[0].shapes[0].source, "assets://models/wedge.obj");
+    EXPECT_EQ(_physics.created[1].shapes[0].source, "assets://models/wedge.obj");
   }
 
   TEST_F(PhysicsSimulationTest, ReadsAModelForEachFitItIsUsedWith)
@@ -537,6 +542,8 @@ namespace
 
     ASSERT_EQ(_physics.created.size(), 2u);
     EXPECT_NE(_physics.created[0].shapes[0].points, _physics.created[1].shapes[0].points);
+    EXPECT_EQ(_physics.created[0].shapes[0].source, "assets://models/wedge.obj (unit)");
+    EXPECT_EQ(_physics.created[1].shapes[0].source, "assets://models/wedge.obj");
   }
 
   // what cannot be created

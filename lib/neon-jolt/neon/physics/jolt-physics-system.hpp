@@ -48,6 +48,10 @@ namespace neon
 
     [[nodiscard]] std::size_t GetBodyCount() override;
 
+    /// How many shapes of models are held for the bodies to share: one for
+    /// every model, kind, and scale that a body has, see docs/physics.md.
+    [[nodiscard]] std::size_t GetSharedShapeCount() const;
+
     bool GetBodyState(BodyId body, BodyState &state) override;
 
     void SetBodyPlace(BodyId body, const glm::vec3 &position, const glm::quat &rotation) override;

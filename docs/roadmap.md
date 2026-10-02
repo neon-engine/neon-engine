@@ -136,6 +136,7 @@ These come first, because everything after them is cheaper with them in place.
 | Scenes and resources serialized to binary and text (#96) | As Godot does with resources, so that saved games are the same machinery. Not decided; to be discussed |
 | A scene manager (#118) | Changes between whole scenes, with a loading screen and what carries over |
 | Prefabs (#146) | **Done:** an entity, or a tree of them, described once in a `*.prefab.yml`, placed in scenes with what differs written on top, a child taken away with `~` (#228), and spawned at run time through `WorldSystem::Spawn` (#229), see [prefabs.md](prefabs.md). A prefab is not a scene. Open: a Lua binding once scripts come (#57) |
+| What a prefab loads, shared (#241) | **Done:** one model, texture, and collider shape for every path, held by the renderer and the physics as long as one entity uses it, so that a placement adds only its own components. Open: drawing the placements with one call (#169) |
 | Assets streamed by distance (#114) | Loaded as the player comes near and released as the player leaves, in the background |
 | Input maps with states (#117) | Named actions bound by a project, and maps for walking, driving, swimming, a menu |
 

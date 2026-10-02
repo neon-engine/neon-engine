@@ -3,11 +3,10 @@
 
 #include <memory>
 
-#include <neon/common/data-buffer.hpp>
 #include <neon/logging/logger.hpp>
 
 #include "vk-device.hpp"
-#include "vk-model.hpp"
+#include "vk-model-cache.hpp"
 #include "vk-resolve.hpp"
 
 namespace neon
@@ -25,7 +24,7 @@ namespace neon
 
     // what the see-through models are drawn with
     VkPipelineLayout pipeline_layout = VK_NULL_HANDLE;
-    DataBuffer<VK_Model> *models = nullptr;
+    const VK_ModelCache *models = nullptr;
 
     std::shared_ptr<Logger> logger;
 

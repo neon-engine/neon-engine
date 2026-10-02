@@ -29,6 +29,13 @@ plan.
 | The meshes | A backend makes a mesh of its own from the positions, normals, texture coordinates, and indices. The Vulkan backend uploads them; the physics keeps the positions for a `mesh` or `convex_hull` collider |
 | The size | A model is drawn at its own size and around its own origin, as the file says, unless the `Renderable` asks for a `fit` of `unit`, which moves it to the origin and scales it so that its longest side is 1. See [the size of a model](#the-size-of-a-model) |
 
+A model is read once for every path and fit, however many entities draw
+it, and its textures once for every image; the renderer holds them as long
+as one entity draws them, see
+[what is shared](vulkan-renderer.md#what-is-shared). The physics reads the
+points of a model once for every path and fit as well, and holds one shape
+for every scale a collider uses them at, see [physics.md](physics.md).
+
 A node that mirrors its mesh, with a transform whose determinant is below 0,
 turns its triangles inside out. The loader reverses the winding of every
 triangle of such a mesh, so that the front still faces out and culling still

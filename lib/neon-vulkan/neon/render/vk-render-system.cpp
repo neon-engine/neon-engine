@@ -62,6 +62,9 @@ namespace neon
     }
 
     _logger->Info("Render resolution: {}x{}", _extent.width, _extent.height);
+
+    _models.Initialize(_file_system_context, &_device, _logger);
+    _textures.Initialize(_file_system_context, &_device, _logger);
     _render_resolution.emplace(static_cast<int>(_extent.width), static_cast<int>(_extent.height));
 
     VkCommandBufferAllocateInfo allocation{};
@@ -97,7 +100,7 @@ namespace neon
       .frame_pass = _frame_pass,
       .depth_format = _depth_format,
       .pipeline_layout = _pipelines.Layout(),
-      .models = &_model_refs,
+      .models = &_models,
       .logger = _logger,
     };
     _frame = VK_Canvas("the frame", &_canvas_shared);
@@ -459,15 +462,14 @@ namespace neon
 
     vkDeviceWaitIdle(device);
 
-    // whatever the scene did not destroy itself
-    for (int id = 0; id < _model_refs.Capacity(); id++)
-    {
-      if (_model_refs.Contains(id)) { _model_refs.Remove(id).CleanUp(); }
-    }
+    // whatever the scene did not destroy itself: the materials first, since
+    // they give their textures back to the cache
     for (int id = 0; id < _material_refs.Capacity(); id++)
     {
       if (_material_refs.Contains(id)) { _material_refs.Remove(id).CleanUp(); }
     }
+    _models.CleanUp();
+    _textures.CleanUp();
 
     for (int id = 0; id < _targets.Capacity(); id++)
     {
@@ -640,6 +642,10 @@ namespace neon
 
   void VK_RenderSystem::FinishFrame()
   {
+    // the objects of a scene are created in its first frame, so this is
+    // said once a scene
+    ReportCreated();
+
     if (!_frame_open) { return; }
 
     // a target that was left open is closed, so that its commands can run
@@ -744,15 +750,10 @@ namespace neon
     }
 
     // a mesh that was built is drawn as it is; a file is read and fitted
-    VK_Model model = render_info.mesh != nullptr
-      ? VK_Model(render_info.mesh, &_device, _logger)
-      : VK_Model(render_info.model_path, render_info.fit, _file_system_context, &_device, _logger);
-    if (!model.Initialize())
-    {
-      const std::string what = render_info.mesh != nullptr ? "the mesh that was built" : render_info.model_path;
-      _logger->Error("Could not initialize model {}", what);
-      return -1;
-    }
+    // once, and shared by every object that draws it
+    const int model_id = _models.Acquire(render_info);
+    if (model_id < 0) { return -1; }
+    const VK_Model &model = _models[model_id];
 
     // What the model file says about its look fills in what the scene does
     // not: its colour factor multiplies the colour of the material, and its
@@ -778,7 +779,8 @@ namespace neon
       _file_system_context,
       &_device,
       _logger);
-    if (model_material != nullptr) { material.SetModelTextures(model_material->textures); }
+    material.SetTextureCache(&_textures);
+    if (model_material != nullptr) { material.SetModelTextures(model_material->textures, render_info.model_path); }
 
     material.SetSurfaceLookup([this](const std::string &name, VK_Texture &texture)
     {
@@ -794,22 +796,18 @@ namespace neon
         !CreateDescriptorSet(material))
     {
       _logger->Error("Could not initialize material with shader {}", render_info.shader_path);
-      model.CleanUp();
       material.CleanUp();
+      _models.Release(model_id);
       return -1;
     }
     material.SetPipeline(pipeline);
 
-    const auto model_id = _model_refs.Add(model);
     const auto material_id = _material_refs.Add(material);
-
-    if (model_id < 0 || material_id < 0)
+    if (material_id < 0)
     {
       _logger->Error("There is no room for another render object");
-      if (model_id >= 0) { _model_refs.Remove(model_id); }
-      if (material_id >= 0) { _material_refs.Remove(material_id); }
-      model.CleanUp();
       material.CleanUp();
+      _models.Release(model_id);
       return -1;
     }
 
@@ -825,7 +823,29 @@ namespace neon
       model_id,
       material_id);
 
+    _objects_created++;
     return render_id;
+  }
+
+  void VK_RenderSystem::ReportCreated()
+  {
+    if (_objects_created == 0) { return; }
+
+    const auto model_loads = _models.Loads() - _model_loads_reported;
+    const auto model_shares = _models.Shares() - _model_shares_reported;
+    const auto texture_loads = _textures.Loads() - _texture_loads_reported;
+    const auto texture_shares = _textures.Shares() - _texture_shares_reported;
+
+    _logger->Info(
+      "Created {} render objects: {} models and {} textures were loaded, and {} models and {} textures were "
+      "shared with objects that had them already",
+      _objects_created, model_loads, texture_loads, model_shares, texture_shares);
+
+    _objects_created = 0;
+    _model_loads_reported = _models.Loads();
+    _model_shares_reported = _models.Shares();
+    _texture_loads_reported = _textures.Loads();
+    _texture_shares_reported = _textures.Shares();
   }
 
   VK_SceneData VK_RenderSystem::BuildSceneData(
@@ -938,7 +958,7 @@ namespace neon
     if (!_frame_open) { return; }
 
     const auto [model_id, material_id] = _render_object_buffer[render_object_id];
-    const auto &model = _model_refs[model_id];
+    const auto &model = _models[model_id];
     auto &material = _material_refs[material_id];
 
     // What is drawn into a render target cannot show that target, since
@@ -1102,7 +1122,6 @@ namespace neon
     vkDeviceWaitIdle(_device.Device());
 
     const auto [model_id, material_id] = _render_object_buffer.Remove(render_object_id);
-    auto model = _model_refs.Remove(model_id);
     auto material = _material_refs.Remove(material_id);
 
     if (const VkDescriptorSet set = material.DescriptorSet(); set != VK_NULL_HANDLE)
@@ -1110,8 +1129,8 @@ namespace neon
       vkFreeDescriptorSets(_device.Device(), _descriptor_pool, 1, &set);
     }
 
-    model.CleanUp();
     material.CleanUp();
+    _models.Release(model_id);
   }
 
   int VK_RenderSystem::CreateTexture(const int width, const int height, const std::vector<unsigned char> &pixels)

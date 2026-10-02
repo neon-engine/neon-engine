@@ -136,7 +136,7 @@ namespace neon
   {
     VK_DrawOrder::BackToFront(_see_through);
 
-    DataBuffer<VK_Model> &models = *_shared->models;
+    const VK_ModelCache &models = *_shared->models;
 
     for (const auto &draw : _see_through)
     {

@@ -39,19 +39,12 @@ namespace neon
       for (std::size_t i = 0; i < _model_textures.size(); i++)
       {
         const TextureInfo &info = _model_textures[i];
-        _surface_names.emplace_back();
-
-        VK_Texture texture(info.path, _file_system_context, _device, _logger);
-        const bool loaded = info.IsEmbedded()
-          ? texture.InitializeWithFile(*info.file, TextureOptionsFor(i))
-          : texture.Initialize(TextureOptionsFor(i));
-        if (!loaded)
+        if (!LoadTexture(info.path, info.file, TextureOptionsFor(i)))
         {
           _logger->Error("Could not initialize the texture {} of the model", info.path);
           CleanUp();
           return false;
         }
-        _textures.push_back(texture);
       }
     }
 
@@ -68,22 +61,44 @@ namespace neon
 
         _textures.push_back(shown);
         _surface_names.push_back(surface);
+        _texture_keys.emplace_back();
         continue;
       }
 
-      _surface_names.emplace_back();
-
-      VK_Texture texture(texture_path, _file_system_context, _device, _logger);
-      if (!texture.Initialize(TextureOptionsFor(i)))
+      if (!LoadTexture(texture_path, nullptr, TextureOptionsFor(i)))
       {
         _logger->Error("Could not initialize texture");
         CleanUp();
         return false;
       }
-      _textures.push_back(texture);
     }
 
     _initialized = true;
+    return true;
+  }
+
+  bool VK_Material::LoadTexture(
+    const std::string &path,
+    const std::shared_ptr<const std::vector<unsigned char>> &file,
+    const VK_TextureOptions &options)
+  {
+    VK_Texture texture(path, _file_system_context, _device, _logger);
+    std::string key;
+
+    if (_texture_cache != nullptr)
+    {
+      // an image a model carries is known by the model as well
+      key = VK_TextureCache::KeyOf(path, file != nullptr ? _model_path : "", options);
+      if (!_texture_cache->Acquire(key, path, file, options, texture)) { return false; }
+    } else
+    {
+      const bool loaded = file != nullptr ? texture.InitializeWithFile(*file, options) : texture.Initialize(options);
+      if (!loaded) { return false; }
+    }
+
+    _textures.push_back(texture);
+    _surface_names.emplace_back();
+    _texture_keys.push_back(key);
     return true;
   }
 
@@ -102,20 +117,36 @@ namespace neon
 
     while (!_textures.empty())
     {
-      // what a render target was drawn to is released by the target
-      const bool is_surface = _textures.size() <= _surface_names.size() &&
-                              !_surface_names[_textures.size() - 1].empty();
+      const std::size_t last = _textures.size() - 1;
 
-      if (!is_surface) { _textures.back().CleanUp(); }
+      // what a render target was drawn to is released by the target, and
+      // what the cache holds is given back to it
+      const bool is_surface = last < _surface_names.size() && !_surface_names[last].empty();
+      const bool is_shared = last < _texture_keys.size() && !_texture_keys[last].empty();
+
+      if (is_shared)
+      {
+        _texture_cache->Release(_texture_keys[last]);
+      } else if (!is_surface)
+      {
+        _textures.back().CleanUp();
+      }
       _textures.pop_back();
     }
     _surface_names.clear();
+    _texture_keys.clear();
     _initialized = false;
   }
 
-  void VK_Material::SetModelTextures(const std::vector<TextureInfo> &textures)
+  void VK_Material::SetModelTextures(const std::vector<TextureInfo> &textures, const std::string &model_path)
   {
     _model_textures = textures;
+    _model_path = model_path;
+  }
+
+  void VK_Material::SetTextureCache(VK_TextureCache *cache)
+  {
+    _texture_cache = cache;
   }
 
   void VK_Material::SetSurfaceLookup(const SurfaceLookup &lookup)

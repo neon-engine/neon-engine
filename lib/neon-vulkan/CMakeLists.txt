@@ -14,6 +14,8 @@ add_library(${TARGET} STATIC
         neon/render/vk-mesh.hpp
         neon/render/vk-model.cpp
         neon/render/vk-model.hpp
+        neon/render/vk-model-cache.cpp
+        neon/render/vk-model-cache.hpp
         neon/render/vk-renderer-2d.cpp
         neon/render/vk-renderer-2d.hpp
         neon/render/vk-shader.cpp
@@ -21,6 +23,8 @@ add_library(${TARGET} STATIC
         neon/render/vk-shader-data.hpp
         neon/render/vk-texture.cpp
         neon/render/vk-texture.hpp
+        neon/render/vk-texture-cache.cpp
+        neon/render/vk-texture-cache.hpp
         neon/render/vk-render-system.cpp
         neon/render/vk-render-system.hpp
         neon/render/vk-shader-values.cpp

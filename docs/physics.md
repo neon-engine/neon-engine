@@ -350,7 +350,14 @@ the `Renderable` that draws the model, so that the shape lies where the
 model is drawn; the collider carries its own, since it names its own model,
 which may be a simpler one than what is drawn, and often sits on an entity
 that draws nothing. A model is read once for each fit, however many
-colliders name it. See [models.md](models.md).
+colliders name it, and the physics holds one shape for every model, kind,
+and scale the colliders use it at: the `ShapeInfo` carries the model and
+its fit as its `source`, and the Jolt backend hands the shape it made for
+that source and scale to every body that asks again, which Jolt counts, so
+that the shape goes when the last body that holds it goes. A box, a
+sphere, and the other shapes that are cheap to make are made for every
+body, and so is the mesh of a `Geometry`, whose points are its own. See
+[models.md](models.md).
 
 ### Several shapes
 
@@ -860,7 +867,7 @@ Jolt Physics is a submodule in `external/jolt-physics`. Its options are set in
 
 | Check | Result |
 |---|---|
-| 117 checks of `Jolt_PhysicsSystem` through the interface | Pass. A box falls and comes to rest, a sphere rolls down a slope, a character stops at a wall and slides along it and is not pushed by a body of 500 kg, a trigger reports enter and leave once each and changes nothing of what passes, layers and masks, rays and overlaps, a mesh is refused on a dynamic body, bodies are released, a crate with its rotation locked slides upright where a free one falls over, a cast box meets a post a ray down its middle misses, a body that grows touches what it did not and keeps its mass, a door turns on its hinge and stops at its limits, a pendulum swings on a point, a sled moves along its slider alone, a glued pair moves as one, a joint goes with either of its bodies |
+| 121 checks of `Jolt_PhysicsSystem` through the interface | Pass. A box falls and comes to rest, a sphere rolls down a slope, a character stops at a wall and slides along it and is not pushed by a body of 500 kg, a trigger reports enter and leave once each and changes nothing of what passes, layers and masks, rays and overlaps, a mesh is refused on a dynamic body, bodies are released, a crate with its rotation locked slides upright where a free one falls over, a cast box meets a post a ray down its middle misses, a body that grows touches what it did not and keeps its mass, a door turns on its hinge and stops at its limits, a pendulum swings on a point, a sled moves along its slider alone, a glued pair moves as one, a joint goes with either of its bodies, two bodies that name one model at one scale hold one shape and let it go with the last of them |
 | The same world twice, with 21 bodies, a mesh, a trigger, and a character, for 300 steps | The same state down to the last bit, and the same events in the same order |
 | The same pendulum twice, for 200 steps | The same state down to the last bit |
 | 91 checks of `PhysicsSimulation` with a physics that is a fake | Pass |

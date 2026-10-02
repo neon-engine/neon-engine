@@ -2119,6 +2119,64 @@ namespace
     EXPECT_TRUE(_physics.CreateBody(trigger, body, _error)) << _error;
   }
 
+  // shapes of a model, shared by the bodies whose colliders name it
+
+  TEST_F(JoltPhysicsSystemTest, HoldsOneShapeForTheBodiesThatNameTheSameModelAtTheSameScale)
+  {
+    auto mesh = CubeOf(ShapeKind::Mesh);
+    mesh.source = "assets://models/rock.glb";
+    mesh.scale = {2.0f, 2.0f, 2.0f};
+
+    const auto first = CreateBody(floor_entity, BodyKind::Static, mesh, {0.0f, 0.0f, 0.0f});
+    const auto second = CreateBody(wall_entity, BodyKind::Static, mesh, {5.0f, 0.0f, 0.0f});
+
+    EXPECT_EQ(_physics.GetSharedShapeCount(), 1u);
+
+    // the shape goes when the last body that holds it goes
+    _physics.DestroyBody(first);
+    EXPECT_EQ(_physics.GetSharedShapeCount(), 1u);
+    _physics.DestroyBody(second);
+    EXPECT_EQ(_physics.GetSharedShapeCount(), 0u);
+  }
+
+  TEST_F(JoltPhysicsSystemTest, HoldsAShapeForEveryScaleAndKindAModelIsUsedAt)
+  {
+    auto mesh = CubeOf(ShapeKind::Mesh);
+    mesh.source = "assets://models/rock.glb";
+    auto larger = mesh;
+    larger.scale = {2.0f, 2.0f, 2.0f};
+    auto hull = CubeOf(ShapeKind::ConvexHull);
+    hull.source = mesh.source;
+
+    CreateBody(floor_entity, BodyKind::Static, mesh, {0.0f, 0.0f, 0.0f});
+    CreateBody(wall_entity, BodyKind::Static, larger, {5.0f, 0.0f, 0.0f});
+    CreateBody(crate_entity, BodyKind::Dynamic, hull, {0.0f, 5.0f, 0.0f});
+
+    EXPECT_EQ(_physics.GetSharedShapeCount(), 3u);
+  }
+
+  TEST_F(JoltPhysicsSystemTest, SharesNoShapeWhosePointsAreNobodyElses)
+  {
+    // a mesh a Geometry built names no source, and a box is cheap to make
+    CreateBody(floor_entity, BodyKind::Static, CubeOf(ShapeKind::Mesh), {0.0f, 0.0f, 0.0f});
+    CreateBody(wall_entity, BodyKind::Static, CubeOf(ShapeKind::Mesh), {5.0f, 0.0f, 0.0f});
+    CreateBody(crate_entity, BodyKind::Static, Box({1.0f, 1.0f, 1.0f}), {9.0f, 0.0f, 0.0f});
+
+    EXPECT_EQ(_physics.GetSharedShapeCount(), 0u);
+  }
+
+  TEST_F(JoltPhysicsSystemTest, LetsGoOfASharedShapeThatABodyChangedAwayFrom)
+  {
+    auto hull = CubeOf(ShapeKind::ConvexHull);
+    hull.source = "assets://models/rock.glb";
+
+    const auto crate = CreateBody(crate_entity, BodyKind::Dynamic, hull, {0.0f, 5.0f, 0.0f});
+    EXPECT_EQ(_physics.GetSharedShapeCount(), 1u);
+
+    EXPECT_TRUE(_physics.SetShape(crate, {Box({1.0f, 1.0f, 1.0f})}, _error)) << _error;
+    EXPECT_EQ(_physics.GetSharedShapeCount(), 0u);
+  }
+
   TEST_F(JoltPhysicsSystemTest, RefusesAPlaneOnABodyThatMoves)
   {
     ShapeInfo plane;

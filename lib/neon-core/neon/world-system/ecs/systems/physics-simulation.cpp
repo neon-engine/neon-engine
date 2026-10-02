@@ -363,6 +363,10 @@ namespace neon
 
           shape.points = geometry->points;
           if (collider->shape == ShapeKind::Mesh) { shape.triangles = geometry->triangles; }
+
+          // the same model with the same fit gives the same points, which
+          // the physics may hold as one shape
+          shape.source = collider->fit == ModelFit::Unit ? collider->model + " (unit)" : collider->model;
         }
       }
 

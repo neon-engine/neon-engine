@@ -2,6 +2,7 @@
 #define PHYSICS_TYPES_HPP
 
 #include <cstdint>
+#include <string>
 #include <vector>
 
 #include <glm/glm.hpp>
@@ -109,6 +110,13 @@ namespace neon
 
     /// Three for every triangle of a mesh, each the number of a point.
     std::vector<std::uint32_t> triangles;
+
+    /// What the points of a convex hull or a mesh were read from: the path
+    /// of the model, with its fit when that is not `none`. Two shapes with
+    /// the same source and scale have the same points, so a backend may
+    /// hold one shape for both. Empty for points that are nobody else's,
+    /// such as those a Geometry built.
+    std::string source;
 
     /// Where the shape sits on its body.
     glm::vec3 position{0.0f};

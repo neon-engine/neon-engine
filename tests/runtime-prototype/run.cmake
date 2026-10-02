@@ -23,6 +23,11 @@ if (CASE STREQUAL "the-player-walks-into-the-room")
   run(--headless-renderer --window-size 1920x1080 --render-scale 1 --time-step 0.05 --frames 60
           --output-dir shots --screenshot output://frame.png --screenshot-at 1,60
           --scene assets://scenes/prototype.scene.yml --input "1: hold-key w 20")
+elseif (CASE STREQUAL "the-kit-pieces-are-loaded-once")
+  # two frames: the first creates the render objects, the second shows that
+  # nothing is loaded again
+  run(--headless-renderer --window-size 320x180 --render-scale 1 --time-step 0.05 --frames 2
+          --scene assets://scenes/prototype.scene.yml)
 else ()
   run(--headless-renderer --window-size 1920x1080 --render-scale 1 --time-step 0.05 --frames 5
           --output-dir shots --screenshot output://frame.png --scene assets://scenes/prototype.scene.yml)
@@ -112,6 +117,30 @@ elseif (CASE STREQUAL "the-player-walks-into-the-room")
   if (BEFORE STREQUAL AFTER)
     fail("Expected the frame to change while the player walked, and frame 1 is the same as frame 60")
   endif ()
+elseif (CASE STREQUAL "the-kit-pieces-are-loaded-once")
+  # expect_output_count(<text> <count>): how many lines of the output hold
+  # the text
+  function(expect_output_count TEXT COUNT)
+    string(REGEX MATCHALL "[^\n]*${TEXT}[^\n]*" LINES "${OUTPUT}")
+    list(LENGTH LINES FOUND)
+    if (NOT FOUND EQUAL COUNT)
+      fail("Expected ${COUNT} lines of the output to hold '${TEXT}', ${FOUND} do")
+    endif ()
+  endfunction()
+
+  # The level places 17 prefabs of four kinds and draws a few more pieces
+  # written out in full. Every model is read once for every path, and
+  # every texture once, however many render objects draw them: the walls
+  # share one wall.glb, and every piece of the Prototype Kit shares its
+  # colormap. The numbers are those of prototype.scene.yml.
+  expect_output("Created 21 render objects: 10 models and 3 textures were loaded, and 11 models and 18 textures were shared")
+  expect_output_count("Created render object [0-9]+ from assets://external/kenney/prototype-kit/wall.glb" 8)
+  expect_output_count("Initializing texture from assets://external/kenney/prototype-kit/Textures/colormap.png" 1)
+  expect_output("Model assets://external/kenney/prototype-kit/wall.glb is shared, 8 render objects draw it now")
+
+  # and freed once, when the last render object that drew it was destroyed
+  expect_output_count("Model assets://external/kenney/prototype-kit/wall.glb was freed, nothing draws it any more" 1)
+  expect_output_count("Texture assets://external/kenney/prototype-kit/Textures/colormap.png\\|color was freed" 1)
 else ()
   message(FATAL_ERROR "There is no case '${CASE}'")
 endif ()

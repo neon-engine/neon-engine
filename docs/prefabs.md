@@ -231,6 +231,15 @@ copied between entities. The prefabs are kept for the life of the scene, so
 that a spawn reads no file, and forgotten at the next scene load, so that a
 file that changed is read anew.
 
+What the placements need is held once (#241): the renderer reads a model
+once for every path and fit and a texture once for every image, and the
+physics holds one shape for every model a collider names at every scale,
+as long as one entity uses them. A placement adds its own components and a
+material of its own, and nothing else. This is not tied to `prefab:`: two
+entities written out in full with the same model share the same way. See
+[what is shared](vulkan-renderer.md#what-is-shared) and
+[physics.md](physics.md#shapes).
+
 ## How it was checked
 
 | Check | Result |
