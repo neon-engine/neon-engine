@@ -303,6 +303,28 @@ Where neon-core does not follow the first rule yet:
 | rapidyaml | `world-system/world-system.hpp` |
 | glm | The math types of the interfaces |
 
+### The standard library
+
+The engine uses the C++ standard library for what it is good at and keeps
+the operating system behind backends, so that a port to a console is a set
+of backends and not a rewrite. Console toolchains ship a full standard
+library; what breaks on them is the corner that reaches the operating
+system, and the engine never reaches it from neon-core.
+
+| Rule | Detail |
+|---|---|
+| Use the standard library for data structures and algorithms | `std::vector`, `std::string`, `std::variant`, `std::function`, `<algorithm>`, `<ranges>`, `std::format`, and the rest of what holds and works on values |
+| The operating system stays behind a backend | Files through `FileSystemContext`, windows and input through their systems, and, when they come, threads, timers, and sockets the same way. No `std::filesystem`, `fopen`, `std::thread`, or `std::chrono::system_clock` in neon-core or an application |
+| No `<iostream>` and no locale | Slow, large, and dependent on the machine's language. The logger writes; `main.cpp` alone writes to `std::cout`, before the logger exists. Numbers are read and written by hand, as `field-text.cpp` does, so that the dot is always a dot |
+| The heap goes through the global allocator | The containers allocate through `operator new`, which a platform overrides once for all of them. Nothing allocates through a library's own allocator, and nothing keeps a container that cannot be given one |
+| Exceptions stay out of the game loop | See [errors](#errors) and #179. A platform that builds without exceptions loses nothing a game needs |
+| A feature of the newest compiler waits for the oldest | A console compiler can be a year or two behind upstream. Before a C++20 or later feature is used in neon-core, it has to exist in the libc++ and MSVC of two years ago; `std::format` is the one to watch |
+
+What the engine rolls itself, such as the command line, is rolled because
+the engine's own messages and no dependency before the backends exist are
+wanted, not to avoid the standard library: it uses `std::string` and
+`std::vector` underneath.
+
 ## Project structure
 
 The repository follows much of the canonical project structure of
