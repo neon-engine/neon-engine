@@ -195,7 +195,8 @@ entities:
 
   # a target on the north wall of the room, 0.5 high from its origin at its
   # foot, and a small one at the end of the corridor, 0.2 across its middle
-  # and made twice as big
+  # and 0.1 thick, made twice as big. The small one has its own model and
+  # so its own collider, around its middle, in the metres of its piece
   - name: room-target
     prefab: assets://prefabs/target.prefab.yml
     components:
@@ -228,6 +229,9 @@ entities:
         scale: 2
       Renderable:
         model: assets://external/kenney/blaster-kit/target-small.glb
+      Collider:
+        size: [0.1, 0.2, 0.2]
+        offset: [0, 0, 0]
 
   # the corridor, south of the doorway
 

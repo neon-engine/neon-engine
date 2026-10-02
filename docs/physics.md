@@ -139,7 +139,13 @@ changes gives the body its shapes anew, see
 
 The shape is sized by the `scale` of the `Transform`, as what is drawn is. A
 floor that is a cube scaled by `[100, 0.1, 100]` has a `box` with its
-defaults as its collider.
+defaults as its collider. So `size` and `offset` are written in the metres
+of the piece, not of the world: a wall of the prototype kit that is 0.2 by
+1 by 1 and is stretched to 6 long and 2.5 high by `scale: [1, 2.5, 6]` has
+a `box` of `size: [0.2, 1, 1]`. Written in world metres, as `[0.2, 2.5,
+6]`, the box would be scaled once more, to 0.2 by 6.25 by 36. The prototype
+had every wall wrong this way once, and its doorway posts stood across the
+opening (#223).
 
 **Trigger**
 

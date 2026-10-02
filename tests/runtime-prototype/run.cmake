@@ -96,7 +96,9 @@ elseif (CASE STREQUAL "the-player-walks-into-the-room")
   # Inside the room: the doorway is behind the player now, the target on the
   # north wall is ahead, the blue crate to the right. Before the colliders of
   # the doorway stood beside it (#190) the posts stopped the walker under the
-  # lintel, which is what the old check saw.
+  # lintel, which is what the old check saw. The target has a body since
+  # #231, and the walker passes east of it before it reaches the wall, so
+  # the frame is the one from before.
   set(FRAME "shots/frame-0060.png")
   expect_image("${FRAME}")
   expect_pixel("the sky above the room after the walk" 960 160 0 0 0)
