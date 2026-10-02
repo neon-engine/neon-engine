@@ -69,6 +69,73 @@ Vulkan SDK. The loader is found when the app starts.
 | Linux | The GPU vendor's driver, or Mesa lavapipe for software rendering with no GPU, which is what the Docker image uses |
 | Windows | Ships with the GPU driver |
 
+## Versions of Vulkan
+
+The engine needs **Vulkan 1.1**. Frames are turned the right way up with a
+viewport of negative height, which Vulkan 1.0 allows only with an extension
+and 1.1 has as part of it. Nothing of 1.2 or later is used.
+
+Which version is rendered with is the lowest of three:
+
+| Who | What it says |
+|---|---|
+| The settings | `SettingsConfig::vulkan_version`, 1.3 unless `--vulkan-version` says otherwise |
+| The loader of the driver | The highest version an instance can be made for. A loader of Vulkan 1.0 cannot say, and counts as 1.0 |
+| The graphics card | The version in its properties. MoltenVK reports no more than the instance asked for |
+
+A graphics card below 1.1 is passed over for one that has it. The log says
+what was chosen:
+
+```
+Rendering with Apple M5 Max in Vulkan 1.3. Vulkan 1.3 was asked for, and the graphics card offers 1.3.357
+```
+
+The renderer stops, and says why, when any of the three is below 1.1:
+
+| Below 1.1 | Message |
+|---|---|
+| What was asked for | `Vulkan 1.0 was asked for, but the engine needs Vulkan 1.1 at least`. Said before a driver is looked for |
+| The loader | `The Vulkan driver offers Vulkan 1.0, but the engine needs Vulkan 1.1 at least. Is the graphics driver up to date?` |
+| Every graphics card | `No graphics card offers Vulkan 1.1, which the engine needs at least.`, followed by the card that was found and its version |
+
+`VK_ApiVersion` works the version out, apart from the device, so that its
+unit tests need no graphics card.
+
+## What the graphics card can do
+
+`RenderSystem::GetCapabilities()` returns a
+[`RenderCapabilities`](../lib/neon-core/neon/render/render-capabilities.hpp),
+which holds no type of Vulkan. It is filled in when the renderer starts and
+does not change. A settings menu reads it to offer only what works.
+
+| Field | What it holds |
+|---|---|
+| `api_version` | The version that is rendered with |
+| `device_api_version` | The version the graphics card offers, with its patch |
+| `device_name` | The name of the graphics card |
+| `max_texture_size` | The widest and highest texture, in pixels |
+| `max_samples` | The most samples of anti-aliasing that colour and depth both have. 1 is none |
+| `max_anisotropy` | The most anisotropic filtering, or 0 when the graphics card has none |
+| `present_modes` | The choices of vertical sync: `Immediate`, `Mailbox`, `Fifo`, `FifoRelaxed`, in that order. Empty without a window |
+| `has_scene_format` | Whether the scene image of `R16G16B16A16_SFLOAT` can be drawn into, blended, and read |
+| `has_srgb_textures` | Whether textures of `R8G8B8A8_SRGB` can be read and filtered |
+| `has_mutable_format_views` | Whether an image can be seen as sRGB and as plain bytes, which render targets need |
+
+They are logged when the renderer starts:
+
+```
+Textures up to 32768 pixels wide, anti-aliasing up to 8 samples, anisotropic filtering up to 16
+Present modes: none without a window
+Scene image of R16G16B16A16_SFLOAT: yes, sRGB textures: yes, views of another format: yes
+```
+
+Without the scene format or sRGB textures nothing could be drawn, and the
+renderer stops with a message that names the format. Without views of
+another format only render targets are lost, and a warning says so.
+
+`VK_Capabilities` turns what Vulkan says into the struct, from values, so
+that its unit tests need no graphics card.
+
 ## Shaders
 
 Vulkan consumes SPIR-V, not GLSL text.
@@ -95,6 +162,7 @@ changes that were made, all backend neutral.
 | `RenderingApi::Vulkan` | Select the backend |
 | `RenderSystem::FinishFrame()` | Vulkan has to submit and present its work at the end of a frame |
 | `RenderSystem::CaptureFrame(path)` | Save the last rendered frame as an image through the file system |
+| `RenderSystem::GetCapabilities()` | Tell the rest of the engine what the graphics card can do, see above |
 | `WindowContext`: Vulkan surface hooks | The window system owns the window, so it is the one that can create a surface for it. They replaced `GetGlProcAddress()`, the hook OpenGL had used |
 | Headless window and input systems | Implement the interfaces with no window and no devices. They live in neon-core, as they need no backend |
 | File system: `user://` and `WriteBytes` | Screenshots need somewhere writable. `user://` was already planned |
@@ -185,6 +253,7 @@ NeonRuntime --headless --frames 3 --screenshot user://screenshots/frame.png
 | Option | Meaning |
 |---|---|
 | `--renderer vulkan` | Renderer to use. Vulkan is the only one so far |
+| `--vulkan-version 1.N` | The highest version of Vulkan to render with. 1.3 unless it is given |
 | `--headless` | No window and no input |
 | `--frames N` | Render N frames, then exit |
 | `--screenshot PATH` | Save the last frame to a virtual path before exiting |
@@ -253,7 +322,7 @@ right before may want weaker `ambient` and `diffuse` values.
 | 4 | Presenting to a window, checked on a screen | Done on macOS |
 | 5 | Removing the OpenGL backend | Done |
 | 6 | Running on Windows, and on Linux with a real graphics card | Open |
-| 7 | A setting for the Vulkan version, and capabilities the engine can ask for | Open |
+| 7 | A setting for the Vulkan version, and capabilities the engine can ask for | Done |
 | 8 | Headless as a finished feature | Later |
 
 ## Open questions

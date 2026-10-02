@@ -34,6 +34,8 @@ namespace neon::testing
 
     MOCK_METHOD(bool, CaptureFrame, (const std::string &path), (override));
 
+    MOCK_METHOD(const RenderCapabilities &, GetCapabilities, (), (const, override));
+
     MOCK_METHOD(int, CreateRenderObject, (const RenderInfo &render_info), (override));
 
     MOCK_METHOD(

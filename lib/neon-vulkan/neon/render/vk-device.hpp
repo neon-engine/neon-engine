@@ -6,6 +6,8 @@
 #include <vector>
 #include <volk.h>
 #include <neon/logging/logger.hpp>
+#include <neon/render/api-version.hpp>
+#include <neon/render/render-capabilities.hpp>
 #include <neon/window/window-context.hpp>
 
 namespace neon
@@ -21,11 +23,15 @@ namespace neon
     VkSurfaceKHR _surface = VK_NULL_HANDLE;
     VkPhysicalDevice _physical_device = VK_NULL_HANDLE;
     VkPhysicalDeviceProperties _properties{};
+    uint32_t _requested_version = 0;
+    uint32_t _instance_version = 0;
+    uint32_t _api_version = 0;
     VkDevice _device = VK_NULL_HANDLE;
     uint32_t _queue_family = 0;
     VkQueue _queue = VK_NULL_HANDLE;
     VkCommandPool _command_pool = VK_NULL_HANDLE;
     VkCommandBuffer _frame_commands = VK_NULL_HANDLE;
+    RenderCapabilities _capabilities;
     std::shared_ptr<Logger> _logger;
 
     bool LoadLibrary() const;
@@ -36,12 +42,22 @@ namespace neon
 
     bool CreateDevice();
 
+    /// Asks what the graphics card can do, and logs it. Returns false when
+    /// it lacks what the renderer cannot do without.
+    bool FindCapabilities();
+
     [[nodiscard]] bool FindMemoryType(uint32_t allowed_types, VkMemoryPropertyFlags properties, uint32_t &type) const;
 
   public:
     /// Brings Vulkan up. With a window, its surface is created as well. With
     /// a headless window context there is no surface and nothing is presented.
-    bool Initialize(WindowContext *window_context, const std::shared_ptr<Logger> &logger);
+    /// It renders with the highest version of Vulkan up to `requested` that
+    /// the driver and the graphics card offer, and fails when that is less
+    /// than the engine needs.
+    bool Initialize(
+      WindowContext *window_context,
+      const ApiVersion &requested,
+      const std::shared_ptr<Logger> &logger);
 
     void CleanUp();
 
@@ -49,6 +65,12 @@ namespace neon
     [[nodiscard]] VkSurfaceKHR Surface() const { return _surface; }
     [[nodiscard]] VkPhysicalDevice PhysicalDevice() const { return _physical_device; }
     [[nodiscard]] const VkPhysicalDeviceProperties &Properties() const { return _properties; }
+
+    /// The version of Vulkan that is rendered with, see VK_ApiVersion.
+    [[nodiscard]] uint32_t VulkanVersion() const { return _api_version; }
+
+    /// What the graphics card can do, once Initialize() succeeded.
+    [[nodiscard]] const RenderCapabilities &Capabilities() const { return _capabilities; }
     [[nodiscard]] VkDevice Device() const { return _device; }
     [[nodiscard]] uint32_t QueueFamily() const { return _queue_family; }
     [[nodiscard]] VkQueue Queue() const { return _queue; }

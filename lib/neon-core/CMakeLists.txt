@@ -213,6 +213,8 @@ add_library(${TARGET} STATIC
         neon/render/forward-render-pipeline.cpp
         neon/render/forward-render-pipeline.hpp
         neon/render/render-system.hpp
+        neon/render/api-version.hpp
+        neon/render/render-capabilities.hpp
         neon/render/render-context.hpp
         neon/render/render-2d-context.hpp
         neon/render/mesh.hpp
@@ -390,6 +392,7 @@ neon_add_unit_test(${TARGET} neon/command-line/display-options.test.cpp)
   neon_add_unit_test(${TARGET} neon/physics/model-geometry.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/forward-render-pipeline.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/model.test.cpp)
+  neon_add_unit_test(${TARGET} neon/render/api-version.test.cpp)
   neon_add_unit_test(${TARGET} neon/runtime/frame-capture.test.cpp)
   neon_add_unit_test(${TARGET} neon/runtime/runtime.test.cpp)
   neon_add_unit_test(${TARGET} neon/text/font-atlas.test.cpp)

@@ -233,6 +233,8 @@ namespace neon
 
     bool CaptureFrame(const std::string &path) override;
 
+    [[nodiscard]] const RenderCapabilities &GetCapabilities() const override;
+
     const RenderResolution &GetRenderResolution() override;
 
     int CreateRenderObject(const RenderInfo &render_info) override;

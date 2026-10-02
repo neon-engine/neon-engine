@@ -114,6 +114,12 @@ namespace neon
     /// read as linear light, and plain bytes for anything else.
     [[nodiscard]] static VkFormat FormatFor(bool is_color);
 
+    /// The two formats: sRGB for colours, which the graphics card turns
+    /// into linear light as they are read, and plain bytes for anything
+    /// else.
+    static constexpr VkFormat kColor_Format = VK_FORMAT_R8G8B8A8_SRGB;
+    static constexpr VkFormat kData_Format = VK_FORMAT_R8G8B8A8_UNORM;
+
     [[nodiscard]] VkImageView View() const { return _view; }
     [[nodiscard]] VkSampler Sampler() const { return _sampler; }
     [[nodiscard]] uint32_t Width() const { return _width; }

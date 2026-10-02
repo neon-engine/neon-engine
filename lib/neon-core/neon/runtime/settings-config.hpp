@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+#include "neon/render/api-version.hpp"
+
 enum class RenderingApi
 {
   Vulkan = 0
@@ -83,6 +85,13 @@ struct SettingsConfig
   std::string input_script_path;
 
   RenderingApi selected_api;
+
+  /// The version of Vulkan to ask for. What is rendered with is the highest
+  /// version that this, the driver, and the graphics card allow, and the
+  /// log says which. Below what the engine needs, see VK_ApiVersion, the
+  /// renderer does not start.
+  static constexpr neon::ApiVersion default_vulkan_version{1, 3};
+  neon::ApiVersion vulkan_version = default_vulkan_version;
   AudioOutput audio_output = AudioOutput::Device;
   WindowMode window_mode = WindowMode::Windowed;
 

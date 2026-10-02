@@ -12,4 +12,5 @@ neon_add_application_test(runtime-command-line NeonRuntime run.cmake
         screenshot-at-never-reached
         screenshot-without-output-dir
         time-step-not-a-number
+        vulkan-version-not-a-version
 )

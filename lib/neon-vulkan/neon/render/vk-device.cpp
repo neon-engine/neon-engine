@@ -3,6 +3,9 @@
 #include <algorithm>
 #include <cstring>
 
+#include "vk-api-version.hpp"
+#include "vk-capabilities.hpp"
+
 #if defined(__APPLE__)
 #  include <dlfcn.h>
 #endif
@@ -59,9 +62,22 @@ namespace neon
     return false;
   }
 
-  bool VK_Device::Initialize(WindowContext *window_context, const std::shared_ptr<Logger> &logger)
+  bool VK_Device::Initialize(
+    WindowContext *window_context,
+    const ApiVersion &requested,
+    const std::shared_ptr<Logger> &logger)
   {
     _logger = logger;
+
+    // said before anything is looked for, since no driver can help it
+    _requested_version = VK_ApiVersion::FromCore(requested);
+    if (!VK_ApiVersion::IsEnough(_requested_version))
+    {
+      const std::string asked = requested.ToString();
+      const std::string minimum = VK_ApiVersion::ToCore(VK_ApiVersion::kMinimum).ToString();
+      _logger->Critical("Vulkan {} was asked for, but the engine needs Vulkan {} at least", asked, minimum);
+      return false;
+    }
 
     if (!LoadLibrary())
     {
@@ -80,11 +96,79 @@ namespace neon
       return false;
     }
 
-    return PickPhysicalDevice() && CreateDevice();
+    return PickPhysicalDevice() && FindCapabilities() && CreateDevice();
+  }
+
+  bool VK_Device::FindCapabilities()
+  {
+    VK_DeviceAnswers answers;
+    answers.properties = _properties;
+    answers.api_version = _api_version;
+    vkGetPhysicalDeviceFeatures(_physical_device, &answers.features);
+
+    // without a window nothing is presented, and there is nothing to choose
+    if (_surface != VK_NULL_HANDLE)
+    {
+      uint32_t count = 0;
+      vkGetPhysicalDeviceSurfacePresentModesKHR(_physical_device, _surface, &count, nullptr);
+      answers.present_modes.resize(count);
+      vkGetPhysicalDeviceSurfacePresentModesKHR(_physical_device, _surface, &count, answers.present_modes.data());
+    }
+
+    vkGetPhysicalDeviceFormatProperties(_physical_device, VK_Capabilities::kSceneFormat, &answers.scene_format);
+    vkGetPhysicalDeviceFormatProperties(_physical_device, VK_Capabilities::kSrgbFormat, &answers.srgb_format);
+
+    // made as a render target makes its image, see VK_RenderTarget
+    VkImageFormatProperties image;
+    answers.has_mutable_format_views = vkGetPhysicalDeviceImageFormatProperties(
+      _physical_device, VK_Capabilities::kSrgbFormat, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL,
+      VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT |
+      VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+      VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT, &image) == VK_SUCCESS;
+
+    _capabilities = VK_Capabilities::Fill(answers);
+    for (const auto &line : VK_Capabilities::Describe(_capabilities)) { _logger->Info("{}", line); }
+
+    // Every frame is lit in the scene image, and every texture is read in
+    // sRGB. Without either nothing could be drawn.
+    if (!_capabilities.has_scene_format)
+    {
+      _logger->Critical("The graphics card cannot light the scene in an image of R16G16B16A16_SFLOAT");
+      return false;
+    }
+    if (!_capabilities.has_srgb_textures)
+    {
+      _logger->Critical("The graphics card cannot read and filter textures in R8G8B8A8_SRGB");
+      return false;
+    }
+
+    // only render targets need it, and a scene without them is drawn
+    if (!_capabilities.has_mutable_format_views)
+    {
+      _logger->Warn("The graphics card cannot see an image in two formats, render targets cannot be made");
+    }
+
+    return true;
   }
 
   bool VK_Device::CreateInstance(const std::vector<std::string> &window_extensions)
   {
+    const std::string minimum = VK_ApiVersion::ToCore(VK_ApiVersion::kMinimum).ToString();
+
+    // A loader of Vulkan 1.0 does not have the function that says which
+    // version it offers.
+    uint32_t loader = VK_API_VERSION_1_0;
+    if (vkEnumerateInstanceVersion != nullptr) { vkEnumerateInstanceVersion(&loader); }
+
+    if (!VK_ApiVersion::IsEnough(loader))
+    {
+      const std::string offered = VK_ApiVersion::ToCore(loader).ToString();
+      _logger->Critical("The Vulkan driver offers Vulkan {}, but the engine needs Vulkan {} at least. "
+                        "Is the graphics driver up to date?", offered, minimum);
+      return false;
+    }
+    _instance_version = VK_ApiVersion::ForInstance(_requested_version, loader);
+
     uint32_t count = 0;
     vkEnumerateInstanceExtensionProperties(nullptr, &count, nullptr);
     std::vector<VkExtensionProperties> available(count);
@@ -106,7 +190,7 @@ namespace neon
     application.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
     application.pApplicationName = "Neon Engine";
     application.pEngineName = "Neon Engine";
-    application.apiVersion = VK_API_VERSION_1_1;
+    application.apiVersion = _instance_version;
 
     VkInstanceCreateInfo info{};
     info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -135,6 +219,10 @@ namespace neon
 
     int best_rating = -1;
 
+    // what was found that offers too old a version, to say so when it is
+    // all there is
+    std::string too_old;
+
     for (const auto device : devices)
     {
       uint32_t family_count = 0;
@@ -157,6 +245,13 @@ namespace neon
         VkPhysicalDeviceProperties properties;
         vkGetPhysicalDeviceProperties(device, &properties);
 
+        if (!VK_ApiVersion::IsEnough(properties.apiVersion))
+        {
+          too_old = std::string(properties.deviceName) + " offers Vulkan " +
+                    VK_ApiVersion::ToCore(properties.apiVersion).ToString();
+          break;
+        }
+
         if (const int rating = rate_device_type(properties.deviceType); rating > best_rating)
         {
           best_rating = rating;
@@ -168,17 +263,27 @@ namespace neon
       }
     }
 
+    if (_physical_device == VK_NULL_HANDLE && !too_old.empty())
+    {
+      const std::string minimum = VK_ApiVersion::ToCore(VK_ApiVersion::kMinimum).ToString();
+      _logger->Critical("No graphics card offers Vulkan {}, which the engine needs at least. {}", minimum, too_old);
+      return false;
+    }
+
     if (_physical_device == VK_NULL_HANDLE)
     {
       _logger->Critical("No graphics card that supports Vulkan was found");
       return false;
     }
 
+    _api_version = VK_ApiVersion::ForDevice(_instance_version, _properties.apiVersion);
+
     const std::string name(_properties.deviceName);
-    const uint32_t major = VK_API_VERSION_MAJOR(_properties.apiVersion);
-    const uint32_t minor = VK_API_VERSION_MINOR(_properties.apiVersion);
-    const uint32_t patch = VK_API_VERSION_PATCH(_properties.apiVersion);
-    _logger->Info("Rendering with {}, Vulkan {}.{}.{}", name, major, minor, patch);
+    const std::string chosen = VK_ApiVersion::ToCore(_api_version).ToString();
+    const std::string asked = VK_ApiVersion::ToCore(_requested_version).ToString();
+    const std::string offered = VK_ApiVersion::ToCore(_properties.apiVersion).ToString();
+    _logger->Info("Rendering with {} in Vulkan {}. Vulkan {} was asked for, and the graphics card offers {}",
+                  name, chosen, asked, offered);
     return true;
   }
 
@@ -267,6 +372,7 @@ namespace neon
       vkDestroyInstance(_instance, nullptr);
     }
 
+    _capabilities = {};
     _command_pool = VK_NULL_HANDLE;
     _device = VK_NULL_HANDLE;
     _surface = VK_NULL_HANDLE;

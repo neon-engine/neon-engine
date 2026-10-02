@@ -75,8 +75,22 @@ elseif (CASE STREQUAL "pause-menu")
   set(SCRIPT "5: hold pause\n20: hold ui-cancel\n30: hold pause")
   run_headless(--output-dir shots --screenshot output://frame.png --screenshot-at 3,10,25,40
           --scene assets://scenes/hud-demo.scene.yml --input "${SCRIPT}")
+elseif (CASE STREQUAL "vulkan-version")
+  run_headless(--frames 1 --vulkan-version 1.1)
+elseif (CASE STREQUAL "capabilities")
+  run_headless(--frames 1)
+elseif (CASE STREQUAL "vulkan-version-below-what-is-needed")
+  run_headless(--frames 1 --vulkan-version 1.0)
 else ()
   message(FATAL_ERROR "There is no case '${CASE}'")
+endif ()
+
+# Refused before a driver is looked for, so it is the same on a machine
+# that cannot render
+if (CASE STREQUAL "vulkan-version-below-what-is-needed")
+  expect_exit_code(1)
+  expect_output("Vulkan 1.0 was asked for, but the engine needs Vulkan 1.1 at least")
+  return()
 endif ()
 
 # a machine that cannot render at all skips the test
@@ -206,6 +220,17 @@ elseif (CASE STREQUAL "user-interface-that-is-missing")
   expect_output("assets://ui/missing.ui.yml: the file cannot be read")
   expect_output("The user interface assets://ui/missing.ui.yml cannot be used")
   expect_no_file("shots/frame.png")
+elseif (CASE STREQUAL "vulkan-version")
+  # what is asked for is the most that is used, and the log says what was
+  expect_exit_code(0)
+  expect_output(" in Vulkan 1.1. Vulkan 1.1 was asked for")
+elseif (CASE STREQUAL "capabilities")
+  # what the graphics card can do is logged, and without a window there
+  # are no present modes to choose from
+  expect_exit_code(0)
+  expect_output("Textures up to ")
+  expect_output("Present modes: none without a window")
+  expect_output("Scene image of R16G16B16A16_SFLOAT: yes, sRGB textures: yes")
 elseif (CASE STREQUAL "output-folder-cannot-be-used")
   # the run still renders, says what went wrong, and fails
   expect_exit_code(1)

@@ -13,6 +13,7 @@ namespace neon
     const std::string scene = "scene";
     const std::string ui = "ui";
     const std::string renderer = "renderer";
+    const std::string vulkan_version = "vulkan-version";
     const std::string frames = "frames";
     const std::string screenshot = "screenshot";
     const std::string screenshot_at = "screenshot-at";
@@ -51,6 +52,28 @@ namespace neon
       frames.erase(repeated.begin(), repeated.end());
       return true;
     }
+
+    /// Reads a version of Vulkan, such as `1.3`. Returns false when it is
+    /// not two whole numbers with a dot between them, or not of Vulkan 1.
+    bool read_vulkan_version(const std::string_view text, ApiVersion &version)
+    {
+      const std::size_t dot = text.find('.');
+      if (dot == std::string_view::npos) { return false; }
+
+      const auto read = [](const std::string_view part, int &number)
+      {
+        const char *last = part.data() + part.size();
+        const auto [stopped_at, error] = std::from_chars(part.data(), last, number);
+        return !part.empty() && error == std::errc{} && stopped_at == last && number >= 0;
+      };
+
+      int major = 0;
+      int minor = 0;
+      if (!read(text.substr(0, dot), major) || !read(text.substr(dot + 1), minor) || major != 1) { return false; }
+
+      version = {major, minor};
+      return true;
+    }
   }
 
   void RuntimeOptions::Register(CommandLine &command_line)
@@ -73,6 +96,13 @@ namespace neon
       .description = "Renderer to draw with",
       .allowed_values = {vulkan},
       .default_value = vulkan
+    });
+
+    command_line.Add({
+      .name = vulkan_version,
+      .value_name = "1.N",
+      .description = "Highest version of Vulkan to render with, for example 1.2",
+      .default_value = SettingsConfig::default_vulkan_version.ToString()
     });
 
     command_line.Add({
@@ -139,6 +169,13 @@ namespace neon
     if (command_line.GetValue(renderer) == vulkan)
     {
       settings.selected_api = RenderingApi::Vulkan;
+    }
+
+    if (command_line.IsSet(vulkan_version) &&
+        !read_vulkan_version(command_line.GetValue(vulkan_version), settings.vulkan_version))
+    {
+      error = "Option '--" + vulkan_version + "' needs a version of Vulkan 1, such as 1.3";
+      return false;
     }
 
     settings.headless = command_line.IsSet(headless);

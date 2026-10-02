@@ -3,6 +3,7 @@
 
 #include <string>
 
+#include "render-capabilities.hpp"
 #include "render-context.hpp"
 #include "neon/runtime/settings-config.hpp"
 #include "neon/filesystem/file-system-context.hpp"
@@ -55,6 +56,10 @@ namespace neon
     /// Saves the last finished frame as a PNG image at a virtual path, such as
     /// `user://screenshots/frame.png`. Returns false if it could not be saved.
     virtual bool CaptureFrame(const std::string &path) = 0;
+
+    /// What the graphics card can do. Filled in by Initialize(), and empty
+    /// before it.
+    [[nodiscard]] virtual const RenderCapabilities &GetCapabilities() const = 0;
   };
 } // neon
 

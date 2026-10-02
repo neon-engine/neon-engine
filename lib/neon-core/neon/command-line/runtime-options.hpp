@@ -7,7 +7,8 @@ namespace neon
 {
   /// The options every runtime understands, whatever it is built into.
   ///
-  ///   --renderer NAME     Renderer to draw with
+  ///   --renderer NAME         Renderer to draw with
+  ///   --vulkan-version 1.N    Highest version of Vulkan to render with
   ///
   ///   Development:
   ///   --frames N                Stop after N frames

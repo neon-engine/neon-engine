@@ -1,6 +1,11 @@
 set(TARGET neon-vulkan)
 
 add_library(${TARGET} STATIC
+        neon/render/vk-api-version.cpp
+        neon/render/vk-api-version.hpp
+        neon/render/vk-capabilities.cpp
+        neon/render/vk-capabilities.hpp
+        neon/render/vk-device-answers.hpp
         neon/render/vk-device.cpp
         neon/render/vk-device.hpp
         neon/render/vk-material.cpp
@@ -67,4 +72,6 @@ if (NEON_BUILD_TESTS)
   neon_add_unit_test(${TARGET} neon/render/vk-draw-order.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/vk-frame-stages.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/vk-surface-format.test.cpp)
+  neon_add_unit_test(${TARGET} neon/render/vk-api-version.test.cpp)
+  neon_add_unit_test(${TARGET} neon/render/vk-capabilities.test.cpp)
 endif ()

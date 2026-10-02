@@ -9,6 +9,7 @@
 
 namespace
 {
+  using neon::ApiVersion;
   using neon::CommandLine;
   using neon::RuntimeOptions;
   using ::testing::ElementsAre;
@@ -63,6 +64,7 @@ namespace
       "  --scene PATH              Scene to start with, for example assets://scenes/demo.scene.yml\n"
       "  --ui PATH                 User interface to show on top, for example assets://ui/hud.ui.yml\n"
       "  --renderer vulkan         Renderer to draw with. Default: vulkan\n"
+      "  --vulkan-version 1.N      Highest version of Vulkan to render with, for example 1.2. Default: 1.3\n"
       "\n"
       "Development:\n"
       "  --frames N                Stop after N frames\n"
@@ -120,7 +122,7 @@ namespace
   TEST_F(RuntimeOptionsTest, EveryOptionButHeadlessNeedsAValue)
   {
     for (const char *option : {"--ui", "--renderer", "--frames", "--screenshot", "--screenshot-at",
-                               "--output-dir", "--time-step"})
+                               "--output-dir", "--time-step", "--vulkan-version"})
     {
       EXPECT_FALSE(Parse({option})) << option;
       EXPECT_EQ(_command_line.GetError(), "Option '" + std::string(option) + "' needs a value");
@@ -147,6 +149,7 @@ namespace
     EXPECT_FALSE(_settings.headless);
     EXPECT_EQ(_settings.max_frames, 0u);
     EXPECT_EQ(_settings.time_step, 0.0);
+    EXPECT_EQ(_settings.vulkan_version, (ApiVersion{1, 3}));
     EXPECT_EQ(_settings.output_directory, "");
     EXPECT_EQ(_settings.screenshot_path, "");
     EXPECT_EQ(_settings.ui_path, "");
@@ -234,6 +237,56 @@ namespace
     RuntimeOptions,
     RuntimeOptionsBadFrames,
     ::testing::Values("0", "-1", "abc", "1.5", "10abc", "1,2", "99999999999999999999999999"));
+
+  // --vulkan-version
+
+  TEST_F(RuntimeOptionsTest, VulkanVersionIsCarriedOver)
+  {
+    ASSERT_TRUE(Apply({"--vulkan-version", "1.2"}));
+
+    EXPECT_EQ(_settings.vulkan_version, (ApiVersion{1, 2}));
+  }
+
+  TEST_F(RuntimeOptionsTest, VulkanVersionAcceptsAMinorOfTwoDigits)
+  {
+    ASSERT_TRUE(Apply({"--vulkan-version=1.10"}));
+
+    EXPECT_EQ(_settings.vulkan_version, (ApiVersion{1, 10}));
+  }
+
+  // The renderer says whether a version is enough, not the command line,
+  // so that a version that comes from elsewhere is checked the same way.
+  TEST_F(RuntimeOptionsTest, VulkanVersionAcceptsAVersionBelowWhatTheRendererNeeds)
+  {
+    ASSERT_TRUE(Apply({"--vulkan-version", "1.0"}));
+
+    EXPECT_EQ(_settings.vulkan_version, (ApiVersion{1, 0}));
+  }
+
+  TEST_F(RuntimeOptionsTest, VulkanVersionKeepsTheOneTheApplicationSetWhenItIsNotGiven)
+  {
+    _settings.vulkan_version = {1, 1};
+
+    ASSERT_TRUE(Apply({}));
+
+    EXPECT_EQ(_settings.vulkan_version, (ApiVersion{1, 1}));
+  }
+
+  class RuntimeOptionsBadVulkanVersion : public RuntimeOptionsTest,
+                                         public ::testing::WithParamInterface<const char *> {};
+
+  TEST_P(RuntimeOptionsBadVulkanVersion, IsRefused)
+  {
+    EXPECT_FALSE(Apply({"--vulkan-version", GetParam()}));
+
+    EXPECT_EQ(_error, "Option '--vulkan-version' needs a version of Vulkan 1, such as 1.3");
+    EXPECT_EQ(_settings.vulkan_version, (ApiVersion{1, 3}));
+  }
+
+  INSTANTIATE_TEST_SUITE_P(
+    RuntimeOptions,
+    RuntimeOptionsBadVulkanVersion,
+    ::testing::Values("1", "2.0", "1.", ".3", "1.3.1", "1.-1", "v1.3", "1,3", "1.3a", "latest"));
 
   // --time-step
 

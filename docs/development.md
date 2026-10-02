@@ -213,6 +213,7 @@ Usage: NeonRuntime [options]
   --scene PATH              Scene to start with, for example assets://scenes/demo.scene.yml
   --ui PATH                 User interface to show on top, for example assets://ui/hud.ui.yml
   --renderer vulkan         Renderer to draw with. Default: vulkan
+  --vulkan-version 1.N      Highest version of Vulkan to render with, for example 1.2. Default: 1.3
 
 Development:
   --frames N                Stop after N frames
@@ -298,7 +299,12 @@ text, and the exit code is 1:
 | A frame in `--screenshot-at` above `--frames` | `Frame 11 of '--screenshot-at' is never reached, '--frames' stops after 10` |
 | A frame that is not a whole number above zero | `Option '--screenshot-at' needs whole numbers above zero, separated by commas` |
 | A time step that is not a number above zero | `Option '--time-step' needs a number of seconds above zero, such as 0.016667` |
+| A version that is not of Vulkan 1, such as `2.0` or `1.3.1` | `Option '--vulkan-version' needs a version of Vulkan 1, such as 1.3` |
 | An `output://` screenshot without `--output-dir` | `'output://frame.png' needs '--output-dir', which says where output:// is` |
+
+A version of Vulkan below 1.1 is a version all the same, and the command line
+lets it through. The renderer refuses it when it starts, and ends the run
+with exit code 1. See [versions of Vulkan](vulkan-renderer.md#versions-of-vulkan).
 
 **Exit code.** A script can rely on it.
 

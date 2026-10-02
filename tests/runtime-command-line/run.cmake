@@ -19,6 +19,7 @@ if (CASE STREQUAL "help")
   expect_output("Usage: NeonRuntime [options]")
   expect_output("--headless")
   expect_output("--screenshot-at N[,N...]")
+  expect_output("--vulkan-version 1.N")
 elseif (CASE STREQUAL "unknown-option")
   expect_refused("Unknown option '--unknown'" --unknown)
 elseif (CASE STREQUAL "bare-argument")
@@ -47,6 +48,10 @@ elseif (CASE STREQUAL "time-step-not-a-number")
   expect_refused(
           "Option '--time-step' needs a number of seconds above zero, such as 0.016667"
           --headless --frames 3 --time-step fast)
+elseif (CASE STREQUAL "vulkan-version-not-a-version")
+  expect_refused(
+          "Option '--vulkan-version' needs a version of Vulkan 1, such as 1.3"
+          --headless --frames 3 --vulkan-version 2.0)
 else ()
   message(FATAL_ERROR "There is no case '${CASE}'")
 endif ()

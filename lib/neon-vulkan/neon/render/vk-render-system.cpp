@@ -55,7 +55,7 @@ namespace neon
   {
     _logger->Info("Initializing Vulkan");
 
-    if (!_device.Initialize(_window_context, _logger))
+    if (!_device.Initialize(_window_context, _settings_config.vulkan_version, _logger))
     {
       throw std::runtime_error("Failed to initialize Vulkan");
     }
@@ -1244,6 +1244,11 @@ namespace neon
       _logger->Error("Could not save the frame to {}", path);
     }
     return written;
+  }
+
+  const RenderCapabilities &VK_RenderSystem::GetCapabilities() const
+  {
+    return _device.Capabilities();
   }
 
   const RenderResolution &VK_RenderSystem::GetRenderResolution()

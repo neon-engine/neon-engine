@@ -499,7 +499,7 @@ namespace neon
 
   VkFormat VK_Texture::FormatFor(const bool is_color)
   {
-    return is_color ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8A8_UNORM;
+    return is_color ? kColor_Format : kData_Format;
   }
 
   void VK_Texture::CleanUp()
