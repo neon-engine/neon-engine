@@ -14,6 +14,7 @@ neon_add_application_test(runtime-headless NeonRuntime run.cmake
         user-interface-of-a-scene
         user-interface-that-is-missing
         pause-menu
+        title-screen-starts-the-level
         input-map-of-the-project
         hold-of-an-action-the-map-does-not-have
         vulkan-version

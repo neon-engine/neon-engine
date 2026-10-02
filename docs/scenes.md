@@ -170,6 +170,26 @@ to its eyes. How it is driven is in [physics.md](physics.md#the-player).
 | `eye_height` | Metres from the feet to the eyes, where the camera is put | `1.6` |
 | `max_pitch` | Degrees the view can turn up or down, from 0 to 90 | `89` |
 
+**Persistent**
+
+The entity stays when the world [changes scene](#changing-the-scene), with
+everything below it. The component holds nothing that matters; being there
+is what it says, so it is written as `Persistent: {}` or `Persistent: Default`.
+
+| Name | Holds | Default |
+|---|---|---|
+| `keep` | Whether it stays. Written for completeness | `true` |
+
+**SceneExit**
+
+The `Trigger` of the entity is the way out of the scene: while a body is
+inside it, the world changes to the scene named. An entity without a
+`Trigger`, or a world without physics, has an exit that never opens.
+
+| Name | Holds | Default |
+|---|---|---|
+| `scene` | Virtual path of the scene to change to | None, and nothing happens |
+
 **SoundSource** and **SoundListener** are listed in [audio.md](audio.md).
 
 **RigidBody**, **Collider**, **Trigger**, **CharacterBody**, and **Joint**
@@ -217,6 +237,70 @@ are the components of the physics. What they hold is listed in
 | `Trigger` | An area that reports what enters and leaves it | `layers`, `mask` |
 | `CharacterBody` | Something that is moved by a velocity, stops at what is in its way, and slides along it | `velocity`, `fall_velocity`, `gravity_scale`, `max_slope`, `step_height`, `mass`, `push_strength`, `layers`, `mask` |
 | `Joint` | Holds the body of its entity to another body, named by its path, or to the world | `type`, `other`, `anchor`, and for a hinge and a slider: `axis`, `limits` |
+
+## Changing the scene
+
+A game is more than one scene: a title screen, levels, an end. The world
+changes from one to the next in play, which the runtime calls the scene
+manager (#118). Three things ask for a change:
+
+- A button with `action: scene` and the `scene` to change to, see
+  [user-interface.md](user-interface.md#elements). The runtime hands the
+  scene to the world. The file of the button is closed, as it would be with
+  `action: close`.
+- An entity with a `SceneExit` and a `Trigger`, when a body is inside the
+  trigger: the door at the end of a level.
+- Code, through `WorldSystem::LoadScene(path)`, and a script once scripts
+  come (#57).
+
+```yaml
+# title.ui.yml: the Start button of a title screen
+- type: button
+  name: start
+  text: Start
+  action: scene
+  scene: assets://scenes/prototype.scene.yml
+
+# prototype.scene.yml: the way out of the level. A trigger reports static
+# bodies too, so it looks for a layer that only the player is in
+- name: exit
+  components:
+    Transform:
+      position: [2.5, 1, -2.5]
+    Trigger:
+      mask: [2]
+    Collider:
+      shape: box
+      size: [0.8, 2, 0.8]
+    SceneExit:
+      scene: assets://scenes/end.scene.yml
+```
+
+What happens, in this order, at the start of the next frame of the world,
+so that a change never falls in the middle of one:
+
+1. Every entity at the top that has no `Persistent` is destroyed, with
+   everything below it. What a system held for those entities is released
+   as it is when an entity goes away in play: the renderer's objects, the
+   bodies of the physics, the sounds, the user interface a `Ui` showed.
+2. The file of the new scene is read into the store, as the first scene
+   was. A file with problems is said in the log, and the world runs with
+   what could be read of it.
+
+An entity with `Persistent` stays where it is, with its children: the
+player, a score, a sound that goes on. The new scene is read next to it, so
+a scene that is entered with a persistent player does not list one. Whether
+the player carries over is the game's to decide; the prototype's does not,
+each level places its own.
+
+The last scene asked for in a frame is the one taken. A scene asked for
+without a path is refused and said in the log.
+
+The prototype game goes
+[title.scene.yml](../app/NeonRuntime/assets/scenes/title.scene.yml) →
+[prototype.scene.yml](../app/NeonRuntime/assets/scenes/prototype.scene.yml)
+→ [end.scene.yml](../app/NeonRuntime/assets/scenes/end.scene.yml), from
+which the end menu goes back to either.
 
 ## Made to be changed by hand
 

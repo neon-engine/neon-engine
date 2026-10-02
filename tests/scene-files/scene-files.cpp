@@ -21,6 +21,8 @@
 #include <neon/testing/recording-logger.hpp>
 #include <neon/world-system/ecs/components/camera.hpp>
 #include <neon/world-system/ecs/components/light.hpp>
+#include <neon/world-system/ecs/components/persistent.hpp>
+#include <neon/world-system/ecs/components/scene-exit.hpp>
 #include <neon/world-system/ecs/components/renderable.hpp>
 #include <neon/world-system/ecs/components/sound-listener.hpp>
 #include <neon/world-system/ecs/components/sound-source.hpp>
@@ -76,6 +78,8 @@ namespace
       store.Register<Renderable>("Renderable");
       store.Register<neon::SoundSource>("SoundSource");
       store.Register<neon::SoundListener>("SoundListener");
+      store.Register<neon::Persistent>("Persistent");
+      store.Register<neon::SceneExit>("SceneExit");
       store.Register<Health>("Health");
     }
 
@@ -176,6 +180,31 @@ namespace
     EXPECT_TRUE(store.Get<Renderable>(store.FindEntity("bear"))->render_info.material_info.use_textures);
     EXPECT_EQ(store.Get<Light>(store.FindEntity("direction"))->source.light_type, LightType::Direction);
     EXPECT_EQ(store.Get<Spectator>(store.FindEntity("player"))->move_speed, 2.5f);
+  }
+
+  TEST_F(SceneFilesTest, KnowsThePathItWasMadeWith)
+  {
+    EXPECT_EQ(_scene.GetPath(), "assets://scenes/test.scene.yml");
+  }
+
+  TEST_F(SceneFilesTest, LoadsAnotherFileAndIsThatSceneFromThenOn)
+  {
+    Write("entities:\n  - name: first\n");
+    _files.AddNativeFile("/assets/scenes/other.scene.yml", "entities:\n  - name: other\n");
+
+    EXPECT_TRUE(_scene.Load(_world.store, "assets://scenes/other.scene.yml"));
+
+    EXPECT_EQ(_scene.GetPath(), "assets://scenes/other.scene.yml");
+    EXPECT_NE(_world.store.FindEntity("other"), No_Entity);
+    EXPECT_EQ(_world.store.FindEntity("first"), No_Entity);
+    EXPECT_TRUE(_logger->Contains(LogLevel::Info, "Loading the scene from assets://scenes/other.scene.yml"));
+  }
+
+  TEST_F(SceneFilesTest, SaysWhenTheFileItIsAskedToLoadIsMissing)
+  {
+    EXPECT_FALSE(_scene.Load(_world.store, "assets://scenes/missing.scene.yml"));
+    EXPECT_TRUE(_logger->Contains(LogLevel::Error, "assets://scenes/missing.scene.yml"))
+      << _logger->Messages(LogLevel::Error);
   }
 
   TEST_F(SceneFilesTest, AnEmptyFileIsAnEmptyScene)

@@ -1,6 +1,8 @@
 #ifndef WORLD_SCENE_HPP
 #define WORLD_SCENE_HPP
 
+#include <string>
+
 #include "entity-store.hpp"
 
 namespace neon
@@ -22,6 +24,12 @@ namespace neon
     /// store then holds what could be, every problem is in the log, and the
     /// world goes on with it. A scene never ends the game.
     virtual bool Populate(EntityStore &store) = 0;
+
+    /// Creates the entities of another scene, named by its virtual path,
+    /// into the store, which the world has emptied of what does not stay.
+    /// What Populate() says about problems holds here too. A scene that
+    /// is written in code and knows no paths returns false and says so.
+    virtual bool Load(EntityStore &store, const std::string &path) = 0;
   };
 } // neon
 

@@ -45,6 +45,10 @@ namespace neon
     /// Loads the pause menu, and says when it cannot be shown.
     void ShowPauseMenu();
 
+    /// Hands the scene a button asked for, with `action: scene`, to the
+    /// world. The last one asked for in a frame is the one taken.
+    void UpdateSceneChange();
+
     Runtime(
       const SettingsConfig &settings_config,
       WindowSystem *window_system,

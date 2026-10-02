@@ -18,7 +18,10 @@
 #include "components/camera.hpp"
 #include "components/light.hpp"
 #include "components/renderable.hpp"
+#include "components/persistent.hpp"
 #include "components/player.hpp"
+#include "components/scene-exit.hpp"
+#include "components/trigger.hpp"
 #include "components/spectator.hpp"
 
 namespace
@@ -30,6 +33,9 @@ namespace
   using neon::EntitySystem;
   using neon::EntityWorld;
   using neon::Light;
+  using neon::Persistent;
+  using neon::SceneExit;
+  using neon::Trigger;
   using neon::No_Component;
   using neon::Renderable;
   using neon::Spectator;
@@ -151,7 +157,7 @@ namespace
   {
     _world.Initialize();
 
-    for (const char *name : {"Transform", "Camera", "Light", "Spectator", "Player", "Renderable"})
+    for (const char *name : {"Transform", "Camera", "Light", "Spectator", "Player", "Renderable", "Persistent", "SceneExit"})
     {
       EXPECT_NE(_store.FindComponent(name), No_Component) << name;
     }
@@ -259,6 +265,147 @@ namespace
 
     _world.Initialize();
   }
+
+  // changing the scene
+
+  TEST_F(EntityWorldTest, IsNotChangingSceneToBeginWith)
+  {
+    _world.Initialize();
+    EXPECT_FALSE(_world.IsChangingScene());
+  }
+
+  TEST_F(EntityWorldTest, ReadsTheSceneAskedForAtTheStartOfTheNextUpdateAndNotBefore)
+  {
+    PopulateWith([](EntityStore &) {});
+    _world.Initialize();
+    EXPECT_CALL(_scene, Load(_, _)).Times(0);
+
+    _world.LoadScene("assets://scenes/next.scene.yml");
+    EXPECT_TRUE(_world.IsChangingScene());
+    ::testing::Mock::VerifyAndClearExpectations(&_scene);
+
+    {
+      InSequence in_order;
+      EXPECT_CALL(_scene, Load(Ref(_store), "assets://scenes/next.scene.yml")).WillOnce(Return(true));
+      EXPECT_CALL(_pipeline, RenderFrame());
+    }
+    _world.Update();
+
+    EXPECT_FALSE(_world.IsChangingScene());
+    EXPECT_TRUE(_logger->Contains(LogLevel::Info, "Changing the scene to assets://scenes/next.scene.yml"));
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 0u) << _logger->Messages(LogLevel::Error);
+  }
+
+  TEST_F(EntityWorldTest, DestroysWhatDoesNotStayAndKeepsWhatIsPersistentWithItsChildren)
+  {
+    Entity level = 0, crate = 0, player = 0, camera = 0;
+    PopulateWith([&](EntityStore &store)
+    {
+      level = store.CreateEntity("level");
+      crate = store.CreateEntity("crate", level);
+      player = store.CreateEntity("player");
+      store.Set(player, Persistent{});
+      camera = store.CreateEntity("camera", player);
+    });
+    _world.Initialize();
+    ON_CALL(_scene, Load(_, _)).WillByDefault(Return(true));
+
+    _world.LoadScene("assets://scenes/next.scene.yml");
+    _world.Update();
+
+    EXPECT_FALSE(_store.IsAlive(level));
+    EXPECT_FALSE(_store.IsAlive(crate));
+    EXPECT_TRUE(_store.IsAlive(player));
+    EXPECT_TRUE(_store.IsAlive(camera));
+  }
+
+  TEST_F(EntityWorldTest, RefusesASceneWithoutAPath)
+  {
+    _world.Initialize();
+    EXPECT_CALL(_scene, Load(_, _)).Times(0);
+
+    _world.LoadScene("");
+    _world.Update();
+
+    EXPECT_FALSE(_world.IsChangingScene());
+    EXPECT_TRUE(_logger->Contains(LogLevel::Error, "A scene without a path was asked for, nothing changes"));
+  }
+
+  TEST_F(EntityWorldTest, TakesTheLastSceneAskedForInAFrame)
+  {
+    _world.Initialize();
+    EXPECT_CALL(_scene, Load(_, "assets://scenes/second.scene.yml")).WillOnce(Return(true));
+
+    _world.LoadScene("assets://scenes/first.scene.yml");
+    _world.LoadScene("assets://scenes/second.scene.yml");
+    _world.Update();
+  }
+
+  TEST_F(EntityWorldTest, GoesOnWithWhatCouldBeReadWhenTheNextSceneHasProblems)
+  {
+    _world.Initialize();
+    EXPECT_CALL(_scene, Load(_, _)).WillOnce(Return(false));
+
+    _world.LoadScene("assets://scenes/next.scene.yml");
+    _world.Update();
+
+    EXPECT_TRUE(_logger->Contains(LogLevel::Error, "The world runs with what could be read of the scene assets://scenes/next.scene.yml"));
+  }
+
+  TEST_F(EntityWorldTest, AsksForTheSceneOfAnExitWhoseTriggerHasABodyInside)
+  {
+    // the physics registers Trigger; here a test does
+    _store.Register<Trigger>("Trigger");
+    Entity door = 0;
+    PopulateWith([&](EntityStore &store)
+    {
+      door = store.CreateEntity("door");
+      store.Set(door, Trigger{});
+      store.Set(door, SceneExit{.scene = "assets://scenes/end.scene.yml"});
+    });
+    _world.Initialize();
+
+    _world.Update();
+    EXPECT_FALSE(_world.IsChangingScene());
+
+    _store.Get<Trigger>(door)->inside = 1;
+    _world.Update();
+    EXPECT_TRUE(_world.IsChangingScene());
+  }
+
+  TEST_F(EntityWorldTest, AnExitWithoutATriggerOrWithoutASceneAsksForNothing)
+  {
+    _store.Register<Trigger>("Trigger");
+    PopulateWith([&](EntityStore &store)
+    {
+      const Entity no_trigger = store.CreateEntity("no-trigger");
+      store.Set(no_trigger, SceneExit{.scene = "assets://scenes/end.scene.yml"});
+
+      const Entity no_scene = store.CreateEntity("no-scene");
+      store.Set(no_scene, Trigger{.inside = 1});
+      store.Set(no_scene, SceneExit{});
+    });
+    _world.Initialize();
+
+    _world.Update();
+    EXPECT_FALSE(_world.IsChangingScene());
+  }
+
+  TEST_F(EntityWorldTest, HasExitsThatNeverOpenWithoutPhysics)
+  {
+    // nothing registered Trigger, as in a world without a physics system
+    PopulateWith([&](EntityStore &store)
+    {
+      const Entity door = store.CreateEntity("door");
+      store.Set(door, SceneExit{.scene = "assets://scenes/end.scene.yml"});
+    });
+    _world.Initialize();
+
+    _world.Update();
+    EXPECT_FALSE(_world.IsChangingScene());
+  }
+
+  // pausing
 
   TEST_F(EntityWorldTest, IsNotPausedToBeginWith)
   {

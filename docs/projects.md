@@ -102,8 +102,9 @@ How the folder is organised is in [project-layout.md](project-layout.md).
   it, with the assets. `ProjectFile` then belongs to the editor, which wraps
   or grows out of NeonRuntime with its own command-line options; nothing is
   split in the build for that.
-- **More in the file**: a version of the project, the scene manager's names
-  for scenes (#118), and the icon of the window are likely to come here. Each
-  is added when its feature does, as `input` was with the input maps.
+- **More in the file**: a version of the project, names for scenes so that a
+  button or an exit says `level-2` in place of a path, and the icon of the
+  window are likely to come here. Each is added when its feature does, as
+  `input` was with the input maps.
 - **A shipped runtime** (#143) runs only its project. `--scene` and the other
   options that load content are then for the editor.

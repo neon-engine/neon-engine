@@ -76,6 +76,12 @@ namespace
       if (populate) { populate(store); }
       return true;
     }
+
+    bool Load(EntityStore &, const std::string &) override
+    {
+      // a scene written in code knows no other
+      return false;
+    }
   };
 
   /// A system of a game that does what the test tells it to.

@@ -46,11 +46,12 @@ namespace neon
       return false;
     }
 
+    /// Asks for the scene at that virtual path to take the place of what is
+    /// there, which happens at the next Update(). A world that cannot
+    /// change scene ignores it.
     virtual void LoadScene(const std::string &file_path)
     {
     }
-
-    // virtual void LoadSceneImpl() = 0;
   };
 }
 

@@ -1,0 +1,46 @@
+# The end of the prototype game, which the exit of prototype.scene.yml
+# changes to: the target of the room, hit, under the end menu. Start it on
+# its own with
+#
+#   NeonRuntime --scene assets://scenes/end.scene.yml
+#
+# The menu asks for the level again, or for the title screen, see
+# docs/scenes.md#changing-the-scene.
+
+scene: end
+version: 1
+
+entities:
+  - name: menu
+    components:
+      Ui:
+        file: assets://ui/end.ui.yml
+
+  - name: target
+    components:
+      Transform:
+        position: [-1.3, 0.1, 0]
+        rotation: [0, 90, 0]
+      Renderable:
+        model: assets://external/kenney/prototype-kit/target-a-round.glb
+        shader: assets://shaders/basic-lit
+
+  - name: daylight
+    components:
+      Transform: Default
+      Light:
+        type: direction
+        direction: [-0.3, -1, -0.2]
+        ambient: [0.35, 0.35, 0.4]
+        diffuse: [0.5, 0.5, 0.45]
+        specular: [0.2, 0.2, 0.2]
+
+  - name: viewpoint
+    components:
+      Transform:
+        position: [0, 0.2, 2.5]
+    children:
+      - name: camera
+        components:
+          Transform: Default
+          Camera: Default

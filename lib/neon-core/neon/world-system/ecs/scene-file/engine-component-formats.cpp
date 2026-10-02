@@ -5,7 +5,9 @@
 #include <neon/world-system/ecs/components/light.hpp>
 #include <neon/world-system/ecs/components/player.hpp>
 #include <neon/world-system/ecs/components/geometry.hpp>
+#include <neon/world-system/ecs/components/persistent.hpp>
 #include <neon/world-system/ecs/components/renderable.hpp>
+#include <neon/world-system/ecs/components/scene-exit.hpp>
 #include <neon/world-system/ecs/components/sound-listener.hpp>
 #include <neon/world-system/ecs/components/sound-source.hpp>
 #include <neon/world-system/ecs/components/spectator.hpp>
@@ -25,6 +27,8 @@ namespace neon
     Add(ComponentFormat::Of<Player>());
     Add(ComponentFormat::Of<SoundSource>());
     Add(ComponentFormat::Of<SoundListener>());
+    Add(ComponentFormat::Of<Persistent>());
+    Add(ComponentFormat::Of<SceneExit>());
 
     // described as well, and told apart by needing the physics
     AddPhysicsComponents();

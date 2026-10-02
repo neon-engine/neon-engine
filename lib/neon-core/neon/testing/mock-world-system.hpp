@@ -27,6 +27,8 @@ namespace neon::testing
 
     MOCK_METHOD(void, SetPaused, (bool paused), (override));
 
+    MOCK_METHOD(void, LoadScene, (const std::string &file_path), (override));
+
     MOCK_METHOD(void, CleanUp, (), (override));
   };
 } // neon::testing

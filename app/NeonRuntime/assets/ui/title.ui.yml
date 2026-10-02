@@ -1,0 +1,56 @@
+# The title screen of the prototype game, shown by title.scene.yml. Start
+# asks for the first level with `action: scene`: the runtime hands the scene
+# to the world, which changes to it at the start of the next frame. The file
+# is modal, so the game sees no input while it is shown.
+
+ui: title
+version: 1
+
+reference_size: [1920, 1080]
+modal: true
+cancel: none
+
+root:
+  type: panel
+  width: 100%
+  height: 100%
+  justify_content: center
+  align_items: center
+  children:
+    - type: panel
+      name: menu
+      padding: 48
+      gap: 16
+      min_width: 400
+      flex_direction: column
+      align_items: stretch
+      border_image_source: assets://ui/panel.png
+      border_image_slice: 16
+      children:
+        - type: label
+          text: Prototype
+          font_size: 48
+          font_weight: bold
+          text_align: center
+          margin_bottom: 16
+        - type: button
+          name: start
+          text: Start
+          autofocus: true
+          border_radius: 8
+          action: scene
+          scene: assets://scenes/prototype.scene.yml
+        - type: label
+          hidden: "{gamepad}"
+          text: "Enter starts"
+          font_size: 14
+          color: "#ffffff80"
+          text_align: center
+          margin_top: 8
+        - type: label
+          hidden: "{!gamepad}"
+          text: "A starts"
+          font_size: 14
+          color: "#ffffff80"
+          text_align: center
+          margin_top: 8

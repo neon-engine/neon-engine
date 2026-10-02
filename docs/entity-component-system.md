@@ -43,7 +43,7 @@ and inspected by an agent.
 | `EntityStore` | neon-core | The interface. Entities, components, hierarchy, and queries |
 | `EntitySystem` | neon-core | The interface of behaviour |
 | `Scene` | neon-core | The interface of what fills a store |
-| `EntityWorld` | neon-core | Runs the systems every frame. It is the `WorldSystem` of the runtime |
+| `EntityWorld` | neon-core | Runs the systems every frame, and changes the scene when one is asked for. It is the `WorldSystem` of the runtime |
 | Components and systems of the engine | neon-core | Listed below |
 | `Flecs_EntityStore` | neon-flecs | The implementation |
 | `SceneFile` | neon-core | The scene that is read from a file. See [scenes.md](scenes.md) |
@@ -62,6 +62,8 @@ privately, so the compiler refuses it anywhere else.
 | `Spectator` | The speeds the input moves the entity with | same |
 | `Player` | The speeds the input walks, runs, jumps, and turns the entity with, and where its eyes are. See [physics.md](physics.md#the-player) | same |
 | `RigidBody`, `Collider`, `Trigger`, `CharacterBody` | What the physics needs to know of an entity. See [physics.md](physics.md) | same |
+| `Persistent` | The entity stays when the world changes scene. See [scenes.md](scenes.md#changing-the-scene) | same |
+| `SceneExit` | The scene the world changes to when a body enters the entity's `Trigger` | same |
 
 ### Systems
 

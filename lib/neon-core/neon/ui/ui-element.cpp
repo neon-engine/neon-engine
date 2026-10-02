@@ -107,6 +107,12 @@ namespace neon
     return false;
   }
 
+  const std::string &UiElement::AsksForScene() const
+  {
+    static const std::string none;
+    return none;
+  }
+
   bool UiElement::WantsFocus() const
   {
     return false;

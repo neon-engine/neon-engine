@@ -34,6 +34,22 @@ namespace neon
 
   bool SceneFile::Populate(EntityStore &store)
   {
+    return Read(store);
+  }
+
+  bool SceneFile::Load(EntityStore &store, const std::string &path)
+  {
+    _path = path;
+    return Read(store);
+  }
+
+  const std::string &SceneFile::GetPath() const
+  {
+    return _path;
+  }
+
+  bool SceneFile::Read(EntityStore &store)
+  {
     _logger->Info("Loading the scene from {}", _path);
 
     std::string text;

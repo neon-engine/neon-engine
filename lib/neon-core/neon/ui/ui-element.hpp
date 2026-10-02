@@ -300,6 +300,10 @@ namespace neon
     /// reported, as a button that says `action: close` does.
     [[nodiscard]] virtual bool ClosesItsFile() const;
 
+    /// The scene choosing it asks the game to change to, as a button that
+    /// says `action: scene` with a `scene` path does. Empty asks for none.
+    [[nodiscard]] virtual const std::string &AsksForScene() const;
+
     /// Whether it has the focus when its file is loaded.
     [[nodiscard]] virtual bool WantsFocus() const;
 

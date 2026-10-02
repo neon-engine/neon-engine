@@ -141,6 +141,21 @@ namespace neon
     if (_pause_document < 0) { _logger->Error("The pause menu {} cannot be shown", _settings_config.pause_menu); }
   }
 
+  void Runtime::UpdateSceneChange()
+  {
+    if (_ui_system == nullptr) { return; }
+
+    const std::string *scene = nullptr;
+    for (const UiEvent &event : _ui_system->GetEvents())
+    {
+      if (event.kind == UiEvent::Kind::Click && !event.scene.empty()) { scene = &event.scene; }
+    }
+    if (scene == nullptr) { return; }
+
+    _logger->Info("The scene {} was asked for by the user interface", *scene);
+    _world_system->LoadScene(*scene);
+  }
+
   void Runtime::Run()
   {
     Initialize();
@@ -156,6 +171,7 @@ namespace neon
       // away from the world. It is drawn last, on top of the world.
       if (_ui_system != nullptr) { _ui_system->Update(); }
       UpdatePauseMenu();
+      UpdateSceneChange();
 
       _render_system->PrepareFrame();
       _world_system->Update();

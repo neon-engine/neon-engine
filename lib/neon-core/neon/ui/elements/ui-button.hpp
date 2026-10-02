@@ -17,6 +17,9 @@ namespace neon
   ///       background_color: "#4c566a"
   ///
   /// It holds a text, or other elements, such as an image next to a label.
+  /// With `action: scene` and a `scene` path choosing it asks the game to
+  /// change to that scene, which a title screen's Start button does; the
+  /// file is closed too, since the scene it belonged to goes away.
   /// With `action: close` choosing it also closes its file, as the Back
   /// button of a menu does, so a menu can be left without code of the game.
   class UiButton final : public UiElement
@@ -26,6 +29,9 @@ namespace neon
     bool _is_enabled = true;
     bool _autofocus = false;
     bool _closes = false;
+
+    // the scene `action: scene` asks for, from the `scene` field
+    std::string _scene;
 
   public:
     /// It says when what it shows changed.
@@ -52,6 +58,8 @@ namespace neon
     [[nodiscard]] bool IsClickable() const override;
 
     [[nodiscard]] bool ClosesItsFile() const override;
+
+    [[nodiscard]] const std::string &AsksForScene() const override;
 
     [[nodiscard]] bool WantsFocus() const override;
 

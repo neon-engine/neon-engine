@@ -4,8 +4,11 @@
 
 #include "components/camera.hpp"
 #include "components/light.hpp"
+#include "components/persistent.hpp"
 #include "components/player.hpp"
 #include "components/renderable.hpp"
+#include "components/scene-exit.hpp"
+#include "components/trigger.hpp"
 #include "components/spectator.hpp"
 #include "systems/render-submission.hpp"
 #include "systems/spectator-movement.hpp"
@@ -60,6 +63,8 @@ namespace neon
 
     // the renderer holds a model, textures, and a material for every entity
     // that was drawn, which are released when the entity stops being visible
+    _store->Register<Persistent>("Persistent");
+    _store->Register<SceneExit>("SceneExit");
     _store->Register<Renderable>("Renderable", [this](Entity, Renderable &renderable)
     {
       if (renderable.render_object_id < 0) { return; }
@@ -89,6 +94,7 @@ namespace neon
     for (const auto &system : _placing) { system->Initialize(*_store); }
     for (const auto &system : _after) { system->Initialize(*_store); }
     for (const auto &system : _added_after_placing) { system->Initialize(*_store); }
+    _exits = _store->Query<SceneExit>();
 
     // a scene with problems is said in the log, and the world runs with
     // what could be read: a game is not ended by a file
@@ -100,6 +106,41 @@ namespace neon
 
     _logger->Info("Initialized the world!");
     _input_context->CenterAndHideCursor();
+  }
+
+  void EntityWorld::LoadScene(const std::string &file_path)
+  {
+    if (file_path.empty())
+    {
+      _logger->Error("A scene without a path was asked for, nothing changes");
+      return;
+    }
+    _scene_to_load = file_path;
+  }
+
+  bool EntityWorld::IsChangingScene() const
+  {
+    return !_scene_to_load.empty();
+  }
+
+  void EntityWorld::ChangeScene()
+  {
+    const std::string path = _scene_to_load;
+    _scene_to_load.clear();
+    _logger->Info("Changing the scene to {}", path);
+
+    // what stays is what carries a Persistent, with everything below it;
+    // the rest goes, which releases what the systems hold for it
+    for (const Entity entity : _store->GetChildren(No_Entity))
+    {
+      if (_store->Has<Persistent>(entity)) { continue; }
+      _store->DestroyEntity(entity);
+    }
+
+    if (!_scene->Load(*_store, path))
+    {
+      _logger->Error("The world runs with what could be read of the scene {}", path);
+    }
   }
 
   void EntityWorld::SetPaused(const bool paused)
@@ -114,6 +155,8 @@ namespace neon
 
   void EntityWorld::Update()
   {
+    if (!_scene_to_load.empty()) { ChangeScene(); }
+
     const auto delta_time = _window_context->GetDeltaTime();
 
     if (_paused)
@@ -149,7 +192,30 @@ namespace neon
     for (const auto &system : _after) { system->Update(*_store, delta_time); }
     for (const auto &system : _added_after_placing) { system->Update(*_store, delta_time); }
 
+    CheckExits();
     _render_pipeline->RenderFrame();
+  }
+
+  void EntityWorld::CheckExits()
+  {
+    // The physics registers Trigger, when there is one; it is looked up by
+    // name so that a world without physics has exits that never open
+    const ComponentId trigger_id = _store->FindComponent("Trigger");
+    if (trigger_id == No_Component) { return; }
+
+    std::string scene;
+    _store->Each(_exits, [this, trigger_id, &scene](const EntityBlock &block)
+    {
+      const auto *exits = block.Column<SceneExit>(0);
+      for (std::size_t i = 0; i < block.count; i++)
+      {
+        const auto *trigger = static_cast<const Trigger *>(_store->GetComponent(block.entities[i], trigger_id));
+        if (trigger == nullptr || trigger->inside == 0 || exits[i].scene.empty()) { continue; }
+        scene = exits[i].scene;
+      }
+    });
+
+    if (!scene.empty()) { LoadScene(scene); }
   }
 
   void EntityWorld::CleanUp()

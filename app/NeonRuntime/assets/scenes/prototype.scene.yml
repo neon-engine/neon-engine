@@ -21,6 +21,11 @@
 # since the scale of the Transform sizes it as it sizes what is drawn, so
 # that nothing falls through or walks through the walls.
 #
+# The way out is the north-east corner of the room, behind the supply crate:
+# an exit the player walks into, which changes to end.scene.yml, see
+# docs/scenes.md#changing-the-scene. The title screen, title.scene.yml,
+# comes before the level.
+#
 # The components and what they hold are listed in docs/scenes.md, and what
 # the loader reads of a GLB in docs/models.md.
 
@@ -277,6 +282,22 @@ entities:
         model: assets://external/kenney/prototype-kit/target-a-round.glb
         shader: assets://shaders/basic-lit
 
+  # The way out of the level: a trigger in the north-east corner, behind the
+  # supply crate, that changes to the end scene when a body is inside it. A
+  # trigger reports static bodies too, and the column and the walls stand in
+  # the corner, so it looks for layer 2 alone, which only the player is in.
+  - name: exit
+    components:
+      Transform:
+        position: [2.5, 1, -2.5]
+      Trigger:
+        mask: [2]
+      Collider:
+        shape: box
+        size: [0.8, 2, 0.8]
+      SceneExit:
+        scene: assets://scenes/end.scene.yml
+
   - name: corridor-target
     components:
       Transform:
@@ -415,7 +436,9 @@ entities:
       Transform:
         position: [0, 0.9, 7.5]
       Player: Default
-      CharacterBody: Default
+      # in layer 2 as well, which the exit looks for
+      CharacterBody:
+        layers: [1, 2]
       Collider:
         shape: capsule
         radius: 0.4

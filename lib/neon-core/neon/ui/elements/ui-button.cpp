@@ -35,7 +35,13 @@ namespace neon
 
     if (name == "action")
     {
-      value = std::string(_closes ? "close" : "none");
+      value = std::string(!_scene.empty() ? "scene" : _closes ? "close" : "none");
+      return true;
+    }
+
+    if (name == "scene")
+    {
+      value = _scene;
       return true;
     }
 
@@ -82,14 +88,22 @@ namespace neon
       std::string action;
       if (!TakeText(value, what, action, error)) { return false; }
 
-      if (action != "none" && action != "close")
+      if (action != "none" && action != "close" && action != "scene")
       {
-        error = std::format("{} is '{}', where none or close was expected", what, action);
+        error = std::format("{} is '{}', where none, close, or scene was expected", what, action);
         return false;
       }
 
-      _closes = action == "close";
+      // a scene asks for a change and closes the file; the path comes with
+      // the scene field, which may arrive before or after
+      _closes = action == "close" || action == "scene";
+      if (action != "scene") { _scene.clear(); }
       return true;
+    }
+
+    if (name == "scene")
+    {
+      return TakeText(value, what, _scene, error);
     }
 
     return UiElement::SetField(name, value, error);
@@ -101,7 +115,8 @@ namespace neon
       {"text", FieldKind::Text, "What is written on it, which may refer to values of the game as {name}", {}},
       {"enabled", FieldKind::Bool, "Whether it can be chosen", {}},
       {"autofocus", FieldKind::Bool, "Whether it has the focus when its file is shown", {}},
-      {"action", FieldKind::Choice, "What choosing it does besides reporting a click: close closes its file", {"none", "close"}}
+      {"action", FieldKind::Choice, "What choosing it does besides reporting a click: close closes its file, scene asks the game for the scene it names", {"none", "close", "scene"}},
+      {"scene", FieldKind::Text, "Virtual path of the scene that action: scene asks for", {}}
     };
   }
 
@@ -148,7 +163,16 @@ namespace neon
     _text.Read(reader);
     reader.Read("autofocus", _autofocus);
 
-    if (std::size_t action = 0; reader.ReadChoice("action", {"none", "close"}, action)) { _closes = action == 1; }
+    std::size_t action = 0;
+    const bool has_action = reader.ReadChoice("action", {"none", "close", "scene"}, action);
+    if (has_action) { _closes = action != 0; }
+
+    reader.Read("scene", _scene);
+    if (has_action && action == 2 && _scene.empty())
+    {
+      reader.Report(std::format("'action' of {} is scene, which needs a 'scene' with the path of one", reader.GetWhere()));
+    }
+    if (!(has_action && action == 2)) { _scene.clear(); }
 
     if (const auto *value = reader.ReadValue("enabled"); value != nullptr && !UiFlag::Read(*value, _enabled))
     {
@@ -163,6 +187,11 @@ namespace neon
   bool UiButton::ClosesItsFile() const
   {
     return _closes;
+  }
+
+  const std::string &UiButton::AsksForScene() const
+  {
+    return _scene;
   }
 
   bool UiButton::TakesChildren() const

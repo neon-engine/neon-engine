@@ -20,6 +20,7 @@ namespace
 {
   using neon::Action;
   using neon::InputState;
+  using neon::UiEvent;
   using neon::testing::FakeEntropyContext;
   using neon::testing::FakeInputContext;
   using neon::testing::LogLevel;
@@ -72,6 +73,9 @@ namespace
     StrictMock<MockRenderPipeline> _render_pipeline{_logger};
     StrictMock<MockWorldSystem> _world_system{_logger};
     StrictMock<MockUiSystem> _ui_system;
+
+    // what the user interface reports, nothing unless a test says otherwise
+    std::vector<UiEvent> _events;
 
     // what the window was told, so that IsRunning can answer like a window
     bool _closed = false;
@@ -181,6 +185,7 @@ namespace
 
     ExpectInitialize();
     EXPECT_CALL(_ui_system, Initialize());
+    EXPECT_CALL(_ui_system, GetEvents()).WillRepeatedly(ReturnRef(_events));
     LetTheWindowRunUntilItIsClosed();
     {
       InSequence in_order;
@@ -211,6 +216,7 @@ namespace
 
     ExpectInitialize();
     EXPECT_CALL(_ui_system, Initialize());
+    EXPECT_CALL(_ui_system, GetEvents()).WillRepeatedly(ReturnRef(_events));
     LetTheWindowRunUntilItIsClosed();
     EXPECT_CALL(_input_system, ProcessInput());
     EXPECT_CALL(_ui_system, Update());
@@ -592,6 +598,7 @@ namespace
       EXPECT_CALL(_ui_system, Update()).Times(AnyNumber());
       EXPECT_CALL(_ui_system, Draw()).Times(AnyNumber());
       EXPECT_CALL(_ui_system, WasClicked(_)).WillRepeatedly(Return(false));
+      EXPECT_CALL(_ui_system, GetEvents()).WillRepeatedly(ReturnRef(_events));
       EXPECT_CALL(_render_system, PrepareFrame()).Times(AnyNumber());
       EXPECT_CALL(_render_system, FinishFrame()).Times(AnyNumber());
       EXPECT_CALL(_world_system, Update()).Times(AnyNumber());
@@ -702,6 +709,46 @@ namespace
     ExpectCleanUp();
 
     EXPECT_TRUE(_logger->Contains(LogLevel::Error, "The settings menu assets://ui/settings.ui.yml cannot be shown"));
+  }
+
+  TEST_F(PauseMenuTest, HandsTheSceneAButtonAsksForToTheWorld)
+  {
+    const auto runtime = CreateWithMenu(3);
+    EXPECT_CALL(_world_system, SetPaused(false)).Times(3);
+
+    // the user interface reports the click in the second frame alone
+    UiEvent start;
+    start.kind = UiEvent::Kind::Click;
+    start.element = "start";
+    start.document = "title";
+    start.scene = "assets://scenes/prototype.scene.yml";
+    _press = [this, start](const int frame)
+    {
+      _events.clear();
+      if (frame == 2) { _events.push_back(start); }
+    };
+
+    EXPECT_CALL(_world_system, LoadScene("assets://scenes/prototype.scene.yml")).Times(1);
+
+    runtime->Run();
+    ExpectCleanUp();
+
+    EXPECT_TRUE(_logger->Contains(LogLevel::Info, "The scene assets://scenes/prototype.scene.yml was asked for by the user interface"));
+  }
+
+  TEST_F(PauseMenuTest, HandsNoSceneToTheWorldForAClickThatAsksForNone)
+  {
+    const auto runtime = CreateWithMenu(2);
+    EXPECT_CALL(_world_system, SetPaused(false)).Times(2);
+
+    UiEvent click;
+    click.kind = UiEvent::Kind::Click;
+    click.element = "fire";
+    _events.push_back(click);
+    EXPECT_CALL(_world_system, LoadScene(_)).Times(0);
+
+    runtime->Run();
+    ExpectCleanUp();
   }
 
   TEST_F(PauseMenuTest, ClosesTheWindowWhenQuitIsChosen)

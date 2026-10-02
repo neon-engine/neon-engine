@@ -805,6 +805,7 @@ namespace neon
 
     UiEvent clicked;
     clicked.kind = UiEvent::Kind::Click;
+    clicked.scene = element.AsksForScene();
     clicked.element = element.GetName();
     clicked.document = document != nullptr ? document->name : "";
     clicked.surface = surface != nullptr ? surface->name : "";

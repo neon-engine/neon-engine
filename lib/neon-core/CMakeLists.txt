@@ -78,6 +78,8 @@ add_library(${TARGET} STATIC
         neon/geometry/mesh-uvs.cpp
         neon/geometry/mesh-uvs.hpp
         neon/world-system/ecs/components/geometry.hpp
+        neon/world-system/ecs/components/persistent.hpp
+        neon/world-system/ecs/components/scene-exit.hpp
         neon/world-system/ecs/components/geometry-shape.hpp
         neon/world-system/ecs/systems/geometry-building.cpp
         neon/world-system/ecs/systems/geometry-building.hpp

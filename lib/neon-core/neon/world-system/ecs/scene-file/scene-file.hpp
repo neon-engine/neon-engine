@@ -46,6 +46,8 @@ namespace neon
     DocumentFormat *_format;
     std::string _path;
     ComponentFormats _component_formats;
+
+    bool Read(EntityStore &store);
     std::shared_ptr<Logger> _logger;
 
     void ReadEntity(
@@ -78,6 +80,14 @@ namespace neon
     /// the store, and every problem that was found is logged with its line,
     /// not only the first, so that a file is corrected in one pass.
     bool Populate(EntityStore &store) override;
+
+    /// Reads another scene file in place of the one the world started with,
+    /// into a store the world has emptied. The path becomes the file's path,
+    /// so that Save() and messages name the scene that is shown.
+    bool Load(EntityStore &store, const std::string &path) override;
+
+    /// The virtual path of the scene that was read last.
+    [[nodiscard]] const std::string &GetPath() const;
 
     /// Writes every entity of the store to a file, as a scene of the given
     /// name. Components without a format are left out. Returns false when

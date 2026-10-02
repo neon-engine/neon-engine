@@ -1067,7 +1067,7 @@ namespace
     },
     WrongProperty{
       "action: jump",
-      "'action' of button 'start' is 'jump', where one of these was expected: none, close"
+      "'action' of button 'start' is 'jump', where one of these was expected: none, close, scene"
     },
     WrongProperty{
       "enabled: maybe",

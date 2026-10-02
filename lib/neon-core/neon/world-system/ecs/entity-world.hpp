@@ -48,7 +48,21 @@ namespace neon
     bool _initialized = false;
     bool _paused = false;
 
+    // the scene asked for, taken at the start of the next frame, so that a
+    // change never happens in the middle of one
+    std::string _scene_to_load;
+
+    // the entities with a SceneExit, looked at after every frame
+    QueryId _exits = 0;
+
     void RegisterComponents() const;
+
+    /// Destroys every entity that does not stay, then reads the scene that
+    /// was asked for.
+    void ChangeScene();
+
+    /// Asks for the scene of a SceneExit whose Trigger has a body inside.
+    void CheckExits();
 
   public:
     EntityWorld(
@@ -77,6 +91,17 @@ namespace neon
     /// per second is set, and what a system asks that needs to know about
     /// the steps.
     [[nodiscard]] FixedClock &GetFixedClock();
+
+    /// Asks for another scene, by its virtual path. It is read at the start
+    /// of the next frame: every entity of the world is destroyed first,
+    /// except those with a Persistent component, which stay with their
+    /// children, and then the scene fills the store. The systems stay as
+    /// they are, so what they hold for a destroyed entity is released
+    /// through the store, as when an entity goes away in play.
+    void LoadScene(const std::string &file_path) override;
+
+    /// Whether a scene was asked for and not read yet.
+    [[nodiscard]] bool IsChangingScene() const;
 
     void Initialize() override;
 

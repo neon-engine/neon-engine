@@ -36,6 +36,10 @@ namespace neon
     /// The name of the surface the file is shown on: `window`, or what a
     /// surface in the world was called.
     std::string surface;
+
+    /// The scene the element asks the game to change to, with
+    /// `action: scene`. Empty for a click that asks for none.
+    std::string scene;
   };
 
   /// The surface every application has: what the frame is drawn to, which
