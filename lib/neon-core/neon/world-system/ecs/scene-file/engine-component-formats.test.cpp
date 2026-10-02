@@ -379,7 +379,7 @@ namespace
 
     EXPECT_THAT(_errors, ElementsAre(
                   "scene.yml: 'shine' is not known to 'material' of Renderable of entity 'thing'. "
-                  "Known are: shininess, color, use_textures, alpha_mode, double_sided"));
+                  "Known are: shininess, color, metallic, roughness, use_textures, alpha_mode, double_sided"));
   }
 
   TEST_F(EngineComponentFormatsTest, ATextureThatIsNotTextIsReported)

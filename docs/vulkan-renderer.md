@@ -154,6 +154,35 @@ Light data is held in a uniform buffer, not in individual uniforms. That
 removes the limit on uniforms per shader, which is what had held the OpenGL
 backend to 16 lights of each kind.
 
+### The shaders that ship
+
+| Shader | Lights | What it draws |
+|---|---|---|
+| `pbr` | Yes | Physically based, with the metallic-roughness model of glTF (#59): Lambert for the scattered light and Cook-Torrance for the reflected, with GGX, Smith-GGX as Schlick approximates it, and Schlick's Fresnel. The material's `color` is the base colour, `metallic` and `roughness` say what the surface is, and the second texture is a glTF metallic-roughness map (green roughness, blue metallic). The shader for every surface of a game |
+| `basic-lit` | Yes | Blinn-Phong with `shininess`, the shader before `pbr`. Kept for the scenes that use it; nothing new should |
+| `unlit` | No | The texture or the colour as it is |
+| `color` | No | The colour as it is |
+| `flat` | No | For what is drawn in two dimensions |
+
+How `pbr` reads a light: `diffuse` is the light's radiance — the colour a
+white, matte, non-metal surface facing it shows; `ambient` lights the diffuse
+colour evenly from every side; `specular` is not read, since a surface's
+highlight follows from its roughness and its metalness, not from the light.
+A roughness below 0.045 is raised to it, so that a mirror does not become a
+spike no pixel hits. The defaults, `metallic: 0` and `roughness: 0.5`,
+differ from glTF's 1 and 1 on purpose: without an environment to reflect
+(#64, #90) a metal is dark, and most surfaces of a game are not metals.
+
+`tests/runtime-pbr` checks the shader against numbers worked out by hand:
+flat planes face the camera and one white light shines from it, so that every
+angle in the shading is known — a white matte dielectric shows 0.963 of the
+light (sRGB 250), a white matte metal 0.080 (sRGB 80), a red matte dielectric
+red with the 4 percent it reflects in white (250, 11, 11).
+
+What `pbr` does not do yet: normal maps, emissive (#129), occlusion, image
+based lighting from an environment (#64), shadows (#60). The ubershader of
+#106 adds them as variants.
+
 ## Changes to neon-core
 
 The interfaces were shaped around OpenGL in a few places. These are the

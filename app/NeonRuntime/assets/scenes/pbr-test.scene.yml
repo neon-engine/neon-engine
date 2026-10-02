@@ -1,0 +1,75 @@
+# A scene for checking the pbr shader, which tests read pixel by pixel:
+#
+#   NeonRuntime --scene assets://scenes/pbr-test.scene.yml
+#
+# Flat planes face the camera, and one white light shines from the camera
+# onto them, so that every angle in the shading is known: the normal, the
+# view, the light, and the half vector all point the same way. What each
+# plane has to show can then be worked out by hand, see
+# tests/runtime-pbr/run.cmake.
+
+scene: pbr-test
+version: 1
+
+entities:
+  - name: camera
+    components:
+      Transform:
+        position: [0, 0, 5]
+      Camera: {}
+
+  # from the camera onto the planes, white, and nothing from the sides
+  - name: light
+    components:
+      Transform: {}
+      Light:
+        type: direction
+        direction: [0, 0, -1]
+        ambient: [0, 0, 0]
+        diffuse: [1, 1, 1]
+        specular: [0, 0, 0]
+
+  # a matte white dielectric, like chalk: nearly all the light comes back
+  # scattered, and 4 percent of it is reflected
+  - name: chalk
+    components:
+      Transform:
+        position: [-2, 0, 0]
+        scale: 1.5
+      Renderable:
+        model: assets://models/quad.obj
+        shader: assets://shaders/pbr
+        material:
+          color: [1, 1, 1]
+          metallic: 0
+          roughness: 1
+
+  # a matte white metal: it scatters nothing, and the rough surface spreads
+  # the one light over the whole hemisphere
+  - name: brushed-metal
+    components:
+      Transform:
+        position: [0, 0, 0]
+        scale: 1.5
+      Renderable:
+        model: assets://models/quad.obj
+        shader: assets://shaders/pbr
+        material:
+          color: [1, 1, 1]
+          metallic: 1
+          roughness: 1
+
+  # a matte red dielectric: the scattered light is red, the reflected 4
+  # percent is white
+  - name: red-chalk
+    components:
+      Transform:
+        position: [2, 0, 0]
+        scale: 1.5
+      Renderable:
+        model: assets://models/quad.obj
+        shader: assets://shaders/pbr
+        material:
+          color: [1, 0, 0]
+          metallic: 0
+          roughness: 1

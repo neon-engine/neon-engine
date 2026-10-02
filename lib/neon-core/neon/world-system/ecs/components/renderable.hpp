@@ -49,6 +49,18 @@ namespace neon
         [](Renderable &renderable) -> Color & { return renderable.render_info.material_info.color; });
 
       material.Field(
+            "metallic",
+            [](Renderable &renderable) -> float & { return renderable.render_info.material_info.metallic; })
+          .AtLeast(0.0f).AtMost(1.0f)
+          .Describe("How much of a metal the surface is, 0 for plastic or stone and 1 for metal. Read by the pbr shader");
+
+      material.Field(
+            "roughness",
+            [](Renderable &renderable) -> float & { return renderable.render_info.material_info.roughness; })
+          .AtLeast(0.0f).AtMost(1.0f)
+          .Describe("How rough the surface is, 0 for a mirror and 1 for matte. Read by the pbr shader");
+
+      material.Field(
         "use_textures",
         [](Renderable &renderable) -> bool & { return renderable.render_info.material_info.use_textures; });
 

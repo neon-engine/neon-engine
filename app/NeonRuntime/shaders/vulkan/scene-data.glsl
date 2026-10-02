@@ -54,6 +54,8 @@ layout (std140, set = 0, binding = 1) uniform ObjectData {
     // x shininess, y is 1 when textures are used and 0 when only the color is,
     // z is 1 when the object is see-through and 0 when it is opaque
     vec4 material;
+    // x metallic, y roughness, for the pbr shader
+    vec4 surface;
 } object;
 
 // The alpha an object writes. An opaque one covers what is behind it

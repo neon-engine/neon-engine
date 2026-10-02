@@ -144,6 +144,7 @@ namespace neon
       _material_info.use_textures ? 1.0f : 0.0f,
       _material_info.alpha_mode == AlphaMode::Blend ? 1.0f : 0.0f,
       0.0f};
+    data.surface = {_material_info.metallic, _material_info.roughness, 0.0f, 0.0f};
     return data;
   }
 

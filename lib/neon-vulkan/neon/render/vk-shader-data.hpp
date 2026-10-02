@@ -74,13 +74,15 @@ namespace neon
     // x shininess, y is 1 when textures are used and 0 when only the color is,
     // z is 1 when the object is see-through and 0 when it is opaque
     glm::vec4 material{0.0f};
+    // x metallic, y roughness, for the pbr shader
+    glm::vec4 surface{0.0f};
   };
 
   static_assert(sizeof(VK_DirectionLight) == 64);
   static_assert(sizeof(VK_PointLight) == 80);
   static_assert(sizeof(VK_SpotLight) == 112);
   static_assert(sizeof(VK_SceneData) == 224 + kMax_Point_Lights * 80 + kMax_Spot_Lights * 112);
-  static_assert(sizeof(VK_ObjectData) == 176);
+  static_assert(sizeof(VK_ObjectData) == 192);
 } // neon
 
 #endif //VK_SHADER_DATA_HPP

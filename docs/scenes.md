@@ -92,7 +92,7 @@ the same.
 | `shader` | Virtual path of the shader, without an extension | None. It has to be written |
 | `textures` | A list of virtual paths | None |
 | `scale_textures` | Whether textures repeat as the entity grows | `false` |
-| `material` | `shininess`, `color` as `[red, green, blue]` or with alpha as a fourth, `use_textures`, `alpha_mode`, and `double_sided` | `0`, white, `true`, `opaque`, `false` |
+| `material` | `color` as `[red, green, blue]` or with alpha as a fourth, `metallic` and `roughness` from 0 to 1 (the `pbr` shader), `shininess` (the `basic-lit` shader), `use_textures`, `alpha_mode`, and `double_sided` | white, `0`, `0.5`, `0`, `true`, `opaque`, `false` |
 
 `color` is written as a screen shows it, in sRGB, like the colours of an
 image. The first texture holds colours, the second how much each part of a
@@ -124,7 +124,7 @@ from the front.
 |---|---|---|
 | `type` | `direction`, `point`, or `spot` | `direction` |
 | `direction` | `[x, y, z]` | `[0, 0, 0]` |
-| `ambient`, `diffuse`, `specular` | `[red, green, blue]`, amounts of light: 0.5 is half the light of 1 | `[0, 0, 0]` |
+| `ambient`, `diffuse`, `specular` | `[red, green, blue]`, amounts of light: 0.5 is half the light of 1. For the `pbr` shader `diffuse` is the light's colour and `specular` is not read, see [vulkan-renderer.md](vulkan-renderer.md#the-shaders-that-ship) | `[0, 0, 0]` |
 | `constant`, `linear`, `quadratic` | How the light fades with distance | `0` |
 | `cutoff`, `outer_cutoff` | The cone of a spot light | `0` |
 

@@ -18,10 +18,25 @@ namespace neon
 
   struct MaterialInfo
   {
+    /// The sharpness of the highlight of the `basic-lit` shader. The `pbr`
+    /// shader does not read it; `roughness` says the same there.
     float shininess{};
     Color color;
     bool use_textures = true;
     AlphaMode alpha_mode = AlphaMode::Opaque;
+
+    /// How much of a metal the surface is, from 0 (a dielectric: plastic,
+    /// wood, stone) to 1 (a metal), as glTF describes it. A metal reflects
+    /// the light in its own colour and has no diffuse colour; without an
+    /// environment to reflect it is dark, which is why 0 is the default here
+    /// where glTF's is 1.
+    float metallic = 0.0f;
+
+    /// How rough the surface is, from 0 (a mirror) to 1 (matte), as glTF
+    /// describes it. The `pbr` shader reads the green channel of the second
+    /// texture for it, and the blue channel for metallic, as a glTF
+    /// metallic-roughness texture is laid out; both multiply these numbers.
+    float roughness = 0.5f;
 
     /// Whether both sides of every triangle are drawn. Most surfaces are
     /// seen from one side only, the outside of a closed model, so the back
