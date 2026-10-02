@@ -24,6 +24,7 @@ namespace
   using neon::BodyKind;
   using neon::CharacterBody;
   using neon::Collider;
+  using neon::ModelFit;
   using neon::Geometry;
   using neon::Entity;
   using neon::Joint;
@@ -387,7 +388,7 @@ namespace
   TEST_F(PhysicsSimulationTest, MakesAHullFromThePointsOfAModel)
   {
     Create("rock", At(0.0f, 5.0f, 0.0f), RigidBody{},
-           Collider{.shape = ShapeKind::ConvexHull, .model = "assets://models/wedge.obj"});
+           Collider{.shape = ShapeKind::ConvexHull, .model = "assets://models/wedge.obj", .fit = ModelFit::Unit});
 
     Step();
 
@@ -397,7 +398,8 @@ namespace
     EXPECT_FALSE(shape.points.empty());
     EXPECT_TRUE(shape.triangles.empty());
 
-    // sized as the renderer sizes the model: the longest side has length 1
+    // sized as the renderer sizes the model with a unit fit: the longest
+    // side has length 1
     float lowest = 1000.0f;
     float highest = -1000.0f;
     for (const auto &point : shape.points)
@@ -407,6 +409,28 @@ namespace
     }
     EXPECT_NEAR(lowest, -0.5f, tolerance);
     EXPECT_NEAR(highest, 0.5f, tolerance);
+  }
+
+  TEST_F(PhysicsSimulationTest, TakesThePointsOfAModelAsTheFileSaysThemWithoutAFit)
+  {
+    Create("rock", At(0.0f, 5.0f, 0.0f), RigidBody{},
+           Collider{.shape = ShapeKind::ConvexHull, .model = "assets://models/wedge.obj"});
+
+    Step();
+
+    ASSERT_EQ(_physics.created.size(), 1u);
+    const auto &shape = _physics.created[0].shapes[0];
+
+    // the wedge is 4 long from the origin, as the renderer draws it
+    float lowest = 1000.0f;
+    float highest = -1000.0f;
+    for (const auto &point : shape.points)
+    {
+      lowest = std::min(lowest, point.x);
+      highest = std::max(highest, point.x);
+    }
+    EXPECT_NEAR(lowest, 0.0f, tolerance);
+    EXPECT_NEAR(highest, 4.0f, tolerance);
   }
 
   TEST_F(PhysicsSimulationTest, MakesAMeshFromTheTrianglesOfAModel)
@@ -500,6 +524,19 @@ namespace
 
     ASSERT_EQ(_physics.created.size(), 2u);
     EXPECT_EQ(_physics.created[0].shapes[0].points, _physics.created[1].shapes[0].points);
+  }
+
+  TEST_F(PhysicsSimulationTest, ReadsAModelForEachFitItIsUsedWith)
+  {
+    Create("first", At(0.0f, 5.0f, 0.0f), RigidBody{},
+           Collider{.shape = ShapeKind::ConvexHull, .model = "assets://models/wedge.obj", .fit = ModelFit::Unit});
+    Create("second", At(3.0f, 5.0f, 0.0f), RigidBody{},
+           Collider{.shape = ShapeKind::ConvexHull, .model = "assets://models/wedge.obj", .fit = ModelFit::None});
+
+    Step();
+
+    ASSERT_EQ(_physics.created.size(), 2u);
+    EXPECT_NE(_physics.created[0].shapes[0].points, _physics.created[1].shapes[0].points);
   }
 
   // what cannot be created

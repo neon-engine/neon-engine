@@ -25,15 +25,17 @@ namespace neon
     void GenerateNormalizationMatrix() override;
 
   public:
+    /// A model from a file, sized as `fit` says once it is loaded.
     VK_Model(
       const std::string &path,
+      ModelFit fit,
       FileSystemContext *file_system_context,
       VK_Device *device,
       const std::shared_ptr<Logger> &logger);
 
     /// A model from a mesh that was built at run time. It is drawn in metres
-    /// as it is, without the centring and scaling a file gets, since what
-    /// built it meant every number.
+    /// as it is, with a fit of `None`, since what built it meant every
+    /// number.
     VK_Model(std::shared_ptr<const MeshData> mesh, VK_Device *device, const std::shared_ptr<Logger> &logger);
 
     bool Initialize() override;

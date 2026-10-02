@@ -25,6 +25,7 @@ entities:
         position: [-3, 0.8, 0]
       Renderable:
         model: assets://models/quad.obj
+        fit: unit
         shader: assets://shaders/color
         material:
           color: [0, 1, 0]
@@ -37,6 +38,7 @@ entities:
         rotation: [0, 180, 0]
       Renderable:
         model: assets://models/quad.obj
+        fit: unit
         shader: assets://shaders/color
         material:
           color: [1, 0, 0]
@@ -49,6 +51,7 @@ entities:
         rotation: [0, 180, 0]
       Renderable:
         model: assets://models/quad.obj
+        fit: unit
         shader: assets://shaders/color
         material:
           color: [0, 0, 1]
@@ -62,6 +65,7 @@ entities:
         scale: [-1, 1, 1]
       Renderable:
         model: assets://models/quad.obj
+        fit: unit
         shader: assets://shaders/color
         material:
           color: [1, 1, 0]
@@ -75,6 +79,7 @@ entities:
         scale: [-1, 1, 1]
       Renderable:
         model: assets://models/quad.obj
+        fit: unit
         shader: assets://shaders/color
         material:
           color: [1, 0, 1]

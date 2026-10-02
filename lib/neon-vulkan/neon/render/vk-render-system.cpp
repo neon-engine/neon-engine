@@ -713,10 +713,10 @@ namespace neon
       return -1;
     }
 
-    // a mesh that was built is drawn as it is; a file is read and normalised
+    // a mesh that was built is drawn as it is; a file is read and fitted
     VK_Model model = render_info.mesh != nullptr
       ? VK_Model(render_info.mesh, &_device, _logger)
-      : VK_Model(render_info.model_path, _file_system_context, &_device, _logger);
+      : VK_Model(render_info.model_path, render_info.fit, _file_system_context, &_device, _logger);
     if (!model.Initialize())
     {
       const std::string what = render_info.mesh != nullptr ? "the mesh that was built" : render_info.model_path;

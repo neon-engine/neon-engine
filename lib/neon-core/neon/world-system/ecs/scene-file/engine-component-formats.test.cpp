@@ -23,6 +23,7 @@ namespace
   using neon::AlphaMode;
   using neon::Camera;
   using neon::Geometry;
+  using neon::ModelFit;
   using neon::ComponentFormats;
   using neon::DataReader;
   using neon::DataValue;
@@ -281,6 +282,7 @@ namespace
     map.Set("shader", DataValue::Text("assets://shaders/basic-lit"));
     map.Set("textures", Texts({"assets://a.png", "assets://b.png"}));
     map.Set("scale_textures", DataValue::Bool(true));
+    map.Set("fit", DataValue::Text("unit"));
     map.Set("material", material);
 
     Read("Renderable", map);
@@ -289,6 +291,7 @@ namespace
     ASSERT_NE(renderable, nullptr);
     const auto &info = renderable->render_info;
     EXPECT_EQ(info.model_path, "assets://models/cube.obj");
+    EXPECT_EQ(info.fit, ModelFit::Unit);
     EXPECT_EQ(info.shader_path, "assets://shaders/basic-lit");
     EXPECT_THAT(info.texture_paths, ElementsAre("assets://a.png", "assets://b.png"));
     EXPECT_TRUE(info.scale_textures);
@@ -350,6 +353,32 @@ namespace
     Read("Renderable", map);
     EXPECT_TRUE(_store.Get<Renderable>(_entity)->render_info.material_info.double_sided);
     EXPECT_THAT(_errors, IsEmpty());
+  }
+
+  TEST_F(EngineComponentFormatsTest, AModelIsDrawnAsItIsUnlessTheRenderableAsksForAFit)
+  {
+    auto map = DataValue::Map();
+    map.Set("model", DataValue::Text("assets://external/kit/wall.glb"));
+    map.Set("shader", DataValue::Text("assets://shaders/basic-lit"));
+
+    Read("Renderable", map);
+
+    EXPECT_EQ(_store.Get<Renderable>(_entity)->render_info.fit, ModelFit::None);
+    EXPECT_THAT(_errors, IsEmpty());
+  }
+
+  TEST_F(EngineComponentFormatsTest, AFitThatIsNotKnownIsReported)
+  {
+    auto map = DataValue::Map();
+    map.Set("model", DataValue::Text("assets://models/cube.obj"));
+    map.Set("shader", DataValue::Text("assets://shaders/basic-lit"));
+    map.Set("fit", DataValue::Text("box"));
+
+    Read("Renderable", map);
+
+    EXPECT_THAT(_errors, ElementsAre(
+                  "scene.yml: 'fit' of Renderable of entity 'thing' is 'box', where one of these was expected: none, "
+                  "unit"));
   }
 
   TEST_F(EngineComponentFormatsTest, ARenderableWithoutAModelIsAcceptedSinceAGeometryMayDrawIt)

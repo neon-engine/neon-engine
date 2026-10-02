@@ -32,6 +32,7 @@ entities:
         scale: [3.4, 1.6, 1]
       Renderable:
         model: assets://models/quad.obj
+        fit: unit
         shader: assets://shaders/color
         material:
           color: [0, 0, 0]
@@ -43,6 +44,7 @@ entities:
         scale: [3.4, 1.6, 1]
       Renderable:
         model: assets://models/quad.obj
+        fit: unit
         shader: assets://shaders/color
         material:
           color: [1, 1, 1]
@@ -54,6 +56,7 @@ entities:
         position: [-2.6, 0.9, 0.5]
       Renderable:
         model: assets://models/quad.obj
+        fit: unit
         shader: assets://shaders/color
         material:
           color: [1, 0.0, 0.0, 0.5]
@@ -68,6 +71,7 @@ entities:
         scale: 1.2
       Renderable:
         model: assets://models/quad.obj
+        fit: unit
         shader: assets://shaders/color
         material:
           color: [1, 0.5, 0, 0.5]
@@ -80,6 +84,7 @@ entities:
         scale: 1.2
       Renderable:
         model: assets://models/quad.obj
+        fit: unit
         shader: assets://shaders/color
         material:
           color: [0, 0, 1, 0.5]
@@ -93,6 +98,7 @@ entities:
         position: [0, -1.1, 0]
       Renderable:
         model: assets://models/quad.obj
+        fit: unit
         shader: assets://shaders/color
         material:
           color: [0, 1, 0, 0.25]
@@ -106,6 +112,7 @@ entities:
         scale: 1.6
       Renderable:
         model: assets://models/quad.obj
+        fit: unit
         shader: assets://shaders/unlit
         textures:
           - assets://textures/gamma-test.png
@@ -118,6 +125,7 @@ entities:
         scale: [2, 1.5, 1]
       Renderable:
         model: assets://models/quad.obj
+        fit: unit
         shader: assets://shaders/unlit
         textures:
           - surface://gamma-test

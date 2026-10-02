@@ -120,9 +120,11 @@ namespace neon
   Model::Model(
     const std::string &path,
     FileSystemContext *file_system_context,
-    const std::shared_ptr<Logger> &logger)
+    const std::shared_ptr<Logger> &logger,
+    const ModelFit fit)
   {
     _path = path;
+    _fit = fit;
     _file_system_context = file_system_context;
     _logger = logger;
   }
@@ -329,8 +331,11 @@ namespace neon
     }
   }
 
-  glm::mat4 Model::ComputeNormalizationMatrix(const std::vector<const Mesh *> &meshes)
+  glm::mat4 Model::ComputeNormalizationMatrix(const std::vector<const Mesh *> &meshes, const ModelFit fit)
   {
+    // the file is taken at its word
+    if (fit == ModelFit::None) { return glm::mat4(1.0f); }
+
     auto lowest = glm::vec3(std::numeric_limits<float>::max());
     auto highest = glm::vec3(std::numeric_limits<float>::lowest());
 

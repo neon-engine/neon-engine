@@ -11,6 +11,7 @@
 namespace
 {
   using neon::LoadModelGeometry;
+  using neon::ModelFit;
   using neon::ModelGeometry;
   using neon::testing::LogLevel;
   using neon::testing::MemoryFileSystem;
@@ -43,9 +44,20 @@ namespace
       _files.AddNativeFile("/assets/models/ramp.obj", ramp);
     }
 
-    bool Load(const std::string &path)
+    bool Load(const std::string &path, const ModelFit fit = ModelFit::Unit)
     {
-      return LoadModelGeometry(path, &_files, _logger, _geometry);
+      return LoadModelGeometry(path, fit, &_files, _logger, _geometry);
+    }
+
+    void Measure(glm::vec3 &lowest, glm::vec3 &highest) const
+    {
+      lowest = glm::vec3{1000.0f};
+      highest = glm::vec3{-1000.0f};
+      for (const auto &point : _geometry.points)
+      {
+        lowest = glm::min(lowest, point);
+        highest = glm::max(highest, point);
+      }
     }
   };
 
@@ -65,17 +77,25 @@ namespace
     for (const auto index : _geometry.triangles) { EXPECT_LT(index, _geometry.points.size()); }
   }
 
-  TEST_F(ModelGeometryTest, PutsTheMiddleOfTheModelAtTheOrigin)
+  TEST_F(ModelGeometryTest, KeepsTheModelWhereAndHowBigTheFileSaysItIsWithoutAFit)
   {
-    ASSERT_TRUE(Load("assets://models/ramp.obj"));
+    ASSERT_TRUE(Load("assets://models/ramp.obj", ModelFit::None));
 
-    glm::vec3 lowest{1000.0f};
-    glm::vec3 highest{-1000.0f};
-    for (const auto &point : _geometry.points)
-    {
-      lowest = glm::min(lowest, point);
-      highest = glm::max(highest, point);
-    }
+    glm::vec3 lowest;
+    glm::vec3 highest;
+    Measure(lowest, highest);
+
+    EXPECT_EQ(lowest, glm::vec3(10.0f, 0.0f, 0.0f));
+    EXPECT_EQ(highest, glm::vec3(14.0f, 2.0f, 1.0f));
+  }
+
+  TEST_F(ModelGeometryTest, PutsTheMiddleOfTheModelAtTheOriginWithAUnitFit)
+  {
+    ASSERT_TRUE(Load("assets://models/ramp.obj", ModelFit::Unit));
+
+    glm::vec3 lowest;
+    glm::vec3 highest;
+    Measure(lowest, highest);
 
     EXPECT_NEAR(lowest.x, -0.5f, 1e-5f);
     EXPECT_NEAR(highest.x, 0.5f, 1e-5f);

@@ -65,7 +65,7 @@ namespace neon
         std::vector<const Mesh *> meshes;
         for (const auto &mesh : _meshes) { meshes.push_back(&mesh); }
 
-        _model_matrix = ComputeNormalizationMatrix(meshes);
+        _model_matrix = ComputeNormalizationMatrix(meshes, GetFit());
       }
 
     public:
@@ -102,13 +102,14 @@ namespace neon
 
   bool LoadModelGeometry(
     const std::string &path,
+    const ModelFit fit,
     FileSystemContext *file_system_context,
     const std::shared_ptr<Logger> &logger,
     ModelGeometry &geometry)
   {
     geometry = {};
 
-    PlainModel model(path, file_system_context, logger);
+    PlainModel model(path, file_system_context, logger, fit);
     if (!model.Initialize()) { return false; }
 
     model.CopyTo(geometry);

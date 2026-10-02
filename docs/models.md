@@ -27,13 +27,40 @@ plan.
 | The materials | Each material of the file becomes a `ModelMaterial`: its diffuse and specular textures, and its base colour factor. See [materials](#what-of-a-material-is-read) |
 | The nodes | The tree of nodes is walked from the root, with the transform of every node under those above it. Each mesh of a node is handed to the backend with that transform, which bakes it into the vertices: the renderer draws a model as one piece and has no nodes of its own |
 | The meshes | A backend makes a mesh of its own from the positions, normals, texture coordinates, and indices. The Vulkan backend uploads them; the physics keeps the positions for a `mesh` or `convex_hull` collider |
-| The size | Every model is moved to the origin and scaled so that its longest side is 1. A scene gives a model its size back with the `scale` of its `Transform` |
+| The size | A model is drawn at its own size and around its own origin, as the file says, unless the `Renderable` asks for a `fit` of `unit`, which moves it to the origin and scales it so that its longest side is 1. See [the size of a model](#the-size-of-a-model) |
 
 A node that mirrors its mesh, with a transform whose determinant is below 0,
 turns its triangles inside out. The loader reverses the winding of every
 triangle of such a mesh, so that the front still faces out and culling still
 shows it. A `Transform` that mirrors an entity is handled by the renderer
 instead, see [culling](vulkan-renderer.md).
+
+## The size of a model
+
+**Decision (#190):** a model is drawn at its own size and around its own
+origin, as the file says. That is what glTF means, a piece of a kit is in
+metres and stands on its origin, and what the editor's conversion (#98)
+will assume. A `Renderable` says otherwise with `fit`:
+
+| `fit` | What is drawn | For |
+|---|---|---|
+| `none` | The model as the file says it, in its units and around its origin. The default | glTF, and every model prepared for the engine |
+| `unit` | The model moved so that its middle lies at the origin, and scaled so that its longest side is 1. The `scale` of the `Transform` then gives it a size | A model that is not in metres, such as the `.obj` leftovers of the demo scenes |
+
+Until the first change of #190, every model got what `unit` does, and a
+scene had to write the longest side of every kit piece as its `scale` and
+lift it by half its height. The demo scenes keep `fit: unit` on every
+`.obj`, so that they draw as they did; the prototype level stands its kit
+pieces on the floor at their own size.
+
+The physics reads the same choice: a `Collider` of kind `mesh` or
+`convex_hull` carries a `fit` of its own, which is to be that of the
+`Renderable` that draws the model, so that the shape lies where the model
+is drawn. See [physics.md](physics.md). A mesh built at run time by a
+`Geometry` is always drawn as it is, see [geometry.md](geometry.md).
+
+In the code, `ModelFit` is `neon/render/model-fit.hpp`; `Model` takes it
+and `Model::ComputeNormalizationMatrix` gives the identity for `None`.
 
 ## What of a material is read
 
@@ -94,10 +121,6 @@ stretched by a `Transform` keeps its colours.
   image file next to the model too, whether the source embedded it or carried
   raw pixels, so that a texture is a file of its own that is shared, replaced,
   and compressed by the exporter.
-- **The size of a model.** Scaling every model to 1 loses the metres of a
-  kit, and a scene has to write the longest side of every piece as its
-  `scale`. A way to keep a model's own size is wanted, likely as the
-  default once models are prepared ahead of time (#98).
 - **`doubleSided` of glTF.** Kenney's kits mark every material double-sided,
   as their exporter does, though every piece is closed. Honouring it would
   draw the back of every triangle of every piece. The scene decides for now.

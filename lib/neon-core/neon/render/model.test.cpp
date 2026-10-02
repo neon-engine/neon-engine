@@ -17,6 +17,7 @@ namespace
 {
   using neon::Mesh;
   using neon::Model;
+  using neon::ModelFit;
   using neon::TextureInfo;
   using neon::TextureType;
   using neon::Vertex;
@@ -44,10 +45,29 @@ namespace
     std::vector<TextureInfo> height_textures;
   };
 
+  class TestMesh final : public Mesh
+  {
+  public:
+    explicit TestMesh(const std::vector<glm::vec3> &positions)
+      : Mesh({}, {}, {}, nullptr)
+    {
+      for (const auto &position : positions) { _vertices.push_back(Vertex{.position = position}); }
+    }
+
+    bool Initialize() override { return true; }
+
+    void CleanUp() override {}
+
+    void Use() const override {}
+  };
+
   /// A model as a backend writes it, which keeps what it is handed instead
   /// of giving it to a graphics card.
   class TestModel final : public Model
   {
+    // the placed vertices of every mesh, which the fit is computed from
+    std::vector<TestMesh> _fitted;
+
   protected:
     bool ProcessMesh(aiMesh *mesh, const aiScene *scene, const glm::mat4 &transform) override
     {
@@ -81,11 +101,17 @@ namespace
       LoadMaterialTextures(scene, material, aiTextureType_SPECULAR, loaded.specular_textures);
       LoadMaterialTextures(scene, material, aiTextureType_HEIGHT, loaded.height_textures);
 
+      _fitted.push_back(TestMesh(loaded.placed_positions));
       meshes.push_back(loaded);
       return meshes.size() <= accepted_meshes;
     }
 
-    void GenerateNormalizationMatrix() override {}
+    void GenerateNormalizationMatrix() override
+    {
+      std::vector<const Mesh *> fitted;
+      for (const auto &mesh : _fitted) { fitted.push_back(&mesh); }
+      _model_matrix = ComputeNormalizationMatrix(fitted, GetFit());
+    }
 
   public:
     std::vector<LoadedMesh> meshes;
@@ -99,28 +125,15 @@ namespace
 
     bool Initialize() override
     {
-      return LoadModel();
+      if (!LoadModel()) { return false; }
+
+      GenerateNormalizationMatrix();
+      return true;
     }
 
     void Use() const override {}
 
     void CleanUp() override {}
-  };
-
-  class TestMesh final : public Mesh
-  {
-  public:
-    explicit TestMesh(const std::vector<glm::vec3> &positions)
-      : Mesh({}, {}, {}, nullptr)
-    {
-      for (const auto &position : positions) { _vertices.push_back(Vertex{.position = position}); }
-    }
-
-    bool Initialize() override { return true; }
-
-    void CleanUp() override {}
-
-    void Use() const override {}
   };
 
   void ExpectMatrix(const glm::mat4 &actual, const glm::mat4 &expected)
@@ -716,25 +729,77 @@ namespace
     EXPECT_EQ(vertices[0].normal, glm::vec3(1.0f, 0.0f, 0.0f));
   }
 
+  // the fit of a model
+
+  TEST_F(ModelTest, IsNoneUnlessAnotherFitIsAsked)
+  {
+    const TestModel model("assets://models/cube.obj", &_file_system, _logger);
+
+    EXPECT_EQ(model.GetFit(), ModelFit::None);
+  }
+
+  TEST_F(ModelTest, KeepsTheSizeAndThePlaceOfAModelWithoutAFit)
+  {
+    // the triangle of 1 made 2 across, 2 away from the origin
+    constexpr auto nodes = R"({"mesh": 0, "translation": [2, 0, 0], "scale": [2, 2, 2]})";
+    _file_system.AddNativeFile(
+      "/assets/models/cube.glb",
+      Glb(TriangleJson(nodes, one_mesh, textured_material, embedded_image), TriangleBuffer()));
+    TestModel model("assets://models/cube.glb", &_file_system, _logger, ModelFit::None);
+
+    ASSERT_TRUE(model.Initialize()) << _logger->Messages(LogLevel::Error);
+
+    EXPECT_EQ(model.GetNormalizedModelMatrix(), glm::mat4(1.0f));
+    const glm::vec3 corner = model.GetNormalizedModelMatrix() * glm::vec4(4.0f, 0.0f, 0.0f, 1.0f);
+    EXPECT_EQ(corner, glm::vec3(4.0f, 0.0f, 0.0f));
+  }
+
+  TEST_F(ModelTest, MovesAModelToTheOriginAndMakesItsLongestSideOneWithAUnitFit)
+  {
+    constexpr auto nodes = R"({"mesh": 0, "translation": [2, 0, 0], "scale": [2, 2, 2]})";
+    _file_system.AddNativeFile(
+      "/assets/models/cube.glb",
+      Glb(TriangleJson(nodes, one_mesh, textured_material, embedded_image), TriangleBuffer()));
+    TestModel model("assets://models/cube.glb", &_file_system, _logger, ModelFit::Unit);
+
+    ASSERT_TRUE(model.Initialize()) << _logger->Messages(LogLevel::Error);
+
+    // the triangle spans 2 to 4 in x and 0 to 2 in y, so its middle is at
+    // 3, 1 and its longest side is 2
+    const glm::vec3 lowest = model.GetNormalizedModelMatrix() * glm::vec4(2.0f, 0.0f, 0.0f, 1.0f);
+    const glm::vec3 highest = model.GetNormalizedModelMatrix() * glm::vec4(4.0f, 2.0f, 0.0f, 1.0f);
+    EXPECT_NEAR(lowest.x, -0.5f, 1e-5f);
+    EXPECT_NEAR(lowest.y, -0.5f, 1e-5f);
+    EXPECT_NEAR(highest.x, 0.5f, 1e-5f);
+    EXPECT_NEAR(highest.y, 0.5f, 1e-5f);
+  }
+
   // ComputeNormalizationMatrix
+
+  TEST(Model, LeavesAModelAsItIsWithoutAFit)
+  {
+    const TestMesh box({{0.0f, 0.0f, 0.0f}, {2.0f, 4.0f, 1.0f}});
+
+    EXPECT_EQ(TestModel::ComputeNormalizationMatrix({&box}, ModelFit::None), glm::mat4(1.0f));
+  }
 
   TEST(Model, LeavesAModelWithoutMeshesAsItIs)
   {
-    EXPECT_EQ(TestModel::ComputeNormalizationMatrix({}), glm::mat4(1.0f));
+    EXPECT_EQ(TestModel::ComputeNormalizationMatrix({}, ModelFit::Unit), glm::mat4(1.0f));
   }
 
   TEST(Model, LeavesAModelWithoutVerticesAsItIs)
   {
     const TestMesh empty({});
 
-    EXPECT_EQ(TestModel::ComputeNormalizationMatrix({&empty, &empty}), glm::mat4(1.0f));
+    EXPECT_EQ(TestModel::ComputeNormalizationMatrix({&empty, &empty}, ModelFit::Unit), glm::mat4(1.0f));
   }
 
   TEST(Model, MovesAModelToTheOriginAndMakesItsLongestSideOne)
   {
     const TestMesh box({{0.0f, 0.0f, 0.0f}, {2.0f, 4.0f, 1.0f}});
 
-    const auto matrix = TestModel::ComputeNormalizationMatrix({&box});
+    const auto matrix = TestModel::ComputeNormalizationMatrix({&box}, ModelFit::Unit);
 
     // the middle of the box is at 1, 2, 0.5 and its longest side is 4
     ExpectMatrix(
@@ -753,7 +818,7 @@ namespace
   {
     const TestMesh small({{-0.1f, 0.0f, 0.0f}, {0.1f, 0.05f, 0.0f}});
 
-    const auto matrix = TestModel::ComputeNormalizationMatrix({&small});
+    const auto matrix = TestModel::ComputeNormalizationMatrix({&small}, ModelFit::Unit);
 
     const glm::vec3 left = matrix * glm::vec4(-0.1f, 0.0f, 0.0f, 1.0f);
     const glm::vec3 right = matrix * glm::vec4(0.1f, 0.05f, 0.0f, 1.0f);
@@ -766,7 +831,7 @@ namespace
     const TestMesh right({{4.0f, 0.0f, 0.0f}, {5.0f, 1.0f, 2.0f}});
     const TestMesh empty({});
 
-    const auto matrix = TestModel::ComputeNormalizationMatrix({&left, &empty, &right});
+    const auto matrix = TestModel::ComputeNormalizationMatrix({&left, &empty, &right}, ModelFit::Unit);
 
     // from -3 to 5 in x, so the middle is at 1, 0.5, 1 and the longest side is 8
     ExpectMatrix(
@@ -779,14 +844,16 @@ namespace
     const TestMesh one({{2.0f, 4.0f, 1.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}});
     const TestMesh other({{0.0f, 4.0f, 0.0f}, {2.0f, 0.0f, 1.0f}});
 
-    ExpectMatrix(TestModel::ComputeNormalizationMatrix({&one}), TestModel::ComputeNormalizationMatrix({&other}));
+    ExpectMatrix(
+      TestModel::ComputeNormalizationMatrix({&one}, ModelFit::Unit),
+      TestModel::ComputeNormalizationMatrix({&other}, ModelFit::Unit));
   }
 
   TEST(Model, MovesAModelOfOnePointToTheOriginWithoutChangingItsSize)
   {
     const TestMesh point({{3.0f, -2.0f, 7.0f}});
 
-    const auto matrix = TestModel::ComputeNormalizationMatrix({&point});
+    const auto matrix = TestModel::ComputeNormalizationMatrix({&point}, ModelFit::Unit);
 
     ExpectMatrix(matrix, translate(glm::mat4(1.0f), glm::vec3(-3.0f, 2.0f, -7.0f)));
   }
@@ -795,7 +862,7 @@ namespace
   {
     const TestMesh flat({{0.0f, 0.0f, 0.0f}, {2.0f, 0.0f, 0.0f}});
 
-    const auto matrix = TestModel::ComputeNormalizationMatrix({&flat});
+    const auto matrix = TestModel::ComputeNormalizationMatrix({&flat}, ModelFit::Unit);
 
     ExpectMatrix(
       matrix,

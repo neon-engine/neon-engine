@@ -94,7 +94,7 @@ and reads it pixel by pixel.
 | `Geometry`, `GeometryShape` | `neon/world-system/ecs/components/` | The component, described with reflection |
 | `GeometryBuilding` | `neon/world-system/ecs/systems/` | Builds the mesh once into `RenderInfo::mesh`; `Build()` is what the physics calls too |
 | `RenderInfo::mesh` | `neon/render/render-info.hpp` | A shared `MeshData` the renderer draws in place of `model_path` |
-| `VK_Model` from a mesh | neon-vulkan | Uploads the mesh as it is; the normalisation of a file is not applied |
+| `VK_Model` from a mesh | neon-vulkan | Uploads the mesh as it is, with a `ModelFit` of `None`, whatever a file would get |
 
 A tool or an importer fills a `MeshData` by hand or through the builder, puts
 it on a `Renderable` as `render_info.mesh`, and hands its points and

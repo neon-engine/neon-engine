@@ -5,11 +5,11 @@
 # the doorway in the middle, and the black behind the walls at the top.
 #
 # The frame these pixels were read from had the SHA-256
-# 7c9da0029d64589d027bcfc4ac9a8fd038e502faf9d303b5418eb80197cf03cd, and it
-# still has it since the player became a CharacterBody with a Player that
-# stands on the floor: its eyes are where the Spectator flew before. The hash
-# itself is not checked, since another graphics card rounds a little
-# differently; the pixels are, within 2 of each channel.
+# 34931d891c96276e64a019ef5484c80f2b5a549924a630e1643ab810d4c63550, drawn
+# since the kit pieces stand at their own size and on their own origin
+# (#190): the room is the same room, and the pixels below are the same as
+# they were. The hash itself is not checked, since another graphics card
+# rounds a little differently; the pixels are, within 2 of each channel.
 
 include("${CMAKE_CURRENT_LIST_DIR}/../../cmake/scripts/run-application.cmake")
 
@@ -89,11 +89,17 @@ elseif (CASE STREQUAL "the-player-walks-into-the-room")
   expect_pixel("the black above the doorway before the walk" 960 160 0 0 0)
   expect_pixel("the west post of the doorway before the walk" 750 700 73 77 96)
 
+  # Inside the room: the doorway is behind the player now, the target on the
+  # north wall is ahead, the blue crate to the right. Before the colliders of
+  # the doorway stood beside it (#190) the posts stopped the walker under the
+  # lintel, which is what the old check saw.
   set(FRAME "shots/frame-0060.png")
   expect_image("${FRAME}")
-  expect_pixel("the lintel of the doorway after the walk" 960 160 76 78 99)
-  expect_pixel("the north wall of the room after the walk" 700 500 154 153 172)
-  expect_pixel("the floor of the room after the walk" 750 700 125 124 142)
+  expect_pixel("the sky above the room after the walk" 960 160 0 0 0)
+  expect_pixel("the north wall of the room after the walk" 700 500 155 154 173)
+  expect_pixel("the target on the north wall after the walk" 960 580 217 84 57)
+  expect_pixel("the blue crate to the right after the walk" 1180 700 41 45 117)
+  expect_pixel("the floor of the room after the walk" 1000 1000 156 157 175)
 
   file(SHA256 "${DIRECTORY}/shots/frame-0001.png" BEFORE)
   file(SHA256 "${DIRECTORY}/shots/frame-0060.png" AFTER)

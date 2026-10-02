@@ -9,6 +9,7 @@
 #include <neon/common/rotation.hpp>
 #include <neon/physics/physics-types.hpp>
 #include <neon/reflection/type-builder.hpp>
+#include <neon/render/model-fit.hpp>
 
 namespace neon
 {
@@ -37,10 +38,12 @@ namespace neon
     float top_radius = 0.25f;
     float bottom_radius = 0.5f;
 
-    /// Virtual path of the model a convex hull or a mesh is made from. The
-    /// model is moved and sized as the renderer does it, so that the shape
-    /// lies where the model is drawn.
+    /// Virtual path of the model a convex hull or a mesh is made from.
     std::string model;
+
+    /// How the model is sized, which is to be the `fit` of the Renderable
+    /// that draws it, so that the shape lies where the model is drawn.
+    ModelFit fit = ModelFit::None;
 
     /// Where the shape sits on the entity.
     glm::vec3 offset{0.0f};
@@ -92,6 +95,12 @@ namespace neon
         .AlwaysWritten()
         .OnlyWhen("shape", {"convex_hull", "mesh"})
         .Describe("Virtual path of the model the shape is made from. Left out, the shape is the entity's Geometry");
+
+    type.Choice("fit", &Collider::fit, {"none", "unit"})
+        .OnlyWhen("shape", {"convex_hull", "mesh"})
+        .Describe(
+          "How the model is sized, as the fit of the Renderable that draws it: none takes it as the file says it, "
+          "unit moves its middle to the origin and scales it so that its longest side is 1");
 
     type.Field("offset", &Collider::offset)
         .Describe("Where the shape sits on the entity");

@@ -6,6 +6,7 @@
 #include <neon/logging/logger.hpp>
 
 #include "mesh.hpp"
+#include "model-fit.hpp"
 #include "model-material.hpp"
 #include "texture-info.hpp"
 
@@ -17,6 +18,7 @@ namespace neon
   class Model
   {
     std::string _path;
+    ModelFit _fit;
     std::vector<ModelMaterial> _materials;
 
     bool ProcessNode(aiNode *root, const aiScene *scene);
@@ -34,6 +36,7 @@ namespace neon
     int _drawn_material = -1;
 
   protected:
+    /// The matrix the fit gives the model, see GetNormalizedModelMatrix().
     glm::mat4 _model_matrix{1.0f};
     FileSystemContext *_file_system_context;
     std::shared_ptr<Logger> _logger;
@@ -56,12 +59,15 @@ namespace neon
     static void ApplyNodeTransform(
       const glm::mat4 &transform, std::vector<Vertex> &vertices, std::vector<unsigned int> &indices);
 
+    /// Sets `_model_matrix` from the meshes that were loaded and the fit.
     virtual void GenerateNormalizationMatrix() = 0;
 
-    /// The matrix that moves a model to the origin and scales it so that its
-    /// longest side has length 1. Backends call this from
-    /// GenerateNormalizationMatrix() with the meshes they loaded.
-    static glm::mat4 ComputeNormalizationMatrix(const std::vector<const Mesh *> &meshes);
+    /// The matrix that gives a model its fit: for `Unit`, the one that moves
+    /// the model to the origin and scales it so that its longest side has
+    /// length 1; for `None`, the identity, which leaves the model as the
+    /// file says. Backends call this from GenerateNormalizationMatrix() with
+    /// the meshes they loaded.
+    static glm::mat4 ComputeNormalizationMatrix(const std::vector<const Mesh *> &meshes, ModelFit fit);
 
     /// Takes one mesh of the model. `transform` is where the node that
     /// carries the mesh places it, with every node above it applied: a
@@ -72,10 +78,12 @@ namespace neon
     ~Model() = default;
 
   public:
+    /// `fit` says how the model is sized once it is loaded, see ModelFit.
     Model(
       const std::string &path,
       FileSystemContext *file_system_context,
-      const std::shared_ptr<Logger> &logger);
+      const std::shared_ptr<Logger> &logger,
+      ModelFit fit = ModelFit::None);
 
     virtual bool Initialize() = 0;
 
@@ -83,7 +91,12 @@ namespace neon
 
     virtual void CleanUp() = 0;
 
+    /// The matrix that gives the model its fit, which what draws it puts
+    /// between the vertices and the Transform of the entity. The identity
+    /// for a fit of `None`, and until the model is loaded.
     [[nodiscard]] glm::mat4 GetNormalizedModelMatrix() const;
+
+    [[nodiscard]] ModelFit GetFit() const { return _fit; }
 
     /// The materials of the file, in its order, with the one assimp adds
     /// for meshes without: behind them for a glTF, in front for an .obj.

@@ -25,6 +25,11 @@ namespace neon
     type.Field("model", [](Renderable &renderable) -> std::string & { return renderable.render_info.model_path; })
         .Describe("Virtual path of the model. Left out when the entity has a Geometry, which is drawn instead");
 
+    type.Choice("fit", [](Renderable &renderable) -> ModelFit & { return renderable.render_info.fit; }, {"none", "unit"})
+        .Describe(
+          "How the model is sized: none draws it at its own size and origin, as the file says; unit moves its middle "
+          "to the origin and scales it so that its longest side is 1");
+
     type.Field("shader", [](Renderable &renderable) -> std::string & { return renderable.render_info.shader_path; })
         .Required()
         .Describe("Virtual path of the shader, without an extension");

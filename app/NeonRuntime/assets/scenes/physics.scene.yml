@@ -24,6 +24,7 @@ entities:
         scale: [40, 0.2, 40]
       Renderable:
         model: assets://models/cube.obj
+        fit: unit
         shader: assets://shaders/basic-lit
         textures:
           - assets://textures/concrete.png
@@ -44,6 +45,7 @@ entities:
         scale: 3
       Renderable:
         model: assets://models/bear.obj
+        fit: unit
         shader: assets://shaders/basic-lit
         textures:
           - assets://textures/concrete.png
@@ -55,6 +57,7 @@ entities:
       Collider:
         shape: mesh
         model: assets://models/bear.obj
+        fit: unit
 
   - name: ramp
     components:
@@ -64,6 +67,7 @@ entities:
         scale: [4, 0.2, 2]
       Renderable:
         model: assets://models/cube.obj
+        fit: unit
         shader: assets://shaders/basic-lit
         textures:
           - assets://textures/wood.png
@@ -79,6 +83,7 @@ entities:
         scale: [0.4, 2, 5]
       Renderable:
         model: assets://models/cube.obj
+        fit: unit
         shader: assets://shaders/basic-lit
         textures:
           - assets://textures/brick.png
@@ -98,6 +103,7 @@ entities:
             scale: 0.4
           Renderable:
             model: assets://models/sphere.obj
+            fit: unit
             shader: assets://shaders/basic-lit
             textures:
               - assets://textures/gold.png
@@ -112,6 +118,7 @@ entities:
             scale: 0.4
           Renderable:
             model: assets://models/sphere.obj
+            fit: unit
             shader: assets://shaders/basic-lit
             textures:
               - assets://textures/gold.png
@@ -126,6 +133,7 @@ entities:
             scale: 0.4
           Renderable:
             model: assets://models/sphere.obj
+            fit: unit
             shader: assets://shaders/basic-lit
             textures:
               - assets://textures/gold.png
@@ -141,6 +149,7 @@ entities:
         scale: 0.8
       Renderable:
         model: assets://models/sphere.obj
+        fit: unit
         shader: assets://shaders/basic-lit
         textures:
           - assets://textures/fire.png
@@ -157,6 +166,7 @@ entities:
             position: [0, 0.5, 0]
           Renderable:
             model: assets://models/cube.obj
+            fit: unit
             shader: assets://shaders/basic-lit
             textures:
               - assets://textures/container.jpg
@@ -170,6 +180,7 @@ entities:
             rotation: [0, 15, 0]
           Renderable:
             model: assets://models/cube.obj
+            fit: unit
             shader: assets://shaders/basic-lit
             textures:
               - assets://textures/container.jpg
@@ -183,6 +194,7 @@ entities:
             rotation: [0, 40, 0]
           Renderable:
             model: assets://models/cube.obj
+            fit: unit
             shader: assets://shaders/basic-lit
             textures:
               - assets://textures/container.jpg
@@ -199,6 +211,7 @@ entities:
         scale: 1.5
       Renderable:
         model: assets://models/bunny.obj
+        fit: unit
         shader: assets://shaders/basic-lit
         textures:
           - assets://textures/purple.png
@@ -207,6 +220,7 @@ entities:
       Collider:
         shape: convex_hull
         model: assets://models/bunny.obj
+        fit: unit
 
   - name: passenger
     components:
@@ -215,6 +229,7 @@ entities:
         scale: 0.8
       Renderable:
         model: assets://models/cube.obj
+        fit: unit
         shader: assets://shaders/basic-lit
         textures:
           - assets://textures/container.jpg
@@ -232,6 +247,7 @@ entities:
         scale: [2, 0.2, 2]
       Renderable:
         model: assets://models/cube.obj
+        fit: unit
         shader: assets://shaders/basic-lit
         textures:
           - assets://textures/dark.png
@@ -261,6 +277,7 @@ entities:
             scale: [0.8, 1.8, 0.8]
           Renderable:
             model: assets://models/cube.obj
+            fit: unit
             shader: assets://shaders/basic-lit
             textures:
               - assets://textures/water.png
@@ -273,6 +290,7 @@ entities:
         scale: [0.2, 2.4, 3]
       Renderable:
         model: assets://models/cube.obj
+        fit: unit
         shader: assets://shaders/basic-lit
         textures:
           - assets://textures/sky.png

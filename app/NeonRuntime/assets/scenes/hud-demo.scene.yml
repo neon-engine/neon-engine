@@ -20,6 +20,7 @@ entities:
       Transform: Default
       Renderable:
         model: assets://models/bear.obj
+        fit: unit
         shader: assets://shaders/basic-lit
         textures:
           - assets://textures/concrete.png
@@ -34,6 +35,7 @@ entities:
         scale: [100, 0.1, 100]
       Renderable:
         model: assets://models/cube.obj
+        fit: unit
         shader: assets://shaders/basic-lit
         textures:
           - assets://textures/concrete.png

@@ -95,6 +95,7 @@ entities:
       Collider:
         shape: mesh
         model: assets://models/slab.obj
+        fit: unit
 
   - name: ball
     components:
@@ -125,6 +126,7 @@ entities:
           Collider:
             shape: convex_hull
             model: assets://models/slab.obj
+            fit: unit
       - name: upper
         components:
           Transform:
@@ -910,6 +912,7 @@ entities:
         position: [0, 100, 0]
       Renderable:
         model: assets://models/slab.obj
+        fit: unit
         shader: assets://shaders/basic-lit
       RigidBody:
         linear_damping: 0
@@ -1064,6 +1067,7 @@ entities:
           Collider:
             shape: mesh
             model: assets://models/slab.obj
+            fit: unit
   - name: crate
     components:
       Transform:

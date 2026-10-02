@@ -38,6 +38,7 @@ entities:
         scale: 1.5
       Renderable:
         model: assets://models/quad.obj
+        fit: unit
         shader: assets://shaders/pbr
         material:
           color: [1, 1, 1]
@@ -53,6 +54,7 @@ entities:
         scale: 1.5
       Renderable:
         model: assets://models/quad.obj
+        fit: unit
         shader: assets://shaders/pbr
         material:
           color: [1, 1, 1]
@@ -68,6 +70,7 @@ entities:
         scale: 1.5
       Renderable:
         model: assets://models/quad.obj
+        fit: unit
         shader: assets://shaders/pbr
         material:
           color: [1, 0, 0]

@@ -24,6 +24,7 @@ entities:
         scale: [40, 0.2, 40]
       Renderable:
         model: assets://models/cube.obj
+        fit: unit
         shader: assets://shaders/basic-lit
         textures:
           - assets://textures/concrete.png
@@ -48,6 +49,7 @@ entities:
             scale: [0.2, 2.2, 0.2]
           Renderable:
             model: assets://models/cube.obj
+            fit: unit
             shader: assets://shaders/basic-lit
             textures:
               - assets://textures/dark.png
@@ -63,6 +65,7 @@ entities:
         scale: [1.6, 2.2, 0.1]
       Renderable:
         model: assets://models/cube.obj
+        fit: unit
         shader: assets://shaders/basic-lit
         textures:
           - assets://textures/wood.png
@@ -84,6 +87,7 @@ entities:
         scale: 0.8
       Renderable:
         model: assets://models/sphere.obj
+        fit: unit
         shader: assets://shaders/basic-lit
         textures:
           - assets://textures/fire.png
@@ -101,6 +105,7 @@ entities:
         scale: 0.3
       Renderable:
         model: assets://models/cube.obj
+        fit: unit
         shader: assets://shaders/basic-lit
         textures:
           - assets://textures/dark.png
@@ -116,6 +121,7 @@ entities:
         scale: 0.6
       Renderable:
         model: assets://models/sphere.obj
+        fit: unit
         shader: assets://shaders/basic-lit
         textures:
           - assets://textures/gold.png
@@ -136,6 +142,7 @@ entities:
         scale: [6, 0.1, 0.4]
       Renderable:
         model: assets://models/cube.obj
+        fit: unit
         shader: assets://shaders/basic-lit
         textures:
           - assets://textures/dark.png
@@ -147,6 +154,7 @@ entities:
         scale: [0.8, 0.6, 0.8]
       Renderable:
         model: assets://models/cube.obj
+        fit: unit
         shader: assets://shaders/basic-lit
         textures:
           - assets://textures/container.jpg
@@ -170,6 +178,7 @@ entities:
         scale: [1.2, 1, 1.2]
       Renderable:
         model: assets://models/cube.obj
+        fit: unit
         shader: assets://shaders/basic-lit
         textures:
           - assets://textures/brick.png
@@ -187,6 +196,7 @@ entities:
             scale: 0.8
           Renderable:
             model: assets://models/cube.obj
+            fit: unit
             shader: assets://shaders/basic-lit
             textures:
               - assets://textures/container.jpg
@@ -200,6 +210,7 @@ entities:
             scale: 0.8
           Renderable:
             model: assets://models/cube.obj
+            fit: unit
             shader: assets://shaders/basic-lit
             textures:
               - assets://textures/container.jpg

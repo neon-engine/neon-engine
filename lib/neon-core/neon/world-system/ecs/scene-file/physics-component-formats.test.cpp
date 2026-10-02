@@ -18,6 +18,7 @@ namespace
   using neon::BodyKind;
   using neon::CharacterBody;
   using neon::Collider;
+  using neon::ModelFit;
   using neon::ComponentFormats;
   using neon::DataReader;
   using neon::DataValue;
@@ -198,7 +199,7 @@ namespace
     }
 
     EXPECT_THAT(_formats.Find("Collider")->type->GetPaths(), ElementsAre(
-                  "shape", "size", "radius", "height", "top_radius", "bottom_radius", "model", "offset",
+                  "shape", "size", "radius", "height", "top_radius", "bottom_radius", "model", "fit", "offset",
                   "rotation"));
     EXPECT_EQ(_formats.Find("RigidBody")->type->Find("layers")->kind, neon::FieldKind::Layers);
     EXPECT_EQ(_formats.Find("CharacterBody")->type->Find("max_slope")->unit, "degrees");
@@ -661,6 +662,7 @@ namespace
     EXPECT_EQ(collider->top_radius, 0.25f);
     EXPECT_EQ(collider->bottom_radius, 0.5f);
     EXPECT_TRUE(collider->model.empty());
+    EXPECT_EQ(collider->fit, ModelFit::None);
     EXPECT_EQ(collider->offset, glm::vec3(0.0f));
     EXPECT_EQ(collider->rotation.pitch, 0.0f);
     EXPECT_EQ(collider->rotation.yaw, 0.0f);
@@ -792,6 +794,35 @@ namespace
       EXPECT_EQ(_store.Get<Collider>(_entity)->model, "assets://models/bear.obj");
     }
     EXPECT_THAT(_errors, IsEmpty());
+  }
+
+  TEST_F(PhysicsComponentFormatsTest, ReadsTheFitOfAHullAndOfAMesh)
+  {
+    for (const std::string shape : {"convex_hull", "mesh"})
+    {
+      auto map = DataValue::Map();
+      map.Set("shape", DataValue::Text(shape));
+      map.Set("model", DataValue::Text("assets://models/bear.obj"));
+      map.Set("fit", DataValue::Text("unit"));
+
+      Read("Collider", map);
+
+      EXPECT_EQ(_store.Get<Collider>(_entity)->fit, ModelFit::Unit) << shape;
+    }
+    EXPECT_THAT(_errors, IsEmpty());
+  }
+
+  TEST_F(PhysicsComponentFormatsTest, TheFitBelongsToAHullAndAMeshAlone)
+  {
+    auto map = DataValue::Map();
+    map.Set("shape", DataValue::Text("box"));
+    map.Set("fit", DataValue::Text("unit"));
+
+    Read("Collider", map);
+
+    EXPECT_THAT(_errors, ElementsAre(
+                  "test.scene.yml: 'fit' is not known to Collider of entity 'crate'. Known are: shape, size, offset, "
+                  "rotation"));
   }
 
   TEST_F(PhysicsComponentFormatsTest, SaysWhatIsWrongWithACollider)

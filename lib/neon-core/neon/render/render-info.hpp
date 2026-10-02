@@ -8,7 +8,7 @@
 #include <neon/geometry/mesh-data.hpp>
 
 #include "material-info.hpp"
-
+#include "model-fit.hpp"
 
 namespace neon
 {
@@ -16,6 +16,11 @@ namespace neon
   {
     /// Virtual path of the model file. Not read when `mesh` is set.
     std::string model_path;
+
+    /// How the model file is sized when it is drawn: as it says, or moved
+    /// to the origin and scaled to a longest side of 1. Not read when
+    /// `mesh` is set, which is drawn as it is.
+    ModelFit fit = ModelFit::None;
 
     /// A mesh built at run time, in place of a model file: by a Geometry
     /// component, a tool, or an importer. Drawn as it is, in metres, without

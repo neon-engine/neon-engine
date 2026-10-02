@@ -4,15 +4,16 @@ namespace neon
 {
   VK_Model::VK_Model(
     const std::string &path,
+    const ModelFit fit,
     FileSystemContext *file_system_context,
     VK_Device *device,
-    const std::shared_ptr<Logger> &logger) : Model(path, file_system_context, logger)
+    const std::shared_ptr<Logger> &logger) : Model(path, file_system_context, logger, fit)
   {
     _device = device;
   }
 
   VK_Model::VK_Model(std::shared_ptr<const MeshData> mesh, VK_Device *device, const std::shared_ptr<Logger> &logger)
-    : Model("", nullptr, logger)
+    : Model("", nullptr, logger, ModelFit::None)
   {
     _device = device;
     _mesh_data = std::move(mesh);
@@ -64,12 +65,10 @@ namespace neon
 
   void VK_Model::GenerateNormalizationMatrix()
   {
-    _logger->Debug("Generating normalized matrix using the loaded vertices");
-
     std::vector<const Mesh *> meshes;
     for (const auto &mesh : _meshes) { meshes.push_back(&mesh); }
 
-    _model_matrix = ComputeNormalizationMatrix(meshes);
+    _model_matrix = ComputeNormalizationMatrix(meshes, GetFit());
   }
 
   bool VK_Model::ProcessMesh(aiMesh *mesh, const aiScene *scene, const glm::mat4 &transform)

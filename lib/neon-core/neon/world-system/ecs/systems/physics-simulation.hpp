@@ -114,9 +114,9 @@ namespace neon
     // ordered, so that the same run does the same in the same order
     std::map<Entity, Record> _records;
 
-    // by the path of the model. One that could not be read is kept as well,
-    // without points, so that it is not read again
-    std::map<std::string, ModelGeometry> _geometries;
+    // by the path of the model and its fit. One that could not be read is
+    // kept as well, without points, so that it is not read again
+    std::map<std::pair<std::string, ModelFit>, ModelGeometry> _geometries;
 
     // colliders that are part of something, by the entity whose body they
     // are part of, and those that were found to be part of nothing, which
@@ -157,7 +157,7 @@ namespace neon
     /// Writes where the physics put an entity into its Transform.
     static void WriteLocal(EntityStore &store, Entity entity, const Pose &world, Transform &transform, Record &record);
 
-    [[nodiscard]] const ModelGeometry *GeometryOf(const std::string &path);
+    [[nodiscard]] const ModelGeometry *GeometryOf(const std::string &path, ModelFit fit);
 
     bool CollectShapes(
       EntityStore &store,

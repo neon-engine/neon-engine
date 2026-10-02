@@ -64,6 +64,7 @@ namespace neon
              && left.top_radius == right.top_radius
              && left.bottom_radius == right.bottom_radius
              && left.model == right.model
+             && left.fit == right.fit
              && left.offset == right.offset
              && SameRotation(left.rotation, right.rotation);
     }
@@ -286,15 +287,16 @@ namespace neon
     record.written_rotation = transform.rotation;
   }
 
-  const ModelGeometry *PhysicsSimulation::GeometryOf(const std::string &path)
+  const ModelGeometry *PhysicsSimulation::GeometryOf(const std::string &path, const ModelFit fit)
   {
-    auto it = _geometries.find(path);
+    const auto key = std::make_pair(path, fit);
+    auto it = _geometries.find(key);
     if (it == _geometries.end())
     {
       ModelGeometry geometry;
       // what could not be read stays without points, and is not read again
-      (void) LoadModelGeometry(path, _file_system, _logger, geometry);
-      it = _geometries.emplace(path, std::move(geometry)).first;
+      (void) LoadModelGeometry(path, fit, _file_system, _logger, geometry);
+      it = _geometries.emplace(key, std::move(geometry)).first;
     }
 
     return it->second.triangles.empty() ? nullptr : &it->second;
@@ -350,7 +352,7 @@ namespace neon
           if (collider->shape == ShapeKind::Mesh) { shape.triangles.assign(mesh.indices.begin(), mesh.indices.end()); }
         } else
         {
-          const auto *geometry = GeometryOf(collider->model);
+          const auto *geometry = GeometryOf(collider->model, collider->fit);
           if (geometry == nullptr)
           {
             error = std::format(

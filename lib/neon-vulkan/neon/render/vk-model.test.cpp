@@ -14,6 +14,7 @@
 
 namespace
 {
+  using neon::ModelFit;
   using neon::VK_Device;
   using neon::VK_Model;
   using neon::testing::LogLevel;
@@ -37,15 +38,31 @@ namespace
 
   TEST_F(VkModelTest, IsLeftAsItIsUntilItIsInitialized)
   {
-    const VK_Model model("assets://models/cube.obj", &_file_system, &_device, _logger);
+    const VK_Model model("assets://models/cube.obj", ModelFit::Unit, &_file_system, &_device, _logger);
 
     EXPECT_EQ(model.GetNormalizedModelMatrix(), glm::mat4(1.0f));
     EXPECT_EQ(_logger->Count(LogLevel::Error), 0u);
   }
 
+  TEST_F(VkModelTest, KeepsTheFitItWasGiven)
+  {
+    const VK_Model fitted("assets://models/cube.obj", ModelFit::Unit, &_file_system, &_device, _logger);
+    const VK_Model as_it_is("assets://models/cube.obj", ModelFit::None, &_file_system, &_device, _logger);
+
+    EXPECT_EQ(fitted.GetFit(), ModelFit::Unit);
+    EXPECT_EQ(as_it_is.GetFit(), ModelFit::None);
+  }
+
+  TEST_F(VkModelTest, AMeshThatWasBuiltHasNoFit)
+  {
+    const VK_Model model(std::make_shared<const neon::MeshData>(), &_device, _logger);
+
+    EXPECT_EQ(model.GetFit(), ModelFit::None);
+  }
+
   TEST_F(VkModelTest, FailsAndSaysSoWhenTheFileIsMissing)
   {
-    VK_Model model("assets://models/missing.obj", &_file_system, &_device, _logger);
+    VK_Model model("assets://models/missing.obj", ModelFit::Unit, &_file_system, &_device, _logger);
 
     EXPECT_FALSE(model.Initialize());
 
@@ -57,7 +74,7 @@ namespace
   TEST_F(VkModelTest, FailsWhenTheFormatOfTheFileIsNotKnown)
   {
     _file_system.AddNativeFile("/assets/models/notes.txt", "this is not a model\n");
-    VK_Model model("assets://models/notes.txt", &_file_system, &_device, _logger);
+    VK_Model model("assets://models/notes.txt", ModelFit::Unit, &_file_system, &_device, _logger);
 
     EXPECT_FALSE(model.Initialize());
 
@@ -66,7 +83,7 @@ namespace
 
   TEST_F(VkModelTest, DrawsNothingAndCleansUpNothingWithoutMeshes)
   {
-    VK_Model model("assets://models/missing.obj", &_file_system, &_device, _logger);
+    VK_Model model("assets://models/missing.obj", ModelFit::Unit, &_file_system, &_device, _logger);
 
     model.Use();
     model.CleanUp();

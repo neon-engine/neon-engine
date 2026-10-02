@@ -126,6 +126,7 @@ the values of the new one.
 | `height` | From end to end, above 0. That of a capsule includes its round ends, and is at least twice the radius | `2` | `capsule`, `cylinder`, and the tapered kinds |
 | `top_radius`, `bottom_radius` | Above 0. One of the two may be 0 for a `tapered_cylinder`, which makes a cone | `0.25`, `0.5` | The tapered kinds |
 | `model` | Virtual path of a model | None. It has to be written | `convex_hull`, `mesh` |
+| `fit` | How the model is sized, as the `fit` of the `Renderable` that draws it: `none` takes it as the file says it, `unit` moves its middle to the origin and scales it so that its longest side is 1 | `none` | `convex_hull`, `mesh` |
 | `offset` | `[x, y, z]`, where the shape sits on its entity | `[0, 0, 0]` | Every shape |
 | `rotation` | `[pitch, yaw, roll]` in degrees, how the shape is turned on its entity | `[0, 0, 0]` | Every shape |
 
@@ -335,11 +336,15 @@ take, the collider goes on the entity and what is drawn on a child:
         Renderable: { ... }
 ```
 
-**Models.** The renderer moves a model so that its middle lies at the origin,
-and sizes it so that its longest side has length 1. A convex hull and a mesh
-are made from the same points, moved and sized the same way, so the shape
-lies where the model is drawn. A model is read once, however many colliders
-name it.
+**Models.** A convex hull and a mesh are made from the points of the model
+as the renderer draws them: as the file says them, or, with `fit: unit`,
+moved so that the middle of the model lies at the origin and sized so that
+its longest side has length 1. The `fit` of the `Collider` is to be that of
+the `Renderable` that draws the model, so that the shape lies where the
+model is drawn; the collider carries its own, since it names its own model,
+which may be a simpler one than what is drawn, and often sits on an entity
+that draws nothing. A model is read once for each fit, however many
+colliders name it. See [models.md](models.md).
 
 ### Several shapes
 
