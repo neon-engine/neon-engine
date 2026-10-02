@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+#include "chord.hpp"
 #include "controller-button.hpp"
 #include "key.hpp"
 #include "mouse-button.hpp"
@@ -38,18 +39,20 @@ namespace neon
   /// down while any of its keys and buttons is, an axis is put together
   /// from two keys or buttons (positive, negative) and a trigger, an axis
   /// of two from four keys or buttons (up, down, left, right), a stick, and
-  /// the motion of the mouse.
+  /// the motion of the mouse. Each key or button is a chord: one of them,
+  /// or several that are held together.
   struct InputAction
   {
     std::string name;
     InputActionType type = InputActionType::Button;
 
     /// For a button, any of them. For an axis, two: positive, negative. For
-    /// an axis of two, four: up, down, left, right.
-    std::vector<Key> keys;
+    /// an axis of two, four: up, down, left, right. Each one key, or a chord
+    /// of keys held together.
+    std::vector<Chord<Key>> keys;
 
     /// The buttons of a controller, in the same way.
-    std::vector<ControllerButton> buttons;
+    std::vector<Chord<ControllerButton>> buttons;
 
     /// A button of the mouse, for a button.
     std::optional<MouseButton> mouse_button;
@@ -75,6 +78,20 @@ namespace neon
     /// -1 to 1 is taken, which is right for walking and wrong for turning.
     /// On an axis of three it scales what the sensor gives.
     std::optional<float> rate;
+
+    /// How far a stick or a trigger of an axis or an axis2 goes before it
+    /// counts, from 0 to below 1, where a stick rests. What is past it is
+    /// stretched so that the end is still 1. The backends hand the devices
+    /// over as they are; the map shapes them.
+    float dead_zone = default_dead_zone;
+
+    /// The power the stretched value is raised to: 1 is a straight line,
+    /// 2 is gentle near the middle and quick at the end.
+    float curve = 1.0f;
+
+    /// A quarter of the way, which is what the engine took off before a map
+    /// could say.
+    static constexpr float default_dead_zone = 0.25f;
 
     [[nodiscard]] bool IsButton() const
     {

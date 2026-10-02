@@ -36,14 +36,49 @@ namespace neon
       return names;
     }
 
-    /// Reads a list of names under `name` into `values` with `of`, which
+    /// Reads one name of a list under `name` into `value` with `of`, which
     /// turns a name into a value or returns false. What is not a name, or
     /// not known, is reported with its line.
     template <typename Value>
-    void ReadNames(
+    bool ReadName(
       const DataReader &reader,
       const std::string &name,
-      std::vector<Value> &values,
+      const DataValue &item,
+      Value &value,
+      const auto &of,
+      const std::string &known)
+    {
+      // a digit is written without quotes, and a format reads it as a
+      // number, which is the key it names
+      std::string text;
+      double digit = 0.0;
+      if (item.GetNumber(digit) && digit >= 0.0 && digit <= 9.0 && digit == static_cast<int>(digit))
+      {
+        text = std::to_string(static_cast<int>(digit));
+      } else if (!item.GetText(text))
+      {
+        reader.Report(item, std::format("'{}' holds {}, where a name was expected", name,
+                                        DataValue::Describe(item.GetKind())));
+        return false;
+      }
+
+      if (!of(text, value))
+      {
+        reader.Report(item, std::format("'{}' names '{}', which is not known. Known are: {}", name, text, known));
+        return false;
+      }
+
+      return true;
+    }
+
+    /// Reads a list of bindings under `name` into `chords`. An item is a
+    /// name, or a list of names that are held together, a chord. Every
+    /// problem is reported with its line, and a chord with one is left out.
+    template <typename Value>
+    void ReadChords(
+      const DataReader &reader,
+      const std::string &name,
+      std::vector<Chord<Value>> &chords,
       const auto &of,
       const std::string &known)
     {
@@ -59,28 +94,42 @@ namespace neon
 
       for (const auto &item : list->GetItems())
       {
-        // a digit is written without quotes, and a format reads it as a
-        // number, which is the key it names
-        std::string text;
-        double digit = 0.0;
-        if (item.GetNumber(digit) && digit >= 0.0 && digit <= 9.0 && digit == static_cast<int>(digit))
+        Chord<Value> chord;
+
+        if (!item.IsList())
         {
-          text = std::to_string(static_cast<int>(digit));
-        } else if (!item.GetText(text))
-        {
-          reader.Report(item, std::format("'{}' holds {}, where a name was expected", name,
-                                          DataValue::Describe(item.GetKind())));
+          Value value{};
+          if (!ReadName(reader, name, item, value, of, known)) { continue; }
+          chord.parts.push_back(value);
+          chords.push_back(chord);
           continue;
         }
 
-        Value value{};
-        if (!of(text, value))
+        if (item.GetItems().empty())
         {
-          reader.Report(item, std::format("'{}' names '{}', which is not known. Known are: {}", name, text, known));
+          reader.Report(item, std::format("'{}' holds an empty chord, where names held together were expected, "
+                                          "such as [left-shift, w]", name));
           continue;
         }
 
-        values.push_back(value);
+        bool read = true;
+        for (const auto &part : item.GetItems())
+        {
+          Value value{};
+          if (part.IsList())
+          {
+            reader.Report(part, std::format("'{}' holds a list inside a chord, where a name was expected", name));
+            read = false;
+          } else if (!ReadName(reader, name, part, value, of, known))
+          {
+            read = false;
+          } else
+          {
+            chord.parts.push_back(value);
+          }
+        }
+
+        if (read) { chords.push_back(chord); }
       }
     }
 
@@ -101,13 +150,13 @@ namespace neon
       const bool is_axis3 = action.type == InputActionType::Axis3;
       const std::string what_it_is = is_axis3 ? "an axis3" : is_axis2 ? "an axis2" : is_axis ? "an axis" : "a button";
 
-      ReadNames(reader, "keys", action.keys, [](const std::string &name, Key &key)
+      ReadChords(reader, "keys", action.keys, [](const std::string &name, Key &key)
       {
         key = KeyOf(name);
         return key != Key::Unknown;
       }, KeyNames());
 
-      ReadNames(reader, "buttons", action.buttons, [](const std::string &name, ControllerButton &button)
+      ReadChords(reader, "buttons", action.buttons, [](const std::string &name, ControllerButton &button)
       {
         return ControllerButtonOf(name, button);
       }, NamesOf<ControllerButton>(kControllerButton_Size));
@@ -211,6 +260,48 @@ namespace neon
         } else
         {
           action.rate = rate;
+        }
+      }
+
+      // a dead zone and a curve shape a stick or a trigger, which an axis
+      // and an axis2 have
+      const bool has_analog = is_axis || is_axis2;
+      if (float dead_zone = 0.0f; reader.Read("dead_zone", dead_zone))
+      {
+        if (!has_analog)
+        {
+          reader.Report(*reader.ReadValue("dead_zone"), std::format(
+                          "'dead_zone' is for an axis or an axis2, which have a stick or a trigger, and this action is {}",
+                          what_it_is));
+        } else if (dead_zone < 0.0f || dead_zone >= 1.0f)
+        {
+          reader.Report(*reader.ReadValue("dead_zone"), std::format(
+                          "'dead_zone' is {}, where a number from 0 to below 1 was expected", dead_zone));
+        } else
+        {
+          action.dead_zone = dead_zone;
+        }
+      }
+
+      if (const DataValue *curve = reader.ReadValue("curve"); curve != nullptr)
+      {
+        std::string word;
+        double power = 0.0;
+        if (!has_analog)
+        {
+          reader.Report(*curve, std::format(
+                          "'curve' is for an axis or an axis2, which have a stick or a trigger, and this action is {}",
+                          what_it_is));
+        } else if (curve->GetText(word) && word == "linear")
+        {
+          action.curve = 1.0f;
+        } else if (curve->GetNumber(power) && power > 0.0)
+        {
+          action.curve = static_cast<float>(power);
+        } else
+        {
+          reader.Report(*curve, "'curve' is not linear or a power above 0, such as 2 for a stick that is gentle near "
+                        "the middle");
         }
       }
 

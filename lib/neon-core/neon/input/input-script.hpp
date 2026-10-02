@@ -37,7 +37,9 @@ namespace neon
   /// | `wheel X Y [precise]` | Turns the wheel, in notches to the right and down |
   /// | `hold ACTION [FRAMES]` | Holds an action down for one frame or more: one of the user interface, such as `ui-accept`, or a button of the input map, such as `jump` |
   /// | `hold-key KEY [FRAMES]` | Holds a key down by where it is, such as `w`, for the input map to read |
-  /// | `stick X Y [FRAMES]` | Pushes the right stick, from -1 to 1 |
+  /// | `hold-button NAME [FRAMES]` | Holds a button of a controller down by its name, such as `south`, for the input map to read |
+  /// | `stick X Y [FRAMES]` | Pushes the right stick, from -1 to 1, to the right and down |
+  /// | `left-stick X Y [FRAMES]` | Pushes the left stick, in the same way |
   /// | `device keyboard` or `device gamepad` | What the player uses from now on, which a user interface shows hints for |
   /// | `look X Y` | Moves the mouse by so much in one frame while the view is turned with it, to the right and down |
   class InputScript
@@ -56,7 +58,9 @@ namespace neon
       Wheel,
       Hold,
       HoldKey,
+      HoldButton,
       Stick,
+      LeftStick,
       Device,
       Look
     };
@@ -77,6 +81,9 @@ namespace neon
       std::string action_name;
       std::size_t frames = 1;
       InputDevice device = InputDevice::KeyboardAndMouse;
+
+      /// For a hold of a button of a controller.
+      ControllerButton button = ControllerButton::South;
     };
 
   private:
@@ -86,6 +93,7 @@ namespace neon
       Action action = Action::Ui_Accept;
       std::string action_name;
       Key key = Key::Unknown;
+      ControllerButton button = ControllerButton::South;
       std::size_t until = 0;
     };
 
@@ -102,6 +110,9 @@ namespace neon
     double _stick_x = 0.0;
     double _stick_y = 0.0;
     std::size_t _stick_until = 0;
+    double _left_stick_x = 0.0;
+    double _left_stick_y = 0.0;
+    std::size_t _left_stick_until = 0;
     TextComposition _composition;
     InputDevice _device = InputDevice::KeyboardAndMouse;
 

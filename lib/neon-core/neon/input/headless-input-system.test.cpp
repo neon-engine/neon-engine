@@ -141,6 +141,6 @@ namespace
     input_system.ProcessInput();
 
     neon::InputContext &input_context = _input_system;
-    EXPECT_FALSE(input_context.GetInputState()[Action::L_Up]);
+    EXPECT_FALSE(input_context.GetInputState()[Action::Ui_Accept]);
   }
 }

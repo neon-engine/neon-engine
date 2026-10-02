@@ -19,6 +19,7 @@
 
 namespace
 {
+  using neon::Chord;
   using neon::ControllerButton;
   using neon::InputActionType;
   using neon::InputMap;
@@ -116,7 +117,7 @@ namespace
     const auto *move = _map.FindAction("move");
     ASSERT_NE(move, nullptr);
     EXPECT_EQ(move->type, InputActionType::Axis2);
-    EXPECT_EQ(move->keys, (std::vector{Key::W, Key::S, Key::A, Key::D}));
+    EXPECT_EQ(move->keys, (std::vector<Chord<Key>>{Key::W, Key::S, Key::A, Key::D}));
     EXPECT_EQ(move->stick, Stick::Left);
     EXPECT_FALSE(move->mouse_motion);
 
@@ -131,18 +132,18 @@ namespace
     ASSERT_NE(throttle, nullptr);
     EXPECT_EQ(throttle->type, InputActionType::Axis);
     EXPECT_EQ(throttle->trigger, ControllerTrigger::Right);
-    EXPECT_EQ(throttle->keys, (std::vector{Key::W, Key::S}));
+    EXPECT_EQ(throttle->keys, (std::vector<Chord<Key>>{Key::W, Key::S}));
 
     const auto *jump = _map.FindAction("jump");
     ASSERT_NE(jump, nullptr);
     EXPECT_EQ(jump->type, InputActionType::Button);
-    EXPECT_EQ(jump->keys, (std::vector{Key::Space}));
-    EXPECT_EQ(jump->buttons, (std::vector{ControllerButton::South}));
+    EXPECT_EQ(jump->keys, (std::vector<Chord<Key>>{Key::Space}));
+    EXPECT_EQ(jump->buttons, (std::vector<Chord<ControllerButton>>{ControllerButton::South}));
 
     const auto *shoot = _map.FindAction("shoot");
     ASSERT_NE(shoot, nullptr);
     EXPECT_EQ(shoot->mouse_button, MouseButton::Left);
-    EXPECT_EQ(shoot->buttons, (std::vector{ControllerButton::RightTrigger}));
+    EXPECT_EQ(shoot->buttons, (std::vector<Chord<ControllerButton>>{ControllerButton::RightTrigger}));
   }
 
   TEST_F(InputMapsTest, ReadsTheStatesInTheOrderWrittenWithTheFirstToStartIn)
@@ -184,6 +185,57 @@ namespace
     EXPECT_EQ(_map.FindAction("a")->keys.size(), 26u);
     EXPECT_EQ(_map.FindAction("a")->buttons.size(), 17u);
     EXPECT_EQ(_map.FindAction("a")->mouse_button, MouseButton::Middle);
+  }
+
+  // chords
+
+  TEST_F(InputMapsTest, ReadsAListOfNamesInABindingAsAChordHeldTogether)
+  {
+    Write(With("{ type: button, keys: [space, [left-shift, w]], buttons: [[left-shoulder, south]] }"));
+
+    ASSERT_TRUE(Read()) << ::testing::PrintToString(_errors);
+    EXPECT_EQ(_map.FindAction("a")->keys, (std::vector<Chord<Key>>{Key::Space, {Key::LeftShift, Key::W}}));
+    EXPECT_EQ(_map.FindAction("a")->buttons,
+              (std::vector<Chord<ControllerButton>>{{ControllerButton::LeftShoulder, ControllerButton::South}}));
+  }
+
+  TEST_F(InputMapsTest, ReadsAChordInEveryPlaceOfAnAxis)
+  {
+    Write(With("{ type: axis2, keys: [[left-shift, w], s, [left-shift, a], d] }"));
+
+    ASSERT_TRUE(Read()) << ::testing::PrintToString(_errors);
+    EXPECT_EQ(_map.FindAction("a")->keys,
+              (std::vector<Chord<Key>>{{Key::LeftShift, Key::W}, Key::S, {Key::LeftShift, Key::A}, Key::D}));
+
+    Write(With("{ type: axis, keys: [[left-control, 1], [left-control, 2]] }"));
+
+    ASSERT_TRUE(Read()) << ::testing::PrintToString(_errors);
+    EXPECT_EQ(_map.FindAction("a")->keys,
+              (std::vector<Chord<Key>>{{Key::LeftControl, Key::Digit1}, {Key::LeftControl, Key::Digit2}}));
+  }
+
+  TEST_F(InputMapsTest, RefusesAnEmptyChord)
+  {
+    Write(With("{ type: button, keys: [space, []] }"));
+
+    ExpectRefused(":3: 'keys' holds an empty chord, where names held together were expected, such as [left-shift, w]");
+  }
+
+  TEST_F(InputMapsTest, RefusesAChordWithAKeyItDoesNotKnowOrAListInIt)
+  {
+    Write(With("{ type: button, keys: [[left-shift, fire], [[w]]] }"));
+
+    EXPECT_FALSE(Read());
+    EXPECT_THAT(_errors, ElementsAre(
+                  HasSubstr(":3: 'keys' names 'fire', which is not known. Known are: left, right, up"),
+                  HasSubstr(":3: 'keys' holds a list inside a chord, where a name was expected")));
+  }
+
+  TEST_F(InputMapsTest, CountsAChordAsOneOfTheKeysOfAnAxis)
+  {
+    Write(With("{ type: axis, keys: [[left-shift, w], s, a] }"));
+
+    ExpectRefused(":3: 'keys' holds 3 for an axis, where two were expected: positive, negative");
   }
 
   TEST_F(InputMapsTest, LeavesTheMapAloneWhenTheFileIsWrong)
@@ -349,7 +401,8 @@ namespace
     Write(With("{ type: axis, buttons: [right-shoulder, left-shoulder], trigger: left, rate: 2.5 }"));
 
     ASSERT_TRUE(Read()) << ::testing::PrintToString(_errors);
-    EXPECT_EQ(_map.FindAction("a")->buttons, (std::vector{ControllerButton::RightShoulder, ControllerButton::LeftShoulder}));
+    EXPECT_EQ(_map.FindAction("a")->buttons,
+              (std::vector<Chord<ControllerButton>>{ControllerButton::RightShoulder, ControllerButton::LeftShoulder}));
     EXPECT_EQ(_map.FindAction("a")->trigger, ControllerTrigger::Left);
     EXPECT_EQ(_map.FindAction("a")->rate, 2.5f);
   }
@@ -408,6 +461,63 @@ namespace
     Write(With("{ type: button, rate: 600 }"));
 
     ExpectRefused(":3: 'rate' is for an axis, an axis2, or an axis3, and this action is a button");
+  }
+
+  // a dead zone and a curve
+
+  TEST_F(InputMapsTest, ReadsADeadZoneAndACurveAndHasAQuarterAndAStraightLineWithout)
+  {
+    Write(With("{ type: axis2, stick: left, dead_zone: 0.1, curve: 2 }"));
+
+    ASSERT_TRUE(Read()) << ::testing::PrintToString(_errors);
+    EXPECT_FLOAT_EQ(_map.FindAction("a")->dead_zone, 0.1f);
+    EXPECT_FLOAT_EQ(_map.FindAction("a")->curve, 2.0f);
+
+    Write(With("{ type: axis, trigger: right, dead_zone: 0, curve: linear }"));
+
+    ASSERT_TRUE(Read()) << ::testing::PrintToString(_errors);
+    EXPECT_FLOAT_EQ(_map.FindAction("a")->dead_zone, 0.0f);
+    EXPECT_FLOAT_EQ(_map.FindAction("a")->curve, 1.0f);
+
+    Write(With("{ type: axis2, stick: left }"));
+
+    ASSERT_TRUE(Read()) << ::testing::PrintToString(_errors);
+    EXPECT_FLOAT_EQ(_map.FindAction("a")->dead_zone, 0.25f);
+    EXPECT_FLOAT_EQ(_map.FindAction("a")->curve, 1.0f);
+  }
+
+  TEST_F(InputMapsTest, RefusesADeadZoneOutsideZeroToBelowOne)
+  {
+    Write(With("{ type: axis2, stick: left, dead_zone: 1 }"));
+    ExpectRefused(":3: 'dead_zone' is 1, where a number from 0 to below 1 was expected");
+
+    _errors.clear();
+    Write(With("{ type: axis2, stick: left, dead_zone: -0.5 }"));
+    ExpectRefused(":3: 'dead_zone' is -0.5, where a number from 0 to below 1 was expected");
+  }
+
+  TEST_F(InputMapsTest, RefusesACurveThatIsNotLinearOrAPowerAboveZero)
+  {
+    Write(With("{ type: axis2, stick: left, curve: 0 }"));
+    ExpectRefused(":3: 'curve' is not linear or a power above 0, such as 2 for a stick that is gentle near the middle");
+
+    _errors.clear();
+    Write(With("{ type: axis2, stick: left, curve: steep }"));
+    ExpectRefused(":3: 'curve' is not linear or a power above 0, such as 2 for a stick that is gentle near the middle");
+  }
+
+  TEST_F(InputMapsTest, RefusesADeadZoneAndACurveForAButtonOrAnAxisOfThree)
+  {
+    Write(With("{ type: button, keys: [space], dead_zone: 0.1, curve: 2 }"));
+
+    EXPECT_FALSE(Read());
+    EXPECT_THAT(_errors, ElementsAre(
+                  HasSubstr(":3: 'dead_zone' is for an axis or an axis2, which have a stick or a trigger, and this action is a button"),
+                  HasSubstr(":3: 'curve' is for an axis or an axis2, which have a stick or a trigger, and this action is a button")));
+
+    _errors.clear();
+    Write(With("{ type: axis3, sensor: gyro, dead_zone: 0.1 }"));
+    ExpectRefused(":3: 'dead_zone' is for an axis or an axis2, which have a stick or a trigger, and this action is an axis3");
   }
 
   // an axis of three
@@ -484,7 +594,7 @@ namespace
   {
     Write(With("{ type: button, key: space }"));
 
-    ExpectRefused(":3: 'key' is not known to the action 'a'. Known are: type, keys, buttons, mouse, stick, trigger, sensor, enabled, rate");
+    ExpectRefused(":3: 'key' is not known to the action 'a'. Known are: type, keys, buttons, mouse, stick, trigger, sensor, enabled, rate, dead_zone, curve");
   }
 
   TEST_F(InputMapsTest, RefusesMissingStates)
@@ -581,6 +691,8 @@ namespace
       EXPECT_EQ(read->sensor, action.sensor) << action.name;
       EXPECT_EQ(read->enabled, action.enabled) << action.name;
       EXPECT_EQ(read->rate, action.rate) << action.name;
+      EXPECT_EQ(read->dead_zone, action.dead_zone) << action.name;
+      EXPECT_EQ(read->curve, action.curve) << action.name;
     }
 
     ASSERT_EQ(_map.GetStates().size(), built_in.GetStates().size());

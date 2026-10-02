@@ -12,11 +12,8 @@ namespace neon
   // Helpers of SDL2_InputSystem, for this file alone.
   namespace
   {
-    // how far a stick has to be pushed to count, of 32767
+    // how far a stick has to be pushed to count as a direction, of 32767
     constexpr int stick_threshold = 16000;
-
-    // below this the right stick is at rest, of 32767
-    constexpr int stick_dead_zone = 8000;
 
     /// The key of the engine at a place of the keyboard, as the US layout
     /// has it. What an input map binds: a game is played by where the keys
@@ -185,9 +182,10 @@ namespace neon
       return modifiers;
     }
 
+    /// A stick as it is, from -1 to 1. The dead zone is the input map's,
+    /// per action, so nothing is taken off here.
     double StickValue(const int value)
     {
-      if (std::abs(value) < stick_dead_zone) { return 0.0; }
       return std::clamp(static_cast<double>(value) / 32767.0, -1.0, 1.0);
     }
   }
@@ -481,26 +479,6 @@ namespace neon
       }
     }
 
-    if (state[SDL_SCANCODE_W])
-    {
-      _input_state.SetKeyboardAction(Action::L_Up);
-    }
-
-    if (state[SDL_SCANCODE_A])
-    {
-      _input_state.SetKeyboardAction(Action::L_Left);
-    }
-
-    if (state[SDL_SCANCODE_S])
-    {
-      _input_state.SetKeyboardAction(Action::L_Down);
-    }
-
-    if (state[SDL_SCANCODE_D])
-    {
-      _input_state.SetKeyboardAction(Action::L_Right);
-    }
-
     // a user interface
     if (state[SDL_SCANCODE_UP]) { _input_state.SetKeyboardAction(Action::Ui_Up); }
     if (state[SDL_SCANCODE_RIGHT]) { _input_state.SetKeyboardAction(Action::Ui_Right); }
@@ -561,12 +539,6 @@ namespace neon
     const int stick_x = SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_LEFTX);
     const int stick_y = SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_LEFTY);
 
-    // the left stick moves, as the keys W, A, S, and D do
-    if (stick_y < -stick_threshold) { _input_state.SetAction(Action::L_Up); }
-    if (stick_x > stick_threshold) { _input_state.SetAction(Action::L_Right); }
-    if (stick_y > stick_threshold) { _input_state.SetAction(Action::L_Down); }
-    if (stick_x < -stick_threshold) { _input_state.SetAction(Action::L_Left); }
-
     // a user interface is moved through with the pad, and with the stick
     if (pressed(SDL_CONTROLLER_BUTTON_DPAD_UP) || stick_y < -stick_threshold)
     {
@@ -617,8 +589,8 @@ namespace neon
       ControllerTrigger::Right,
       std::clamp(SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_TRIGGERRIGHT) / 32767.0, 0.0, 1.0));
 
-    // the sticks as they are, for the input map; the right one also scrolls
-    // what is under the focus
+    // the sticks as they are, for the input map to shape; the right one
+    // also scrolls what is under the focus
     _input_state.SetLeftStick(StickValue(stick_x), StickValue(stick_y));
     _input_state.SetRightStick(
       StickValue(SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_RIGHTX)),

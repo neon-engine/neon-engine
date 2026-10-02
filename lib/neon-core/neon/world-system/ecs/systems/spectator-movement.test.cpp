@@ -196,12 +196,14 @@ namespace
 
   TEST_F(SpectatorMovementTest, MovesWithTheLeftStick)
   {
+    // pushed all the way aslant, which the dead zone of the default map
+    // leaves as it is
     const Entity spectator = CreateSpectator();
-    _input.state.SetLeftStick(0.5, -1.0);
+    _input.state.SetLeftStick(0.6, -0.8);
 
     Update(1.0);
 
-    ExpectVector(TransformOf(spectator).position, 1.0f, 0.0f, -2.0f);
+    ExpectVector(TransformOf(spectator).position, 1.2f, 0.0f, -1.6f);
   }
 
   TEST_F(SpectatorMovementTest, TurnsWithTheRightStickByTheTimeOfTheFrame)

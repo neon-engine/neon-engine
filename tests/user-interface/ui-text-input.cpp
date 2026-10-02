@@ -798,7 +798,7 @@ namespace
     Release();
     _input.state.SetKeyboardAction(Action::Ui_Left);
     _input.state.SetKeyboardAction(Action::Ui_Cancel);
-    _input.state.SetKeyboardAction(Action::L_Up);
+    _input.state.SetKeyDown(Key::W);
     _input.state.AddText("x");
     _input.state.AddKeyEvent({Key::Left, true, false, {}});
     Frame();
@@ -806,7 +806,7 @@ namespace
     const neon::InputState &game = _ui->GetGameInput()->GetInputState();
     EXPECT_FALSE(game[Action::Ui_Left]);
     EXPECT_FALSE(game[Action::Ui_Cancel]);
-    EXPECT_FALSE(game[Action::L_Up]) << "the keys type, and do not move the game";
+    EXPECT_FALSE(game.IsKeyDown(Key::W)) << "the keys type, and do not move the game";
     EXPECT_TRUE(game.GetText().empty());
     EXPECT_TRUE(game.GetKeyEvents().empty());
     EXPECT_EQ(Value(), "x");
@@ -818,10 +818,10 @@ namespace
     ClickBefore(0);
 
     Release();
-    _input.state.SetAction(Action::L_Up);
+    _input.state.SetControllerButtonDown(neon::ControllerButton::South);
     Frame();
 
-    EXPECT_TRUE(_ui->GetGameInput()->GetInputState()[Action::L_Up]);
+    EXPECT_TRUE(_ui->GetGameInput()->GetInputState().IsControllerButtonDown(neon::ControllerButton::South));
   }
 
   TEST_F(UiTextInputTest, TabLeavesTheFieldAndEscapeCancels)

@@ -64,10 +64,13 @@ namespace
     }
 
     /// A frame with everything released but what is given.
-    void FrameWith(const std::initializer_list<Action> actions)
+    /// A frame with these actions of the user interface held, and these
+    /// keys down for the game.
+    void FrameWith(const std::initializer_list<Action> actions, const std::initializer_list<neon::Key> keys = {})
     {
       Release();
       for (const Action action : actions) { _input.state.SetAction(action); }
+      for (const neon::Key key : keys) { _input.state.SetKeyDown(key); }
       Frame();
     }
   };
@@ -606,13 +609,13 @@ namespace
   {
     PointAt(150, 125);
     _input.state.SetAction(Action::Pointer_Primary);
-    _input.state.SetAction(Action::L_Up);
+    _input.state.SetKeyDown(neon::Key::W);
     _input.state.SetAction(Action::Ui_Accept);
     _input.state.SetAxisMotion(Axis::Mouse, 3, 4);
     Frame();
 
     EXPECT_TRUE(GameInput()[Action::Pointer_Primary]);
-    EXPECT_TRUE(GameInput()[Action::L_Up]);
+    EXPECT_TRUE(GameInput().IsKeyDown(neon::Key::W));
     EXPECT_TRUE(GameInput()[Action::Ui_Accept]);
     EXPECT_TRUE(GameInput()[Action::Mouse]);
     EXPECT_EQ(GameInput()[Axis::Mouse].x, 3);
@@ -625,11 +628,11 @@ namespace
     ShowGrid();
 
     PointAt(50, 50);
-    FrameWith({Action::Pointer_Primary, Action::L_Up});
+    FrameWith({Action::Pointer_Primary}, {neon::Key::W});
 
     EXPECT_TRUE(GameInput()[Action::Pointer_Primary]);
     EXPECT_TRUE(GameInput().HasPointer());
-    EXPECT_TRUE(GameInput()[Action::L_Up]);
+    EXPECT_TRUE(GameInput().IsKeyDown(neon::Key::W));
   }
 
   TEST_F(UiInputTest, TheGameDoesNotSeeAClickOnAButton)
@@ -637,13 +640,13 @@ namespace
     ShowGrid();
 
     PointAt(150, 125);
-    FrameWith({Action::Pointer_Primary, Action::L_Up});
+    FrameWith({Action::Pointer_Primary}, {neon::Key::W});
 
     EXPECT_FALSE(GameInput()[Action::Pointer_Primary]);
     EXPECT_FALSE(GameInput().HasPointer());
 
     // what the user interface has no use for is left alone
-    EXPECT_TRUE(GameInput()[Action::L_Up]);
+    EXPECT_TRUE(GameInput().IsKeyDown(neon::Key::W));
 
     // and the input itself is as it was
     EXPECT_TRUE(_input.state[Action::Pointer_Primary]);
@@ -696,10 +699,9 @@ namespace
     ShowGrid();
     ASSERT_TRUE(_ui->Focus("a"));
 
-    FrameWith({
-      Action::Ui_Up, Action::Ui_Right, Action::Ui_Down, Action::Ui_Left, Action::Ui_Accept, Action::Ui_Cancel,
-      Action::L_Up, Action::R_Left
-    });
+    FrameWith(
+      {Action::Ui_Up, Action::Ui_Right, Action::Ui_Down, Action::Ui_Left, Action::Ui_Accept, Action::Ui_Cancel},
+      {neon::Key::W, neon::Key::A});
 
     for (const Action action : {
            Action::Ui_Up, Action::Ui_Right, Action::Ui_Down, Action::Ui_Left, Action::Ui_Accept,
@@ -709,8 +711,8 @@ namespace
       EXPECT_FALSE(GameInput()[action]) << static_cast<int>(action);
     }
 
-    EXPECT_TRUE(GameInput()[Action::L_Up]);
-    EXPECT_TRUE(GameInput()[Action::R_Left]);
+    EXPECT_TRUE(GameInput().IsKeyDown(neon::Key::W));
+    EXPECT_TRUE(GameInput().IsKeyDown(neon::Key::A));
   }
 
   TEST_F(UiInputTest, TheGameSeesNothingWhileAFileIsModal)
@@ -737,13 +739,13 @@ namespace
     ASSERT_GE(Show("modal: true\nroot:\n  type: button\n  name: resume\n  text: a\n"), 0);
     const int document = 0;
 
-    FrameWith({Action::L_Up});
-    ASSERT_FALSE(GameInput()[Action::L_Up]);
+    FrameWith({}, {neon::Key::W});
+    ASSERT_FALSE(GameInput().IsKeyDown(neon::Key::W));
 
     _ui->Unload(document);
-    FrameWith({Action::L_Up, Action::Ui_Accept});
+    FrameWith({Action::Ui_Accept}, {neon::Key::W});
 
-    EXPECT_TRUE(GameInput()[Action::L_Up]);
+    EXPECT_TRUE(GameInput().IsKeyDown(neon::Key::W));
     EXPECT_TRUE(GameInput()[Action::Ui_Accept]);
   }
 

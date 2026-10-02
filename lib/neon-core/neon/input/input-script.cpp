@@ -10,14 +10,6 @@ namespace neon
   namespace
   {
     const std::pair<Action, const char *> action_names[] = {
-      {Action::L_Up, "l-up"},
-      {Action::L_Right, "l-right"},
-      {Action::L_Down, "l-down"},
-      {Action::L_Left, "l-left"},
-      {Action::R_Up, "r-up"},
-      {Action::R_Right, "r-right"},
-      {Action::R_Down, "r-down"},
-      {Action::R_Left, "r-left"},
       {Action::Ui_Up, "ui-up"},
       {Action::Ui_Right, "ui-right"},
       {Action::Ui_Down, "ui-down"},
@@ -335,17 +327,30 @@ namespace neon
           continue;
         }
         step.key.key = KeyOf(words[0]);
-      } else if (command == "stick")
+      } else if (command == "hold-button")
       {
-        step.kind = Kind::Stick;
+        step.kind = Kind::HoldButton;
+
+        if (words.empty() || !ControllerButtonOf(words[0], step.button) || words.size() > 2 ||
+            (words.size() == 2 && (!ReadCount(words[1], step.frames) || step.frames == 0)))
+        {
+          report(std::format(
+            "'hold-button' is followed by '{}', where the name of a button of a controller was expected, such as "
+            "south or left-shoulder, and a number of frames after it or nothing",
+            rest));
+          continue;
+        }
+      } else if (command == "stick" || command == "left-stick")
+      {
+        step.kind = command == "stick" ? Kind::Stick : Kind::LeftStick;
 
         if (words.size() < 2 || words.size() > 3 || !ReadNumber(words[0], step.x) || !ReadNumber(words[1], step.y) ||
             (words.size() == 3 && (!ReadCount(words[2], step.frames) || step.frames == 0)))
         {
           report(std::format(
-            "'stick' is followed by '{}', where two numbers from -1 to 1 were expected, and a number of "
+            "'{}' is followed by '{}', where two numbers from -1 to 1 were expected, and a number of "
             "frames after them or nothing",
-            rest));
+            command, rest));
           continue;
         }
       } else if (command == "look")
@@ -371,8 +376,8 @@ namespace neon
       } else
       {
         report(std::format(
-          "'{}' is not known. Known are: pointer, down, up, click, key, text, compose, wheel, hold, hold-key, stick, "
-          "device, look",
+          "'{}' is not known. Known are: pointer, down, up, click, key, text, compose, wheel, hold, hold-key, "
+          "hold-button, stick, left-stick, device, look",
           command));
         continue;
       }
@@ -408,7 +413,8 @@ namespace neon
     {
       std::size_t end = step.frame;
       if (step.kind == Kind::Click) { end = step.frame + 1; }
-      if (step.kind == Kind::Hold || step.kind == Kind::HoldKey || step.kind == Kind::Stick)
+      if (step.kind == Kind::Hold || step.kind == Kind::HoldKey || step.kind == Kind::HoldButton ||
+          step.kind == Kind::Stick || step.kind == Kind::LeftStick)
       {
         end = step.frame + step.frames - 1;
       }
@@ -473,15 +479,28 @@ namespace neon
           if (is_now) { state.AddWheel(step.x, step.y, step.precise); }
           break;
         case Kind::Hold:
-          _held.push_back({Kind::Hold, step.action, step.action_name, Key::Unknown, step.frame + step.frames - 1});
+          _held.push_back({
+            .kind = Kind::Hold,
+            .action = step.action,
+            .action_name = step.action_name,
+            .until = step.frame + step.frames - 1
+          });
           break;
         case Kind::HoldKey:
-          _held.push_back({Kind::HoldKey, Action::Ui_Accept, "", step.key.key, step.frame + step.frames - 1});
+          _held.push_back({.kind = Kind::HoldKey, .key = step.key.key, .until = step.frame + step.frames - 1});
+          break;
+        case Kind::HoldButton:
+          _held.push_back({.kind = Kind::HoldButton, .button = step.button, .until = step.frame + step.frames - 1});
           break;
         case Kind::Stick:
           _stick_x = step.x;
           _stick_y = step.y;
           _stick_until = step.frame + step.frames - 1;
+          break;
+        case Kind::LeftStick:
+          _left_stick_x = step.x;
+          _left_stick_y = step.y;
+          _left_stick_until = step.frame + step.frames - 1;
           break;
         case Kind::Device:
           _device = step.device;
@@ -511,6 +530,11 @@ namespace neon
       _stick_x = 0.0;
       _stick_y = 0.0;
     }
+    if (frame > _left_stick_until)
+    {
+      _left_stick_x = 0.0;
+      _left_stick_y = 0.0;
+    }
 
     if (_has_pointer)
     {
@@ -528,11 +552,13 @@ namespace neon
     for (const auto &held : _held)
     {
       if (held.kind == Kind::HoldKey) { state.SetKeyDown(held.key); }
+      else if (held.kind == Kind::HoldButton) { state.SetControllerButtonDown(held.button); }
       else if (!held.action_name.empty()) { state.HoldAction(held.action_name); }
       else { state.SetAction(held.action); }
     }
 
     state.SetRightStick(_stick_x, _stick_y);
+    state.SetLeftStick(_left_stick_x, _left_stick_y);
     state.SetComposition(_composition);
   }
 } // neon

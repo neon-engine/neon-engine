@@ -83,14 +83,14 @@ namespace
   TEST_F(SDL2InputSystemTest, HoldsAnActionFromTheKeyGoingDownToItGoingUp)
   {
     PushKey(true, SDL_SCANCODE_W);
-    EXPECT_TRUE(Frame()[Action::L_Up]);
+    EXPECT_TRUE(Frame().IsKeyDown(Key::W));
 
     // no event, and the key is still held
-    EXPECT_TRUE(Frame()[Action::L_Up]);
-    EXPECT_TRUE(Frame()[Action::L_Up]);
+    EXPECT_TRUE(Frame().IsKeyDown(Key::W));
+    EXPECT_TRUE(Frame().IsKeyDown(Key::W));
 
     PushKey(false, SDL_SCANCODE_W);
-    EXPECT_FALSE(Frame()[Action::L_Up]);
+    EXPECT_FALSE(Frame().IsKeyDown(Key::W));
   }
 
   TEST_F(SDL2InputSystemTest, MovesWithWASD)
@@ -100,11 +100,12 @@ namespace
     PushKey(true, SDL_SCANCODE_S);
     PushKey(true, SDL_SCANCODE_D);
 
+    // by where they are, for the input map; they move no user interface
     const InputState &state = Frame();
-    EXPECT_TRUE(state[Action::L_Up]);
-    EXPECT_TRUE(state[Action::L_Left]);
-    EXPECT_TRUE(state[Action::L_Down]);
-    EXPECT_TRUE(state[Action::L_Right]);
+    EXPECT_TRUE(state.IsKeyDown(Key::W));
+    EXPECT_TRUE(state.IsKeyDown(Key::A));
+    EXPECT_TRUE(state.IsKeyDown(Key::S));
+    EXPECT_TRUE(state.IsKeyDown(Key::D));
     EXPECT_FALSE(state[Action::Ui_Up]);
   }
 
@@ -120,7 +121,7 @@ namespace
     EXPECT_TRUE(state[Action::Ui_Right]);
     EXPECT_TRUE(state[Action::Ui_Down]);
     EXPECT_TRUE(state[Action::Ui_Left]);
-    EXPECT_FALSE(state[Action::L_Up]);
+    EXPECT_FALSE(state.IsKeyDown(Key::W));
   }
 
   TEST_F(SDL2InputSystemTest, AcceptsWithReturnEnterAndSpace)
@@ -227,24 +228,24 @@ namespace
     PushKey(true, SDL_SCANCODE_W);
 
     InputState state = Frame();
-    EXPECT_TRUE(state[Action::L_Up]);
+    EXPECT_TRUE(state.IsKeyDown(Key::W));
 
     // what takes the keyboard away while a text is typed
     state.ClearKeyboard();
-    EXPECT_FALSE(state[Action::L_Up]);
+    EXPECT_FALSE(state.IsKeyDown(Key::W));
   }
 
   TEST_F(SDL2InputSystemTest, ReleasesEveryKeyWhenTheWindowLosesTheFocus)
   {
     PushKey(true, SDL_SCANCODE_W);
-    EXPECT_TRUE(Frame()[Action::L_Up]);
+    EXPECT_TRUE(Frame().IsKeyDown(Key::W));
 
     PushWindowEvent(SDL_WINDOWEVENT_FOCUS_LOST);
-    EXPECT_FALSE(Frame()[Action::L_Up]);
+    EXPECT_FALSE(Frame().IsKeyDown(Key::W));
 
     // the key went up while another window had the focus
     PushWindowEvent(SDL_WINDOWEVENT_FOCUS_GAINED);
-    EXPECT_FALSE(Frame()[Action::L_Up]);
+    EXPECT_FALSE(Frame().IsKeyDown(Key::W));
   }
 
   TEST_F(SDL2InputSystemTest, ReportsAKeyThatEditsOnceForEachEvent)
@@ -709,23 +710,28 @@ namespace
     SetButton(SDL_CONTROLLER_BUTTON_DPAD_DOWN, true);
     const InputState &state = Frame();
     EXPECT_TRUE(state[Action::Ui_Down]);
-    EXPECT_FALSE(state[Action::L_Down]);
+    EXPECT_EQ(state.GetLeftStick().y, 0.0);
   }
 
-  TEST_F(SDL2ControllerTest, MovesWithTheLeftStick)
+  TEST_F(SDL2ControllerTest, HandsTheLeftStickOverAsItIsAndMovesTheUserInterfaceWithIt)
   {
     SetAxis(SDL_CONTROLLER_AXIS_LEFTX, 32000);
     const InputState &right = Frame();
-    EXPECT_TRUE(right[Action::L_Right]);
+    EXPECT_NEAR(right.GetLeftStick().x, 32000.0 / 32767.0, 0.0001);
     EXPECT_TRUE(right[Action::Ui_Right]);
 
-    // not far enough to count
+    // not far enough to count as a direction, and still handed over for
+    // the input map to shape
     SetAxis(SDL_CONTROLLER_AXIS_LEFTX, 8000);
-    EXPECT_FALSE(Frame()[Action::L_Right]);
+    const InputState &little = Frame();
+    EXPECT_NEAR(little.GetLeftStick().x, 8000.0 / 32767.0, 0.0001);
+    EXPECT_FALSE(little[Action::Ui_Right]);
 
     SetAxis(SDL_CONTROLLER_AXIS_LEFTX, 0);
     SetAxis(SDL_CONTROLLER_AXIS_LEFTY, -32000);
-    EXPECT_TRUE(Frame()[Action::L_Up]);
+    const InputState &up = Frame();
+    EXPECT_NEAR(up.GetLeftStick().y, -32000.0 / 32767.0, 0.0001);
+    EXPECT_TRUE(up[Action::Ui_Up]);
   }
 
   TEST_F(SDL2ControllerTest, ScrollsWithTheRightStick)
@@ -736,9 +742,10 @@ namespace
     SetAxis(SDL_CONTROLLER_AXIS_RIGHTY, -16384);
     EXPECT_NEAR(Frame().GetRightStick().y, -0.5, 0.001);
 
-    // at rest, where a stick is never quite in the middle
+    // handed over as it is, a little off the middle; the dead zone is the
+    // input map's
     SetAxis(SDL_CONTROLLER_AXIS_RIGHTY, 3000);
-    EXPECT_DOUBLE_EQ(Frame().GetRightStick().y, 0.0);
+    EXPECT_NEAR(Frame().GetRightStick().y, 3000.0 / 32767.0, 0.0001);
   }
 
   TEST_F(SDL2ControllerTest, IsHeldByMoreThanTheKeyboard)

@@ -21,14 +21,17 @@ namespace neon
   ///       move:  { type: axis2, keys: [w, s, a, d], stick: left }
   ///       look:  { type: axis2, mouse: motion, stick: right }
   ///       jump:  { type: button, keys: [space], buttons: [south] }
+  ///       dash:  { type: button, keys: [[left-shift, space]] }
   ///       shoot: { type: button, mouse: left, buttons: [right-trigger] }
   ///       pause: { type: button, keys: [escape], buttons: [start] }
   ///     states:
   ///       walking: [move, look, jump, shoot, pause]
   ///       menu:    [pause]
   ///
-  /// `version` is the version of this layout. A name that is not known is an
-  /// error, as is a key, a button, or a stick that is not known, and an
+  /// `version` is the version of this layout. A key or a button in a binding
+  /// is a name, or a list of names held together, a chord. A name that is
+  /// not known is an error, as is a key, a button, or a stick that is not
+  /// known, and an
   /// action a state names that there is not, so that a name that was
   /// misspelled does not go unnoticed. Every problem is reported with its
   /// line, not only the first.

@@ -25,6 +25,43 @@ namespace neon
       return action.rate.has_value() ? *action.rate * static_cast<float>(input.GetFrameTime()) : 1.0f;
     }
 
+    /// How far something is pushed, shaped by the dead zone and the curve
+    /// of the action: nothing up to the dead zone, what is past it
+    /// stretched so that one is still one, and that raised to the curve. A
+    /// stick in its corner is further than one and stays so, as it did
+    /// without a dead zone; what cuts an axis down to one does it after.
+    float Shaped(const float how_far, const InputAction &action)
+    {
+      if (how_far <= action.dead_zone) { return 0.0f; }
+
+      const float stretched = (how_far - action.dead_zone) / (1.0f - action.dead_zone);
+      return action.curve == 1.0f ? stretched : std::pow(stretched, action.curve);
+    }
+
+    /// A stick shaped as a whole, by how far it is from the middle, so that
+    /// the dead zone is round and a push straight ahead and one aslant go
+    /// through the same curve. Down is positive, as the backends give it.
+    glm::vec2 ShapedStick(const AxisState &stick, const InputAction &action)
+    {
+      const glm::vec2 raw{static_cast<float>(stick.x), static_cast<float>(stick.y)};
+      const float how_far = glm::length(raw);
+      if (how_far == 0.0f) { return raw; }
+
+      return raw * (Shaped(how_far, action) / how_far);
+    }
+
+    /// Whether a chord of keys is held, all of them together.
+    bool IsKeysDown(const Chord<Key> &chord, const InputState &input)
+    {
+      return chord.IsDown([&](const Key key) { return input.IsKeyDown(key); });
+    }
+
+    /// Whether a chord of buttons of a controller is held.
+    bool IsButtonsDown(const Chord<ControllerButton> &chord, const InputState &input)
+    {
+      return chord.IsDown([&](const ControllerButton button) { return input.IsControllerButtonDown(button); });
+    }
+
     glm::vec2 AxisOf(const InputAction &action, const InputState &input)
     {
       glm::vec2 axis{0.0f, 0.0f};
@@ -32,28 +69,28 @@ namespace neon
       if (action.keys.size() == 4)
       {
         axis += FourWays(
-          input.IsKeyDown(action.keys[0]),
-          input.IsKeyDown(action.keys[1]),
-          input.IsKeyDown(action.keys[2]),
-          input.IsKeyDown(action.keys[3]));
+          IsKeysDown(action.keys[0], input),
+          IsKeysDown(action.keys[1], input),
+          IsKeysDown(action.keys[2], input),
+          IsKeysDown(action.keys[3], input));
       }
 
       if (action.buttons.size() == 4)
       {
         axis += FourWays(
-          input.IsControllerButtonDown(action.buttons[0]),
-          input.IsControllerButtonDown(action.buttons[1]),
-          input.IsControllerButtonDown(action.buttons[2]),
-          input.IsControllerButtonDown(action.buttons[3]));
+          IsButtonsDown(action.buttons[0], input),
+          IsButtonsDown(action.buttons[1], input),
+          IsButtonsDown(action.buttons[2], input),
+          IsButtonsDown(action.buttons[3], input));
       }
 
       // the sticks count down as positive, the axis counts forward
       if (action.stick.has_value())
       {
         const AxisState &stick = *action.stick == Stick::Left ? input.GetLeftStick() : input.GetRightStick();
-        const float scale = Scale(action, input);
-        axis.x += static_cast<float>(stick.x) * scale;
-        axis.y -= static_cast<float>(stick.y) * scale;
+        const glm::vec2 shaped = ShapedStick(stick, action) * Scale(action, input);
+        axis.x += shaped.x;
+        axis.y -= shaped.y;
       }
 
       // a stick on top of keys does not move further than either, unless the
@@ -88,19 +125,20 @@ namespace neon
       // the first key is the positive one, the second the negative one
       if (action.keys.size() == 2)
       {
-        amount = Larger(amount, (input.IsKeyDown(action.keys[0]) ? 1.0f : 0.0f) -
-                                (input.IsKeyDown(action.keys[1]) ? 1.0f : 0.0f));
+        amount = Larger(amount, (IsKeysDown(action.keys[0], input) ? 1.0f : 0.0f) -
+                                (IsKeysDown(action.keys[1], input) ? 1.0f : 0.0f));
       }
 
       if (action.buttons.size() == 2)
       {
-        amount = Larger(amount, (input.IsControllerButtonDown(action.buttons[0]) ? 1.0f : 0.0f) -
-                                (input.IsControllerButtonDown(action.buttons[1]) ? 1.0f : 0.0f));
+        amount = Larger(amount, (IsButtonsDown(action.buttons[0], input) ? 1.0f : 0.0f) -
+                                (IsButtonsDown(action.buttons[1], input) ? 1.0f : 0.0f));
       }
 
       if (action.trigger.has_value())
       {
-        amount = Larger(amount, static_cast<float>(input.GetTrigger(*action.trigger)) * Scale(action, input));
+        const float pulled = Shaped(static_cast<float>(input.GetTrigger(*action.trigger)), action);
+        amount = Larger(amount, pulled * Scale(action, input));
       }
 
       return amount;
@@ -121,11 +159,14 @@ namespace neon
 
     bool IsButtonDown(const InputAction &action, const InputState &input)
     {
-      if (std::ranges::any_of(action.keys, [&](const Key key) { return input.IsKeyDown(key); })) { return true; }
-
-      if (std::ranges::any_of(action.buttons, [&](const ControllerButton button)
+      if (std::ranges::any_of(action.keys, [&](const Chord<Key> &chord) { return IsKeysDown(chord, input); }))
       {
-        return input.IsControllerButtonDown(button);
+        return true;
+      }
+
+      if (std::ranges::any_of(action.buttons, [&](const Chord<ControllerButton> &chord)
+      {
+        return IsButtonsDown(chord, input);
       }))
       {
         return true;

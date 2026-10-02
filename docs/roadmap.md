@@ -59,6 +59,9 @@ Principles that hold for both:
 | Reflection (#35) | A component is described once, next to itself. Scene recipes follow from it, and the editor and scripts will. See [reflection.md](reflection.md) |
 | Scenes in files (#29) | A scene is a recipe, a YAML file of entities and components, made to be changed by hand. The rules every recipe shares are in [recipes.md](recipes.md), the scene's own in [scenes.md](scenes.md) |
 | Entities and components (#27) | The world is made of entities, components, and systems, with Flecs behind an interface. See [entity-component-system.md](entity-component-system.md) |
+| Chords, dead zones, and curves in input maps (#200) | A binding that is a list is a chord held together; an axis has a dead zone and a curve of its own, and the backends hand the sticks and the triggers over as they are. See [input.md](input.md#chords) |
+| Scripts hold a controller button and push the left stick (#202) | `hold-button NAME` and `left-stick X Y` in an input script, so that every binding of a map is reached without devices. See [input.md](input.md#scripts) |
+| The fixed game actions are gone (#203) | `Action::L_*` and `R_*`, the map of before a project could say, are deleted from the input state and the backends. A game reads its named actions, and the tests set keys and buttons |
 | Running without a window (#28) | `--headless`, `--frames`, and `--screenshot` render a number of frames and save the last one |
 | Screenshots where the caller wants them (#28) | `--output-dir` chooses the folder behind `output://` |
 | Screenshots at chosen frames (#28) | `--screenshot-at` runs the game forward and saves each frame that is listed |

@@ -173,8 +173,10 @@ namespace
 
   TEST_F(PlayerMovementTest, WalksAsFarAsTheStickIsPushed)
   {
+    // the default map takes a quarter off the stick and stretches the rest,
+    // so five eighths of the way reads a half
     const Entity player = CreatePlayer();
-    _input.state.SetLeftStick(0.0, -0.5);
+    _input.state.SetLeftStick(0.0, -0.625);
 
     Update();
 

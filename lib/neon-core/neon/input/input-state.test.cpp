@@ -15,14 +15,6 @@ namespace
   using neon::testing::RecordingLogger;
 
   constexpr Action every_action[] = {
-    Action::L_Up,
-    Action::L_Right,
-    Action::L_Down,
-    Action::L_Left,
-    Action::R_Up,
-    Action::R_Right,
-    Action::R_Down,
-    Action::R_Left,
     Action::Mouse,
     Action::Ui_Up,
     Action::Ui_Right,
@@ -79,21 +71,21 @@ namespace
 
   TEST_F(InputStateTest, KeepsSeveralActionsAtOnce)
   {
-    _state.SetAction(Action::L_Up);
-    _state.SetAction(Action::L_Left);
+    _state.SetAction(Action::Ui_Up);
+    _state.SetAction(Action::Ui_Left);
 
-    EXPECT_TRUE(_state[Action::L_Up]);
-    EXPECT_TRUE(_state[Action::L_Left]);
-    EXPECT_FALSE(_state[Action::L_Down]);
-    EXPECT_FALSE(_state[Action::L_Right]);
+    EXPECT_TRUE(_state[Action::Ui_Up]);
+    EXPECT_TRUE(_state[Action::Ui_Left]);
+    EXPECT_FALSE(_state[Action::Ui_Down]);
+    EXPECT_FALSE(_state[Action::Ui_Right]);
   }
 
   TEST_F(InputStateTest, KeepsAnActionThatIsSetTwice)
   {
-    _state.SetAction(Action::L_Up);
-    _state.SetAction(Action::L_Up);
+    _state.SetAction(Action::Ui_Up);
+    _state.SetAction(Action::Ui_Up);
 
-    EXPECT_TRUE(_state[Action::L_Up]);
+    EXPECT_TRUE(_state[Action::Ui_Up]);
   }
 
   TEST_F(InputStateTest, ResetReleasesEveryAction)
@@ -148,7 +140,7 @@ namespace
 
   TEST_F(InputStateTest, IsCopiedWithWhatItHolds)
   {
-    _state.SetAction(Action::R_Up);
+    _state.SetAction(Action::Ui_Accept);
     _state.SetAxisMotion(Axis::Mouse, 4.0, 5.0);
     _state.SetPointer(640.0, 360.0);
 
@@ -156,7 +148,7 @@ namespace
     _state.Reset();
     _state.ClearPointer();
 
-    EXPECT_TRUE(copy[Action::R_Up]);
+    EXPECT_TRUE(copy[Action::Ui_Accept]);
     EXPECT_TRUE(copy[Action::Mouse]);
     EXPECT_EQ(copy[Axis::Mouse].x, 4.0);
     EXPECT_TRUE(copy.HasPointer());
@@ -297,18 +289,18 @@ namespace
 
   TEST_F(InputStateTest, TakesTheKeyboardAwayAndLeavesWhatElseHoldsAnAction)
   {
-    _state.SetKeyboardAction(Action::L_Up);
+    _state.SetKeyboardAction(Action::Ui_Up);
     _state.SetKeyboardAction(Action::Ui_Accept);
     _state.SetAction(Action::Ui_Accept);
     _state.SetAction(Action::Pointer_Primary);
     _state.AddKeyEvent({Key::A, true, false, {}});
     _state.AddText("w");
 
-    EXPECT_TRUE(_state[Action::L_Up]);
+    EXPECT_TRUE(_state[Action::Ui_Up]);
 
     _state.ClearKeyboard();
 
-    EXPECT_FALSE(_state[Action::L_Up]);
+    EXPECT_FALSE(_state[Action::Ui_Up]);
     EXPECT_TRUE(_state[Action::Ui_Accept]);
     EXPECT_TRUE(_state[Action::Pointer_Primary]);
     EXPECT_TRUE(_state.GetKeyEvents().empty());

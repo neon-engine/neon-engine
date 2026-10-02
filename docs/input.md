@@ -50,7 +50,7 @@ An action has:
 | Name | Holds | For |
 |---|---|---|
 | `type` | `button`: down or not. `axis`: one number, from -1 to 1, or 0 to 1 from a trigger. `axis2`: two numbers, x to the right and y forward. `axis3`: three numbers from a motion sensor, about x, y, and z | All. Required |
-| `keys` | Keys, by the names below. A button is down while any of them is. An axis takes exactly two: positive, negative. An axis2 exactly four: up, down, left, right | All |
+| `keys` | Keys, by the names below, each one key or a chord of keys held together, `[left-shift, w]`. A button is down while any of them is. An axis takes exactly two: positive, negative. An axis2 exactly four: up, down, left, right | All |
 | `buttons` | Buttons of a controller, in the same way | All |
 | `mouse` | A button of the mouse for a button: `left`, `right`, `middle`. `motion` for an axis2: the mouse moves it, in pixels | A button, an axis2 |
 | `stick` | `left` or `right`: the stick moves the axis2, from -1 to 1 | An axis2 |
@@ -58,6 +58,8 @@ An action has:
 | `sensor` | `gyro` or `accelerometer`: a motion sensor of the controller, the one source of an axis3 | An axis3. Required there |
 | `enabled` | `true` turns the sensor on when the map loads, for a game that wants it from the start. A sensor is off otherwise, until the player turns it on | An axis3 |
 | `rate` | How much a stick or a trigger pulled all the way counts per second, in the unit the mouse gives, pixels. Without it the raw value from -1 to 1 is taken, which is right for walking and wrong for turning. On an axis3 it scales what the sensor gives | An axis, an axis2, an axis3 |
+| `dead_zone` | How far the stick or the trigger goes before it counts, from 0 to below 1. Left out, a quarter of the way, `0.25f`, where a stick rests; `0` takes the device as it is | An axis, an axis2 |
+| `curve` | How the stick or the trigger answers past the dead zone: `linear`, or a power above 0 that the value is raised to. `2` is gentle near the middle and quick at the end. Left out, linear | An axis, an axis2 |
 
 An action without a binding is allowed: it never fires until a player binds
 it, see [the open questions](#open-questions). A name that is not known is an
@@ -65,9 +67,11 @@ error, as in a scene file, and so is a key, a button, or a stick that is not
 known, an action a state names that there is not, a binding on a type it is
 not for (`stick` on a button, `trigger` on an axis2, `mouse` on an axis,
 `rate` on a button, `sensor` or `enabled` on anything but an axis3, keys or
-buttons on an axis3), an axis3 without a sensor, a rate that is not above
-zero, and an axis with other than two keys or an axis2 with other than
-four. Every problem is
+buttons on an axis3, `dead_zone` or `curve` on a button or an axis3), an
+axis3 without a sensor, a rate that is not above zero, a dead zone that is
+not from 0 to below 1, a curve that is neither `linear` nor a power above 0,
+and an axis with other than two keys or an axis2 with other than four. Every
+problem is
 reported with its line, not only the first, and the runtime stops before
 anything else starts.
 
@@ -91,6 +95,26 @@ backend. Only `neon-sdl2` knows what SDL calls them.
 | Sticks | `left`, `right` |
 | Triggers, as analog | `left`, `right`, under `trigger` |
 | Motion sensors | `gyro`, `accelerometer`, under `sensor` |
+
+### Chords
+
+A binding that is a list of names is a **chord**: its keys, or its buttons,
+have to be held together, and the chord is down while every one of them is.
+`[left-shift, w]` is shift with W, `[left-shoulder, south]` the shoulder with
+the lower face button. A chord stands in any place a key does, so an axis
+takes two of them and an axis2 four: `keys: [[left-shift, w], s, a, d]` is an
+axis2 that goes forward only with shift. A chord does not take the key away
+from a plain binding: with `jump` on `space` and `sprint-jump` on
+`[left-shift, space]`, both are down while shift and space are. The order in
+a chord does not matter, and an empty chord is an error, as is a list inside
+one.
+
+```yaml
+actions:
+  jump:        { type: button, keys: [space] }
+  sprint-jump: { type: button, keys: [[left-shift, space]], buttons: [[left-shoulder, south]] }
+  lean:        { type: axis, keys: [[left-shift, d], [left-shift, a]] }
+```
 
 A key is bound **by where it is**, as on a keyboard of the US layout: `w` is
 the key above `s` on every layout, so a game that is played with W, A, S, and
@@ -121,6 +145,31 @@ second the negative one, and a trigger gives how far it is pulled, from 0 to
 1, at `rate` pixels a second when it has one. The largest of them wins when
 several are used at once, so a key pressed all the way beats a trigger half
 pulled, whichever way it goes.
+
+### Dead zones and curves
+
+A stick is never quite in the middle when it rests, and a trigger not
+always at zero, so the backends hand them over as they are and the map
+shapes them, per action. `dead_zone` is how far the device goes before it
+counts, and what is past it is stretched so that the end is still 1: with
+the quarter that is taken off when nothing is said, a stick pushed half way
+reads a third, and one pushed all the way reads 1. A stick's dead zone is
+round, by how far the stick is from the middle, so that a push aslant goes
+through it as a push straight ahead does; the corner is cut down to 1 in
+each direction after, as a stick on top of keys is. `curve` raises what is
+stretched to a power: `linear`
+is the value as it is, `2` makes the stick gentle near the middle and quick
+at the end, for a view that is too lively around rest. Keys, buttons, and
+the mouse are not shaped; they have no middle to rest off. The user
+interface, which scrolls with the right stick as a device, keeps a rest zone
+of its own.
+
+```yaml
+actions:
+  move: { type: axis2, keys: [w, s, a, d], stick: left, dead_zone: 0.2 }
+  look: { type: axis2, mouse: motion, stick: right, rate: 600, curve: 2 }
+  gas:  { type: axis, trigger: right, dead_zone: 0.05, curve: linear }
+```
 
 An axis3 is what a motion sensor of the controller gives, about or along
 its three axes, which are SDL's: x to the right, y up, z toward the player
@@ -226,31 +275,43 @@ The `playing` state of the default map has `move`, `look`, `jump`, `run`, and
 
 `Ui_Up` to `Ui_Cancel` and `Pointer_Primary` stay fixed actions of the user
 interface: they are the engine's, not the game's, and every project moves
-through a menu the same way. `L_*` and `R_*` are still set by the backends
-while tests read them, and go when they do.
+through a menu the same way. `L_*` and `R_*` are gone (#203): nothing of the
+engine read them, and the tests that did set keys and buttons instead.
 
 ## Scripts
 
 A script of a run without a window holds an action by its name, `hold jump`,
-as it holds `ui-accept`, and a key by where it is, `hold-key w 15`. A hold of
-an action the map does not have is refused before the run starts, with the
-names the map has, and so is a hold of an axis: its keys are held with
-`hold-key`. `down`, `up`, and `click` are the left button of the mouse as well
-as the button of the pointer, so that `shoot` fires from a script. See
+as it holds `ui-accept`, a key by where it is, `hold-key w 15`, and a button
+of a controller by its name, `hold-button south`. It pushes the sticks:
+`stick X Y` the right one and `left-stick X Y` the left one, from -1 to 1,
+to the right and down as the backends give them, and the map shapes them as
+it shapes a controller's. A hold of an action the map does not have is
+refused before the run starts, with the names the map has, and so is a hold
+of an axis: its keys are held with `hold-key`, its buttons with
+`hold-button`, and its stick is pushed. `down`, `up`, and `click` are the
+left button of the mouse as well as the button of the pointer, so that
+`shoot` fires from a script. See
 [development.md](development.md#running-without-a-window).
+
+```
+1: left-stick 0 -1 30      # walks ahead for half a second
+10: hold-button south      # and jumps
+20: hold-key w 5; left-stick 0.5 0 5
+```
 
 ## How it is built
 
 | Piece | Location | Role |
 |---|---|---|
 | `Key`, `MouseButton`, `ControllerButton`, `Stick`, `ControllerTrigger`, `Sensor` | neon-core, `neon/input/` | The devices by their names, with `NameOf` and the way back |
+| `Chord` | neon-core, `neon/input/chord.hpp` | A key or a button, or several held together, which is what a binding holds |
 | `InputState` | neon-core, `neon/input/input-state.hpp` | The devices of a frame as they are: the keys that are down, the buttons, both sticks, both triggers, the sensors that are on, the time of the frame, and the actions a script holds by name |
 | `InputAction`, `InputMapState`, `InputMap` | neon-core, `neon/input/` | What the file holds, as values, and `InputMap::Default()` |
 | `InputMapFile` | neon-core, `neon/input/input-map-file.hpp` | Reads the file through the file system and a `DocumentFormat`, checks it, and collects every problem |
 | `InputActions` | neon-core, `neon/input/input-actions.hpp` | Works the actions out once a frame from the map, the state, and an `InputState` |
 | `InputContext` | neon-core, `neon/input/input-context.hpp` | The calls above, which `InputSystem`, `UiInputGate`, and the fakes implement |
 | `InputSystem` | neon-core, `neon/input/input-system.hpp` | Holds the map, the state, and which sensors are on for the backends, which call `RefreshActions()` at the end of a frame with the time it stands for: the window's for SDL2, the time step for headless. `OnSensorEnabled()` tells a backend to ask the controller |
-| `SDL2_InputSystem`, `Headless_InputSystem` | neon-sdl2, neon-core | Read the devices, or a script, into the `InputState`. Only the first knows SDL's names |
+| `SDL2_InputSystem`, `Headless_InputSystem` | neon-sdl2, neon-core | Read the devices, or a script, into the `InputState`, the sticks and the triggers as they are. Only the first knows SDL's names |
 | `main.cpp` | NeonRuntime | Reads the map the project names and gives it to the input system before the script is checked, then applies the player's `input.gyro` |
 
 The tests of the reader are in `tests/input-maps`, with the map of the
@@ -265,14 +326,7 @@ outside the state does not fire, an axis is put together from four keys.
   written to `user://input.yml` on top of the project's map, as settings are
   layered ([settings.md](settings.md)), and `DocumentFormat::Write` is needed
   for it. An action without bindings in the project's map is there for that.
-- **Chords**: `shift` with a key, two buttons together. The map has one key
-  per binding today; a chord would be a list in place of a name.
-- **Dead zones and curves**: the SDL backend has one dead zone for both
-  sticks. A map could say its own per axis, and a curve for a stick that is
-  too quick near the middle.
 - **A sensor in a script**: `SetSensor()` of the headless input has no line
   of the script yet, so a run without a window cannot feed a gyro.
 - **Several controllers**: the first one plugged in is read. Local play with
   two needs a device in the binding, or a map per player.
-- **The old fixed actions**: `Action::L_*` and `R_*` are set by the backends
-  and read only by tests. They go once the tests set keys instead.

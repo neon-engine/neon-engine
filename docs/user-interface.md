@@ -1206,7 +1206,7 @@ monitor, look at Unlock, press.
 | The wheel, and two fingers on a trackpad | A notch is 60 units. A trackpad gives its own distance |
 | Dragging the thumb of the scrollbar, and pressing its track | The thumb follows the pointer. The track moves a page |
 | Arrow keys, page up and down, home and end, while nothing that takes them has the focus | 40 units, nine tenths of the box, and the ends |
-| The right stick of a controller | 1200 units a second at full deflection |
+| The right stick of a controller | 1200 units a second at full deflection. Within a quarter of the way the stick is at rest and nothing scrolls, since the backends hand it over as it is |
 | Dragging what is inside, with `scroll_drag: auto` or `inertia` | After the pointer moved 6 units. When let go it runs on and slows down |
 | The focus moving to what is out of sight | What has the focus is brought into view |
 | The game | `SetScroll()`, `GetScroll()`, `ScrollIntoView()` |

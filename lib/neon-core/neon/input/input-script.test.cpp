@@ -221,6 +221,30 @@ namespace
         "and a number of frames after it or nothing"));
   }
 
+  TEST_F(InputScriptTest, HoldsAButtonOfAControllerByItsName)
+  {
+    Read("2: hold-button south 3\n2: hold-button left-shoulder");
+
+    EXPECT_FALSE(Frame(1).IsControllerButtonDown(neon::ControllerButton::South));
+    EXPECT_TRUE(Frame(2).IsControllerButtonDown(neon::ControllerButton::South));
+    EXPECT_TRUE(Frame(2).IsControllerButtonDown(neon::ControllerButton::LeftShoulder));
+    EXPECT_TRUE(Frame(4).IsControllerButtonDown(neon::ControllerButton::South));
+    EXPECT_FALSE(Frame(4).IsControllerButtonDown(neon::ControllerButton::LeftShoulder));
+    EXPECT_FALSE(Frame(5).IsControllerButtonDown(neon::ControllerButton::South));
+    EXPECT_EQ(_script.GetLastFrame(), 4u);
+  }
+
+  TEST_F(InputScriptTest, RefusesAButtonThatIsNotKnownToHold)
+  {
+    EXPECT_THAT(
+      ProblemsOf("1: hold-button a\n2: hold-button south soon"),
+      ElementsAre(
+        "script:1: 'hold-button' is followed by 'a', where the name of a button of a controller was expected, such "
+        "as south or left-shoulder, and a number of frames after it or nothing",
+        "script:2: 'hold-button' is followed by 'south soon', where the name of a button of a controller was "
+        "expected, such as south or left-shoulder, and a number of frames after it or nothing"));
+  }
+
   TEST_F(InputScriptTest, HoldsTheLeftButtonOfTheMouseWhileThePointerIsDown)
   {
     Read("1: down\n3: up");
@@ -251,6 +275,32 @@ namespace
     EXPECT_EQ(Frame(1).GetRightStick().y, 1.0);
     EXPECT_EQ(Frame(2).GetRightStick().y, 1.0);
     EXPECT_EQ(Frame(3).GetRightStick().y, 0.0);
+  }
+
+  TEST_F(InputScriptTest, PushesTheLeftStickApartFromTheRightOne)
+  {
+    Read("1: left-stick 0.5 -1 2\n2: stick 1 0");
+
+    EXPECT_EQ(Frame(1).GetLeftStick().x, 0.5);
+    EXPECT_EQ(Frame(1).GetLeftStick().y, -1.0);
+    EXPECT_EQ(Frame(1).GetRightStick().x, 0.0);
+
+    EXPECT_EQ(Frame(2).GetLeftStick().y, -1.0);
+    EXPECT_EQ(Frame(2).GetRightStick().x, 1.0);
+
+    EXPECT_EQ(Frame(3).GetLeftStick().x, 0.0);
+    EXPECT_EQ(Frame(3).GetLeftStick().y, 0.0);
+    EXPECT_EQ(Frame(3).GetRightStick().x, 0.0);
+    EXPECT_EQ(_script.GetLastFrame(), 2u);
+  }
+
+  TEST_F(InputScriptTest, RefusesALeftStickWithoutTwoNumbers)
+  {
+    EXPECT_EQ(
+      ProblemsOf("1: left-stick up"),
+      std::vector<std::string>{
+        "script:1: 'left-stick' is followed by 'up', where two numbers from -1 to 1 were expected, and a number of "
+        "frames after them or nothing"});
   }
 
   TEST_F(InputScriptTest, SaysWhichDeviceIsUsedFromAFrameOn)
@@ -327,7 +377,7 @@ namespace
       ElementsAre(
         "script:1: 'pointer' is followed by 'here', where two numbers or none was expected",
         "script:2: 'jump' is not known. Known are: pointer, down, up, click, key, text, compose, wheel, hold, "
-        "hold-key, stick, device, look",
+        "hold-key, hold-button, stick, left-stick, device, look",
         "script:4: the frame is '0', where a whole number above 0 was expected",
         "script:5: 'key' is followed by 'f13', where the name of a key was expected, such as left, enter, or a",
         "script:6: 'hyper' is held with the key, where shift, control, alt, super, shortcut, or word was "
@@ -339,6 +389,29 @@ namespace
         "script:9: 'click' is followed by 'twice', where nothing was expected",
         "script:10: 'stick' is followed by '1', where two numbers from -1 to 1 were expected, and a number of "
         "frames after them or nothing"));
+  }
+
+  TEST_F(InputScriptTest, MovesAndJumpsThroughTheInputMapWithoutDevices)
+  {
+    // the default map: `move` on the left stick, `jump` on south. The stick
+    // is pushed past the dead zone of the map
+    Read("1: left-stick 0 -1 2\n2: hold-button south");
+
+    Headless_InputSystem input(SettingsConfig{}, _logger);
+    std::vector<std::string> errors;
+    ASSERT_TRUE(input.SetScript(_script, errors)) << ::testing::PrintToString(errors);
+
+    input.ProcessInput();
+    EXPECT_EQ(input.ActionAxis("move"), glm::vec2(0.0f, 1.0f));
+    EXPECT_FALSE(input.IsActionDown("jump"));
+
+    input.ProcessInput();
+    EXPECT_EQ(input.ActionAxis("move"), glm::vec2(0.0f, 1.0f));
+    EXPECT_TRUE(input.WasActionPressed("jump"));
+
+    input.ProcessInput();
+    EXPECT_EQ(input.ActionAxis("move"), glm::vec2(0.0f, 0.0f));
+    EXPECT_FALSE(input.IsActionDown("jump"));
   }
 
   TEST_F(InputScriptTest, IsFollowedByTheInputSystemWithoutDevices)

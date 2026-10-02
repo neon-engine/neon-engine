@@ -18,21 +18,10 @@ namespace neon
   /// What the devices are fixed to, which the user interface and the pointer
   /// read. What a game reads is named by its input map instead, see
   /// InputMap and InputActions, which take the keys, the buttons, and the
-  /// sticks below. L_* and R_* are the fixed map of before an input map
-  /// could say, and are kept while they have readers.
+  /// sticks below.
   enum class Action
   {
-    L_Up,
-    L_Right,
-    L_Down,
-    L_Left,
-
-    R_Up,
-    R_Right,
-    R_Down,
-    R_Left,
-
-    Mouse,
+    Mouse = 0,
 
     /// Moving through a user interface and choosing in it, with the keys
     /// or a controller.

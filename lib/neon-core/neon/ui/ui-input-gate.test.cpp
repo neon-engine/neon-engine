@@ -12,6 +12,8 @@ namespace
 {
   using neon::Action;
   using neon::Axis;
+  using neon::ControllerButton;
+  using neon::Key;
   using neon::UiConsumed;
   using neon::UiInputGate;
   using neon::testing::FakeInputContext;
@@ -34,6 +36,7 @@ namespace
       }
       _input.state.SetAxisMotion(Axis::Mouse, 3, 4);
       _input.state.SetPointer(640, 360);
+      _input.state.SetKeyDown(Key::W);
     }
   };
 
@@ -75,7 +78,7 @@ namespace
 
     // turning the view and everything else is left
     EXPECT_TRUE(state[Action::Mouse]);
-    EXPECT_TRUE(state[Action::L_Up]);
+    EXPECT_TRUE(state.IsKeyDown(Key::W));
     EXPECT_TRUE(state[Action::Ui_Accept]);
   }
 
@@ -93,13 +96,11 @@ namespace
       EXPECT_FALSE(state[action]) << static_cast<int>(action);
     }
 
-    for (const Action action : {
-           Action::L_Up, Action::L_Right, Action::L_Down, Action::L_Left, Action::R_Up, Action::R_Right,
-           Action::R_Down, Action::R_Left, Action::Mouse, Action::Pointer_Primary
-         })
+    for (const Action action : {Action::Mouse, Action::Pointer_Primary})
     {
       EXPECT_TRUE(state[action]) << static_cast<int>(action);
     }
+    EXPECT_TRUE(state.IsKeyDown(Key::W));
     EXPECT_TRUE(state.HasPointer());
   }
 
@@ -121,7 +122,7 @@ namespace
     _gate.Refresh({.everything = true});
 
     EXPECT_TRUE(_input.state[Action::Pointer_Primary]);
-    EXPECT_TRUE(_input.state[Action::L_Up]);
+    EXPECT_TRUE(_input.state.IsKeyDown(Key::W));
     EXPECT_TRUE(_input.state.HasPointer());
   }
 
@@ -131,11 +132,11 @@ namespace
     _gate.Refresh({.everything = true});
 
     _input.state.Reset();
-    _input.state.SetAction(Action::L_Left);
+    _input.state.SetKeyDown(Key::A);
     _gate.Refresh({});
 
-    EXPECT_TRUE(_gate.GetInputState()[Action::L_Left]);
-    EXPECT_FALSE(_gate.GetInputState()[Action::L_Up]);
+    EXPECT_TRUE(_gate.GetInputState().IsKeyDown(Key::A));
+    EXPECT_FALSE(_gate.GetInputState().IsKeyDown(Key::W));
     EXPECT_TRUE(_gate.GetInputState().HasPointer());
   }
 
@@ -224,33 +225,35 @@ namespace
 
   TEST_F(UiInputGateTest, TakesTheKeyboardAwayWhileATextIsTyped)
   {
-    _input.state.SetKeyboardAction(Action::L_Up);
+    _input.state.SetKeyDown(Key::W);
     _input.state.SetKeyboardAction(Action::Ui_Cancel);
-    _input.state.SetAction(Action::L_Left);
+    _input.state.SetControllerButtonDown(ControllerButton::South);
+    _input.state.SetLeftStick(0.0, -1.0);
     _input.state.AddKeyEvent({Key::Backspace, true, false, {}});
     _input.state.AddText("w");
 
     _gate.Refresh({.keyboard = true});
 
     const auto &state = _gate.GetInputState();
-    EXPECT_FALSE(state[Action::L_Up]);
+    EXPECT_FALSE(state.IsKeyDown(Key::W));
     EXPECT_FALSE(state[Action::Ui_Cancel]);
     EXPECT_TRUE(state.GetKeyEvents().empty());
     EXPECT_TRUE(state.GetText().empty());
 
     // a controller still moves
-    EXPECT_TRUE(state[Action::L_Left]);
+    EXPECT_TRUE(state.IsControllerButtonDown(ControllerButton::South));
+    EXPECT_EQ(state.GetLeftStick().y, -1.0);
   }
 
   TEST_F(UiInputGateTest, HandsTheKeyboardOnWhenNoTextIsTyped)
   {
-    _input.state.SetKeyboardAction(Action::L_Up);
+    _input.state.SetKeyDown(Key::W);
     _input.state.AddKeyEvent({Key::A, true, false, {}});
     _input.state.AddText("a");
 
     _gate.Refresh({});
 
-    EXPECT_TRUE(_gate.GetInputState()[Action::L_Up]);
+    EXPECT_TRUE(_gate.GetInputState().IsKeyDown(Key::W));
     EXPECT_EQ(_gate.GetInputState().GetKeyEvents().size(), 1u);
     EXPECT_EQ(_gate.GetInputState().GetText(), "a");
   }

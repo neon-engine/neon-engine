@@ -899,6 +899,22 @@ namespace
     EXPECT_FLOAT_EQ(ScrollY(), 120.0f);
   }
 
+  TEST_F(UiScrollingTest, DoesNotScrollWithAStickThatRestsOffTheMiddle)
+  {
+    ShowList(100);
+    ASSERT_TRUE(_ui->Focus("row-0"));
+    Frame();
+
+    // the stick comes as it is, and rests a little off the middle; that is
+    // not a scroll, and it is not taken from the game either
+    Release();
+    _input.state.SetRightStick(0.1, 0.2);
+    _ui->Advance(0.1);
+    Frame();
+    EXPECT_FLOAT_EQ(ScrollY(), 0.0f);
+    EXPECT_EQ(_ui->GetGameInput()->GetInputState().GetRightStick().y, 0.2);
+  }
+
   TEST_F(UiScrollingTest, KeepsTheStickFromTheGameWhileItScrolls)
   {
     ShowList(100);

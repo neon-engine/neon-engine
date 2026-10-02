@@ -43,7 +43,8 @@ namespace neon
       } else if (!action->IsButton())
       {
         errors.push_back(std::format(
-          "'hold {}' names an axis, and only a button is held. The keys of the axis are held with hold-key",
+          "'hold {}' names an axis, and only a button is held. The keys of the axis are held with hold-key, its "
+          "buttons with hold-button, and its stick is pushed with stick or left-stick",
           step.action_name));
       }
     }

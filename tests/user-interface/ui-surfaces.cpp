@@ -803,10 +803,10 @@ namespace
       "  text: Resume\n");
     ASSERT_GE(_ui->LoadOnto(surface, "assets://ui/menu.ui.yml"), 0);
 
-    _input.state.SetAction(Action::L_Up);
+    _input.state.SetKeyDown(neon::Key::W);
     Frame();
 
-    EXPECT_TRUE(_ui->GetGameInput()->GetInputState()[Action::L_Up]);
+    EXPECT_TRUE(_ui->GetGameInput()->GetInputState().IsKeyDown(neon::Key::W));
   }
 
   // keys and controller

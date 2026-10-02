@@ -29,19 +29,51 @@ namespace
   InputMap WalkingAndDriving()
   {
     InputMap map;
-    map.Add({.name = "move", .type = InputActionType::Axis2, .keys = {Key::W, Key::S, Key::A, Key::D}, .stick = Stick::Left});
-    map.Add({.name = "look", .type = InputActionType::Axis2, .mouse_motion = true, .stick = Stick::Right});
+    // the sticks and the triggers of these are taken as they are; `walk`,
+    // `swim`, and `gas` have a dead zone and a curve
+    map.Add({
+      .name = "move",
+      .type = InputActionType::Axis2,
+      .keys = {Key::W, Key::S, Key::A, Key::D},
+      .stick = Stick::Left,
+      .dead_zone = 0.0f
+    });
+    map.Add({.name = "look", .type = InputActionType::Axis2, .mouse_motion = true, .stick = Stick::Right, .dead_zone = 0.0f});
     map.Add({.name = "jump", .keys = {Key::Space}, .buttons = {ControllerButton::South}});
     map.Add({.name = "honk", .keys = {Key::H}, .mouse_button = MouseButton::Right});
     map.Add({.name = "pause", .keys = {Key::Escape}, .buttons = {ControllerButton::Start}});
-    map.Add({.name = "turn", .type = InputActionType::Axis2, .stick = Stick::Right, .rate = 600.0f});
-    map.Add({.name = "throttle", .type = InputActionType::Axis, .keys = {Key::W, Key::S}, .trigger = ControllerTrigger::Right});
+    map.Add({
+      .name = "sprint-jump",
+      .keys = {{Key::LeftShift, Key::Space}},
+      .buttons = {{ControllerButton::LeftShoulder, ControllerButton::South}}
+    });
+    map.Add({
+      .name = "lean",
+      .type = InputActionType::Axis,
+      .keys = {{Key::LeftShift, Key::D}, {Key::LeftShift, Key::A}}
+    });
+    map.Add({
+      .name = "crawl",
+      .type = InputActionType::Axis2,
+      .keys = {{Key::LeftControl, Key::W}, {Key::LeftControl, Key::S}, {Key::LeftControl, Key::A}, {Key::LeftControl, Key::D}}
+    });
+    map.Add({.name = "turn", .type = InputActionType::Axis2, .stick = Stick::Right, .rate = 600.0f, .dead_zone = 0.0f});
+    map.Add({
+      .name = "throttle",
+      .type = InputActionType::Axis,
+      .keys = {Key::W, Key::S},
+      .trigger = ControllerTrigger::Right,
+      .dead_zone = 0.0f
+    });
     map.Add({
       .name = "gear",
       .type = InputActionType::Axis,
       .buttons = {ControllerButton::RightShoulder, ControllerButton::LeftShoulder}
     });
-    map.Add({.name = "brake", .type = InputActionType::Axis, .trigger = ControllerTrigger::Left, .rate = 10.0f});
+    map.Add({.name = "brake", .type = InputActionType::Axis, .trigger = ControllerTrigger::Left, .rate = 10.0f, .dead_zone = 0.0f});
+    map.Add({.name = "walk", .type = InputActionType::Axis2, .stick = Stick::Left});
+    map.Add({.name = "swim", .type = InputActionType::Axis2, .stick = Stick::Left, .dead_zone = 0.5f, .curve = 2.0f});
+    map.Add({.name = "gas", .type = InputActionType::Axis, .trigger = ControllerTrigger::Right, .dead_zone = 0.2f, .curve = 2.0f});
     map.Add({.name = "aim", .type = InputActionType::Axis3, .sensor = Sensor::Gyro});
     map.Add({.name = "tilt", .type = InputActionType::Axis3, .sensor = Sensor::Accelerometer, .rate = 0.5f});
     map.Add({
@@ -49,8 +81,11 @@ namespace
       .type = InputActionType::Axis2,
       .buttons = {ControllerButton::DpadUp, ControllerButton::DpadDown, ControllerButton::DpadLeft, ControllerButton::DpadRight}
     });
-    map.Add(InputMapState{.name = "walking", .actions = {"move", "look", "jump", "pause", "dpad", "turn", "aim", "tilt"}});
-    map.Add(InputMapState{.name = "driving", .actions = {"move", "honk", "pause", "throttle", "gear", "brake"}});
+    map.Add(InputMapState{
+      .name = "walking",
+      .actions = {"move", "look", "jump", "pause", "dpad", "turn", "aim", "tilt", "sprint-jump", "lean", "crawl", "walk", "swim"}
+    });
+    map.Add(InputMapState{.name = "driving", .actions = {"move", "honk", "pause", "throttle", "gear", "brake", "gas"}});
     return map;
   }
 
@@ -88,6 +123,60 @@ namespace
 
     Frame();
     EXPECT_FALSE(_actions.IsDown("jump"));
+  }
+
+  TEST_F(InputActionsTest, HoldsAButtonFromAChordOnlyWhileEveryKeyOfItIs)
+  {
+    _input.SetKeyDown(Key::Space);
+    Frame();
+    EXPECT_TRUE(_actions.IsDown("jump"));
+    EXPECT_FALSE(_actions.IsDown("sprint-jump")) << "shift is not held";
+
+    _input.SetKeyDown(Key::LeftShift);
+    _input.SetKeyDown(Key::Space);
+    Frame();
+    EXPECT_TRUE(_actions.IsDown("sprint-jump"));
+    EXPECT_TRUE(_actions.IsDown("jump")) << "a chord does not take the key away from a plain binding";
+
+    _input.SetKeyDown(Key::LeftShift);
+    Frame();
+    EXPECT_FALSE(_actions.IsDown("sprint-jump"));
+  }
+
+  TEST_F(InputActionsTest, HoldsAButtonFromAChordOfButtonsOfAController)
+  {
+    _input.SetControllerButtonDown(ControllerButton::South);
+    Frame();
+    EXPECT_FALSE(_actions.IsDown("sprint-jump"));
+
+    _input.SetControllerButtonDown(ControllerButton::South);
+    _input.SetControllerButtonDown(ControllerButton::LeftShoulder);
+    Frame();
+    EXPECT_TRUE(_actions.IsDown("sprint-jump"));
+  }
+
+  TEST_F(InputActionsTest, PutsAnAxisTogetherFromChords)
+  {
+    _input.SetKeyDown(Key::D);
+    Frame();
+    EXPECT_FLOAT_EQ(_actions.GetAmount("lean"), 0.0f) << "d alone is not the chord";
+
+    _input.SetKeyDown(Key::LeftShift);
+    _input.SetKeyDown(Key::D);
+    Frame();
+    EXPECT_FLOAT_EQ(_actions.GetAmount("lean"), 1.0f);
+
+    _input.SetKeyDown(Key::LeftShift);
+    _input.SetKeyDown(Key::A);
+    Frame();
+    EXPECT_FLOAT_EQ(_actions.GetAmount("lean"), -1.0f);
+
+    _input.SetKeyDown(Key::LeftControl);
+    _input.SetKeyDown(Key::W);
+    _input.SetKeyDown(Key::D);
+    Frame();
+    EXPECT_EQ(_actions.GetAxis("crawl"), glm::vec2(1.0f, 1.0f));
+    EXPECT_EQ(_actions.GetAxis("move"), glm::vec2(1.0f, 1.0f)) << "the plain keys still move";
   }
 
   TEST_F(InputActionsTest, HoldsAButtonFromAButtonOfTheMouse)
@@ -207,6 +296,74 @@ namespace
     _input.SetFrameTime(0.0);
     Frame();
     EXPECT_EQ(_actions.GetAxis("turn"), glm::vec2(0.0f, 0.0f));
+  }
+
+  TEST_F(InputActionsTest, TakesNothingFromAStickInsideTheDeadZoneAndStretchesWhatIsPastIt)
+  {
+    // a quarter of the way unless the map says, round, so that aslant is
+    // the same as straight
+    _input.SetLeftStick(0.2, 0.1);
+    Frame();
+    EXPECT_EQ(_actions.GetAxis("walk"), glm::vec2(0.0f, 0.0f));
+    EXPECT_FALSE(_actions.IsDown("walk"));
+
+    _input.SetLeftStick(0.25, 0.0);
+    Frame();
+    EXPECT_EQ(_actions.GetAxis("walk"), glm::vec2(0.0f, 0.0f)) << "the edge of the zone is still inside";
+
+    // half way is a third of what is past the zone, and all the way is one
+    _input.SetLeftStick(0.5, 0.0);
+    Frame();
+    EXPECT_NEAR(_actions.GetAxis("walk").x, 1.0f / 3.0f, 0.0001f);
+
+    _input.SetLeftStick(0.0, -1.0);
+    Frame();
+    EXPECT_FLOAT_EQ(_actions.GetAxis("walk").y, 1.0f);
+
+    // the corner is further than one, and is cut to one in each, as a stick
+    // on top of keys is
+    _input.SetLeftStick(1.0, 1.0);
+    Frame();
+    EXPECT_EQ(_actions.GetAxis("walk"), glm::vec2(1.0f, -1.0f));
+  }
+
+  TEST_F(InputActionsTest, ShapesAStickByItsOwnDeadZoneAndCurve)
+  {
+    // half the way is the edge of the zone, three quarters is half of what
+    // is past it, and the curve squares that
+    _input.SetLeftStick(0.5, 0.0);
+    Frame();
+    EXPECT_EQ(_actions.GetAxis("swim"), glm::vec2(0.0f, 0.0f));
+
+    _input.SetLeftStick(0.75, 0.0);
+    Frame();
+    EXPECT_FLOAT_EQ(_actions.GetAxis("swim").x, 0.25f);
+
+    _input.SetLeftStick(1.0, 0.0);
+    Frame();
+    EXPECT_FLOAT_EQ(_actions.GetAxis("swim").x, 1.0f);
+
+    // a dead zone of nothing takes the stick as it is
+    _input.SetLeftStick(0.1, 0.0);
+    Frame();
+    EXPECT_FLOAT_EQ(_actions.GetAxis("move").x, 0.1f);
+  }
+
+  TEST_F(InputActionsTest, ShapesATriggerByItsDeadZoneAndCurve)
+  {
+    _input.SetTrigger(ControllerTrigger::Right, 0.2);
+    Frame("driving");
+    EXPECT_FLOAT_EQ(_actions.GetAmount("gas"), 0.0f);
+    EXPECT_FALSE(_actions.IsDown("gas"));
+
+    // six tenths is half of what is past the zone, squared
+    _input.SetTrigger(ControllerTrigger::Right, 0.6);
+    Frame("driving");
+    EXPECT_FLOAT_EQ(_actions.GetAmount("gas"), 0.25f);
+
+    _input.SetTrigger(ControllerTrigger::Right, 1.0);
+    Frame("driving");
+    EXPECT_FLOAT_EQ(_actions.GetAmount("gas"), 1.0f);
   }
 
   TEST_F(InputActionsTest, TakesAnAmountFromTwoKeys)

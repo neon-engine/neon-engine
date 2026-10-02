@@ -23,6 +23,9 @@ namespace neon
     // for each second
     constexpr float stick_speed = 1200.0f;
 
+    // the stick is handed over as it is, and rests a little off the middle
+    constexpr double stick_rest = 0.25;
+
     // seconds that scrolling to a place takes
     constexpr float move_time = 0.25f;
 
@@ -381,7 +384,7 @@ namespace neon
   void Tree_UiSystem::ScrollWithStick(const InputState &input, const float seconds, UiConsumed &consumed)
   {
     const AxisState &stick = input.GetRightStick();
-    if (stick.x == 0.0 && stick.y == 0.0) { return; }
+    if (std::abs(stick.x) < stick_rest && std::abs(stick.y) < stick_rest) { return; }
 
     // what has the focus, and without that what is under the pointer
     UiElement *from = _focused;

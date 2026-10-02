@@ -216,6 +216,7 @@ add_library(${TARGET} STATIC
         neon/input/headless-input-system.hpp
 
         # input maps: the actions a project plays with
+        neon/input/chord.hpp
         neon/input/controller-button.hpp
         neon/input/input-action.hpp
         neon/input/input-actions.cpp

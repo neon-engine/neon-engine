@@ -494,7 +494,7 @@ owner to decide.
 |---|---|---|
 | Constants | `snake_case`: `assets_scheme`, `user_scheme`, `frame_time`, `forbidden_characters`, `help_option`, and the six names in `runtime-options.cpp` | `k` and words with underscores, 6 times: `kAction_Size`, `kAxis_Size`, `kMax_Point_Lights`, `kMax_Spot_Lights`, `kMax_Render_Objects`, `kMax_Scenes_Per_Frame`. The settings of CLion in `.idea/codeStyles` ask for this form. clang-tidy reports the six |
 | Methods | `PascalCase` | `World_Forward()` and `World_Up()` in `transform.hpp`. The settings of CLion allow it, clang-tidy accepts it |
-| Enumerators | `PascalCase` | `L_Up` and seven like it, and `COUNT` twice, in `input-state.hpp`. clang-tidy accepts both |
+| Enumerators | `PascalCase` | `Ui_Up` and six like it, and `COUNT` twice, in `input-state.hpp`. clang-tidy accepts both |
 | Prefix of a class | For a backend: `SDL2_`, `VK_` | For one of several implementations inside neon-core: `Headless_`, `Forward_`, `Spd_`. Is the underscore meant for both? |
 | Own headers in another folder | `<neon/...>`, 49 times | `"neon/..."`, 30 times, 28 of them in neon-core |
 | `*` and `&` | At the name, 521 times | At the type, 26 times: `WindowContext* _context`, `const std::string& format` |
