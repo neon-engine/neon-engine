@@ -42,15 +42,17 @@
     },
     {
       "label": "Build",
+      "detail": "Builds the chosen preset, and configures it first when its build directory has not been configured yet",
       "type": "shell",
-      "command": "cmake --build --preset ${input:preset}",
+      "command": "{ [ -f 'build/${input:preset}/CMakeCache.txt' ] || cmake --preset ${input:preset}; } && cmake --build --preset ${input:preset}",
       "group": { "kind": "build", "isDefault": true },
       "problemMatcher": ["$gcc"]
     },
     {
       "label": "Clean",
       "type": "shell",
-      "command": "cmake --build --preset ${input:preset} --target clean",
+      "detail": "Removes what the chosen preset has built, and does nothing when its build directory has not been configured yet",
+      "command": "[ ! -f 'build/${input:preset}/CMakeCache.txt' ] || cmake --build --preset ${input:preset} --target clean",
       "problemMatcher": []
     },
     {
@@ -70,7 +72,7 @@
     },
     {
       "label": "Full Clean",
-      "detail": "Deletes the build directory of the chosen preset and its binaries, so Configure has to run again",
+      "detail": "Deletes the build directory of the chosen preset and its binaries, so the next Build configures it again",
       "type": "shell",
       "command": "case '${input:preset}' in *-release) TYPE=release ;; *) TYPE=debug ;; esac; rm -rf build/${input:preset} bin/$TYPE/darwin-arm64 bin/$TYPE/linux-* bin/$TYPE/windows-*",
       "problemMatcher": []

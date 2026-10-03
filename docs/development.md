@@ -1003,8 +1003,8 @@ of each target, and defaults to the debug build of macOS.
 | Task | What it runs |
 |---|---|
 | Configure | `cmake --preset <preset>` |
-| Build | `cmake --build --preset <preset>` (default build task, Cmd+Shift+B) |
-| Clean | the preset's `clean` target |
+| Build | `cmake --build --preset <preset>` (default build task, Cmd+Shift+B). A preset that has not been configured yet is configured first, so a preset can be picked and built without running Configure |
+| Clean | the preset's `clean` target; nothing when the preset has not been configured yet |
 | Rebuild | Clean, then Build |
 | Full Clean | deletes the preset's build directory and the `bin` output of its build type |
 | Run | builds, then runs the macOS binary of the preset from its own folder without a debugger. It asks for a scene: left empty, the entry scene of the project starts; a name such as `prototype` starts `assets://scenes/prototype.scene.yml`; a virtual path is taken as it is |
