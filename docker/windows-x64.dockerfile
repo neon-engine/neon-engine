@@ -19,9 +19,12 @@ ARG LLVM_MINGW_TAG=20250709
 ARG TARGETARCH
 ENV DEBIAN_FRONTEND=noninteractive
 
+# The C headers and the runtime files of gcc let llvm-mingw's own clang
+# build for this machine too, which LuaJIT's build needs: two of its tools
+# run here while the library is cross-compiled. No second compiler.
 RUN apt-get update && apt-get install -y --no-install-recommends \
         ca-certificates curl xz-utils git \
-        cmake ninja-build make \
+        cmake ninja-build make libc6-dev libgcc-13-dev \
         glslang-tools \
     && rm -rf /var/lib/apt/lists/*
 

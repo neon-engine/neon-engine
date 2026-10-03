@@ -23,8 +23,11 @@ namespace neon
     const std::string time_step = "time-step";
     const std::string output_dir = "output-dir";
     const std::string spawn = "spawn";
+    const std::string jit = "jit";
 
     const std::string vulkan = "vulkan";
+    const std::string on = "on";
+    const std::string off = "off";
 
     const std::string development = "Development";
 
@@ -149,6 +152,15 @@ namespace neon
       .group = development
     });
 
+    command_line.Add({
+      .name = jit,
+      .value_name = "MODE",
+      .description = "Compile the scripts as they run, or run them in LuaJIT's interpreter. Over scripting.jit "
+                     "of the settings, for comparing the two",
+      .group = development,
+      .allowed_values = {on, off}
+    });
+
     // declared so that it is understood and refused with a pointer to the
     // right option, instead of being an unknown one. Applying it is for the
     // dedicated server, #144
@@ -204,6 +216,12 @@ namespace neon
     if (command_line.IsSet(spawn))
     {
       settings.spawn_path = command_line.GetValue(spawn);
+    }
+
+    // the parser only lets on and off through
+    if (command_line.IsSet(jit))
+    {
+      settings.script_jit = command_line.GetValue(jit) == on;
     }
 
     if (command_line.IsSet(frames))

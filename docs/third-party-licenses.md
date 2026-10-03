@@ -41,6 +41,7 @@ a screen in it.
 | [rapidyaml](https://github.com/biojppm/rapidyaml) | 0.8.0 | MIT | Allowed | Reading YAML |
 | [Vulkan-Headers](https://github.com/KhronosGroup/Vulkan-Headers) | 1.4.357 | Apache 2.0, or MIT | Allowed. Header only | Declarations of Vulkan |
 | [volk](https://github.com/zeux/volk) | 1.4.357 | MIT | Allowed | Finding the Vulkan library when the program starts |
+| [LuaJIT](https://github.com/LuaJIT/LuaJIT) | c6ffc14, v2.1 of 2026-09-08 | MIT | Allowed | The scripts |
 
 For GLM and stb the MIT license is the one to pick. The Happy Bunny License
 asks for something that cannot be checked, and public domain is not recognized

@@ -21,8 +21,8 @@ namespace neon
   {
     // the actions of the input map, which the project binds: `move` is to
     // the right and forward, `look` to the right and up
-    const glm::vec2 move = _input_context->ActionAxis("move");
-    const glm::vec2 look = _input_context->ActionAxis("look");
+    const glm::vec2 move = _input_context->ActionAxis2("move");
+    const glm::vec2 look = _input_context->ActionAxis2("look");
 
     store.Each(_query, [&](const EntityBlock &block)
     {

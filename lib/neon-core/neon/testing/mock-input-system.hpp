@@ -68,14 +68,14 @@ namespace neon::testing
       return actions.WasPressed(name);
     }
 
-    glm::vec2 ActionAxis(const std::string &name) override
+    glm::vec2 ActionAxis2(const std::string &name) override
     {
-      return actions.GetAxis(name);
+      return actions.GetAxis2(name);
     }
 
-    float ActionAmount(const std::string &name) override
+    float ActionAxis(const std::string &name) override
     {
-      return actions.GetAmount(name);
+      return actions.GetAxis(name);
     }
 
     glm::vec3 ActionAxis3(const std::string &name) override
@@ -132,9 +132,9 @@ namespace neon::testing
 
     MOCK_METHOD(bool, WasActionPressed, (const std::string &), (override));
 
-    MOCK_METHOD(glm::vec2, ActionAxis, (const std::string &), (override));
+    MOCK_METHOD(glm::vec2, ActionAxis2, (const std::string &), (override));
 
-    MOCK_METHOD(float, ActionAmount, (const std::string &), (override));
+    MOCK_METHOD(float, ActionAxis, (const std::string &), (override));
 
     MOCK_METHOD(glm::vec3, ActionAxis3, (const std::string &), (override));
 

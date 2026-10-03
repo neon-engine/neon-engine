@@ -1,6 +1,6 @@
 # Scripting
 
-The code of a game is written in Lua 5.4 and lives in the project, under
+The code of a game is written in Lua and lives in the project, under
 `scripts/` by convention and anywhere in fact. The engine finds the scripts
 itself, registers what they declare, and runs them next to its own systems.
 Nothing names an entry script, nothing lists the files, and nothing says
@@ -40,11 +40,11 @@ function DoorSystem:update(entity, door, dt)
 end
 
 function DoorSystem:on_trigger_enter(entity, door, other)
-  if other:has("Player") then door.open = true end
+  if other:has_component("Player") then door.open = true end
 end
 
 function DoorSystem:on_trigger_exit(entity, door, other)
-  if other:has("Player") then door.open = false end
+  if other:has_component("Player") then door.open = false end
 end
 
 return Door, DoorSystem
@@ -104,8 +104,8 @@ is a field with its default, and the default says what the field holds:
 | Default | The field holds | In a scene |
 |---|---|---|
 | `true`, `false` | A bool | `open: true` |
-| `3` | A whole number | `count: 3` |
-| `2.5` | A number | `speed: 2.5` |
+| `integer(3)` | A whole number | `count: 3` |
+| `3`, `2.5` | A number | `speed: 2.5` |
 | `"text"` | Text, such as a virtual path | `sound: assets://sounds/door.wav` |
 | `vec2(1, 2)`, `vec3(1, 2, 3)`, `vec4(1, 2, 3, 4)` | A vector of two, three, or four numbers | `at: [1, 2, 3]` |
 | `color(1, 0, 0)` | A colour | `tint: [1, 0, 0]` |
@@ -147,7 +147,7 @@ hooks:
 |---|---|---|
 | `ready(entity, components...)` | Once, when an entity with the components is first seen | |
 | `update(entity, components..., dt)` | Every frame | The seconds of the frame |
-| `step(entity, components..., dt)` | Every step of the world, see [the fixed clock](entity-component-system.md#systems) | The seconds of a step, always the same |
+| `fixed_update(entity, components..., dt)` | Every step of the world, see [the fixed clock](entity-component-system.md#systems) | The seconds of a step, always the same |
 | `removed(entity)` | Once, when an entity the system saw no longer has the components | The entity alone: the components are gone |
 | `on_trigger_enter(entity, components..., other)` | A body entered this entity's `Trigger` | The other entity |
 | `on_trigger_exit(entity, components..., other)` | A body left it | |
@@ -166,6 +166,13 @@ place they run in the order their files were loaded. What the physics
 reported in a frame, a body entering a trigger or two bodies touching,
 reaches the hooks before `update` of that frame.
 
+`update` and `fixed_update` are one call per entity. The engine makes that cheap
+underneath: one protected call per run of entities the store keeps
+together, inside which the hook is called plainly for each, with the same
+handles refilled, so a thousand entities cost a thousand function calls and
+nothing else. A handle a hook is given is bound to the entity of that call
+and no other, so it is not kept across calls.
+
 A hook that fails is reported once, with the system, the hook, the entity,
 and Lua's message with a traceback, and is switched off until the scripts
 are loaded again. The game goes on; the runtime's exit code says that
@@ -181,10 +188,10 @@ says when the entity lost the component.
 |---|---|
 | `entity.id`, `entity.name`, `entity.path` | What the entity is called, and its names from the top with slashes |
 | `entity.Transform`, `entity.Door` | The component by its name, or `nil` when the entity has none. A name no component has is an error |
-| `entity:has("Door")`, `entity:get("Door")` | The same, said in full |
-| `entity:remove("Door")` | Takes a component away. It takes effect when the hook's query is done |
-| `entity:parent()`, `entity:children()` | What is above and below |
-| `entity:alive()`, `entity:destroy()` | Whether it is still there, and the end of it with its children |
+| `entity:has_component("Door")`, `entity:get_component("Door")` | The same, said in full, named as `EntityStore` names them |
+| `entity:remove_component("Door")` | Takes a component away. It takes effect when the hook's query is done |
+| `entity:get_parent()`, `entity:get_children()` | What is above and below |
+| `entity:is_alive()`, `entity:destroy()` | Whether it is still there, and the end of it with its children |
 
 | On a component | Does |
 |---|---|
@@ -205,23 +212,38 @@ column, value)`, rows and columns from 1, with `m:row(i)` as a vector and
 `*` with a matrix or a vector. A whole number of any width of the engine's
 components is a Lua integer, refused outside the range of its kind; a
 character is a string of one; a whole vector is read as a `vec2` or `vec3`
-and written back whole. A list is a table, and the table is a copy: reading
-`gauge.steps` copies the list out, and a change to the table reaches the
-component when the table is assigned back, `gauge.steps = steps`. Every
-other value above reaches the component in place. A handle that reaches a
-list in place is a follow-up (#99); until then a list a hook walks every
-frame is the one cost to know of.
+and written back whole. A list of a component is reached in place too:
+`#steps`, `steps[i]`, `steps[i] = v`, `steps:insert(v)`, `steps:insert(i,
+v)`, `steps:remove(i)`, and `steps:clear()` touch the list where it lives,
+and an index past the end is an error. An element that is a vector is a
+copy of that element, written back with `steps[i] = v`. A list of a field
+that is computed, with a get and a set of its own, has no address and comes
+as a table, a copy, which is assigned back whole; none of the engine's
+lists is such a field. Assigning a table to a list field replaces it.
+
+What a script reads from a component is kept: `transform.position` is the
+same handle every frame, bound again, and so is `entity.Transform`, so a
+hook that reads them makes nothing Lua has to collect. What a script makes,
+`vec3(1, 2, 3)` or `a + b`, is new each time; a hook over many entities
+keeps such values to a few per turn.
 
 ## What a script reaches of the engine
+
+The functions are the engine's own, named as the interfaces name them, in
+the snake case Lua reads: `EntityStore::CreateEntity` is
+`world.create_entity`, `InputContext::IsActionDown` is
+`input.is_action_down`, `WorldSystem::LoadScene` is `world.load_scene`,
+and a method of an entity is the store's function on it,
+`entity:has_component("Door")`. What a name means in C++ it means in Lua.
 
 | Library | Function | Does |
 |---|---|---|
 | `world` | `world.each("Player", "Transform")` | Iterates the entities that carry every named component, `for entity, player, transform in ...`. The entities are taken at the start of the loop |
-| | `world.find("player/camera")` | An entity by its path, or `nil` |
-| | `world.create(name, parent)`, `world.destroy(entity)` | Makes and ends entities |
-| `input` | `input.is_down(action)`, `input.pressed(action)` | The actions of the [input map](input.md) |
-| | `input.amount(action)`, `input.axis(action)`, `input.axis3(action)` | A trigger, a stick as two numbers, a sensor as three |
-| `scene` | `scene.load(path)` | Asks for another scene, read at the start of the next frame, see [scenes.md](scenes.md#changing-the-scene) |
+| | `world.find_entity("player/camera")` | An entity by its path, or `nil` |
+| | `world.create_entity(name, parent)`, `world.destroy_entity(entity)` | Makes and ends entities |
+| | `world.load_scene(path)` | Asks for another scene, read at the start of the next frame, see [scenes.md](scenes.md#changing-the-scene). `scene.load_scene` is the same |
+| `input` | `input.is_action_down(action)`, `input.was_action_pressed(action)` | The actions of the [input map](input.md) |
+| | `input.action_axis2(action)`, `input.action_axis2(action)`, `input.action_axis3(action)` | A trigger, a stick as two numbers, a sensor as three |
 | `log` | `log.debug(...)`, `log.info(...)`, `log.warn(...)`, `log.error(...)` | The engine's log, with a space between the values. `print` is `log.info` |
 | `math` | `math.move_toward(from, to, by)`, `math.clamp(value, low, high)` | On top of Lua's `math` |
 | | `vec3(x, y, z)`, `vec3(n)`, `vec3()`, `color(r, g, b, a)` | Values |
@@ -235,26 +257,101 @@ over without running it again.
 
 ### The sandbox
 
-A script has Lua's base functions, `string`, `table`, `math`, `utf8`, and
+A script has Lua's base functions, `string`, `table`, `math`, `bit`, and
 `coroutine`, and nothing else: no `io`, no `os`, no `debug`, no `package`,
-and no `load`, `loadstring`, `dofile`, or `loadfile`. Files, time, random
-numbers, and the log go through the engine. A shipped game loads its
-scripts from its own assets, as it loads its scenes.
+no `ffi`, no `jit`, and no `load`, `loadstring`, `dofile`, or `loadfile`.
+Files, time, random numbers, and the log go through the engine. A shipped
+game loads its scripts from its own assets, as it loads its scenes.
 
 ## For an editor
 
 `lib/neon-lua/types/neon.d.lua` describes `Component`, `System`, every hook,
 the libraries, and the engine's components for the
 [Lua language server](https://luals.github.io), which VS Code and others
-use. A project's `.luarc.json` names it:
+use; in VS Code it is the extension `sumneko.lua`, which the repository
+recommends. The `.luarc.json` at the root of the repository names the
+folder of the definitions and the Lua the scripts run on:
 
 ```json
-{ "workspace.library": ["../../lib/neon-lua/types"] }
+{
+  "runtime.version": "LuaJIT",
+  "workspace.library": ["lib/neon-lua/types"]
+}
 ```
 
-With it, `door.opne` is underlined before the game runs, and `entity.`
-completes to the engine's components. A script may add `---@class Door :
-Component` above its own component for the same on its fields.
+The path is from the folder of the `.luarc.json`; a project kept elsewhere
+has one of its own with the path from there. With it, `Component:` and
+`entity.` complete, a function of `world` that is not there is underlined
+before the game runs, and so is `//`, `<const>`, or a library that LuaJIT
+does not have. The server lets `&`, `|`, and `~` through; the engine
+refuses them when the file loads.
+
+The components a hook receives are not checked unless the script says what
+they are, since the definitions cannot know which components a system
+named:
+
+```lua
+---@class Door : Component
+---@field speed number
+---@field open boolean
+local Door = Component:extend { speed = 2.0, open = false }
+
+local Doors = System:extend(Door)
+
+---@param door Door
+function Doors:update(entity, door, dt)
+  door.opne = true -- underlined
+end
+```
+
+## Which Lua
+
+The scripts run on [LuaJIT](https://luajit.org/) 2.1, and on nothing else.
+It runs on x86 and x64, on 32-bit ARM, and on ARM64, which is Apple
+silicon, the ARM Macs, iPhones and iPads, Linux and Windows on ARM, and
+the Raspberry Pi; it also has ports to PowerPC and MIPS, which the build
+does not turn on, and a processor outside those is refused when the build
+is configured. Its compiler runs on the desktops, macOS, Linux, and
+Windows, on both x64 and ARM64. On a platform that forbids writing code at
+run time, iOS and iPadOS and the consoles, LuaJIT turns its compiler off
+itself and is an interpreter there; the SDK flags of those platforms are
+not wired into the build yet. The Windows build cross-compiles LuaJIT with
+llvm-mingw like the rest; the two tools of LuaJIT's build that run on the
+building machine are compiled by the same clang, which the Windows image
+gives the C headers and runtime files of that machine for.
+
+`scripting.jit: false` in [settings.yml](settings.md), or `--jit off` on
+the command line for one run, keeps LuaJIT from compiling and runs the
+scripts in its interpreter, which is how the two are compared. The log
+says which started.
+
+LuaJIT speaks Lua 5.1 with the parts of 5.2 it chose to add: `goto`,
+`table.pack`, `table.unpack`, `%q`, and `__pairs` and `__len` on tables.
+What a script written for a later Lua has to know:
+
+| | In a script |
+|---|---|
+| Numbers | One kind, a double; `3` and `3.0` are the same value and print the same. Beyond 2^53 a number loses precision, in `Long` and `UnsignedLong` fields too |
+| `//` | Not in the language; `math.floor(a / b)` |
+| `&`, `\|`, `~`, `<<`, `>>` | Not in the language; `bit.band`, `bit.bor`, `bit.bxor`, `bit.bnot`, `bit.lshift`, `bit.rshift`, on 32 bits with a sign |
+| `local x <const>`, `local x <close>` | Not in the language; a file with one does not load |
+| `utf8`, `string.pack`, `table.move`, `math.type`, `math.tointeger` | Absent |
+| `unpack` | Present, with `table.unpack` |
+| A whole value written to an `Integer` field | Any number without a fraction, `2.0` as well |
+
+This is why a number in a declaration is a `Float`, and a whole field is
+declared with `integer(3)`: LuaJIT cannot tell `3` from `3.0`.
+
+The bindings are written to the API of Lua 5.4; what LuaJIT lacks of it is
+in `lua-compat.hpp`, where a userdata's single user value, the cache of
+handles, is its environment table.
+
+What the compiler buys: a hook that works on its own values, numbers,
+tables, and the vectors it makes, is compiled to machine code. A hook that
+reads and writes components crosses into C at every field, and LuaJIT does
+not compile across such a call, so those run in its interpreter. Reaching
+a component as a C struct through LuaJIT's FFI, which compiles to a load
+and a store, is #326.
 
 ## How it is built
 
@@ -267,7 +364,8 @@ Component` above its own component for the same on its fields.
 | `Lua_ScriptSystem` | neon-lua, `neon/scripting/` | The Lua backend: the state, the files, the contracts, the hooks |
 | `lua-classes`, `lua-sandbox`, `lua-libraries` | neon-lua | `Component` and `System`, what of Lua a script gets, and `world`, `input`, `log`, `scene` |
 | `lua-entity-handle`, `lua-component-handle`, `lua-vec3-handle`, `lua-color-handle` | neon-lua | What a script holds of an entity, a component, a vector, a colour |
-| `lua` | `external/lua`, built by `lib/neon-lua/CMakeLists.txt` | Lua 5.4, as C, private to neon-lua |
+| `lua` | `external/luajit`, built by its own Makefile from `lib/neon-lua/CMakeLists.txt` | LuaJIT, as C, private to neon-lua |
+| `lua-compat` | neon-lua | What of the Lua 5.4 API the bindings use and LuaJIT lacks, and how many parameters a function takes |
 
 The language is a backend behind `ScriptContext`, as the physics is behind
 `PhysicsContext`: nothing outside neon-lua includes Lua. A second language

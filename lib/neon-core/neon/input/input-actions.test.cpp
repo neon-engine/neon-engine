@@ -108,7 +108,7 @@ namespace
   {
     EXPECT_FALSE(_actions.IsDown("jump"));
     EXPECT_FALSE(_actions.WasPressed("jump"));
-    EXPECT_EQ(_actions.GetAxis("move"), glm::vec2(0.0f, 0.0f));
+    EXPECT_EQ(_actions.GetAxis2("move"), glm::vec2(0.0f, 0.0f));
   }
 
   TEST_F(InputActionsTest, HoldsAButtonWhileAnyOfItsKeysOrButtonsIs)
@@ -159,24 +159,24 @@ namespace
   {
     _input.SetKeyDown(Key::D);
     Frame();
-    EXPECT_FLOAT_EQ(_actions.GetAmount("lean"), 0.0f) << "d alone is not the chord";
+    EXPECT_FLOAT_EQ(_actions.GetAxis("lean"), 0.0f) << "d alone is not the chord";
 
     _input.SetKeyDown(Key::LeftShift);
     _input.SetKeyDown(Key::D);
     Frame();
-    EXPECT_FLOAT_EQ(_actions.GetAmount("lean"), 1.0f);
+    EXPECT_FLOAT_EQ(_actions.GetAxis("lean"), 1.0f);
 
     _input.SetKeyDown(Key::LeftShift);
     _input.SetKeyDown(Key::A);
     Frame();
-    EXPECT_FLOAT_EQ(_actions.GetAmount("lean"), -1.0f);
+    EXPECT_FLOAT_EQ(_actions.GetAxis("lean"), -1.0f);
 
     _input.SetKeyDown(Key::LeftControl);
     _input.SetKeyDown(Key::W);
     _input.SetKeyDown(Key::D);
     Frame();
-    EXPECT_EQ(_actions.GetAxis("crawl"), glm::vec2(1.0f, 1.0f));
-    EXPECT_EQ(_actions.GetAxis("move"), glm::vec2(1.0f, 1.0f)) << "the plain keys still move";
+    EXPECT_EQ(_actions.GetAxis2("crawl"), glm::vec2(1.0f, 1.0f));
+    EXPECT_EQ(_actions.GetAxis2("move"), glm::vec2(1.0f, 1.0f)) << "the plain keys still move";
   }
 
   TEST_F(InputActionsTest, HoldsAButtonFromAButtonOfTheMouse)
@@ -213,22 +213,22 @@ namespace
   {
     _input.SetKeyDown(Key::W);
     Frame();
-    EXPECT_EQ(_actions.GetAxis("move"), glm::vec2(0.0f, 1.0f));
+    EXPECT_EQ(_actions.GetAxis2("move"), glm::vec2(0.0f, 1.0f));
     EXPECT_TRUE(_actions.IsDown("move"));
 
     _input.SetKeyDown(Key::S);
     _input.SetKeyDown(Key::A);
     Frame();
-    EXPECT_EQ(_actions.GetAxis("move"), glm::vec2(-1.0f, -1.0f));
+    EXPECT_EQ(_actions.GetAxis2("move"), glm::vec2(-1.0f, -1.0f));
 
     _input.SetKeyDown(Key::W);
     _input.SetKeyDown(Key::S);
     _input.SetKeyDown(Key::D);
     Frame();
-    EXPECT_EQ(_actions.GetAxis("move"), glm::vec2(1.0f, 0.0f));
+    EXPECT_EQ(_actions.GetAxis2("move"), glm::vec2(1.0f, 0.0f));
 
     Frame();
-    EXPECT_EQ(_actions.GetAxis("move"), glm::vec2(0.0f, 0.0f));
+    EXPECT_EQ(_actions.GetAxis2("move"), glm::vec2(0.0f, 0.0f));
     EXPECT_FALSE(_actions.IsDown("move"));
   }
 
@@ -237,7 +237,7 @@ namespace
     _input.SetControllerButtonDown(ControllerButton::DpadDown);
     _input.SetControllerButtonDown(ControllerButton::DpadRight);
     Frame();
-    EXPECT_EQ(_actions.GetAxis("dpad"), glm::vec2(1.0f, -1.0f));
+    EXPECT_EQ(_actions.GetAxis2("dpad"), glm::vec2(1.0f, -1.0f));
   }
 
   TEST_F(InputActionsTest, TakesAnAxisFromAStickWithForwardUp)
@@ -245,13 +245,13 @@ namespace
     // the sticks count down as positive, the axis counts forward
     _input.SetLeftStick(0.5, -0.25);
     Frame();
-    EXPECT_FLOAT_EQ(_actions.GetAxis("move").x, 0.5f);
-    EXPECT_FLOAT_EQ(_actions.GetAxis("move").y, 0.25f);
+    EXPECT_FLOAT_EQ(_actions.GetAxis2("move").x, 0.5f);
+    EXPECT_FLOAT_EQ(_actions.GetAxis2("move").y, 0.25f);
 
     _input.SetRightStick(-1.0, 1.0);
     Frame();
-    EXPECT_FLOAT_EQ(_actions.GetAxis("look").x, -1.0f);
-    EXPECT_FLOAT_EQ(_actions.GetAxis("look").y, -1.0f);
+    EXPECT_FLOAT_EQ(_actions.GetAxis2("look").x, -1.0f);
+    EXPECT_FLOAT_EQ(_actions.GetAxis2("look").y, -1.0f);
   }
 
   TEST_F(InputActionsTest, DoesNotLetKeysAndAStickTogetherGoPastOne)
@@ -260,21 +260,21 @@ namespace
     _input.SetKeyDown(Key::D);
     _input.SetLeftStick(0.7, -0.7);
     Frame();
-    EXPECT_EQ(_actions.GetAxis("move"), glm::vec2(1.0f, 1.0f));
+    EXPECT_EQ(_actions.GetAxis2("move"), glm::vec2(1.0f, 1.0f));
   }
 
   TEST_F(InputActionsTest, TakesAnAxisFromTheMouseInPixelsWithUpPositive)
   {
     _input.SetAxisMotion(Axis::Mouse, 12.0, -3.0);
     Frame();
-    EXPECT_EQ(_actions.GetAxis("look"), glm::vec2(12.0f, 3.0f));
+    EXPECT_EQ(_actions.GetAxis2("look"), glm::vec2(12.0f, 3.0f));
     EXPECT_TRUE(_actions.IsDown("look"));
 
     // the stick adds to it, and the pixels are not cut down to one
     _input.SetAxisMotion(Axis::Mouse, 100.0, 0.0);
     _input.SetRightStick(0.5, 0.0);
     Frame();
-    EXPECT_EQ(_actions.GetAxis("look"), glm::vec2(100.5f, 0.0f));
+    EXPECT_EQ(_actions.GetAxis2("look"), glm::vec2(100.5f, 0.0f));
   }
 
   TEST_F(InputActionsTest, TurnsAStickIntoPixelsAtItsRateForTheTimeOfTheFrame)
@@ -282,20 +282,20 @@ namespace
     _input.SetRightStick(1.0, -0.5);
     _input.SetFrameTime(0.1);
     Frame();
-    EXPECT_FLOAT_EQ(_actions.GetAxis("turn").x, 60.0f);
-    EXPECT_FLOAT_EQ(_actions.GetAxis("turn").y, 30.0f);
+    EXPECT_FLOAT_EQ(_actions.GetAxis2("turn").x, 60.0f);
+    EXPECT_FLOAT_EQ(_actions.GetAxis2("turn").y, 30.0f);
     EXPECT_TRUE(_actions.IsDown("turn"));
 
     // half the time, half the turn; and nothing without time
     _input.SetRightStick(1.0, -0.5);
     _input.SetFrameTime(0.05);
     Frame();
-    EXPECT_FLOAT_EQ(_actions.GetAxis("turn").x, 30.0f);
+    EXPECT_FLOAT_EQ(_actions.GetAxis2("turn").x, 30.0f);
 
     _input.SetRightStick(1.0, 0.0);
     _input.SetFrameTime(0.0);
     Frame();
-    EXPECT_EQ(_actions.GetAxis("turn"), glm::vec2(0.0f, 0.0f));
+    EXPECT_EQ(_actions.GetAxis2("turn"), glm::vec2(0.0f, 0.0f));
   }
 
   TEST_F(InputActionsTest, TakesNothingFromAStickInsideTheDeadZoneAndStretchesWhatIsPastIt)
@@ -304,27 +304,27 @@ namespace
     // the same as straight
     _input.SetLeftStick(0.2, 0.1);
     Frame();
-    EXPECT_EQ(_actions.GetAxis("walk"), glm::vec2(0.0f, 0.0f));
+    EXPECT_EQ(_actions.GetAxis2("walk"), glm::vec2(0.0f, 0.0f));
     EXPECT_FALSE(_actions.IsDown("walk"));
 
     _input.SetLeftStick(0.25, 0.0);
     Frame();
-    EXPECT_EQ(_actions.GetAxis("walk"), glm::vec2(0.0f, 0.0f)) << "the edge of the zone is still inside";
+    EXPECT_EQ(_actions.GetAxis2("walk"), glm::vec2(0.0f, 0.0f)) << "the edge of the zone is still inside";
 
     // half way is a third of what is past the zone, and all the way is one
     _input.SetLeftStick(0.5, 0.0);
     Frame();
-    EXPECT_NEAR(_actions.GetAxis("walk").x, 1.0f / 3.0f, 0.0001f);
+    EXPECT_NEAR(_actions.GetAxis2("walk").x, 1.0f / 3.0f, 0.0001f);
 
     _input.SetLeftStick(0.0, -1.0);
     Frame();
-    EXPECT_FLOAT_EQ(_actions.GetAxis("walk").y, 1.0f);
+    EXPECT_FLOAT_EQ(_actions.GetAxis2("walk").y, 1.0f);
 
     // the corner is further than one, and is cut to one in each, as a stick
     // on top of keys is
     _input.SetLeftStick(1.0, 1.0);
     Frame();
-    EXPECT_EQ(_actions.GetAxis("walk"), glm::vec2(1.0f, -1.0f));
+    EXPECT_EQ(_actions.GetAxis2("walk"), glm::vec2(1.0f, -1.0f));
   }
 
   TEST_F(InputActionsTest, ShapesAStickByItsOwnDeadZoneAndCurve)
@@ -333,54 +333,54 @@ namespace
     // is past it, and the curve squares that
     _input.SetLeftStick(0.5, 0.0);
     Frame();
-    EXPECT_EQ(_actions.GetAxis("swim"), glm::vec2(0.0f, 0.0f));
+    EXPECT_EQ(_actions.GetAxis2("swim"), glm::vec2(0.0f, 0.0f));
 
     _input.SetLeftStick(0.75, 0.0);
     Frame();
-    EXPECT_FLOAT_EQ(_actions.GetAxis("swim").x, 0.25f);
+    EXPECT_FLOAT_EQ(_actions.GetAxis2("swim").x, 0.25f);
 
     _input.SetLeftStick(1.0, 0.0);
     Frame();
-    EXPECT_FLOAT_EQ(_actions.GetAxis("swim").x, 1.0f);
+    EXPECT_FLOAT_EQ(_actions.GetAxis2("swim").x, 1.0f);
 
     // a dead zone of nothing takes the stick as it is
     _input.SetLeftStick(0.1, 0.0);
     Frame();
-    EXPECT_FLOAT_EQ(_actions.GetAxis("move").x, 0.1f);
+    EXPECT_FLOAT_EQ(_actions.GetAxis2("move").x, 0.1f);
   }
 
   TEST_F(InputActionsTest, ShapesATriggerByItsDeadZoneAndCurve)
   {
     _input.SetTrigger(ControllerTrigger::Right, 0.2);
     Frame("driving");
-    EXPECT_FLOAT_EQ(_actions.GetAmount("gas"), 0.0f);
+    EXPECT_FLOAT_EQ(_actions.GetAxis("gas"), 0.0f);
     EXPECT_FALSE(_actions.IsDown("gas"));
 
     // six tenths is half of what is past the zone, squared
     _input.SetTrigger(ControllerTrigger::Right, 0.6);
     Frame("driving");
-    EXPECT_FLOAT_EQ(_actions.GetAmount("gas"), 0.25f);
+    EXPECT_FLOAT_EQ(_actions.GetAxis("gas"), 0.25f);
 
     _input.SetTrigger(ControllerTrigger::Right, 1.0);
     Frame("driving");
-    EXPECT_FLOAT_EQ(_actions.GetAmount("gas"), 1.0f);
+    EXPECT_FLOAT_EQ(_actions.GetAxis("gas"), 1.0f);
   }
 
   TEST_F(InputActionsTest, TakesAnAmountFromTwoKeys)
   {
     _input.SetKeyDown(Key::W);
     Frame("driving");
-    EXPECT_FLOAT_EQ(_actions.GetAmount("throttle"), 1.0f);
+    EXPECT_FLOAT_EQ(_actions.GetAxis("throttle"), 1.0f);
     EXPECT_TRUE(_actions.IsDown("throttle"));
 
     _input.SetKeyDown(Key::S);
     Frame("driving");
-    EXPECT_FLOAT_EQ(_actions.GetAmount("throttle"), -1.0f);
+    EXPECT_FLOAT_EQ(_actions.GetAxis("throttle"), -1.0f);
 
     _input.SetKeyDown(Key::W);
     _input.SetKeyDown(Key::S);
     Frame("driving");
-    EXPECT_FLOAT_EQ(_actions.GetAmount("throttle"), 0.0f);
+    EXPECT_FLOAT_EQ(_actions.GetAxis("throttle"), 0.0f);
     EXPECT_FALSE(_actions.IsDown("throttle"));
   }
 
@@ -388,23 +388,23 @@ namespace
   {
     _input.SetControllerButtonDown(ControllerButton::LeftShoulder);
     Frame("driving");
-    EXPECT_FLOAT_EQ(_actions.GetAmount("gear"), -1.0f);
+    EXPECT_FLOAT_EQ(_actions.GetAxis("gear"), -1.0f);
 
     _input.SetControllerButtonDown(ControllerButton::RightShoulder);
     Frame("driving");
-    EXPECT_FLOAT_EQ(_actions.GetAmount("gear"), 1.0f);
+    EXPECT_FLOAT_EQ(_actions.GetAxis("gear"), 1.0f);
   }
 
   TEST_F(InputActionsTest, TakesAnAmountFromATriggerAsFarAsItIsPulled)
   {
     _input.SetTrigger(ControllerTrigger::Right, 0.5);
     Frame("driving");
-    EXPECT_FLOAT_EQ(_actions.GetAmount("throttle"), 0.5f);
+    EXPECT_FLOAT_EQ(_actions.GetAxis("throttle"), 0.5f);
     EXPECT_TRUE(_actions.IsDown("throttle"));
 
     _input.SetTrigger(ControllerTrigger::Left, 0.5);
     Frame("driving");
-    EXPECT_FLOAT_EQ(_actions.GetAmount("throttle"), 0.0f) << "the other trigger";
+    EXPECT_FLOAT_EQ(_actions.GetAxis("throttle"), 0.0f) << "the other trigger";
   }
 
   TEST_F(InputActionsTest, LetsTheLargestOfKeysAndTriggerWin)
@@ -412,13 +412,13 @@ namespace
     _input.SetTrigger(ControllerTrigger::Right, 0.5);
     _input.SetKeyDown(Key::W);
     Frame("driving");
-    EXPECT_FLOAT_EQ(_actions.GetAmount("throttle"), 1.0f);
+    EXPECT_FLOAT_EQ(_actions.GetAxis("throttle"), 1.0f);
 
     // the key that goes the other way is further from zero than the trigger
     _input.SetTrigger(ControllerTrigger::Right, 0.5);
     _input.SetKeyDown(Key::S);
     Frame("driving");
-    EXPECT_FLOAT_EQ(_actions.GetAmount("throttle"), -1.0f);
+    EXPECT_FLOAT_EQ(_actions.GetAxis("throttle"), -1.0f);
   }
 
   TEST_F(InputActionsTest, ScalesATriggerByItsRateForTheTimeOfTheFrame)
@@ -426,15 +426,15 @@ namespace
     _input.SetTrigger(ControllerTrigger::Left, 0.5);
     _input.SetFrameTime(0.2);
     Frame("driving");
-    EXPECT_FLOAT_EQ(_actions.GetAmount("brake"), 1.0f);
+    EXPECT_FLOAT_EQ(_actions.GetAxis("brake"), 1.0f);
   }
 
   TEST_F(InputActionsTest, HasNoAmountForAnAxisOfTwoAndNoAxisForAnAxisOfOne)
   {
     _input.SetKeyDown(Key::W);
     Frame("driving");
-    EXPECT_FLOAT_EQ(_actions.GetAmount("move"), 0.0f);
-    EXPECT_EQ(_actions.GetAxis("throttle"), glm::vec2(0.0f, 0.0f));
+    EXPECT_FLOAT_EQ(_actions.GetAxis("move"), 0.0f);
+    EXPECT_EQ(_actions.GetAxis2("throttle"), glm::vec2(0.0f, 0.0f));
   }
 
   TEST_F(InputActionsTest, TurnsAGyroIntoRadiansTurnedInTheFrame)
@@ -511,7 +511,7 @@ namespace
     Frame();
     EXPECT_FALSE(_actions.IsDown("fly"));
     EXPECT_FALSE(_actions.WasPressed("fly"));
-    EXPECT_EQ(_actions.GetAxis("fly"), glm::vec2(0.0f, 0.0f));
+    EXPECT_EQ(_actions.GetAxis2("fly"), glm::vec2(0.0f, 0.0f));
   }
 
   TEST_F(InputActionsTest, FiresAButtonThatIsHeldByItsName)

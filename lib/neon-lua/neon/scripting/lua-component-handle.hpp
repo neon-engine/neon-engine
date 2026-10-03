@@ -48,8 +48,11 @@ namespace neon
   [[nodiscard]] LuaComponentHandle *test_component(lua_State *lua, int index);
 
   /// Pushes the value of a field of a component as a script sees it: a
-  /// number, a bool, text, or a vector or colour that writes back.
-  void push_field(lua_State *lua, const LuaComponentHandle &handle, const FieldInfo &field, void *object);
+  /// number, a bool, text, a vector or colour that writes back, or a list
+  /// reached in place. `owner` is the stack index of the component handle
+  /// the field is read from, whose cache keeps the handle so that a read
+  /// every frame makes nothing new; 0 for none.
+  void push_field(lua_State *lua, const LuaComponentHandle &handle, const FieldInfo &field, void *object, int owner);
 
   /// Reads the value at the index into a field of a component, or raises a
   /// Lua error that says what the field holds instead.

@@ -8,9 +8,9 @@ struct lua_State;
 namespace neon
 {
   /// Opens what a script may use of Lua and nothing else: the base
-  /// functions, strings, tables, math, utf8, and coroutines. There is no
-  /// `io`, no `os`, no `debug`, and no `load` of text from outside the
-  /// scripts, and `print` goes to the engine's log. `require` resolves
+  /// functions, strings, tables, math, bit, and coroutines. There is no
+  /// `io`, no `os`, no `debug`, no `ffi`, no `jit`, and no `load` of text
+  /// from outside the scripts, and `print` goes to the engine's log. `require` resolves
   /// inside the scripts' folder alone, through the engine's file system.
   void open_sandbox(lua_State *lua);
 

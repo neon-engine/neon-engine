@@ -17,7 +17,7 @@ struct lua_State;
 
 namespace neon
 {
-  /// The scripts of a game in Lua 5.4.
+  /// The scripts of a game in Lua, run by LuaJIT.
   ///
   /// Every `*.lua` under the scripts' folder is run once when the scripts
   /// are loaded, in the order of the paths. A file declares a component
@@ -65,9 +65,26 @@ namespace neon
       /// filled in before every call, so that no call allocates.
       int entity_ref = -1;
       std::vector<int> component_refs;
+
+      /// The function that runs a block, made once, whose upvalue is the
+      /// run of the moment.
+      int run_ref = -1;
+    };
+
+    /// One run of a hook over a block, inside one protected call: what the
+    /// loop needs, and where it is, so that a failure names the entity.
+    struct BlockRun
+    {
+      DeclaredSystem *system = nullptr;
+      const EntityBlock *block = nullptr;
+      LuaHook hook = LuaHook::Update;
+      double seconds = 0.0;
+      std::size_t index = 0;
     };
 
     lua_State *_lua = nullptr;
+
+    bool _jit = true;
     LuaHost _host;
     std::vector<DeclaredComponent> _components;
     std::vector<DeclaredSystem> _systems;
@@ -100,14 +117,24 @@ namespace neon
     bool CallHook(DeclaredSystem &system, LuaHook hook, Entity entity, int extra);
 
     /// Runs a hook over every entity of a system's query, pushing `seconds`
-    /// as the last argument.
+    /// as the last argument: one protected call per block, inside which
+    /// the loop calls the hook plainly for each entity, so that a thousand
+    /// entities cost a thousand calls and one error handler, not a
+    /// thousand.
     void RunOver(DeclaredSystem &system, LuaHook hook, EntityStore &store, double seconds);
+
+    /// The loop of one block, run inside the protected call. The run is
+    /// its upvalue.
+    static int RunBlock(lua_State *lua);
 
     /// Calls `ready` for an entity the system had not seen and `removed`
     /// for one it no longer sees.
     void TrackLifetimes(DeclaredSystem &system, EntityStore &store);
 
     void ReportError(const DeclaredSystem &system, LuaHook hook, Entity entity, EntityStore &store);
+
+    /// Tells the state whether to compile.
+    void ApplyJit();
 
   public:
     Lua_ScriptSystem(FileSystemContext *file_system, const std::shared_ptr<Logger> &logger);
@@ -116,6 +143,11 @@ namespace neon
 
     /// What `input` reads. May be left out for a run without input.
     void SetInput(InputContext *input);
+
+    /// Whether LuaJIT compiles the scripts as they run; off runs them in
+    /// its interpreter. On by default.
+    /// Takes effect at once, on a state that is ready or on the next one.
+    void SetJit(bool enabled);
 
     /// What `scene.load` asks. May be left out for a world of its own.
     void SetWorld(WorldSystem *world);

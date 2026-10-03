@@ -84,6 +84,12 @@ namespace neon
       reader.Finish();
     }
 
+    void read_scripting(const DataReader &reader, SettingsConfig &settings)
+    {
+      reader.Read("jit", settings.script_jit);
+      reader.Finish();
+    }
+
     void read_rendering(const DataReader &reader, SettingsConfig &settings)
     {
       // Written in quotes, since 1.10 as a number is 1.1
@@ -318,6 +324,7 @@ namespace neon
     read_part(reader, "ui", read, read_ui);
     read_part(reader, "world", read, read_world);
     read_part(reader, "input", read, read_input);
+    read_part(reader, "scripting", read, read_scripting);
     read_part(reader, "rendering", read, read_rendering);
     read_part(reader, "audio", read, read_audio);
     reader.Finish();

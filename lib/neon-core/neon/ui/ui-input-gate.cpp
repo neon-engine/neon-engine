@@ -88,14 +88,14 @@ namespace neon
     return _actions.WasPressed(name);
   }
 
-  glm::vec2 UiInputGate::ActionAxis(const std::string &name)
+  glm::vec2 UiInputGate::ActionAxis2(const std::string &name)
   {
-    return _actions.GetAxis(name);
+    return _actions.GetAxis2(name);
   }
 
-  float UiInputGate::ActionAmount(const std::string &name)
+  float UiInputGate::ActionAxis(const std::string &name)
   {
-    return _actions.GetAmount(name);
+    return _actions.GetAxis(name);
   }
 
   glm::vec3 UiInputGate::ActionAxis3(const std::string &name)

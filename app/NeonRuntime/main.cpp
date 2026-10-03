@@ -390,6 +390,7 @@ int main(const int argc, char *argv[])
   // declare components and systems as the engine's code does. They read
   // the input the user interface left, and may ask for another scene.
   neon::Lua_ScriptSystem script_system(&file_system, logging_system.CreateLogger("Lua_ScriptSystem"));
+  script_system.SetJit(settings_config.script_jit);
   script_system.Initialize();
   script_system.SetInput(ui_system.GetGameInput());
   script_system.SetWorld(&world);

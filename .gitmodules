@@ -46,6 +46,7 @@
 [submodule "external/lunasvg"]
 	path = external/lunasvg
 	url = https://github.com/sammycage/lunasvg.git
-[submodule "external/lua"]
-	path = external/lua
-	url = https://github.com/lua/lua.git
+[submodule "external/luajit"]
+	path = external/luajit
+	url = https://github.com/LuaJIT/LuaJIT.git
+	branch = v2.1

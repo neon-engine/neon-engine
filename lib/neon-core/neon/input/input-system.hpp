@@ -68,9 +68,9 @@ namespace neon
 
     bool WasActionPressed(const std::string &name) override;
 
-    glm::vec2 ActionAxis(const std::string &name) override;
+    glm::vec2 ActionAxis2(const std::string &name) override;
 
-    float ActionAmount(const std::string &name) override;
+    float ActionAxis(const std::string &name) override;
 
     glm::vec3 ActionAxis3(const std::string &name) override;
 

@@ -31,25 +31,25 @@ local Entity = {}
 ---Whether the entity carries the component.
 ---@param name string
 ---@return boolean
-function Entity:has(name) end
+function Entity:has_component(name) end
 
 ---The component, or nil when the entity has none.
 ---@param name string
 ---@return Component|nil
-function Entity:get(name) end
+function Entity:get_component(name) end
 
 ---Takes the component away. It takes effect when the hook's query is done.
 ---@param name string
-function Entity:remove(name) end
+function Entity:remove_component(name) end
 
 ---@return Entity|nil
-function Entity:parent() end
+function Entity:get_parent() end
 
 ---@return Entity[]
-function Entity:children() end
+function Entity:get_children() end
 
 ---@return boolean
-function Entity:alive() end
+function Entity:is_alive() end
 
 ---Ends the entity with its children.
 function Entity:destroy() end
@@ -58,7 +58,7 @@ function Entity:destroy() end
 ---with an underscore first is private state the engine keeps for the
 ---entity and never reads from a recipe.
 ---@class Component
-local Component = {}
+Component = {}
 
 ---Declares a component: every entry of the table is a field with its
 ---default, and the default says what the field holds: a bool, a whole
@@ -78,7 +78,7 @@ function Component:extend(name, fields) end
 ---A system: its hooks, over every entity that carries the components it
 ---named. `self` is the class.
 ---@class System
-local System = {}
+System = {}
 
 ---Declares a system over the components named, as text or as the class in
 ---hand.
@@ -88,18 +88,18 @@ function System:extend(...) end
 
 ---Once, when an entity with the components is first seen.
 ---@param entity Entity
----@param ... Component
+---@param ... any The components the system named, in that order, then what the hook adds
 function System:ready(entity, ...) end
 
 ---Every frame. The last argument is the seconds of the frame.
 ---@param entity Entity
----@param ... Component|number
+---@param ... any The components the system named, in that order, then what the hook adds
 function System:update(entity, ...) end
 
 ---Every step of the world. The last argument is the seconds of a step.
 ---@param entity Entity
----@param ... Component|number
-function System:step(entity, ...) end
+---@param ... any The components the system named, in that order, then what the hook adds
+function System:fixed_update(entity, ...) end
 
 ---Once, when an entity the system saw no longer has the components.
 ---@param entity Entity
@@ -108,19 +108,19 @@ function System:removed(entity) end
 ---A body entered this entity's Trigger. The last argument is the other
 ---entity.
 ---@param entity Entity
----@param ... Component|Entity
+---@param ... any The components the system named, in that order, then what the hook adds
 function System:on_trigger_enter(entity, ...) end
 
 ---A body left this entity's Trigger.
 ---@param entity Entity
----@param ... Component|Entity
+---@param ... any The components the system named, in that order, then what the hook adds
 function System:on_trigger_exit(entity, ...) end
 
 ---This entity's body began to touch another. The last three arguments are
 ---the other entity, the point, and the normal from this entity to the
 ---other.
 ---@param entity Entity
----@param ... Component|Entity|vec3
+---@param ... any The components the system named, in that order, then what the hook adds
 function System:on_collision(entity, ...) end
 
 ---A vector. One read from a component is bound to its field and writes
@@ -165,6 +165,28 @@ function vec3_class:copy() end
 ---@param z number
 ---@return vec3
 function vec3(x, y, z) end
+
+---Marks the default of a field as a whole number, for `Component:extend`:
+---`count = integer(3)` declares an Integer field, where `count = 3` would
+---declare a Float, since LuaJIT has one kind of number.
+---@param n integer
+---@return integer
+function integer(n) end
+
+---A list of a component, reached in place. Indexes count from 1.
+---@class list
+local list_class = {}
+
+---At the end, or before the element i with two arguments.
+---@overload fun(self: list, value: any)
+---@param i integer
+---@param value any
+function list_class:insert(i, value) end
+
+---@param i integer
+function list_class:remove(i) end
+
+function list_class:clear() end
 
 ---A vector of two numbers, as vec3 is.
 ---@class vec2
@@ -348,45 +370,49 @@ function world.each(...) end
 ---An entity by its path from the top, or nil.
 ---@param path string
 ---@return Entity|nil
-function world.find(path) end
+function world.find_entity(path) end
 
 ---@param name string|nil
 ---@param parent Entity|nil
 ---@return Entity
-function world.create(name, parent) end
+function world.create_entity(name, parent) end
 
 ---@param entity Entity
-function world.destroy(entity) end
+function world.destroy_entity(entity) end
+
+---Asks for another scene, read at the start of the next frame.
+---@param path string
+function world.load_scene(path) end
 
 ---@class inputlib
 input = {}
 
 ---@param action string
 ---@return boolean
-function input.is_down(action) end
+function input.is_action_down(action) end
 
 ---@param action string
 ---@return boolean
-function input.pressed(action) end
+function input.was_action_pressed(action) end
 
 ---@param action string
 ---@return number
-function input.amount(action) end
+function input.action_axis2(action) end
 
 ---@param action string
 ---@return number, number
-function input.axis(action) end
+function input.action_axis2(action) end
 
 ---@param action string
 ---@return number, number, number
-function input.axis3(action) end
+function input.action_axis3(action) end
 
 ---@class scenelib
 scene = {}
 
 ---Asks for another scene, read at the start of the next frame.
 ---@param path string
-function scene.load(path) end
+function scene.load_scene(path) end
 
 ---@class loglib
 log = {}

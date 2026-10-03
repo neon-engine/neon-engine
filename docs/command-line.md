@@ -36,6 +36,7 @@ The last column is a proposal, to be decided in #143:
 | `--input SCRIPT` | Development | Input from a script in place of devices | Editor only. It plays the game without a player |
 | `--input-script PATH` | Development | The same from a file | Editor only |
 | `--spawn PATH` | Development | Spawns this prefab at the top of the world once the scene is read, as a script would, see [prefabs.md](prefabs.md#spawning-at-run-time) | Editor only. It is for checking a prefab on its own |
+| `--jit on\|off` | Development | Compiles the scripts as they run, or runs them in LuaJIT's interpreter, over `scripting.jit` of the settings, see [scripting.md](scripting.md#which-lua) | Decide. A setting serves a game; the option compares the two |
 | `--window-size WxH` | Display | The size of the window in points, over `window` of the settings | Decide. Usually a menu's choice, but useful for displays a game does not expect |
 | `--render-scale NUMBER` | Display | Pixels for each point, without a window | Editor only. It needs `--headless-renderer` |
 | `--ui-scale NUMBER` | Display | Makes the user interface larger or smaller, over `ui.scale` of the settings | Decide. It helps players who need larger text, which a settings menu may offer instead |

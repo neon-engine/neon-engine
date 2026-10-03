@@ -55,11 +55,11 @@ namespace neon
     /// Where an axis of two is: x to the right, y forward, from -1 to 1 from
     /// keys and sticks, in pixels moved from the mouse or at a rate. Zero
     /// for anything else.
-    [[nodiscard]] glm::vec2 GetAxis(const std::string &name) const;
+    [[nodiscard]] glm::vec2 GetAxis2(const std::string &name) const;
 
     /// Where an axis of one is: from -1 to 1 from two keys or buttons, from
     /// 0 to 1 from a trigger, the larger of them. Zero for anything else.
-    [[nodiscard]] float GetAmount(const std::string &name) const;
+    [[nodiscard]] float GetAxis(const std::string &name) const;
 
     /// What a motion sensor gave an axis of three: about x, y, and z. A gyro
     /// is turned into radians turned in the frame. Zero for anything else,

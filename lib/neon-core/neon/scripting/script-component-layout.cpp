@@ -161,6 +161,7 @@ namespace neon
       info.description = field.description;
       info.get = [slot](const void *object) { return Get(slot, object); };
       info.set = [slot](void *object, const FieldValue &value) { Set(slot, object, value); };
+      info.reach = [slot](void *object) -> void * { return static_cast<char *>(object) + slot.offset; };
       type->fields.push_back(info);
     }
 

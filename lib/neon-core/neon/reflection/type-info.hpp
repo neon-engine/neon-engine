@@ -86,6 +86,12 @@ namespace neon
     /// the field, which Check() tells.
     std::function<void(void *object, const FieldValue &value)> set;
 
+    /// The member itself, for a field that is one: what `get` reads and
+    /// `set` writes, at its address in the object, so that a script reaches
+    /// a list in place. Empty for a field that is computed with a get and
+    /// a set of its own, which has no one address.
+    std::function<void *(void *object)> reach;
+
     /// Says what is wrong with a value for this field, or nothing when it
     /// can be set. `what` is how the field is called in the message, such as
     /// `'fov' of Camera`.

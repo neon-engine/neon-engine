@@ -59,7 +59,7 @@ The engine's dependencies are git submodules. Fetch the ones the build uses:
 git submodule update --init --recursive \
   external/glm external/sdl2 external/assimp external/jolt-physics \
   external/spdlog external/rapidyaml external/stb external/googletest \
-  external/freetype external/harfbuzz external/lunasvg external/lua
+  external/freetype external/harfbuzz external/lunasvg external/luajit
 ```
 
 LunaSVG brings PlutoVG as a folder of its own, not as a submodule.
@@ -223,6 +223,7 @@ Development:
   --time-step SECONDS       Advance the game by this much time in every frame, for example 0.016667, so that a run gives the same frames every time
   --headless-renderer       Render without a window, for screenshots and checks on a machine with no display
   --spawn PATH              Spawn this prefab at the top of the world once the scene is read, as a script would, for example assets://prefabs/target.prefab.yml
+  --jit on|off              Compile the scripts as they run, or run them in LuaJIT's interpreter. Over scripting.jit of the settings, for comparing the two
   --headless                Run as a dedicated server. Not available yet, see --headless-renderer
   --input SCRIPT            Input in place of devices, for example "1: pointer 640 360; 2: click". Needs --headless-renderer
   --input-script PATH       The same from a file, for example assets://input/menu.input. Needs --headless-renderer
@@ -258,6 +259,7 @@ This writes `/some/where/frame.png`.
 | `--input SCRIPT` | Input from a script in place of devices. A step is `frame: command`, with `;` or a line break between steps: `pointer X Y` or `pointer none`, `down`, `up`, `click`, `key NAME [shift] [control] [alt] [shortcut] [word]`, `text WHAT`, `compose WHAT`, `wheel X Y [precise]`, `hold ACTION [N]` for an action of the user interface such as `ui-accept` or a button of the input map such as `jump`, `hold-key KEY [N]` for a key by where it is such as `w`, `hold-button NAME [N]` for a button of a controller such as `south`, `stick X Y [N]` for the right stick and `left-stick X Y [N]` for the left one, `device keyboard` or `device gamepad`, `look X Y`. A step of a frame that was skipped is applied in the next. A hold of an action the map does not have is refused with the names it has, see [input.md](input.md#scripts) |
 | `--input-script PATH` | The same from a file at a virtual path |
 | `--spawn PATH` | Spawns the prefab at a virtual path at the top of the world once the scene is read, as a script would. A prefab that cannot be read is said in the log and sets the exit code, and the run goes on without it |
+| `--jit on\|off` | Compiles the scripts as they run, or runs them in LuaJIT's interpreter, over `scripting.jit` of the settings |
 | `--window-size WxH` | The size in points |
 | `--render-scale N` | N pixels for each point, as a display of that density gives. `--window-size 1280x720 --render-scale 2` renders 2560 by 1440 |
 | `--ui-scale N` | Makes the user interface larger or smaller, on top of the density |

@@ -228,8 +228,8 @@ script will be able to say later.
 
 ```cpp
 // a system of the game, given ui_system.GetGameInput() as its InputContext
-const glm::vec2 move = input->ActionAxis("move");
-const float throttle = input->ActionAmount("throttle");
+const glm::vec2 move = input->ActionAxis2("move");
+const float throttle = input->ActionAxis("throttle");
 if (input->WasActionPressed("jump")) { Jump(); }
 if (input->IsActionDown("shoot")) { Shoot(delta_time); }
 input->SetState("driving");
@@ -239,8 +239,8 @@ input->SetState("driving");
 |---|---|
 | `IsActionDown(name)` | Whether the action is down in this frame. An axis is down while it is away from its middle. False for a name the map does not have, and outside the current state |
 | `WasActionPressed(name)` | Whether it went down in this frame and was not down in the one before. For what happens once a press, such as a jump or the pause menu |
-| `ActionAxis(name)` | Where an axis2 is, as a `glm::vec2`. Zero for anything else |
-| `ActionAmount(name)` | Where an axis is, as a `float`. Zero for anything else |
+| `ActionAxis2(name)` | Where an axis2 is, as a `glm::vec2`. Zero for anything else |
+| `ActionAxis(name)` | Where an axis is, as a `float`. Zero for anything else |
 | `ActionAxis3(name)` | What an axis3 read, as a `glm::vec3`: about x, y, and z. Zero for anything else, and while its sensor is off |
 | `SetSensorEnabled(sensor, on)`, `IsSensorEnabled(sensor)` | A motion sensor, `gyro` or `accelerometer`, see [sensors](#sensors) |
 | `SetState(name)`, `GetState()` | The state the game is in |

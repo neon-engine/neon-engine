@@ -155,7 +155,7 @@ namespace
         speed = 2.0,
         open = false,
         sound = "assets://sounds/door.wav",
-        count = 3,
+        count = integer(3),
         at = vec3(1, 2, 3),
         tint = color(1, 0, 0),
       }
@@ -214,7 +214,7 @@ namespace
       return Door, DoorSystem
     )");
     Load();
-    EXPECT_THAT(Errors(), HasSubstr("DoorSystem defines 'updte', which is not a hook of System. The hooks are ready, update, step, removed, on_trigger_enter, on_trigger_exit, on_collision"));
+    EXPECT_THAT(Errors(), HasSubstr("DoorSystem defines 'updte', which is not a hook of System. The hooks are ready, update, fixed_update, removed, on_trigger_enter, on_trigger_exit, on_collision"));
   }
 
   TEST_F(LuaScriptSystemTest, RefusesAHookWithTheWrongNumberOfParameters)
@@ -285,7 +285,7 @@ namespace
     AddScript("riser.lua", R"(
       local Riser = Component:extend { rate = 2.0 }
       local RiserSystem = System:extend("Riser", "Transform")
-      function RiserSystem:step(entity, riser, transform, dt)
+      function RiserSystem:fixed_update(entity, riser, transform, dt)
         transform.position.y = transform.position.y + riser.rate * dt
         transform.scale = vec3(2)
       end
@@ -366,7 +366,7 @@ namespace
   TEST_F(LuaScriptSystemTest, CallsReadyOnceWhenAnEntityAppearsAndRemovedWhenItGoes)
   {
     AddScript("counter.lua", R"(
-      local Counter = Component:extend { readies = 0, removes = 0 }
+      local Counter = Component:extend { readies = integer(0), removes = integer(0) }
       local S = System:extend "Counter"
       function S:ready(entity, counter) counter.readies = counter.readies + 1 end
       function S:removed(entity) removed_entity = entity.id end
@@ -439,6 +439,23 @@ namespace
     EXPECT_EQ(std::get<float>(Field(a, "Door", "speed")), 3.0f);
   }
 
+  TEST_F(LuaScriptSystemTest, RunsTheScriptsWithTheCompilerOffWhenAsked)
+  {
+    _lua.SetJit(false);
+    AddScript("door.lua", R"(
+      local Door = Component:extend { speed = 2.0 }
+      local S = System:extend(Door)
+      function S:update(entity, door, dt) door.speed = door.speed + dt end
+      return Door, S
+    )");
+    ASSERT_TRUE(Load());
+    const Entity a = Place("a");
+    Give(a, "Door");
+    _lua.Update(_store, 0.5);
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 0u) << Errors();
+    EXPECT_EQ(std::get<float>(Field(a, "Door", "speed")), 2.5f);
+  }
+
   TEST_F(LuaScriptSystemTest, KeepsIoAndOsAndLoadOutOfReach)
   {
     AddScript("check.lua", "assert(io == nil and os == nil and load == nil and dofile == nil and debug == nil)");
@@ -446,10 +463,38 @@ namespace
     EXPECT_EQ(_logger->Count(LogLevel::Error), 0u) << Errors();
   }
 
+  TEST_F(LuaScriptSystemTest, KeepsTheForeignFunctionsAndTheCompilerOfLuaJitOutOfReach)
+  {
+    AddScript("check.lua", R"(
+      assert(ffi == nil and jit == nil and package == nil and loadstring == nil)
+      assert(not pcall(require, "ffi") and not pcall(require, "jit"))
+    )");
+    EXPECT_TRUE(Load());
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 0u) << Errors();
+  }
+
+  TEST_F(LuaScriptSystemTest, GivesTheOperationsOnBitsAsTheBitLibrary)
+  {
+    AddScript("check.lua", R"(
+      assert(bit.band(0xFF, 0x0F) == 15 and bit.bor(1, 4) == 5 and bit.bxor(5, 1) == 4)
+      assert(bit.lshift(1, 4) == 16 and bit.rshift(256, 4) == 16 and bit.bnot(0) == -1)
+    )");
+    EXPECT_TRUE(Load());
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 0u) << Errors();
+  }
+
+  TEST_F(LuaScriptSystemTest, RefusesAFileWithTheSyntaxOfALaterLua)
+  {
+    AddScript("later.lua", "local half <const> = 7 // 2");
+    Load();
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 1u);
+    EXPECT_THAT(Errors(), HasSubstr("later.lua"));
+  }
+
   TEST_F(LuaScriptSystemTest, IteratesTheWorldWithEach)
   {
     AddScript("seeker.lua", R"(
-      local Seeker = Component:extend { found = 0 }
+      local Seeker = Component:extend { found = integer(0) }
       local S = System:extend "Seeker"
       function S:update(entity, seeker, dt)
         local count = 0
@@ -557,7 +602,7 @@ namespace
         seen = { gauge.level, gauge.offset, gauge.ticks, gauge.mark, gauge.size.y, gauge.tint.w, gauge.cell.z, gauge.steps[2] }
         gauge.level = 255
         gauge.offset = -32768
-        gauge.ticks = 1 << 40
+        gauge.ticks = 1099511627776
         gauge.mark = "z"
         gauge.size = vec2(5, 6)
         gauge.cell = vec3(7, 8, 9)
@@ -640,5 +685,90 @@ namespace
     EXPECT_NEAR(basis[0][0], -1.0f, 0.001f);
     const auto place = std::get<glm::mat4>(Field(a, "Frame", "place"));
     EXPECT_EQ(place[3][0], 5.0f);
+  }
+
+  TEST_F(LuaScriptSystemTest, ReachesAListOfTheEngineInPlace)
+  {
+    _store.RegisterComponent(ComponentInfo::Of<Gauge>("Gauge"));
+    _formats.Add(ComponentFormat::Of<Gauge>());
+
+    AddScript("steps.lua", R"(
+      local S = System:extend "Gauge"
+      function S:update(entity, gauge, dt)
+        local steps = gauge.steps
+        count_before = #steps
+        steps[1] = 10
+        steps:insert(30)
+        steps:insert(2, 20)
+        steps:remove(3)
+        count_after = #gauge.steps
+        second = gauge.steps[2]
+      end
+      return S
+    )");
+    ASSERT_TRUE(Load());
+
+    const Entity a = Place("a");
+    const Gauge standard;
+    _store.SetComponent(a, _store.FindComponent("Gauge"), &standard);
+    _lua.Update(_store, 0.1);
+
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 0u) << Errors();
+    const auto *after = static_cast<const Gauge *>(_store.GetComponent(a, _store.FindComponent("Gauge")));
+    ASSERT_NE(after, nullptr);
+    EXPECT_EQ(after->steps, (std::vector<int>{10, 20, 30}));
+  }
+
+  TEST_F(LuaScriptSystemTest, SaysWhenAListIndexIsPastTheEnd)
+  {
+    _store.RegisterComponent(ComponentInfo::Of<Gauge>("Gauge"));
+    _formats.Add(ComponentFormat::Of<Gauge>());
+    AddScript("over.lua", R"(
+      local S = System:extend "Gauge"
+      function S:update(entity, gauge, dt) gauge.steps[5] = 1 end
+      return S
+    )");
+    ASSERT_TRUE(Load());
+    const Entity a = Place("a");
+    const Gauge standard;
+    _store.SetComponent(a, _store.FindComponent("Gauge"), &standard);
+
+    _lua.Update(_store, 0.1);
+
+    EXPECT_THAT(Errors(), HasSubstr("The list has 2 elements, so there is no element 5"));
+  }
+
+  TEST_F(LuaScriptSystemTest, ReadingVectorsAndComponentsEveryFrameMakesNothingNew)
+  {
+    // the handles read from a component are kept and bound again, so a
+    // read every frame makes nothing Lua has to collect: with the collector
+    // held still, the memory in use stays the same from one frame to the next
+    AddScript("reader.lua", R"(
+      local Reader = Component:extend { at = vec3(0, 0, 0), grew = 0.0 }
+      local S = System:extend("Reader", "Transform")
+      collectgarbage('stop')
+      local last = nil
+      function S:update(entity, reader, transform, dt)
+        local p = transform.position
+        local a = reader.at
+        local t = entity.Transform
+        p.x = p.x + a.y + t.scale.y * 0
+        local now = collectgarbage('count')
+        if last ~= nil and now > last then reader.grew = reader.grew + (now - last) end
+        last = now
+      end
+      return Reader, S
+    )");
+    ASSERT_TRUE(Load());
+    const Entity a = Place("a");
+    Give(a, "Reader");
+
+    // the first frames make the handles
+    for (int i = 0; i < 3; i++) { _lua.Update(_store, 0.1); }
+    const float grew_at_start = std::get<float>(Field(a, "Reader", "grew"));
+    for (int i = 0; i < 200; i++) { _lua.Update(_store, 0.1); }
+
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 0u) << Errors();
+    EXPECT_EQ(std::get<float>(Field(a, "Reader", "grew")), grew_at_start);
   }
 }

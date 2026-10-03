@@ -78,6 +78,8 @@ namespace
       "  --headless-renderer       Render without a window, for screenshots and checks on a machine with no display\n"
       "  --spawn PATH              Spawn this prefab at the top of the world once the scene is read, as a script "
       "would, for example assets://prefabs/target.prefab.yml\n"
+      "  --jit on|off              Compile the scripts as they run, or run them in LuaJIT's interpreter. Over "
+      "scripting.jit of the settings, for comparing the two\n"
       "  --headless                Run as a dedicated server. Not available yet, see --headless-renderer\n");
   }
 
@@ -125,7 +127,7 @@ namespace
   TEST_F(RuntimeOptionsTest, EveryOptionButTheHeadlessOnesNeedsAValue)
   {
     for (const char *option : {"--ui", "--renderer", "--frames", "--screenshot", "--screenshot-at",
-                               "--output-dir", "--time-step", "--vulkan-version", "--spawn"})
+                               "--output-dir", "--time-step", "--vulkan-version", "--spawn", "--jit"})
     {
       EXPECT_FALSE(Parse({option})) << option;
       EXPECT_EQ(_command_line.GetError(), "Option '" + std::string(option) + "' needs a value");
@@ -325,6 +327,34 @@ namespace
     RuntimeOptions,
     RuntimeOptionsBadVulkanVersion,
     ::testing::Values("1", "2.0", "1.", ".3", "1.3.1", "1.-1", "v1.3", "1,3", "1.3a", "latest"));
+
+  // --jit
+
+  TEST_F(RuntimeOptionsTest, JitOffRunsTheScriptsInTheInterpreter)
+  {
+    ASSERT_TRUE(Apply({"--jit", "off"}));
+    EXPECT_FALSE(_settings.script_jit);
+  }
+
+  TEST_F(RuntimeOptionsTest, JitOnCompilesOverASettingThatSaidOff)
+  {
+    _settings.script_jit = false;
+    ASSERT_TRUE(Apply({"--jit=on"}));
+    EXPECT_TRUE(_settings.script_jit);
+  }
+
+  TEST_F(RuntimeOptionsTest, JitLeftOutLeavesTheSetting)
+  {
+    _settings.script_jit = false;
+    ASSERT_TRUE(Apply({}));
+    EXPECT_FALSE(_settings.script_jit);
+  }
+
+  TEST_F(RuntimeOptionsTest, JitRefusesAnythingButOnAndOff)
+  {
+    EXPECT_FALSE(Parse({"--jit", "maybe"}));
+    EXPECT_EQ(_command_line.GetError(), "'maybe' is not a value of '--jit'. It accepts on, off");
+  }
 
   // --time-step
 

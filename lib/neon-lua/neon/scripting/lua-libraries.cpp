@@ -33,6 +33,8 @@ namespace neon
       push_component(lua, handle);
     }
 
+    int scene_load(lua_State *lua);
+
     /// The step of `world.each`: the next entity of the snapshot that still
     /// carries every component, with its components, or nothing.
     int each_step(lua_State *lua)
@@ -153,9 +155,10 @@ namespace neon
 
     constexpr luaL_Reg world_functions[] = {
       {"each", world_each},
-      {"find", world_find},
-      {"create", world_create},
-      {"destroy", world_destroy},
+      {"find_entity", world_find},
+      {"create_entity", world_create},
+      {"destroy_entity", world_destroy},
+      {"load_scene", scene_load},
       {nullptr, nullptr}
     };
 
@@ -181,14 +184,14 @@ namespace neon
     int input_amount(lua_State *lua)
     {
       InputContext *input = input_of(lua);
-      lua_pushnumber(lua, input != nullptr ? input->ActionAmount(luaL_checkstring(lua, 1)) : 0.0);
+      lua_pushnumber(lua, input != nullptr ? input->ActionAxis(luaL_checkstring(lua, 1)) : 0.0);
       return 1;
     }
 
     int input_axis(lua_State *lua)
     {
       InputContext *input = input_of(lua);
-      const glm::vec2 axis = input != nullptr ? input->ActionAxis(luaL_checkstring(lua, 1)) : glm::vec2{0.0f};
+      const glm::vec2 axis = input != nullptr ? input->ActionAxis2(luaL_checkstring(lua, 1)) : glm::vec2{0.0f};
       lua_pushnumber(lua, axis.x);
       lua_pushnumber(lua, axis.y);
       return 2;
@@ -205,11 +208,11 @@ namespace neon
     }
 
     constexpr luaL_Reg input_functions[] = {
-      {"is_down", input_is_down},
-      {"pressed", input_pressed},
-      {"amount", input_amount},
-      {"axis", input_axis},
-      {"axis3", input_axis3},
+      {"is_action_down", input_is_down},
+      {"was_action_pressed", input_pressed},
+      {"action_axis", input_amount},
+      {"action_axis2", input_axis},
+      {"action_axis3", input_axis3},
       {nullptr, nullptr}
     };
 
@@ -273,7 +276,7 @@ namespace neon
       return 0;
     }
 
-    constexpr luaL_Reg scene_functions[] = {{"load", scene_load}, {nullptr, nullptr}};
+    constexpr luaL_Reg scene_functions[] = {{"load_scene", scene_load}, {nullptr, nullptr}};
 
     /// `math.move_toward(from, to, by)`: `from` moved by at most `by`
     /// towards `to`, and `to` itself when that is nearer.
@@ -320,6 +323,8 @@ namespace neon
 
   void open_scene_library(lua_State *lua)
   {
+    // `scene.load_scene` is `world.load_scene`; the table stays for a
+    // script that reads better with it
     luaL_newlib(lua, scene_functions);
     lua_setglobal(lua, "scene");
   }

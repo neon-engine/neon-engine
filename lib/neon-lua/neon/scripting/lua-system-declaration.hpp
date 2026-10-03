@@ -13,7 +13,7 @@ namespace neon
   {
     Ready = 0,
     Update,
-    Step,
+    FixedUpdate,
     Removed,
     TriggerEnter,
     TriggerExit,
@@ -22,7 +22,7 @@ namespace neon
 
   /// The names of the hooks, in the order of LuaHook.
   constexpr std::array<std::string_view, 7> lua_hook_names = {
-    "ready", "update", "step", "removed", "on_trigger_enter", "on_trigger_exit", "on_collision"
+    "ready", "update", "fixed_update", "removed", "on_trigger_enter", "on_trigger_exit", "on_collision"
   };
 
   /// What a script declared with `System:extend`, read off its class table:

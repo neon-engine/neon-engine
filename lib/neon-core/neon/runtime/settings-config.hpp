@@ -168,6 +168,11 @@ struct SettingsConfig
   /// unless an action says `enabled: true`. See docs/input.md.
   std::optional<bool> gyro_enabled;
 
+  /// Whether LuaJIT compiles the scripts to machine code as they run. Off
+  /// runs them in its interpreter, for comparing the two. See
+  /// docs/scripting.md.
+  bool script_jit = true;
+
   /// Steps the world takes in a second. What a game is decided by, the
   /// physics first of all, advances in steps of this length, whatever the
   /// frame rate is.

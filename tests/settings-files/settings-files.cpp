@@ -51,6 +51,9 @@ namespace
     "input:\n"
     "  gyro: true\n"
     "\n"
+    "scripting:\n"
+    "  jit: false\n"
+    "\n"
     "rendering:\n"
     "  vulkan_version: \"1.2\"\n"
     "  max_light_sources: 64\n"
@@ -154,6 +157,7 @@ namespace
     EXPECT_EQ(_settings.settings_menu, "assets://ui/settings.ui.yml");
     EXPECT_DOUBLE_EQ(_settings.steps_per_second, 120.0);
     EXPECT_EQ(_settings.gyro_enabled, true);
+    EXPECT_FALSE(_settings.script_jit);
     EXPECT_EQ(_settings.most_steps_per_frame, 4u);
     EXPECT_EQ(_settings.vulkan_version, (ApiVersion{1, 2}));
     EXPECT_EQ(_settings.max_light_sources, 64u);

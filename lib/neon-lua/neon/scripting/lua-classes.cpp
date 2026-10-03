@@ -1,7 +1,7 @@
 #include "lua-classes.hpp"
 
 #include <algorithm>
-#include <cstring>
+#include <limits>
 
 #include "lua-api.hpp"
 #include "lua-color-handle.hpp"
@@ -18,6 +18,29 @@ namespace neon
   {
     constexpr const char *component_class = "neon.component-class";
     constexpr const char *system_class = "neon.system-class";
+
+    // what `integer(3)` makes: a whole number marked as one, for a
+    // declaration. A number alone declares a Float on every Lua, since
+    // LuaJIT has one kind of number and could not tell 3 from 3.0.
+    constexpr const char *integer_marker = "neon.integer";
+
+    /// `integer(n)`: marks a whole number as the default of a whole field.
+    int make_integer(lua_State *lua)
+    {
+      if (!lua_isinteger(lua, 1))
+      {
+        return luaL_error(lua, "integer takes a whole number, not %s", lua_isnumber(lua, 1) ? lua_tostring(lua, 1) : luaL_typename(lua, 1));
+      }
+      const lua_Integer value = lua_tointeger(lua, 1);
+      if (value < std::numeric_limits<int>::min() || value > std::numeric_limits<int>::max())
+      {
+        return luaL_error(lua, "integer takes a whole number of 32 bits, and %s is outside them", lua_tostring(lua, 1));
+      }
+      auto *made = static_cast<lua_Integer *>(lua_newuserdatauv(lua, sizeof(lua_Integer), 0));
+      *made = value;
+      luaL_setmetatable(lua, integer_marker);
+      return 1;
+    }
 
     /// The hooks a system's functions are called with, after `self`, the
     /// entity, and one component each: nothing, the seconds, the other
@@ -83,10 +106,10 @@ namespace neon
         field.standard = lua_toboolean(lua, -1) != 0;
         return true;
       }
-      if (lua_isinteger(lua, -1))
+      if (const auto *whole = static_cast<const lua_Integer *>(luaL_testudata(lua, -1, integer_marker)))
       {
         field.kind = FieldKind::Integer;
-        field.standard = static_cast<int>(lua_tointeger(lua, -1));
+        field.standard = static_cast<int>(*whole);
         return true;
       }
       if (lua_isnumber(lua, -1))
@@ -149,17 +172,6 @@ namespace neon
       return false;
     }
 
-    /// How many parameters a Lua function takes, or -1 when it takes any
-    /// number, or is not written in Lua.
-    int parameters_of(lua_State *lua, const int index)
-    {
-      lua_Debug info;
-      lua_pushvalue(lua, index);
-      lua_getinfo(lua, ">Su", &info);
-      if (info.isvararg != 0 || std::strcmp(info.what, "Lua") != 0) { return -1; }
-      return static_cast<int>(info.nparams);
-    }
-
     constexpr luaL_Reg component_functions[] = {{"extend", component_extend}, {nullptr, nullptr}};
     constexpr luaL_Reg system_functions[] = {{"extend", system_extend}, {nullptr, nullptr}};
   }
@@ -175,6 +187,11 @@ namespace neon
     lua_setglobal(lua, "Component");
     luaL_newlib(lua, system_functions);
     lua_setglobal(lua, "System");
+
+    luaL_newmetatable(lua, integer_marker);
+    lua_pop(lua, 1);
+    lua_pushcfunction(lua, make_integer);
+    lua_setglobal(lua, "integer");
   }
 
   bool is_component_class(lua_State *lua, const int index)
@@ -339,7 +356,7 @@ namespace neon
         problem = "'" + key + "' of " + declaration.name + " takes " + std::to_string(parameters) + " parameters; it is called with "
                   + std::to_string(expected) + ": self, the entity"
                   + (components > 0 ? ", one for each of its " + std::to_string(components) + " components" : "")
-                  + (extra_parameters[hook] == 1 && hook <= static_cast<std::size_t>(LuaHook::Step) ? ", and the seconds" : "")
+                  + (extra_parameters[hook] == 1 && hook <= static_cast<std::size_t>(LuaHook::FixedUpdate) ? ", and the seconds" : "")
                   + (hook == static_cast<std::size_t>(LuaHook::TriggerEnter) || hook == static_cast<std::size_t>(LuaHook::TriggerExit)
                        ? ", and the other entity"
                        : "")

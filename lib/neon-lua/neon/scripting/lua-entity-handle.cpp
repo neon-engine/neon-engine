@@ -34,12 +34,35 @@ namespace neon
         return 1;
       }
 
+      // the handle of this component read from this entity handle before,
+      // kept in the entity's user value, so that `entity.Transform` every
+      // frame makes nothing new
+      if (lua_getiuservalue(lua, 1, 1) == LUA_TNIL)
+      {
+        lua_pop(lua, 1);
+        lua_newtable(lua);
+        lua_pushvalue(lua, -1);
+        lua_setiuservalue(lua, 1, 1);
+      }
+      lua_getfield(lua, -1, name);
+      if (LuaComponentHandle *kept = test_component(lua, -1))
+      {
+        kept->entity = entity;
+        kept->pointer = nullptr;
+        lua_remove(lua, -2);
+        return 1;
+      }
+      lua_pop(lua, 1);
+
       LuaComponentHandle handle;
       handle.entity = entity;
       handle.component = id;
       const ComponentFormat *format = host_of(lua).formats != nullptr ? host_of(lua).formats->Find(name) : nullptr;
       handle.type = format != nullptr ? format->type.get() : nullptr;
       push_component(lua, handle);
+      lua_pushvalue(lua, -1);
+      lua_setfield(lua, -3, name);
+      lua_remove(lua, -2);
       return 1;
     }
 
@@ -174,12 +197,12 @@ namespace neon
       {"__newindex", entity_newindex},
       {"__eq", entity_eq},
       {"__tostring", entity_tostring},
-      {"has", entity_has},
-      {"get", entity_get},
-      {"remove", entity_remove},
-      {"parent", entity_parent},
-      {"children", entity_children},
-      {"alive", entity_alive},
+      {"has_component", entity_has},
+      {"get_component", entity_get},
+      {"remove_component", entity_remove},
+      {"get_parent", entity_parent},
+      {"get_children", entity_children},
+      {"is_alive", entity_alive},
       {"destroy", entity_destroy},
       {nullptr, nullptr}
     };
@@ -193,7 +216,8 @@ namespace neon
 
   void push_entity(lua_State *lua, const Entity entity)
   {
-    auto *handle = static_cast<LuaEntityHandle *>(lua_newuserdatauv(lua, sizeof(LuaEntityHandle), 0));
+    // one user value: the components read from this handle, kept
+    auto *handle = static_cast<LuaEntityHandle *>(lua_newuserdatauv(lua, sizeof(LuaEntityHandle), 1));
     new(handle) LuaEntityHandle();
     handle->entity = entity;
     luaL_setmetatable(lua, metatable);

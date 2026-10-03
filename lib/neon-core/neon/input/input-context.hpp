@@ -49,12 +49,12 @@ namespace neon
 
     /// Where an axis of two of the map is: x to the right, y forward, from
     /// -1 to 1 from keys and sticks, in pixels moved from the mouse.
-    virtual glm::vec2 ActionAxis(const std::string &name) = 0;
+    virtual glm::vec2 ActionAxis2(const std::string &name) = 0;
 
     /// Where an axis of one of the map is: from -1 to 1 from two keys or
     /// buttons, from 0 to 1 from a trigger. The largest wins when several
     /// are used at once.
-    virtual float ActionAmount(const std::string &name) = 0;
+    virtual float ActionAxis(const std::string &name) = 0;
 
     /// Where an axis of three of the map is, from a motion sensor of a
     /// controller: about x, y, and z, which are pitch, yaw, and roll. A

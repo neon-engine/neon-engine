@@ -246,13 +246,13 @@ namespace neon
     return value != nullptr && value->is_down && !value->was_down;
   }
 
-  glm::vec2 InputActions::GetAxis(const std::string &name) const
+  glm::vec2 InputActions::GetAxis2(const std::string &name) const
   {
     const Value *value = Find(name);
     return value != nullptr ? value->axis : glm::vec2{0.0f, 0.0f};
   }
 
-  float InputActions::GetAmount(const std::string &name) const
+  float InputActions::GetAxis(const std::string &name) const
   {
     const Value *value = Find(name);
     return value != nullptr ? value->amount : 0.0f;

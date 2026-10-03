@@ -9,6 +9,7 @@
 #include "lua-component-handle.hpp"
 #include "lua-entity-handle.hpp"
 #include "lua-libraries.hpp"
+#include "lua-list-handle.hpp"
 #include "lua-sandbox.hpp"
 #include "lua-vec2-handle.hpp"
 #include "lua-vec3-handle.hpp"
@@ -87,7 +88,7 @@ namespace neon
       switch (hook)
       {
         case LuaHook::Update:
-        case LuaHook::Step:
+        case LuaHook::FixedUpdate:
         case LuaHook::TriggerEnter:
         case LuaHook::TriggerExit: return 1;
         case LuaHook::Collision: return 3;
@@ -124,6 +125,7 @@ namespace neon
     _lua = luaL_newstate();
     set_host(_lua, &_host);
 
+    open_compat(_lua);
     open_sandbox(_lua);
     open_entity_handles(_lua);
     open_component_handles(_lua);
@@ -132,6 +134,7 @@ namespace neon
     open_vec4_handles(_lua);
     open_quat_handles(_lua);
     open_matrix_handles(_lua);
+    open_list_handles(_lua);
     open_color_handles(_lua);
     open_classes(_lua);
     open_world_library(_lua);
@@ -140,8 +143,21 @@ namespace neon
     open_scene_library(_lua);
     open_math_extras(_lua);
 
-    const std::string version = LUA_VERSION_MAJOR "." LUA_VERSION_MINOR;
-    _host.logger->Info("Lua {} is ready for the scripts", version);
+    ApplyJit();
+    const std::string version = LUAJIT_VERSION ", the language of Lua 5.1 with parts of 5.2";
+    const std::string compiler = _jit ? ", compiling the scripts as they run" : ", running the scripts in its interpreter";
+    _host.logger->Info("{} is ready for the scripts{}", version, compiler);
+  }
+
+  void Lua_ScriptSystem::SetJit(const bool enabled)
+  {
+    _jit = enabled;
+    if (_lua != nullptr) { ApplyJit(); }
+  }
+
+  void Lua_ScriptSystem::ApplyJit()
+  {
+    luaJIT_setmode(_lua, 0, LUAJIT_MODE_ENGINE | (_jit ? LUAJIT_MODE_ON : LUAJIT_MODE_OFF));
   }
 
   void Lua_ScriptSystem::CleanUp()
@@ -409,6 +425,12 @@ namespace neon
     // the handles the hooks are called with
     push_entity(_lua, No_Entity);
     system.entity_ref = luaL_ref(_lua, LUA_REGISTRYINDEX);
+
+    // the function that runs a block, with a run to be pointed at
+    lua_pushlightuserdata(_lua, nullptr);
+    lua_pushcclosure(_lua, RunBlock, 1);
+    system.run_ref = luaL_ref(_lua, LUA_REGISTRYINDEX);
+
     for (std::size_t i = 0; i < system.components.size(); i++)
     {
       LuaComponentHandle handle;
@@ -500,27 +522,68 @@ namespace neon
       message);
   }
 
+  int Lua_ScriptSystem::RunBlock(lua_State *lua)
+  {
+    auto *run = static_cast<BlockRun *>(lua_touserdata(lua, lua_upvalueindex(1)));
+    DeclaredSystem &system = *run->system;
+    const EntityBlock &block = *run->block;
+    const auto hook = static_cast<std::size_t>(run->hook);
+
+    // the function once, the handles refilled for every entity
+    lua_rawgeti(lua, LUA_REGISTRYINDEX, system.declaration.ref);
+    const int self = lua_gettop(lua);
+    lua_getfield(lua, self, lua_hook_names[hook].data());
+    const int function = lua_gettop(lua);
+
+    for (run->index = 0; run->index < block.count; run->index++)
+    {
+      const std::size_t index = run->index;
+      lua_pushvalue(lua, function);
+      lua_pushvalue(lua, self);
+
+      lua_rawgeti(lua, LUA_REGISTRYINDEX, system.entity_ref);
+      check_entity(lua, -1).entity = block.entities[index];
+
+      for (std::size_t c = 0; c < system.component_refs.size(); c++)
+      {
+        lua_rawgeti(lua, LUA_REGISTRYINDEX, system.component_refs[c]);
+        LuaComponentHandle &handle = check_component(lua, -1);
+        handle.entity = block.entities[index];
+        handle.pointer = system.sizes[c] == 0 ? nullptr : static_cast<char *>(block.columns[c]) + index * system.sizes[c];
+      }
+
+      lua_pushnumber(lua, run->seconds);
+      lua_call(lua, 2 + static_cast<int>(system.component_refs.size()) + 1, 0);
+    }
+
+    return 0;
+  }
+
   void Lua_ScriptSystem::RunOver(DeclaredSystem &system, const LuaHook hook, EntityStore &store, const double seconds)
   {
     const auto index = static_cast<std::size_t>(hook);
     if (!system.declaration.hooks[index] || system.off[index] || system.components.empty()) { return; }
 
-    // the handles point into the block while it is handed over, and ask the
-    // store afterwards
-    std::vector<void *> pointers(system.components.size(), nullptr);
     store.Each(system.query, [&](const EntityBlock &block)
     {
-      for (std::size_t i = 0; i < block.count && !system.off[index]; i++)
+      if (system.off[index] || block.count == 0) { return; }
+
+      BlockRun run;
+      run.system = &system;
+      run.block = &block;
+      run.hook = hook;
+      run.seconds = seconds;
+
+      // one protected call for the block, through the function made once,
+      // pointed at this run; an error inside names the entity the loop was on
+      lua_rawgeti(_lua, LUA_REGISTRYINDEX, system.run_ref);
+      lua_pushlightuserdata(_lua, &run);
+      lua_setupvalue(_lua, -2, 1);
+      if (lua_pcall(_lua, 0, 0, 0) != LUA_OK)
       {
-        for (std::size_t c = 0; c < system.components.size(); c++)
-        {
-          pointers[c] = system.sizes[c] == 0
-                          ? nullptr
-                          : static_cast<char *>(block.columns[c]) + i * system.sizes[c];
-        }
-        FillHandles(system, block.entities[i], pointers);
-        lua_pushnumber(_lua, seconds);
-        CallHook(system, hook, block.entities[i], 1);
+        ReportError(system, hook, block.entities[run.index], store);
+        lua_pop(_lua, 1);
+        system.off[index] = true;
       }
     });
     FillHandles(system, No_Entity, {});
@@ -590,7 +653,10 @@ namespace neon
     if (_lua == nullptr || !_started) { return; }
     _host.store = &store;
 
-    for (DeclaredSystem &system : _systems) { RunOver(system, LuaHook::Step, store, fixed_delta_time); }
+    for (DeclaredSystem &system : _systems)
+    {
+      RunOver(system, LuaHook::FixedUpdate, store, fixed_delta_time);
+    }
 
     _host.store = nullptr;
   }

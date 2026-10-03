@@ -402,15 +402,15 @@ namespace
     ASSERT_TRUE(input.SetScript(_script, errors)) << ::testing::PrintToString(errors);
 
     input.ProcessInput();
-    EXPECT_EQ(input.ActionAxis("move"), glm::vec2(0.0f, 1.0f));
+    EXPECT_EQ(input.ActionAxis2("move"), glm::vec2(0.0f, 1.0f));
     EXPECT_FALSE(input.IsActionDown("jump"));
 
     input.ProcessInput();
-    EXPECT_EQ(input.ActionAxis("move"), glm::vec2(0.0f, 1.0f));
+    EXPECT_EQ(input.ActionAxis2("move"), glm::vec2(0.0f, 1.0f));
     EXPECT_TRUE(input.WasActionPressed("jump"));
 
     input.ProcessInput();
-    EXPECT_EQ(input.ActionAxis("move"), glm::vec2(0.0f, 0.0f));
+    EXPECT_EQ(input.ActionAxis2("move"), glm::vec2(0.0f, 0.0f));
     EXPECT_FALSE(input.IsActionDown("jump"));
   }
 

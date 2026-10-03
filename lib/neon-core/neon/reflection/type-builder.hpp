@@ -143,6 +143,11 @@ namespace neon
         reach(*static_cast<T *>(object)) = std::get<V>(value);
       };
 
+      field.reach = [reach](void *object) -> void *
+      {
+        return &reach(*static_cast<T *>(object));
+      };
+
       return *this;
     }
 

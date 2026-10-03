@@ -9,6 +9,7 @@
 #include "lua-api.hpp"
 #include "lua-color-handle.hpp"
 #include "lua-host.hpp"
+#include "lua-list-handle.hpp"
 #include "lua-vec2-handle.hpp"
 #include "lua-vec3-handle.hpp"
 #include "lua-vec4-handle.hpp"
@@ -126,7 +127,7 @@ namespace neon
         return luaL_error(lua, "%s has no field '%s'; the fields are %s", name_of(handle), key, fields_of(*handle.type).c_str());
       }
 
-      push_field(lua, handle, *field, object_of(lua, handle));
+      push_field(lua, handle, *field, object_of(lua, handle), 1);
       return 1;
     }
 
@@ -226,7 +227,9 @@ namespace neon
 
   void push_component(lua_State *lua, const LuaComponentHandle &handle)
   {
-    auto *made = static_cast<LuaComponentHandle *>(lua_newuserdatauv(lua, sizeof(LuaComponentHandle), 0));
+    // one user value: the handles read from this one, kept so that a read
+    // every frame makes nothing new
+    auto *made = static_cast<LuaComponentHandle *>(lua_newuserdatauv(lua, sizeof(LuaComponentHandle), 1));
     new(made) LuaComponentHandle(handle);
     luaL_setmetatable(lua, metatable);
   }
@@ -241,9 +244,104 @@ namespace neon
     return static_cast<LuaComponentHandle *>(luaL_testudata(lua, index, metatable));
   }
 
-  void push_field(lua_State *lua, const LuaComponentHandle &handle, const FieldInfo &field, void *object)
+  // Helpers of the cache of handles, for this file alone.
+  namespace
   {
+    /// Pushes the cached handle of a field of the owner at `owner`, or nil.
+    /// The cache is the owner's user value, made on the first use.
+    void push_cached(lua_State *lua, const int owner, const FieldInfo &field)
+    {
+      if (owner == 0)
+      {
+        lua_pushnil(lua);
+        return;
+      }
+      if (lua_getiuservalue(lua, owner, 1) == LUA_TNIL)
+      {
+        lua_pop(lua, 1);
+        lua_newtable(lua);
+        lua_pushvalue(lua, -1);
+        lua_setiuservalue(lua, owner, 1);
+      }
+      lua_getfield(lua, -1, field.name.c_str());
+      lua_remove(lua, -2);
+    }
+
+    /// Keeps the handle at the top of the stack as the cached one of the
+    /// field, and leaves it there.
+    void keep_cached(lua_State *lua, const int owner, const FieldInfo &field)
+    {
+      if (owner == 0) { return; }
+      lua_getiuservalue(lua, owner, 1);
+      lua_pushvalue(lua, -2);
+      lua_setfield(lua, -2, field.name.c_str());
+      lua_pop(lua, 1);
+    }
+  }
+
+  void push_field(lua_State *lua, const LuaComponentHandle &handle, const FieldInfo &field, void *object, const int owner)
+  {
+    // a list reached in place, when the field has an address
+    const bool list = field.kind == FieldKind::StringList || field.kind == FieldKind::FloatList
+                      || field.kind == FieldKind::IntegerList || field.kind == FieldKind::Vector3List
+                      || field.kind == FieldKind::Layers;
+    if (list && field.reach)
+    {
+      push_cached(lua, owner, field);
+      if (LuaListHandle *cached = test_list(lua, -1))
+      {
+        cached->target = handle;
+        return;
+      }
+      lua_pop(lua, 1);
+      push_list(lua, handle, field);
+      keep_cached(lua, owner, field);
+      return;
+    }
+
     const FieldValue value = field.get(object);
+
+    // a vector, a colour, a quaternion, or a matrix read from a component is
+    // the same handle every time, bound again
+    if (owner != 0)
+    {
+      push_cached(lua, owner, field);
+      bool reused = true;
+      if (const auto *vector = std::get_if<glm::vec3>(&value))
+      {
+        if (LuaVec3Handle *cached = test_vec3(lua, -1)) { cached->value = *vector; cached->target = handle; cached->field = &field; }
+        else { reused = false; }
+      }
+      else if (const auto *two = std::get_if<glm::vec2>(&value))
+      {
+        if (LuaVec2Handle *cached = test_vec2(lua, -1)) { cached->value = *two; cached->target = handle; cached->field = &field; }
+        else { reused = false; }
+      }
+      else if (const auto *four = std::get_if<glm::vec4>(&value))
+      {
+        if (LuaVec4Handle *cached = test_vec4(lua, -1)) { cached->value = *four; cached->target = handle; cached->field = &field; }
+        else { reused = false; }
+      }
+      else if (const auto *color = std::get_if<Color>(&value))
+      {
+        if (LuaColorHandle *cached = test_color(lua, -1)) { cached->value = *color; cached->target = handle; cached->field = &field; }
+        else { reused = false; }
+      }
+      else if (const auto *quaternion = std::get_if<glm::quat>(&value))
+      {
+        if (LuaQuatHandle *cached = test_quat(lua, -1)) { cached->value = *quaternion; cached->target = handle; cached->field = &field; }
+        else { reused = false; }
+      }
+      else if (std::holds_alternative<glm::mat3>(value) || std::holds_alternative<glm::mat4>(value))
+      {
+        if (LuaMatrixHandle *cached = test_matrix(lua, -1)) { cached->target = handle; cached->field = &field; }
+        else { reused = false; }
+      }
+      else { reused = false; }
+
+      if (reused) { return; }
+      lua_pop(lua, 1);
+    }
 
     if (const auto *held = std::get_if<bool>(&value)) { lua_pushboolean(lua, *held ? 1 : 0); }
     else if (const auto *whole = std::get_if<int>(&value)) { lua_pushinteger(lua, *whole); }
@@ -295,6 +393,12 @@ namespace neon
       lua_setfield(lua, -2, "percent");
     }
     else { lua_pushnil(lua); }
+
+    if (test_vec3(lua, -1) != nullptr || test_vec2(lua, -1) != nullptr || test_vec4(lua, -1) != nullptr
+        || test_color(lua, -1) != nullptr || test_quat(lua, -1) != nullptr || test_matrix(lua, -1) != nullptr)
+    {
+      keep_cached(lua, owner, field);
+    }
   }
 
   void set_field(lua_State *lua, const int index, const FieldInfo &field, void *object, const char *owner)

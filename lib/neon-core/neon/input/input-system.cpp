@@ -69,14 +69,14 @@ namespace neon
     return _actions.WasPressed(name);
   }
 
-  glm::vec2 InputSystem::ActionAxis(const std::string &name)
+  glm::vec2 InputSystem::ActionAxis2(const std::string &name)
   {
-    return _actions.GetAxis(name);
+    return _actions.GetAxis2(name);
   }
 
-  float InputSystem::ActionAmount(const std::string &name)
+  float InputSystem::ActionAxis(const std::string &name)
   {
-    return _actions.GetAmount(name);
+    return _actions.GetAxis(name);
   }
 
   bool InputSystem::SetState(const std::string &name)

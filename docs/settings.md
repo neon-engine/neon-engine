@@ -75,6 +75,7 @@ The settings of the runtime are
 | `world.steps_per_second` | Steps the world takes in a second. Above zero | 60 |
 | `world.most_steps_per_frame` | The most steps one frame takes. A whole number above zero | 8 |
 | `input.gyro` | The player's switch for the gyro of a controller, over what the input map says, see [input.md](input.md#sensors) | Left to the map, which has it off unless an action says `enabled: true` |
+| `scripting.jit` | Whether LuaJIT compiles the scripts to machine code as they run; `false` runs them in its interpreter, for comparing the two, see [scripting.md](scripting.md#which-lua) | `true` |
 | `rendering.vulkan_version` | The version of Vulkan to ask for, in quotes, since `1.10` as a number is `1.1` | `"1.3"` |
 | `rendering.max_light_sources` | How many lights a frame may hold. A whole number above zero | 1024 |
 | `rendering.max_render_objects` | How many render objects a frame may hold, each one draw. A whole number above zero. It sizes a per-frame buffer of 208 bytes an object, so a larger number costs little; a scene that passes it is told, with this name | 16384 |

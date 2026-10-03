@@ -105,8 +105,10 @@ namespace neon
     open_library(lua, LUA_STRLIBNAME, luaopen_string);
     open_library(lua, LUA_TABLIBNAME, luaopen_table);
     open_library(lua, LUA_MATHLIBNAME, luaopen_math);
-    open_library(lua, LUA_UTF8LIBNAME, luaopen_utf8);
-    open_library(lua, LUA_COLIBNAME, luaopen_coroutine);
+    // the operations on bits, which the language of LuaJIT has no
+    // operators for. coroutine came with the base library; ffi and jit are
+    // left closed, the first reaches raw memory
+    open_library(lua, LUA_BITLIBNAME, luaopen_bit);
 
     // nothing reads a file or runs text from outside the scripts
     remove_global(lua, "dofile");
