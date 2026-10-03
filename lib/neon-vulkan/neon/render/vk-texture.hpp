@@ -1,6 +1,8 @@
 #ifndef VK_TEXTURE_HPP
 #define VK_TEXTURE_HPP
 
+#include <array>
+#include <cstddef>
 #include <string>
 #include <vector>
 #include <neon/filesystem/file-system-context.hpp>
@@ -68,6 +70,9 @@ namespace neon
       const VK_TextureOptions &options = {});
 
   public:
+    /// How many faces a cube has.
+    static constexpr std::size_t kCube_Faces = 6;
+
     VK_Texture() = default;
 
     VK_Texture(
@@ -97,6 +102,14 @@ namespace neon
     /// Makes the texture a single colour. Used where a material names no
     /// texture, so that shaders always have something to read.
     bool InitializeWithColor(unsigned char red, unsigned char green, unsigned char blue, unsigned char alpha);
+
+    /// Makes the texture a cube from six image files, which a shader reads
+    /// by a direction: its faces in the order Vulkan keeps them, towards
+    /// positive x, negative x, positive y, negative y, positive z, and
+    /// negative z. Every image is a square, and all six have one size.
+    /// They hold colours, and have no smaller copies. The path the texture
+    /// was created with only names it in the log.
+    bool InitializeWithFaces(const std::array<std::string, kCube_Faces> &paths);
 
     void CleanUp();
 

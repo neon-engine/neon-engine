@@ -1,6 +1,7 @@
 #ifndef FORWARD_RENDER_PIPELINE_HPP
 #define FORWARD_RENDER_PIPELINE_HPP
 #include <map>
+#include <optional>
 #include <queue>
 #include <string>
 #include <tuple>
@@ -16,6 +17,9 @@ namespace neon
     std::vector<LightSource> _light_sources;
     std::size_t _max_light_sources;
     CameraInfo _camera_info;
+
+    // the sky of the frame, which every camera of it sees
+    std::optional<SkyInfo> _sky;
 
     // the cameras of the frame that draw into a texture, and the target
     // of each texture by its name. -1 for one that could not be made,
@@ -46,6 +50,8 @@ namespace neon
     void CleanUp() override;
 
     void EnqueueLightSource(const LightSource &light_source) override;
+
+    void SetSky(const SkyInfo &sky) override;
   };
 } // neon
 

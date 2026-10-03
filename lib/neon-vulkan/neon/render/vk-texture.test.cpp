@@ -63,6 +63,35 @@ namespace
     EXPECT_EQ(texture.View(), VK_NULL_HANDLE);
   }
 
+  TEST_F(VkTextureTest, ACubeFailsAndNamesTheFaceThatIsMissing)
+  {
+    VK_Texture texture("the faces of a sky", &_file_system, &_device, _logger);
+
+    EXPECT_FALSE(texture.InitializeWithFaces({
+      "assets://textures/sky/right.png", "assets://textures/sky/left.png", "assets://textures/sky/top.png",
+      "assets://textures/sky/bottom.png", "assets://textures/sky/front.png", "assets://textures/sky/back.png"}));
+
+    EXPECT_TRUE(_logger->Contains(
+      LogLevel::Error, "Failed to read assets://textures/sky/right.png, a face of the faces of a sky"))
+      << _logger->Messages(LogLevel::Error);
+    EXPECT_EQ(texture.View(), VK_NULL_HANDLE);
+  }
+
+  TEST_F(VkTextureTest, ACubeFailsAndNamesTheFaceThatIsNoImage)
+  {
+    _file_system.AddNativeFile("/assets/textures/sky/right.png", "this is not an image");
+    VK_Texture texture("the faces of a sky", &_file_system, &_device, _logger);
+
+    EXPECT_FALSE(texture.InitializeWithFaces({
+      "assets://textures/sky/right.png", "assets://textures/sky/left.png", "assets://textures/sky/top.png",
+      "assets://textures/sky/bottom.png", "assets://textures/sky/front.png", "assets://textures/sky/back.png"}));
+
+    EXPECT_TRUE(_logger->Contains(
+      LogLevel::Error, "Failed to load assets://textures/sky/right.png, a face of the faces of a sky"))
+      << _logger->Messages(LogLevel::Error);
+    EXPECT_EQ(texture.View(), VK_NULL_HANDLE);
+  }
+
   TEST_F(VkTextureTest, FailsAndSaysSoWhenThePathBreaksARule)
   {
     _file_system.AddNativeFile("/assets/textures/wood.png", "");

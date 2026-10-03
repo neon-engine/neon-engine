@@ -11,6 +11,10 @@
     - The files keep their published names, and the folder `Textures/` its published name too, since
       every GLB names its texture as `Textures/colormap.png`
 
+- `textures/sky/`
+    - Made for Neon Engine by a script, `tools/make-sky-images.py`, from a formula. They are part of the engine
+      and under its license.
+
 - `sounds/hum.wav`
     - Made for Neon Engine by a script, from sine waves. It is part of the engine and under its license.
 

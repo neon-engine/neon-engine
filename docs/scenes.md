@@ -193,6 +193,62 @@ shape. The fields are in [geometry.md](geometry.md).
 The position of a light is that of its `Transform`. The renderer knows a
 light by the name of its entity.
 
+**Sky**
+
+What every camera sees behind everything else, in every direction and
+endlessly far away: the camera turns in it and never moves through it. A
+scene has one, on any entity; it needs no `Transform`. Without one the
+frame shows black.
+
+| Name | Holds | Default |
+|---|---|---|
+| `type` | `box`, six images that are the faces of a cube, or `sphere`, one panorama around the camera | `box` |
+| `faces` | For a box: `right`, `left`, `top`, `bottom`, `front`, and `back`, the virtual path of an image each | none |
+| `texture` | For a sphere: the virtual path of the panorama | none |
+| `rotation` | Degrees the sky is turned around the direction that is up, against the clock seen from above | `0` |
+| `brightness` | What the light of the images is multiplied by | `1` |
+
+```yaml
+- name: sky
+  components:
+    Sky:
+      type: box
+      faces:
+        right: assets://textures/sky/day-right.png
+        left: assets://textures/sky/day-left.png
+        top: assets://textures/sky/day-top.png
+        bottom: assets://textures/sky/day-bottom.png
+        front: assets://textures/sky/day-front.png
+        back: assets://textures/sky/day-back.png
+```
+
+```yaml
+- name: sky
+  components:
+    Sky:
+      type: sphere
+      texture: assets://textures/sky/day-panorama.png
+```
+
+The faces of a box are named after the direction each is seen in: `front`
+is what a camera that was not turned looks at, along negative z, `right`
+is along positive x, and `top` along positive y. They are laid out as sky
+boxes are painted, a cross folded around the camera: the four sides are
+upright, the right edge of `front` meets the left edge of `right`, the
+lower edge of `top` meets the upper edge of `front`, and the upper edge of
+`bottom` meets the lower edge of `front`. All six are squares of one size.
+
+The panorama of a sphere is twice as wide as high and holds every
+direction (an equirectangular image, which is how panoramas are published):
+its middle is seen along negative z, what is right of the middle towards
+positive x, its upper edge straight up.
+
+The images are PNG or JPEG, colours as a screen shows them. The sky is
+shown as it is: no light of the scene falls on it, and it lights nothing
+itself, so a `Light` is set to match it by hand. `sky-box.scene.yml` and
+`sky-sphere.scene.yml` show the same sky both ways. How it is drawn is in
+[vulkan-renderer.md](vulkan-renderer.md#the-sky).
+
 **Spectator**
 
 | Name | Holds | Default |

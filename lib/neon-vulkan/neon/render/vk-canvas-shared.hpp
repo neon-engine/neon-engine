@@ -9,6 +9,7 @@
 #include "vk-device.hpp"
 #include "vk-model-cache.hpp"
 #include "vk-resolve.hpp"
+#include "vk-sky.hpp"
 
 namespace neon
 {
@@ -21,6 +22,9 @@ namespace neon
   {
     VK_Device *device = nullptr;
     VK_Resolve *resolve = nullptr;
+
+    // what the sky of a canvas is drawn with
+    const VK_Sky *sky = nullptr;
     VkRenderPass scene_pass = VK_NULL_HANDLE;
     VkRenderPass frame_pass = VK_NULL_HANDLE;
     VkFormat depth_format = VK_FORMAT_UNDEFINED;

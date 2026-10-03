@@ -277,6 +277,8 @@ add_library(${TARGET} STATIC
         neon/render/model-material.hpp
         neon/render/texture-type.hpp
         neon/render/light-source.hpp
+        neon/render/sky-info.hpp
+        neon/render/sky-type.hpp
         neon/render/material-info.hpp
 
         # physics
@@ -316,6 +318,7 @@ add_library(${TARGET} STATIC
         neon/world-system/ecs/components/collider.hpp
         neon/world-system/ecs/components/joint.hpp
         neon/world-system/ecs/components/light.hpp
+        neon/world-system/ecs/components/sky.hpp
         neon/world-system/ecs/components/player.hpp
         neon/world-system/ecs/components/prefab.hpp
         neon/world-system/ecs/components/renderable.hpp

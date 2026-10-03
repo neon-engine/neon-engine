@@ -6,6 +6,7 @@
 #include <neon/world-system/ecs/components/camera.hpp>
 #include <neon/world-system/ecs/components/light.hpp>
 #include <neon/world-system/ecs/components/renderable.hpp>
+#include <neon/world-system/ecs/components/sky.hpp>
 
 namespace neon
 {
@@ -18,6 +19,7 @@ namespace neon
   {
     _cameras = store.Query<Transform, Camera>();
     _lights = store.Query<Transform, Light>();
+    _skies = store.Query<Sky>();
     _renderables = store.Query<Transform, Renderable>();
   }
 
@@ -65,6 +67,16 @@ namespace neon
 
         _render_pipeline->EnqueueLightSource(source);
       }
+    });
+
+    // a scene has one sky: the first that is found is drawn
+    bool has_sky = false;
+    store.Each(_skies, [&](const EntityBlock &block)
+    {
+      if (has_sky || block.count == 0) { return; }
+
+      _render_pipeline->SetSky(block.Column<Sky>(0)[0].info);
+      has_sky = true;
     });
 
     store.Each(_renderables, [&](const EntityBlock &block)

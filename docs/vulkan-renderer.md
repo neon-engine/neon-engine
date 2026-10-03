@@ -159,7 +159,7 @@ no combined image sampler, and the tools that split one make up bindings of
 their own; written apart, every target binds what the source says
 ([shaders.md](shaders.md#what-the-sources-keep-to), #212). The layouts are
 constants of the backend, `VK_Pipelines::kBindings`, `VK_Resolve::kBindings`,
-and `VK_Renderer2D::kBindings`, and tests hold them to what the shaders
+`VK_Sky::kBindings`, and `VK_Renderer2D::kBindings`, and tests hold them to what the shaders
 declare.
 
 | Shaders | Set | Binding | Type | What |
@@ -187,6 +187,9 @@ ship do.
 | Resolve: `resolve` | 0 | 0 | Sampled image | The scene image |
 | | 0 | 1 | Sampler | What it is read through, pixel by pixel |
 | | 0 | 2 | Uniform buffer | `ResolveData`: the tonemapper and the exposure of the run, see [tonemapping](#tonemapping) |
+| The sky: `sky-box`, `sky-sphere` | 0 | 0 | Sampled image | The images of the sky: a cube for the one, a panorama for the other |
+| | 0 | 1 | Sampler | What they are read through |
+| | push constant | | | `Sky`: how a pixel becomes a direction, and how bright the sky is, `sky.glsl` |
 | User interface: `flat`, `ui/*` | 0 | 0 | Sampled image | The texture of the call, `ui-shader.glsl` |
 | | 0 | 1 | Sampler | What it is read through |
 | | 1 | 0 | Storage buffer | The shapes of the frame |
@@ -224,6 +227,7 @@ backend to 16 lights of each kind.
 | `unlit` | No | The texture, times the colour of the vertex, as it is |
 | `color` | No | The colour as it is |
 | `flat` | No | For what is drawn in two dimensions |
+| `sky-box`, `sky-sphere` | No | The sky of a scene, see [The sky](#the-sky). Drawn by the renderer for a `Sky`, not named by a material |
 
 How `pbr` reads a light: `diffuse` is the light's radiance — the colour a
 white, matte, non-metal surface facing it shows; `ambient` lights the diffuse
@@ -307,6 +311,7 @@ A library of its own, `neon-vulkan`.
 | `VK_Material` | Textures, descriptor set, per-object data, and which pipelines draw it. A render object holds one for each material of its model that a mesh uses |
 | `VK_SceneImage` | The image of linear light a scene is lit in, with its depth |
 | `VK_ShadowMap` | The depth of the scene as the direction light sees it, with the pass that draws it |
+| `VK_Sky` | The sky of a scene: its two pipelines, the images of the skies that are drawn, and how a pixel becomes the direction it is seen in |
 | `VK_Resolve` | The resolve step, which turns a scene image into the colours of the image that is shown |
 | `VK_RenderTarget` | An image that is drawn to like the frame, and read as a texture |
 | `VK_Renderer2D` | What is drawn in two dimensions, on top of the resolved scene |
@@ -382,7 +387,7 @@ what a screenshot shows is what a window would show.
 |---|---|---|
 | Shadow pass | The shadow map, `D32_SFLOAT`, 2048 by 2048, a layer a cascade | The opaque models of the first scene of the frame whose direction light casts, as the light sees them, depth alone, once into every cascade. Recorded apart and run before everything below, so that every scene of the frame reads the finished map. Left out when no light casts. See [Shadows](#shadows) |
 | Render targets | Each target, in the order they are drawn | Each goes through the stages below on its own: a camera that draws into a texture lights a scene in a scene image of the target, a user interface on a surface draws on top. A target that shows only a user interface has no scene image |
-| Scene | The scene image, `R16G16B16A16_SFLOAT`, and its depth | Opaque models in the order that costs the least, see below, then see-through ones from the farthest to the nearest, tested against depth but not writing it. The back of every triangle is left out unless the material is double-sided. Lighting and blending are in linear light. An opaque model replaces what is behind it and leaves the alpha of the scene image at 1, whatever its shader wrote |
+| Scene | The scene image, `R16G16B16A16_SFLOAT`, and its depth | Opaque models in the order that costs the least, see below, then the sky wherever none of them is, see [The sky](#the-sky), then see-through ones from the farthest to the nearest, tested against depth but not writing it. The back of every triangle is left out unless the material is double-sided. Lighting and blending are in linear light. An opaque model replaces what is behind it and leaves the alpha of the scene image at 1, whatever its shader wrote |
 | Resolve | The image that is shown, `R8G8B8A8_UNORM` | A triangle that covers it reads the scene image pixel by pixel, multiplies the exposure in, maps it through the tonemapper, and writes it in sRGB. The one place where light becomes the colours of a screen, see [tonemapping](#tonemapping) |
 | On top | The same image | What is drawn in two dimensions: user interfaces, blended in sRGB as CSS blends them |
 | Copy | The window, or a file | Byte for byte. The bytes are sRGB already |
@@ -528,6 +533,34 @@ What is open:
 | One map a frame | The map is fitted around the camera of the frame, the one the window shows, and holds what that scene casts. What a camera draws into a texture is left unshadowed: it is drawn before the frame and picks a cascade by its own depth, so it cannot read a map fitted to another camera. Before, the first camera of a frame took the map, which was the camera of a texture, and the window lost its shadows. A map per camera, or per light, is later (#350) |
 | The bias per cascade | One bias serves every cascade, in texels of each, so the far cascades push a caster back further in metres than the near one. A bias scaled to the cascade, and normal offset, are later |
 
+## The sky
+
+A scene with a `Sky` (#343, see [scenes.md](scenes.md)) shows it behind its
+models, for every camera of the frame: the one of the window and those
+that draw into a texture.
+
+| Part | What it is |
+|---|---|
+| The way in | `RenderSubmission` hands the `SkyInfo` of the scene to the pipeline in every frame, as it does the lights, and `Forward_RenderPipeline` calls `RenderContext::DrawSky()` once for every camera, with its view and its projection. A renderer that leaves `DrawSky()` as it is shows what the frame is cleared to |
+| The draw | One triangle that covers the scene image, at the far end of the depth, which is what the depth is cleared to. It is tested against the depth as less or equal and writes none: it passes where no model was drawn and nowhere else. The canvas keeps it until its opaque models are drawn and draws it then, so that only the pixels left over are shaded, and before the see-through models, which blend over it |
+| The direction | `VK_Sky::ValuesOf()`: the view without where the camera stands, times the projection, undone, and turned back by the `rotation` of the sky. The fragment shader takes its place on the screen through that matrix to the direction it is seen in, for every pixel (`sky.glsl`). The camera therefore turns in the sky and never moves through it, whatever `far` is |
+| A box | The six images as the layers of one cube image, `VK_Texture::InitializeWithFaces()`, read by the direction. A cube counts z the other way round than the world does, so `front`, seen along negative z, is the layer of positive z, and `sky-box.frag` reads with z turned round; the faces are then seen from the inside as they were painted, not mirrored. The graphics card blends across the edges of the faces, so no seam shows |
+| A sphere | The panorama as one image. `sky-sphere.frag` turns the direction into a place across, by the angle around what is up, and a place down, by the angle from straight up. The image starts again past its left and right edge, and half a pixel is kept from its top and bottom |
+| The images | sRGB colours read as linear light, as the first texture of a material is, multiplied by `brightness`, and written into the scene image with alpha 1. They are loaded the first time a sky is drawn and held until a frame goes by that does not draw it, so a scene that is left gives its sky back. A sky that cannot be loaded says why once, and the frame shows what it is cleared to |
+
+`tests/runtime-sky` checks where each face and each part of a panorama is
+seen, a sky that is turned, a model in front of the sky, and a see-through
+one blended over it, pixel by pixel.
+
+What is open:
+
+| Open | Detail |
+|---|---|
+| Light from the sky | The sky lights nothing. Image based lighting from it is #64 |
+| Brighter than white | The images are 8 bits a channel, so nothing in a sky is brighter than white for the [tonemapper](#tonemapping) to map. HDR panoramas are #347 |
+| Smaller copies | The images are read at their full size, so a panorama much larger than the screen shimmers as the camera turns. A level picked from the place in the image would draw a seam where a panorama starts again, so it has to be picked from the direction (#347) |
+| Day and night | Blending between painted skies by the time of day is #346, a sky made by a formula with an atmosphere #344, volumetric clouds #345 |
+
 ## Colour spaces
 
 Colours are written the way a screen shows them, in sRGB: in image files, in
@@ -539,6 +572,7 @@ interfaces are drawn in sRGB, which is what CSS blends in.
 | What | How it is read |
 |---|---|
 | The first texture of a material | An sRGB format, read as linear light. Its smaller copies are made by the graphics card in linear light |
+| The images of a sky | An sRGB format, read as linear light, without smaller copies |
 | The second texture of a material | Plain bytes. It says how much a surface shines, which is a number and not a colour |
 | The `color` of a material, the colour a camera clears its texture to | Turned into linear light before the shaders see it |
 | The `emissive` of a material, and its texture | As the colour and the first texture: written in sRGB, turned into linear light, and multiplied by `emissive_strength` in linear light, which is how it goes above white |

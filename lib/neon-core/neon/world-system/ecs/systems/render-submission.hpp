@@ -7,12 +7,13 @@
 namespace neon
 {
   /// Hands what is to be drawn to the render pipeline: the camera, the
-  /// lights, and every entity that carries a Renderable.
+  /// lights, the sky, and every entity that carries a Renderable.
   class RenderSubmission final : public EntitySystem
   {
     RenderPipeline *_render_pipeline;
     QueryId _cameras = 0;
     QueryId _lights = 0;
+    QueryId _skies = 0;
     QueryId _renderables = 0;
 
   public:

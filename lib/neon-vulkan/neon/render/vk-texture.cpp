@@ -256,6 +256,158 @@ namespace neon
     return true;
   }
 
+  bool VK_Texture::InitializeWithFaces(const std::array<std::string, kCube_Faces> &paths)
+  {
+    if (_initialized)
+    {
+      _logger->Warn("Texture {} was already initialized", _texture_path);
+      return true;
+    }
+
+    // the faces one after another, as the layers of the image are filled
+    std::vector<unsigned char> faces;
+    uint32_t side = 0;
+
+    for (const std::string &path : paths)
+    {
+      _logger->Info("Initializing a face of {} from {}", _texture_path, path);
+
+      std::vector<unsigned char> file_contents;
+      if (!_file_system_context->ReadBytes(path, file_contents))
+      {
+        _logger->Error("Failed to read {}, a face of {}", path, _texture_path);
+        return false;
+      }
+
+      int width, height, channels;
+      stbi_set_flip_vertically_on_load(false);
+      unsigned char *pixels = stbi_load_from_memory(
+        file_contents.data(),
+        static_cast<int>(file_contents.size()),
+        &width,
+        &height,
+        &channels,
+        STBI_rgb_alpha);
+
+      if (pixels == nullptr)
+      {
+        _logger->Error("Failed to load {}, a face of {}", path, _texture_path);
+        return false;
+      }
+
+      // the first face says how large every face is
+      if (side == 0 && width == height) { side = static_cast<uint32_t>(width); }
+
+      if (width != height || static_cast<uint32_t>(width) != side)
+      {
+        _logger->Error(
+          "{}, a face of {}, is {} by {} pixels. The faces of a cube are squares of one size",
+          path, _texture_path, width, height);
+        stbi_image_free(pixels);
+        return false;
+      }
+
+      faces.insert(faces.end(), pixels, pixels + static_cast<std::size_t>(width) * height * 4);
+      stbi_image_free(pixels);
+    }
+
+    if (const uint32_t most = _device->Properties().limits.maxImageDimensionCube; side > most)
+    {
+      _logger->Error(
+        "The faces of {} are {} pixels wide, and the graphics card holds a cube of {} at most",
+        _texture_path, side, most);
+      return false;
+    }
+
+    const VkDevice device = _device->Device();
+    const VkDeviceSize size = faces.size();
+    constexpr auto layers = static_cast<uint32_t>(kCube_Faces);
+
+    VkBuffer staging = VK_NULL_HANDLE;
+    VkDeviceMemory staging_memory = VK_NULL_HANDLE;
+    if (!_device->CreateBuffer(
+      size,
+      VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+      staging,
+      staging_memory))
+    {
+      return false;
+    }
+
+    const auto release_staging = [&]
+    {
+      vkDestroyBuffer(device, staging, nullptr);
+      vkFreeMemory(device, staging_memory, nullptr);
+    };
+
+    void *mapped = nullptr;
+    if (vkMapMemory(device, staging_memory, 0, size, 0, &mapped) != VK_SUCCESS)
+    {
+      release_staging();
+      return false;
+    }
+    std::memcpy(mapped, faces.data(), size);
+    vkUnmapMemory(device, staging_memory);
+
+    if (!_device->CreateImage(
+          side,
+          side,
+          1,
+          kColor_Format,
+          VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+          _image,
+          _memory,
+          VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT,
+          layers))
+    {
+      release_staging();
+      return false;
+    }
+
+    const VkCommandBuffer commands = _device->BeginCommands();
+    constexpr VkImageAspectFlags color = VK_IMAGE_ASPECT_COLOR_BIT;
+
+    VK_Device::TransitionImage(
+      commands, _image, color, 0, 1,
+      VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, layers);
+
+    // the faces lie one after another in the buffer, a layer each
+    VkBufferImageCopy region{};
+    region.imageSubresource = {color, 0, 0, layers};
+    region.imageExtent = {side, side, 1};
+    vkCmdCopyBufferToImage(commands, staging, _image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+
+    VK_Device::TransitionImage(
+      commands, _image, color, 0, 1,
+      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, layers);
+
+    const bool uploaded = _device->EndCommands(commands);
+    release_staging();
+
+    // seen as a cube, which a shader reads by a direction
+    VkImageViewCreateInfo view{};
+    view.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    view.image = _image;
+    view.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
+    view.format = kColor_Format;
+    view.subresourceRange = {color, 0, 1, 0, layers};
+
+    if (!uploaded || vkCreateImageView(device, &view, nullptr, &_view) != VK_SUCCESS)
+    {
+      _logger->Error("Could not upload the faces of {}", _texture_path);
+      CleanUp();
+      return false;
+    }
+
+    // read smoothly; a cube has no edge to go past
+    _sampling = VK_Sampling::LinearClamp;
+    _width = side;
+    _height = side;
+    _initialized = true;
+    return true;
+  }
+
   bool VK_Texture::InitializeWithLevels(const std::vector<ImagePixels> &levels, const VK_TextureOptions &options)
   {
     if (_initialized)

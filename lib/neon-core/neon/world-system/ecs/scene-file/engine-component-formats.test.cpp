@@ -10,6 +10,7 @@
 #include <neon/world-system/ecs/components/camera.hpp>
 #include <neon/world-system/ecs/components/geometry.hpp>
 #include <neon/world-system/ecs/components/light.hpp>
+#include <neon/world-system/ecs/components/sky.hpp>
 #include <neon/world-system/ecs/components/player.hpp>
 #include <neon/world-system/ecs/components/renderable.hpp>
 #include <neon/world-system/ecs/components/sound-listener.hpp>
@@ -31,6 +32,8 @@ namespace
   using neon::Entity;
   using neon::Light;
   using neon::LightType;
+  using neon::Sky;
+  using neon::SkyType;
   using neon::Player;
   using neon::Renderable;
   using neon::RenderTarget;
@@ -102,6 +105,7 @@ namespace
       _store.Register<Geometry>("Geometry");
       _store.Register<Camera>("Camera");
       _store.Register<Light>("Light");
+      _store.Register<Sky>("Sky");
       _store.Register<Spectator>("Spectator");
       _store.Register<Player>("Player");
       _store.Register<SoundSource>("SoundSource");
@@ -746,6 +750,66 @@ namespace
 
     EXPECT_THAT(NamesOf(written), ElementsAre("type", "diffuse"));
     EXPECT_EQ(TextOf(written, "type"), "direction");
+  }
+
+  // Sky
+
+  TEST_F(EngineComponentFormatsTest, ReadsASkyOfSixFaces)
+  {
+    auto faces = DataValue::Map();
+    faces.Set("right", DataValue::Text("assets://textures/sky/right.png"));
+    faces.Set("left", DataValue::Text("assets://textures/sky/left.png"));
+    faces.Set("top", DataValue::Text("assets://textures/sky/top.png"));
+    faces.Set("bottom", DataValue::Text("assets://textures/sky/bottom.png"));
+    faces.Set("front", DataValue::Text("assets://textures/sky/front.png"));
+    faces.Set("back", DataValue::Text("assets://textures/sky/back.png"));
+
+    auto map = DataValue::Map();
+    map.Set("type", DataValue::Text("box"));
+    map.Set("faces", faces);
+
+    Read("Sky", map);
+
+    const auto *sky = _store.Get<Sky>(_entity);
+    ASSERT_NE(sky, nullptr);
+    EXPECT_EQ(sky->info.type, SkyType::Box);
+    EXPECT_EQ(sky->info.right, "assets://textures/sky/right.png");
+    EXPECT_EQ(sky->info.left, "assets://textures/sky/left.png");
+    EXPECT_EQ(sky->info.top, "assets://textures/sky/top.png");
+    EXPECT_EQ(sky->info.bottom, "assets://textures/sky/bottom.png");
+    EXPECT_EQ(sky->info.front, "assets://textures/sky/front.png");
+    EXPECT_EQ(sky->info.back, "assets://textures/sky/back.png");
+    EXPECT_THAT(_errors, IsEmpty());
+  }
+
+  TEST_F(EngineComponentFormatsTest, ReadsASkyOfOnePanorama)
+  {
+    auto map = DataValue::Map();
+    map.Set("type", DataValue::Text("sphere"));
+    map.Set("texture", DataValue::Text("assets://textures/sky/panorama.png"));
+    map.Set("rotation", DataValue::Number(90.0f));
+    map.Set("brightness", DataValue::Number(0.5f));
+
+    Read("Sky", map);
+
+    const auto *sky = _store.Get<Sky>(_entity);
+    ASSERT_NE(sky, nullptr);
+    EXPECT_EQ(sky->info.type, SkyType::Sphere);
+    EXPECT_EQ(sky->info.texture, "assets://textures/sky/panorama.png");
+    EXPECT_EQ(sky->info.rotation, 90.0f);
+    EXPECT_EQ(sky->info.brightness, 0.5f);
+    EXPECT_THAT(_errors, IsEmpty());
+  }
+
+  TEST_F(EngineComponentFormatsTest, ASkyIsAsBrightAsItsImagesUnlessItSaysOtherwise)
+  {
+    Read("Sky", DataValue::Map());
+
+    const auto *sky = _store.Get<Sky>(_entity);
+    ASSERT_NE(sky, nullptr);
+    EXPECT_EQ(sky->info.type, SkyType::Box);
+    EXPECT_EQ(sky->info.rotation, 0.0f);
+    EXPECT_EQ(sky->info.brightness, 1.0f);
   }
 
   // Spectator

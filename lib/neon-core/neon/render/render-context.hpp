@@ -11,6 +11,7 @@
 #include "light-source.hpp"
 #include "render-info.hpp"
 #include "render-object-ref.hpp"
+#include "sky-info.hpp"
 
 
 namespace neon
@@ -88,6 +89,13 @@ namespace neon
 
     /// From now on DrawRenderObject() draws into the frame again.
     virtual void EndRenderTarget() {}
+
+    /// Draws the sky of the scene as a camera sees it, behind every model
+    /// drawn with that camera: into the render target that is drawn to,
+    /// or the frame. Called once for every camera of a frame, at any time
+    /// among its models. A renderer that leaves it as it is shows what the
+    /// frame is cleared to.
+    virtual void DrawSky(const SkyInfo &sky, const glm::mat4 &view, const glm::mat4 &projection) {}
   };
 } // neon
 

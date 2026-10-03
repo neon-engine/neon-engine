@@ -8,6 +8,7 @@
 #include "components/player.hpp"
 #include "components/renderable.hpp"
 #include "components/scene-exit.hpp"
+#include "components/sky.hpp"
 #include "components/trigger.hpp"
 #include "components/spectator.hpp"
 #include "systems/render-submission.hpp"
@@ -58,6 +59,7 @@ namespace neon
     _store->Register<Transform>("Transform");
     _store->Register<Camera>("Camera");
     _store->Register<Light>("Light");
+    _store->Register<Sky>("Sky");
     _store->Register<Spectator>("Spectator");
     _store->Register<Player>("Player");
 

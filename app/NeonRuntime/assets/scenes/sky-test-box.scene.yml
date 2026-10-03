@@ -1,0 +1,59 @@
+# A scene for checking a sky of six faces, which tests read pixel by pixel:
+#
+#   NeonRuntime --scene assets://scenes/sky-test-box.scene.yml
+#
+# The camera stands at the origin, is not turned, and sees 120 degrees from
+# top to bottom, so that the sky ahead, to both sides, above, and below it
+# is in the picture. Every direction of the sky has a plain colour of its
+# own: right red, left green, top blue, bottom brown, front yellow, back
+# purple. Two small quads stand in front of the sky: an opaque magenta one
+# right of the middle, which covers it, and a half see-through red one left
+# of the middle, which is blended over it. See tests/runtime-sky/run.cmake
+# for the numbers; the images are written by tools/make-sky-images.py.
+
+scene: sky-test-box
+version: 1
+
+entities:
+  - name: camera
+    components:
+      Transform: Default
+      Camera:
+        fov: 120
+
+  - name: sky
+    components:
+      Sky:
+        type: box
+        faces:
+          right: assets://textures/sky/test-right.png
+          left: assets://textures/sky/test-left.png
+          top: assets://textures/sky/test-top.png
+          bottom: assets://textures/sky/test-bottom.png
+          front: assets://textures/sky/test-front.png
+          back: assets://textures/sky/test-back.png
+
+  - name: opaque
+    components:
+      Transform:
+        position: [0.5, 0, -2]
+        scale: 0.2
+      Renderable:
+        model: assets://models/quad.obj
+        fit: unit
+        shader: assets://shaders/color
+        material:
+          color: [1, 0, 1]
+
+  - name: see-through
+    components:
+      Transform:
+        position: [-0.5, 0, -2]
+        scale: 0.2
+      Renderable:
+        model: assets://models/quad.obj
+        fit: unit
+        shader: assets://shaders/color
+        material:
+          color: [1, 0, 0, 0.5]
+          alpha_mode: blend

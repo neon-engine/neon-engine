@@ -23,6 +23,7 @@ namespace
   using neon::RenderInfo;
   using neon::RenderResolution;
   using neon::RenderTarget;
+  using neon::SkyInfo;
   using neon::Transform;
   using neon::testing::LogLevel;
   using neon::testing::RecordingLogger;
@@ -49,7 +50,18 @@ namespace
       int begun = 0;
     };
 
+    /// A sky that was drawn: how many objects had been drawn by then,
+    /// into what, and seen how.
+    struct DrawnSky
+    {
+      std::string texture;
+      std::size_t after = 0;
+      int target = -1;
+      glm::mat4 view{1.0f};
+    };
+
     std::vector<Drawn> drawn;
+    std::vector<DrawnSky> skies;
     std::map<int, Target> targets;
     std::vector<std::string> refused;
     int created = 0;
@@ -121,6 +133,11 @@ namespace
     }
 
     void EndRenderTarget() override { current = -1; }
+
+    void DrawSky(const SkyInfo &sky, const glm::mat4 &view, const glm::mat4 &projection) override
+    {
+      skies.push_back({sky.texture, drawn.size(), current, view});
+    }
   };
 
   class ForwardRenderPipelineCamerasTest : public ::testing::Test
@@ -308,5 +325,65 @@ namespace
 
     // those it found are its own no less, since it draws into them
     EXPECT_EQ(_renderer.destroyed, 3);
+  }
+
+  // the sky
+
+  TEST_F(ForwardRenderPipelineCamerasTest, WithoutASkyNoneIsDrawn)
+  {
+    Frame({Window(1)}, {7, 8});
+
+    EXPECT_TRUE(_renderer.skies.empty());
+  }
+
+  TEST_F(ForwardRenderPipelineCamerasTest, DrawsTheSkyAsTheCameraOfTheWindowSeesIt)
+  {
+    SkyInfo sky;
+    sky.texture = "day";
+    _pipeline.SetSky(sky);
+
+    Frame({Window(1)}, {7, 8});
+
+    ASSERT_EQ(_renderer.skies.size(), 1u);
+    EXPECT_EQ(_renderer.skies[0].texture, "day");
+    EXPECT_EQ(_renderer.skies[0].target, -1);
+    EXPECT_FLOAT_EQ(_renderer.skies[0].view[3].x, 1);
+  }
+
+  TEST_F(ForwardRenderPipelineCamerasTest, DrawsTheSkyOfASceneThatHasNoModel)
+  {
+    _pipeline.SetSky(SkyInfo{});
+
+    Frame({Window(1)}, {});
+
+    EXPECT_EQ(_renderer.skies.size(), 1u);
+  }
+
+  TEST_F(ForwardRenderPipelineCamerasTest, EveryCameraSeesTheSky)
+  {
+    _pipeline.SetSky(SkyInfo{});
+
+    Frame({Window(1), Into("mirror", 5)}, {7, 8});
+
+    // into the texture while it is drawn to, then into the window
+    ASSERT_EQ(_renderer.skies.size(), 2u);
+    EXPECT_EQ(_renderer.skies[0].target, _renderer.targets.begin()->first);
+    EXPECT_EQ(_renderer.skies[0].after, 2u);
+    EXPECT_FLOAT_EQ(_renderer.skies[0].view[3].x, 5);
+    EXPECT_EQ(_renderer.skies[1].target, -1);
+    EXPECT_EQ(_renderer.skies[1].after, 4u);
+    EXPECT_FLOAT_EQ(_renderer.skies[1].view[3].x, 1);
+  }
+
+  TEST_F(ForwardRenderPipelineCamerasTest, TheSkyIsAskedForInEveryFrame)
+  {
+    _pipeline.SetSky(SkyInfo{});
+    Frame({Window(1)}, {7});
+    ASSERT_EQ(_renderer.skies.size(), 1u);
+
+    // a frame that names no sky has none
+    Frame({Window(1)}, {7});
+
+    EXPECT_EQ(_renderer.skies.size(), 1u);
   }
 }

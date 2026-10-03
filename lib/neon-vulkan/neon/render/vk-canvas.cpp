@@ -45,6 +45,7 @@ namespace neon
     _clear = clear;
     _stage = VK_FrameStage::Nothing;
     _see_through.clear();
+    _sky.reset();
   }
 
   bool VK_Canvas::EnterScene()
@@ -107,8 +108,11 @@ namespace neon
     if (steps.end_scene)
     {
       // what is opaque was kept until now, and is drawn in the order that
-      // costs the least, then what is see-through over it
+      // costs the least, then the sky wherever nothing of it is, then what
+      // is see-through over both
       if (_shared->draw_opaque) { _shared->draw_opaque(*this); }
+      if (_sky.has_value() && _shared->sky != nullptr) { _shared->sky->Draw(_commands, *_sky); }
+      _sky.reset();
       DrawSeeThrough();
       vkCmdEndRenderPass(_commands);
     }

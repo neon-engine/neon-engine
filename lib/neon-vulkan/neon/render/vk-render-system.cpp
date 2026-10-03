@@ -97,6 +97,7 @@ namespace neon
           _settings_config.tonemapper,
           static_cast<float>(_settings_config.exposure),
           _logger) ||
+        !_sky.Initialize(&_device, _file_system_context, _scene_pass, &_samplers, _logger) ||
         !CreateDescriptors())
     {
       throw std::runtime_error("Failed to set up the Vulkan renderer");
@@ -105,6 +106,7 @@ namespace neon
     _canvas_shared = {
       .device = &_device,
       .resolve = &_resolve,
+      .sky = &_sky,
       .scene_pass = _scene_pass,
       .frame_pass = _frame_pass,
       .depth_format = _depth_format,
@@ -535,6 +537,7 @@ namespace neon
 
     DestroyFrameImages();
     _resolve.CleanUp();
+    _sky.CleanUp();
     _shadow_map.CleanUp();
     _samplers.CleanUp();
     if (_scene_pass != VK_NULL_HANDLE) { vkDestroyRenderPass(device, _scene_pass, nullptr); }
@@ -642,6 +645,11 @@ namespace neon
 
     // a window that changed its size, or has no area to draw to
     if (_device.Surface() != VK_NULL_HANDLE && !FitWindow()) { return; }
+
+    // The frame before is finished, and nothing refers to the sky of a
+    // scene that was left. A frame that is not drawn, as while the window
+    // is minimized, does not get here, and frees nothing.
+    _sky.ReleaseUnused();
 
     for (int id = 0; id < _targets.Capacity(); id++)
     {
@@ -1445,6 +1453,23 @@ namespace neon
     _shadow_open = true;
     _shadow_target = _current_target;
     return true;
+  }
+
+  void VK_RenderSystem::DrawSky(const SkyInfo &sky, const glm::mat4 &view, const glm::mat4 &projection)
+  {
+    if (!_frame_open) { return; }
+
+    // its images are loaded the first time it is drawn; a sky that cannot
+    // be drawn has said why, and the canvas shows what it is cleared to
+    VK_SkyDraw draw;
+    if (!_sky.Prepare(sky, view, depth_correction * projection, draw)) { return; }
+
+    // a scene may have a sky and no model, so the sky begins it as well
+    VK_Canvas &canvas = CurrentCanvas();
+    if (!canvas.EnterScene()) { return; }
+
+    // kept until the opaque models of the canvas are drawn, see VK_Canvas
+    canvas.KeepSky(draw);
   }
 
   void VK_RenderSystem::DestroyRenderObject(const int render_object_id)

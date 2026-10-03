@@ -27,6 +27,7 @@
 #include "vk-shader-data.hpp"
 #include "vk-shadow-cascades.hpp"
 #include "vk-shadow-map.hpp"
+#include "vk-sky.hpp"
 #include "vk-swapchain.hpp"
 #include "vk-texture-cache.hpp"
 
@@ -43,6 +44,10 @@ namespace neon
   /// resolve step turns that into the sRGB colours of the image that is
   /// shown, and what is drawn in two dimensions goes on top of it. A render
   /// target is drawn the same way.
+  ///
+  /// The sky of a scene is drawn into the scene image behind its models:
+  /// after the opaque ones, wherever none of them is, and before the
+  /// see-through ones.
   ///
   /// Before any of that, the shadow map of the direction light is drawn in
   /// a pass of its own, into commands that run before those of the
@@ -84,6 +89,9 @@ namespace neon
     VkFormat _depth_format = VK_FORMAT_UNDEFINED;
     VkRenderPass _scene_pass = VK_NULL_HANDLE;
     VK_Resolve _resolve;
+
+    // what is seen behind the models of a scene, and the images of it
+    VK_Sky _sky;
 
     // the image that is shown, which every frame is drawn into
     VkImage _color_image = VK_NULL_HANDLE;
@@ -306,6 +314,8 @@ namespace neon
       const std::vector<LightSource> &lights) override;
 
     void DestroyRenderObject(int render_object_id) override;
+
+    void DrawSky(const SkyInfo &sky, const glm::mat4 &view, const glm::mat4 &projection) override;
 
     int CreateTexture(int width, int height, const std::vector<unsigned char> &pixels) override;
 

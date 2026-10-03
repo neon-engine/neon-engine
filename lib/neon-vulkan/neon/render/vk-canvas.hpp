@@ -2,6 +2,7 @@
 #define VK_CANVAS_HPP
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 #include <neon/common/color.hpp>
@@ -20,7 +21,8 @@ namespace neon
 {
   /// Where the frame, or a render target, is drawn: how far its drawing
   /// has got, what it is cleared to, the scene image its models are lit
-  /// in, and the see-through models kept until its scene is finished. The
+  /// in, and the sky and the see-through models kept until its scene is
+  /// finished. The
   /// frame and every render target have one, and are drawn the same way
   /// through it.
   ///
@@ -48,6 +50,10 @@ namespace neon
     Color _clear{0.0f, 0.0f, 0.0f, 1.0f};
     VK_FrameStage _stage = VK_FrameStage::Nothing;
     std::vector<VK_SeeThroughDraw> _see_through;
+
+    // the sky of the scene, drawn between what is opaque and what is
+    // see-through
+    std::optional<VK_SkyDraw> _sky;
 
     /// Draws the see-through models that were kept, from the farthest to
     /// the nearest, and forgets them.
@@ -93,6 +99,11 @@ namespace neon
     /// Keeps a see-through model until the scene is finished, when it is
     /// drawn over what is opaque.
     void KeepSeeThrough(const VK_SeeThroughDraw &draw) { _see_through.push_back(draw); }
+
+    /// Keeps the sky until the opaque models of the scene are drawn, so
+    /// that it is shaded only where none of them is, and is drawn before
+    /// what is see-through. A canvas has one sky: the last one kept.
+    void KeepSky(const VK_SkyDraw &draw) { _sky = draw; }
 
     [[nodiscard]] VkCommandBuffer Commands() const { return _commands; }
     [[nodiscard]] VkExtent2D Extent() const { return _extent; }

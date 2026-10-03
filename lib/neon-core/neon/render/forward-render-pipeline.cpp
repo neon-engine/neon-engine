@@ -106,6 +106,8 @@ namespace neon
           _render_context->DrawRenderObject(render_object_id, transform, camera.view, seen, _light_sources);
         }
 
+        if (_sky.has_value()) { _render_context->DrawSky(*_sky, camera.view, seen); }
+
         _render_context->EndRenderTarget();
       }
 
@@ -119,7 +121,11 @@ namespace neon
       _render_context->DrawRenderObject(render_object_id, transform, _camera_info.view, projection, _light_sources);
     }
 
+    // behind the models, wherever none was drawn
+    if (_sky.has_value()) { _render_context->DrawSky(*_sky, _camera_info.view, projection); }
+
     _light_sources.clear();
+    _sky.reset();
   }
 
   void Forward_RenderPipeline::CleanUp()
@@ -132,6 +138,12 @@ namespace neon
     }
     _targets.clear();
     _texture_cameras.clear();
+    _sky.reset();
+  }
+
+  void Forward_RenderPipeline::SetSky(const SkyInfo &sky)
+  {
+    _sky = sky;
   }
 
   void Forward_RenderPipeline::EnqueueLightSource(const LightSource &light_source)

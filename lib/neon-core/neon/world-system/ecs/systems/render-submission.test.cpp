@@ -14,6 +14,7 @@
 #include <neon/world-system/ecs/components/camera.hpp>
 #include <neon/world-system/ecs/components/light.hpp>
 #include <neon/world-system/ecs/components/renderable.hpp>
+#include <neon/world-system/ecs/components/sky.hpp>
 
 namespace
 {
@@ -26,6 +27,9 @@ namespace
   using neon::RenderInfo;
   using neon::RenderSubmission;
   using neon::RenderTarget;
+  using neon::Sky;
+  using neon::SkyInfo;
+  using neon::SkyType;
   using neon::Transform;
   using neon::testing::FakeEntityStore;
   using neon::testing::MockRenderPipeline;
@@ -82,6 +86,7 @@ namespace
       _store.Register<Transform>("Transform");
       _store.Register<Camera>("Camera");
       _store.Register<Light>("Light");
+      _store.Register<Sky>("Sky");
       _store.Register<Renderable>("Renderable");
       _system.Initialize(_store);
     }
@@ -280,6 +285,48 @@ namespace
     EXPECT_CALL(
       _pipeline,
       EnqueueLightSource(Field("direction", &LightSource::direction, glm::vec3(0.0f, -1.0f, 0.0f))));
+
+    _system.Update(_store, 0.016);
+  }
+
+  // the sky
+
+  TEST_F(RenderSubmissionTest, HandsOverTheSkyOfTheWorld)
+  {
+    Sky sky;
+    sky.info.type = SkyType::Sphere;
+    sky.info.texture = "assets://textures/sky/panorama.png";
+    sky.info.rotation = 90.0f;
+    sky.info.brightness = 0.5f;
+    _store.Set(_store.CreateEntity("sky"), sky);
+
+    EXPECT_CALL(
+      _pipeline,
+      SetSky(
+        AllOf(
+          Field("type", &SkyInfo::type, SkyType::Sphere),
+          Field("texture", &SkyInfo::texture, "assets://textures/sky/panorama.png"),
+          Field("rotation", &SkyInfo::rotation, 90.0f),
+          Field("brightness", &SkyInfo::brightness, 0.5f))));
+
+    _system.Update(_store, 0.016);
+  }
+
+  TEST_F(RenderSubmissionTest, HandsOverTheSkyInEveryFrame)
+  {
+    _store.Set(_store.CreateEntity("sky"), Sky{});
+
+    EXPECT_CALL(_pipeline, SetSky(_)).Times(3);
+
+    for (int frame = 0; frame < 3; frame++) { _system.Update(_store, 0.016); }
+  }
+
+  TEST_F(RenderSubmissionTest, HandsOverOneSkyWhenTheWorldHasTwo)
+  {
+    _store.Set(_store.CreateEntity("day"), Sky{});
+    _store.Set(_store.CreateEntity("night"), Sky{});
+
+    EXPECT_CALL(_pipeline, SetSky(_)).Times(1);
 
     _system.Update(_store, 0.016);
   }

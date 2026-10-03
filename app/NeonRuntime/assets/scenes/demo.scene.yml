@@ -13,8 +13,9 @@
 # even ones on the east. Walk with W, A, S, D, look with the mouse, jump
 # with space, run with the left shift, and pause with escape.
 #
-# Nothing comes from a model file or an image: every piece is a Geometry in
-# metres, drawn in a plain colour, and every sign is a user interface.
+# Nothing but the sky comes from a model file or an image: every piece is a
+# Geometry in metres, drawn in a plain colour, and every sign is a user
+# interface. The sky is a panorama painted by a script.
 # Models of our own take their places later. The scripts are under
 # assets/scripts, the prefabs under assets/prefabs/museum, and the signs
 # under assets/ui/museum.
@@ -45,20 +46,14 @@ entities:
         ambient: [0.22, 0.23, 0.26]
         diffuse: [0.9, 0.87, 0.8]
 
-  # a sphere turned inside out, in one colour that no light changes
+  # a day sky as one panorama around the camera. Its sun stands where the
+  # light above comes from, so the shadows fall away from it; the image is
+  # written by tools/make-sky-images.py
   - name: sky
     components:
-      Transform: Default
-      Geometry:
-        shape: sphere
-        size: [600, 600, 600]
-        sides: 32
-        smooth: true
-        inside: true
-      Renderable:
-        shader: assets://shaders/color
-        material:
-          color: [0.53, 0.72, 0.92]
+      Sky:
+        type: sphere
+        texture: assets://textures/sky/museum-panorama.png
 
   - name: floor
     components:

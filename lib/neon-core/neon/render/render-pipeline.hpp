@@ -42,6 +42,11 @@ namespace neon
 
     virtual void EnqueueLightSource(const LightSource &light_source) = 0;
 
+    /// The sky of the frame that is drawn next, seen by every camera of
+    /// it. Asked for in every frame, like the lights: a frame without it
+    /// has no sky. A pipeline that leaves it as it is draws none.
+    virtual void SetSky(const SkyInfo &sky) {}
+
     virtual void Initialize() = 0;
 
     virtual void RenderFrame() = 0;

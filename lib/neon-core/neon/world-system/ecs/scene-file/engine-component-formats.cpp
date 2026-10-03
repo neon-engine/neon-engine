@@ -8,6 +8,7 @@
 #include <neon/world-system/ecs/components/persistent.hpp>
 #include <neon/world-system/ecs/components/renderable.hpp>
 #include <neon/world-system/ecs/components/scene-exit.hpp>
+#include <neon/world-system/ecs/components/sky.hpp>
 #include <neon/world-system/ecs/components/sound-listener.hpp>
 #include <neon/world-system/ecs/components/sound-source.hpp>
 #include <neon/world-system/ecs/components/spectator.hpp>
@@ -23,6 +24,7 @@ namespace neon
     Add(ComponentFormat::Of<Geometry>());
     Add(ComponentFormat::Of<Camera>());
     Add(ComponentFormat::Of<Light>());
+    Add(ComponentFormat::Of<Sky>());
     Add(ComponentFormat::Of<Spectator>());
     Add(ComponentFormat::Of<Player>());
     Add(ComponentFormat::Of<SoundSource>());

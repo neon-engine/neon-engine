@@ -33,6 +33,11 @@ scenes:
   - assets://scenes/vertex-colours-test.scene.yml
   - assets://scenes/materials-test.scene.yml
   - assets://scenes/tonemap-test.scene.yml
+  - assets://scenes/sky-box.scene.yml
+  - assets://scenes/sky-sphere.scene.yml
+  - assets://scenes/sky-test-box.scene.yml
+  - assets://scenes/sky-test-sphere.scene.yml
+  - assets://scenes/sky-test-turned.scene.yml
 
 entry_scene: assets://scenes/demo.scene.yml
 

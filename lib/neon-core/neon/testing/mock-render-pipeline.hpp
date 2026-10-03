@@ -27,6 +27,8 @@ namespace neon::testing
 
     MOCK_METHOD(void, EnqueueLightSource, (const LightSource &light_source), (override));
 
+    MOCK_METHOD(void, SetSky, (const SkyInfo &sky), (override));
+
     MOCK_METHOD(void, Initialize, (), (override));
 
     MOCK_METHOD(void, RenderFrame, (), (override));

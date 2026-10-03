@@ -56,6 +56,10 @@ add_library(${TARGET} STATIC
         neon/render/vk-shadow-cascades.hpp
         neon/render/vk-shadow-casting.cpp
         neon/render/vk-shadow-casting.hpp
+        neon/render/vk-sky.cpp
+        neon/render/vk-sky.hpp
+        neon/render/vk-sky-draw.hpp
+        neon/render/vk-sky-values.hpp
         neon/render/vk-shadow-fit.cpp
         neon/render/vk-shadow-fit.hpp
         neon/render/vk-shadow-map.cpp
@@ -102,6 +106,7 @@ if (NEON_BUILD_TESTS)
   neon_add_unit_test(${TARGET} neon/render/vk-pipelines.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/vk-resolve.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/vk-samplers.test.cpp)
+  neon_add_unit_test(${TARGET} neon/render/vk-sky.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/vk-swapchain-sizing.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/vk-culling.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/vk-shadow-fit.test.cpp)
