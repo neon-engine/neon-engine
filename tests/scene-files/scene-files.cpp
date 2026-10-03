@@ -282,7 +282,7 @@ namespace
     EXPECT_THAT(
       ProblemsOf("entities:\n  - name: a\n    components:\n      Transfrom: {}\n"),
       HasSubstr("test.scene.yml:4: component 'Transfrom' of entity 'a' is not known. "
-        "Known are: Transform, Renderable, Geometry, Camera, Light, Sky, Spectator"));
+        "Known are: Transform, Renderable, Geometry, Rope, Camera, Light, Sky, Spectator"));
   }
 
   TEST_F(SceneFilesTest, ANameInAComponentThatIsNotKnownIsReportedWithItsLine)
