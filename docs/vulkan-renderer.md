@@ -525,7 +525,7 @@ What is open:
 | Between cascades | A point picks one cascade, so the edge of a shadow changes its softness where one cascade hands over to the next. Blending the two over a band of depth hides the seam, and is later |
 | Point and spot lights | A spot light needs a map with perspective, a point light six of them in a cube, or a map of two paraboloids. The scene data and the bindings have room, the shaders do not read any yet |
 | Soft shadows | The nine comparisons give a fixed softness of three texels. Percentage-closer soft shadows, which widen with the distance between the caster and the receiver, or a Poisson disc, are later |
-| One map a frame | The map is fitted around the first camera of the frame that draws with a light that casts, which is the camera of a render target when one is drawn before the frame. A map per camera, or per light, is later |
+| One map a frame | The map is fitted around the camera of the frame, the one the window shows, and holds what that scene casts. What a camera draws into a texture is left unshadowed: it is drawn before the frame and picks a cascade by its own depth, so it cannot read a map fitted to another camera. Before, the first camera of a frame took the map, which was the camera of a texture, and the window lost its shadows. A map per camera, or per light, is later (#350) |
 | The bias per cascade | One bias serves every cascade, in texels of each, so the far cascades push a caster back further in metres than the near one. A bias scaled to the cascade, and normal offset, are later |
 
 ## Colour spaces

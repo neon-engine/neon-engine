@@ -177,6 +177,109 @@ namespace
     }
   }
 
+  TEST(MeshBuilder, BuildsASphereOfFlatFacesThatFillsItsSize)
+  {
+    const MeshData sphere = MeshBuilder().AddSphere({2.0f, 2.0f, 2.0f}, 8).Build();
+
+    // eight round and four rings: a triangle at each pole and two rings of
+    // quads between them
+    EXPECT_EQ(sphere.TriangleCount(), 8u + 8u + 2u * 8u * 2u);
+    ExpectWindingMatchesNormals(sphere);
+    ExpectEveryFacePointsOutward(sphere);
+    for (const auto &vertex : sphere.vertices) { EXPECT_NEAR(length(vertex.position), 1.0f, 1e-5f); }
+  }
+
+  TEST(MeshBuilder, ASmoothSphereSharesItsVerticesAndHasTheNormalsOfABall)
+  {
+    const MeshData sphere = MeshBuilder().AddSphere({2.0f, 2.0f, 2.0f}, 8, true).Build();
+
+    // two poles and three rings of eight
+    EXPECT_EQ(sphere.vertices.size(), 2u + 3u * 8u);
+    EXPECT_EQ(sphere.TriangleCount(), 8u + 8u + 2u * 8u * 2u);
+    ExpectEveryFacePointsOutward(sphere);
+    for (const auto &vertex : sphere.vertices)
+    {
+      EXPECT_NEAR(dot(vertex.normal, vertex.position), 1.0f, 1e-5f);
+    }
+  }
+
+  TEST(MeshBuilder, ASphereOfThreeLengthsIsAnEllipsoidCentredWhereItIsAsked)
+  {
+    const MeshData egg = MeshBuilder().AddSphere({2.0f, 4.0f, 6.0f}, 16, true, {1.0f, 2.0f, 3.0f}).Build();
+
+    glm::vec3 least{1e9f};
+    glm::vec3 most{-1e9f};
+    for (const auto &vertex : egg.vertices)
+    {
+      least = min(least, vertex.position);
+      most = max(most, vertex.position);
+      EXPECT_NEAR(length(vertex.normal), 1.0f, 1e-5f);
+    }
+    EXPECT_NEAR(most.x - least.x, 2.0f, 1e-4f);
+    EXPECT_NEAR(most.y - least.y, 4.0f, 1e-4f);
+    EXPECT_NEAR(most.z - least.z, 6.0f, 1e-4f);
+    EXPECT_NEAR((most.y + least.y) * 0.5f, 2.0f, 1e-4f);
+    ExpectEveryFacePointsOutward(egg);
+  }
+
+  TEST(MeshBuilder, BuildsACylinderAlongYWithACapAtEachEnd)
+  {
+    const MeshData cylinder = MeshBuilder().AddCylinder({1.0f, 3.0f, 1.0f}, 6).Build();
+
+    // six quads round, and two caps of six corners, which are four
+    // triangles each
+    EXPECT_EQ(cylinder.TriangleCount(), 6u * 2u + 4u + 4u);
+    ExpectWindingMatchesNormals(cylinder);
+    ExpectEveryFacePointsOutward(cylinder);
+    EXPECT_EQ(CountFacing(cylinder, {0, 1, 0}), 4u);
+    EXPECT_EQ(CountFacing(cylinder, {0, -1, 0}), 4u);
+    for (const auto &vertex : cylinder.vertices) { EXPECT_NEAR(std::fabs(vertex.position.y), 1.5f, 1e-5f); }
+  }
+
+  TEST(MeshBuilder, ASmoothCylinderRoundsItsSideAndKeepsItsCapsFlat)
+  {
+    const MeshData cylinder = MeshBuilder().AddCylinder({2.0f, 1.0f, 2.0f}, 12, true).Build();
+
+    EXPECT_EQ(cylinder.TriangleCount(), 12u * 2u + 10u + 10u);
+    ExpectEveryFacePointsOutward(cylinder);
+    EXPECT_EQ(CountFacing(cylinder, {0, 1, 0}), 10u);
+
+    std::size_t on_the_side = 0;
+    std::size_t on_a_cap = 0;
+    for (const auto &vertex : cylinder.vertices)
+    {
+      if (std::fabs(vertex.normal.y) > 0.5f)
+      {
+        on_a_cap++;
+        EXPECT_NEAR(std::fabs(vertex.normal.y), 1.0f, 1e-5f);
+        continue;
+      }
+      on_the_side++;
+      const glm::vec3 outward = normalize(glm::vec3(vertex.position.x, 0.0f, vertex.position.z));
+      EXPECT_NEAR(dot(vertex.normal, outward), 1.0f, 1e-5f);
+    }
+    EXPECT_EQ(on_the_side, 24u);
+    EXPECT_EQ(on_a_cap, 24u);
+  }
+
+  TEST(MeshBuilder, AnUprightQuadFacesForwardAndCarriesATextureOnce)
+  {
+    // the texels per metre are not asked: a picture lies on it once
+    const MeshData quad = MeshBuilder(4.0f).AddUprightQuad({3.0f, 2.0f}).Build();
+
+    EXPECT_EQ(quad.TriangleCount(), 2u);
+    ExpectWindingMatchesNormals(quad);
+    EXPECT_EQ(CountFacing(quad, {0, 0, 1}), 2u);
+    for (const auto &vertex : quad.vertices)
+    {
+      // left is u = 0, and the top is v = 0, as textures are uploaded
+      EXPECT_FLOAT_EQ(vertex.tex_coords.x, vertex.position.x < 0.0f ? 0.0f : 1.0f);
+      EXPECT_FLOAT_EQ(vertex.tex_coords.y, vertex.position.y > 0.0f ? 0.0f : 1.0f);
+      EXPECT_NEAR(std::fabs(vertex.position.x), 1.5f, 1e-5f);
+      EXPECT_NEAR(std::fabs(vertex.position.y), 1.0f, 1e-5f);
+    }
+  }
+
   TEST(MeshBuilder, ProjectsTexturesOnceAMetreByDefault)
   {
     const MeshData box = MeshBuilder().AddBox({2.0f, 2.0f, 2.0f}).Build();

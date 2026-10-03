@@ -514,6 +514,50 @@ namespace
     EXPECT_THAT(_errors.front(), ::testing::HasSubstr("'segments'"));
   }
 
+  TEST_F(EngineComponentFormatsTest, ReadsASphereWithItsSides)
+  {
+    auto map = DataValue::Map();
+    map.Set("shape", DataValue::Text("sphere"));
+    map.Set("sides", DataValue::Number(32));
+    map.Set("smooth", DataValue::Bool(true));
+
+    Read("Geometry", map);
+
+    const auto *geometry = _store.Get<Geometry>(_entity);
+    ASSERT_NE(geometry, nullptr);
+    EXPECT_EQ(geometry->shape, neon::GeometryShape::Sphere);
+    EXPECT_EQ(geometry->sides, 32);
+    EXPECT_TRUE(geometry->smooth);
+    EXPECT_THAT(_errors, IsEmpty());
+  }
+
+  TEST_F(EngineComponentFormatsTest, ReadsACylinderAndAQuad)
+  {
+    auto cylinder = DataValue::Map();
+    cylinder.Set("shape", DataValue::Text("cylinder"));
+    Read("Geometry", cylinder);
+    EXPECT_EQ(_store.Get<Geometry>(_entity)->shape, neon::GeometryShape::Cylinder);
+    EXPECT_EQ(_store.Get<Geometry>(_entity)->sides, 24);
+
+    auto quad = DataValue::Map();
+    quad.Set("shape", DataValue::Text("quad"));
+    Read("Geometry", quad);
+    EXPECT_EQ(_store.Get<Geometry>(_entity)->shape, neon::GeometryShape::Quad);
+    EXPECT_THAT(_errors, IsEmpty());
+  }
+
+  TEST_F(EngineComponentFormatsTest, SidesBelongToASphereAndACylinderAlone)
+  {
+    auto map = DataValue::Map();
+    map.Set("shape", DataValue::Text("box"));
+    map.Set("sides", DataValue::Number(12));
+
+    Read("Geometry", map);
+
+    EXPECT_EQ(_errors.size(), 1u) << ::testing::PrintToString(_errors);
+    EXPECT_THAT(_errors.front(), ::testing::HasSubstr("'sides'"));
+  }
+
   TEST_F(EngineComponentFormatsTest, ANameAMaterialDoesNotKnowIsReported)
   {
     auto material = DataValue::Map();
@@ -837,6 +881,7 @@ namespace
     map.Set("spatial", DataValue::Bool(true));
     map.Set("min_distance", DataValue::Number(2.0f));
     map.Set("max_distance", DataValue::Number(30.0f));
+    map.Set("falloff", DataValue::Text("linear"));
     map.Set("group", DataValue::Text("music"));
 
     Read("SoundSource", map);
@@ -851,6 +896,7 @@ namespace
     EXPECT_TRUE(source->sound.spatial);
     EXPECT_EQ(source->sound.min_distance, 2.0f);
     EXPECT_EQ(source->sound.max_distance, 30.0f);
+    EXPECT_EQ(source->sound.falloff, neon::SoundFalloff::Linear);
     EXPECT_EQ(source->sound.group, "music");
     EXPECT_EQ(source->sound_id, -1);
     EXPECT_THAT(_errors, IsEmpty());

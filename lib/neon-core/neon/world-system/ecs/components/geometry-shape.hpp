@@ -9,7 +9,10 @@ namespace neon
     Box = 0,
     Plane,
     Ramp,
-    Prism
+    Prism,
+    Sphere,
+    Cylinder,
+    Quad
   };
 } // neon
 

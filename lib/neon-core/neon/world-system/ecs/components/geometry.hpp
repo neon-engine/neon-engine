@@ -23,11 +23,16 @@ namespace neon
   {
     GeometryShape shape = GeometryShape::Box;
 
-    /// The size of a box or a ramp in x, y, and z; of a plane in x and z.
+    /// The size of a box, a ramp, a sphere, or a cylinder in x, y, and z; of
+    /// a plane in x and z; of a quad in x and y.
     glm::vec3 size{1.0f};
 
     /// How many quads a plane is cut into along each side.
     int segments = 1;
+
+    /// How many faces go round a sphere or a cylinder. A sphere has half as
+    /// many rings from pole to pole.
+    int sides = 24;
 
     /// The outline of a prism on the ground, as pairs of x and z, going
     /// round either way. Its height is `size.y`.
@@ -37,11 +42,12 @@ namespace neon
     float texels_per_metre = 1.0f;
 
     /// Whether the normals are smoothed over shared vertices, for a plane
-    /// that is to look round rather than faceted.
+    /// that is to look round rather than faceted, and for a sphere and the
+    /// side of a cylinder, which are lit as round surfaces with it.
     bool smooth = false;
 
     /// Whether the faces point inward, for a box or a prism that is a room
-    /// seen from within. The outside is then left out by culling, as the
+    /// seen from within, or a sphere that is a dome. The outside is then left out by culling, as the
     /// inside of a crate is.
     bool inside = false;
   };
@@ -50,17 +56,24 @@ namespace neon
   {
     type.Named("Geometry", "A shape the engine builds in place of a model");
 
-    type.Choice("shape", &Geometry::shape, {"box", "plane", "ramp", "prism"})
+    type.Choice("shape", &Geometry::shape, {"box", "plane", "ramp", "prism", "sphere", "cylinder", "quad"})
         .Describe("What is built. Which of the other values count depends on it");
 
     type.Field("size", &Geometry::size)
         .Unit("m")
-        .Describe("A box or a ramp in x, y, and z; a plane in x and z; the height of a prism in y");
+        .Describe(
+          "A box, a ramp, a sphere, or a cylinder in x, y, and z; a plane in x and z; a quad in x and y; the height "
+          "of a prism in y");
 
     type.Field("segments", &Geometry::segments)
         .AtLeast(1)
         .OnlyWhen("shape", {"plane"})
         .Describe("How many quads a plane is cut into along each side");
+
+    type.Field("sides", &Geometry::sides)
+        .AtLeast(3)
+        .OnlyWhen("shape", {"sphere", "cylinder"})
+        .Describe("How many faces go round a sphere or a cylinder");
 
     type.Field("outline", &Geometry::outline)
         .OnlyWhen("shape", {"prism"})
@@ -74,7 +87,7 @@ namespace neon
         .Describe("Whether the normals are smoothed over shared vertices");
 
     type.Field("inside", &Geometry::inside)
-        .OnlyWhen("shape", {"box", "prism"})
+        .OnlyWhen("shape", {"box", "prism", "sphere", "cylinder"})
         .Describe("Whether the faces point inward, for a room seen from within");
 
     type.Rule("outline", [](const Geometry &geometry, const std::string &where) -> std::string

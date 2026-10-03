@@ -1,7 +1,10 @@
 #include "mesh-builder.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <utility>
+
+#include <glm/gtc/constants.hpp>
 
 #include "mesh-uvs.hpp"
 
@@ -151,6 +154,172 @@ namespace neon
     return *this;
   }
 
+  MeshBuilder &MeshBuilder::AddSphere(
+    const glm::vec3 &size,
+    const int sides,
+    const bool smooth,
+    const glm::vec3 &center)
+  {
+    const int around = sides < 3 ? 3 : sides;
+    const int rings = around / 2 < 2 ? 2 : around / 2;
+    const glm::vec3 radii = size * 0.5f;
+
+    // the point of ring `ring`, counted from the top, at step `step` round
+    // y. The steps go from +x towards +z
+    const auto point = [&](const int ring, const int step)
+    {
+      const float down = glm::pi<float>() * static_cast<float>(ring) / static_cast<float>(rings);
+      const float round = glm::two_pi<float>() * static_cast<float>(step) / static_cast<float>(around);
+      return glm::vec3(std::sin(down) * std::cos(round), std::cos(down), std::sin(down) * std::sin(round));
+    };
+
+    if (!smooth)
+    {
+      for (int ring = 0; ring < rings; ring++)
+      {
+        for (int step = 0; step < around; step++)
+        {
+          const glm::vec3 upper = center + radii * point(ring, step);
+          const glm::vec3 upper_next = center + radii * point(ring, step + 1);
+          const glm::vec3 lower = center + radii * point(ring + 1, step);
+          const glm::vec3 lower_next = center + radii * point(ring + 1, step + 1);
+
+          // a triangle at each pole, where a ring is one point, and a quad
+          // between two rings
+          if (ring == 0) { AddFace({upper, lower_next, lower}); }
+          else if (ring == rings - 1) { AddFace({upper, upper_next, lower}); }
+          else { AddFace({upper, upper_next, lower_next, lower}); }
+        }
+      }
+      return *this;
+    }
+
+    // Shared vertices, each with the normal of the surface where it is:
+    // the top, the rings between the poles, the bottom
+    const auto first = static_cast<unsigned int>(_mesh.vertices.size());
+    const auto add = [&](const glm::vec3 &on_unit_sphere)
+    {
+      // the normal of an ellipsoid leans towards its short axes
+      const glm::vec3 normal = normalize(on_unit_sphere / radii);
+      _mesh.vertices.push_back(
+        Vertex{.position = center + radii * on_unit_sphere, .normal = normal, .tex_coords = {}});
+    };
+
+    add(point(0, 0));
+    for (int ring = 1; ring < rings; ring++)
+    {
+      for (int step = 0; step < around; step++) { add(point(ring, step)); }
+    }
+    add(point(rings, 0));
+
+    const auto at = [&](const int ring, const int step)
+    {
+      return first + 1 + static_cast<unsigned int>((ring - 1) * around + step % around);
+    };
+    const unsigned int top = first;
+    const unsigned int bottom = first + 1 + static_cast<unsigned int>((rings - 1) * around);
+    const auto triangle = [&](const unsigned int a, const unsigned int b, const unsigned int c)
+    {
+      _mesh.indices.push_back(a);
+      _mesh.indices.push_back(b);
+      _mesh.indices.push_back(c);
+    };
+
+    for (int step = 0; step < around; step++)
+    {
+      triangle(top, at(1, step + 1), at(1, step));
+      for (int ring = 1; ring + 1 < rings; ring++)
+      {
+        triangle(at(ring, step), at(ring, step + 1), at(ring + 1, step + 1));
+        triangle(at(ring, step), at(ring + 1, step + 1), at(ring + 1, step));
+      }
+      triangle(at(rings - 1, step), at(rings - 1, step + 1), bottom);
+    }
+    return *this;
+  }
+
+  MeshBuilder &MeshBuilder::AddCylinder(
+    const glm::vec3 &size,
+    const int sides,
+    const bool smooth,
+    const glm::vec3 &center)
+  {
+    const int around = sides < 3 ? 3 : sides;
+    const glm::vec3 radii = size * 0.5f;
+
+    // the direction of step `step` round y, from +x towards +z
+    const auto round = [&](const int step)
+    {
+      const float angle = glm::two_pi<float>() * static_cast<float>(step) / static_cast<float>(around);
+      return glm::vec3(std::cos(angle), 0.0f, std::sin(angle));
+    };
+    const glm::vec3 up{0.0f, radii.y, 0.0f};
+    const glm::vec3 across{radii.x, 0.0f, radii.z};
+
+    if (smooth)
+    {
+      // the side shares its vertices, a top and a bottom one for every
+      // step, each with the normal of the round side there
+      const auto first = static_cast<unsigned int>(_mesh.vertices.size());
+      for (int step = 0; step < around; step++)
+      {
+        const glm::vec3 outward = round(step);
+        const glm::vec3 normal = normalize(glm::vec3(outward.x / radii.x, 0.0f, outward.z / radii.z));
+        _mesh.vertices.push_back(Vertex{.position = center + across * outward + up, .normal = normal, .tex_coords = {}});
+        _mesh.vertices.push_back(Vertex{.position = center + across * outward - up, .normal = normal, .tex_coords = {}});
+      }
+      for (int step = 0; step < around; step++)
+      {
+        const unsigned int upper = first + static_cast<unsigned int>(step) * 2;
+        const unsigned int upper_next = first + static_cast<unsigned int>((step + 1) % around) * 2;
+        for (const unsigned int index : {upper, upper_next, upper_next + 1, upper, upper_next + 1, upper + 1})
+        {
+          _mesh.indices.push_back(index);
+        }
+      }
+    } else
+    {
+      for (int step = 0; step < around; step++)
+      {
+        const glm::vec3 here = center + across * round(step);
+        const glm::vec3 next = center + across * round(step + 1);
+        AddFace({here + up, next + up, next - up, here - up});
+      }
+    }
+
+    // the caps: the top goes round against the steps to face up, the bottom
+    // with them to face down
+    std::vector<glm::vec3> top;
+    std::vector<glm::vec3> bottom;
+    for (int step = 0; step < around; step++)
+    {
+      top.push_back(center + across * round(around - step) + up);
+      bottom.push_back(center + across * round(step) - up);
+    }
+    AddFace(top);
+    AddFace(bottom);
+    return *this;
+  }
+
+  MeshBuilder &MeshBuilder::AddUprightQuad(const glm::vec2 &size, const glm::vec3 &center)
+  {
+    const glm::vec2 h = size * 0.5f;
+    const auto first = static_cast<unsigned int>(_mesh.vertices.size());
+
+    AddQuad(
+      center + glm::vec3(-h.x, -h.y, 0.0f),
+      center + glm::vec3(h.x, -h.y, 0.0f),
+      center + glm::vec3(h.x, h.y, 0.0f),
+      center + glm::vec3(-h.x, h.y, 0.0f));
+
+    // the texture once across, with its top, which is v = 0, at the top
+    _laid_uvs.emplace_back(first, glm::vec2(0.0f, 1.0f));
+    _laid_uvs.emplace_back(first + 1, glm::vec2(1.0f, 1.0f));
+    _laid_uvs.emplace_back(first + 2, glm::vec2(1.0f, 0.0f));
+    _laid_uvs.emplace_back(first + 3, glm::vec2(0.0f, 0.0f));
+    return *this;
+  }
+
   MeshBuilder &MeshBuilder::InsideOut(const bool inside_out)
   {
     _inside_out = inside_out;
@@ -168,8 +337,11 @@ namespace neon
     }
 
     ProjectUvs(_mesh, _texels_per_metre);
+    for (const auto &[index, uv] : _laid_uvs) { _mesh.vertices[index].tex_coords = uv; }
+
     MeshData built = std::move(_mesh);
     _mesh = MeshData{};
+    _laid_uvs.clear();
     return built;
   }
 } // neon

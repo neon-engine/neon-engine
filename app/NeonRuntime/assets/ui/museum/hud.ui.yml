@@ -1,0 +1,60 @@
+# What the window shows over the museum, demo.scene.yml: a dot where the
+# player looks, and how to walk. The properties are those of CSS, with an
+# underscore where CSS has a hyphen, see docs/user-interface.md.
+
+ui: museum-hud
+version: 1
+
+# the size this was made for, which everything grows and shrinks from
+reference_size: [1920, 1080]
+
+values:
+  # whether a screen in the world is pointed at, which the runtime says
+  pointing: false
+
+root:
+  type: panel
+  width: 100%
+  height: 100%
+  children:
+    # a dot in the middle, where the player looks. It becomes a ring while
+    # a screen in the world is pointed at, as the terminal of hall 10 is
+    - type: panel
+      position: absolute
+      top: 50%
+      left: 50%
+      width: 6
+      height: 6
+      margin_top: -3
+      margin_left: -3
+      border_radius: 3
+      background_color: "#ffffffc0"
+      box_shadow: "0 0 3px #000000a0"
+      hidden: "{pointing}"
+    - type: panel
+      position: absolute
+      top: 50%
+      left: 50%
+      width: 18
+      height: 18
+      margin_top: -9
+      margin_left: -9
+      border_radius: 9
+      border_width: 2
+      border_color: "#ffffffe0"
+      box_shadow: "0 0 3px #000000a0"
+      hidden: "{!pointing}"
+
+    # pinned to the left bottom corner
+    - type: panel
+      position: absolute
+      left: 24
+      bottom: 24
+      padding: "10 16"
+      border_radius: 8
+      background_color: "#00000070"
+      children:
+        - type: label
+          text: "W A S D  walk     Mouse  look     Space  jump     Shift  run     Esc  pause"
+          font_size: 18
+          color: "#ffffffd0"

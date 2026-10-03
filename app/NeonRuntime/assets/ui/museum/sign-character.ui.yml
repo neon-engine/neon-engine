@@ -1,0 +1,41 @@
+# The sign of hall 08, shown on a surface of its own by demo.scene.yml.
+
+ui: sign-character
+version: 1
+
+# the size of the surface in the scene, so that a unit is a pixel
+reference_size: [1024, 512]
+
+root:
+  type: panel
+  box_sizing: border-box
+  width: 100%
+  height: 100%
+  padding: 44
+  gap: 14
+  flex_direction: column
+  background_color: "#12161c"
+  border: "8px solid #6fe36f"
+  children:
+    - type: label
+      text: "08"
+      font_size: 40
+      font_weight: bold
+      letter_spacing: 6
+      color: "#6fe36f"
+    - type: label
+      text: "Character"
+      font_size: 92
+      font_weight: bold
+    - type: label
+      text: "You are a CharacterBody: steps are walked up,"
+      font_size: 36
+      color: "#ffffffc8"
+    - type: label
+      text: "slopes up to 45 degrees too, steeper is a wall."
+      font_size: 36
+      color: "#ffffffc8"
+    - type: label
+      text: "The lift is kinematic. The walker is a script."
+      font_size: 36
+      color: "#ffffffc8"

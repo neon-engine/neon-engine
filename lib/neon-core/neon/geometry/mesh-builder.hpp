@@ -1,6 +1,7 @@
 #ifndef MESH_BUILDER_HPP
 #define MESH_BUILDER_HPP
 
+#include <utility>
 #include <vector>
 
 #include <glm/glm.hpp>
@@ -26,6 +27,10 @@ namespace neon
     MeshData _mesh;
     float _texels_per_metre;
     bool _inside_out = false;
+
+    /// The texture coordinates a shape laid itself, by the index of the
+    /// vertex, which Build() keeps in place of the projected ones.
+    std::vector<std::pair<unsigned int, glm::vec2>> _laid_uvs;
 
     /// Adds one face with the corners given anticlockwise seen from its
     /// front, with the normal of that front on every corner.
@@ -56,6 +61,23 @@ namespace neon
     /// It stands on `floor_y`.
     MeshBuilder &AddPrism(const std::vector<glm::vec2> &outline, float height, float floor_y = 0.0f);
 
+    /// A sphere that fills `size`, an ellipsoid when its three lengths
+    /// differ, centred at `center`, with `sides` faces round its equator and
+    /// half as many rings from pole to pole. `smooth` gives every vertex the
+    /// normal of the round surface, so that it is lit as a ball; without it
+    /// every face is flat, as the faces of the other shapes are.
+    MeshBuilder &AddSphere(const glm::vec3 &size, int sides = 24, bool smooth = false, const glm::vec3 &center = {});
+
+    /// A cylinder along y that fills `size`, centred at `center`, with
+    /// `sides` faces round it and a cap at each end. `smooth` rounds the
+    /// side; the caps stay flat and their edges hard.
+    MeshBuilder &AddCylinder(const glm::vec3 &size, int sides = 24, bool smooth = false, const glm::vec3 &center = {});
+
+    /// An upright quad of `size` in x and y, facing +z, centred at `center`,
+    /// on which a texture lies once with its top at the top, whatever the
+    /// texels per metre: what shows a picture or a surface, as a screen does.
+    MeshBuilder &AddUprightQuad(const glm::vec2 &size, const glm::vec3 &center = {});
+
     /// One quad with its corners given anticlockwise seen from the front.
     MeshBuilder &AddQuad(const glm::vec3 &a, const glm::vec3 &b, const glm::vec3 &c, const glm::vec3 &d);
 
@@ -65,8 +87,8 @@ namespace neon
     /// way round from there.
     MeshBuilder &InsideOut(bool inside_out = true);
 
-    /// Takes the mesh, with its texture coordinates projected. The builder
-    /// is empty afterwards.
+    /// Takes the mesh, with its texture coordinates projected, but for the
+    /// shapes that lay their own. The builder is empty afterwards.
     [[nodiscard]] MeshData Build();
   };
 } // neon

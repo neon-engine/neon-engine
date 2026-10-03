@@ -1,0 +1,89 @@
+# The terminal of hall 10 of the museum, demo.scene.yml: a user interface
+# as any other, laid out and drawn on a surface of its own, which a quad in
+# the world shows. Its buttons are pointed at from where the player looks,
+# and pressed with the pointer or accept.
+
+ui: museum-terminal
+version: 1
+
+# the size of the surface in the scene, so that a unit is a pixel
+reference_size: [1024, 768]
+
+values:
+  door: locked
+  power: 0.4
+
+root:
+  type: panel
+  box_sizing: border-box
+  width: 100%
+  height: 100%
+  padding: 48
+  gap: 24
+  flex_direction: column
+  background: "linear-gradient(160deg, #0b2a2f, #06141a)"
+  border: "6px solid #2fd6c4"
+  children:
+    - type: label
+      text: "TERMINAL 10"
+      font_size: 72
+      font_weight: bold
+      letter_spacing: 6
+      color: "#2fd6c4"
+
+    - type: label
+      text: "Door: {door}"
+      font_size: 48
+
+    - type: panel
+      gap: 16
+      align_items: center
+      children:
+        - type: label
+          text: Power
+          font_size: 36
+          color: "#ffffffb0"
+        - type: bar
+          value: "{power}"
+          max: 1
+          width: 480
+          height: 28
+          border_radius: 14
+          overflow: hidden
+          accent_color: "#2fd6c4"
+
+    - type: label
+      text: "Look at a button and click."
+      font_size: 30
+      color: "#ffffff90"
+
+    - type: panel
+      gap: 24
+      margin_top: auto
+      children:
+        - type: button
+          name: unlock
+          text: Unlock
+          font_size: 40
+          padding: "16 40"
+          border_radius: 12
+          background_color: "#2fd6c4"
+          color: "#06141a"
+          # pointed at from the world, and pressed
+          hover:
+            background_color: "#7ff0e3"
+          active:
+            background_color: "#1a9a8c"
+            color: "#ffffff"
+        - type: button
+          name: alarm
+          text: Alarm
+          font_size: 40
+          padding: "16 40"
+          border_radius: 12
+          background_color: "#bf616a"
+          hover:
+            background_color: "#d98b92"
+          active:
+            background_color: "#8f3f47"
+            color: "#ffffff"

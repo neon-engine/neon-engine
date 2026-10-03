@@ -30,10 +30,17 @@ namespace neon
         builder.AddPrism(outline, geometry.size.y);
         break;
       }
+      case GeometryShape::Sphere: builder.AddSphere(geometry.size, geometry.sides, geometry.smooth); break;
+      case GeometryShape::Cylinder: builder.AddCylinder(geometry.size, geometry.sides, geometry.smooth); break;
+      case GeometryShape::Quad: builder.AddUprightQuad({geometry.size.x, geometry.size.y}); break;
     }
 
     MeshData mesh = builder.InsideOut(geometry.inside).Build();
-    if (geometry.smooth) { ComputeSmoothNormals(mesh); }
+
+    // a sphere and a cylinder are built round where they are to be, with
+    // the edges of a cylinder's caps kept hard, which smoothing would undo
+    const bool is_built_smooth = geometry.shape == GeometryShape::Sphere || geometry.shape == GeometryShape::Cylinder;
+    if (geometry.smooth && !is_built_smooth) { ComputeSmoothNormals(mesh); }
     return mesh;
   }
 

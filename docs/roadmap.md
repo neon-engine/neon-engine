@@ -138,7 +138,7 @@ These come first, because everything after them is cheaper with them in place.
 | Components from Lua (#100) | **Done with #57:** a script declares a component that takes part in scenes, reflection, and systems. Open: a sentence per field for the editor, and lists, choices, and references as fields |
 | Script everything (#101) | **The shape is in (#57):** the unit is a system over components, a script is a component and a system, and events of the physics arrive as hooks. Open: what a script reaches of audio, spawning, and the user interface |
 | Games in C++ and Lua with hot reload (#104) | Other languages after 1.0. C++ reloads as a library, which may need a runtime made for the editor |
-| Meshes with collision, generated (#97) | **First step done:** `MeshData`, `MeshBuilder` (box, plane, ramp, prism), flat and smooth normals, textures projected once a metre, the `Geometry` component drawn by its `Renderable` and collided with through a `Collider`, a level blocked out in `blockout.scene.yml`. Open: concave outlines, brushes and booleans, rebuilding while the game runs. See [geometry.md](geometry.md) |
+| Meshes with collision, generated (#97) | **First step done:** `MeshData`, `MeshBuilder` (box, plane, ramp, prism, sphere, cylinder, quad), flat and smooth normals, textures projected once a metre, the `Geometry` component drawn by its `Renderable` and collided with through a `Collider`, a level blocked out in `blockout.scene.yml`, and the museum of `demo.scene.yml` built from shapes alone (#341). Open: concave outlines, brushes and booleans, rebuilding while the game runs. See [geometry.md](geometry.md) |
 | Scenes and resources serialized to binary and text (#96) | As Godot does with resources, so that saved games are the same machinery. Not decided; to be discussed |
 | A scene manager (#118) | Changes between whole scenes, with a loading screen and what carries over |
 | Prefabs (#146) | **Done:** an entity, or a tree of them, described once in a `*.prefab.yml`, placed in scenes with what differs written on top, a child taken away with `~` (#228), and spawned at run time through `WorldSystem::Spawn` (#229), see [prefabs.md](prefabs.md). A prefab is not a scene. Open: a Lua binding once scripts come (#57) |
@@ -393,6 +393,9 @@ Wanted, and not for 1.0.
 | What | Issue |
 |---|---|
 | Sanitizer builds hang at startup on macOS | #54 |
+| The cone of a spot light is written as cosines, and a light without a `constant` is divided by zero | #342 |
+| What a camera draws into a texture has no shadows: the one shadow map is fitted to the window's camera | #350 |
+| A script's system cannot run over the components of the physics or the player, which are registered after the scripts are read | #351 |
 | clang-tidy findings in the test code, clang-format violations | #52, #53 |
 | Pointing at a user interface on a surface in the world needs the ray cast | #73 |
 | Two raw `new` remain in the Jolt backend, for the factory and for characters | #148 |

@@ -5,6 +5,8 @@
 
 #include <glm/glm.hpp>
 
+#include "sound-falloff.hpp"
+
 namespace neon
 {
   /// The groups every audio system has. Each has a volume of its own, which
@@ -47,8 +49,12 @@ namespace neon
     /// loud as it gets.
     float min_distance = 1.0f;
 
-    /// From this distance on, it does not get any quieter.
+    /// From this distance on, it does not get any quieter. With a linear
+    /// falloff that is silence.
     float max_distance = 100.0f;
+
+    /// How it gets quieter between the two distances.
+    SoundFalloff falloff = SoundFalloff::Inverse;
 
     /// The group the sound belongs to, whose volume it is played at on top
     /// of its own.

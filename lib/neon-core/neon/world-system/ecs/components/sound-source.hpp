@@ -119,7 +119,10 @@ namespace neon
 
     type.Field("max_distance", [](SoundSource &source) -> float & { return source.sound.max_distance; })
         .AtLeast(0)
-        .Describe("From this distance on it does not get quieter");
+        .Describe("From this distance on it does not get quieter, which is silence with a linear falloff");
+
+    type.Choice("falloff", [](SoundSource &source) -> SoundFalloff & { return source.sound.falloff; }, {"inverse", "linear"})
+        .Describe("How it gets quieter between the two distances: inverse stays heard, linear ends in silence");
 
     // a project declares groups of its own, so a name is not checked here.
     // The audio says when a sound is of a group that is not there

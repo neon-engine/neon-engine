@@ -125,10 +125,10 @@ namespace
       return _logger->Messages(LogLevel::Error);
     }
 
-    static std::string DemoScene()
+    static std::string SmallScene()
     {
-      const std::ifstream file(NEON_DEMO_SCENE);
-      EXPECT_TRUE(file.good()) << NEON_DEMO_SCENE;
+      const std::ifstream file(NEON_SMALL_SCENE);
+      EXPECT_TRUE(file.good()) << NEON_SMALL_SCENE;
 
       std::stringstream text;
       text << file.rdbuf();
@@ -145,9 +145,9 @@ namespace
 
   // loading
 
-  TEST_F(SceneFilesTest, LoadsTheSceneOfTheRuntime)
+  TEST_F(SceneFilesTest, LoadsASceneFromTheRepository)
   {
-    Write(DemoScene());
+    Write(SmallScene());
 
     _scene.Populate(_world.store);
 
@@ -157,7 +157,7 @@ namespace
 
   TEST_F(SceneFilesTest, PutsAChildBelowItsParent)
   {
-    Write(DemoScene());
+    Write(SmallScene());
 
     _scene.Populate(_world.store);
 
@@ -167,9 +167,9 @@ namespace
     EXPECT_EQ(_world.store.GetParent(camera), _world.store.FindEntity("player"));
   }
 
-  TEST_F(SceneFilesTest, ReadsTheValuesOfTheSceneOfTheRuntime)
+  TEST_F(SceneFilesTest, ReadsTheValuesOfASceneFromTheRepository)
   {
-    Write(DemoScene());
+    Write(SmallScene());
 
     _scene.Populate(_world.store);
 
@@ -421,7 +421,7 @@ namespace
 
   TEST_F(SceneFilesTest, ASceneThatIsSavedAndLoadedAndSavedAgainIsTheSameText)
   {
-    Write(DemoScene());
+    Write(SmallScene());
     _scene.Populate(_world.store);
     ASSERT_TRUE(_scene.Save(_world.store, "demo", "user://first.scene.yml"));
 
@@ -435,7 +435,7 @@ namespace
 
   TEST_F(SceneFilesTest, AComponentIsTheSameAfterSavingAndLoading)
   {
-    Write(DemoScene());
+    Write(SmallScene());
     _scene.Populate(_world.store);
     ASSERT_TRUE(_scene.Save(_world.store, "demo", "user://saved.scene.yml"));
 

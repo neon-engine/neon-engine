@@ -1,0 +1,88 @@
+# A small scene with a model, a sound, a light, and a camera below a
+# spectator, which tests/scene-files reads as it is. It was the scene of
+# the runtime before the museum.
+#
+# An entity has a name, the components it carries, and the entities below it.
+# What a component leaves out keeps its default. The components and what they
+# hold are listed in docs/scenes.md.
+
+scene: small
+version: 1
+
+entities:
+  - name: bear
+    components:
+      Transform: Default
+      Renderable:
+        model: assets://models/bear.obj
+        fit: unit
+        shader: assets://shaders/basic-lit
+        textures:
+          - assets://textures/concrete.png
+        material:
+          shininess: 32
+          color: [1, 0.5, 0.31]
+
+  - name: sphere
+    components:
+      Transform:
+        position: [1.2, 1, -2]
+        scale: 0.2
+      Renderable:
+        model: assets://models/sphere.obj
+        fit: unit
+        shader: assets://shaders/basic-lit
+        textures:
+          - assets://textures/fire.png
+        material:
+          shininess: 100
+          color: [1, 1, 1]
+          use_textures: false
+      # the sphere hums. It is louder from close by, and is heard from the
+      # side it is on
+      SoundSource:
+        sound: assets://sounds/hum.wav
+        looping: true
+        spatial: true
+        volume: 0.6
+        max_distance: 30
+
+  - name: floor
+    components:
+      Transform:
+        position: [0, -0.55, 0]
+        scale: [100, 0.1, 100]
+      Renderable:
+        model: assets://models/cube.obj
+        fit: unit
+        shader: assets://shaders/basic-lit
+        textures:
+          - assets://textures/concrete.png
+        scale_textures: true
+        material:
+          shininess: 32
+          color: [0.5, 0.5, 0.5]
+
+  - name: direction
+    components:
+      Transform:
+        position: [1.2, 1, -2]
+      Light:
+        type: direction
+        direction: [-0.2, -1, -0.3]
+        ambient: [0.5, 0.5, 0.5]
+        diffuse: [0.4, 0.4, 0.4]
+        specular: [0.5, 0.5, 0.5]
+
+  - name: player
+    components:
+      Transform:
+        position: [0, 0, 2]
+      Spectator: Default
+    children:
+      # the camera sits on the player, and so moves and turns with it
+      - name: camera
+        components:
+          Transform: Default
+          Camera: Default
+          SoundListener: Default

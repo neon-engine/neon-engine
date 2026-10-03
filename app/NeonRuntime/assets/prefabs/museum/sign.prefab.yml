@@ -1,0 +1,43 @@
+# A sign of the museum, demo.scene.yml: a board of 2 by 1 metres that floats
+# where it is put, centred on its origin and facing +z. The board is a quad
+# that shows a surface, and the scene says which: it writes the `textures` of the board's
+# Renderable, `surface://` and a name, and gives the board a UiSurface of
+# that name with the user interface to draw on it, see
+# docs/user-interface.md#surfaces. A quad has no back, so a dark panel
+# stands behind it, which is also what is walked into.
+version: 1
+prefab: sign
+
+entity:
+  components:
+    Transform: Default
+  children:
+    - name: back
+      components:
+        Transform:
+          position: [0, 0, -0.04]
+        Geometry:
+          shape: box
+          size: [2.08, 1.08, 0.06]
+        Renderable:
+          shader: assets://shaders/pbr
+          material:
+            color: [0.12, 0.13, 0.15]
+            roughness: 0.6
+        RigidBody:
+          kind: static
+        Collider:
+          shape: box
+          size: [2.08, 1.08, 0.06]
+
+    # a quad of 1 by 1, sized by its Transform, which is the square a
+    # surface is pointed at on
+    - name: board
+      components:
+        Transform:
+          position: [0, 0, 0]
+          scale: [2, 1, 1]
+        Geometry:
+          shape: quad
+        Renderable:
+          shader: assets://shaders/unlit

@@ -761,6 +761,51 @@ namespace
     EXPECT_NEAR(far, near, 0.02f);
   }
 
+  TEST_F(MaAudioSystemTest, ASoundWithAnInverseFalloffIsStillHeardPastItsMostDistance)
+  {
+    _audio.SetListener(ListenerInfo{});
+    const int sound = Playing({
+      .path = "assets://sounds/tone.wav", .looping = true, .spatial = true, .min_distance = 1.0f, .max_distance = 10.0f
+    });
+
+    _audio.SetPosition(sound, {0.0f, 0.0f, -10.0f}, glm::vec3{0.0f});
+    const float at_the_most = LevelAfter(0.2);
+
+    _audio.SetPosition(sound, {0.0f, 0.0f, -40.0f}, glm::vec3{0.0f});
+    const float far = LevelAfter(0.2);
+
+    EXPECT_GT(far, 0.0f);
+    EXPECT_NEAR(far, at_the_most, 0.01f);
+  }
+
+  TEST_F(MaAudioSystemTest, ASoundWithALinearFalloffIsSilentFromItsMostDistanceOn)
+  {
+    _audio.SetListener(ListenerInfo{});
+    const int sound = Playing({
+      .path = "assets://sounds/tone.wav",
+      .looping = true,
+      .spatial = true,
+      .min_distance = 1.0f,
+      .max_distance = 10.0f,
+      .falloff = neon::SoundFalloff::Linear
+    });
+
+    _audio.SetPosition(sound, {0.0f, 0.0f, -1.0f}, glm::vec3{0.0f});
+    const float near = LevelAfter(0.2);
+
+    _audio.SetPosition(sound, {0.0f, 0.0f, -5.5f}, glm::vec3{0.0f});
+    const float halfway = LevelAfter(0.2);
+
+    _audio.SetPosition(sound, {0.0f, 0.0f, -40.0f}, glm::vec3{0.0f});
+    LevelAfter(0.2);
+    const float far = LevelAfter(0.2);
+
+    EXPECT_GT(near, 0.1f);
+    EXPECT_LT(halfway, near);
+    EXPECT_GT(halfway, 0.0f);
+    EXPECT_NEAR(far, 0.0f, 0.001f);
+  }
+
   // Time
 
   TEST_F(MaAudioSystemTest, MixesNothingWhenNoTimePasses)

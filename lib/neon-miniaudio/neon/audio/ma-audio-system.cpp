@@ -331,6 +331,12 @@ namespace neon
     {
       ma_sound_set_min_distance(&sound->sound, sound_info.min_distance);
       ma_sound_set_max_distance(&sound->sound, sound_info.max_distance);
+
+      // inverse is what miniaudio starts a sound with, and never reaches
+      // silence; linear is silent from the most distance on
+      const bool is_linear = sound_info.falloff == SoundFalloff::Linear;
+      ma_sound_set_attenuation_model(
+        &sound->sound, is_linear ? ma_attenuation_model_linear : ma_attenuation_model_inverse);
     }
 
     _state->next_id++;

@@ -27,7 +27,9 @@ expect_no_output("[warning]")
 expect_no_output("[critical]")
 
 # the scripts were found and what they declare is said
-expect_output("Scripts under assets:// declare 1 components and 1 systems")
+# the Spinner this scene uses, and the Mover, the Patrol, and the TriggerLamp
+# of the museum
+expect_output("Scripts under assets:// declare 4 components and 4 systems")
 
 # expect_pixel(<what> <x> <y> <red> <green> <blue>): the colour of a pixel of
 # the image FRAME, each channel within 2 of what is given

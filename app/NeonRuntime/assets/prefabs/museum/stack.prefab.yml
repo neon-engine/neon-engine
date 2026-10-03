@@ -1,0 +1,56 @@
+# What hall 12 of the museum, demo.scene.yml, places five times: a base, a
+# block on it, and a ball on top, each a child with a name, so that a scene
+# changes one or takes one away, see docs/prefabs.md#what-differs. It stands
+# on its origin, and its base is what is walked into.
+version: 1
+prefab: stack
+
+entity:
+  components:
+    Transform: Default
+  children:
+    - name: base
+      components:
+        Transform:
+          position: [0, 0.25, 0]
+        Geometry:
+          shape: box
+          size: [0.8, 0.5, 0.8]
+        Renderable:
+          shader: assets://shaders/pbr
+          material:
+            color: [0.3, 0.33, 0.5]
+            roughness: 0.7
+        RigidBody:
+          kind: static
+        Collider:
+          shape: box
+          size: [0.8, 0.5, 0.8]
+
+    - name: middle
+      components:
+        Transform:
+          position: [0, 0.7, 0]
+        Geometry:
+          shape: box
+          size: [0.55, 0.4, 0.55]
+        Renderable:
+          shader: assets://shaders/pbr
+          material:
+            color: [0.45, 0.5, 0.75]
+            roughness: 0.6
+
+    - name: top
+      components:
+        Transform:
+          position: [0, 1.1, 0]
+        Geometry:
+          shape: sphere
+          size: [0.4, 0.4, 0.4]
+          sides: 24
+          smooth: true
+        Renderable:
+          shader: assets://shaders/pbr
+          material:
+            color: [0.6, 0.65, 1]
+            roughness: 0.4

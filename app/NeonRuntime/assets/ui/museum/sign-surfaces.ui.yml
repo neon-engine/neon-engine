@@ -1,0 +1,41 @@
+# The sign of hall 10, shown on a surface of its own by demo.scene.yml.
+
+ui: sign-surfaces
+version: 1
+
+# the size of the surface in the scene, so that a unit is a pixel
+reference_size: [1024, 512]
+
+root:
+  type: panel
+  box_sizing: border-box
+  width: 100%
+  height: 100%
+  padding: 44
+  gap: 14
+  flex_direction: column
+  background_color: "#12161c"
+  border: "8px solid #2fd6c4"
+  children:
+    - type: label
+      text: "10"
+      font_size: 40
+      font_weight: bold
+      letter_spacing: 6
+      color: "#2fd6c4"
+    - type: label
+      text: "Surfaces"
+      font_size: 92
+      font_weight: bold
+    - type: label
+      text: "A user interface on a screen in the world:"
+      font_size: 36
+      color: "#ffffffc8"
+    - type: label
+      text: "look at a button and click. Next to it, what"
+      font_size: 36
+      color: "#ffffffc8"
+    - type: label
+      text: "a second camera sees. This sign is one too."
+      font_size: 36
+      color: "#ffffffc8"

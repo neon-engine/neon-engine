@@ -1,5 +1,7 @@
 #include "geometry-building.hpp"
 
+#include <cmath>
+
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
@@ -97,6 +99,41 @@ namespace
     EXPECT_EQ(
       GeometryBuilding::Build(Geometry{.shape = GeometryShape::Prism, .outline = {0, 0, 1, 0, 1, 1}}).TriangleCount(),
       3u * 2u + 1u + 1u);
+    EXPECT_EQ(
+      GeometryBuilding::Build(Geometry{.shape = GeometryShape::Sphere, .sides = 8}).TriangleCount(),
+      8u + 8u + 2u * 8u * 2u);
+    EXPECT_EQ(
+      GeometryBuilding::Build(Geometry{.shape = GeometryShape::Cylinder, .sides = 8}).TriangleCount(),
+      8u * 2u + 6u + 6u);
+    EXPECT_EQ(GeometryBuilding::Build(Geometry{.shape = GeometryShape::Quad}).TriangleCount(), 2u);
+  }
+
+  TEST_F(GeometryBuildingTest, ASmoothSphereIsRoundAndASmoothCylinderKeepsItsCaps)
+  {
+    const auto ball = GeometryBuilding::Build(Geometry{.shape = GeometryShape::Sphere, .sides = 8, .smooth = true});
+    const auto faceted = GeometryBuilding::Build(Geometry{.shape = GeometryShape::Sphere, .sides = 8});
+    const auto can = GeometryBuilding::Build(Geometry{.shape = GeometryShape::Cylinder, .sides = 8, .smooth = true});
+
+    // a ball shares its vertices, a faceted one has one for every corner of
+    // every face
+    EXPECT_LT(ball.vertices.size(), faceted.vertices.size());
+    for (const auto &vertex : ball.vertices) { EXPECT_NEAR(dot(vertex.normal, vertex.position), 0.5f, 1e-5f); }
+
+    // the caps of the can still face straight up and down
+    std::size_t straight = 0;
+    for (const auto &vertex : can.vertices)
+    {
+      if (std::fabs(vertex.normal.y) > 0.999f) { straight++; }
+    }
+    EXPECT_EQ(straight, 16u);
+  }
+
+  TEST_F(GeometryBuildingTest, ASphereTurnedInsideOutIsADomeSeenFromWithin)
+  {
+    const auto dome = GeometryBuilding::Build(
+      Geometry{.shape = GeometryShape::Sphere, .size = glm::vec3(10.0f), .smooth = true, .inside = true});
+
+    for (const auto &vertex : dome.vertices) { EXPECT_LT(dot(vertex.normal, vertex.position), 0.0f); }
   }
 
   TEST_F(GeometryBuildingTest, SmoothsTheNormalsWhenAsked)

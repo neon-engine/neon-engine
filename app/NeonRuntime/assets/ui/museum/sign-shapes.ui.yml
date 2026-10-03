@@ -1,0 +1,41 @@
+# The sign of hall 01, shown on a surface of its own by demo.scene.yml.
+
+ui: sign-shapes
+version: 1
+
+# the size of the surface in the scene, so that a unit is a pixel
+reference_size: [1024, 512]
+
+root:
+  type: panel
+  box_sizing: border-box
+  width: 100%
+  height: 100%
+  padding: 44
+  gap: 14
+  flex_direction: column
+  background_color: "#12161c"
+  border: "8px solid #f2a33a"
+  children:
+    - type: label
+      text: "01"
+      font_size: 40
+      font_weight: bold
+      letter_spacing: 6
+      color: "#f2a33a"
+    - type: label
+      text: "Shapes"
+      font_size: 92
+      font_weight: bold
+    - type: label
+      text: "Every piece of this museum is a Geometry:"
+      font_size: 36
+      color: "#ffffffc8"
+    - type: label
+      text: "a box, a plane, a ramp, a prism, a sphere,"
+      font_size: 36
+      color: "#ffffffc8"
+    - type: label
+      text: "a cylinder, or a quad. No model files."
+      font_size: 36
+      color: "#ffffffc8"

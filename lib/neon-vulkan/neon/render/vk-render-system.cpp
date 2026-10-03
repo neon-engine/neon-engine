@@ -1018,8 +1018,11 @@ namespace neon
     // where the camera stands, which the view matrix holds in reverse
     scene.view_position = glm::inverse(view)[3];
 
-    // the shadow map is fitted around the first camera of the frame that
-    // draws with a light that casts, and every later camera reads it
+    // The shadow map is fitted around the camera of the frame, the one the
+    // window shows. A camera that draws into a render target is drawn
+    // before it and picks a cascade by its own depth, so it cannot read a
+    // map fitted to another camera: what it draws is left unshadowed, and
+    // the map is kept for the frame (#350)
     const auto fit_shadow = [this, &scene, &view, &projection](const LightSource &light)
     {
       if (!_shadow_fitted)
@@ -1062,7 +1065,11 @@ namespace neon
           scene.direction_light.specular = glm::vec4(light.specular, 0.0f);
 
           // a light with no direction lights nothing, and shadows nothing
-          if (light.casts_shadows && glm::dot(light.direction, light.direction) > 0.0f) { fit_shadow(light); }
+          const bool is_frame = _current_target == No_Render_Target;
+          if (is_frame && light.casts_shadows && glm::dot(light.direction, light.direction) > 0.0f)
+          {
+            fit_shadow(light);
+          }
           break;
         }
         case LightType::Point:
@@ -1352,12 +1359,14 @@ namespace neon
       _frame_draws += model.MeshCount(batch.model_material);
     }
 
-    // The shadow map holds what the first scene that casts draws, as its
-    // light sees it: the same batches, with the pipelines of the pass,
+    // The shadow map holds what the scene of the frame that casts draws, as
+    // its light sees it, and nothing of a render target, see
+    // BuildSceneData(): the same batches, with the pipelines of the pass,
     // once into every cascade, which a push constant names for the shader.
     const auto &shadow_batches = _draws.ShadowBatches();
-    if (!shadow_batches.empty() && (!_shadow_open || _shadow_target == _current_target) &&
-        (_shadow_open || BeginShadowPass()))
+    const bool is_frame = _current_target == No_Render_Target;
+    const bool is_shadow_scene = !_shadow_open || _shadow_target == _current_target;
+    if (!shadow_batches.empty() && is_frame && is_shadow_scene && (_shadow_open || BeginShadowPass()))
     {
       for (int cascade = 0; cascade < _shadow_cascades.count; cascade++)
       {

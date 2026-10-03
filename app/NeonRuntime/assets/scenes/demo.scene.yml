@@ -1,4 +1,23 @@
-# The scene NeonRuntime shows when it is started without one.
+# The scene NeonRuntime shows when it is started without one: a museum of
+# what the engine does, to walk through.
+#
+#   NeonRuntime
+#
+# A corridor with twelve halls, each with a sign that says what it shows:
+#
+#   01 Shapes        02 Materials      03 Lights       04 Transparency
+#   05 Shadows       06 Physics        07 Joints       08 Character
+#   09 Scripts       10 Surfaces       11 Sound        12 Prefabs and scenes
+#
+# The odd halls are on the west side, to the left of the way in, and the
+# even ones on the east. Walk with W, A, S, D, look with the mouse, jump
+# with space, run with the left shift, and pause with escape.
+#
+# Nothing comes from a model file or an image: every piece is a Geometry in
+# metres, drawn in a plain colour, and every sign is a user interface.
+# Models of our own take their places later. The scripts are under
+# assets/scripts, the prefabs under assets/prefabs/museum, and the signs
+# under assets/ui/museum.
 #
 # An entity has a name, the components it carries, and the entities below it.
 # What a component leaves out keeps its default. The components and what they
@@ -8,79 +27,3356 @@ scene: demo
 version: 1
 
 entities:
-  - name: bear
+  # --------------------------------------------------------------------------
+  # The building
+  # A corridor runs north from the entrance, along -z, with six halls on each
+  # side, 8 metres square. Everything is a box with a box collider: walls that
+  # are solid cast shadows, which a room turned inside out would not.
+  # --------------------------------------------------------------------------
+
+  # the one light that casts shadows. It shines from the west, so the
+  # shadows of the west halls fall towards the corridor
+  - name: sun
     components:
       Transform: Default
-      Renderable:
-        model: assets://models/bear.obj
-        fit: unit
-        shader: assets://shaders/basic-lit
-        textures:
-          - assets://textures/concrete.png
-        material:
-          shininess: 32
-          color: [1, 0.5, 0.31]
+      Light:
+        type: direction
+        direction: [0.6, -1, -0.25]
+        ambient: [0.22, 0.23, 0.26]
+        diffuse: [0.9, 0.87, 0.8]
 
-  - name: sphere
+  # a sphere turned inside out, in one colour that no light changes
+  - name: sky
     components:
-      Transform:
-        position: [1.2, 1, -2]
-        scale: 0.2
+      Transform: Default
+      Geometry:
+        shape: sphere
+        size: [600, 600, 600]
+        sides: 32
+        smooth: true
+        inside: true
       Renderable:
-        model: assets://models/sphere.obj
-        fit: unit
-        shader: assets://shaders/basic-lit
-        textures:
-          - assets://textures/fire.png
+        shader: assets://shaders/color
         material:
-          shininess: 100
-          color: [1, 1, 1]
-          use_textures: false
-      # the sphere hums. It is louder from close by, and is heard from the
-      # side it is on
-      SoundSource:
-        sound: assets://sounds/hum.wav
-        looping: true
-        spatial: true
-        volume: 0.6
-        max_distance: 30
+          color: [0.53, 0.72, 0.92]
 
   - name: floor
     components:
       Transform:
-        position: [0, -0.55, 0]
-        scale: [100, 0.1, 100]
+        position: [0, -0.1, -22]
+      Geometry:
+        shape: box
+        size: [22.8, 0.2, 56.8]
       Renderable:
-        model: assets://models/cube.obj
-        fit: unit
-        shader: assets://shaders/basic-lit
-        textures:
-          - assets://textures/concrete.png
-        scale_textures: true
+        shader: assets://shaders/pbr
         material:
-          shininess: 32
-          color: [0.5, 0.5, 0.5]
+          color: [0.5, 0.5, 0.53]
+          roughness: 0.9
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [22.8, 0.2, 56.8]
 
-  - name: direction
+  - name: wall-west
     components:
       Transform:
-        position: [1.2, 1, -2]
-      Light:
-        type: direction
-        direction: [-0.2, -1, -0.3]
-        ambient: [0.5, 0.5, 0.5]
-        diffuse: [0.4, 0.4, 0.4]
-        specular: [0.5, 0.5, 0.5]
+        position: [-11.2, 2, -22]
+      Geometry:
+        shape: box
+        size: [0.4, 4, 56.8]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.86, 0.86, 0.83]
+          roughness: 0.8
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [0.4, 4, 56.8]
 
+  - name: wall-east
+    components:
+      Transform:
+        position: [11.2, 2, -22]
+      Geometry:
+        shape: box
+        size: [0.4, 4, 56.8]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.86, 0.86, 0.83]
+          roughness: 0.8
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [0.4, 4, 56.8]
+
+  - name: wall-south
+    components:
+      Transform:
+        position: [0, 2, 6.2]
+      Geometry:
+        shape: box
+        size: [22.8, 4, 0.4]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.86, 0.86, 0.83]
+          roughness: 0.8
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [22.8, 4, 0.4]
+
+  - name: wall-north
+    components:
+      Transform:
+        position: [0, 2, -50.2]
+      Geometry:
+        shape: box
+        size: [22.8, 4, 0.4]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.86, 0.86, 0.83]
+          roughness: 0.8
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [22.8, 4, 0.4]
+
+  # the walls between the halls, 3 metres high
+  - name: divider-west-0
+    components:
+      Transform:
+        position: [-7, 1.5, 0]
+      Geometry:
+        shape: box
+        size: [8, 3, 0.3]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.86, 0.86, 0.83]
+          roughness: 0.8
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [8, 3, 0.3]
+
+  - name: divider-west-1
+    components:
+      Transform:
+        position: [-7, 1.5, -8]
+      Geometry:
+        shape: box
+        size: [8, 3, 0.3]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.86, 0.86, 0.83]
+          roughness: 0.8
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [8, 3, 0.3]
+
+  - name: divider-west-2
+    components:
+      Transform:
+        position: [-7, 1.5, -16]
+      Geometry:
+        shape: box
+        size: [8, 3, 0.3]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.86, 0.86, 0.83]
+          roughness: 0.8
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [8, 3, 0.3]
+
+  - name: divider-west-3
+    components:
+      Transform:
+        position: [-7, 1.5, -24]
+      Geometry:
+        shape: box
+        size: [8, 3, 0.3]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.86, 0.86, 0.83]
+          roughness: 0.8
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [8, 3, 0.3]
+
+  - name: divider-west-4
+    components:
+      Transform:
+        position: [-7, 1.5, -32]
+      Geometry:
+        shape: box
+        size: [8, 3, 0.3]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.86, 0.86, 0.83]
+          roughness: 0.8
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [8, 3, 0.3]
+
+  - name: divider-west-5
+    components:
+      Transform:
+        position: [-7, 1.5, -40]
+      Geometry:
+        shape: box
+        size: [8, 3, 0.3]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.86, 0.86, 0.83]
+          roughness: 0.8
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [8, 3, 0.3]
+
+  - name: divider-west-6
+    components:
+      Transform:
+        position: [-7, 1.5, -48]
+      Geometry:
+        shape: box
+        size: [8, 3, 0.3]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.86, 0.86, 0.83]
+          roughness: 0.8
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [8, 3, 0.3]
+
+  - name: divider-east-0
+    components:
+      Transform:
+        position: [7, 1.5, 0]
+      Geometry:
+        shape: box
+        size: [8, 3, 0.3]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.86, 0.86, 0.83]
+          roughness: 0.8
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [8, 3, 0.3]
+
+  - name: divider-east-1
+    components:
+      Transform:
+        position: [7, 1.5, -8]
+      Geometry:
+        shape: box
+        size: [8, 3, 0.3]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.86, 0.86, 0.83]
+          roughness: 0.8
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [8, 3, 0.3]
+
+  - name: divider-east-2
+    components:
+      Transform:
+        position: [7, 1.5, -16]
+      Geometry:
+        shape: box
+        size: [8, 3, 0.3]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.86, 0.86, 0.83]
+          roughness: 0.8
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [8, 3, 0.3]
+
+  - name: divider-east-3
+    components:
+      Transform:
+        position: [7, 1.5, -24]
+      Geometry:
+        shape: box
+        size: [8, 3, 0.3]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.86, 0.86, 0.83]
+          roughness: 0.8
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [8, 3, 0.3]
+
+  - name: divider-east-4
+    components:
+      Transform:
+        position: [7, 1.5, -32]
+      Geometry:
+        shape: box
+        size: [8, 3, 0.3]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.86, 0.86, 0.83]
+          roughness: 0.8
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [8, 3, 0.3]
+
+  - name: divider-east-5
+    components:
+      Transform:
+        position: [7, 1.5, -40]
+      Geometry:
+        shape: box
+        size: [8, 3, 0.3]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.86, 0.86, 0.83]
+          roughness: 0.8
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [8, 3, 0.3]
+
+  - name: divider-east-6
+    components:
+      Transform:
+        position: [7, 1.5, -48]
+      Geometry:
+        shape: box
+        size: [8, 3, 0.3]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.86, 0.86, 0.83]
+          roughness: 0.8
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [8, 3, 0.3]
+
+  # the title floats over the way in. A sign is a prefab, and what it shows
+  # is a user interface on a surface of its own, see hall 10
+  - name: title
+    prefab: assets://prefabs/museum/sign.prefab.yml
+    components:
+      Transform:
+        position: [0, 3.4, -0.6]
+        scale: 1.5
+    children:
+      - name: board
+        components:
+          Renderable:
+            textures:
+              - surface://sign-title
+          UiSurface:
+            ui: assets://ui/museum/sign-title.ui.yml
+            name: sign-title
+            size: [1024, 512]
+            reach: 0.01
+
+  # a mat in the colour of its hall, and a sign that floats at the south end
+  # of its opening, facing the corridor, for every hall
+  - name: shapes-mat
+    components:
+      Transform:
+        position: [-7, 0.01, -4]
+      Geometry:
+        shape: plane
+        size: [7.4, 0, 7.4]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.7375, 0.66, 0.5575]
+          roughness: 0.95
+
+  - name: shapes-sign
+    prefab: assets://prefabs/museum/sign.prefab.yml
+    components:
+      Transform:
+        position: [-2.75, 1.9, -1.2]
+        rotation: [0, 90, 0]
+    children:
+      - name: board
+        components:
+          Renderable:
+            textures:
+              - surface://sign-shapes
+          UiSurface:
+            ui: assets://ui/museum/sign-shapes.ui.yml
+            name: sign-shapes
+            size: [1024, 512]
+            reach: 0.01
+
+  - name: materials-mat
+    components:
+      Transform:
+        position: [7, 0.01, -4]
+      Geometry:
+        shape: plane
+        size: [7.4, 0, 7.4]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.5775, 0.675, 0.75]
+          roughness: 0.95
+
+  - name: materials-sign
+    prefab: assets://prefabs/museum/sign.prefab.yml
+    components:
+      Transform:
+        position: [2.75, 1.9, -1.2]
+        rotation: [0, -90, 0]
+    children:
+      - name: board
+        components:
+          Renderable:
+            textures:
+              - surface://sign-materials
+          UiSurface:
+            ui: assets://ui/museum/sign-materials.ui.yml
+            name: sign-materials
+            size: [1024, 512]
+            reach: 0.01
+
+  - name: lights-mat
+    components:
+      Transform:
+        position: [-7, 0.01, -12]
+      Geometry:
+        shape: plane
+        size: [7.4, 0, 7.4]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.75, 0.59, 0.59]
+          roughness: 0.95
+
+  - name: lights-sign
+    prefab: assets://prefabs/museum/sign.prefab.yml
+    components:
+      Transform:
+        position: [-2.75, 1.9, -9.2]
+        rotation: [0, 90, 0]
+    children:
+      - name: board
+        components:
+          Renderable:
+            textures:
+              - surface://sign-lights
+          UiSurface:
+            ui: assets://ui/museum/sign-lights.ui.yml
+            name: sign-lights
+            size: [1024, 512]
+            reach: 0.01
+
+  - name: glass-mat
+    components:
+      Transform:
+        position: [7, 0.01, -12]
+      Geometry:
+        shape: plane
+        size: [7.4, 0, 7.4]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.62, 0.72, 0.69]
+          roughness: 0.95
+
+  - name: glass-sign
+    prefab: assets://prefabs/museum/sign.prefab.yml
+    components:
+      Transform:
+        position: [2.75, 1.9, -9.2]
+        rotation: [0, -90, 0]
+    children:
+      - name: board
+        components:
+          Renderable:
+            textures:
+              - surface://sign-glass
+          UiSurface:
+            ui: assets://ui/museum/sign-glass.ui.yml
+            name: sign-glass
+            size: [1024, 512]
+            reach: 0.01
+
+  - name: shadows-mat
+    components:
+      Transform:
+        position: [-7, 0.01, -20]
+      Geometry:
+        shape: plane
+        size: [7.4, 0, 7.4]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.6975, 0.6975, 0.6975]
+          roughness: 0.95
+
+  - name: shadows-sign
+    prefab: assets://prefabs/museum/sign.prefab.yml
+    components:
+      Transform:
+        position: [-2.75, 1.9, -17.2]
+        rotation: [0, 90, 0]
+    children:
+      - name: board
+        components:
+          Renderable:
+            textures:
+              - surface://sign-shadows
+          UiSurface:
+            ui: assets://ui/museum/sign-shadows.ui.yml
+            name: sign-shadows
+            size: [1024, 512]
+            reach: 0.01
+
+  - name: physics-mat
+    components:
+      Transform:
+        position: [7, 0.01, -20]
+      Geometry:
+        shape: plane
+        size: [7.4, 0, 7.4]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.75, 0.705, 0.5725]
+          roughness: 0.95
+
+  - name: physics-sign
+    prefab: assets://prefabs/museum/sign.prefab.yml
+    components:
+      Transform:
+        position: [2.75, 1.9, -17.2]
+        rotation: [0, -90, 0]
+    children:
+      - name: board
+        components:
+          Renderable:
+            textures:
+              - surface://sign-physics
+          UiSurface:
+            ui: assets://ui/museum/sign-physics.ui.yml
+            name: sign-physics
+            size: [1024, 512]
+            reach: 0.01
+
+  - name: joints-mat
+    components:
+      Transform:
+        position: [-7, 0.01, -28]
+      Geometry:
+        shape: plane
+        size: [7.4, 0, 7.4]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.6825, 0.6375, 0.75]
+          roughness: 0.95
+
+  - name: joints-sign
+    prefab: assets://prefabs/museum/sign.prefab.yml
+    components:
+      Transform:
+        position: [-2.75, 1.9, -25.2]
+        rotation: [0, 90, 0]
+    children:
+      - name: board
+        components:
+          Renderable:
+            textures:
+              - surface://sign-joints
+          UiSurface:
+            ui: assets://ui/museum/sign-joints.ui.yml
+            name: sign-joints
+            size: [1024, 512]
+            reach: 0.01
+
+  - name: character-mat
+    components:
+      Transform:
+        position: [7, 0.01, -28]
+      Geometry:
+        shape: plane
+        size: [7.4, 0, 7.4]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.61, 0.7225, 0.61]
+          roughness: 0.95
+
+  - name: character-sign
+    prefab: assets://prefabs/museum/sign.prefab.yml
+    components:
+      Transform:
+        position: [2.75, 1.9, -25.2]
+        rotation: [0, -90, 0]
+    children:
+      - name: board
+        components:
+          Renderable:
+            textures:
+              - surface://sign-character
+          UiSurface:
+            ui: assets://ui/museum/sign-character.ui.yml
+            name: sign-character
+            size: [1024, 512]
+            reach: 0.01
+
+  - name: scripts-mat
+    components:
+      Transform:
+        position: [-7, 0.01, -36]
+      Geometry:
+        shape: plane
+        size: [7.4, 0, 7.4]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.75, 0.635, 0.705]
+          roughness: 0.95
+
+  - name: scripts-sign
+    prefab: assets://prefabs/museum/sign.prefab.yml
+    components:
+      Transform:
+        position: [-2.75, 1.9, -33.2]
+        rotation: [0, 90, 0]
+    children:
+      - name: board
+        components:
+          Renderable:
+            textures:
+              - surface://sign-scripts
+          UiSurface:
+            ui: assets://ui/museum/sign-scripts.ui.yml
+            name: sign-scripts
+            size: [1024, 512]
+            reach: 0.01
+
+  - name: surfaces-mat
+    components:
+      Transform:
+        position: [7, 0.01, -36]
+      Geometry:
+        shape: plane
+        size: [7.4, 0, 7.4]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.545, 0.71, 0.6925]
+          roughness: 0.95
+
+  - name: surfaces-sign
+    prefab: assets://prefabs/museum/sign.prefab.yml
+    components:
+      Transform:
+        position: [2.75, 1.9, -33.2]
+        rotation: [0, -90, 0]
+    children:
+      - name: board
+        components:
+          Renderable:
+            textures:
+              - surface://sign-surfaces
+          UiSurface:
+            ui: assets://ui/museum/sign-surfaces.ui.yml
+            name: sign-surfaces
+            size: [1024, 512]
+            reach: 0.01
+
+  - name: sound-mat
+    components:
+      Transform:
+        position: [-7, 0.01, -44]
+      Geometry:
+        shape: plane
+        size: [7.4, 0, 7.4]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.75, 0.675, 0.605]
+          roughness: 0.95
+
+  - name: sound-sign
+    prefab: assets://prefabs/museum/sign.prefab.yml
+    components:
+      Transform:
+        position: [-2.75, 1.9, -41.2]
+        rotation: [0, 90, 0]
+    children:
+      - name: board
+        components:
+          Renderable:
+            textures:
+              - surface://sign-sound
+          UiSurface:
+            ui: assets://ui/museum/sign-sound.ui.yml
+            name: sign-sound
+            size: [1024, 512]
+            reach: 0.01
+
+  - name: prefabs-mat
+    components:
+      Transform:
+        position: [7, 0.01, -44]
+      Geometry:
+        shape: plane
+        size: [7.4, 0, 7.4]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.65, 0.6625, 0.75]
+          roughness: 0.95
+
+  - name: prefabs-sign
+    prefab: assets://prefabs/museum/sign.prefab.yml
+    components:
+      Transform:
+        position: [2.75, 1.9, -41.2]
+        rotation: [0, -90, 0]
+    children:
+      - name: board
+        components:
+          Renderable:
+            textures:
+              - surface://sign-prefabs
+          UiSurface:
+            ui: assets://ui/museum/sign-prefabs.ui.yml
+            name: sign-prefabs
+            size: [1024, 512]
+            reach: 0.01
+
+  # --------------------------------------------------------------------------
+  # 01 Shapes
+  # What a Geometry builds, each on a pedestal, see docs/geometry.md. The
+  # pedestals are one prefab. The mats of the halls are the plane.
+  # --------------------------------------------------------------------------
+
+  - name: shapes-box-pedestal
+    prefab: assets://prefabs/museum/pedestal.prefab.yml
+    components:
+      Transform:
+        position: [-5.5, 0.5, -7]
+
+  - name: shapes-box
+    components:
+      Transform:
+        position: [-5.5, 1.35, -7]
+      Geometry:
+        shape: box
+        size: [0.7, 0.7, 0.7]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.95, 0.64, 0.23]
+          roughness: 0.7
+
+  - name: shapes-ramp-pedestal
+    prefab: assets://prefabs/museum/pedestal.prefab.yml
+    components:
+      Transform:
+        position: [-5.5, 0.5, -5.5]
+
+  # a ramp stands on its origin, and rises towards its back
+  - name: shapes-ramp
+    components:
+      Transform:
+        position: [-5.5, 1, -5.5]
+        rotation: [0, 90, 0]
+      Geometry:
+        shape: ramp
+        size: [0.7, 0.5, 0.7]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.95, 0.64, 0.23]
+          roughness: 0.7
+
+  - name: shapes-prism-pedestal
+    prefab: assets://prefabs/museum/pedestal.prefab.yml
+    components:
+      Transform:
+        position: [-5.5, 0.5, -4]
+
+  # a prism is an outline on the ground pulled up: here a hexagon
+  - name: shapes-prism
+    components:
+      Transform:
+        position: [-5.5, 1, -4]
+      Geometry:
+        shape: prism
+        size: [0, 0.7, 0]
+        outline: [0.4, 0, 0.2, 0.3464, -0.2, 0.3464, -0.4, 0, -0.2, -0.3464, 0.2, -0.3464]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.95, 0.64, 0.23]
+          roughness: 0.7
+
+  - name: shapes-cylinder-pedestal
+    prefab: assets://prefabs/museum/pedestal.prefab.yml
+    components:
+      Transform:
+        position: [-5.5, 0.5, -2.5]
+
+  # eight sides, each a flat face
+  - name: shapes-cylinder
+    components:
+      Transform:
+        position: [-5.5, 1.4, -2.5]
+      Geometry:
+        shape: cylinder
+        size: [0.6, 0.8, 0.6]
+        sides: 8
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.95, 0.64, 0.23]
+          roughness: 0.7
+
+  - name: shapes-column-pedestal
+    prefab: assets://prefabs/museum/pedestal.prefab.yml
+    components:
+      Transform:
+        position: [-5.5, 0.5, -1]
+
+  # smooth rounds the side and keeps the caps flat
+  - name: shapes-column
+    components:
+      Transform:
+        position: [-5.5, 1.4, -1]
+      Geometry:
+        shape: cylinder
+        size: [0.6, 0.8, 0.6]
+        sides: 32
+        smooth: true
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.95, 0.64, 0.23]
+          roughness: 0.7
+
+  - name: shapes-faceted-sphere-pedestal
+    prefab: assets://prefabs/museum/pedestal.prefab.yml
+    components:
+      Transform:
+        position: [-8.5, 0.5, -7]
+
+  - name: shapes-faceted-sphere
+    components:
+      Transform:
+        position: [-8.5, 1.4, -7]
+      Geometry:
+        shape: sphere
+        size: [0.8, 0.8, 0.8]
+        sides: 12
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.95, 0.64, 0.23]
+          roughness: 0.7
+
+  - name: shapes-sphere-pedestal
+    prefab: assets://prefabs/museum/pedestal.prefab.yml
+    components:
+      Transform:
+        position: [-8.5, 0.5, -5.5]
+
+  - name: shapes-sphere
+    components:
+      Transform:
+        position: [-8.5, 1.4, -5.5]
+      Geometry:
+        shape: sphere
+        size: [0.8, 0.8, 0.8]
+        sides: 32
+        smooth: true
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.95, 0.64, 0.23]
+          roughness: 0.7
+
+  - name: shapes-ellipsoid-pedestal
+    prefab: assets://prefabs/museum/pedestal.prefab.yml
+    components:
+      Transform:
+        position: [-8.5, 0.5, -4]
+
+  # a sphere of three lengths
+  - name: shapes-ellipsoid
+    components:
+      Transform:
+        position: [-8.5, 1.5, -4]
+      Geometry:
+        shape: sphere
+        size: [0.5, 1, 0.7]
+        sides: 32
+        smooth: true
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.95, 0.64, 0.23]
+          roughness: 0.7
+
+  - name: shapes-quad-pedestal
+    prefab: assets://prefabs/museum/pedestal.prefab.yml
+    components:
+      Transform:
+        position: [-8.5, 0.5, -2.5]
+
+  # a quad has a front and no back: walk behind it
+  - name: shapes-quad
+    components:
+      Transform:
+        position: [-8.5, 1.45, -2.5]
+        rotation: [0, 90, 0]
+      Geometry:
+        shape: quad
+        size: [0.8, 0.8, 1]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.95, 0.64, 0.23]
+          roughness: 0.7
+
+  - name: shapes-room-pedestal
+    prefab: assets://prefabs/museum/pedestal.prefab.yml
+    components:
+      Transform:
+        position: [-8.5, 0.5, -1]
+
+  # a box turned inside out is a room: its near walls are left out
+  - name: shapes-room
+    components:
+      Transform:
+        position: [-8.5, 1.4, -1]
+      Geometry:
+        shape: box
+        size: [0.8, 0.8, 0.8]
+        inside: true
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.95, 0.64, 0.23]
+          roughness: 0.7
+
+  # --------------------------------------------------------------------------
+  # 02 Materials
+  # A rack of spheres drawn with the pbr shader. Roughness grows along the
+  # rack, from 0.05 to 1. The lowest row is not metal, the middle row is, and
+  # the top row shows colours. A metal is dark where it reflects no light:
+  # there is no environment to reflect yet. In front, the two older shaders,
+  # and a material that gives off light of its own.
+  # --------------------------------------------------------------------------
+
+  - name: materials-rack-1
+    components:
+      Transform:
+        position: [7.6, 0.3, -4]
+      Geometry:
+        shape: box
+        size: [0.8, 0.6, 6]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.12, 0.13, 0.15]
+          roughness: 0.6
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [0.8, 0.6, 6]
+
+  - name: materials-rack-2
+    components:
+      Transform:
+        position: [8.4, 0.65, -4]
+      Geometry:
+        shape: box
+        size: [0.8, 1.3, 6]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.12, 0.13, 0.15]
+          roughness: 0.6
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [0.8, 1.3, 6]
+
+  - name: materials-rack-3
+    components:
+      Transform:
+        position: [9.2, 1, -4]
+      Geometry:
+        shape: box
+        size: [0.8, 2, 6]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.12, 0.13, 0.15]
+          roughness: 0.6
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [0.8, 2, 6]
+
+  - name: materials-plastic-1
+    components:
+      Transform:
+        position: [7.6, 0.9, -6.4]
+      Geometry:
+        shape: sphere
+        size: [0.6, 0.6, 0.6]
+        sides: 32
+        smooth: true
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.85, 0.2, 0.15]
+          metallic: 0
+          roughness: 0.05
+
+  - name: materials-plastic-2
+    components:
+      Transform:
+        position: [7.6, 0.9, -5.2]
+      Geometry:
+        shape: sphere
+        size: [0.6, 0.6, 0.6]
+        sides: 32
+        smooth: true
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.85, 0.2, 0.15]
+          metallic: 0
+          roughness: 0.25
+
+  - name: materials-plastic-3
+    components:
+      Transform:
+        position: [7.6, 0.9, -4]
+      Geometry:
+        shape: sphere
+        size: [0.6, 0.6, 0.6]
+        sides: 32
+        smooth: true
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.85, 0.2, 0.15]
+          metallic: 0
+          roughness: 0.5
+
+  - name: materials-plastic-4
+    components:
+      Transform:
+        position: [7.6, 0.9, -2.8]
+      Geometry:
+        shape: sphere
+        size: [0.6, 0.6, 0.6]
+        sides: 32
+        smooth: true
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.85, 0.2, 0.15]
+          metallic: 0
+          roughness: 0.75
+
+  - name: materials-plastic-5
+    components:
+      Transform:
+        position: [7.6, 0.9, -1.6]
+      Geometry:
+        shape: sphere
+        size: [0.6, 0.6, 0.6]
+        sides: 32
+        smooth: true
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.85, 0.2, 0.15]
+          metallic: 0
+          roughness: 1
+
+  - name: materials-metal-1
+    components:
+      Transform:
+        position: [8.4, 1.6, -6.4]
+      Geometry:
+        shape: sphere
+        size: [0.6, 0.6, 0.6]
+        sides: 32
+        smooth: true
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.95, 0.78, 0.4]
+          metallic: 1
+          roughness: 0.05
+
+  - name: materials-metal-2
+    components:
+      Transform:
+        position: [8.4, 1.6, -5.2]
+      Geometry:
+        shape: sphere
+        size: [0.6, 0.6, 0.6]
+        sides: 32
+        smooth: true
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.95, 0.78, 0.4]
+          metallic: 1
+          roughness: 0.25
+
+  - name: materials-metal-3
+    components:
+      Transform:
+        position: [8.4, 1.6, -4]
+      Geometry:
+        shape: sphere
+        size: [0.6, 0.6, 0.6]
+        sides: 32
+        smooth: true
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.95, 0.78, 0.4]
+          metallic: 1
+          roughness: 0.5
+
+  - name: materials-metal-4
+    components:
+      Transform:
+        position: [8.4, 1.6, -2.8]
+      Geometry:
+        shape: sphere
+        size: [0.6, 0.6, 0.6]
+        sides: 32
+        smooth: true
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.95, 0.78, 0.4]
+          metallic: 1
+          roughness: 0.75
+
+  - name: materials-metal-5
+    components:
+      Transform:
+        position: [8.4, 1.6, -1.6]
+      Geometry:
+        shape: sphere
+        size: [0.6, 0.6, 0.6]
+        sides: 32
+        smooth: true
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.95, 0.78, 0.4]
+          metallic: 1
+          roughness: 1
+
+  - name: materials-colour-1
+    components:
+      Transform:
+        position: [9.2, 2.3, -6.4]
+      Geometry:
+        shape: sphere
+        size: [0.6, 0.6, 0.6]
+        sides: 32
+        smooth: true
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.9, 0.15, 0.12]
+          metallic: 0
+          roughness: 0.4
+
+  - name: materials-colour-2
+    components:
+      Transform:
+        position: [9.2, 2.3, -5.2]
+      Geometry:
+        shape: sphere
+        size: [0.6, 0.6, 0.6]
+        sides: 32
+        smooth: true
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.95, 0.75, 0.1]
+          metallic: 0
+          roughness: 0.4
+
+  - name: materials-colour-3
+    components:
+      Transform:
+        position: [9.2, 2.3, -4]
+      Geometry:
+        shape: sphere
+        size: [0.6, 0.6, 0.6]
+        sides: 32
+        smooth: true
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.15, 0.7, 0.25]
+          metallic: 0
+          roughness: 0.4
+
+  - name: materials-colour-4
+    components:
+      Transform:
+        position: [9.2, 2.3, -2.8]
+      Geometry:
+        shape: sphere
+        size: [0.6, 0.6, 0.6]
+        sides: 32
+        smooth: true
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.12, 0.35, 0.9]
+          metallic: 0
+          roughness: 0.4
+
+  - name: materials-colour-5
+    components:
+      Transform:
+        position: [9.2, 2.3, -1.6]
+      Geometry:
+        shape: sphere
+        size: [0.6, 0.6, 0.6]
+        sides: 32
+        smooth: true
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.9, 0.9, 0.9]
+          metallic: 0
+          roughness: 0.4
+
+  - name: materials-matte-pedestal
+    prefab: assets://prefabs/museum/pedestal.prefab.yml
+    components:
+      Transform:
+        position: [5.2, 0.5, -6.7]
+
+  # basic-lit, the shader before pbr: a wide highlight
+  - name: materials-matte
+    components:
+      Transform:
+        position: [5.2, 1.35, -6.7]
+      Geometry:
+        shape: sphere
+        size: [0.7, 0.7, 0.7]
+        sides: 32
+        smooth: true
+      Renderable:
+        shader: assets://shaders/basic-lit
+        material:
+          color: [0.2, 0.6, 0.9]
+          shininess: 8
+
+  - name: materials-shiny-pedestal
+    prefab: assets://prefabs/museum/pedestal.prefab.yml
+    components:
+      Transform:
+        position: [5.2, 0.5, -4.9]
+
+  # and a small one
+  - name: materials-shiny
+    components:
+      Transform:
+        position: [5.2, 1.35, -4.9]
+      Geometry:
+        shape: sphere
+        size: [0.7, 0.7, 0.7]
+        sides: 32
+        smooth: true
+      Renderable:
+        shader: assets://shaders/basic-lit
+        material:
+          color: [0.2, 0.6, 0.9]
+          shininess: 128
+
+  - name: materials-flat-pedestal
+    prefab: assets://prefabs/museum/pedestal.prefab.yml
+    components:
+      Transform:
+        position: [5.2, 0.5, -3.1]
+
+  # the color shader takes no light: a disc of one colour
+  - name: materials-flat
+    components:
+      Transform:
+        position: [5.2, 1.35, -3.1]
+      Geometry:
+        shape: sphere
+        size: [0.7, 0.7, 0.7]
+        sides: 32
+        smooth: true
+      Renderable:
+        shader: assets://shaders/color
+        material:
+          color: [0.2, 0.6, 0.9]
+
+  - name: materials-glowing-pedestal
+    prefab: assets://prefabs/museum/pedestal.prefab.yml
+    components:
+      Transform:
+        position: [5.2, 0.5, -1.3]
+
+  # pbr again, with light of its own on top of what lights it: emissive
+  - name: materials-glowing
+    components:
+      Transform:
+        position: [5.2, 1.35, -1.3]
+      Geometry:
+        shape: sphere
+        size: [0.7, 0.7, 0.7]
+        sides: 32
+        smooth: true
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.1, 0.1, 0.1]
+          roughness: 0.5
+          emissive: [1, 0.45, 0.1]
+          emissive_strength: 2
+
+  # --------------------------------------------------------------------------
+  # 03 Lights
+  # A room with a roof, which the sun does not reach: what is seen inside is
+  # lit by the lights of the room. Point and spot lights cast no shadows yet.
+  # `cutoff` and `outer_cutoff` of a spot light are the cosines of the angles
+  # of its cone.
+  # --------------------------------------------------------------------------
+
+  - name: lights-front-south
+    components:
+      Transform:
+        position: [-3, 1.5, -9.4]
+      Geometry:
+        shape: box
+        size: [0.3, 3, 2.9]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.12, 0.13, 0.15]
+          roughness: 0.9
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [0.3, 3, 2.9]
+
+  - name: lights-front-north
+    components:
+      Transform:
+        position: [-3, 1.5, -14.6]
+      Geometry:
+        shape: box
+        size: [0.3, 3, 2.9]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.12, 0.13, 0.15]
+          roughness: 0.9
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [0.3, 3, 2.9]
+
+  - name: lights-lintel
+    components:
+      Transform:
+        position: [-3, 2.6, -12]
+      Geometry:
+        shape: box
+        size: [0.3, 0.8, 2.3]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.12, 0.13, 0.15]
+          roughness: 0.9
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [0.3, 0.8, 2.3]
+
+  - name: lights-roof
+    components:
+      Transform:
+        position: [-7, 3.1, -12]
+      Geometry:
+        shape: box
+        size: [8.3, 0.2, 8.3]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.12, 0.13, 0.15]
+          roughness: 0.9
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [8.3, 0.2, 8.3]
+
+  # a white wall and white shapes, which show the colour of what lights them
+  - name: lights-backdrop
+    components:
+      Transform:
+        position: [-10.8, 1.5, -12]
+      Geometry:
+        shape: box
+        size: [0.1, 3, 7.7]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.86, 0.86, 0.83]
+          roughness: 1
+
+  - name: lights-sphere-pedestal
+    prefab: assets://prefabs/museum/pedestal.prefab.yml
+    components:
+      Transform:
+        position: [-8.5, 0.5, -12]
+
+  - name: lights-sphere
+    components:
+      Transform:
+        position: [-8.5, 1.5, -12]
+      Geometry:
+        shape: sphere
+        size: [1, 1, 1]
+        sides: 32
+        smooth: true
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [1, 1, 1]
+          roughness: 0.5
+
+  # a point light, and a small ball in its colour where it is
+  - name: lights-red
+    components:
+      Transform:
+        position: [-7.2, 2.2, -13.6]
+      Geometry:
+        shape: sphere
+        size: [0.15, 0.15, 0.15]
+        sides: 12
+        smooth: true
+      Renderable:
+        shader: assets://shaders/color
+        material:
+          color: [1, 0, 0]
+      Light:
+        type: point
+        diffuse: [1.6, 0, 0]
+        constant: 1
+        linear: 0.22
+        quadratic: 0.2
+
+  - name: lights-green
+    components:
+      Transform:
+        position: [-7.2, 2.2, -10.4]
+      Geometry:
+        shape: sphere
+        size: [0.15, 0.15, 0.15]
+        sides: 12
+        smooth: true
+      Renderable:
+        shader: assets://shaders/color
+        material:
+          color: [0, 1, 0]
+      Light:
+        type: point
+        diffuse: [0, 1.6, 0]
+        constant: 1
+        linear: 0.22
+        quadratic: 0.2
+
+  - name: lights-blue
+    components:
+      Transform:
+        position: [-9.6, 2.2, -12]
+      Geometry:
+        shape: sphere
+        size: [0.15, 0.15, 0.15]
+        sides: 12
+        smooth: true
+      Renderable:
+        shader: assets://shaders/color
+        material:
+          color: [0, 0, 1]
+      Light:
+        type: point
+        diffuse: [0, 0, 1.6]
+        constant: 1
+        linear: 0.22
+        quadratic: 0.2
+
+  - name: lights-glow-pedestal
+    prefab: assets://prefabs/museum/pedestal.prefab.yml
+    components:
+      Transform:
+        position: [-5.2, 0.5, -9.4]
+
+  # an emissive material shows in the dark, and lights nothing but itself
+  - name: lights-glow
+    components:
+      Transform:
+        position: [-5.2, 1.3, -9.4]
+      Geometry:
+        shape: box
+        size: [0.6, 0.6, 0.6]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.05, 0.05, 0.05]
+          roughness: 0.5
+          emissive: [0.2, 0.9, 1]
+          emissive_strength: 3
+
+  - name: lights-spot-target-pedestal
+    prefab: assets://prefabs/museum/pedestal.prefab.yml
+    components:
+      Transform:
+        position: [-5.2, 0.5, -14.6]
+
+  - name: lights-spot-target
+    components:
+      Transform:
+        position: [-5.2, 1.3, -14.6]
+      Geometry:
+        shape: cylinder
+        size: [0.5, 0.6, 0.5]
+        sides: 6
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [1, 1, 1]
+          roughness: 0.6
+
+  # a spot light under the roof, straight down: full within 20 degrees,
+  # fading out to 30
+  - name: lights-spot
+    components:
+      Transform:
+        position: [-5.2, 2.9, -14.6]
+      Light:
+        type: spot
+        direction: [0, -1, 0]
+        diffuse: [2.2, 2.1, 1.8]
+        constant: 1
+        linear: 0.09
+        quadratic: 0.032
+        cutoff: 0.9397
+        outer_cutoff: 0.866
+
+  # --------------------------------------------------------------------------
+  # 04 Transparency
+  # Three panes of glass one behind the other, and two cards that show which
+  # side of a surface is drawn.
+  # --------------------------------------------------------------------------
+
+  - name: glass-red
+    components:
+      Transform:
+        position: [6, 1.3, -14.6]
+      Geometry:
+        shape: box
+        size: [0.05, 2.2, 2.2]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.9, 0.1, 0.1, 0.45]
+          roughness: 0.2
+          alpha_mode: blend
+
+  - name: glass-green
+    components:
+      Transform:
+        position: [7.2, 1.3, -13.9]
+      Geometry:
+        shape: box
+        size: [0.05, 2.2, 2.2]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.1, 0.8, 0.2, 0.45]
+          roughness: 0.2
+          alpha_mode: blend
+
+  - name: glass-blue
+    components:
+      Transform:
+        position: [8.4, 1.3, -13.2]
+      Geometry:
+        shape: box
+        size: [0.05, 2.2, 2.2]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.1, 0.3, 0.95, 0.45]
+          roughness: 0.2
+          alpha_mode: blend
+
+  - name: glass-behind-pedestal
+    prefab: assets://prefabs/museum/pedestal.prefab.yml
+    components:
+      Transform:
+        position: [9.8, 0.5, -13.9]
+
+  # seen through all three
+  - name: glass-behind
+    components:
+      Transform:
+        position: [9.8, 1.5, -13.9]
+      Geometry:
+        shape: sphere
+        size: [1, 1, 1]
+        sides: 32
+        smooth: true
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [1, 1, 1]
+          roughness: 0.6
+
+  # orange has a front alone, and is gone from behind
+  - name: glass-one-sided
+    components:
+      Transform:
+        position: [6.5, 1.3, -10.7]
+        rotation: [0, -90, 0]
+      Geometry:
+        shape: quad
+        size: [1.4, 1.4, 1]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [1, 0.55, 0.1]
+          roughness: 0.6
+
+  # teal is drawn from both sides
+  - name: glass-two-sided
+    components:
+      Transform:
+        position: [6.5, 1.3, -9]
+        rotation: [0, -90, 0]
+      Geometry:
+        shape: quad
+        size: [1.4, 1.4, 1]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.1, 0.75, 0.7]
+          roughness: 0.6
+          double_sided: always
+
+  # --------------------------------------------------------------------------
+  # 05 Shadows
+  # What stands in the sun shadows what is behind it. The shadows fall
+  # towards the corridor.
+  # --------------------------------------------------------------------------
+
+  - name: shadows-column-1
+    components:
+      Transform:
+        position: [-7.5, 0.5, -23]
+      Geometry:
+        shape: cylinder
+        size: [0.4, 1, 0.4]
+        sides: 24
+        smooth: true
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.86, 0.86, 0.83]
+          roughness: 0.8
+      RigidBody:
+        kind: static
+      Collider:
+        shape: cylinder
+        radius: 0.2
+        height: 1
+
+  - name: shadows-column-2
+    components:
+      Transform:
+        position: [-7.5, 1, -21.9]
+      Geometry:
+        shape: cylinder
+        size: [0.4, 2, 0.4]
+        sides: 24
+        smooth: true
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.86, 0.86, 0.83]
+          roughness: 0.8
+      RigidBody:
+        kind: static
+      Collider:
+        shape: cylinder
+        radius: 0.2
+        height: 2
+
+  - name: shadows-column-3
+    components:
+      Transform:
+        position: [-7.5, 1.5, -20.8]
+      Geometry:
+        shape: cylinder
+        size: [0.4, 3, 0.4]
+        sides: 24
+        smooth: true
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.86, 0.86, 0.83]
+          roughness: 0.8
+      RigidBody:
+        kind: static
+      Collider:
+        shape: cylinder
+        radius: 0.2
+        height: 3
+
+  - name: shadows-post
+    components:
+      Transform:
+        position: [-7, 0.75, -19.2]
+      Geometry:
+        shape: box
+        size: [0.06, 1.5, 0.06]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.12, 0.13, 0.15]
+          roughness: 0.6
+
+  - name: shadows-ball
+    components:
+      Transform:
+        position: [-7, 1.9, -19.2]
+      Geometry:
+        shape: sphere
+        size: [0.8, 0.8, 0.8]
+        sides: 32
+        smooth: true
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.9, 0.3, 0.2]
+          roughness: 0.5
+
+  - name: shadows-mast
+    components:
+      Transform:
+        position: [-7, 1.1, -17.2]
+      Geometry:
+        shape: box
+        size: [0.1, 2.2, 0.1]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.12, 0.13, 0.15]
+          roughness: 0.6
+
+  # turned by a script, see hall 09: the shadow follows
+  - name: shadows-arm
+    components:
+      Transform:
+        position: [-7, 2.25, -17.2]
+      Geometry:
+        shape: box
+        size: [2.2, 0.1, 0.3]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.2, 0.5, 0.9]
+          roughness: 0.5
+      Spinner:
+        speed: 45
+
+  # see-through, and so without a shadow
+  - name: shadows-glass
+    components:
+      Transform:
+        position: [-5.2, 1.1, -21.5]
+      Geometry:
+        shape: box
+        size: [0.05, 2, 1.6]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.6, 0.9, 1, 0.35]
+          roughness: 0.2
+          alpha_mode: blend
+
+  # --------------------------------------------------------------------------
+  # 06 Physics
+  # Dynamic bodies are moved by the simulation, static ones by nothing, and a
+  # kinematic one by its own velocity, whatever is in its way. The player
+  # pushes what is dynamic by walking into it.
+  # --------------------------------------------------------------------------
+
+  # a wall of crates to walk into
+  - name: physics-crate-1
+    components:
+      Transform:
+        position: [5.2, 0.25, -18.6]
+      Geometry:
+        shape: box
+        size: [0.5, 0.5, 0.5]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.8, 0.6, 0.3]
+          roughness: 0.8
+      RigidBody:
+        mass: 4
+      Collider:
+        shape: box
+        size: [0.5, 0.5, 0.5]
+
+  - name: physics-crate-2
+    components:
+      Transform:
+        position: [5.2, 0.25, -18.08]
+      Geometry:
+        shape: box
+        size: [0.5, 0.5, 0.5]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.8, 0.6, 0.3]
+          roughness: 0.8
+      RigidBody:
+        mass: 4
+      Collider:
+        shape: box
+        size: [0.5, 0.5, 0.5]
+
+  - name: physics-crate-3
+    components:
+      Transform:
+        position: [5.2, 0.25, -17.56]
+      Geometry:
+        shape: box
+        size: [0.5, 0.5, 0.5]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.8, 0.6, 0.3]
+          roughness: 0.8
+      RigidBody:
+        mass: 4
+      Collider:
+        shape: box
+        size: [0.5, 0.5, 0.5]
+
+  - name: physics-crate-4
+    components:
+      Transform:
+        position: [5.2, 0.75, -18.6]
+      Geometry:
+        shape: box
+        size: [0.5, 0.5, 0.5]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.8, 0.6, 0.3]
+          roughness: 0.8
+      RigidBody:
+        mass: 4
+      Collider:
+        shape: box
+        size: [0.5, 0.5, 0.5]
+
+  - name: physics-crate-5
+    components:
+      Transform:
+        position: [5.2, 0.75, -18.08]
+      Geometry:
+        shape: box
+        size: [0.5, 0.5, 0.5]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.8, 0.6, 0.3]
+          roughness: 0.8
+      RigidBody:
+        mass: 4
+      Collider:
+        shape: box
+        size: [0.5, 0.5, 0.5]
+
+  - name: physics-crate-6
+    components:
+      Transform:
+        position: [5.2, 0.75, -17.56]
+      Geometry:
+        shape: box
+        size: [0.5, 0.5, 0.5]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.8, 0.6, 0.3]
+          roughness: 0.8
+      RigidBody:
+        mass: 4
+      Collider:
+        shape: box
+        size: [0.5, 0.5, 0.5]
+
+  - name: physics-crate-7
+    components:
+      Transform:
+        position: [5.2, 1.25, -18.6]
+      Geometry:
+        shape: box
+        size: [0.5, 0.5, 0.5]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.8, 0.6, 0.3]
+          roughness: 0.8
+      RigidBody:
+        mass: 4
+      Collider:
+        shape: box
+        size: [0.5, 0.5, 0.5]
+
+  - name: physics-crate-8
+    components:
+      Transform:
+        position: [5.2, 1.25, -18.08]
+      Geometry:
+        shape: box
+        size: [0.5, 0.5, 0.5]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.8, 0.6, 0.3]
+          roughness: 0.8
+      RigidBody:
+        mass: 4
+      Collider:
+        shape: box
+        size: [0.5, 0.5, 0.5]
+
+  - name: physics-crate-9
+    components:
+      Transform:
+        position: [5.2, 1.25, -17.56]
+      Geometry:
+        shape: box
+        size: [0.5, 0.5, 0.5]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.8, 0.6, 0.3]
+          roughness: 0.8
+      RigidBody:
+        mass: 4
+      Collider:
+        shape: box
+        size: [0.5, 0.5, 0.5]
+
+  # a pen with a paddle that turns by its own angular velocity, and balls
+  # that it keeps moving
+  - name: physics-pen-south
+    components:
+      Transform:
+        position: [8.6, 0.35, -20.3]
+      Geometry:
+        shape: box
+        size: [3.4, 0.7, 0.2]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.12, 0.13, 0.15]
+          roughness: 0.6
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [3.4, 0.7, 0.2]
+
+  - name: physics-pen-north
+    components:
+      Transform:
+        position: [8.6, 0.35, -23.5]
+      Geometry:
+        shape: box
+        size: [3.4, 0.7, 0.2]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.12, 0.13, 0.15]
+          roughness: 0.6
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [3.4, 0.7, 0.2]
+
+  - name: physics-pen-west
+    components:
+      Transform:
+        position: [7, 0.35, -21.9]
+      Geometry:
+        shape: box
+        size: [0.2, 0.7, 3]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.12, 0.13, 0.15]
+          roughness: 0.6
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [0.2, 0.7, 3]
+
+  - name: physics-pen-east
+    components:
+      Transform:
+        position: [10.2, 0.35, -21.9]
+      Geometry:
+        shape: box
+        size: [0.2, 0.7, 3]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.12, 0.13, 0.15]
+          roughness: 0.6
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [0.2, 0.7, 3]
+
+  - name: physics-paddle
+    components:
+      Transform:
+        position: [8.6, 0.2, -21.9]
+      Geometry:
+        shape: box
+        size: [2.6, 0.3, 0.15]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.9, 0.2, 0.2]
+          roughness: 0.5
+      RigidBody:
+        kind: kinematic
+        angular_velocity: [0, 60, 0]
+      Collider:
+        shape: box
+        size: [2.6, 0.3, 0.15]
+
+  - name: physics-ball-1
+    components:
+      Transform:
+        position: [7.7, 0.6, -22.7]
+      Geometry:
+        shape: sphere
+        size: [0.4, 0.4, 0.4]
+        sides: 16
+        smooth: true
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.95, 0.75, 0.1]
+          roughness: 0.4
+      RigidBody:
+        mass: 0.5
+        bounce: 0.6
+      Collider:
+        shape: sphere
+        radius: 0.2
+
+  - name: physics-ball-2
+    components:
+      Transform:
+        position: [8.6, 1.1, -22.7]
+      Geometry:
+        shape: sphere
+        size: [0.4, 0.4, 0.4]
+        sides: 16
+        smooth: true
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.15, 0.7, 0.25]
+          roughness: 0.4
+      RigidBody:
+        mass: 0.5
+        bounce: 0.6
+      Collider:
+        shape: sphere
+        radius: 0.2
+
+  - name: physics-ball-3
+    components:
+      Transform:
+        position: [9.5, 1.6, -22.7]
+      Geometry:
+        shape: sphere
+        size: [0.4, 0.4, 0.4]
+        sides: 16
+        smooth: true
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.12, 0.35, 0.9]
+          roughness: 0.4
+      RigidBody:
+        mass: 0.5
+        bounce: 0.6
+      Collider:
+        shape: sphere
+        radius: 0.2
+
+  - name: physics-ball-4
+    components:
+      Transform:
+        position: [7.7, 2.1, -21.1]
+      Geometry:
+        shape: sphere
+        size: [0.4, 0.4, 0.4]
+        sides: 16
+        smooth: true
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.9, 0.9, 0.9]
+          roughness: 0.4
+      RigidBody:
+        mass: 0.5
+        bounce: 0.6
+      Collider:
+        shape: sphere
+        radius: 0.2
+
+  - name: physics-ball-5
+    components:
+      Transform:
+        position: [8.6, 2.6, -21.1]
+      Geometry:
+        shape: sphere
+        size: [0.4, 0.4, 0.4]
+        sides: 16
+        smooth: true
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.9, 0.3, 0.6]
+          roughness: 0.4
+      RigidBody:
+        mass: 0.5
+        bounce: 0.6
+      Collider:
+        shape: sphere
+        radius: 0.2
+
+  - name: physics-ball-6
+    components:
+      Transform:
+        position: [9.5, 3.1, -21.1]
+      Geometry:
+        shape: sphere
+        size: [0.4, 0.4, 0.4]
+        sides: 16
+        smooth: true
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.3, 0.85, 0.9]
+          roughness: 0.4
+      RigidBody:
+        mass: 0.5
+        bounce: 0.6
+      Collider:
+        shape: sphere
+        radius: 0.2
+
+  # a collider of every shape a Geometry has, each dynamic: give them a push
+  - name: physics-shape-sphere
+    components:
+      Transform:
+        position: [5.4, 0.3, -23.2]
+      Geometry:
+        shape: sphere
+        size: [0.6, 0.6, 0.6]
+        sides: 24
+        smooth: true
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.3, 0.7, 0.9]
+          roughness: 0.5
+      RigidBody: Default
+      Collider:
+        shape: sphere
+        radius: 0.3
+
+  - name: physics-shape-cylinder
+    components:
+      Transform:
+        position: [5.4, 0.4, -22.2]
+      Geometry:
+        shape: cylinder
+        size: [0.6, 0.8, 0.6]
+        sides: 24
+        smooth: true
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.3, 0.7, 0.9]
+          roughness: 0.5
+      RigidBody: Default
+      Collider:
+        shape: cylinder
+        radius: 0.3
+        height: 0.8
+
+  # a capsule is drawn as a cylinder with a sphere at each end
+  - name: physics-shape-capsule
+    components:
+      Transform:
+        position: [5.4, 0.6, -21.2]
+      Geometry:
+        shape: cylinder
+        size: [0.5, 0.7, 0.5]
+        sides: 24
+        smooth: true
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.3, 0.7, 0.9]
+          roughness: 0.5
+      RigidBody: Default
+      Collider:
+        shape: capsule
+        radius: 0.25
+        height: 1.2
+    children:
+      - name: top
+        components:
+          Transform:
+            position: [0, 0.35, 0]
+          Geometry:
+            shape: sphere
+            size: [0.5, 0.5, 0.5]
+            sides: 24
+            smooth: true
+          Renderable:
+            shader: assets://shaders/pbr
+            material:
+              color: [0.3, 0.7, 0.9]
+              roughness: 0.5
+      - name: bottom
+        components:
+          Transform:
+            position: [0, -0.35, 0]
+          Geometry:
+            shape: sphere
+            size: [0.5, 0.5, 0.5]
+            sides: 24
+            smooth: true
+          Renderable:
+            shader: assets://shaders/pbr
+            material:
+              color: [0.3, 0.7, 0.9]
+              roughness: 0.5
+
+  # a convex hull takes the shape of the Geometry it is next to
+  - name: physics-shape-hull
+    components:
+      Transform:
+        position: [5.4, 0.05, -20.2]
+      Geometry:
+        shape: ramp
+        size: [0.7, 0.5, 0.9]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.3, 0.7, 0.9]
+          roughness: 0.5
+      RigidBody: Default
+      Collider:
+        shape: convex_hull
+
+  # a ball that keeps most of its speed when it bounces, on a pad that
+  # gives it back
+  - name: physics-bouncer
+    components:
+      Transform:
+        position: [9.8, 3.2, -17.4]
+      Geometry:
+        shape: sphere
+        size: [0.5, 0.5, 0.5]
+        sides: 24
+        smooth: true
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.95, 0.3, 0.6]
+          roughness: 0.3
+      RigidBody:
+        bounce: 0.92
+        linear_damping: 0
+        can_sleep: false
+      Collider:
+        shape: sphere
+        radius: 0.25
+
+  - name: physics-pad
+    components:
+      Transform:
+        position: [9.8, 0.1, -17.4]
+      Geometry:
+        shape: box
+        size: [1.6, 0.2, 1.6]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.12, 0.13, 0.15]
+          roughness: 0.6
+      RigidBody:
+        kind: static
+        bounce: 0.92
+      Collider:
+        shape: box
+        size: [1.6, 0.2, 1.6]
+
+  # --------------------------------------------------------------------------
+  # 07 Joints
+  # A Joint holds a body to another, or to the world. Everything here can be
+  # pushed: walk through the door, into the pendulum, against the block.
+  # --------------------------------------------------------------------------
+
+  # a door on a hinge at its frame, which a spring pulls shut again
+  - name: joints-frame
+    components:
+      Transform:
+        position: [-3.6, 1.1, -28.95]
+      Geometry:
+        shape: box
+        size: [0.15, 2.2, 0.15]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.12, 0.13, 0.15]
+          roughness: 0.6
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [0.15, 2.2, 0.15]
+
+  - name: joints-frame-far
+    components:
+      Transform:
+        position: [-3.6, 1.1, -27.05]
+      Geometry:
+        shape: box
+        size: [0.15, 2.2, 0.15]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.12, 0.13, 0.15]
+          roughness: 0.6
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [0.15, 2.2, 0.15]
+
+  - name: joints-door
+    components:
+      Transform:
+        position: [-3.6, 1.1, -28]
+      Geometry:
+        shape: box
+        size: [0.08, 2.1, 1.7]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.7, 0.5, 0.9]
+          roughness: 0.6
+      RigidBody:
+        mass: 5
+      Collider:
+        shape: box
+        size: [0.08, 2.1, 1.7]
+      Joint:
+        type: hinge
+        other: joints-frame
+        anchor: [0, 0, -0.9]
+        axis: [0, 1, 0]
+        limits: [-100, 100]
+        spring:
+          stiffness: 20
+          damping: 4
+
+  # a pendulum on a point joint to the world, from a beam on the wall, let
+  # go from the side
+  - name: joints-beam
+    components:
+      Transform:
+        position: [-6.5, 2.9, -30.925]
+      Geometry:
+        shape: box
+        size: [0.15, 0.15, 1.85]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.12, 0.13, 0.15]
+          roughness: 0.6
+
+  - name: joints-pendulum
+    components:
+      Transform:
+        position: [-6.5, 1.5, -29.3]
+      Geometry:
+        shape: sphere
+        size: [0.6, 0.6, 0.6]
+        sides: 24
+        smooth: true
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.9, 0.75, 0.2]
+          roughness: 0.3
+      RigidBody:
+        mass: 3
+        linear_damping: 0
+        angular_damping: 0
+        can_sleep: false
+      Collider:
+        shape: sphere
+        radius: 0.3
+      Joint:
+        type: point
+        anchor: [0, 1.4, -0.9]
+
+  # a block on a slider along its rail, with a spring that brings it back
+  - name: joints-rail
+    components:
+      Transform:
+        position: [-7, 0.45, -27.4]
+      Geometry:
+        shape: box
+        size: [4, 0.06, 0.06]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.12, 0.13, 0.15]
+          roughness: 0.6
+
+  - name: joints-block
+    components:
+      Transform:
+        position: [-7, 0.45, -27.4]
+      Geometry:
+        shape: box
+        size: [0.6, 0.6, 0.6]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.3, 0.8, 0.5]
+          roughness: 0.6
+      RigidBody:
+        mass: 3
+      Collider:
+        shape: box
+        size: [0.6, 0.6, 0.6]
+      Joint:
+        type: slider
+        axis: [1, 0, 0]
+        limits: [-1.6, 1.6]
+        spring:
+          stiffness: 30
+          damping: 3
+
+  # a wheel on a hinge that a motor turns, a quarter turn a second
+  - name: joints-axle
+    components:
+      Transform:
+        position: [-9.9, 1.2, -25.4]
+      Geometry:
+        shape: box
+        size: [0.12, 2.4, 0.12]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.12, 0.13, 0.15]
+          roughness: 0.6
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [0.12, 2.4, 0.12]
+
+  - name: joints-wheel
+    components:
+      Transform:
+        position: [-9.6, 2, -25.4]
+      Geometry:
+        shape: box
+        size: [0.12, 2, 0.3]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.9, 0.4, 0.3]
+          roughness: 0.5
+      RigidBody:
+        mass: 2
+      Collider:
+        shape: box
+        size: [0.12, 2, 0.3]
+      Joint:
+        type: hinge
+        other: joints-axle
+        axis: [1, 0, 0]
+        motor_velocity: 90
+        motor_strength: 60
+
+  # two crates held as one by a fixed joint: push one, and both go
+  - name: joints-fixed-a
+    components:
+      Transform:
+        position: [-5.2, 0.25, -25.2]
+      Geometry:
+        shape: box
+        size: [0.5, 0.5, 0.5]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.3, 0.6, 0.9]
+          roughness: 0.6
+      RigidBody: Default
+      Collider:
+        shape: box
+        size: [0.5, 0.5, 0.5]
+
+  - name: joints-fixed-b
+    components:
+      Transform:
+        position: [-5.2, 0.25, -26.1]
+      Geometry:
+        shape: box
+        size: [0.5, 0.5, 0.5]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.9, 0.6, 0.3]
+          roughness: 0.6
+      RigidBody: Default
+      Collider:
+        shape: box
+        size: [0.5, 0.5, 0.5]
+      Joint:
+        type: fixed
+        other: joints-fixed-a
+        anchor: [0, 0, 0.45]
+
+  # --------------------------------------------------------------------------
+  # 08 Character
+  # What a CharacterBody does with the ground. Steps of 0.2 are below the
+  # step_height of 0.25 and are walked up; the green ramp is 27 degrees, the
+  # red one 63, which is above max_slope and so a wall.
+  # --------------------------------------------------------------------------
+
+  - name: character-step-1
+    components:
+      Transform:
+        position: [7.2, 0.1, -30.8]
+      Geometry:
+        shape: box
+        size: [0.4, 0.2, 2]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.75, 0.75, 0.72]
+          roughness: 0.9
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [0.4, 0.2, 2]
+
+  - name: character-step-2
+    components:
+      Transform:
+        position: [7.6, 0.2, -30.8]
+      Geometry:
+        shape: box
+        size: [0.4, 0.4, 2]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.75, 0.75, 0.72]
+          roughness: 0.9
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [0.4, 0.4, 2]
+
+  - name: character-step-3
+    components:
+      Transform:
+        position: [8, 0.3, -30.8]
+      Geometry:
+        shape: box
+        size: [0.4, 0.6, 2]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.75, 0.75, 0.72]
+          roughness: 0.9
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [0.4, 0.6, 2]
+
+  - name: character-step-4
+    components:
+      Transform:
+        position: [8.4, 0.4, -30.8]
+      Geometry:
+        shape: box
+        size: [0.4, 0.8, 2]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.75, 0.75, 0.72]
+          roughness: 0.9
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [0.4, 0.8, 2]
+
+  - name: character-platform
+    components:
+      Transform:
+        position: [9.8, 0.5, -30.8]
+      Geometry:
+        shape: box
+        size: [2.4, 1, 2]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.75, 0.75, 0.72]
+          roughness: 0.9
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [2.4, 1, 2]
+
+  - name: character-ramp
+    components:
+      Transform:
+        position: [9.8, 0, -28.8]
+      Geometry:
+        shape: ramp
+        size: [2.4, 1, 2]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.35, 0.75, 0.4]
+          roughness: 0.9
+      RigidBody:
+        kind: static
+      Collider:
+        shape: convex_hull
+
+  - name: character-steep
+    components:
+      Transform:
+        position: [6.2, 0, -25.2]
+        rotation: [0, -90, 0]
+      Geometry:
+        shape: ramp
+        size: [1.6, 2, 1]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.85, 0.25, 0.2]
+          roughness: 0.9
+      RigidBody:
+        kind: static
+      Collider:
+        shape: convex_hull
+
+  # a kinematic body that a script moves up and down: ride it for a view
+  # over the walls
+  - name: character-lift
+    components:
+      Transform:
+        position: [4.4, 0.1, -30.6]
+      Geometry:
+        shape: box
+        size: [1.6, 0.2, 1.6]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.95, 0.8, 0.2]
+          roughness: 0.5
+      RigidBody:
+        kind: kinematic
+      Collider:
+        shape: box
+        size: [1.6, 0.2, 1.6]
+      Mover:
+        travel: [0, 2.6, 0]
+        period: 10
+
+  # another character, walked back and forth by a script. It stops at you
+  - name: character-walker
+    components:
+      Transform:
+        position: [4.2, 0.9, -26.8]
+      CharacterBody: Default
+      Collider:
+        shape: capsule
+        radius: 0.3
+        height: 1.8
+      Patrol:
+        speed: 1.5
+        distance: 5.5
+    children:
+      - name: body
+        components:
+          Transform: Default
+          Geometry:
+            shape: cylinder
+            size: [0.6, 1.2, 0.6]
+            sides: 24
+            smooth: true
+          Renderable:
+            shader: assets://shaders/pbr
+            material:
+              color: [0.9, 0.5, 0.2]
+              roughness: 0.6
+      - name: head
+        components:
+          Transform:
+            position: [0, 0.6, 0]
+          Geometry:
+            shape: sphere
+            size: [0.6, 0.6, 0.6]
+            sides: 24
+            smooth: true
+          Renderable:
+            shader: assets://shaders/pbr
+            material:
+              color: [0.9, 0.5, 0.2]
+              roughness: 0.6
+      - name: feet
+        components:
+          Transform:
+            position: [0, -0.6, 0]
+          Geometry:
+            shape: sphere
+            size: [0.6, 0.6, 0.6]
+            sides: 24
+            smooth: true
+          Renderable:
+            shader: assets://shaders/pbr
+            material:
+              color: [0.9, 0.5, 0.2]
+              roughness: 0.6
+
+  # --------------------------------------------------------------------------
+  # 09 Scripts
+  # Components and systems declared in Lua, under assets/scripts, and written
+  # here as any component of the engine is, see docs/scripting.md.
+  # --------------------------------------------------------------------------
+
+  - name: scripts-spinner-pedestal
+    prefab: assets://prefabs/museum/pedestal.prefab.yml
+    components:
+      Transform:
+        position: [-5.5, 0.5, -38.6]
+
+  # spinner.lua turns it about y
+  - name: scripts-spinner
+    components:
+      Transform:
+        position: [-5.5, 1.6, -38.6]
+      Geometry:
+        shape: box
+        size: [0.6, 0.6, 0.6]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [1, 0.5, 0.8]
+          roughness: 0.5
+      Spinner:
+        speed: 90
+
+  - name: scripts-tumbler-pedestal
+    prefab: assets://prefabs/museum/pedestal.prefab.yml
+    components:
+      Transform:
+        position: [-5.5, 0.5, -37]
+
+  # and about x
+  - name: scripts-tumbler
+    components:
+      Transform:
+        position: [-5.5, 1.7, -37]
+      Geometry:
+        shape: cylinder
+        size: [0.3, 0.9, 0.3]
+        sides: 6
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [1, 0.5, 0.8]
+          roughness: 0.5
+      Spinner:
+        speed: 140
+        axis: x
+
+  - name: scripts-mover-pedestal
+    prefab: assets://prefabs/museum/pedestal.prefab.yml
+    components:
+      Transform:
+        position: [-8.5, 0.5, -37.8]
+
+  # mover.lua glides it up and back
+  - name: scripts-mover
+    components:
+      Transform:
+        position: [-8.5, 1.5, -37.8]
+      Geometry:
+        shape: sphere
+        size: [0.6, 0.6, 0.6]
+        sides: 24
+        smooth: true
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.5, 0.8, 1]
+          roughness: 0.4
+      Mover:
+        travel: [0, 1.2, 0]
+        period: 3
+
+  # the plate is only drawn. The trigger above it looks for layer 2, which
+  # the player alone is in, and trigger-lamp.lua lights the lamp while the
+  # player is inside
+  - name: scripts-plate
+    components:
+      Transform:
+        position: [-6.5, 0.03, -34]
+      Geometry:
+        shape: box
+        size: [1.6, 0.06, 1.6]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.95, 0.85, 0.1]
+          roughness: 0.6
+
+  - name: scripts-plate-trigger
+    components:
+      Transform:
+        position: [-6.5, 1, -34]
+      Trigger:
+        mask: [2]
+      Collider:
+        shape: box
+        size: [1.6, 2, 1.6]
+      TriggerLamp:
+        lamp: scripts-lamp
+
+  - name: scripts-lamp-post
+    components:
+      Transform:
+        position: [-9.4, 1.1, -34]
+      Geometry:
+        shape: box
+        size: [0.1, 2.2, 0.1]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.12, 0.13, 0.15]
+          roughness: 0.6
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [0.1, 2.2, 0.1]
+
+  # dark until the script gives it light
+  - name: scripts-lamp
+    components:
+      Transform:
+        position: [-9.4, 2.35, -34]
+      Geometry:
+        shape: sphere
+        size: [0.3, 0.3, 0.3]
+        sides: 16
+        smooth: true
+      Renderable:
+        shader: assets://shaders/color
+        material:
+          color: [1, 0.85, 0.5]
+      Light:
+        type: point
+        diffuse: [0, 0, 0]
+        constant: 1
+        linear: 0.14
+        quadratic: 0.07
+
+  # --------------------------------------------------------------------------
+  # 10 Surfaces
+  # A user interface is laid out and drawn on a surface. The window is one;
+  # every sign of the museum is one; so is this terminal, whose buttons take
+  # the pointer from where the player looks, within its reach. A camera draws
+  # into a texture as well, which the second screen shows. See
+  # docs/user-interface.md#surfaces.
+  # --------------------------------------------------------------------------
+
+  - name: surfaces-desk
+    components:
+      Transform:
+        position: [7.6, 0.45, -37.6]
+      Geometry:
+        shape: box
+        size: [0.5, 0.9, 2.2]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.12, 0.13, 0.15]
+          roughness: 0.6
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [0.5, 0.9, 2.2]
+
+  # a quad of 1 by 1, sized by its Transform, is the square a surface is
+  # pointed at on
+  - name: surfaces-terminal
+    components:
+      Transform:
+        position: [7.3, 1.6, -37.6]
+        rotation: [0, -90, 0]
+        scale: [1.6, 1.2, 1]
+      Geometry:
+        shape: quad
+      Renderable:
+        shader: assets://shaders/unlit
+        textures:
+          - surface://museum-terminal
+      UiSurface:
+        ui: assets://ui/museum/terminal.ui.yml
+        name: museum-terminal
+        size: [1024, 768]
+
+  - name: surfaces-terminal-back
+    components:
+      Transform:
+        position: [7.36, 1.6, -37.6]
+      Geometry:
+        shape: box
+        size: [0.08, 1.3, 1.7]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.12, 0.13, 0.15]
+          roughness: 0.6
+
+  - name: surfaces-stand
+    components:
+      Transform:
+        position: [7.6, 0.45, -34.2]
+      Geometry:
+        shape: box
+        size: [0.5, 0.9, 2.2]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.12, 0.13, 0.15]
+          roughness: 0.6
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [0.5, 0.9, 2.2]
+
+  # what the camera at the end of the corridor sees
+  - name: surfaces-monitor
+    components:
+      Transform:
+        position: [7.3, 1.6, -34.2]
+        rotation: [0, -90, 0]
+        scale: [1.2, 1.2, 1]
+      Geometry:
+        shape: quad
+      Renderable:
+        shader: assets://shaders/unlit
+        textures:
+          - surface://security
+
+  - name: surfaces-monitor-back
+    components:
+      Transform:
+        position: [7.36, 1.6, -34.2]
+      Geometry:
+        shape: box
+        size: [0.08, 1.3, 1.3]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.12, 0.13, 0.15]
+          roughness: 0.6
+
+  # on the north wall, looking back down the corridor
+  - name: surfaces-camera
+    components:
+      Transform:
+        position: [0, 3.6, -49.6]
+        rotation: [-20, 180, 0]
+      Camera:
+        target: texture
+        texture: security
+        size: [512, 512]
+        fov: 60
+
+  - name: surfaces-camera-case
+    components:
+      Transform:
+        position: [0, 3.6, -49.8]
+      Geometry:
+        shape: box
+        size: [0.3, 0.2, 0.3]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.12, 0.13, 0.15]
+          roughness: 0.4
+
+  # --------------------------------------------------------------------------
+  # 11 Sound
+  # A spatial sound on an orb that a Spinner carries round a post: it is
+  # louder from close by, moves from ear to ear, and shifts in pitch as it
+  # comes and goes. Its falloff is the inverse one, as sound fades in the open:
+  # full within a metre, a third at three, a tenth at ten, and next to nothing
+  # at the entrance. A `max_distance` beyond the museum keeps it fading all the
+  # way; `falloff: linear` would end it in silence at that distance instead. What hears it is the SoundListener on the camera.
+  # --------------------------------------------------------------------------
+
+  - name: sound-post
+    components:
+      Transform:
+        position: [-7, 0.7, -44]
+      Geometry:
+        shape: box
+        size: [0.15, 1.4, 0.15]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.12, 0.13, 0.15]
+          roughness: 0.6
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [0.15, 1.4, 0.15]
+
+  - name: sound-carousel
+    components:
+      Transform:
+        position: [-7, 1.4, -44]
+      Geometry:
+        shape: box
+        size: [4.4, 0.06, 0.06]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.12, 0.13, 0.15]
+          roughness: 0.6
+      Spinner:
+        speed: 50
+    children:
+      - name: orb
+        components:
+          Transform:
+            position: [2.2, 0, 0]
+          Geometry:
+            shape: sphere
+            size: [0.5, 0.5, 0.5]
+            sides: 24
+            smooth: true
+          Renderable:
+            shader: assets://shaders/pbr
+            material:
+              color: [1, 0.7, 0.3]
+              roughness: 0.3
+          SoundSource:
+            sound: assets://sounds/hum.wav
+            looping: true
+            spatial: true
+            volume: 0.6
+            min_distance: 1
+            max_distance: 60
+      - name: weight
+        components:
+          Transform:
+            position: [-2.2, 0, 0]
+          Geometry:
+            shape: box
+            size: [0.3, 0.3, 0.3]
+          Renderable:
+            shader: assets://shaders/pbr
+            material:
+              color: [0.12, 0.13, 0.15]
+              roughness: 0.6
+
+  # --------------------------------------------------------------------------
+  # 12 Prefabs and scenes
+  # A prefab is an entity described once in a file of its own, see
+  # docs/prefabs.md. The scene places it and writes what differs: here a
+  # stack of three, as it is, moved, turned, recoloured, and with a child
+  # taken away. The arch is the way out of the scene, into the same scene.
+  # --------------------------------------------------------------------------
+
+  # as the file says it
+  - name: prefabs-stack-1
+    prefab: assets://prefabs/museum/stack.prefab.yml
+    components:
+      Transform:
+        position: [5.4, 0, -47]
+
+  # turned
+  - name: prefabs-stack-2
+    prefab: assets://prefabs/museum/stack.prefab.yml
+    components:
+      Transform:
+        position: [5.4, 0, -45.5]
+        rotation: [0, 30, 0]
+
+  # larger
+  - name: prefabs-stack-3
+    prefab: assets://prefabs/museum/stack.prefab.yml
+    components:
+      Transform:
+        position: [5.4, 0, -44]
+        scale: 1.4
+
+  # a child changed: the top is red and shines
+  - name: prefabs-stack-4
+    prefab: assets://prefabs/museum/stack.prefab.yml
+    components:
+      Transform:
+        position: [5.4, 0, -42.5]
+    children:
+      - name: top
+        components:
+          Renderable:
+            material:
+              color: [0.9, 0.15, 0.12]
+              roughness: 0.15
+
+  # a child taken away
+  - name: prefabs-stack-5
+    prefab: assets://prefabs/museum/stack.prefab.yml
+    components:
+      Transform:
+        position: [5.4, 0, -41]
+    children:
+      - top: ~
+
+  # the arch, and the way out behind its pane
+  - name: prefabs-arch-south
+    components:
+      Transform:
+        position: [9.6, 1.2, -42.9]
+      Geometry:
+        shape: box
+        size: [0.3, 2.4, 0.3]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.6, 0.65, 1]
+          roughness: 0.4
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [0.3, 2.4, 0.3]
+
+  - name: prefabs-arch-north
+    components:
+      Transform:
+        position: [9.6, 1.2, -45.1]
+      Geometry:
+        shape: box
+        size: [0.3, 2.4, 0.3]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.6, 0.65, 1]
+          roughness: 0.4
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [0.3, 2.4, 0.3]
+
+  - name: prefabs-arch-top
+    components:
+      Transform:
+        position: [9.6, 2.55, -44]
+      Geometry:
+        shape: box
+        size: [0.3, 0.3, 2.5]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.6, 0.65, 1]
+          roughness: 0.4
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [0.3, 0.3, 2.5]
+
+  - name: prefabs-arch-pane
+    components:
+      Transform:
+        position: [9.6, 1.2, -44]
+      Geometry:
+        shape: box
+        size: [0.04, 2.4, 1.9]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.6, 0.65, 1, 0.35]
+          roughness: 0.2
+          alpha_mode: blend
+
+  # a trigger reports static bodies too, so it looks for layer 2
+  - name: prefabs-exit
+    components:
+      Transform:
+        position: [10.3, 1.2, -44]
+      Trigger:
+        mask: [2]
+      Collider:
+        shape: box
+        size: [0.6, 2.4, 1.9]
+      SceneExit:
+        scene: assets://scenes/demo.scene.yml
+
+  # --------------------------------------------------------------------------
+  # The visitor
+  # The player walks the museum from the first person: a CharacterBody with a
+  # capsule, driven by the input map, with the camera at its eyes. The window
+  # shows a dot where the player looks, from a user interface of its own.
+  # --------------------------------------------------------------------------
+
+  - name: hud
+    components:
+      Ui:
+        file: assets://ui/museum/hud.ui.yml
+
+  # in layer 2 as well, which the triggers of the museum look for. `fov` is
+  # the field of view up and down: 59 degrees is 90 across a window of 16 by 9
   - name: player
     components:
       Transform:
-        position: [0, 0, 2]
-      Spectator: Default
+        position: [0, 0.9, 4.5]
+      Player: Default
+      CharacterBody:
+        layers: [1, 2]
+      Collider:
+        shape: capsule
+        radius: 0.4
+        height: 1.8
     children:
-      # the camera sits on the player, and so moves and turns with it
       - name: camera
         components:
           Transform: Default
-          Camera: Default
+          Camera:
+            fov: 59
           SoundListener: Default

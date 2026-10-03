@@ -1,0 +1,23 @@
+# A pedestal of the museum, demo.scene.yml: a block 0.8 square and a metre
+# high, built by the engine, that stands still and can be walked into. A
+# Geometry is centred on its entity, so the scene places it half a metre
+# above the floor, and what it shows a metre above.
+version: 1
+prefab: pedestal
+
+entity:
+  components:
+    Transform: Default
+    Geometry:
+      shape: box
+      size: [0.8, 1, 0.8]
+    Renderable:
+      shader: assets://shaders/pbr
+      material:
+        color: [0.2, 0.21, 0.24]
+        roughness: 0.7
+    RigidBody:
+      kind: static
+    Collider:
+      shape: box
+      size: [0.8, 1, 0.8]

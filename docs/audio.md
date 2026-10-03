@@ -48,6 +48,7 @@ camera.
 | `spatial` | Whether the sound has a place in the world | `false` |
 | `min_distance` | Up to this distance the sound is as loud as it gets | `1` |
 | `max_distance` | From this distance on it does not get quieter | `100` |
+| `falloff` | How it gets quieter between the two distances. `inverse` is as sound does in the open, half as loud at twice the distance; it never reaches silence, and from `max_distance` on stays as loud as `min_distance / max_distance` of its volume. `linear` goes down in a straight line to silence at `max_distance`, and is silent from there on: a sound that is to be heard in one room and not in the next | `inverse` |
 | `group` | The [group](#groups) whose volume the sound is played at | `effects` |
 
 A sound with a place is quieter from further away, is heard from the side it

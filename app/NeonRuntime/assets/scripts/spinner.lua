@@ -1,6 +1,7 @@
 -- A Spinner turns its entity about an axis, for ever. It is the first
--- script of the runtime, and what scripting-demo.scene.yml places; the
--- docs describe how a script is written in docs/scripting.md.
+-- script of the runtime, and what scripting-demo.scene.yml and the museum,
+-- demo.scene.yml, place; the docs describe how a script is written in
+-- docs/scripting.md.
 --
 -- The component is named after the file: Spinner. A scene writes it as
 --

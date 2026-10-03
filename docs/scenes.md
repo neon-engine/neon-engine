@@ -44,8 +44,8 @@ entities:
 
 The runtime starts with the entry scene of its project, see
 [projects.md](projects.md), which is
-[demo.scene.yml](../app/NeonRuntime/assets/scenes/demo.scene.yml). Another one
-is chosen with `--scene`:
+[demo.scene.yml](../app/NeonRuntime/assets/scenes/demo.scene.yml), the
+[museum](#the-museum). Another one is chosen with `--scene`:
 
 ```
 NeonRuntime --scene assets://scenes/other.scene.yml
@@ -165,7 +165,8 @@ with one or three of its axes below 0, is still drawn from the front.
 **Geometry**
 
 A shape the engine builds in place of a model, in metres: a box, a plane, a
-ramp, or a prism from an outline, textured once a metre. The entity's
+ramp, a prism from an outline, a sphere, a cylinder, or an upright quad,
+textured once a metre. The entity's
 `Renderable` draws it, and a `Collider` without a `model` takes the same
 shape. The fields are in [geometry.md](geometry.md).
 
@@ -185,8 +186,8 @@ shape. The fields are in [geometry.md](geometry.md).
 | `type` | `direction`, `point`, or `spot` | `direction` |
 | `direction` | `[x, y, z]` | `[0, 0, 0]` |
 | `ambient`, `diffuse`, `specular` | `[red, green, blue]`, amounts of light: 0.5 is half the light of 1. For the `pbr` shader `diffuse` is the light's colour and `specular` is not read, see [vulkan-renderer.md](vulkan-renderer.md#the-shaders-that-ship) | `[0, 0, 0]` |
-| `constant`, `linear`, `quadratic` | How the light fades with distance | `0` |
-| `cutoff`, `outer_cutoff` | The cone of a spot light | `0` |
+| `constant`, `linear`, `quadratic` | How a point or a spot light fades with distance `d`: its light is divided by `constant + linear * d + quadratic * d * d`, so a light writes a `constant` of 1 | `0` |
+| `cutoff`, `outer_cutoff` | The cone of a spot light, as the cosines of two angles from its `direction`: the light is full within the first and fades out to the second. 20 and 30 degrees are `0.9397` and `0.866`. Degrees are #342 | `0` |
 | `casts_shadows` | Whether what stands in the light shadows what is behind it. A `direction` light draws a shadow map, see [vulkan-renderer.md](vulkan-renderer.md#shadows); a `point` or `spot` light casts nothing yet, whatever this says | `true` |
 
 The position of a light is that of its `Transform`. The renderer knows a
@@ -284,6 +285,36 @@ are the components of the physics. What they hold is listed in
 | `Trigger` | An area that reports what enters and leaves it | `layers`, `mask` |
 | `CharacterBody` | Something that is moved by a velocity, stops at what is in its way, and slides along it | `velocity`, `fall_velocity`, `gravity_scale`, `max_slope`, `step_height`, `mass`, `push_strength`, `layers`, `mask` |
 | `Joint` | Holds the body of its entity to another body, named by its path, or to the world | `type`, `other`, `anchor`, `collide_with_other`, and for a hinge and a slider: `axis`, `limits`, `motor_velocity`, `motor_strength`, `spring` |
+
+## The museum
+
+[demo.scene.yml](../app/NeonRuntime/assets/scenes/demo.scene.yml) is a museum
+of what the engine does, to walk through from the first person: a corridor
+with twelve halls, each with a sign that says what it shows. Nothing in it
+comes from a model file or an image. Every piece is a `Geometry` in a plain
+colour, see [geometry.md](geometry.md), until models of our own take their
+places.
+
+| Hall | Shows | Read more |
+|---|---|---|
+| 01 Shapes | Every shape a `Geometry` builds, flat and smooth | [geometry.md](geometry.md) |
+| 02 Materials | The `pbr` shader over roughness, metalness, and colour; `basic-lit`, `color`, and an `emissive` material | [vulkan-renderer.md](vulkan-renderer.md#the-shaders-that-ship) |
+| 03 Lights | Point lights that mix, a spot light, and a cube that glows, in a room the sun does not reach | [Light](#components) |
+| 04 Transparency | `alpha_mode: blend` in order of distance, and `double_sided` | [Renderable](#components) |
+| 05 Shadows | The shadows of the sun, of what stands still and of what a script turns | [vulkan-renderer.md](vulkan-renderer.md#shadows) |
+| 06 Physics | Static, dynamic, and kinematic bodies, and a collider of every shape | [physics.md](physics.md) |
+| 07 Joints | A hinge with a spring, a point, a slider, a motor, and a fixed joint | [physics.md](physics.md#joints) |
+| 08 Character | Steps, slopes, a lift, and a second character that a script walks | [physics.md](physics.md#the-player) |
+| 09 Scripts | The `Spinner`, the `Mover`, and the `TriggerLamp` of `assets/scripts` | [scripting.md](scripting.md) |
+| 10 Surfaces | A terminal that is pointed at and pressed, and what a second camera sees | [user-interface.md](user-interface.md#surfaces) |
+| 11 Sound | A spatial `SoundSource` that circles the listener | [audio.md](audio.md) |
+| 12 Prefabs and scenes | One prefab placed five times with what differs, and a `SceneExit` | [prefabs.md](prefabs.md), [below](#changing-the-scene) |
+
+The player is a `Player` with a `CharacterBody` and a camera below it with a
+`fov` of 59, which is 90 degrees across a window of 16 by 9: `fov` is the
+field of view up and down. The signs are one prefab, `assets/prefabs/museum/sign.prefab.yml`,
+whose board shows a user interface of `assets/ui/museum` on a surface of its
+own. A part of the engine that is added gets a hall, or a piece in one.
 
 ## Changing the scene
 

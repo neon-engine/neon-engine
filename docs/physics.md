@@ -291,11 +291,13 @@ entity with a `Camera`, which the system lifts to the eyes and pitches.
 | What the physics gives it | `on_floor` says whether a jump is allowed. Walking up steps, sliding along walls, slopes that are too steep, falling, and pushing crates come from the `CharacterBody` |
 | What is drawn | The body is placed between the last two steps as every character is, and the camera below it goes with it |
 | While the pause menu is shown | The world does not update its systems, so the player neither turns nor moves, and the user interface takes the input first, see [user-interface.md](user-interface.md#input-and-focus) |
-| The `Spectator` | Stays what it is: a camera that flies, for looking around while developing. `demo.scene.yml` keeps it |
+| The `Spectator` | Stays what it is: a camera that flies, for looking around while developing. `hud-demo.scene.yml` and `surface-demo.scene.yml` keep it |
 
-The runtime walks the prototype level and the blockout this way:
+The runtime walks its museum, the prototype level, and the blockout this
+way:
 
 ```
+NeonRuntime
 NeonRuntime --scene assets://scenes/prototype.scene.yml
 NeonRuntime --scene assets://scenes/blockout.scene.yml
 ```
