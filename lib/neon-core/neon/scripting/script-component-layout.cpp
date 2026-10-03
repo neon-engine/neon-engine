@@ -1,6 +1,7 @@
 #include "script-component-layout.hpp"
 
 #include <cctype>
+#include <cstring>
 #include <new>
 #include <utility>
 
@@ -22,6 +23,20 @@ namespace neon
         case FieldKind::String: return sizeof(std::string);
         case FieldKind::Vector3: return sizeof(glm::vec3);
         case FieldKind::Color: return sizeof(Color);
+        case FieldKind::Byte: return sizeof(std::uint8_t);
+        case FieldKind::Char: return sizeof(char);
+        case FieldKind::Short: return sizeof(std::int16_t);
+        case FieldKind::UnsignedShort: return sizeof(std::uint16_t);
+        case FieldKind::UnsignedInteger: return sizeof(std::uint32_t);
+        case FieldKind::Long: return sizeof(std::int64_t);
+        case FieldKind::UnsignedLong: return sizeof(std::uint64_t);
+        case FieldKind::Vector2: return sizeof(glm::vec2);
+        case FieldKind::Vector4: return sizeof(glm::vec4);
+        case FieldKind::IntegerVector2: return sizeof(glm::ivec2);
+        case FieldKind::IntegerVector3: return sizeof(glm::ivec3);
+        case FieldKind::Quaternion: return sizeof(glm::quat);
+        case FieldKind::Matrix3: return sizeof(glm::mat3);
+        case FieldKind::Matrix4: return sizeof(glm::mat4);
         default: return 0;
       }
     }
@@ -37,6 +52,20 @@ namespace neon
         case FieldKind::String: return alignof(std::string);
         case FieldKind::Vector3: return alignof(glm::vec3);
         case FieldKind::Color: return alignof(Color);
+        case FieldKind::Byte: return alignof(std::uint8_t);
+        case FieldKind::Char: return alignof(char);
+        case FieldKind::Short: return alignof(std::int16_t);
+        case FieldKind::UnsignedShort: return alignof(std::uint16_t);
+        case FieldKind::UnsignedInteger: return alignof(std::uint32_t);
+        case FieldKind::Long: return alignof(std::int64_t);
+        case FieldKind::UnsignedLong: return alignof(std::uint64_t);
+        case FieldKind::Vector2: return alignof(glm::vec2);
+        case FieldKind::Vector4: return alignof(glm::vec4);
+        case FieldKind::IntegerVector2: return alignof(glm::ivec2);
+        case FieldKind::IntegerVector3: return alignof(glm::ivec3);
+        case FieldKind::Quaternion: return alignof(glm::quat);
+        case FieldKind::Matrix3: return alignof(glm::mat3);
+        case FieldKind::Matrix4: return alignof(glm::mat4);
         default: return 1;
       }
     }
@@ -184,6 +213,34 @@ namespace neon
           break;
         case FieldKind::Color: new(place) Color(std::get<Color>(slot.standard));
           break;
+        case FieldKind::Byte: new(place) std::uint8_t(std::get<std::uint8_t>(slot.standard));
+          break;
+        case FieldKind::Char: new(place) char(std::get<char>(slot.standard));
+          break;
+        case FieldKind::Short: new(place) std::int16_t(std::get<std::int16_t>(slot.standard));
+          break;
+        case FieldKind::UnsignedShort: new(place) std::uint16_t(std::get<std::uint16_t>(slot.standard));
+          break;
+        case FieldKind::UnsignedInteger: new(place) std::uint32_t(std::get<std::uint32_t>(slot.standard));
+          break;
+        case FieldKind::Long: new(place) std::int64_t(std::get<std::int64_t>(slot.standard));
+          break;
+        case FieldKind::UnsignedLong: new(place) std::uint64_t(std::get<std::uint64_t>(slot.standard));
+          break;
+        case FieldKind::Vector2: new(place) glm::vec2(std::get<glm::vec2>(slot.standard));
+          break;
+        case FieldKind::Vector4: new(place) glm::vec4(std::get<glm::vec4>(slot.standard));
+          break;
+        case FieldKind::IntegerVector2: new(place) glm::ivec2(std::get<glm::ivec2>(slot.standard));
+          break;
+        case FieldKind::IntegerVector3: new(place) glm::ivec3(std::get<glm::ivec3>(slot.standard));
+          break;
+        case FieldKind::Quaternion: new(place) glm::quat(std::get<glm::quat>(slot.standard));
+          break;
+        case FieldKind::Matrix3: new(place) glm::mat3(std::get<glm::mat3>(slot.standard));
+          break;
+        case FieldKind::Matrix4: new(place) glm::mat4(std::get<glm::mat4>(slot.standard));
+          break;
         default: break;
       }
     }
@@ -218,7 +275,13 @@ namespace neon
           break;
         case FieldKind::Color: at<Color>(to, slot.offset) = at<Color>(from, slot.offset);
           break;
-        default: break;
+        default:
+          // every other kind a layout holds is plain bytes
+          if (slot.kind != FieldKind::String && size_of(slot.kind) != 0)
+          {
+            std::memcpy(static_cast<char *>(to) + slot.offset, static_cast<const char *>(from) + slot.offset, size_of(slot.kind));
+          }
+          break;
       }
     }
   }
@@ -249,6 +312,20 @@ namespace neon
       case FieldKind::String: return at<std::string>(object, slot.offset);
       case FieldKind::Vector3: return at<glm::vec3>(object, slot.offset);
       case FieldKind::Color: return at<Color>(object, slot.offset);
+      case FieldKind::Byte: return at<std::uint8_t>(object, slot.offset);
+      case FieldKind::Char: return at<char>(object, slot.offset);
+      case FieldKind::Short: return at<std::int16_t>(object, slot.offset);
+      case FieldKind::UnsignedShort: return at<std::uint16_t>(object, slot.offset);
+      case FieldKind::UnsignedInteger: return at<std::uint32_t>(object, slot.offset);
+      case FieldKind::Long: return at<std::int64_t>(object, slot.offset);
+      case FieldKind::UnsignedLong: return at<std::uint64_t>(object, slot.offset);
+      case FieldKind::Vector2: return at<glm::vec2>(object, slot.offset);
+      case FieldKind::Vector4: return at<glm::vec4>(object, slot.offset);
+      case FieldKind::IntegerVector2: return at<glm::ivec2>(object, slot.offset);
+      case FieldKind::IntegerVector3: return at<glm::ivec3>(object, slot.offset);
+      case FieldKind::Quaternion: return at<glm::quat>(object, slot.offset);
+      case FieldKind::Matrix3: return at<glm::mat3>(object, slot.offset);
+      case FieldKind::Matrix4: return at<glm::mat4>(object, slot.offset);
       default: return {};
     }
   }
@@ -279,6 +356,48 @@ namespace neon
         break;
       case FieldKind::Color:
         if (const auto *held = std::get_if<Color>(&value)) { at<Color>(object, slot.offset) = *held; }
+        break;
+      case FieldKind::Byte:
+        if (const auto *held = std::get_if<std::uint8_t>(&value)) { at<std::uint8_t>(object, slot.offset) = *held; }
+        break;
+      case FieldKind::Char:
+        if (const auto *held = std::get_if<char>(&value)) { at<char>(object, slot.offset) = *held; }
+        break;
+      case FieldKind::Short:
+        if (const auto *held = std::get_if<std::int16_t>(&value)) { at<std::int16_t>(object, slot.offset) = *held; }
+        break;
+      case FieldKind::UnsignedShort:
+        if (const auto *held = std::get_if<std::uint16_t>(&value)) { at<std::uint16_t>(object, slot.offset) = *held; }
+        break;
+      case FieldKind::UnsignedInteger:
+        if (const auto *held = std::get_if<std::uint32_t>(&value)) { at<std::uint32_t>(object, slot.offset) = *held; }
+        break;
+      case FieldKind::Long:
+        if (const auto *held = std::get_if<std::int64_t>(&value)) { at<std::int64_t>(object, slot.offset) = *held; }
+        break;
+      case FieldKind::UnsignedLong:
+        if (const auto *held = std::get_if<std::uint64_t>(&value)) { at<std::uint64_t>(object, slot.offset) = *held; }
+        break;
+      case FieldKind::Vector2:
+        if (const auto *held = std::get_if<glm::vec2>(&value)) { at<glm::vec2>(object, slot.offset) = *held; }
+        break;
+      case FieldKind::Vector4:
+        if (const auto *held = std::get_if<glm::vec4>(&value)) { at<glm::vec4>(object, slot.offset) = *held; }
+        break;
+      case FieldKind::IntegerVector2:
+        if (const auto *held = std::get_if<glm::ivec2>(&value)) { at<glm::ivec2>(object, slot.offset) = *held; }
+        break;
+      case FieldKind::IntegerVector3:
+        if (const auto *held = std::get_if<glm::ivec3>(&value)) { at<glm::ivec3>(object, slot.offset) = *held; }
+        break;
+      case FieldKind::Quaternion:
+        if (const auto *held = std::get_if<glm::quat>(&value)) { at<glm::quat>(object, slot.offset) = *held; }
+        break;
+      case FieldKind::Matrix3:
+        if (const auto *held = std::get_if<glm::mat3>(&value)) { at<glm::mat3>(object, slot.offset) = *held; }
+        break;
+      case FieldKind::Matrix4:
+        if (const auto *held = std::get_if<glm::mat4>(&value)) { at<glm::mat4>(object, slot.offset) = *held; }
         break;
       default: break;
     }

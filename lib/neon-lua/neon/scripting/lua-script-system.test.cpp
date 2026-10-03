@@ -6,7 +6,10 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <cstdint>
+
 #include <neon/common/transform.hpp>
+#include <neon/reflection/type-builder.hpp>
 #include <neon/testing/fake-entity-store.hpp>
 #include <neon/testing/memory-file-system.hpp>
 #include <neon/testing/recording-logger.hpp>
@@ -30,6 +33,33 @@ namespace
   using neon::testing::MemoryFileSystem;
   using neon::testing::RecordingLogger;
   using ::testing::HasSubstr;
+
+  /// A component of the engine with the kinds a script does not declare
+  /// itself: whole numbers of every width, two and four numbers, lists.
+  struct Gauge
+  {
+    std::uint8_t level = 7;
+    std::int16_t offset = -3;
+    std::uint64_t ticks = 10;
+    char mark = 'a';
+    glm::vec2 size{1.0f, 2.0f};
+    glm::vec4 tint{0.0f, 0.0f, 0.0f, 1.0f};
+    glm::ivec3 cell{1, 2, 3};
+    std::vector<int> steps{1, 2};
+  };
+
+  void Describe(neon::TypeBuilder<Gauge> &type)
+  {
+    type.Named("Gauge");
+    type.Field("level", &Gauge::level);
+    type.Field("offset", &Gauge::offset);
+    type.Field("ticks", &Gauge::ticks);
+    type.Field("mark", &Gauge::mark);
+    type.Field("size", &Gauge::size);
+    type.Field("tint", &Gauge::tint);
+    type.Field("cell", &Gauge::cell);
+    type.Field("steps", &Gauge::steps);
+  }
 
   /// Scripts in a file system in memory, under `assets://scripts`, run
   /// over a fake store that knows the engine's Transform.
@@ -165,7 +195,7 @@ namespace
   {
     AddScript("door.lua", "return Component:extend { parts = {} }");
     Load();
-    EXPECT_THAT(Errors(), HasSubstr("The default of 'parts' of Door is table; a field holds a number, a bool, text, a vec3, or a color"));
+    EXPECT_THAT(Errors(), HasSubstr("The default of 'parts' of Door is table; a field holds a number, a bool, text, a vec2, a vec3, a vec4, a color, a quat, a mat3, or a mat4"));
   }
 
   TEST_F(LuaScriptSystemTest, RefusesAComponentOfTheEngine)
@@ -486,5 +516,129 @@ namespace
     EXPECT_EQ(_logger->Count(LogLevel::Error), 0u) << Errors();
     EXPECT_EQ(_lua.GetComponentCount(), 1u);
     EXPECT_NE(_store.FindComponent("Door"), No_Component);
+  }
+
+  TEST_F(LuaScriptSystemTest, DeclaresFieldsOfTwoAndFourNumbers)
+  {
+    AddScript("plane.lua", R"(
+      local Plane = Component:extend { size = vec2(3, 4), tint = vec4(1, 0, 0, 0.5) }
+      local S = System:extend "Plane"
+      function S:update(entity, plane, dt)
+        plane.size.x = plane.size.x + 1
+        plane.tint = plane.tint * 2
+      end
+      return Plane, S
+    )");
+    ASSERT_TRUE(Load());
+    ASSERT_EQ(_logger->Count(LogLevel::Error), 0u) << Errors();
+
+    const ComponentFormat *format = _formats.Find("Plane");
+    ASSERT_NE(format, nullptr);
+    EXPECT_EQ(format->type->Find("size")->kind, neon::FieldKind::Vector2);
+    EXPECT_EQ(format->type->Find("tint")->kind, neon::FieldKind::Vector4);
+
+    const Entity a = Place("a");
+    Give(a, "Plane");
+    _lua.Update(_store, 0.1);
+
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 0u) << Errors();
+    EXPECT_EQ(std::get<glm::vec2>(Field(a, "Plane", "size")), glm::vec2(4.0f, 4.0f));
+    EXPECT_EQ(std::get<glm::vec4>(Field(a, "Plane", "tint")), glm::vec4(2.0f, 0.0f, 0.0f, 1.0f));
+  }
+
+  TEST_F(LuaScriptSystemTest, ReadsAndWritesEveryWholeKindAndTheListsOfTheEngine)
+  {
+    const ComponentId gauge = _store.RegisterComponent(ComponentInfo::Of<Gauge>("Gauge"));
+    _formats.Add(ComponentFormat::Of<Gauge>());
+
+    AddScript("reader.lua", R"(
+      local S = System:extend "Gauge"
+      function S:update(entity, gauge, dt)
+        seen = { gauge.level, gauge.offset, gauge.ticks, gauge.mark, gauge.size.y, gauge.tint.w, gauge.cell.z, gauge.steps[2] }
+        gauge.level = 255
+        gauge.offset = -32768
+        gauge.ticks = 1 << 40
+        gauge.mark = "z"
+        gauge.size = vec2(5, 6)
+        gauge.cell = vec3(7, 8, 9)
+        gauge.steps = { 4, 5, 6 }
+      end
+      return S
+    )");
+    ASSERT_TRUE(Load());
+
+    const Entity a = Place("a");
+    const Gauge standard;
+    _store.SetComponent(a, gauge, &standard);
+    _lua.Update(_store, 0.1);
+
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 0u) << Errors();
+    const auto *after = static_cast<const Gauge *>(_store.GetComponent(a, gauge));
+    ASSERT_NE(after, nullptr);
+    EXPECT_EQ(after->level, 255);
+    EXPECT_EQ(after->offset, -32768);
+    EXPECT_EQ(after->ticks, std::uint64_t{1} << 40);
+    EXPECT_EQ(after->mark, 'z');
+    EXPECT_EQ(after->size, glm::vec2(5.0f, 6.0f));
+    EXPECT_EQ(after->cell, glm::ivec3(7, 8, 9));
+    EXPECT_EQ(after->steps, (std::vector<int>{4, 5, 6}));
+  }
+
+  TEST_F(LuaScriptSystemTest, RefusesAWholeNumberOutsideTheRangeOfItsKind)
+  {
+    _store.RegisterComponent(ComponentInfo::Of<Gauge>("Gauge"));
+    _formats.Add(ComponentFormat::Of<Gauge>());
+
+    AddScript("over.lua", R"(
+      local S = System:extend "Gauge"
+      function S:update(entity, gauge, dt) gauge.level = 256 end
+      return S
+    )");
+    ASSERT_TRUE(Load());
+    const Entity a = Place("a");
+    const Gauge standard;
+    _store.SetComponent(a, _store.FindComponent("Gauge"), &standard);
+
+    _lua.Update(_store, 0.1);
+
+    EXPECT_THAT(Errors(), HasSubstr("'level' of Gauge holds a whole number from 0 to 255, not number"));
+  }
+
+  TEST_F(LuaScriptSystemTest, HoldsAQuaternionAndMatricesAndTurnsAVectorWithThem)
+  {
+    AddScript("frame.lua", R"(
+      local Frame = Component:extend { turn = quat(), basis = mat3(), place = mat4() }
+      local S = System:extend "Frame"
+      function S:update(entity, frame, dt)
+        frame.turn = quat.from_euler(0, 90, 0)
+        local forward = frame.turn * vec3(0, 0, -1)
+        frame.basis:set(1, 1, forward.x)
+        frame.place:set(1, 4, 5)
+        local p, y, r = frame.turn:to_euler()
+        yaw_seen = y
+        moved = frame.place * vec3(1, 2, 3)
+      end
+      return Frame, S
+    )");
+    ASSERT_TRUE(Load());
+    ASSERT_EQ(_logger->Count(LogLevel::Error), 0u) << Errors();
+
+    const ComponentFormat *format = _formats.Find("Frame");
+    ASSERT_NE(format, nullptr);
+    EXPECT_EQ(format->type->Find("turn")->kind, neon::FieldKind::Quaternion);
+    EXPECT_EQ(format->type->Find("basis")->kind, neon::FieldKind::Matrix3);
+    EXPECT_EQ(format->type->Find("place")->kind, neon::FieldKind::Matrix4);
+
+    const Entity a = Place("a");
+    Give(a, "Frame");
+    _lua.Update(_store, 0.1);
+
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 0u) << Errors();
+    const auto turn = std::get<glm::quat>(Field(a, "Frame", "turn"));
+    EXPECT_NEAR(turn.y, 0.7071f, 0.001f);
+    const auto basis = std::get<glm::mat3>(Field(a, "Frame", "basis"));
+    EXPECT_NEAR(basis[0][0], -1.0f, 0.001f);
+    const auto place = std::get<glm::mat4>(Field(a, "Frame", "place"));
+    EXPECT_EQ(place[3][0], 5.0f);
   }
 }

@@ -1,12 +1,19 @@
 #include "lua-component-handle.hpp"
 
+#include <cmath>
 #include <string>
 #include <variant>
+
+#include <glm/common.hpp>
 
 #include "lua-api.hpp"
 #include "lua-color-handle.hpp"
 #include "lua-host.hpp"
+#include "lua-vec2-handle.hpp"
 #include "lua-vec3-handle.hpp"
+#include "lua-vec4-handle.hpp"
+#include "lua-quat-handle.hpp"
+#include "lua-matrix-handle.hpp"
 
 namespace neon
 {
@@ -247,6 +254,35 @@ namespace neon
     else if (const auto *color = std::get_if<Color>(&value)) { push_bound_color(lua, *color, handle, field); }
     else if (const auto *texts = std::get_if<std::vector<std::string>>(&value)) { push_list(lua, *texts); }
     else if (const auto *numbers = std::get_if<std::vector<float>>(&value)) { push_list(lua, *numbers); }
+    else if (const auto *character = std::get_if<char>(&value)) { lua_pushlstring(lua, character, 1); }
+    else if (std::holds_alternative<std::uint8_t>(value) || std::holds_alternative<std::int16_t>(value)
+             || std::holds_alternative<std::uint16_t>(value) || std::holds_alternative<std::uint32_t>(value)
+             || std::holds_alternative<std::int64_t>(value) || std::holds_alternative<std::uint64_t>(value))
+    {
+      lua_pushinteger(lua, static_cast<lua_Integer>(WholeNumber(value)));
+    }
+    else if (const auto *two = std::get_if<glm::vec2>(&value)) { push_bound_vec2(lua, *two, handle, field); }
+    else if (const auto *four = std::get_if<glm::vec4>(&value)) { push_bound_vec4(lua, *four, handle, field); }
+    else if (const auto *whole_two = std::get_if<glm::ivec2>(&value))
+    {
+      // whole vectors are values of their own: a script writes the whole
+      // vector back
+      push_vec2(lua, glm::vec2(*whole_two));
+    }
+    else if (const auto *whole_three = std::get_if<glm::ivec3>(&value)) { push_vec3(lua, glm::vec3(*whole_three)); }
+    else if (const auto *wholes = std::get_if<std::vector<int>>(&value)) { push_list(lua, *wholes); }
+    else if (const auto *quaternion = std::get_if<glm::quat>(&value)) { push_bound_quat(lua, *quaternion, handle, field); }
+    else if (const auto *three = std::get_if<glm::mat3>(&value)) { push_bound_mat3(lua, *three, handle, field); }
+    else if (const auto *four = std::get_if<glm::mat4>(&value)) { push_bound_mat4(lua, *four, handle, field); }
+    else if (const auto *vectors = std::get_if<std::vector<glm::vec3>>(&value))
+    {
+      lua_createtable(lua, static_cast<int>(vectors->size()), 0);
+      for (std::size_t i = 0; i < vectors->size(); i++)
+      {
+        push_vec3(lua, (*vectors)[i]);
+        lua_rawseti(lua, -2, static_cast<lua_Integer>(i + 1));
+      }
+    }
     else if (const auto *length = std::get_if<FieldLength>(&value))
     {
       // a length as a style sheet writes one is three numbers to a script
@@ -293,6 +329,104 @@ namespace neon
         fits = test_vec3(lua, index) != nullptr;
         if (fits) { value = check_vec3(lua, index); }
         break;
+      case FieldKind::Vector2:
+        fits = test_vec2(lua, index) != nullptr;
+        if (fits) { value = check_vec2(lua, index); }
+        break;
+      case FieldKind::Vector4:
+        fits = test_vec4(lua, index) != nullptr;
+        if (fits) { value = check_vec4(lua, index); }
+        break;
+      case FieldKind::Quaternion:
+        fits = test_quat(lua, index) != nullptr;
+        if (fits) { value = check_quat(lua, index); }
+        break;
+      case FieldKind::Matrix3:
+      case FieldKind::Matrix4:
+      {
+        LuaMatrixHandle *matrix = test_matrix(lua, index);
+        fits = matrix != nullptr && matrix->size == (field.kind == FieldKind::Matrix3 ? 3 : 4);
+        if (fits)
+        {
+          const glm::mat4 given = matrix_value(lua, *matrix);
+          if (field.kind == FieldKind::Matrix3) { value = glm::mat3(given); }
+          else { value = given; }
+        }
+        break;
+      }
+      case FieldKind::IntegerVector2:
+        fits = test_vec2(lua, index) != nullptr;
+        if (fits)
+        {
+          const glm::vec2 given = check_vec2(lua, index);
+          fits = given == glm::round(given);
+          if (fits) { value = glm::ivec2(given); }
+        }
+        break;
+      case FieldKind::IntegerVector3:
+        fits = test_vec3(lua, index) != nullptr;
+        if (fits)
+        {
+          const glm::vec3 given = check_vec3(lua, index);
+          fits = given == glm::round(given);
+          if (fits) { value = glm::ivec3(given); }
+        }
+        break;
+      case FieldKind::Byte:
+      case FieldKind::Short:
+      case FieldKind::UnsignedShort:
+      case FieldKind::UnsignedInteger:
+      case FieldKind::Long:
+      case FieldKind::UnsignedLong:
+      {
+        double least = 0.0;
+        double most = 0.0;
+        RangeOfWholeKind(field.kind, least, most);
+        fits = lua_isinteger(lua, index) != 0;
+        if (fits)
+        {
+          const auto number = static_cast<double>(lua_tointeger(lua, index));
+          fits = number >= least && number <= most;
+          if (fits) { value = WholeValue(field.kind, number); }
+        }
+        break;
+      }
+      case FieldKind::Char:
+      {
+        std::size_t length = 0;
+        const char *text = lua_type(lua, index) == LUA_TSTRING ? lua_tolstring(lua, index, &length) : nullptr;
+        fits = text != nullptr && length == 1;
+        if (fits) { value = text[0]; }
+        break;
+      }
+      case FieldKind::IntegerList:
+      {
+        std::vector<float> numbers;
+        fits = read_list(lua, index, numbers);
+        std::vector<int> wholes;
+        for (const float number : numbers)
+        {
+          if (number != std::round(number)) { fits = false; }
+          wholes.push_back(static_cast<int>(number));
+        }
+        if (fits) { value = wholes; }
+        break;
+      }
+      case FieldKind::Vector3List:
+      {
+        fits = lua_istable(lua, index);
+        std::vector<glm::vec3> vectors;
+        const auto count = fits ? static_cast<lua_Integer>(lua_rawlen(lua, index)) : 0;
+        for (lua_Integer i = 1; i <= count && fits; i++)
+        {
+          lua_rawgeti(lua, index, i);
+          fits = test_vec3(lua, -1) != nullptr;
+          if (fits) { vectors.push_back(check_vec3(lua, -1)); }
+          lua_pop(lua, 1);
+        }
+        if (fits) { value = vectors; }
+        break;
+      }
       case FieldKind::Color:
         fits = test_color(lua, index) != nullptr;
         if (fits) { value = check_color(lua, index); }

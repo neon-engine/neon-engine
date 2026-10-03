@@ -107,8 +107,10 @@ is a field with its default, and the default says what the field holds:
 | `3` | A whole number | `count: 3` |
 | `2.5` | A number | `speed: 2.5` |
 | `"text"` | Text, such as a virtual path | `sound: assets://sounds/door.wav` |
-| `vec3(1, 2, 3)` | A vector | `at: [1, 2, 3]` |
+| `vec2(1, 2)`, `vec3(1, 2, 3)`, `vec4(1, 2, 3, 4)` | A vector of two, three, or four numbers | `at: [1, 2, 3]` |
 | `color(1, 0, 0)` | A colour | `tint: [1, 0, 0]` |
+| `quat()`, `quat(x, y, z, w)`, `quat.from_euler(pitch, yaw, roll)` | A quaternion | `turn: [0, 0, 0, 1]` |
+| `mat3()`, `mat4()` | A matrix, the identity to start with | `basis: [[1, 0, 0], [0, 1, 0], [0, 0, 1]]` |
 
 The fields are laid out in memory in the order of their names, each at the
 alignment of what it holds, so a component a script declares is one of the
@@ -121,9 +123,11 @@ A component with no fields, `Component:extend {}`, marks an entity, as
 `Persistent` does.
 
 What a component cannot hold yet: a list, a choice of words, a reference to
-another entity (#211), and a precise number. A field named with an
-underscore first is refused, since that is for private state (below), and a
-function is refused, since behaviour belongs in a system.
+another entity (#211), and the narrower whole numbers (a script's whole
+number is an `Integer`; a byte or a short is reached on the engine's
+components, not declared). A field named with an underscore first is
+refused, since that is for private state (below), and a function is
+refused, since behaviour belongs in a system.
 
 ## Systems
 
@@ -190,9 +194,23 @@ says when the entity lost the component.
 
 A vector or a colour read from a component is bound to it: `p = t.position;
 p.y = 1` changes the Transform. One made in the script, `vec3(1, 2, 3)` or
-`a + b`, is a value of its own until it is assigned to a field. Vectors add,
-subtract, scale, and have `length`, `normalized`, `dot`, `cross`,
-`distance`, and `copy`. A colour has `r`, `g`, `b`, `a`.
+`a + b`, is a value of its own until it is assigned to a field. Vectors of
+two, three, and four numbers add, subtract, scale, and have `length`,
+`normalized`, `dot`, `distance`, and `copy`; `vec3` has `cross` too. A
+colour has `r`, `g`, `b`, `a`. A quaternion has `x`, `y`, `z`, `w`,
+`normalized`, `inverse`, `to_euler`, and `*` with a quaternion or a vector;
+`quat.from_euler(pitch, yaw, roll)` makes one from degrees as a Transform
+reads them. A matrix is reached by `m:get(row, column)` and `m:set(row,
+column, value)`, rows and columns from 1, with `m:row(i)` as a vector and
+`*` with a matrix or a vector. A whole number of any width of the engine's
+components is a Lua integer, refused outside the range of its kind; a
+character is a string of one; a whole vector is read as a `vec2` or `vec3`
+and written back whole. A list is a table, and the table is a copy: reading
+`gauge.steps` copies the list out, and a change to the table reaches the
+component when the table is assigned back, `gauge.steps = steps`. Every
+other value above reaches the component in place. A handle that reaches a
+list in place is a follow-up (#99); until then a list a hook walks every
+frame is the one cost to know of.
 
 ## What a script reaches of the engine
 

@@ -62,7 +62,7 @@ local Component = {}
 
 ---Declares a component: every entry of the table is a field with its
 ---default, and the default says what the field holds: a bool, a whole
----number, a number, text, a vec3, or a color. The name is that of the file,
+---number, a number, text, a vec2, a vec3, a vec4, a color, a quat, a mat3, or a mat4. The name is that of the file,
 ---unless given in front of the table.
 ---@overload fun(self: Component, fields: table): Component
 ---@param name string
@@ -165,6 +165,159 @@ function vec3_class:copy() end
 ---@param z number
 ---@return vec3
 function vec3(x, y, z) end
+
+---A vector of two numbers, as vec3 is.
+---@class vec2
+---@field x number
+---@field y number
+---@operator add(vec2): vec2
+---@operator sub(vec2): vec2
+---@operator mul(number|vec2): vec2
+---@operator div(number): vec2
+---@operator unm: vec2
+local vec2_class = {}
+
+---@return number
+function vec2_class:length() end
+
+---@return vec2
+function vec2_class:normalized() end
+
+---@param other vec2
+---@return number
+function vec2_class:dot(other) end
+
+---@param other vec2
+---@return number
+function vec2_class:distance(other) end
+
+---@return vec2
+function vec2_class:copy() end
+
+---@overload fun(): vec2
+---@overload fun(n: number): vec2
+---@param x number
+---@param y number
+---@return vec2
+function vec2(x, y) end
+
+---A vector of four numbers, as vec3 is.
+---@class vec4
+---@field x number
+---@field y number
+---@field z number
+---@field w number
+---@operator add(vec4): vec4
+---@operator sub(vec4): vec4
+---@operator mul(number|vec4): vec4
+---@operator div(number): vec4
+---@operator unm: vec4
+local vec4_class = {}
+
+---@return number
+function vec4_class:length() end
+
+---@return vec4
+function vec4_class:normalized() end
+
+---@param other vec4
+---@return number
+function vec4_class:dot(other) end
+
+---@param other vec4
+---@return number
+function vec4_class:distance(other) end
+
+---@return vec4
+function vec4_class:copy() end
+
+---@overload fun(): vec4
+---@overload fun(n: number): vec4
+---@param x number
+---@param y number
+---@param z number
+---@param w number
+---@return vec4
+function vec4(x, y, z, w) end
+
+---A quaternion, a turn. One read from a component is bound to its field.
+---@class quat
+---@field x number
+---@field y number
+---@field z number
+---@field w number
+---@operator mul(quat): quat
+---@operator mul(vec3): vec3
+local quat_class = {}
+
+---@return quat
+function quat_class:normalized() end
+
+---@return quat
+function quat_class:inverse() end
+
+---Pitch, yaw, and roll in degrees, as a Transform writes them.
+---@return number, number, number
+function quat_class:to_euler() end
+
+---@return quat
+function quat_class:copy() end
+
+---@class quatlib
+---@overload fun(): quat
+---@overload fun(x: number, y: number, z: number, w: number): quat
+quat = {}
+
+---From pitch, yaw, and roll in degrees, applied yaw, then pitch, then
+---roll, as a Transform does.
+---@param pitch number
+---@param yaw number
+---@param roll number|nil
+---@return quat
+function quat.from_euler(pitch, yaw, roll) end
+
+---A matrix of three or four rows. Rows and columns count from 1. One read
+---from a component is bound to its field and writes through on set.
+---@class matrix
+---@operator mul(matrix): matrix
+---@operator mul(vec3): vec3
+---@operator mul(vec4): vec4
+local matrix_class = {}
+
+---@param row integer
+---@param column integer
+---@return number
+function matrix_class:get(row, column) end
+
+---@param row integer
+---@param column integer
+---@param value number
+function matrix_class:set(row, column, value) end
+
+---A row as a vec3 or a vec4.
+---@param row integer
+---@return vec3|vec4
+function matrix_class:row(row) end
+
+---@return matrix
+function matrix_class:copy() end
+
+---The identity, or three rows as vec3.
+---@overload fun(): matrix
+---@param a vec3
+---@param b vec3
+---@param c vec3
+---@return matrix
+function mat3(a, b, c) end
+
+---The identity, or four rows as vec4.
+---@overload fun(): matrix
+---@param a vec4
+---@param b vec4
+---@param c vec4
+---@param d vec4
+---@return matrix
+function mat4(a, b, c, d) end
 
 ---A colour, as a vector is.
 ---@class color

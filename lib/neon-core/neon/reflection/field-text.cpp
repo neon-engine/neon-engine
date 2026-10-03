@@ -307,6 +307,84 @@ namespace neon
       return joined;
     }
 
+    if (const auto *character = std::get_if<char>(&value)) { return std::string(1, *character); }
+    if (std::holds_alternative<std::uint8_t>(value) || std::holds_alternative<std::int16_t>(value)
+        || std::holds_alternative<std::uint16_t>(value) || std::holds_alternative<std::uint32_t>(value)
+        || std::holds_alternative<std::int64_t>(value) || std::holds_alternative<std::uint64_t>(value))
+    {
+      return std::format("{:.0f}", WholeNumber(value));
+    }
+
+    if (const auto *vector = std::get_if<glm::vec2>(&value))
+    {
+      return FormatNumber(vector->x) + " " + FormatNumber(vector->y);
+    }
+    if (const auto *vector = std::get_if<glm::vec4>(&value))
+    {
+      return FormatNumber(vector->x) + " " + FormatNumber(vector->y) + " " + FormatNumber(vector->z) + " "
+             + FormatNumber(vector->w);
+    }
+    if (const auto *vector = std::get_if<glm::ivec2>(&value)) { return std::format("{} {}", vector->x, vector->y); }
+    if (const auto *vector = std::get_if<glm::ivec3>(&value))
+    {
+      return std::format("{} {} {}", vector->x, vector->y, vector->z);
+    }
+    if (const auto *wholes = std::get_if<std::vector<int>>(&value))
+    {
+      std::string joined;
+      for (const int number : *wholes)
+      {
+        if (!joined.empty()) { joined += ' '; }
+        joined += std::format("{}", number);
+      }
+      return joined;
+    }
+    if (const auto *quaternion = std::get_if<glm::quat>(&value))
+    {
+      return FormatNumber(quaternion->x) + " " + FormatNumber(quaternion->y) + " " + FormatNumber(quaternion->z) + " "
+             + FormatNumber(quaternion->w);
+    }
+    if (const auto *matrix = std::get_if<glm::mat3>(&value))
+    {
+      // rows apart by commas; glm keeps columns, so a row is read across
+      std::string joined;
+      for (int row = 0; row < 3; row++)
+      {
+        if (!joined.empty()) { joined += ", "; }
+        for (int column = 0; column < 3; column++)
+        {
+          if (column > 0) { joined += ' '; }
+          joined += FormatNumber((*matrix)[column][row]);
+        }
+      }
+      return joined;
+    }
+    if (const auto *matrix = std::get_if<glm::mat4>(&value))
+    {
+      std::string joined;
+      for (int row = 0; row < 4; row++)
+      {
+        if (!joined.empty()) { joined += ", "; }
+        for (int column = 0; column < 4; column++)
+        {
+          if (column > 0) { joined += ' '; }
+          joined += FormatNumber((*matrix)[column][row]);
+        }
+      }
+      return joined;
+    }
+    if (const auto *vectors = std::get_if<std::vector<glm::vec3>>(&value))
+    {
+      // one vector a line, as a list of lists has no other flat form
+      std::string joined;
+      for (const auto &vector : *vectors)
+      {
+        if (!joined.empty()) { joined += ", "; }
+        joined += FormatNumber(vector.x) + " " + FormatNumber(vector.y) + " " + FormatNumber(vector.z);
+      }
+      return joined;
+    }
+
     return "";
   }
 
@@ -468,6 +546,165 @@ namespace neon
       case FieldKind::Group:
         error = std::format("{} is a group and holds no value of its own", what);
         return false;
+
+      case FieldKind::Byte:
+      case FieldKind::Short:
+      case FieldKind::UnsignedShort:
+      case FieldKind::UnsignedInteger:
+      case FieldKind::Long:
+      case FieldKind::UnsignedLong:
+      {
+        double number = 0.0;
+        double least = 0.0;
+        double most = 0.0;
+        RangeOfWholeKind(field.kind, least, most);
+        if (!ParseNumber(text, number) || number != std::round(number) || number < least || number > most)
+        {
+          return refuse(Describe(field.kind));
+        }
+        value = WholeValue(field.kind, number);
+        return true;
+      }
+
+      case FieldKind::Char:
+      {
+        const std::string trimmed = Trimmed(text);
+        if (trimmed.size() != 1) { return refuse("one character"); }
+        value = trimmed.front();
+        return true;
+      }
+
+      case FieldKind::Vector2:
+      {
+        const auto words = Words(text);
+        glm::vec2 vector{0.0f};
+        if (words.size() != 2 || !ParseNumber(words[0], vector.x) || !ParseNumber(words[1], vector.y))
+        {
+          return refuse("two numbers, such as 1 2");
+        }
+        value = vector;
+        return true;
+      }
+
+      case FieldKind::Vector4:
+      {
+        const auto words = Words(text);
+        glm::vec4 vector{0.0f};
+        if (words.size() != 4 || !ParseNumber(words[0], vector.x) || !ParseNumber(words[1], vector.y)
+            || !ParseNumber(words[2], vector.z) || !ParseNumber(words[3], vector.w))
+        {
+          return refuse("four numbers, such as 1 2 3 4");
+        }
+        value = vector;
+        return true;
+      }
+
+      case FieldKind::IntegerVector2:
+      case FieldKind::IntegerVector3:
+      case FieldKind::IntegerList:
+      {
+        const auto words = Words(text);
+        const std::size_t wanted = field.kind == FieldKind::IntegerVector2 ? 2 : field.kind == FieldKind::IntegerVector3 ? 3 : 0;
+        if (wanted != 0 && words.size() != wanted)
+        {
+          return refuse(std::format("{} whole numbers", wanted));
+        }
+
+        std::vector<int> wholes;
+        for (const auto &word : words)
+        {
+          float number = 0.0f;
+          if (!ParseNumber(word, number) || number != std::round(number) || std::abs(number) > 2.0e9f)
+          {
+            return refuse("whole numbers, such as 1 2 3");
+          }
+          wholes.push_back(static_cast<int>(number));
+        }
+
+        if (field.kind == FieldKind::IntegerVector2) { value = glm::ivec2{wholes[0], wholes[1]}; }
+        else if (field.kind == FieldKind::IntegerVector3) { value = glm::ivec3{wholes[0], wholes[1], wholes[2]}; }
+        else { value = wholes; }
+        return true;
+      }
+
+      case FieldKind::Quaternion:
+      {
+        const auto words = Words(text);
+        glm::quat quaternion{1.0f, 0.0f, 0.0f, 0.0f};
+        if (words.size() != 4 || !ParseNumber(words[0], quaternion.x) || !ParseNumber(words[1], quaternion.y)
+            || !ParseNumber(words[2], quaternion.z) || !ParseNumber(words[3], quaternion.w))
+        {
+          return refuse("a quaternion of four numbers x y z w, such as 0 0 0 1");
+        }
+        value = quaternion;
+        return true;
+      }
+
+      case FieldKind::Matrix3:
+      case FieldKind::Matrix4:
+      {
+        // rows apart by commas, their numbers by spaces
+        const int size = field.kind == FieldKind::Matrix3 ? 3 : 4;
+        glm::mat4 matrix{1.0f};
+        int row = 0;
+        std::string each;
+        for (const char letter : text + ",")
+        {
+          if (letter != ',')
+          {
+            each += letter;
+            continue;
+          }
+          const auto words = Words(each);
+          each.clear();
+          if (words.empty()) { continue; }
+          if (row >= size || static_cast<int>(words.size()) != size)
+          {
+            return refuse(std::format("{} rows of {} numbers apart by commas", size, size));
+          }
+          for (int column = 0; column < size; column++)
+          {
+            if (!ParseNumber(words[static_cast<std::size_t>(column)], matrix[column][row]))
+            {
+              return refuse(std::format("{} rows of {} numbers apart by commas", size, size));
+            }
+          }
+          row++;
+        }
+        if (row != size) { return refuse(std::format("{} rows of {} numbers apart by commas", size, size)); }
+
+        if (size == 3) { value = glm::mat3(matrix); }
+        else { value = matrix; }
+        return true;
+      }
+
+      case FieldKind::Vector3List:
+      {
+        // vectors apart by commas, their numbers by spaces
+        std::vector<glm::vec3> vectors;
+        std::string each;
+        for (const char letter : text + ",")
+        {
+          if (letter != ',')
+          {
+            each += letter;
+            continue;
+          }
+          const auto words = Words(each);
+          each.clear();
+          if (words.empty()) { continue; }
+
+          glm::vec3 vector{0.0f};
+          if (words.size() != 3 || !ParseNumber(words[0], vector.x) || !ParseNumber(words[1], vector.y)
+              || !ParseNumber(words[2], vector.z))
+          {
+            return refuse("vectors of three numbers apart by commas, such as 1 2 3, 4 5 6");
+          }
+          vectors.push_back(vector);
+        }
+        value = vectors;
+        return true;
+      }
     }
 
     return false;

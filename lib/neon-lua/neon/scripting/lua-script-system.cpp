@@ -10,7 +10,11 @@
 #include "lua-entity-handle.hpp"
 #include "lua-libraries.hpp"
 #include "lua-sandbox.hpp"
+#include "lua-vec2-handle.hpp"
 #include "lua-vec3-handle.hpp"
+#include "lua-vec4-handle.hpp"
+#include "lua-quat-handle.hpp"
+#include "lua-matrix-handle.hpp"
 
 namespace neon
 {
@@ -123,7 +127,11 @@ namespace neon
     open_sandbox(_lua);
     open_entity_handles(_lua);
     open_component_handles(_lua);
+    open_vec2_handles(_lua);
     open_vec3_handles(_lua);
+    open_vec4_handles(_lua);
+    open_quat_handles(_lua);
+    open_matrix_handles(_lua);
     open_color_handles(_lua);
     open_classes(_lua);
     open_world_library(_lua);

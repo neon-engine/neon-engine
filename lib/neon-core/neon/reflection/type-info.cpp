@@ -24,7 +24,7 @@ namespace neon
     /// one number.
     std::string Written(const FieldKind kind, const std::vector<float> &numbers)
     {
-      if (kind == FieldKind::Float || kind == FieldKind::Integer) { return std::format("{}", numbers.front()); }
+      if (kind == FieldKind::Float || IsWholeKind(kind)) { return std::format("{}", numbers.front()); }
 
       std::string written;
       for (const float number : numbers)
@@ -164,12 +164,43 @@ namespace neon
     // the numbers that the limits are about
     std::vector<float> numbers;
     if (kind == FieldKind::Float) { numbers.push_back(std::get<float>(value)); }
-    if (kind == FieldKind::Integer) { numbers.push_back(static_cast<float>(std::get<int>(value))); }
+    if (IsWholeKind(kind)) { numbers.push_back(static_cast<float>(WholeNumber(value))); }
 
     if (kind == FieldKind::Vector3)
     {
       const auto &vector = std::get<glm::vec3>(value);
       numbers = {vector.x, vector.y, vector.z};
+    }
+    if (kind == FieldKind::Vector2)
+    {
+      const auto &vector = std::get<glm::vec2>(value);
+      numbers = {vector.x, vector.y};
+    }
+    if (kind == FieldKind::Vector4)
+    {
+      const auto &vector = std::get<glm::vec4>(value);
+      numbers = {vector.x, vector.y, vector.z, vector.w};
+    }
+    if (kind == FieldKind::IntegerVector2)
+    {
+      const auto &vector = std::get<glm::ivec2>(value);
+      numbers = {static_cast<float>(vector.x), static_cast<float>(vector.y)};
+    }
+    if (kind == FieldKind::IntegerVector3)
+    {
+      const auto &vector = std::get<glm::ivec3>(value);
+      numbers = {static_cast<float>(vector.x), static_cast<float>(vector.y), static_cast<float>(vector.z)};
+    }
+    if (kind == FieldKind::IntegerList)
+    {
+      for (const int number : std::get<std::vector<int>>(value)) { numbers.push_back(static_cast<float>(number)); }
+    }
+    if (kind == FieldKind::Vector3List)
+    {
+      for (const auto &vector : std::get<std::vector<glm::vec3>>(value))
+      {
+        numbers.insert(numbers.end(), {vector.x, vector.y, vector.z});
+      }
     }
 
     if (kind == FieldKind::FloatList)

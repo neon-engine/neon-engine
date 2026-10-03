@@ -313,4 +313,70 @@ namespace
     EXPECT_TRUE(neon::Same(Read("1, 3 32", FieldKind::Layers), layers));
     EXPECT_TRUE(neon::Same(Read("", FieldKind::Layers), FieldValue{std::vector<float>{}}));
   }
-} // namespace
+
+  TEST(FieldText, ReadsAndWritesEveryWholeKindWithinItsRange)
+  {
+    EXPECT_EQ(std::get<std::uint8_t>(Read("255", FieldKind::Byte)), 255);
+    EXPECT_EQ(std::get<std::int16_t>(Read("-32768", FieldKind::Short)), -32768);
+    EXPECT_EQ(std::get<std::uint16_t>(Read("65535", FieldKind::UnsignedShort)), 65535);
+    EXPECT_EQ(std::get<std::uint32_t>(Read("4294967295", FieldKind::UnsignedInteger)), 4294967295u);
+    EXPECT_EQ(std::get<std::int64_t>(Read("-9007199254740992", FieldKind::Long)), -9007199254740992LL);
+    EXPECT_EQ(std::get<std::uint64_t>(Read("9007199254740992", FieldKind::UnsignedLong)), 9007199254740992ULL);
+
+    EXPECT_EQ(ProblemOf("256", FieldKind::Byte), "'field' of Thing is '256', where a whole number from 0 to 255 was expected");
+    EXPECT_EQ(ProblemOf("-1", FieldKind::UnsignedShort), "'field' of Thing is '-1', where a whole number from 0 to 65535 was expected");
+    EXPECT_EQ(ProblemOf("1.5", FieldKind::Short), "'field' of Thing is '1.5', where a whole number from -32768 to 32767 was expected");
+
+    EXPECT_EQ(neon::FormatField(FieldValue{std::uint8_t{200}}), "200");
+    EXPECT_EQ(neon::FormatField(FieldValue{std::int64_t{-5}}), "-5");
+  }
+
+  TEST(FieldText, ReadsOneCharacterAndTheVectorsOfTwoAndFourNumbers)
+  {
+    EXPECT_EQ(std::get<char>(Read(" q ", FieldKind::Char)), 'q');
+    EXPECT_EQ(ProblemOf("qq", FieldKind::Char), "'field' of Thing is 'qq', where one character was expected");
+
+    EXPECT_EQ(std::get<glm::vec2>(Read("1 2", FieldKind::Vector2)), glm::vec2(1.0f, 2.0f));
+    EXPECT_EQ(std::get<glm::vec4>(Read("1, 2, 3, 4", FieldKind::Vector4)), glm::vec4(1.0f, 2.0f, 3.0f, 4.0f));
+    EXPECT_EQ(ProblemOf("1 2 3", FieldKind::Vector2), "'field' of Thing is '1 2 3', where two numbers, such as 1 2 was expected");
+
+    EXPECT_EQ(std::get<glm::ivec2>(Read("3 4", FieldKind::IntegerVector2)), glm::ivec2(3, 4));
+    EXPECT_EQ(std::get<glm::ivec3>(Read("3 4 5", FieldKind::IntegerVector3)), glm::ivec3(3, 4, 5));
+    EXPECT_EQ(ProblemOf("3 4.5 5", FieldKind::IntegerVector3), "'field' of Thing is '3 4.5 5', where whole numbers, such as 1 2 3 was expected");
+
+    EXPECT_EQ(neon::FormatField(FieldValue{glm::vec2(1.5f, 2.0f)}), "1.5 2");
+    EXPECT_EQ(neon::FormatField(FieldValue{glm::vec4(1.0f, 2.0f, 3.0f, 4.0f)}), "1 2 3 4");
+    EXPECT_EQ(neon::FormatField(FieldValue{glm::ivec3(1, 2, 3)}), "1 2 3");
+  }
+
+  TEST(FieldText, ReadsListsOfWholeNumbersAndOfVectors)
+  {
+    EXPECT_THAT(std::get<std::vector<int>>(Read("1 2 3", FieldKind::IntegerList)), ElementsAre(1, 2, 3));
+    EXPECT_EQ(ProblemOf("1 2.5", FieldKind::IntegerList), "'field' of Thing is '1 2.5', where whole numbers, such as 1 2 3 was expected");
+
+    const auto vectors = std::get<std::vector<glm::vec3>>(Read("1 2 3, 4 5 6", FieldKind::Vector3List));
+    EXPECT_THAT(vectors, ElementsAre(glm::vec3(1.0f, 2.0f, 3.0f), glm::vec3(4.0f, 5.0f, 6.0f)));
+    EXPECT_EQ(neon::FormatField(FieldValue{vectors}), "1 2 3, 4 5 6");
+    EXPECT_EQ(neon::FormatField(FieldValue{std::vector<int>{7, 8}}), "7 8");
+  }
+
+  TEST(FieldText, ReadsAQuaternionAndTheMatricesAsRows)
+  {
+    const auto quaternion = std::get<glm::quat>(Read("0 0 0 1", FieldKind::Quaternion));
+    EXPECT_EQ(quaternion, glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
+    EXPECT_EQ(ProblemOf("0 0 1", FieldKind::Quaternion), "'field' of Thing is '0 0 1', where a quaternion of four numbers x y z w, such as 0 0 0 1 was expected");
+    EXPECT_EQ(neon::FormatField(FieldValue{glm::quat(1.0f, 0.5f, 0.0f, 0.0f)}), "0.5 0 0 1");
+
+    const auto three = std::get<glm::mat3>(Read("1 2 3, 4 5 6, 7 8 9", FieldKind::Matrix3));
+    EXPECT_EQ(three[0][0], 1.0f);
+    EXPECT_EQ(three[1][0], 2.0f);
+    EXPECT_EQ(three[0][1], 4.0f);
+    EXPECT_EQ(neon::FormatField(FieldValue{three}), "1 2 3, 4 5 6, 7 8 9");
+    EXPECT_EQ(ProblemOf("1 2 3, 4 5 6", FieldKind::Matrix3), "'field' of Thing is '1 2 3, 4 5 6', where 3 rows of 3 numbers apart by commas was expected");
+
+    const auto four = std::get<glm::mat4>(Read("1 0 0 5, 0 1 0 6, 0 0 1 7, 0 0 0 1", FieldKind::Matrix4));
+    EXPECT_EQ(four[3][0], 5.0f);
+    EXPECT_EQ(four[3][2], 7.0f);
+    EXPECT_EQ(neon::FormatField(FieldValue{four}), "1 0 0 5, 0 1 0 6, 0 0 1 7, 0 0 0 1");
+  }
+}

@@ -321,6 +321,210 @@ namespace neon
     return true;
   }
 
+  bool DataReader::Read(const std::string &name, glm::vec2 &value) const
+  {
+    float numbers[2] = {};
+    std::size_t count = 0;
+    if (!ReadNumbers(name, numbers, 2, 2, count)) { return false; }
+
+    value = {numbers[0], numbers[1]};
+    return true;
+  }
+
+  bool DataReader::Read(const std::string &name, glm::vec4 &value) const
+  {
+    float numbers[4] = {};
+    std::size_t count = 0;
+    if (!ReadNumbers(name, numbers, 4, 4, count)) { return false; }
+
+    value = {numbers[0], numbers[1], numbers[2], numbers[3]};
+    return true;
+  }
+
+  bool DataReader::Read(const std::string &name, glm::ivec2 &value) const
+  {
+    std::vector<int> wholes;
+    if (!Read(name, wholes)) { return false; }
+    if (wholes.size() != 2)
+    {
+      Report(*Ask(name), std::format("'{}' of {} holds {} values, where two whole numbers were expected", name, _where, wholes.size()));
+      return false;
+    }
+    value = {wholes[0], wholes[1]};
+    return true;
+  }
+
+  bool DataReader::Read(const std::string &name, glm::ivec3 &value) const
+  {
+    std::vector<int> wholes;
+    if (!Read(name, wholes)) { return false; }
+    if (wholes.size() != 3)
+    {
+      Report(*Ask(name), std::format("'{}' of {} holds {} values, where three whole numbers were expected", name, _where, wholes.size()));
+      return false;
+    }
+    value = {wholes[0], wholes[1], wholes[2]};
+    return true;
+  }
+
+  bool DataReader::Read(const std::string &name, std::vector<int> &value) const
+  {
+    const auto *found = Ask(name);
+    if (found == nullptr) { return false; }
+
+    if (!found->IsList())
+    {
+      Report(*found, std::format(
+               "'{}' of {} is {}, where a list of whole numbers was expected",
+               name, _where, DataValue::Describe(found->GetKind())));
+      return false;
+    }
+
+    std::vector<int> wholes;
+    for (const auto &item : found->GetItems())
+    {
+      double number = 0.0;
+      if (!item.GetNumber(number) || number != std::floor(number) || std::fabs(number) > 2147483647.0)
+      {
+        Report(item, std::format("'{}' of {} holds {}, where a whole number was expected", name, _where, DataValue::Describe(item.GetKind())));
+        return false;
+      }
+      wholes.push_back(static_cast<int>(number));
+    }
+
+    value = wholes;
+    return true;
+  }
+
+  bool DataReader::Read(const std::string &name, std::vector<glm::vec3> &value) const
+  {
+    const auto *found = Ask(name);
+    if (found == nullptr) { return false; }
+
+    if (!found->IsList())
+    {
+      Report(*found, std::format(
+               "'{}' of {} is {}, where a list of lists of three numbers was expected",
+               name, _where, DataValue::Describe(found->GetKind())));
+      return false;
+    }
+
+    std::vector<glm::vec3> vectors;
+    for (const auto &item : found->GetItems())
+    {
+      if (!item.IsList() || item.GetItems().size() != 3)
+      {
+        Report(item, std::format("'{}' of {} holds {}, where a list of three numbers was expected", name, _where, DataValue::Describe(item.GetKind())));
+        return false;
+      }
+      glm::vec3 vector{0.0f};
+      float *parts[3] = {&vector.x, &vector.y, &vector.z};
+      for (std::size_t i = 0; i < 3; i++)
+      {
+        if (!item.GetItems()[i].GetNumber(*parts[i]))
+        {
+          Report(item, std::format("'{}' of {} holds {}, where a number was expected", name, _where, DataValue::Describe(item.GetItems()[i].GetKind())));
+          return false;
+        }
+      }
+      vectors.push_back(vector);
+    }
+
+    value = vectors;
+    return true;
+  }
+
+  bool DataReader::Read(const std::string &name, glm::quat &value) const
+  {
+    float numbers[4] = {};
+    std::size_t count = 0;
+    if (!ReadNumbers(name, numbers, 4, 4, count)) { return false; }
+
+    value = glm::quat{numbers[3], numbers[0], numbers[1], numbers[2]};
+    return true;
+  }
+
+  // Helpers of the matrices, for this file alone.
+  namespace
+  {
+    /// Reads `size` rows of `size` numbers into the columns of a matrix,
+    /// which is how glm keeps one.
+    bool read_rows(const DataReader &reader, const DataValue *found, const std::string &name, const std::string &where, const int size, glm::mat4 &matrix)
+    {
+      const std::string expected = std::format("{} rows of {} numbers", size, size);
+      if (!found->IsList() || static_cast<int>(found->GetItems().size()) != size)
+      {
+        reader.Report(*found, std::format("'{}' of {} is {}, where {} were expected", name, where, DataValue::Describe(found->GetKind()), expected));
+        return false;
+      }
+      for (int row = 0; row < size; row++)
+      {
+        const DataValue &line = found->GetItems()[static_cast<std::size_t>(row)];
+        if (!line.IsList() || static_cast<int>(line.GetItems().size()) != size)
+        {
+          reader.Report(line, std::format("'{}' of {} holds a row that is not {} numbers, where {} were expected", name, where, size, expected));
+          return false;
+        }
+        for (int column = 0; column < size; column++)
+        {
+          if (!line.GetItems()[static_cast<std::size_t>(column)].GetNumber(matrix[column][row]))
+          {
+            reader.Report(line, std::format("'{}' of {} holds a row with something that is not a number, where {} were expected", name, where, expected));
+            return false;
+          }
+        }
+      }
+      return true;
+    }
+  }
+
+  bool DataReader::Read(const std::string &name, glm::mat3 &value) const
+  {
+    const auto *found = Ask(name);
+    if (found == nullptr) { return false; }
+    glm::mat4 matrix{1.0f};
+    if (!read_rows(*this, found, name, _where, 3, matrix)) { return false; }
+    value = glm::mat3(matrix);
+    return true;
+  }
+
+  bool DataReader::Read(const std::string &name, glm::mat4 &value) const
+  {
+    const auto *found = Ask(name);
+    if (found == nullptr) { return false; }
+    glm::mat4 matrix{1.0f};
+    if (!read_rows(*this, found, name, _where, 4, matrix)) { return false; }
+    value = matrix;
+    return true;
+  }
+
+  bool DataReader::ReadWhole(
+    const std::string &name,
+    const double least,
+    const double most,
+    const std::string &expected,
+    double &value) const
+  {
+    const auto *found = Ask(name);
+    if (found == nullptr) { return false; }
+
+    double number = 0.0;
+    if (!found->GetNumber(number))
+    {
+      Report(*found, std::format("'{}' of {} is {}, where {} was expected", name, _where, DataValue::Describe(found->GetKind()), expected));
+      return false;
+    }
+
+    if (number != std::floor(number) || number < least || number > most)
+    {
+      Report(*found, std::format("'{}' of {} is {}, where {} was expected", name, _where, number, expected));
+      return false;
+    }
+
+    value = number;
+    return true;
+  }
+
   bool DataReader::ReadScale(const std::string &name, glm::vec3 &value) const
   {
     if (const auto *found = Ask(name); found != nullptr)

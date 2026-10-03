@@ -125,6 +125,96 @@ namespace neon
           value = field.choices[index];
           break;
         }
+        case FieldKind::Byte:
+        case FieldKind::Short:
+        case FieldKind::UnsignedShort:
+        case FieldKind::UnsignedInteger:
+        case FieldKind::Long:
+        case FieldKind::UnsignedLong:
+        {
+          double least = 0.0;
+          double most = 0.0;
+          RangeOfWholeKind(field.kind, least, most);
+          double read = 0.0;
+          if (!reader.ReadWhole(field.name, least, most, Describe(field.kind), read)) { return false; }
+          value = WholeValue(field.kind, read);
+          break;
+        }
+        case FieldKind::Char:
+        {
+          std::string read;
+          if (!reader.Read(field.name, read)) { return false; }
+          if (read.size() != 1)
+          {
+            reader.Report(*reader.ReadValue(field.name), std::format("'{}' of {} is '{}', where one character was expected", field.name, reader.GetWhere(), read));
+            return false;
+          }
+          value = read.front();
+          break;
+        }
+        case FieldKind::Vector2:
+        {
+          glm::vec2 read{0.0f};
+          if (!reader.Read(field.name, read)) { return false; }
+          value = read;
+          break;
+        }
+        case FieldKind::Vector4:
+        {
+          glm::vec4 read{0.0f};
+          if (!reader.Read(field.name, read)) { return false; }
+          value = read;
+          break;
+        }
+        case FieldKind::IntegerVector2:
+        {
+          glm::ivec2 read{0};
+          if (!reader.Read(field.name, read)) { return false; }
+          value = read;
+          break;
+        }
+        case FieldKind::IntegerVector3:
+        {
+          glm::ivec3 read{0};
+          if (!reader.Read(field.name, read)) { return false; }
+          value = read;
+          break;
+        }
+        case FieldKind::IntegerList:
+        {
+          std::vector<int> read;
+          if (!reader.Read(field.name, read)) { return false; }
+          value = read;
+          break;
+        }
+        case FieldKind::Vector3List:
+        {
+          std::vector<glm::vec3> read;
+          if (!reader.Read(field.name, read)) { return false; }
+          value = read;
+          break;
+        }
+        case FieldKind::Quaternion:
+        {
+          glm::quat read{1.0f, 0.0f, 0.0f, 0.0f};
+          if (!reader.Read(field.name, read)) { return false; }
+          value = read;
+          break;
+        }
+        case FieldKind::Matrix3:
+        {
+          glm::mat3 read{1.0f};
+          if (!reader.Read(field.name, read)) { return false; }
+          value = read;
+          break;
+        }
+        case FieldKind::Matrix4:
+        {
+          glm::mat4 read{1.0f};
+          if (!reader.Read(field.name, read)) { return false; }
+          value = read;
+          break;
+        }
         case FieldKind::Length:
         {
           const auto *written = reader.ReadValue(field.name);
@@ -283,6 +373,68 @@ namespace neon
     }
 
     if (const auto *numbers = std::get_if<std::vector<float>>(&value)) { return ListOf(*numbers); }
+
+    if (const auto *character = std::get_if<char>(&value)) { return DataValue::Text(std::string(1, *character)); }
+    if (std::holds_alternative<std::uint8_t>(value) || std::holds_alternative<std::int16_t>(value)
+        || std::holds_alternative<std::uint16_t>(value) || std::holds_alternative<std::uint32_t>(value)
+        || std::holds_alternative<std::int64_t>(value) || std::holds_alternative<std::uint64_t>(value))
+    {
+      return DataValue::Number(WholeNumber(value));
+    }
+    if (const auto *vector = std::get_if<glm::vec2>(&value)) { return ListOf(std::vector{vector->x, vector->y}); }
+    if (const auto *vector = std::get_if<glm::vec4>(&value))
+    {
+      return ListOf(std::vector{vector->x, vector->y, vector->z, vector->w});
+    }
+    if (const auto *vector = std::get_if<glm::ivec2>(&value))
+    {
+      auto list = DataValue::List();
+      list.Add(DataValue::Number(vector->x));
+      list.Add(DataValue::Number(vector->y));
+      return list;
+    }
+    if (const auto *vector = std::get_if<glm::ivec3>(&value))
+    {
+      auto list = DataValue::List();
+      list.Add(DataValue::Number(vector->x));
+      list.Add(DataValue::Number(vector->y));
+      list.Add(DataValue::Number(vector->z));
+      return list;
+    }
+    if (const auto *wholes = std::get_if<std::vector<int>>(&value))
+    {
+      auto list = DataValue::List();
+      for (const int number : *wholes) { list.Add(DataValue::Number(number)); }
+      return list;
+    }
+    if (const auto *vectors = std::get_if<std::vector<glm::vec3>>(&value))
+    {
+      auto list = DataValue::List();
+      for (const auto &vector : *vectors) { list.Add(ListOf(vector)); }
+      return list;
+    }
+    if (const auto *quaternion = std::get_if<glm::quat>(&value))
+    {
+      return ListOf(std::vector{quaternion->x, quaternion->y, quaternion->z, quaternion->w});
+    }
+    if (const auto *matrix = std::get_if<glm::mat3>(&value))
+    {
+      auto rows = DataValue::List();
+      for (int row = 0; row < 3; row++)
+      {
+        rows.Add(ListOf(std::vector{(*matrix)[0][row], (*matrix)[1][row], (*matrix)[2][row]}));
+      }
+      return rows;
+    }
+    if (const auto *matrix = std::get_if<glm::mat4>(&value))
+    {
+      auto rows = DataValue::List();
+      for (int row = 0; row < 4; row++)
+      {
+        rows.Add(ListOf(std::vector{(*matrix)[0][row], (*matrix)[1][row], (*matrix)[2][row], (*matrix)[3][row]}));
+      }
+      return rows;
+    }
 
     return {};
   }

@@ -5,6 +5,7 @@
 #include <vector>
 
 #include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 #include <neon/common/color.hpp>
 
@@ -96,6 +97,38 @@ namespace neon
 
     /// A list of three numbers, or one number that stands for all three.
     bool ReadScale(const std::string &name, glm::vec3 &value) const;
+
+    /// A list of two numbers.
+    bool Read(const std::string &name, glm::vec2 &value) const;
+
+    /// A list of four numbers.
+    bool Read(const std::string &name, glm::vec4 &value) const;
+
+    /// A list of two whole numbers.
+    bool Read(const std::string &name, glm::ivec2 &value) const;
+
+    /// A list of three whole numbers.
+    bool Read(const std::string &name, glm::ivec3 &value) const;
+
+    /// A list of whole numbers, of any length.
+    bool Read(const std::string &name, std::vector<int> &value) const;
+
+    /// A list of lists of three numbers.
+    bool Read(const std::string &name, std::vector<glm::vec3> &value) const;
+
+    /// A list of four numbers x, y, z, w.
+    bool Read(const std::string &name, glm::quat &value) const;
+
+    /// Three lists of three numbers, the rows.
+    bool Read(const std::string &name, glm::mat3 &value) const;
+
+    /// Four lists of four numbers, the rows.
+    bool Read(const std::string &name, glm::mat4 &value) const;
+
+    /// A whole number from `least` to `most`, read as a double, which is
+    /// how every number is read; `expected` names the range in a message,
+    /// such as `a whole number from 0 to 255`.
+    bool ReadWhole(const std::string &name, double least, double most, const std::string &expected, double &value) const;
 
     /// A list of three numbers for red, green, and blue, or four with alpha.
     bool Read(const std::string &name, Color &value) const;

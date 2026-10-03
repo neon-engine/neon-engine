@@ -55,6 +55,22 @@ namespace neon
       else if constexpr (std::is_same_v<V, FieldLength>) { return FieldKind::Length; }
       else if constexpr (std::is_same_v<V, std::vector<float>>) { return FieldKind::FloatList; }
       else if constexpr (std::is_same_v<V, double>) { return FieldKind::Double; }
+      else if constexpr (std::is_same_v<V, std::uint8_t>) { return FieldKind::Byte; }
+      else if constexpr (std::is_same_v<V, char>) { return FieldKind::Char; }
+      else if constexpr (std::is_same_v<V, std::int16_t>) { return FieldKind::Short; }
+      else if constexpr (std::is_same_v<V, std::uint16_t>) { return FieldKind::UnsignedShort; }
+      else if constexpr (std::is_same_v<V, std::uint32_t>) { return FieldKind::UnsignedInteger; }
+      else if constexpr (std::is_same_v<V, std::int64_t>) { return FieldKind::Long; }
+      else if constexpr (std::is_same_v<V, std::uint64_t>) { return FieldKind::UnsignedLong; }
+      else if constexpr (std::is_same_v<V, glm::vec2>) { return FieldKind::Vector2; }
+      else if constexpr (std::is_same_v<V, glm::vec4>) { return FieldKind::Vector4; }
+      else if constexpr (std::is_same_v<V, glm::ivec2>) { return FieldKind::IntegerVector2; }
+      else if constexpr (std::is_same_v<V, glm::ivec3>) { return FieldKind::IntegerVector3; }
+      else if constexpr (std::is_same_v<V, std::vector<int>>) { return FieldKind::IntegerList; }
+      else if constexpr (std::is_same_v<V, std::vector<glm::vec3>>) { return FieldKind::Vector3List; }
+      else if constexpr (std::is_same_v<V, glm::quat>) { return FieldKind::Quaternion; }
+      else if constexpr (std::is_same_v<V, glm::mat3>) { return FieldKind::Matrix3; }
+      else if constexpr (std::is_same_v<V, glm::mat4>) { return FieldKind::Matrix4; }
       else
       {
         // depends on V, so that it is only looked at for a type that gets here

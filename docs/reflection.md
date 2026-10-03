@@ -69,6 +69,23 @@ It is deduced from the member.
 | `std::uint32_t`, with `Layers()` | Layers | One layer from 1 to 32, or a list of them. `[]` is none |
 | Several, with `Group()` | Group | A map |
 | `FieldLength` | Length | A number of pixels, or text as a style sheet writes a length: `"50%"`, `auto`, `"calc(100% + -20px)"` |
+| `std::uint8_t` | Byte | A whole number from 0 to 255 |
+| `char` | Char | One character |
+| `std::int16_t`, `std::uint16_t` | Short, UnsignedShort | A whole number in the range of the type |
+| `std::uint32_t` | UnsignedInteger | A whole number from 0 |
+| `std::int64_t`, `std::uint64_t` | Long, UnsignedLong | A whole number up to 2^53 either way, the digits a double keeps, since a recipe reads every number as one |
+| `glm::vec2`, `glm::vec4` | Vector2, Vector4 | `[x, y]`, `[x, y, z, w]` |
+| `glm::ivec2`, `glm::ivec3` | IntegerVector2, IntegerVector3 | `[x, y]`, `[x, y, z]` of whole numbers |
+| `std::vector<int>` | IntegerList | A list of whole numbers |
+| `std::vector<glm::vec3>` | Vector3List | A list of lists of three numbers |
+| `glm::quat` | Quaternion | `[x, y, z, w]`. A `Transform` keeps its rotation as degrees, see below; this is for a component with a quaternion of its own |
+| `glm::mat3`, `glm::mat4` | Matrix3, Matrix4 | A list of rows, each a list of three or four numbers |
+
+A `Transform` holds its rotation as a quaternion in code and writes it as
+pitch, yaw, and roll in degrees, through a `Field<glm::vec3>` with a get and
+a set. That stays: degrees are what a person writes in a recipe. The
+Quaternion kind is for a component that holds a turn of its own and wants
+it written as the four numbers.
 
 ### Ways to describe a field
 
@@ -178,6 +195,14 @@ back.
 | Length | `12px`, `50%`, `auto` |
 | FloatList | `1 2 3 4` |
 | Layers | `1 3` |
+| Byte, Short, UnsignedShort, UnsignedInteger, Long, UnsignedLong | `12`, refused outside the range of the type |
+| Char | `q` |
+| Vector2, Vector4 | `1 2`, `1 2 3 4` |
+| IntegerVector2, IntegerVector3 | `1 2`, `1 2 3` |
+| IntegerList | `1 2 3` |
+| Vector3List | `1 2 3, 4 5 6`, the vectors apart by commas |
+| Quaternion | `0 0 0 1`, as x y z w |
+| Matrix3, Matrix4 | `1 0 0, 0 1 0, 0 0 1`, the rows apart by commas |
 
 ## Reaching a field by name
 

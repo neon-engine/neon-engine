@@ -1,5 +1,5 @@
-#include <format>
 #include <cstdint>
+#include <format>
 #include <string>
 #include <vector>
 
@@ -40,6 +40,49 @@ namespace
     std::vector<float> gears;
     double odometer = 0.0;
   };
+
+  /// Every kind that came with #283: whole numbers of every width, a
+  /// character, two and four numbers, whole vectors, and lists.
+  struct Gauge
+  {
+    std::uint8_t level = 7;
+    char mark = 'a';
+    std::int16_t offset = -3;
+    std::uint16_t slots = 4;
+    std::uint32_t flags = 5;
+    std::int64_t ticks = -6;
+    std::uint64_t total = 8;
+    glm::vec2 size{1.0f, 2.0f};
+    glm::vec4 tint{0.0f, 0.0f, 0.0f, 1.0f};
+    glm::ivec2 cell{1, 2};
+    glm::ivec3 voxel{1, 2, 3};
+    std::vector<int> steps;
+    std::vector<glm::vec3> path;
+    glm::quat turn{1.0f, 0.0f, 0.0f, 0.0f};
+    glm::mat3 basis{1.0f};
+    glm::mat4 frame{1.0f};
+  };
+
+  void Describe(TypeBuilder<Gauge> &type)
+  {
+    type.Named("Gauge");
+    type.Field("level", &Gauge::level);
+    type.Field("mark", &Gauge::mark);
+    type.Field("offset", &Gauge::offset);
+    type.Field("slots", &Gauge::slots);
+    type.Field("flags", &Gauge::flags);
+    type.Field("ticks", &Gauge::ticks);
+    type.Field("total", &Gauge::total);
+    type.Field("size", &Gauge::size).AtLeast(0);
+    type.Field("tint", &Gauge::tint);
+    type.Field("cell", &Gauge::cell);
+    type.Field("voxel", &Gauge::voxel);
+    type.Field("steps", &Gauge::steps);
+    type.Field("path", &Gauge::path);
+    type.Field("turn", &Gauge::turn);
+    type.Field("basis", &Gauge::basis);
+    type.Field("frame", &Gauge::frame);
+  }
 
   void Describe(TypeBuilder<Car> &type)
   {
@@ -1014,4 +1057,161 @@ namespace
       type.Find("corners")->Check(neon::FieldValue{1.0f}, "'corners' of Box"),
       "'corners' of Box takes a list of numbers");
   }
-} // namespace
+
+  TEST(FieldDocuments, ReadsEveryKindOfNumberVectorAndListAndWritesBackWhatDiffers)
+  {
+    const TypeInfo type = TypeInfo::Of<Gauge>();
+    auto map = DataValue::Map();
+    map.Set("level", DataValue::Number(255));
+    map.Set("mark", DataValue::Text("z"));
+    map.Set("offset", DataValue::Number(-32768));
+    map.Set("slots", DataValue::Number(65535));
+    map.Set("flags", DataValue::Number(4294967295.0));
+    map.Set("ticks", DataValue::Number(-9007199254740992.0));
+    map.Set("total", DataValue::Number(9007199254740992.0));
+    auto size = DataValue::List();
+    size.Add(DataValue::Number(3.0f));
+    size.Add(DataValue::Number(4.0f));
+    map.Set("size", size);
+    auto tint = DataValue::List();
+    for (const float part : {0.5f, 0.25f, 1.0f, 0.75f}) { tint.Add(DataValue::Number(part)); }
+    map.Set("tint", tint);
+    auto cell = DataValue::List();
+    cell.Add(DataValue::Number(5));
+    cell.Add(DataValue::Number(6));
+    map.Set("cell", cell);
+    auto voxel = DataValue::List();
+    for (const int part : {7, 8, 9}) { voxel.Add(DataValue::Number(part)); }
+    map.Set("voxel", voxel);
+    auto steps = DataValue::List();
+    for (const int part : {1, 2, 3}) { steps.Add(DataValue::Number(part)); }
+    map.Set("steps", steps);
+    auto path = DataValue::List();
+    for (const float x : {1.0f, 2.0f})
+    {
+      auto point = DataValue::List();
+      point.Add(DataValue::Number(x));
+      point.Add(DataValue::Number(0.0f));
+      point.Add(DataValue::Number(0.0f));
+      path.Add(point);
+    }
+    map.Set("path", path);
+
+    std::vector<std::string> errors;
+    Gauge gauge;
+    neon::ReadFields(type, DataReader(map, "gauges.yml", "Gauge of entity 'g'", errors), &gauge);
+
+    EXPECT_THAT(errors, IsEmpty());
+    EXPECT_EQ(gauge.level, 255);
+    EXPECT_EQ(gauge.mark, 'z');
+    EXPECT_EQ(gauge.offset, -32768);
+    EXPECT_EQ(gauge.slots, 65535);
+    EXPECT_EQ(gauge.flags, 4294967295u);
+    EXPECT_EQ(gauge.ticks, -9007199254740992LL);
+    EXPECT_EQ(gauge.total, 9007199254740992ULL);
+    EXPECT_EQ(gauge.size, glm::vec2(3.0f, 4.0f));
+    EXPECT_EQ(gauge.tint, glm::vec4(0.5f, 0.25f, 1.0f, 0.75f));
+    EXPECT_EQ(gauge.cell, glm::ivec2(5, 6));
+    EXPECT_EQ(gauge.voxel, glm::ivec3(7, 8, 9));
+    EXPECT_THAT(gauge.steps, ElementsAre(1, 2, 3));
+    EXPECT_THAT(gauge.path, ElementsAre(glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(2.0f, 0.0f, 0.0f)));
+
+    const Gauge standard;
+    auto written = DataValue::Map();
+    neon::WriteFields(type, &gauge, &standard, written);
+    EXPECT_EQ(written.GetEntries().size(), 13u);
+    double level = 0.0;
+    EXPECT_TRUE(written.Find("level")->GetNumber(level));
+    EXPECT_EQ(level, 255.0);
+    std::string mark;
+    EXPECT_TRUE(written.Find("mark")->GetText(mark));
+    EXPECT_EQ(mark, "z");
+    EXPECT_EQ(written.Find("path")->GetItems().size(), 2u);
+
+    // what keeps its default is left out
+    auto same = DataValue::Map();
+    neon::WriteFields(type, &standard, &standard, same);
+    EXPECT_TRUE(same.GetEntries().empty());
+  }
+
+  TEST(FieldDocuments, RefusesANumberOutsideTheRangeOfItsKindAndSaysTheRange)
+  {
+    const TypeInfo type = TypeInfo::Of<Gauge>();
+    auto map = DataValue::Map();
+    map.Set("level", DataValue::Number(256));
+    map.Set("offset", DataValue::Number(1.5f));
+    map.Set("mark", DataValue::Text("zz"));
+    auto cell = DataValue::List();
+    cell.Add(DataValue::Number(1));
+    map.Set("cell", cell);
+
+    std::vector<std::string> errors;
+    Gauge gauge;
+    neon::ReadFields(type, DataReader(map, "gauges.yml", "Gauge of entity 'g'", errors), &gauge);
+
+    EXPECT_EQ(errors.size(), 4u) << ::testing::PrintToString(errors);
+    EXPECT_THAT(errors[0], ::testing::HasSubstr("'level' of Gauge of entity 'g' is 256, where a whole number from 0 to 255 was expected"));
+    EXPECT_THAT(errors[1], ::testing::HasSubstr("'mark' of Gauge of entity 'g' is 'zz', where one character was expected"));
+    EXPECT_THAT(errors[2], ::testing::HasSubstr("'offset' of Gauge of entity 'g' is 1.5, where a whole number from -32768 to 32767 was expected"));
+    EXPECT_THAT(errors[3], ::testing::HasSubstr("'cell' of Gauge of entity 'g' holds 1 values, where two whole numbers were expected"));
+    EXPECT_EQ(gauge.level, 7);
+  }
+
+  TEST(FieldDocuments, ReadsAQuaternionAndMatricesAsListsOfRowsAndWritesThemBack)
+  {
+    const TypeInfo type = TypeInfo::Of<Gauge>();
+    auto map = DataValue::Map();
+    auto turn = DataValue::List();
+    for (const float part : {0.0f, 0.70710678f, 0.0f, 0.70710678f}) { turn.Add(DataValue::Number(part)); }
+    map.Set("turn", turn);
+    auto basis = DataValue::List();
+    for (int row = 0; row < 3; row++)
+    {
+      auto line = DataValue::List();
+      for (int column = 0; column < 3; column++) { line.Add(DataValue::Number(static_cast<float>(row * 3 + column + 1))); }
+      basis.Add(line);
+    }
+    map.Set("basis", basis);
+    auto frame = DataValue::List();
+    for (int row = 0; row < 4; row++)
+    {
+      auto line = DataValue::List();
+      for (int column = 0; column < 4; column++)
+      {
+        line.Add(DataValue::Number(row == column ? 1.0f : column == 3 ? static_cast<float>(row + 5) : 0.0f));
+      }
+      frame.Add(line);
+    }
+    map.Set("frame", frame);
+
+    std::vector<std::string> errors;
+    Gauge gauge;
+    neon::ReadFields(type, DataReader(map, "gauges.yml", "Gauge of entity 'g'", errors), &gauge);
+
+    EXPECT_THAT(errors, IsEmpty());
+    EXPECT_NEAR(gauge.turn.y, 0.7071f, 0.001f);
+    EXPECT_NEAR(gauge.turn.w, 0.7071f, 0.001f);
+    EXPECT_EQ(gauge.basis[1][0], 2.0f);
+    EXPECT_EQ(gauge.basis[0][2], 7.0f);
+    EXPECT_EQ(gauge.frame[3][0], 5.0f);
+    EXPECT_EQ(gauge.frame[3][2], 7.0f);
+
+    const Gauge standard;
+    auto written = DataValue::Map();
+    neon::WriteFields(type, &gauge, &standard, written);
+    ASSERT_NE(written.Find("basis"), nullptr);
+    EXPECT_EQ(written.Find("basis")->GetItems().size(), 3u);
+    float cell = 0.0f;
+    EXPECT_TRUE(written.Find("basis")->GetItems()[2].GetItems()[0].GetNumber(cell));
+    EXPECT_EQ(cell, 7.0f);
+    EXPECT_EQ(written.Find("turn")->GetItems().size(), 4u);
+
+    auto bad = DataValue::Map();
+    auto rows = DataValue::List();
+    rows.Add(DataValue::Number(1.0f));
+    bad.Set("basis", rows);
+    neon::ReadFields(type, DataReader(bad, "gauges.yml", "Gauge of entity 'g'", errors), &gauge);
+    ASSERT_EQ(errors.size(), 1u);
+    EXPECT_THAT(errors[0], ::testing::HasSubstr("where 3 rows of 3 numbers were expected"));
+  }
+}

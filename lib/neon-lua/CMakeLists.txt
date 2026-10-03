@@ -36,13 +36,21 @@ add_library(${TARGET} STATIC
         neon/scripting/lua-host.hpp
         neon/scripting/lua-libraries.cpp
         neon/scripting/lua-libraries.hpp
+        neon/scripting/lua-matrix-handle.cpp
+        neon/scripting/lua-matrix-handle.hpp
+        neon/scripting/lua-quat-handle.cpp
+        neon/scripting/lua-quat-handle.hpp
         neon/scripting/lua-sandbox.cpp
         neon/scripting/lua-sandbox.hpp
         neon/scripting/lua-script-system.cpp
         neon/scripting/lua-script-system.hpp
         neon/scripting/lua-system-declaration.hpp
+        neon/scripting/lua-vec2-handle.cpp
+        neon/scripting/lua-vec2-handle.hpp
         neon/scripting/lua-vec3-handle.cpp
         neon/scripting/lua-vec3-handle.hpp
+        neon/scripting/lua-vec4-handle.cpp
+        neon/scripting/lua-vec4-handle.hpp
 )
 neon_warnings(${TARGET})
 

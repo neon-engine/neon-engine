@@ -5,7 +5,11 @@
 
 #include "lua-api.hpp"
 #include "lua-color-handle.hpp"
+#include "lua-vec2-handle.hpp"
 #include "lua-vec3-handle.hpp"
+#include "lua-vec4-handle.hpp"
+#include "lua-quat-handle.hpp"
+#include "lua-matrix-handle.hpp"
 
 namespace neon
 {
@@ -109,6 +113,39 @@ namespace neon
         field.standard = check_color(lua, -1);
         return true;
       }
+      if (test_vec2(lua, -1) != nullptr)
+      {
+        field.kind = FieldKind::Vector2;
+        field.standard = check_vec2(lua, -1);
+        return true;
+      }
+      if (test_vec4(lua, -1) != nullptr)
+      {
+        field.kind = FieldKind::Vector4;
+        field.standard = check_vec4(lua, -1);
+        return true;
+      }
+      if (test_quat(lua, -1) != nullptr)
+      {
+        field.kind = FieldKind::Quaternion;
+        field.standard = check_quat(lua, -1);
+        return true;
+      }
+      if (LuaMatrixHandle *matrix = test_matrix(lua, -1))
+      {
+        const glm::mat4 value = matrix_value(lua, *matrix);
+        if (matrix->size == 3)
+        {
+          field.kind = FieldKind::Matrix3;
+          field.standard = glm::mat3(value);
+        }
+        else
+        {
+          field.kind = FieldKind::Matrix4;
+          field.standard = value;
+        }
+        return true;
+      }
       return false;
     }
 
@@ -204,7 +241,7 @@ namespace neon
       if (!infer_field(lua, field))
       {
         problem = "The default of '" + field.name + "' of " + declaration.name + " is " + luaL_typename(lua, -1)
-                  + "; a field holds a number, a bool, text, a vec3, or a color";
+                  + "; a field holds a number, a bool, text, a vec2, a vec3, a vec4, a color, a quat, a mat3, or a mat4";
         lua_settop(lua, top);
         return false;
       }

@@ -179,4 +179,76 @@ namespace
 
     EXPECT_FALSE(format.write(store, store.CreateEntity("without"), written));
   }
+
+  TEST(ScriptComponentLayoutTest, LaysOutEveryKindOfNumberAndVector)
+  {
+    const ScriptComponentLayout layout("Gauge", "", {
+      {"level", FieldKind::Byte, std::uint8_t{7}, ""},
+      {"mark", FieldKind::Char, 'a', ""},
+      {"offset", FieldKind::Short, std::int16_t{-3}, ""},
+      {"slots", FieldKind::UnsignedShort, std::uint16_t{4}, ""},
+      {"flags", FieldKind::UnsignedInteger, std::uint32_t{5}, ""},
+      {"ticks", FieldKind::Long, std::int64_t{-6}, ""},
+      {"total", FieldKind::UnsignedLong, std::uint64_t{8}, ""},
+      {"size", FieldKind::Vector2, glm::vec2{1.0f, 2.0f}, ""},
+      {"tint", FieldKind::Vector4, glm::vec4{1.0f}, ""},
+      {"cell", FieldKind::IntegerVector2, glm::ivec2{1, 2}, ""},
+      {"voxel", FieldKind::IntegerVector3, glm::ivec3{1, 2, 3}, ""},
+    });
+    ASSERT_EQ(layout.GetProblem(), "");
+    EXPECT_EQ(layout.GetAlignment(), alignof(glm::vec4) > alignof(std::int64_t) ? alignof(glm::vec4) : alignof(std::int64_t));
+
+    const auto info = layout.GetComponentInfo();
+    const auto type = layout.GetTypeInfo();
+    std::vector<std::max_align_t> from(layout.GetSize() / sizeof(std::max_align_t) + 1);
+    std::vector<std::max_align_t> to(layout.GetSize() / sizeof(std::max_align_t) + 1);
+    info.construct(from.data(), 1);
+    info.construct(to.data(), 1);
+
+    EXPECT_TRUE(neon::Same(type->Find("level")->get(from.data()), FieldValue{std::uint8_t{7}}));
+    EXPECT_TRUE(neon::Same(type->Find("ticks")->get(from.data()), FieldValue{std::int64_t{-6}}));
+    EXPECT_TRUE(neon::Same(type->Find("voxel")->get(from.data()), FieldValue{glm::ivec3{1, 2, 3}}));
+
+    type->Find("level")->set(from.data(), std::uint8_t{200});
+    type->Find("mark")->set(from.data(), 'q');
+    type->Find("size")->set(from.data(), glm::vec2{5.0f, 6.0f});
+    type->Find("total")->set(from.data(), std::uint64_t{1} << 40);
+    info.copy(to.data(), from.data(), 1);
+
+    EXPECT_TRUE(neon::Same(type->Find("level")->get(to.data()), FieldValue{std::uint8_t{200}}));
+    EXPECT_TRUE(neon::Same(type->Find("mark")->get(to.data()), FieldValue{'q'}));
+    EXPECT_TRUE(neon::Same(type->Find("size")->get(to.data()), FieldValue{glm::vec2{5.0f, 6.0f}}));
+    EXPECT_TRUE(neon::Same(type->Find("total")->get(to.data()), FieldValue{std::uint64_t{1} << 40}));
+
+    info.destruct(from.data(), 1);
+    info.destruct(to.data(), 1);
+  }
+
+  TEST(ScriptComponentLayoutTest, StillRefusesTheListsAScriptCannotHold)
+  {
+    EXPECT_THAT(
+      ScriptComponentLayout("Door", "", {{"steps", FieldKind::IntegerList, std::vector<int>{}, ""}}).GetProblem(),
+      HasSubstr("holds a list of whole numbers, which a script's component cannot"));
+  }
+
+  TEST(ScriptComponentLayoutTest, LaysOutAQuaternionAndTheMatrices)
+  {
+    const ScriptComponentLayout layout("Frame", "", {
+      {"turn", FieldKind::Quaternion, glm::quat{1.0f, 0.0f, 0.0f, 0.0f}, ""},
+      {"basis", FieldKind::Matrix3, glm::mat3{2.0f}, ""},
+      {"place", FieldKind::Matrix4, glm::mat4{1.0f}, ""},
+    });
+    ASSERT_EQ(layout.GetProblem(), "");
+
+    const auto info = layout.GetComponentInfo();
+    const auto type = layout.GetTypeInfo();
+    std::vector<std::max_align_t> memory(layout.GetSize() / sizeof(std::max_align_t) + 1);
+    info.construct(memory.data(), 1);
+
+    EXPECT_TRUE(neon::Same(type->Find("basis")->get(memory.data()), FieldValue{glm::mat3{2.0f}}));
+    type->Find("place")->set(memory.data(), glm::mat4{3.0f});
+    EXPECT_TRUE(neon::Same(type->Find("place")->get(memory.data()), FieldValue{glm::mat4{3.0f}}));
+
+    info.destruct(memory.data(), 1);
+  }
 }
