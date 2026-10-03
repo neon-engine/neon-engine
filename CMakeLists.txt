@@ -151,9 +151,11 @@ foreach (APP IN LISTS APP_TARGETS)
 
   # ensure binaries can run anywhere, assuming they are ABI compatible that is
   # todo consider downgrading GCC so this is not necessary
-  # Apple has no static C++ runtime to link. It ships with the system instead
+  # Apple has no static C++ runtime to link. It ships with the system instead.
+  # The flag is the linker's alone: given to the compiler as well, clang
+  # reports it as unused, which -Werror turns into a failed build
   if (NOT APPLE)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libstdc++")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libstdc++")
   endif ()
 
   add_subdirectory(app/${APP})
