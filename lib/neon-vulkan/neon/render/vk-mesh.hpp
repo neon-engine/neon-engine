@@ -31,9 +31,10 @@ namespace neon
     /// Draws the mesh as part of the frame that is being recorded.
     void Use() const override;
 
-    /// Draws the mesh into `commands`, which the shadow pass records apart
-    /// from the frame.
-    void Draw(VkCommandBuffer commands) const;
+    /// Draws the mesh into `commands` `instances` times over, the shaders
+    /// told which object each is by gl_InstanceIndex, counted from
+    /// `first_instance`. The shadow pass records apart from the frame.
+    void Draw(VkCommandBuffer commands, uint32_t instances = 1, uint32_t first_instance = 0) const;
 
     void CleanUp() override;
   };

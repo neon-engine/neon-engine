@@ -54,9 +54,9 @@ namespace neon
     for (const auto &mesh : _meshes) { mesh.Use(); }
   }
 
-  void VK_Model::Draw(const VkCommandBuffer commands) const
+  void VK_Model::Draw(const VkCommandBuffer commands, const uint32_t instances, const uint32_t first_instance) const
   {
-    for (const auto &mesh : _meshes) { mesh.Draw(commands); }
+    for (const auto &mesh : _meshes) { mesh.Draw(commands, instances, first_instance); }
   }
 
   void VK_Model::CleanUp()

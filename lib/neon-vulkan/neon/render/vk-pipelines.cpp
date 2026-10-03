@@ -32,10 +32,16 @@ namespace neon
       return false;
     }
 
+    // the shadow pass names the cascade it draws with a push constant,
+    // which the shaders of the scene leave alone
+    constexpr VkPushConstantRange cascade{VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(uint32_t)};
+
     VkPipelineLayoutCreateInfo pipeline_layout{};
     pipeline_layout.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     pipeline_layout.setLayoutCount = 1;
     pipeline_layout.pSetLayouts = &_descriptor_layout;
+    pipeline_layout.pushConstantRangeCount = 1;
+    pipeline_layout.pPushConstantRanges = &cascade;
 
     if (vkCreatePipelineLayout(_device->Device(), &pipeline_layout, nullptr, &_pipeline_layout) != VK_SUCCESS)
     {

@@ -21,13 +21,15 @@ namespace
 
   TEST(VkPipelinesTest, BindsTheSceneAndTheObjectFirstForBothHalvesOfAShader)
   {
+    // the scene by an offset into its buffer, the objects of the frame whole,
+    // read by index
     constexpr VkShaderStageFlags both = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 
     EXPECT_EQ(VK_Pipelines::kBindings[0].binding, 0u);
     EXPECT_EQ(VK_Pipelines::kBindings[0].descriptorType, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC);
     EXPECT_EQ(VK_Pipelines::kBindings[0].stageFlags, both);
     EXPECT_EQ(VK_Pipelines::kBindings[1].binding, 1u);
-    EXPECT_EQ(VK_Pipelines::kBindings[1].descriptorType, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC);
+    EXPECT_EQ(VK_Pipelines::kBindings[1].descriptorType, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
     EXPECT_EQ(VK_Pipelines::kBindings[1].stageFlags, both);
   }
 

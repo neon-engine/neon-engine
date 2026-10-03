@@ -32,9 +32,10 @@ namespace
     EXPECT_EQ(offsetof(VK_DirectionLight, ambient), 1 * vec4);
     EXPECT_EQ(offsetof(VK_DirectionLight, diffuse), 2 * vec4);
     EXPECT_EQ(offsetof(VK_DirectionLight, specular), 3 * vec4);
-    EXPECT_EQ(offsetof(VK_DirectionLight, light_view_projection), 4 * vec4);
-    EXPECT_EQ(offsetof(VK_DirectionLight, shadow), 4 * vec4 + mat4);
-    EXPECT_EQ(sizeof(VK_DirectionLight), 5 * vec4 + mat4);
+    EXPECT_EQ(offsetof(VK_DirectionLight, cascades), 4 * vec4);
+    EXPECT_EQ(offsetof(VK_DirectionLight, splits), 4 * vec4 + neon::kMax_Shadow_Cascades * mat4);
+    EXPECT_EQ(offsetof(VK_DirectionLight, shadow), 5 * vec4 + neon::kMax_Shadow_Cascades * mat4);
+    EXPECT_EQ(sizeof(VK_DirectionLight), 6 * vec4 + neon::kMax_Shadow_Cascades * mat4);
   }
 
   TEST(VkShaderData, LaysOutAPointLightAsTheShadersReadIt)
@@ -93,7 +94,8 @@ namespace
     EXPECT_EQ(scene->view_position, glm::vec4(0.0f));
     EXPECT_EQ(scene->light_counts, glm::ivec4(0));
     EXPECT_EQ(scene->direction_light.diffuse, glm::vec4(0.0f));
-    EXPECT_EQ(scene->direction_light.light_view_projection, glm::mat4(1.0f));
+    EXPECT_EQ(scene->direction_light.cascades[3], glm::mat4(1.0f));
+    EXPECT_EQ(scene->direction_light.splits, glm::vec4(0.0f));
     EXPECT_EQ(scene->direction_light.shadow, glm::vec4(0.0f));
     EXPECT_EQ(scene->point_lights[63].attenuation, glm::vec4(0.0f));
     EXPECT_EQ(scene->spot_lights[63].cutoff, glm::vec4(0.0f));

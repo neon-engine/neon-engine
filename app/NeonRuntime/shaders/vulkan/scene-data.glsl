@@ -3,19 +3,22 @@
 
 #define MAX_POINT_LIGHTS 64
 #define MAX_SPOT_LIGHTS 64
+#define MAX_SHADOW_CASCADES 4
 
 struct DirectionLight {
     vec4 direction;
     vec4 ambient;
     vec4 diffuse;
     vec4 specular;
-    // where the shadow map looks: the world as the light sees it, with
-    // the depth from 0 to 1 as Vulkan has it
-    mat4 light_view_projection;
+    // where the shadow map looks, one matrix a cascade: the world as the
+    // light sees it, with the depth from 0 to 1 as Vulkan has it
+    mat4 cascades[MAX_SHADOW_CASCADES];
+    // how far from the camera each cascade reaches, along its view
+    vec4 splits;
     // x is 1 when the shadow map is to be compared against and 0 when the
     // light casts no shadow, y the size of a texel of the map across it,
     // z the bias a depth is moved towards the light by before it is
-    // compared, see shadows.glsl
+    // compared, w how many cascades there are, see shadows.glsl
     vec4 shadow;
 };
 
@@ -53,7 +56,7 @@ layout (std140, set = 0, binding = 0) uniform SceneData {
 } scene;
 
 // what differs from one object to the next
-layout (std140, set = 0, binding = 1) uniform ObjectData {
+struct ObjectData {
     mat4 model;
     mat4 normal_matrix;
     vec4 color;
@@ -64,14 +67,23 @@ layout (std140, set = 0, binding = 1) uniform ObjectData {
     vec4 material;
     // x metallic, y roughness, for the pbr shader
     vec4 surface;
-} object;
+};
+
+// Every object of the frame, side by side. A draw names its first with
+// gl_InstanceIndex, and objects drawn as one call follow it. A shader
+// says which one is `object` before it includes this: the vertex half
+// by gl_InstanceIndex, the fragment half by the index the vertex half
+// hands it.
+layout (std430, set = 0, binding = 1) readonly buffer ObjectBuffer {
+    ObjectData objects[];
+};
 
 // The alpha an object writes. An opaque one covers what is behind it
 // whatever its alpha says, and writes 1. The pipeline of an opaque material
 // keeps the alpha of the scene image at 1 as well, over an opaque clear.
 // This is for a texture a camera clears to a see-through colour, where the
 // pipeline cannot, so a shader of its own is well advised to use it.
-float object_alpha(float alpha)
+float object_alpha(vec4 material, float alpha)
 {
-    return object.material.z > 0.5 ? alpha : 1.0;
+    return material.z > 0.5 ? alpha : 1.0;
 }

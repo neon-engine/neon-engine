@@ -96,14 +96,19 @@ namespace neon
       VkImageUsageFlags usage,
       VkImage &image,
       VkDeviceMemory &memory,
-      VkImageCreateFlags flags = 0) const;
+      VkImageCreateFlags flags = 0,
+      uint32_t layers = 1) const;
 
+    /// A view of `layers` layers of the image from `first_layer` on: one
+    /// layer is a 2D view, more are an array the shaders index.
     bool CreateImageView(
       VkImage image,
       VkFormat format,
       VkImageAspectFlags aspect,
       uint32_t mip_levels,
-      VkImageView &view) const;
+      VkImageView &view,
+      uint32_t first_layer = 0,
+      uint32_t layers = 1) const;
 
     /// Starts commands that are run once, right away, outside a frame. Used
     /// for uploads and copies.
@@ -120,7 +125,8 @@ namespace neon
       uint32_t first_mip_level,
       uint32_t mip_levels,
       VkImageLayout from,
-      VkImageLayout to);
+      VkImageLayout to,
+      uint32_t layers = 1);
   };
 } // neon
 

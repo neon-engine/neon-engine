@@ -5,8 +5,13 @@
 // depth is lit when it is no further than what the map holds, blended
 // between the four texels around the place, and lit past the edge of the
 // map.
+//
+// The map is cascaded: one layer for each slice of the camera's view, the
+// nearest slice drawn the finest. A point picks the first cascade whose
+// reach it is within, by its distance along the camera's view, so that
+// the shadows near the camera come from the finest layer.
 
-layout (set = 0, binding = 6) uniform texture2D shadow_map;
+layout (set = 0, binding = 6) uniform texture2DArray shadow_map;
 layout (set = 0, binding = 7) uniform samplerShadow shadow_sampler;
 
 // 1 where the direction light reaches `world_position`, 0 where something
@@ -17,10 +22,18 @@ float direction_light_visibility(vec3 world_position)
 {
     if (scene.direction_light.shadow.x < 0.5) { return 1.0; }
 
-    vec4 in_light = scene.direction_light.light_view_projection * vec4(world_position, 1.0);
+    // how far along the view the point is, which picks the cascade; past
+    // the last one the point is lit
+    float depth = -(scene.view * vec4(world_position, 1.0)).z;
+    int count = int(scene.direction_light.shadow.w);
+    int cascade = 0;
+    while (cascade < count - 1 && depth > scene.direction_light.splits[cascade]) { cascade++; }
+    if (depth > scene.direction_light.splits[count - 1]) { return 1.0; }
+
+    vec4 in_light = scene.direction_light.cascades[cascade] * vec4(world_position, 1.0);
     vec3 place = in_light.xyz / in_light.w;
 
-    // what is further from the light than the map reaches is lit
+    // what is further from the light than the cascade reaches is lit
     if (place.z > 1.0) { return 1.0; }
 
     // Across the map from -1 to 1 to 0 to 1, with the rows turned round,
@@ -33,7 +46,8 @@ float direction_light_visibility(vec3 world_position)
     float lit = 0.0;
     for (int x = -1; x <= 1; x++) {
         for (int y = -1; y <= 1; y++) {
-            lit += texture(sampler2DShadow(shadow_map, shadow_sampler), compared + vec3(vec2(x, y) * texel, 0.0));
+            vec2 at = compared.xy + vec2(x, y) * texel;
+            lit += texture(sampler2DArrayShadow(shadow_map, shadow_sampler), vec4(at, float(cascade), compared.z));
         }
     }
     return lit / 9.0;

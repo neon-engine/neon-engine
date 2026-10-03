@@ -75,4 +75,11 @@ function(setup_compile_shaders TARGET_NAME SOURCE_SHADERS_DIR OUTPUT_SHADERS_DIR
 
     add_custom_target(${TARGET_NAME}_compile_shaders ALL DEPENDS ${SHADER_OUTPUTS})
     add_dependencies(${TARGET_NAME} ${TARGET_NAME}_compile_shaders)
+
+    # The copy of the assets removes empty folders the source lacks, and the
+    # shaders' folder is one until a shader is written into it: so the
+    # shaders are compiled after the copy, never beside it.
+    if (TARGET ${TARGET_NAME}_copy_assets)
+        add_dependencies(${TARGET_NAME}_compile_shaders ${TARGET_NAME}_copy_assets)
+    endif ()
 endfunction()

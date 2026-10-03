@@ -78,6 +78,8 @@ The settings of the runtime are
 | `rendering.vulkan_version` | The version of Vulkan to ask for, in quotes, since `1.10` as a number is `1.1` | `"1.3"` |
 | `rendering.max_light_sources` | How many lights a frame may hold. A whole number above zero | 1024 |
 | `rendering.max_render_objects` | How many render objects a frame may hold, each one draw. A whole number above zero. It sizes a per-frame buffer of 208 bytes an object, so a larger number costs little; a scene that passes it is told, with this name | 16384 |
+| `rendering.shadow_distance` | How far from the camera the shadow of the direction light reaches, in metres, along its view, see [vulkan-renderer.md](vulkan-renderer.md#shadows). What is further is lit. Farther is coarser in the far cascades. Above zero | 50 |
+| `rendering.shadow_cascades` | How many cascades the shadow map has, 1 to 4: slices of what the camera sees, the nearest drawn the finest. More is finer near the camera at the same distance, and the casters drawn once more each | 4 |
 | `audio.groups` | The [groups of sounds](audio.md#groups) the project has besides those of the engine: a list of names, or of maps with a `name` and the `volume` the group starts at. A name that is there already is an error. A group of the project is held still while the game is paused, as the effects are | None. The groups of the engine are `music`, `effects`, `voices`, and `ambience` |
 | `audio.volumes` | The volume of a group by its name, 0 for silence and 1 for the loudness of its sounds, not below 0. A name that is not a group of the engine or of the project, declared above or in a file read before, is an error | 1 for every group |
 

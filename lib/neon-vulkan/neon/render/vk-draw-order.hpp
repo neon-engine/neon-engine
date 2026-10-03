@@ -16,7 +16,9 @@ namespace neon
     VkPipeline pipeline = VK_NULL_HANDLE;
     VkDescriptorSet set = VK_NULL_HANDLE;
     uint32_t scene_offset = 0;
-    uint32_t object_offset = 0;
+    // where the object's data is in the buffer of the frame, which the
+    // shaders read by gl_InstanceIndex
+    uint32_t object_index = 0;
     int model_id = -1;
     float distance = 0.0f;
   };

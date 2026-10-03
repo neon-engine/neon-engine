@@ -83,14 +83,14 @@ namespace neon
     Draw(_device->FrameCommands());
   }
 
-  void VK_Mesh::Draw(const VkCommandBuffer commands) const
+  void VK_Mesh::Draw(const VkCommandBuffer commands, const uint32_t instances, const uint32_t first_instance) const
   {
     if (commands == VK_NULL_HANDLE || !_initialized) { return; }
 
     constexpr VkDeviceSize offset = 0;
     vkCmdBindVertexBuffers(commands, 0, 1, &_vertex_buffer, &offset);
     vkCmdBindIndexBuffer(commands, _index_buffer, 0, VK_INDEX_TYPE_UINT32);
-    vkCmdDrawIndexed(commands, static_cast<uint32_t>(_indices.size()), 1, 0, 0, 0);
+    vkCmdDrawIndexed(commands, static_cast<uint32_t>(_indices.size()), instances, 0, 0, first_instance);
   }
 
   void VK_Mesh::CleanUp()

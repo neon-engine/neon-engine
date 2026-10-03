@@ -1,19 +1,23 @@
 #ifndef VK_SHADOW_MAP_HPP
 #define VK_SHADOW_MAP_HPP
 
+#include <array>
 #include <memory>
 #include <neon/logging/logger.hpp>
 
 #include "vk-device.hpp"
+#include "vk-shader-data.hpp"
 
 namespace neon
 {
   /// The shadow map of the direction light: the depth of the scene as the
   /// light sees it, drawn in a pass of its own before the scene, and
   /// compared against by the lit shaders to tell what the light reaches.
-  /// It owns its image, its view, the render pass that writes it, and
-  /// the framebuffer; the sampler it is compared through is one of
-  /// VK_Samplers.
+  /// It is one image of as many layers as there are cascades at most, a
+  /// layer a cascade, each drawn in a pass of its own and read together
+  /// as an array. It owns its image, its views, the render pass that
+  /// writes a layer, and a framebuffer a layer; the sampler it is
+  /// compared through is one of VK_Samplers.
   ///
   /// Between two passes the map is ready to be read by a shader, from the
   /// moment it is made: a frame in which nothing casts reads it as it was
@@ -28,7 +32,10 @@ namespace neon
     VkDeviceMemory _memory = VK_NULL_HANDLE;
     VkImageView _view = VK_NULL_HANDLE;
     VkRenderPass _render_pass = VK_NULL_HANDLE;
-    VkFramebuffer _framebuffer = VK_NULL_HANDLE;
+
+    // a layer is drawn through a view and a framebuffer of its own
+    std::array<VkImageView, kMax_Shadow_Cascades> _layer_views{};
+    std::array<VkFramebuffer, kMax_Shadow_Cascades> _framebuffers{};
 
     bool CreateRenderPass();
 
@@ -39,7 +46,7 @@ namespace neon
     /// Depth alone, in whole floats: the map is compared, not shown.
     static constexpr VkFormat kFormat = VK_FORMAT_D32_SFLOAT;
 
-    /// The map is square, this many texels along each side.
+    /// The map is square, this many texels along each side, every layer.
     static constexpr uint32_t kSize = 2048;
 
     /// The layout the map is in between two passes, which is what the
@@ -52,11 +59,12 @@ namespace neon
 
     void CleanUp();
 
-    [[nodiscard]] bool IsReady() const { return _framebuffer != VK_NULL_HANDLE; }
+    [[nodiscard]] bool IsReady() const { return _framebuffers[0] != VK_NULL_HANDLE; }
 
-    /// Begins the pass that draws the map: clears it to the far depth and
-    /// sets the viewport to the whole map. Every caster is drawn after it.
-    void Begin(VkCommandBuffer commands) const;
+    /// Begins the pass that draws one layer of the map, the cascade at
+    /// `layer`: clears it to the far depth and sets the viewport to the
+    /// whole map. Every caster is drawn after it.
+    void Begin(VkCommandBuffer commands, uint32_t layer) const;
 
     /// Ends the pass. The map is then ready to be read by the shaders of
     /// what is drawn after the commands.
@@ -65,7 +73,7 @@ namespace neon
     /// What the pipelines of the pass are made for.
     [[nodiscard]] VkRenderPass RenderPass() const { return _render_pass; }
 
-    /// What the lit shaders compare against.
+    /// What the lit shaders compare against: every layer, as an array.
     [[nodiscard]] VkImageView View() const { return _view; }
   };
 } // neon

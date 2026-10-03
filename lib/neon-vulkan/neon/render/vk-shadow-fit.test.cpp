@@ -2,20 +2,25 @@
 
 #include <algorithm>
 #include <cmath>
+#include <glm/gtc/matrix_transform.hpp>
 
 #include <gtest/gtest.h>
 
 // Where the shadow map looks is worked out before Vulkan is called, so it
-// is checked here: the box is around the camera, it is seen along the
-// light, and it moves in whole texels.
+// is checked here: the cascades slice what the camera sees, each box
+// holds its slice, the near slice is the finest, and a box moves in whole
+// texels.
 
 namespace
 {
   using neon::VK_ShadowFit;
+  using neon::VK_ShadowCascades;
 
   constexpr float map_size = 2048.0f;
+  constexpr float distance = VK_ShadowFit::kDistance;
+  const glm::vec3 down{0.0f, -1.0f, 0.0f};
 
-  // where a point of the world lands in the map: x and y from -1 to 1
+  // where a point of the world lands in a box: x and y from -1 to 1
   // across it, z from -1 to 1 through it
   glm::vec3 Projected(const glm::mat4 &view_projection, const glm::vec3 &point)
   {
@@ -23,108 +28,106 @@ namespace
     return glm::vec3(clip) / clip.w;
   }
 
-  TEST(VkShadowFitTest, PutsTheCameraInTheMiddleOfTheMapAtItsMiddleDepth)
+  bool Inside(const glm::mat4 &view_projection, const glm::vec3 &point)
   {
-    const glm::vec3 camera{3.0f, 1.5f, -7.0f};
-    const glm::mat4 fit = VK_ShadowFit::ViewProjection(glm::vec3(0.0f, -1.0f, 0.0f), camera, map_size);
-    const glm::vec3 at = Projected(fit, camera);
-
-    // within a texel across, since the box is moved by whole texels
-    const float texel = 2.0f / map_size;
-    EXPECT_NEAR(at.x, 0.0f, texel);
-    EXPECT_NEAR(at.y, 0.0f, texel);
-    EXPECT_NEAR(at.z, 0.0f, 1e-4f);
+    const glm::vec3 at = Projected(view_projection, point);
+    return std::abs(at.x) <= 1.0001f && std::abs(at.y) <= 1.0001f && std::abs(at.z) <= 1.0001f;
   }
 
-  TEST(VkShadowFitTest, LooksAlongTheLightSoThatWhatIsNearerTheLightIsNearerInTheMap)
+  // a camera at the origin looking down -z, as the scene has it
+  const glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 2.0f, 0.0f), glm::vec3(0.0f, 2.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+  const glm::mat4 projection = glm::perspective(glm::radians(60.0f), 16.0f / 9.0f, 0.1f, 500.0f);
+
+  TEST(VkShadowFitTest, SplitsEndAtTheDistanceAndGrowWithIt)
   {
-    const glm::vec3 camera{0.0f, 0.0f, 0.0f};
-    const glm::vec3 direction{0.0f, -1.0f, 0.0f};
-    const glm::mat4 fit = VK_ShadowFit::ViewProjection(direction, camera, map_size);
-
-    const glm::vec3 high = Projected(fit, glm::vec3(0.0f, 10.0f, 0.0f));
-    const glm::vec3 low = Projected(fit, glm::vec3(0.0f, -10.0f, 0.0f));
-
-    EXPECT_LT(high.z, low.z);
-    EXPECT_NEAR(high.z, -10.0f / VK_ShadowFit::kDepth, 1e-4f);
-    EXPECT_NEAR(low.z, 10.0f / VK_ShadowFit::kDepth, 1e-4f);
+    const auto splits = VK_ShadowFit::Splits(0.1f, 100.0f, 4);
+    EXPECT_FLOAT_EQ(splits[3], 100.0f);
+    EXPECT_LT(splits[0], splits[1]);
+    EXPECT_LT(splits[1], splits[2]);
+    EXPECT_LT(splits[2], splits[3]);
+    // the near slice is thinner than an even quarter, the far one wider
+    EXPECT_LT(splits[0], 25.0f);
+    EXPECT_GT(splits[3] - splits[2], 25.0f);
   }
 
-  TEST(VkShadowFitTest, CoversTheBoxAroundTheCameraAndNoMore)
+  TEST(VkShadowFitTest, OneCascadeIsTheWholeDistance)
   {
-    const glm::vec3 camera{0.0f, 0.0f, 0.0f};
-    const glm::mat4 fit = VK_ShadowFit::ViewProjection(glm::vec3(0.0f, -1.0f, 0.0f), camera, map_size);
+    const auto splits = VK_ShadowFit::Splits(0.1f, 40.0f, 1);
+    EXPECT_FLOAT_EQ(splits[0], 40.0f);
+  }
 
-    constexpr float half = VK_ShadowFit::kBox / 2.0f;
-    const float texel = 2.0f / map_size;
+  TEST(VkShadowFitTest, EachCascadeHoldsItsSliceOfTheView)
+  {
+    const VK_ShadowCascades cascades = VK_ShadowFit::Cascades(view, projection, down, distance, 4, map_size);
+    ASSERT_EQ(cascades.count, 4);
 
-    // along whichever axis of the map the world's x and z lie: half the
-    // box from the camera is the edge of the map, and a step past it is
-    // outside
-    const auto across = [&fit](const glm::vec3 &point)
+    const glm::mat4 inverse = glm::inverse(projection * view);
+    float from = 0.1f;
+    for (int i = 0; i < 4; i++)
     {
-      const glm::vec3 at = Projected(fit, point);
-      return std::max(std::abs(at.x), std::abs(at.y));
-    };
-
-    EXPECT_NEAR(across(glm::vec3(half, 0.0f, 0.0f)), 1.0f, texel);
-    EXPECT_NEAR(across(glm::vec3(-half, 0.0f, 0.0f)), 1.0f, texel);
-    EXPECT_NEAR(across(glm::vec3(0.0f, 0.0f, half)), 1.0f, texel);
-    EXPECT_GT(across(glm::vec3(half + 1.0f, 0.0f, 0.0f)), 1.0f);
-    EXPECT_LT(across(glm::vec3(half - 1.0f, 0.0f, 0.0f)), 1.0f);
+      const float to = cascades.splits[static_cast<std::size_t>(i)];
+      for (const glm::vec3 &corner : VK_ShadowFit::SliceCorners(inverse, 0.1f, 500.0f, from, to))
+      {
+        EXPECT_TRUE(Inside(cascades.view_projections[static_cast<std::size_t>(i)], corner)) << "cascade " << i;
+      }
+      from = to;
+    }
   }
 
-  TEST(VkShadowFitTest, MovesInWholeTexelsAsTheCameraMoves)
+  TEST(VkShadowFitTest, TheNearCascadeIsTheFinest)
   {
-    const glm::vec3 direction{0.0f, -1.0f, 0.0f};
+    const VK_ShadowCascades cascades = VK_ShadowFit::Cascades(view, projection, down, distance, 4, map_size);
+
+    // a metre across the world is more of the near box than of the far one
+    const auto across = [&](const int i)
+    {
+      const glm::mat4 &box = cascades.view_projections[static_cast<std::size_t>(i)];
+      return glm::length(glm::vec2(Projected(box, glm::vec3(1.0f, 0.0f, 0.0f))) - glm::vec2(Projected(box, glm::vec3(0.0f))));
+    };
+    EXPECT_GT(across(0), across(1));
+    EXPECT_GT(across(1), across(2));
+    EXPECT_GT(across(2), across(3));
+  }
+
+  TEST(VkShadowFitTest, WhatIsAboveTheSliceTowardsTheLightIsInTheBox)
+  {
+    const VK_ShadowCascades cascades = VK_ShadowFit::Cascades(view, projection, down, distance, 4, map_size);
+
+    // a caster high above the near slice, within the distance, is nearer
+    // the light than the slice and still inside the box
+    const glm::vec3 above(0.0f, 2.0f + distance * 0.9f, -2.0f);
+    EXPECT_TRUE(Inside(cascades.view_projections[0], above));
+  }
+
+  TEST(VkShadowFitTest, ABoxMovesInWholeTexelsAsItsCentreMoves)
+  {
     const glm::vec3 point{4.0f, 0.0f, 2.0f};
-    const float texel_in_metres = VK_ShadowFit::kBox / map_size;
+    const float texel_in_metres = 2.0f * 10.0f / map_size;
 
-    // a move of less than a texel does not move the point in the map,
-    // a move of several moves it by whole texels, and only ever by whole
-    // texels
-    const glm::vec3 camera{0.0f, 0.0f, 0.0f};
-    const glm::vec3 nearby = camera + glm::vec3(texel_in_metres * 0.3f, 0.0f, 0.0f);
-    const glm::vec3 far = camera + glm::vec3(texel_in_metres * 7.0f, 0.0f, 0.0f);
+    const glm::mat4 before = VK_ShadowFit::BoxViewProjection(down, glm::vec3(0.0f), 10.0f, 50.0f, map_size);
+    const glm::mat4 after = VK_ShadowFit::BoxViewProjection(down, glm::vec3(texel_in_metres * 7.3f, 0.0f, 0.0f), 10.0f, 50.0f, map_size);
 
-    const glm::vec3 at = Projected(VK_ShadowFit::ViewProjection(direction, camera, map_size), point);
-    const glm::vec3 at_nearby = Projected(VK_ShadowFit::ViewProjection(direction, nearby, map_size), point);
-    const glm::vec3 at_far = Projected(VK_ShadowFit::ViewProjection(direction, far, map_size), point);
-
-    EXPECT_NEAR(at.x, at_nearby.x, 1e-5f);
-    EXPECT_NEAR(at.y, at_nearby.y, 1e-5f);
-
-    // along whichever axis of the map the world's x lies
+    // the point moved in the map by whole texels, seven of them
+    const glm::vec3 at = Projected(before, point);
+    const glm::vec3 at_moved = Projected(after, point);
     const float texel = 2.0f / map_size;
-    EXPECT_NEAR(glm::length(glm::vec2(at) - glm::vec2(at_far)) / texel, 7.0f, 1e-2f);
+    EXPECT_NEAR(glm::length(glm::vec2(at) - glm::vec2(at_moved)) / texel, 7.0f, 1e-2f);
   }
 
   TEST(VkShadowFitTest, HasAnUpForALightStraightDown)
   {
-    const glm::mat4 view = VK_ShadowFit::View(glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.0f));
-
-    // a view that is finite, and a point to the side that lands to the side
+    const glm::mat4 light = VK_ShadowFit::View(down, glm::vec3(0.0f), 10.0f, 50.0f);
     for (int column = 0; column < 4; column++)
     {
-      for (int row = 0; row < 4; row++) { EXPECT_TRUE(std::isfinite(view[column][row])); }
+      for (int row = 0; row < 4; row++) { EXPECT_TRUE(std::isfinite(light[column][row])); }
     }
-
-    const glm::vec4 aside = view * glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
-    EXPECT_NEAR(std::abs(aside.x) + std::abs(aside.y), 1.0f, 1e-4f);
+    const glm::vec4 side = light * glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
+    EXPECT_GT(std::abs(side.x) + std::abs(side.y), 0.5f);
   }
 
-  TEST(VkShadowFitTest, TakesTheDirectionWhateverItsLength)
+  TEST(VkShadowFitTest, TheCountIsHeldToWhatTheMapHas)
   {
-    const glm::vec3 camera{1.0f, 2.0f, 3.0f};
-    const glm::mat4 unit = VK_ShadowFit::ViewProjection(glm::vec3(-0.6f, -0.8f, 0.0f), camera, map_size);
-    const glm::mat4 longer = VK_ShadowFit::ViewProjection(glm::vec3(-6.0f, -8.0f, 0.0f), camera, map_size);
-
-    const glm::vec3 point{5.0f, 0.0f, -2.0f};
-    const glm::vec3 a = Projected(unit, point);
-    const glm::vec3 b = Projected(longer, point);
-
-    EXPECT_NEAR(a.x, b.x, 1e-4f);
-    EXPECT_NEAR(a.y, b.y, 1e-4f);
-    EXPECT_NEAR(a.z, b.z, 1e-4f);
+    EXPECT_EQ(VK_ShadowFit::Cascades(view, projection, down, distance, 9, map_size).count, neon::kMax_Shadow_Cascades);
+    EXPECT_EQ(VK_ShadowFit::Cascades(view, projection, down, distance, 0, map_size).count, 1);
   }
 }

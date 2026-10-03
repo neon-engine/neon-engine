@@ -1,6 +1,7 @@
 #version 450
 #extension GL_GOOGLE_include_directive : require
 
+#define object objects[object_index]
 #include "scene-data.glsl"
 #include "shadows.glsl"
 
@@ -18,6 +19,7 @@ layout (location = 2) in vec2 tex_coord;
 // the colour painted on the vertices, in linear light; white where a
 // model has none
 layout (location = 3) in vec4 vertex_color;
+layout (location = 4) flat in uint object_index;
 
 layout (location = 0) out vec4 frag_color;
 
@@ -179,5 +181,5 @@ void main()
             roughness);
     }
 
-    frag_color = vec4(result, object_alpha(object.color.a));
+    frag_color = vec4(result, object_alpha(object.material, object.color.a));
 }

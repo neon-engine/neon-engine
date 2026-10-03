@@ -3,6 +3,7 @@
 
 // Draws an object with its texture as it is, without lighting.
 
+#define object objects[gl_InstanceIndex]
 #include "scene-data.glsl"
 
 layout (location = 0) in vec3 attr_pos_coords;
@@ -12,9 +13,11 @@ layout (location = 3) in vec4 attr_color;
 
 layout (location = 0) out vec2 tex_coord;
 layout (location = 1) out vec4 vertex_color;
+layout (location = 2) flat out uint object_index;
 
 void main()
 {
+    object_index = gl_InstanceIndex;
     tex_coord = attr_tex_coords * object.texture_scale.xy;
     vertex_color = attr_color;
 

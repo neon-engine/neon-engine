@@ -26,21 +26,29 @@ namespace neon
   };
 
   // ReSharper disable once CppInconsistentNaming
+  /// How many cascades the shadow map has at most, see VK_ShadowFit.
+  constexpr int kMax_Shadow_Cascades = 4;
+
   struct VK_DirectionLight
   {
     glm::vec4 direction{0.0f};
     glm::vec4 ambient{0.0f};
     glm::vec4 diffuse{0.0f};
     glm::vec4 specular{0.0f};
-    // where the shadow map looks: the world as the light sees it
-    glm::mat4 light_view_projection{1.0f};
+    // where the shadow map looks, one matrix a cascade: the world as the
+    // light sees it, with the depth from 0 to 1 as Vulkan has it
+    glm::mat4 cascades[kMax_Shadow_Cascades]{glm::mat4(1.0f), glm::mat4(1.0f), glm::mat4(1.0f), glm::mat4(1.0f)};
+
+    // how far from the camera each cascade reaches, along its view
+    glm::vec4 splits{0.0f};
+
     // x is 1 when the shadow map is to be compared against and 0 when the
     // light casts no shadow, y the size of a texel of the map across it,
-    // z the bias
+    // z the bias a depth is moved towards the light by before it is
+    // compared, w how many cascades there are, see shadows.glsl
     glm::vec4 shadow{0.0f};
   };
 
-  // ReSharper disable once CppInconsistentNaming
   struct VK_PointLight
   {
     glm::vec4 position{0.0f};
@@ -96,10 +104,10 @@ namespace neon
     glm::vec4 surface{0.0f};
   };
 
-  static_assert(sizeof(VK_DirectionLight) == 144);
+  static_assert(sizeof(VK_DirectionLight) == 352);
   static_assert(sizeof(VK_PointLight) == 80);
   static_assert(sizeof(VK_SpotLight) == 112);
-  static_assert(sizeof(VK_SceneData) == 304 + kMax_Point_Lights * 80 + kMax_Spot_Lights * 112);
+  static_assert(sizeof(VK_SceneData) == 512 + kMax_Point_Lights * 80 + kMax_Spot_Lights * 112);
   static_assert(sizeof(VK_ObjectData) == 192);
 } // neon
 

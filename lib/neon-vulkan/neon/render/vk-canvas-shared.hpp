@@ -1,6 +1,7 @@
 #ifndef VK_CANVAS_SHARED_HPP
 #define VK_CANVAS_SHARED_HPP
 
+#include <functional>
 #include <memory>
 
 #include <neon/logging/logger.hpp>
@@ -11,6 +12,8 @@
 
 namespace neon
 {
+  class VK_Canvas;
+
   /// What every canvas draws with, which the renderer owns and the
   /// frame and the render targets share.
   // ReSharper disable once CppInconsistentNaming
@@ -25,6 +28,10 @@ namespace neon
     // what the see-through models are drawn with
     VkPipelineLayout pipeline_layout = VK_NULL_HANDLE;
     const VK_ModelCache *models = nullptr;
+
+    // draws the opaque models the render system kept for the canvas,
+    // when its scene is about to end
+    std::function<void(VK_Canvas &)> draw_opaque;
 
     std::shared_ptr<Logger> logger;
 

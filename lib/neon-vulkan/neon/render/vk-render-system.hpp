@@ -15,6 +15,7 @@
 #include "vk-capture.hpp"
 #include "vk-device.hpp"
 #include "vk-draw-order.hpp"
+#include "vk-draw-queue.hpp"
 #include "vk-material.hpp"
 #include "vk-material-cache.hpp"
 #include "vk-model-cache.hpp"
@@ -24,6 +25,7 @@
 #include "vk-resolve.hpp"
 #include "vk-samplers.hpp"
 #include "vk-shader-data.hpp"
+#include "vk-shadow-cascades.hpp"
 #include "vk-shadow-map.hpp"
 #include "vk-swapchain.hpp"
 #include "vk-texture-cache.hpp"
@@ -114,8 +116,21 @@ namespace neon
     VkCommandBuffer _shadow_commands = VK_NULL_HANDLE;
     bool _shadow_open = false;
     bool _shadow_fitted = false;
-    glm::mat4 _shadow_view_projection{1.0f};
+    VK_ShadowCascades _shadow_cascades;
     int _shadow_target = No_Render_Target;
+
+    // The draws of the scene being drawn, kept until it ends and then
+    // drawn in the order that costs the least, those alike as one call,
+    // see VK_DrawQueue; and the canvas they are for.
+    VK_DrawQueue _draws;
+    VK_Canvas *_draws_canvas = nullptr;
+
+    // what a frame cost in calls, said in the log now and then
+    std::size_t _frame_objects = 0;
+    std::size_t _frame_draws = 0;
+    std::size_t _frame_pipeline_binds = 0;
+    std::size_t _frame_set_binds = 0;
+    std::size_t _frames_since_said = 0;
 
     VK_Pipelines _pipelines;
     // the pools the materials' sets are taken from, one more whenever the
@@ -127,6 +142,10 @@ namespace neon
     VK_SceneData _last_scene;
     bool _has_last_scene = false;
     uint32_t _last_scene_offset = 0;
+    // what _last_scene was built from, see SameScene()
+    glm::mat4 _last_view{1.0f};
+    glm::mat4 _last_projection{1.0f};
+    std::vector<LightSource> _last_lights;
     bool _warned_about_lights = false;
     bool _warned_about_capacity = false;
 
@@ -225,9 +244,18 @@ namespace neon
     /// being drawn. Returns false when it cannot be recorded.
     bool BeginShadowPass();
 
-    /// Draws an opaque object into the shadow map, with the scene and the
-    /// object data at `offsets` that its draw into the scene uses.
-    void DrawShadow(const VK_Model &model, VK_Material &material, bool mirrored, const std::array<uint32_t, 2> &offsets);
+    /// Draws what was kept for the canvas: the opaque batches in their
+    /// order, and into the shadow map when the scene casts, and hands the
+    /// see-through draws to the canvas. The objects' data is written into
+    /// the buffer of the frame in that order first.
+    void FlushDraws(VK_Canvas &canvas);
+
+    /// Whether `view`, `projection`, and `lights` are those the last scene
+    /// data was built from, which saves building it for every object.
+    [[nodiscard]] bool SameScene(
+      const glm::mat4 &view,
+      const glm::mat4 &projection,
+      const std::vector<LightSource> &lights) const;
 
   public:
     explicit VK_RenderSystem(

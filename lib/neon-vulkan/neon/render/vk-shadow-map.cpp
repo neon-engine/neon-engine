@@ -19,11 +19,12 @@ namespace neon
       return false;
     }
 
+    constexpr auto layers = static_cast<uint32_t>(kMax_Shadow_Cascades);
     if (!_device->CreateImage(
           kSize, kSize, 1, kFormat,
           VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
-          _image, _memory) ||
-        !_device->CreateImageView(_image, kFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1, _view) ||
+          _image, _memory, 0, layers) ||
+        !_device->CreateImageView(_image, kFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1, _view, 0, layers) ||
         !CreateRenderPass())
     {
       _logger->Critical("Could not create the shadow map");
@@ -31,20 +32,31 @@ namespace neon
       return false;
     }
 
-    VkFramebufferCreateInfo framebuffer{};
-    framebuffer.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-    framebuffer.renderPass = _render_pass;
-    framebuffer.attachmentCount = 1;
-    framebuffer.pAttachments = &_view;
-    framebuffer.width = kSize;
-    framebuffer.height = kSize;
-    framebuffer.layers = 1;
-
-    if (vkCreateFramebuffer(_device->Device(), &framebuffer, nullptr, &_framebuffer) != VK_SUCCESS)
+    // a layer is drawn on its own, through a view of it alone
+    for (uint32_t layer = 0; layer < layers; layer++)
     {
-      _logger->Critical("Could not create the framebuffer of the shadow map");
-      CleanUp();
-      return false;
+      if (!_device->CreateImageView(_image, kFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1, _layer_views[layer], layer, 1))
+      {
+        _logger->Critical("Could not create the view of a layer of the shadow map");
+        CleanUp();
+        return false;
+      }
+
+      VkFramebufferCreateInfo framebuffer{};
+      framebuffer.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+      framebuffer.renderPass = _render_pass;
+      framebuffer.attachmentCount = 1;
+      framebuffer.pAttachments = &_layer_views[layer];
+      framebuffer.width = kSize;
+      framebuffer.height = kSize;
+      framebuffer.layers = 1;
+
+      if (vkCreateFramebuffer(_device->Device(), &framebuffer, nullptr, &_framebuffers[layer]) != VK_SUCCESS)
+      {
+        _logger->Critical("Could not create the framebuffer of the shadow map");
+        CleanUp();
+        return false;
+      }
     }
 
     if (!ClearToLit())
@@ -115,17 +127,18 @@ namespace neon
 
     // the far depth everywhere, which every point of the scene is in
     // front of, and then the layout the shaders read it in
+    constexpr auto layers = static_cast<uint32_t>(kMax_Shadow_Cascades);
     VK_Device::TransitionImage(
       commands, _image, VK_IMAGE_ASPECT_DEPTH_BIT, 0, 1,
-      VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+      VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, layers);
 
     constexpr VkClearDepthStencilValue far{1.0f, 0};
-    constexpr VkImageSubresourceRange whole{VK_IMAGE_ASPECT_DEPTH_BIT, 0, 1, 0, 1};
+    constexpr VkImageSubresourceRange whole{VK_IMAGE_ASPECT_DEPTH_BIT, 0, 1, 0, layers};
     vkCmdClearDepthStencilImage(commands, _image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &far, 1, &whole);
 
     VK_Device::TransitionImage(
       commands, _image, VK_IMAGE_ASPECT_DEPTH_BIT, 0, 1,
-      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, kRead_Layout);
+      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, kRead_Layout, layers);
 
     return _device->EndCommands(commands);
   }
@@ -136,20 +149,28 @@ namespace neon
 
     const VkDevice device = _device->Device();
 
-    if (_framebuffer != VK_NULL_HANDLE) { vkDestroyFramebuffer(device, _framebuffer, nullptr); }
+    for (auto &framebuffer : _framebuffers)
+    {
+      if (framebuffer != VK_NULL_HANDLE) { vkDestroyFramebuffer(device, framebuffer, nullptr); }
+      framebuffer = VK_NULL_HANDLE;
+    }
+    for (auto &view : _layer_views)
+    {
+      if (view != VK_NULL_HANDLE) { vkDestroyImageView(device, view, nullptr); }
+      view = VK_NULL_HANDLE;
+    }
     if (_render_pass != VK_NULL_HANDLE) { vkDestroyRenderPass(device, _render_pass, nullptr); }
     if (_view != VK_NULL_HANDLE) { vkDestroyImageView(device, _view, nullptr); }
     if (_image != VK_NULL_HANDLE) { vkDestroyImage(device, _image, nullptr); }
     if (_memory != VK_NULL_HANDLE) { vkFreeMemory(device, _memory, nullptr); }
 
-    _framebuffer = VK_NULL_HANDLE;
     _render_pass = VK_NULL_HANDLE;
     _view = VK_NULL_HANDLE;
     _image = VK_NULL_HANDLE;
     _memory = VK_NULL_HANDLE;
   }
 
-  void VK_ShadowMap::Begin(const VkCommandBuffer commands) const
+  void VK_ShadowMap::Begin(const VkCommandBuffer commands, const uint32_t layer) const
   {
     VkClearValue clear{};
     clear.depthStencil = {1.0f, 0};
@@ -157,7 +178,7 @@ namespace neon
     VkRenderPassBeginInfo pass{};
     pass.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     pass.renderPass = _render_pass;
-    pass.framebuffer = _framebuffer;
+    pass.framebuffer = _framebuffers[layer];
     pass.renderArea = {{0, 0}, {kSize, kSize}};
     pass.clearValueCount = 1;
     pass.pClearValues = &clear;

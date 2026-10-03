@@ -101,6 +101,7 @@ namespace neon
       .depth_format = _depth_format,
       .pipeline_layout = _pipelines.Layout(),
       .models = &_models,
+      .draw_opaque = [this](VK_Canvas &canvas) { FlushDraws(canvas); },
       .logger = _logger,
     };
     _frame = VK_Canvas("the frame", &_canvas_shared);
@@ -315,9 +316,10 @@ namespace neon
 
     const VkDeviceSize size = buffer.entry_size * capacity;
 
+    // the scene buffer is read by an offset, the object buffer whole
     if (!_device.CreateBuffer(
       size,
-      VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+      VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
       buffer.buffer,
       buffer.memory))
@@ -361,8 +363,9 @@ namespace neon
     // one set for each material, with its textures and their samplers,
     // and the shadow map with its sampler
     constexpr uint32_t textures = (VK_Pipelines::kTexture_Count + 1) * kSets_Per_Pool;
-    constexpr std::array<VkDescriptorPoolSize, 3> sizes{{
-      {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 2 * kSets_Per_Pool},
+    constexpr std::array<VkDescriptorPoolSize, 4> sizes{{
+      {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, kSets_Per_Pool},
+      {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, kSets_Per_Pool},
       {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, textures},
       {VK_DESCRIPTOR_TYPE_SAMPLER, textures},
     }};
@@ -438,7 +441,7 @@ namespace neon
     const VK_Texture &specular = textures.size() > 1 ? usable(textures[1]) : diffuse;
 
     const VkDescriptorBufferInfo scene{_scene_buffer.buffer, 0, sizeof(VK_SceneData)};
-    const VkDescriptorBufferInfo object{_object_buffer.buffer, 0, sizeof(VK_ObjectData)};
+    const VkDescriptorBufferInfo object{_object_buffer.buffer, 0, VK_WHOLE_SIZE};
     const VkDescriptorImageInfo diffuse_image{
       VK_NULL_HANDLE, diffuse.View(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
     const VkDescriptorImageInfo specular_image{
@@ -642,6 +645,13 @@ namespace neon
     _shadow_fitted = false;
     _shadow_target = No_Render_Target;
 
+    _draws.Clear();
+    _draws_canvas = nullptr;
+    _frame_objects = 0;
+    _frame_draws = 0;
+    _frame_pipeline_binds = 0;
+    _frame_set_binds = 0;
+
     vkResetCommandBuffer(_commands, 0);
 
     VkCommandBufferBeginInfo begin{};
@@ -670,6 +680,15 @@ namespace neon
 
     _frame.Leave();
 
+    // what the frame cost in calls, every few seconds, for the bench
+    if (++_frames_since_said >= 300 && _frame_objects > 0)
+    {
+      _frames_since_said = 0;
+      _logger->Debug(
+        "Drew {} objects in {} draws, with {} pipelines and {} descriptor sets bound",
+        _frame_objects, _frame_draws, _frame_pipeline_binds, _frame_set_binds);
+    }
+
     uint32_t image_index = 0;
     bool present = false;
 
@@ -688,7 +707,6 @@ namespace neon
 
     if (_shadow_open)
     {
-      _shadow_map.End(_shadow_commands);
       vkEndCommandBuffer(_shadow_commands);
       buffers[buffer_count++] = _shadow_commands;
       _shadow_open = false;
@@ -914,17 +932,26 @@ namespace neon
 
     // the shadow map is fitted around the first camera of the frame that
     // draws with a light that casts, and every later camera reads it
-    const auto fit_shadow = [this, &scene](const LightSource &light)
+    const auto fit_shadow = [this, &scene, &view, &projection](const LightSource &light)
     {
       if (!_shadow_fitted)
       {
-        _shadow_view_projection = depth_correction * VK_ShadowFit::ViewProjection(
-          light.direction, glm::vec3(scene.view_position), static_cast<float>(VK_ShadowMap::kSize));
+        // the cascades of this camera: slices of what it sees, as far as
+        // the setting says, as many as it says
+        _shadow_cascades = VK_ShadowFit::Cascades(
+          view, projection, light.direction, static_cast<float>(_settings_config.shadow_distance),
+          static_cast<int>(_settings_config.shadow_cascades), static_cast<float>(VK_ShadowMap::kSize));
+        for (auto &cascade : _shadow_cascades.view_projections) { cascade = depth_correction * cascade; }
         _shadow_fitted = true;
       }
-      scene.direction_light.light_view_projection = _shadow_view_projection;
+      for (int i = 0; i < kMax_Shadow_Cascades; i++)
+      {
+        scene.direction_light.cascades[i] = _shadow_cascades.view_projections[static_cast<std::size_t>(i)];
+        scene.direction_light.splits[i] = _shadow_cascades.splits[static_cast<std::size_t>(i)];
+      }
       scene.direction_light.shadow = {
-        1.0f, 1.0f / static_cast<float>(VK_ShadowMap::kSize), VK_ShadowSettings::kBias, 0.0f};
+        1.0f, 1.0f / static_cast<float>(VK_ShadowMap::kSize), VK_ShadowSettings::kBias,
+        static_cast<float>(_shadow_cascades.count)};
     };
 
     int point_lights = 0;
@@ -1001,6 +1028,30 @@ namespace neon
     return scene;
   }
 
+  bool VK_RenderSystem::SameScene(
+    const glm::mat4 &view,
+    const glm::mat4 &projection,
+    const std::vector<LightSource> &lights) const
+  {
+    if (!_has_last_scene || view != _last_view || projection != _last_projection || lights.size() != _last_lights.size())
+    {
+      return false;
+    }
+    for (std::size_t i = 0; i < lights.size(); i++)
+    {
+      const LightSource &a = lights[i];
+      const LightSource &b = _last_lights[i];
+      if (a.light_type != b.light_type || a.position != b.position || a.direction != b.direction ||
+          a.ambient != b.ambient || a.diffuse != b.diffuse || a.specular != b.specular ||
+          a.constant != b.constant || a.linear != b.linear || a.quadratic != b.quadratic ||
+          a.cutoff != b.cutoff || a.outer_cutoff != b.outer_cutoff || a.casts_shadows != b.casts_shadows)
+      {
+        return false;
+      }
+    }
+    return true;
+  }
+
   void VK_RenderSystem::DrawRenderObject(
     const int render_object_id,
     const Transform &transform,
@@ -1022,40 +1073,50 @@ namespace neon
     }
 
     VK_Canvas &canvas = CurrentCanvas();
-    const VkCommandBuffer commands = canvas.Commands();
     if (!canvas.EnterScene()) { return; }
 
+    // what was kept for another canvas is drawn there first
+    if (_draws_canvas != nullptr && _draws_canvas != &canvas && !_draws.Empty()) { FlushDraws(*_draws_canvas); }
+    _draws_canvas = &canvas;
+
     // The camera and the lights are handed over with every object, but they
-    // rarely change within a frame. They are only stored again when they do.
-    const VK_SceneData scene = BuildSceneData(view, projection, lights);
-    if (!_has_last_scene || std::memcmp(&scene, &_last_scene, sizeof(VK_SceneData)) != 0)
+    // rarely change within a frame. The scene data is only built and stored
+    // again when they do.
+    if (!SameScene(view, projection, lights))
     {
-      if (_scene_buffer.used < _scene_buffer.capacity)
+      const VK_SceneData scene = BuildSceneData(view, projection, lights);
+      if (!_has_last_scene || std::memcmp(&scene, &_last_scene, sizeof(VK_SceneData)) != 0)
       {
-        _last_scene_offset = static_cast<uint32_t>(_scene_buffer.used * _scene_buffer.entry_size);
-        std::memcpy(_scene_buffer.mapped + _last_scene_offset, &scene, sizeof(VK_SceneData));
-        _scene_buffer.used++;
-        _last_scene = scene;
-        _has_last_scene = true;
-      } else if (!_warned_about_capacity)
-      {
-        _warned_about_capacity = true;
-        _logger->Warn("The camera or the lights changed too often within one frame, the last ones are kept");
+        if (_scene_buffer.used < _scene_buffer.capacity)
+        {
+          _last_scene_offset = static_cast<uint32_t>(_scene_buffer.used * _scene_buffer.entry_size);
+          std::memcpy(_scene_buffer.mapped + _last_scene_offset, &scene, sizeof(VK_SceneData));
+          _scene_buffer.used++;
+          _last_scene = scene;
+          _has_last_scene = true;
+        } else if (!_warned_about_capacity)
+        {
+          _warned_about_capacity = true;
+          _logger->Warn("The camera or the lights changed too often within one frame, the last ones are kept");
+        }
       }
+      _last_view = view;
+      _last_projection = projection;
+      _last_lights = lights;
     }
 
-    if (_object_buffer.used >= _object_buffer.capacity)
+    if (_object_buffer.used + _draws.Size() >= _object_buffer.capacity)
     {
       if (!_warned_about_capacity)
       {
         _warned_about_capacity = true;
-        _logger->Warn("More objects were drawn in one frame than the renderer holds, the rest are left out");
+        _logger->Warn(
+          "More objects were drawn in one frame than rendering.max_render_objects allows, the rest are left out");
       }
       return;
     }
 
     const glm::mat4 model_matrix = transform.world_coordinates * model.GetNormalizedModelMatrix();
-    const VK_ObjectData object = material.GetObjectData(model_matrix, transform);
 
     // A mirrored object turns its triangles round, and is drawn with the
     // opposite front. The pipeline for that is made when the first mirrored
@@ -1072,50 +1133,149 @@ namespace neon
       material.SetMirroredPipeline(pipeline);
     }
 
-    const auto object_offset = static_cast<uint32_t>(_object_buffer.used * _object_buffer.entry_size);
-    std::memcpy(_object_buffer.mapped + object_offset, &object, sizeof(VK_ObjectData));
-    _object_buffer.used++;
+    // what is see-through casts no shadow for now, and is drawn when the
+    // scene is finished, over what is opaque, from the farthest to the
+    // nearest
+    const bool see_through = material.GetAlphaMode() == AlphaMode::Blend;
+    const bool casts = _last_scene.direction_light.shadow.x > 0.5f && !see_through;
 
-    const std::array offsets{_last_scene_offset, object_offset};
-    const VkDescriptorSet set = material.DescriptorSet();
+    VkPipeline shadow_pipeline = VK_NULL_HANDLE;
+    if (casts)
+    {
+      // the pipeline of the pass is made when the first object that casts
+      // is drawn with the material, culled as the material is
+      shadow_pipeline = material.ShadowPipeline(mirrored);
+      if (shadow_pipeline == VK_NULL_HANDLE && _pipelines.GetShadow(material.IsDoubleSided(), mirrored, shadow_pipeline))
+      {
+        material.SetShadowPipeline(mirrored, shadow_pipeline);
+      }
+    }
+
+    // kept until the scene ends, see FlushDraws()
+    _draws.Add({
+      .pipeline = pipeline,
+      .shadow_pipeline = shadow_pipeline,
+      .set = material.DescriptorSet(),
+      .scene_offset = _last_scene_offset,
+      .model_id = model_id,
+      .material_id = material_id,
+      .distance = VK_DrawOrder::DistanceOf(view, glm::vec3(model_matrix[3])),
+      .see_through = see_through,
+      .casts_shadow = casts && shadow_pipeline != VK_NULL_HANDLE,
+      .data = material.GetObjectData(model_matrix, transform)
+    });
+  }
+
+  void VK_RenderSystem::FlushDraws(VK_Canvas &canvas)
+  {
+    if (_draws.Empty() || &canvas != _draws_canvas) { return; }
+
+    _draws.Settle();
+    const auto &draws = _draws.Draws();
+    const auto &batches = _draws.Batches();
+
+    // the objects' data, in the order the draws ended up in, from where the
+    // buffer of the frame was filled to; a batch names its first object
+    // by its index in the buffer, which the shaders read it by
+    const uint32_t base = _object_buffer.used;
+    for (std::size_t i = 0; i < draws.size(); i++)
+    {
+      std::memcpy(_object_buffer.mapped + (base + i) * _object_buffer.entry_size, &draws[i].data, sizeof(VK_ObjectData));
+    }
+    _object_buffer.used += static_cast<uint32_t>(draws.size());
+
+    const VkCommandBuffer commands = canvas.Commands();
+    VkPipeline bound_pipeline = VK_NULL_HANDLE;
+    VkDescriptorSet bound_set = VK_NULL_HANDLE;
+    uint32_t bound_offset = 0;
+    bool casts = false;
+
+    for (const VK_DrawBatch &batch : batches)
+    {
+      // a model that was destroyed since is left out
+      if (!_models.Contains(batch.model_id)) { continue; }
+
+      if (batch.pipeline != bound_pipeline)
+      {
+        vkCmdBindPipeline(commands, VK_PIPELINE_BIND_POINT_GRAPHICS, batch.pipeline);
+        bound_pipeline = batch.pipeline;
+        _frame_pipeline_binds++;
+      }
+      if (batch.set != bound_set || batch.scene_offset != bound_offset)
+      {
+        vkCmdBindDescriptorSets(
+          commands, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipelines.Layout(), 0, 1, &batch.set, 1, &batch.scene_offset);
+        bound_set = batch.set;
+        bound_offset = batch.scene_offset;
+        _frame_set_binds++;
+      }
+
+      const VK_Model &model = _models[batch.model_id];
+      model.Draw(commands, batch.instances, base + batch.first_instance);
+      _frame_draws += model.MeshCount();
+      _frame_objects += batch.instances;
+      casts = casts || batch.casts_shadow;
+    }
 
     // The shadow map holds what the first scene that casts draws, as its
-    // light sees it. What is see-through casts no shadow for now.
-    if (scene.direction_light.shadow.x > 0.5f && (!_shadow_open || _shadow_target == _current_target))
+    // light sees it: the same batches, with the pipelines of the pass,
+    // once into every cascade, which a push constant names for the shader.
+    if (casts && (!_shadow_open || _shadow_target == _current_target) && (_shadow_open || BeginShadowPass()))
     {
-      if ((_shadow_open || BeginShadowPass()) && material.GetAlphaMode() != AlphaMode::Blend)
+      for (int cascade = 0; cascade < _shadow_cascades.count; cascade++)
       {
-        DrawShadow(model, material, mirrored, offsets);
+        const auto layer = static_cast<uint32_t>(cascade);
+        _shadow_map.Begin(_shadow_commands, layer);
+        vkCmdPushConstants(_shadow_commands, _pipelines.Layout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(layer), &layer);
+
+        bound_pipeline = VK_NULL_HANDLE;
+        bound_set = VK_NULL_HANDLE;
+        for (const VK_DrawBatch &batch : batches)
+        {
+          if (!batch.casts_shadow || !_models.Contains(batch.model_id)) { continue; }
+
+          if (batch.shadow_pipeline != bound_pipeline)
+          {
+            vkCmdBindPipeline(_shadow_commands, VK_PIPELINE_BIND_POINT_GRAPHICS, batch.shadow_pipeline);
+            bound_pipeline = batch.shadow_pipeline;
+            _frame_pipeline_binds++;
+          }
+          if (batch.set != bound_set || batch.scene_offset != bound_offset)
+          {
+            vkCmdBindDescriptorSets(
+              _shadow_commands, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipelines.Layout(), 0, 1, &batch.set, 1,
+              &batch.scene_offset);
+            bound_set = batch.set;
+            bound_offset = batch.scene_offset;
+            _frame_set_binds++;
+          }
+
+          const VK_Model &model = _models[batch.model_id];
+          model.Draw(_shadow_commands, batch.instances, base + batch.first_instance);
+          _frame_draws += model.MeshCount();
+        }
+        _shadow_map.End(_shadow_commands);
       }
     }
 
     // what is see-through is drawn when the scene is finished, over what
     // is opaque, from the farthest to the nearest
-    if (material.GetAlphaMode() == AlphaMode::Blend)
+    for (std::size_t i = _draws.SeeThroughStart(); i < draws.size(); i++)
     {
+      const VK_Draw &draw = draws[i];
       canvas.KeepSeeThrough({
-        .pipeline = pipeline,
-        .set = set,
-        .scene_offset = _last_scene_offset,
-        .object_offset = object_offset,
-        .model_id = model_id,
-        .distance = VK_DrawOrder::DistanceOf(view, glm::vec3(model_matrix[3]))
+        .pipeline = draw.pipeline,
+        .set = draw.set,
+        .scene_offset = draw.scene_offset,
+        .object_index = base + static_cast<uint32_t>(i),
+        .model_id = draw.model_id,
+        .distance = draw.distance
       });
-      return;
+      _frame_objects++;
     }
 
-    vkCmdBindPipeline(commands, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-    vkCmdBindDescriptorSets(
-      commands,
-      VK_PIPELINE_BIND_POINT_GRAPHICS,
-      _pipelines.Layout(),
-      0,
-      1,
-      &set,
-      static_cast<uint32_t>(offsets.size()),
-      offsets.data());
-
-    model.Use();
+    _draws.Clear();
+    _draws_canvas = nullptr;
   }
 
   bool VK_RenderSystem::BeginShadowPass()
@@ -1132,41 +1292,9 @@ namespace neon
       return false;
     }
 
-    _shadow_map.Begin(_shadow_commands);
     _shadow_open = true;
     _shadow_target = _current_target;
     return true;
-  }
-
-  void VK_RenderSystem::DrawShadow(
-    const VK_Model &model,
-    VK_Material &material,
-    const bool mirrored,
-    const std::array<uint32_t, 2> &offsets)
-  {
-    // the pipeline of the pass is made when the first object that casts
-    // is drawn with the material, culled as the material is
-    VkPipeline pipeline = material.ShadowPipeline(mirrored);
-    if (pipeline == VK_NULL_HANDLE)
-    {
-      if (!_pipelines.GetShadow(material.IsDoubleSided(), mirrored, pipeline)) { return; }
-      material.SetShadowPipeline(mirrored, pipeline);
-    }
-
-    const VkDescriptorSet set = material.DescriptorSet();
-
-    vkCmdBindPipeline(_shadow_commands, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-    vkCmdBindDescriptorSets(
-      _shadow_commands,
-      VK_PIPELINE_BIND_POINT_GRAPHICS,
-      _pipelines.Layout(),
-      0,
-      1,
-      &set,
-      static_cast<uint32_t>(offsets.size()),
-      offsets.data());
-
-    model.Draw(_shadow_commands);
   }
 
   void VK_RenderSystem::DestroyRenderObject(const int render_object_id)
@@ -1339,6 +1467,9 @@ namespace neon
       if (vkBeginCommandBuffer(_target_commands, &begin) != VK_SUCCESS) { return false; }
       _target_commands_open = true;
     }
+
+    // what the frame's canvas kept is drawn there before the target's own
+    if (_draws_canvas != nullptr && !_draws.Empty()) { FlushDraws(*_draws_canvas); }
 
     Target &kept = _targets[target];
     const VkExtent2D extent = kept.target.Extent();

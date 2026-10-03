@@ -43,9 +43,13 @@ namespace neon
     /// Draws the model as part of the frame that is being recorded.
     void Use() const override;
 
-    /// Draws the model into `commands`, which the shadow pass records
-    /// apart from the frame.
-    void Draw(VkCommandBuffer commands) const;
+    /// Draws the model into `commands` `instances` times over, the shaders
+    /// told which object each is by gl_InstanceIndex, counted from
+    /// `first_instance`. The shadow pass records apart from the frame.
+    void Draw(VkCommandBuffer commands, uint32_t instances = 1, uint32_t first_instance = 0) const;
+
+    /// How many draws the model takes, one for each of its meshes.
+    [[nodiscard]] std::size_t MeshCount() const { return _meshes.size(); }
 
     void CleanUp() override;
   };

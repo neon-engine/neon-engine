@@ -104,6 +104,14 @@ namespace neon
 
       read_count(reader, "max_light_sources", settings.max_light_sources);
       read_count(reader, "max_render_objects", settings.max_render_objects);
+      read_amount(reader, "shadow_distance", settings.shadow_distance);
+      read_count(reader, "shadow_cascades", settings.shadow_cascades);
+      if (settings.shadow_cascades > 4)
+      {
+        reader.Report(*reader.ReadValue("shadow_cascades"), std::format(
+                        "'shadow_cascades' of {} is {}, where 1 to 4 was expected", reader.GetWhere(), settings.shadow_cascades));
+        settings.shadow_cascades = 4;
+      }
       reader.Finish();
     }
 

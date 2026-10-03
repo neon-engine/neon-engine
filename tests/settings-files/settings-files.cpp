@@ -55,6 +55,8 @@ namespace
     "  vulkan_version: \"1.2\"\n"
     "  max_light_sources: 64\n"
     "  max_render_objects: 2048\n"
+    "  shadow_distance: 80\n"
+    "  shadow_cascades: 2\n"
     "\n"
     "audio:\n"
     "  groups:\n"
@@ -156,6 +158,8 @@ namespace
     EXPECT_EQ(_settings.vulkan_version, (ApiVersion{1, 2}));
     EXPECT_EQ(_settings.max_light_sources, 64u);
     EXPECT_EQ(_settings.max_render_objects, 2048u);
+    EXPECT_DOUBLE_EQ(_settings.shadow_distance, 80.0);
+    EXPECT_EQ(_settings.shadow_cascades, 2u);
     EXPECT_EQ(VolumeOf("music"), 0.6f);
     EXPECT_EQ(VolumeOf("effects"), 1.0f);
     EXPECT_EQ(VolumeOf("voices"), 1.0f);

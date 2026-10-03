@@ -106,6 +106,9 @@ namespace neon
 
     if (steps.end_scene)
     {
+      // what is opaque was kept until now, and is drawn in the order that
+      // costs the least, then what is see-through over it
+      if (_shared->draw_opaque) { _shared->draw_opaque(*this); }
       DrawSeeThrough();
       vkCmdEndRenderPass(_commands);
     }
@@ -143,20 +146,11 @@ namespace neon
       // a model that was destroyed since is left out
       if (!models.Contains(draw.model_id)) { continue; }
 
-      const std::array offsets{draw.scene_offset, draw.object_offset};
-
       vkCmdBindPipeline(_commands, VK_PIPELINE_BIND_POINT_GRAPHICS, draw.pipeline);
       vkCmdBindDescriptorSets(
-        _commands,
-        VK_PIPELINE_BIND_POINT_GRAPHICS,
-        _shared->pipeline_layout,
-        0,
-        1,
-        &draw.set,
-        static_cast<uint32_t>(offsets.size()),
-        offsets.data());
+        _commands, VK_PIPELINE_BIND_POINT_GRAPHICS, _shared->pipeline_layout, 0, 1, &draw.set, 1, &draw.scene_offset);
 
-      models[draw.model_id].Use();
+      models[draw.model_id].Draw(_commands, 1, draw.object_index);
     }
 
     _see_through.clear();

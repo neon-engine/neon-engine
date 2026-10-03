@@ -447,7 +447,8 @@ namespace neon
     const VkImageUsageFlags usage,
     VkImage &image,
     VkDeviceMemory &memory,
-    const VkImageCreateFlags flags) const
+    const VkImageCreateFlags flags,
+    const uint32_t layers) const
   {
     VkImageCreateInfo info{};
     info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -456,7 +457,7 @@ namespace neon
     info.format = format;
     info.extent = {width, height, 1};
     info.mipLevels = mip_levels;
-    info.arrayLayers = 1;
+    info.arrayLayers = layers;
     info.samples = VK_SAMPLE_COUNT_1_BIT;
     info.tiling = VK_IMAGE_TILING_OPTIMAL;
     info.usage = usage;
@@ -497,14 +498,16 @@ namespace neon
     const VkFormat format,
     const VkImageAspectFlags aspect,
     const uint32_t mip_levels,
-    VkImageView &view) const
+    VkImageView &view,
+    const uint32_t first_layer,
+    const uint32_t layers) const
   {
     VkImageViewCreateInfo info{};
     info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
     info.image = image;
-    info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    info.viewType = layers > 1 ? VK_IMAGE_VIEW_TYPE_2D_ARRAY : VK_IMAGE_VIEW_TYPE_2D;
     info.format = format;
-    info.subresourceRange = {aspect, 0, mip_levels, 0, 1};
+    info.subresourceRange = {aspect, 0, mip_levels, first_layer, layers};
 
     if (vkCreateImageView(_device, &info, nullptr, &view) != VK_SUCCESS)
     {
@@ -559,7 +562,8 @@ namespace neon
     const uint32_t first_mip_level,
     const uint32_t mip_levels,
     const VkImageLayout from,
-    const VkImageLayout to)
+    const VkImageLayout to,
+    const uint32_t layers)
   {
     // what has to be finished before the change, and what waits for it
     const auto access_of = [](const VkImageLayout layout) -> VkAccessFlags
@@ -595,7 +599,7 @@ namespace neon
     barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     barrier.image = image;
-    barrier.subresourceRange = {aspect, first_mip_level, mip_levels, 0, 1};
+    barrier.subresourceRange = {aspect, first_mip_level, mip_levels, 0, layers};
 
     vkCmdPipelineBarrier(commands, stage_of(from), stage_of(to), 0, 0, nullptr, 0, nullptr, 1, &barrier);
   }
