@@ -28,7 +28,12 @@ namespace neon
     // how far in front of the camera, for drawing the nearest first
     float distance = 0.0f;
     bool see_through = false;
+    // whether the draw goes into the shadow map, and the meshes of which
+    // material of the model it casts, every mesh when below 0: an object
+    // of several materials casts its whole model with one of its draws when
+    // it can, see VK_ShadowCasting
     bool casts_shadow = true;
+    int shadow_material = -1;
 
     // what the shaders read of the object, written into the buffer of the
     // frame in the order the draws end up in

@@ -8,6 +8,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "vk-culling.hpp"
+#include "vk-shadow-casting.hpp"
 #include "vk-shadow-fit.hpp"
 
 namespace neon
@@ -352,7 +353,9 @@ namespace neon
   bool VK_RenderSystem::CreateDescriptors()
   {
     if (!CreateFrameBuffer(_scene_buffer, sizeof(VK_SceneData), kMax_Scenes_Per_Frame) ||
-        !CreateFrameBuffer(_object_buffer, sizeof(VK_ObjectData), static_cast<uint32_t>(_settings_config.max_render_objects)))
+        // every object once for the scene, and once more for the shadow
+        // pass, which has its casters in an order of its own
+        !CreateFrameBuffer(_object_buffer, sizeof(VK_ObjectData), 2 * static_cast<uint32_t>(_settings_config.max_render_objects)))
     {
       _logger->Critical("Could not create the buffers for shader data");
       return false;
@@ -1194,7 +1197,8 @@ namespace neon
       _last_lights = lights;
     }
 
-    if (_object_buffer.used + _draws.Size() + object.material_ids.size() > _object_buffer.capacity)
+    // twice each, since a draw that casts is written once more for the pass
+    if (_object_buffer.used + 2 * (_draws.Size() + object.material_ids.size()) > _object_buffer.capacity)
     {
       if (!_warned_about_capacity)
       {
@@ -1217,53 +1221,71 @@ namespace neon
     // one draw for each material of the object: the meshes of the model
     // that use the material of the file it was made from
     const auto &model_materials = model.GetUsedMaterials();
-    for (std::size_t i = 0; i < object.material_ids.size(); i++)
-    {
-      const int material_id = object.material_ids[i];
-      auto &material = _materials[material_id];
-      const int model_material = i < model_materials.size() ? model_materials[i] : -1;
+    const std::size_t count = object.material_ids.size();
 
-      VkPipeline pipeline = material.Pipeline(mirrored);
-      if (pipeline == VK_NULL_HANDLE)
+    // what each material is drawn with, and what it casts with
+    std::vector<VkPipeline> pipelines(count, VK_NULL_HANDLE);
+    std::vector<VK_ShadowCasting::Caster> casters(count);
+    for (std::size_t i = 0; i < count; i++)
+    {
+      auto &material = _materials[object.material_ids[i]];
+      casters[i].model_material = i < model_materials.size() ? model_materials[i] : -1;
+
+      pipelines[i] = material.Pipeline(mirrored);
+      if (pipelines[i] == VK_NULL_HANDLE)
       {
-        if (!_pipelines.Get(material.ShaderPath(), material.GetAlphaMode(), material.IsDoubleSided(), true, pipeline))
+        if (!_pipelines.Get(
+              material.ShaderPath(), material.GetAlphaMode(), material.IsDoubleSided(), true, pipelines[i]))
         {
+          pipelines[i] = VK_NULL_HANDLE;
           continue;
         }
-        material.SetMirroredPipeline(pipeline);
+        material.SetMirroredPipeline(pipelines[i]);
       }
 
-      // what is see-through casts no shadow for now, and is drawn when the
-      // scene is finished, over what is opaque, from the farthest to the
-      // nearest
+      // what is see-through casts no shadow for now
       const bool see_through = material.GetAlphaMode() == AlphaMode::Blend;
-      const bool casts = _last_scene.direction_light.shadow.x > 0.5f && !see_through;
-
-      VkPipeline shadow_pipeline = VK_NULL_HANDLE;
-      if (casts)
+      casters[i].casts = _last_scene.direction_light.shadow.x > 0.5f && !see_through;
+      if (casters[i].casts)
       {
         // the pipeline of the pass is made when the first object that casts
         // is drawn with the material, culled as the material is
-        shadow_pipeline = material.ShadowPipeline(mirrored);
-        if (shadow_pipeline == VK_NULL_HANDLE &&
-            _pipelines.GetShadow(material.IsDoubleSided(), mirrored, shadow_pipeline))
+        casters[i].pipeline = material.ShadowPipeline(mirrored);
+        if (casters[i].pipeline == VK_NULL_HANDLE &&
+            _pipelines.GetShadow(material.IsDoubleSided(), mirrored, casters[i].pipeline))
         {
-          material.SetShadowPipeline(mirrored, shadow_pipeline);
+          material.SetShadowPipeline(mirrored, casters[i].pipeline);
         }
       }
+    }
 
-      // kept until the scene ends, see FlushDraws()
+    // The pass that draws the shadow map writes depth alone: when every
+    // material of the object casts alike, one of its draws casts the whole
+    // model and the others nothing, see VK_ShadowCasting.
+    const std::vector<VK_ShadowCasting::Cast> casts = VK_ShadowCasting::Plan(casters);
+
+    for (std::size_t i = 0; i < count; i++)
+    {
+      if (pipelines[i] == VK_NULL_HANDLE) { continue; }
+
+      const int material_id = object.material_ids[i];
+      const auto &material = _materials[material_id];
+
+      // kept until the scene ends, see FlushDraws(). What is see-through is
+      // drawn when the scene is finished, over what is opaque, from the
+      // farthest to the nearest.
       _draws.Add({
-        .pipeline = pipeline,
-        .shadow_pipeline = shadow_pipeline,
+        .pipeline = pipelines[i],
+        .shadow_pipeline = casters[i].pipeline,
         .set = material.DescriptorSet(),
         .scene_offset = _last_scene_offset,
         .model_id = model_id,
         .material_id = material_id,
-        .model_material = model_material,
+        .model_material = casters[i].model_material,
         .distance = distance,
-        .see_through = see_through,
-        .casts_shadow = casts && shadow_pipeline != VK_NULL_HANDLE,
+        .see_through = material.GetAlphaMode() == AlphaMode::Blend,
+        .casts_shadow = casts[i].casts,
+        .shadow_material = casts[i].model_material,
         .data = material.GetObjectData(model_matrix, transform)
       });
     }
@@ -1288,11 +1310,22 @@ namespace neon
     }
     _object_buffer.used += static_cast<uint32_t>(draws.size());
 
+    // and the casters once more, in the order of the shadow pass, so that
+    // a batch of the pass has its objects side by side
+    const auto &shadow_order = _draws.ShadowOrder();
+    const uint32_t shadow_base = _object_buffer.used;
+    for (std::size_t i = 0; i < shadow_order.size(); i++)
+    {
+      std::memcpy(
+        _object_buffer.mapped + (shadow_base + i) * _object_buffer.entry_size, &draws[shadow_order[i]].data,
+        sizeof(VK_ObjectData));
+    }
+    _object_buffer.used += static_cast<uint32_t>(shadow_order.size());
+
     const VkCommandBuffer commands = canvas.Commands();
     VkPipeline bound_pipeline = VK_NULL_HANDLE;
     VkDescriptorSet bound_set = VK_NULL_HANDLE;
     uint32_t bound_offset = 0;
-    bool casts = false;
 
     for (const VK_DrawBatch &batch : batches)
     {
@@ -1317,13 +1350,14 @@ namespace neon
       const VK_Model &model = _models[batch.model_id];
       model.Draw(commands, batch.instances, base + batch.first_instance, batch.model_material);
       _frame_draws += model.MeshCount(batch.model_material);
-      casts = casts || batch.casts_shadow;
     }
 
     // The shadow map holds what the first scene that casts draws, as its
     // light sees it: the same batches, with the pipelines of the pass,
     // once into every cascade, which a push constant names for the shader.
-    if (casts && (!_shadow_open || _shadow_target == _current_target) && (_shadow_open || BeginShadowPass()))
+    const auto &shadow_batches = _draws.ShadowBatches();
+    if (!shadow_batches.empty() && (!_shadow_open || _shadow_target == _current_target) &&
+        (_shadow_open || BeginShadowPass()))
     {
       for (int cascade = 0; cascade < _shadow_cascades.count; cascade++)
       {
@@ -1331,30 +1365,34 @@ namespace neon
         _shadow_map.Begin(_shadow_commands, layer);
         vkCmdPushConstants(_shadow_commands, _pipelines.Layout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(layer), &layer);
 
+        // The pass reads the scene and the objects alone, which every set
+        // binds the same, so one set serves until the camera or the lights
+        // change; and it draws the batches of its own, where the material
+        // an object has in the scene parts nothing.
         bound_pipeline = VK_NULL_HANDLE;
-        bound_set = VK_NULL_HANDLE;
-        for (const VK_DrawBatch &batch : batches)
+        bool set_bound = false;
+        for (const VK_ShadowBatch &batch : shadow_batches)
         {
-          if (!batch.casts_shadow || !_models.Contains(batch.model_id)) { continue; }
+          if (!_models.Contains(batch.model_id)) { continue; }
 
-          if (batch.shadow_pipeline != bound_pipeline)
+          if (batch.pipeline != bound_pipeline)
           {
-            vkCmdBindPipeline(_shadow_commands, VK_PIPELINE_BIND_POINT_GRAPHICS, batch.shadow_pipeline);
-            bound_pipeline = batch.shadow_pipeline;
+            vkCmdBindPipeline(_shadow_commands, VK_PIPELINE_BIND_POINT_GRAPHICS, batch.pipeline);
+            bound_pipeline = batch.pipeline;
             _frame_pipeline_binds++;
           }
-          if (batch.set != bound_set || batch.scene_offset != bound_offset)
+          if (!set_bound || batch.scene_offset != bound_offset)
           {
             vkCmdBindDescriptorSets(
               _shadow_commands, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipelines.Layout(), 0, 1, &batch.set, 1,
               &batch.scene_offset);
-            bound_set = batch.set;
+            set_bound = true;
             bound_offset = batch.scene_offset;
             _frame_set_binds++;
           }
 
           const VK_Model &model = _models[batch.model_id];
-          model.Draw(_shadow_commands, batch.instances, base + batch.first_instance, batch.model_material);
+          model.Draw(_shadow_commands, batch.instances, shadow_base + batch.first_instance, batch.model_material);
           _frame_draws += model.MeshCount(batch.model_material);
         }
         _shadow_map.End(_shadow_commands);

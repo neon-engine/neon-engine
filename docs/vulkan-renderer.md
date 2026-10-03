@@ -322,7 +322,8 @@ entry of object data of that material, so that the colour factor of every
 material of the file reaches the shader; draws alike are batched as every
 draw is, see [The order of a frame](#the-order-of-a-frame), a see-through
 material is kept for the end of the scene, and the shadow pass draws the
-meshes of each material with its covering. The scene's `Renderable`
+whole model of an object once when all of its materials cast alike, and
+the meshes of each material with its covering when they do not. The scene's `Renderable`
 overrides every material, and its `textures` the first alone, see
 [models.md](models.md#several-materials). What a render object draws with
 is held once (#241), its materials included: two render objects whose
@@ -394,8 +395,16 @@ within it, for the descriptor set; by model within that; and the nearest
 first among those alike, so that what is hidden is not shaded. Draws alike
 in all three are one call, `vkCmdDrawIndexed` with as many instances, their
 objects side by side in the buffer of the frame from the first instance on.
-Two thousand crates of one prefab are one draw. The shadow pass draws the
-same batches with its own pipelines. See-through draws keep the order they
+Two thousand crates of one prefab are one draw. The shadow pass has batches
+of its own, since it writes depth alone and the material of an object parts
+nothing there: the casters are ordered by the pipeline of the pass, the
+model, and its meshes, their objects are written into the buffer once more
+in that order, and a model is one call a cascade however many materials its
+objects are drawn with in the scene. An object of several materials casts
+its whole model with one of its draws when all of them cast alike
+(`VK_ShadowCasting`). The pass reads the scene and the objects alone, which
+every descriptor set binds the same, so it binds one set for a camera and
+its lights. See-through draws keep the order they
 came in, behind the opaque ones, and the canvas sorts them from the farthest
 to the nearest as before. The order is worked out apart from the graphics
 card, in `VK_DrawQueue`, which is tested; what a frame cost, objects, draws,
@@ -490,7 +499,7 @@ cast nothing yet.
 | Part | What it is |
 |---|---|
 | The map | One depth image of 2048 by 2048 in whole floats with four layers, `VK_ShadowMap`, a layer a cascade, drawn once a frame and read by every scene of it as an array. It is left all lit when it is made, so that a frame in which nothing casts reads it and lights everything |
-| The pass | Before the scene, in commands of its own that are submitted first. Every opaque model of the first scene that casts is drawn with the depth-only `shadow` shader through a variant of `VK_Pipelines`, once into each cascade's layer, the cascade named by a push constant, culled as its material is: a plane seen from one side casts from that side alone, and a double-sided material from both. The same instanced batches as the scene, so two thousand crates are one draw a cascade. See-through models cast nothing for now |
+| The pass | Before the scene, in commands of its own that are submitted first. Every opaque model of the first scene that casts is drawn with the depth-only `shadow` shader through a variant of `VK_Pipelines`, once into each cascade's layer, the cascade named by a push constant, culled as its material is: a plane seen from one side casts from that side alone, and a double-sided material from both. In batches of its own, by model and not by material, so two thousand crates are one draw a cascade whatever their materials are. See-through models cast nothing for now |
 | The fit | `VK_ShadowFit`: cascades, as Godot, Unity, and Unreal fit theirs. What the camera sees up to `rendering.shadow_distance`, 50 metres unless the [settings](settings.md) say otherwise, is cut into `rendering.shadow_cascades` slices along the view, four by default, split halfway between even and logarithmic so that the near slice is thin; each slice gets a box around the sphere that holds its corners, seen along the light without perspective, reaching back towards the light by the distance so that what casts into the slice from above it is in the map. A sphere gives the box one size however the camera turns, and the box moves in whole texels of the map, so that the edge of a shadow stays where it is while the camera moves by less than one and does not shimmer. The shaders pick the cascade by the point's distance along the view and read its layer; past the last one everything is lit |
 | The bias | Two parts. The pipeline of the pass pushes a caster back along the slope of its surface by two texels of depth (`depthBiasSlopeFactor`), which covers the texels the comparison reaches across on a surface that slopes away from the light. The shaders move the compared depth by 0.0002 of the depth of the box, about 1.6 centimetres, which covers a surface that faces the light. With whole floats the constant bias of the pipeline is too fine to be of use, which is why that part is in the shaders |
 | The comparison | `shadows.glsl`, bound to every lit shader: the place in the map and the depth of the point, compared through a sampler that compares (`VK_Sampling::ShadowCompare`), which blends the answers of the four texels around the place. Nine such comparisons one texel apart are averaged, which softens the edge of a shadow over about three texels. Past the edge of the map, and further from the light than the box reaches, everything is lit |

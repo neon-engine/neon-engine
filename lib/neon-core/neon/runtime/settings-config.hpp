@@ -136,8 +136,9 @@ struct SettingsConfig
   std::size_t max_light_sources = 1024;
 
   /// How many render objects a frame may hold: what is drawn, one draw each.
-  /// It sizes the per-frame buffer of the objects' data, 208 bytes each,
-  /// so a larger number costs little; what it really budgets is draw calls.
+  /// It sizes the per-frame buffer of the objects' data, twice 208 bytes
+  /// each, once for the scene and once for the shadow pass, so a larger
+  /// number costs little; what it really budgets is draw calls.
   std::size_t max_render_objects = 16384;
   /// How far from the camera the shadow of the direction light reaches,
   /// in metres, along its view; what is further is lit. The shadow map is

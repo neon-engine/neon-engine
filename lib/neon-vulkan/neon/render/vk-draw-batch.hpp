@@ -13,7 +13,6 @@ namespace neon
   struct VK_DrawBatch
   {
     VkPipeline pipeline = VK_NULL_HANDLE;
-    VkPipeline shadow_pipeline = VK_NULL_HANDLE;
     VkDescriptorSet set = VK_NULL_HANDLE;
     uint32_t scene_offset = 0;
     int model_id = -1;
@@ -22,7 +21,6 @@ namespace neon
     int model_material = -1;
     uint32_t first_instance = 0;
     uint32_t instances = 0;
-    bool casts_shadow = true;
   };
 } // neon
 

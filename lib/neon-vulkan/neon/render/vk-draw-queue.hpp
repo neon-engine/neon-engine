@@ -6,6 +6,7 @@
 
 #include "vk-draw.hpp"
 #include "vk-draw-batch.hpp"
+#include "vk-shadow-batch.hpp"
 
 namespace neon
 {
@@ -24,6 +25,8 @@ namespace neon
   {
     std::vector<VK_Draw> _draws;
     std::vector<VK_DrawBatch> _batches;
+    std::vector<VK_ShadowBatch> _shadow_batches;
+    std::vector<uint32_t> _shadow_order;
 
   public:
     void Add(const VK_Draw &draw) { _draws.push_back(draw); }
@@ -40,6 +43,19 @@ namespace neon
 
     /// The opaque draws as batches, in order. Empty before Settle().
     [[nodiscard]] const std::vector<VK_DrawBatch> &Batches() const { return _batches; }
+
+    /// What goes into the shadow map, as batches of their own: the opaque
+    /// draws that cast, gathered by the pipeline of the pass, the model, and
+    /// its meshes, whatever material each is drawn with in the scene, since
+    /// the pass writes depth alone. A batch names its first object by its
+    /// place in ShadowOrder(). Empty before Settle().
+    [[nodiscard]] const std::vector<VK_ShadowBatch> &ShadowBatches() const { return _shadow_batches; }
+
+    /// The draws that cast, as places in Draws(), in the order the batches
+    /// of the pass have them. Their objects are written into the buffer of
+    /// the frame once more in this order, after those of the scene, so that
+    /// every batch of the pass has its objects side by side.
+    [[nodiscard]] const std::vector<uint32_t> &ShadowOrder() const { return _shadow_order; }
 
     /// Where the see-through draws start in Draws(), which is after the
     /// opaque ones.

@@ -94,17 +94,94 @@ namespace
     EXPECT_EQ(queue.Draws()[0].pipeline, Pipeline(1));
   }
 
-  TEST(VkDrawQueueTest, DrawsThatCastAndDrawsThatDoNotAreNotOneBatch)
+  TEST(VkDrawQueueTest, DrawsThatCastAndDrawsThatDoNotAreOneBatchOfTheSceneAndTheCastersOneOfTheShadowMap)
   {
     VK_DrawQueue queue;
     VK_Draw casts = Draw(1, 1, 1, 1.0f);
+    casts.shadow_pipeline = Pipeline(9);
     VK_Draw does_not = Draw(1, 1, 1, 2.0f);
     does_not.casts_shadow = false;
     queue.Add(casts);
     queue.Add(does_not);
     queue.Settle();
 
+    EXPECT_EQ(queue.Batches().size(), 1u);
+    ASSERT_EQ(queue.ShadowBatches().size(), 1u);
+    EXPECT_EQ(queue.ShadowBatches()[0].instances, 1u);
+    EXPECT_EQ(queue.ShadowBatches()[0].first_instance, 0u);
+  }
+
+  TEST(VkDrawQueueTest, CratesOfTwoMaterialsAreTwoBatchesOfTheSceneAndOneOfTheShadowMap)
+  {
+    // the same model, the same pipeline, two materials: side by side in the
+    // buffer, and the pass does not care which material each has
+    VK_DrawQueue queue;
+    for (int i = 0; i < 4; i++)
+    {
+      VK_Draw draw = Draw(1, i < 2 ? 1 : 2, 7, static_cast<float>(i));
+      draw.shadow_pipeline = Pipeline(9);
+      queue.Add(draw);
+    }
+    queue.Settle();
+
     EXPECT_EQ(queue.Batches().size(), 2u);
+    ASSERT_EQ(queue.ShadowBatches().size(), 1u);
+    EXPECT_EQ(queue.ShadowBatches()[0].first_instance, 0u);
+    EXPECT_EQ(queue.ShadowBatches()[0].instances, 4u);
+    EXPECT_EQ(queue.ShadowBatches()[0].model_id, 7);
+  }
+
+  TEST(VkDrawQueueTest, CastersOfOneModelAreOneBatchWhereverTheyStandAmongTheDraws)
+  {
+    // another model stands between them in the scene's order; the pass
+    // has an order of its own
+    VK_DrawQueue queue;
+    VK_Draw first = Draw(1, 1, 7, 1.0f);
+    VK_Draw between = Draw(1, 1, 8, 1.0f);
+    VK_Draw second = Draw(1, 2, 7, 1.0f);
+    for (VK_Draw *draw : {&first, &between, &second}) { draw->shadow_pipeline = Pipeline(9); }
+    queue.Add(first);
+    queue.Add(between);
+    queue.Add(second);
+    queue.Settle();
+
+    // in the scene: model 7 at 0, model 8 at 1, model 7 at 2
+    ASSERT_EQ(queue.ShadowBatches().size(), 2u);
+    EXPECT_EQ(queue.ShadowBatches()[0].model_id, 7);
+    EXPECT_EQ(queue.ShadowBatches()[0].first_instance, 0u);
+    EXPECT_EQ(queue.ShadowBatches()[0].instances, 2u);
+    EXPECT_EQ(queue.ShadowBatches()[1].model_id, 8);
+    EXPECT_EQ(queue.ShadowBatches()[1].first_instance, 2u);
+    EXPECT_EQ(queue.ShadowOrder(), (std::vector<uint32_t>{0, 2, 1}));
+  }
+
+  TEST(VkDrawQueueTest, ADrawThatCastsTheWholeModelAndOneThatCastsOneMaterialAreNotOneBatch)
+  {
+    VK_DrawQueue queue;
+    VK_Draw whole = Draw(1, 1, 7, 1.0f);
+    whole.shadow_pipeline = Pipeline(9);
+    whole.shadow_material = -1;
+    VK_Draw part = Draw(1, 1, 7, 2.0f);
+    part.shadow_pipeline = Pipeline(9);
+    part.shadow_material = 2;
+    queue.Add(whole);
+    queue.Add(part);
+    queue.Settle();
+
+    ASSERT_EQ(queue.ShadowBatches().size(), 2u);
+    EXPECT_EQ(queue.ShadowBatches()[0].model_material, -1);
+    EXPECT_EQ(queue.ShadowBatches()[1].model_material, 2);
+  }
+
+  TEST(VkDrawQueueTest, SeeThroughDrawsCastNothing)
+  {
+    VK_DrawQueue queue;
+    VK_Draw glass = Draw(1, 1, 7, 1.0f, true);
+    glass.shadow_pipeline = Pipeline(9);
+    queue.Add(glass);
+    queue.Settle();
+
+    EXPECT_TRUE(queue.ShadowBatches().empty());
   }
 
   TEST(VkDrawQueueTest, TheMeshesOfTwoMaterialsOfOneModelAreTwoBatches)

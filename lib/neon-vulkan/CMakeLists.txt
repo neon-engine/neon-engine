@@ -52,7 +52,10 @@ add_library(${TARGET} STATIC
         neon/render/vk-sampling.hpp
         neon/render/vk-scene-image.cpp
         neon/render/vk-scene-image.hpp
+        neon/render/vk-shadow-batch.hpp
         neon/render/vk-shadow-cascades.hpp
+        neon/render/vk-shadow-casting.cpp
+        neon/render/vk-shadow-casting.hpp
         neon/render/vk-shadow-fit.cpp
         neon/render/vk-shadow-fit.hpp
         neon/render/vk-shadow-map.cpp
@@ -104,6 +107,7 @@ if (NEON_BUILD_TESTS)
   neon_add_unit_test(${TARGET} neon/render/vk-shadow-fit.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/vk-draw-order.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/vk-draw-queue.test.cpp)
+  neon_add_unit_test(${TARGET} neon/render/vk-shadow-casting.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/vk-frame-stages.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/vk-surface-format.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/vk-api-version.test.cpp)
