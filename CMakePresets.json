@@ -54,6 +54,54 @@
       "displayName": "Windows x64 (Debug, cross-compiled with llvm-mingw)",
       "inherits": "base",
       "toolchainFile": "${sourceDir}/cmake/toolchains/windows-x64-llvm-mingw.cmake"
+    },
+    {
+      "name": "release",
+      "hidden": true,
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_C_FLAGS_RELEASE": "-O3 -DNDEBUG -fno-math-errno -ffunction-sections -fdata-sections",
+        "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG -fno-math-errno -ffunction-sections -fdata-sections",
+        "CMAKE_INTERPROCEDURAL_OPTIMIZATION": "ON"
+      }
+    },
+    {
+      "name": "macos-arm64-release",
+      "displayName": "macOS arm64 (Release)",
+      "inherits": "release",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Darwin" },
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "/opt/homebrew/opt/llvm@20/bin/clang",
+        "CMAKE_CXX_COMPILER": "/opt/homebrew/opt/llvm@20/bin/clang++",
+        "CMAKE_C_FLAGS": "-mcpu=apple-m1",
+        "CMAKE_CXX_FLAGS": "-mcpu=apple-m1",
+        "CMAKE_EXE_LINKER_FLAGS_RELEASE": "-Wl,-dead_strip"
+      }
+    },
+    {
+      "name": "linux-x64-release",
+      "displayName": "Linux x64 (Release)",
+      "inherits": "release",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux" },
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_C_FLAGS": "-march=x86-64-v2",
+        "CMAKE_CXX_FLAGS": "-stdlib=libc++ -march=x86-64-v2",
+        "CMAKE_EXE_LINKER_FLAGS_RELEASE": "-Wl,--gc-sections"
+      }
+    },
+    {
+      "name": "windows-x64-release",
+      "displayName": "Windows x64 (Release, cross-compiled with llvm-mingw)",
+      "inherits": "release",
+      "toolchainFile": "${sourceDir}/cmake/toolchains/windows-x64-llvm-mingw.cmake",
+      "cacheVariables": {
+        "CMAKE_C_FLAGS": "-march=x86-64-v2",
+        "CMAKE_CXX_FLAGS": "-march=x86-64-v2",
+        "CMAKE_EXE_LINKER_FLAGS_RELEASE": "-Wl,--gc-sections"
+      }
     }
   ],
   "buildPresets": [
@@ -68,7 +116,13 @@
     { "name": "linux-x64-release-tests",   "configurePreset": "linux-x64-release",   "targets": ["neon-tests"] },
     { "name": "windows-x64-release-tests", "configurePreset": "windows-x64-release", "targets": ["neon-tests"] },
     { "name": "linux-x64-debug-tests",   "configurePreset": "linux-x64-debug",   "targets": ["neon-tests"] },
-    { "name": "windows-x64-debug-tests", "configurePreset": "windows-x64-debug", "targets": ["neon-tests"] }
+    { "name": "windows-x64-debug-tests", "configurePreset": "windows-x64-debug", "targets": ["neon-tests"] },
+    { "name": "macos-arm64-release", "configurePreset": "macos-arm64-release", "targets": ["NeonRuntime"] },
+    { "name": "linux-x64-release",   "configurePreset": "linux-x64-release",   "targets": ["NeonRuntime"] },
+    { "name": "windows-x64-release", "configurePreset": "windows-x64-release", "targets": ["NeonRuntime"] },
+    { "name": "macos-arm64-release-tests", "configurePreset": "macos-arm64-release", "targets": ["neon-tests"] },
+    { "name": "linux-x64-release-tests",   "configurePreset": "linux-x64-release",   "targets": ["neon-tests"] },
+    { "name": "windows-x64-release-tests", "configurePreset": "windows-x64-release", "targets": ["neon-tests"] }
   ],
   "testPresets": [
     {
@@ -92,6 +146,8 @@
       "configurePreset": "linux-x64-debug",
       "inherits": "test-base",
       "filter": { "include": { "label": "unit" } }
-    }
+    },
+    { "name": "macos-arm64-release", "configurePreset": "macos-arm64-release", "inherits": "test-base" },
+    { "name": "linux-x64-release",   "configurePreset": "linux-x64-release",   "inherits": "test-base" }
   ]
 }

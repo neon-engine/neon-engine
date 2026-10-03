@@ -14,7 +14,35 @@ identical across targets:
 
 Build configurations live in [CMakePresets.json](../CMakePresets.json). Each
 preset writes into `build/<preset-name>` and the resulting executable lands in
-`bin/<build-type>/<os>-<arch>/<app-name>/`.
+`bin/<build-type>/<os>-<arch>/<app-name>/`. Every target has a debug preset
+and a release one, `macos-arm64-debug` and `macos-arm64-release` and so on.
+
+### Release builds
+
+A release preset is what a number is measured with and what a game ships
+as. The debug presets compile with `-O0` and nothing inlined, for the
+debugger; the release ones with:
+
+| Flag | Why |
+|---|---|
+| `-O3 -DNDEBUG` | The optimiser at its highest, and the assertions of the libraries off |
+| Link-time optimisation, `CMAKE_INTERPROCEDURAL_OPTIMIZATION` | The engine is a dozen static libraries in one executable; optimised as one program, a call into another library is inlined as one within a file is. Thin LTO with clang, so the link stays parallel |
+| `-fno-math-errno` | `sqrt` and its kin compile to the instruction of the processor in place of a call that sets `errno`, which nothing reads |
+| `-ffunction-sections -fdata-sections` with `-Wl,-dead_strip` on macOS and `-Wl,--gc-sections` elsewhere | What nothing calls is left out of the executable: most of assimp's importers, for one |
+| `-mcpu=apple-m1` on macOS | Every Mac with Apple silicon, and the instructions all of them have |
+| `-march=x86-64-v2` on Linux and Windows | SSE4.2 and POPCNT, which is what Jolt is built for already (`cmake/JoltPhysics.cmake`) and what every processor since 2009 has. AVX2 would be `x86-64-v3` and would shut out processors that Jolt's own build still runs on |
+
+What is left out on purpose: `-ffast-math`, since it lets the compiler
+reorder arithmetic, and the physics is built to give the same result on
+every platform (`CROSS_PLATFORM_DETERMINISTIC`), which it then would not;
+and `-march=native`, since a build has to run on machines other than the
+one that built it.
+
+```sh
+cmake --preset macos-arm64-release
+cmake --build --preset macos-arm64-release
+./bin/release/darwin-arm64/NeonRuntime/NeonRuntime
+```
 
 | Option | What it does | Default |
 |---|---|---|
@@ -967,7 +995,8 @@ the same.
 
 [.vscode/tasks.json](../.vscode/tasks.json) also defines plain VS Code tasks
 that wrap the preset commands, so no extension is needed. Run them with
-`Terminal > Run Task`; each one asks which preset to use and defaults to macOS.
+`Terminal > Run Task`; each one asks which preset to use, debug or release
+of each target, and defaults to the debug build of macOS.
 
 | Task | What it runs |
 |---|---|
@@ -975,9 +1004,9 @@ that wrap the preset commands, so no extension is needed. Run them with
 | Build | `cmake --build --preset <preset>` (default build task, Cmd+Shift+B) |
 | Clean | the preset's `clean` target |
 | Rebuild | Clean, then Build |
-| Full Clean | deletes the preset's build directory and the `bin` output |
-| Run | builds, then runs the macOS binary from its own folder without a debugger |
-| Build in Docker (Linux x64 / Windows x64) | configure and build inside the matching image |
+| Full Clean | deletes the preset's build directory and the `bin` output of its build type |
+| Run | builds, then runs the macOS binary of the preset from its own folder without a debugger. It asks for a scene: left empty, the entry scene of the project starts; a name such as `prototype` starts `assets://scenes/prototype.scene.yml`; a virtual path is taken as it is |
+| Build in Docker (Linux x64 / Windows x64) | configure and build inside the matching image, debug or release as asked |
 
 ### Running and debugging from VS Code
 

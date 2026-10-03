@@ -6,7 +6,27 @@
       "type": "pickString",
       "description": "CMake preset",
       "default": "macos-arm64-debug",
-      "options": ["macos-arm64-debug", "linux-x64-debug", "windows-x64-debug"]
+      "options": [
+        "macos-arm64-debug",
+        "macos-arm64-release",
+        "linux-x64-debug",
+        "linux-x64-release",
+        "windows-x64-debug",
+        "windows-x64-release"
+      ]
+    },
+    {
+      "id": "buildType",
+      "type": "pickString",
+      "description": "Debug or release",
+      "default": "debug",
+      "options": ["debug", "release"]
+    },
+    {
+      "id": "scene",
+      "type": "promptString",
+      "description": "Scene to start with: empty for the entry scene of the project, a name such as prototype, or a virtual path such as assets://scenes/prototype.scene.yml",
+      "default": ""
     }
   ],
   "options": {
@@ -42,30 +62,29 @@
     },
     {
       "label": "Run",
-      "detail": "Runs the macOS build without a debugger, from the binary's folder so asset paths resolve",
+      "detail": "Runs the macOS build of the chosen preset without a debugger, from the binary's folder so asset paths resolve, with the scene that was asked for or the entry scene of the project",
       "type": "shell",
-      "command": "./NeonRuntime",
-      "options": { "cwd": "${workspaceFolder}/bin/debug/darwin-arm64/NeonRuntime" },
+      "command": "case '${input:preset}' in *-release) TYPE=release ;; *) TYPE=debug ;; esac; SCENE='${input:scene}'; case \"$SCENE\" in '') ;; *://*) ;; *) SCENE=\"assets://scenes/$SCENE.scene.yml\" ;; esac; cd \"${workspaceFolder}/bin/$TYPE/darwin-arm64/NeonRuntime\" && ./NeonRuntime ${SCENE:+--scene \"$SCENE\"}",
       "dependsOn": ["Build"],
       "problemMatcher": []
     },
     {
       "label": "Full Clean",
-      "detail": "Deletes the build directory and binaries for the chosen preset, so Configure has to run again",
+      "detail": "Deletes the build directory of the chosen preset and its binaries, so Configure has to run again",
       "type": "shell",
-      "command": "rm -rf build/${input:preset} bin/debug/darwin-arm64 bin/debug/linux-* bin/debug/windows-*",
+      "command": "case '${input:preset}' in *-release) TYPE=release ;; *) TYPE=debug ;; esac; rm -rf build/${input:preset} bin/$TYPE/darwin-arm64 bin/$TYPE/linux-* bin/$TYPE/windows-*",
       "problemMatcher": []
     },
     {
       "label": "Build in Docker (Linux x64)",
       "type": "shell",
-      "command": "docker run --rm -v \"${workspaceFolder}\":/src -w /src neon-engine/linux-x64 sh -c 'cmake --preset linux-x64-debug && cmake --build --preset linux-x64-debug'",
+      "command": "docker run --rm -v \"${workspaceFolder}\":/src -w /src neon-engine/linux-x64 sh -c 'cmake --preset linux-x64-${input:buildType} && cmake --build --preset linux-x64-${input:buildType}'",
       "problemMatcher": ["$gcc"]
     },
     {
       "label": "Build in Docker (Windows x64)",
       "type": "shell",
-      "command": "docker run --rm -v \"${workspaceFolder}\":/src -w /src neon-engine/windows-x64 sh -c 'cmake --preset windows-x64-debug && cmake --build --preset windows-x64-debug'",
+      "command": "docker run --rm -v \"${workspaceFolder}\":/src -w /src neon-engine/windows-x64 sh -c 'cmake --preset windows-x64-${input:buildType} && cmake --build --preset windows-x64-${input:buildType}'",
       "problemMatcher": ["$gcc"]
     }
   ]

@@ -106,7 +106,19 @@ namespace
     {
       for (int pixel = 0; pixel < 2; pixel++)
       {
-        const unsigned char value = two_pixels[pixel * 4 + channel];
+        unsigned char value = two_pixels[pixel * 4 + channel];
+
+        // Photoshop keeps the colours of a picture with alpha blended over
+        // white, and a reader takes the white off again. A colour kept as
+        // it is would be darker than any blend over white can be, which
+        // stb_image turns into a float below zero and then into a byte,
+        // and what that gives is not defined: 0 without the optimiser, 3
+        // with it.
+        if (channels == 4 && channel < 3)
+        {
+          const int alpha = two_pixels[pixel * 4 + 3];
+          value = static_cast<unsigned char>((value * alpha + 255 * (255 - alpha) + 127) / 255);
+        }
 
         bytes.push_back(value);
         // 16 bits repeat the byte, so that 255 is 65535
