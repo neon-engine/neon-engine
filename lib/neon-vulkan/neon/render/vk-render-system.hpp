@@ -146,8 +146,6 @@ namespace neon
     std::size_t _material_shares_reported = 0;
     std::size_t _model_loads_reported = 0;
     std::size_t _model_shares_reported = 0;
-    std::size_t _texture_loads_reported = 0;
-    std::size_t _texture_shares_reported = 0;
 
     /// Says in the log what the render objects created since the last
     /// frame loaded, and what they shared. Nothing is said when none was.

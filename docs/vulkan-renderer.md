@@ -311,9 +311,11 @@ from four prefabs read four GLB files and one colormap, not seventeen of
 each, and a scene that writes the same model on two entities in full gets
 the same. `CreateRenderObject()` takes a reference and
 `DestroyRenderObject()` gives it back. The log says at the end of the
-frame that created render objects how many models and textures were loaded
-and how many were shared, once a scene, and names each model and texture
-that is shared or freed at the level of debugging.
+frame that created render objects how many models were loaded and how many
+were shared, and how many materials were made and how many shared, once a
+scene. Textures are not counted there, since one is only ever read through
+a material; each model and texture that is shared or freed is named at the
+level of debugging.
 
 The images of the user interface, loaded through `LoadTexture()`, are held
 by `UiResources` once for every path already and are not in the cache.

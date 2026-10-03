@@ -883,24 +883,22 @@ namespace neon
 
     const auto model_loads = _models.Loads() - _model_loads_reported;
     const auto model_shares = _models.Shares() - _model_shares_reported;
-    const auto texture_loads = _textures.Loads() - _texture_loads_reported;
-    const auto texture_shares = _textures.Shares() - _texture_shares_reported;
-
     const auto material_makes = _materials.Makes() - _material_makes_reported;
     const auto material_shares = _materials.Shares() - _material_shares_reported;
 
+    // Textures are not counted: a texture is only ever read through a
+    // material, so a shared material says it all, and a material that is
+    // made names the textures it loads or shares at the level of debugging.
     _logger->Info(
-      "Created {} render objects: {} models and {} textures were loaded, and {} models and {} textures were "
-      "shared with objects that had them already; {} materials were made and {} shared",
-      _objects_created, model_loads, texture_loads, model_shares, texture_shares, material_makes, material_shares);
+      "Created {} render objects: {} models were loaded and {} shared with objects that had them already; "
+      "{} materials were made and {} shared",
+      _objects_created, model_loads, model_shares, material_makes, material_shares);
     _material_makes_reported = _materials.Makes();
     _material_shares_reported = _materials.Shares();
 
     _objects_created = 0;
     _model_loads_reported = _models.Loads();
     _model_shares_reported = _models.Shares();
-    _texture_loads_reported = _textures.Loads();
-    _texture_shares_reported = _textures.Shares();
   }
 
   VK_SceneData VK_RenderSystem::BuildSceneData(
