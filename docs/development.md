@@ -1004,6 +1004,7 @@ of each target, and defaults to the debug build of macOS.
 |---|---|
 | Configure | `cmake --preset <preset>` |
 | Build | `cmake --build --preset <preset>` (default build task, Cmd+Shift+B). A preset that has not been configured yet is configured first, so a preset can be picked and built without running Configure |
+| Build `<preset>` | the same as Build for one fixed preset, without asking; the launch configurations run these |
 | Clean | the preset's `clean` target; nothing when the preset has not been configured yet |
 | Rebuild | Clean, then Build |
 | Full Clean | deletes the preset's build directory and the `bin` output of its build type |
@@ -1012,10 +1013,13 @@ of each target, and defaults to the debug build of macOS.
 
 ### Running and debugging from VS Code
 
-[.vscode/launch.json](../.vscode/launch.json) has one launch configuration per
-platform binary: macOS arm64, Linux x86_64, Linux aarch64, and Windows x86_64.
-Pick the one matching the machine VS Code is running on. Each builds first,
-then starts the binary from its own folder so the relative asset paths resolve.
+[.vscode/launch.json](../.vscode/launch.json) has two launch configurations per
+platform binary, debug and release: macOS arm64, Linux x86_64, Linux aarch64,
+and Windows x86_64. Pick the one matching the machine VS Code is running on.
+Each builds its own preset first without asking for one, through the
+`Build <preset>` task of that preset, so the binary that starts is always the
+one that was just built. It starts from its own folder so the relative asset
+paths resolve.
 
 They all use the
 [CodeLLDB](https://marketplace.visualstudio.com/items?itemName=vadimcn.vscode-lldb)
