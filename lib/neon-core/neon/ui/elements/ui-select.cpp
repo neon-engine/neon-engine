@@ -695,13 +695,13 @@ namespace neon
   std::vector<UiElement::Field> UiSelect::GetFields() const
   {
     return {
-      {"value", FieldKind::Text, "What is chosen, which may follow a value of the game as {name}", {}},
-      {"text", FieldKind::Text, "What is shown for what is chosen", {}},
-      {"options", FieldKind::TextList, "What can be chosen, by value", {}},
-      {"placeholder", FieldKind::Text, "What is shown while nothing is chosen", {}},
-      {"open", FieldKind::Bool, "Whether the list is open", {}},
-      {"enabled", FieldKind::Bool, "Whether it can be chosen from", {}},
-      {"autofocus", FieldKind::Bool, "Whether it has the focus when its file is shown", {}}
+      {"value", FieldKind::String, "What is chosen, which may follow a value of the game as {name}", {}},
+      {"text", FieldKind::String, "What is shown for what is chosen", {}},
+      {"options", FieldKind::StringList, "What can be chosen, by value", {}},
+      {"placeholder", FieldKind::String, "What is shown while nothing is chosen", {}},
+      {"open", FieldKind::Boolean, "Whether the list is open", {}},
+      {"enabled", FieldKind::Boolean, "Whether it can be chosen from", {}},
+      {"autofocus", FieldKind::Boolean, "Whether it has the focus when its file is shown", {}}
     };
   }
 

@@ -50,7 +50,7 @@ namespace
 
     const neon::FieldInfo *text = button.Find("text");
     ASSERT_NE(text, nullptr);
-    EXPECT_EQ(text->kind, FieldKind::Text);
+    EXPECT_EQ(text->kind, FieldKind::String);
     EXPECT_EQ(text->description, "What is written on it, which may refer to values of the game as {name}");
 
     const neon::FieldInfo *kind = nullptr;
@@ -104,7 +104,7 @@ namespace
 
     const neon::FieldInfo *opacity = panel.Find("style.opacity");
     ASSERT_NE(opacity, nullptr);
-    EXPECT_EQ(opacity->kind, FieldKind::Number);
+    EXPECT_EQ(opacity->kind, FieldKind::Float);
   }
 
   TEST_F(UiDescribingTest, TheFieldsOfADescriptionReadAndChangeAnElement)

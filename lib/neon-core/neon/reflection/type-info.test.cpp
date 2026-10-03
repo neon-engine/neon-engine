@@ -238,18 +238,18 @@ namespace
 
   TEST_F(TypeInfoTest, DeducesWhatAFieldHoldsFromTheMember)
   {
-    EXPECT_EQ(_type.Find("alive")->kind, FieldKind::Bool);
-    EXPECT_EQ(_type.Find("legs")->kind, FieldKind::Whole);
-    EXPECT_EQ(_type.Find("speed")->kind, FieldKind::Number);
-    EXPECT_EQ(_type.Find("name")->kind, FieldKind::Text);
-    EXPECT_EQ(_type.Find("home")->kind, FieldKind::Vector);
+    EXPECT_EQ(_type.Find("alive")->kind, FieldKind::Boolean);
+    EXPECT_EQ(_type.Find("legs")->kind, FieldKind::Integer);
+    EXPECT_EQ(_type.Find("speed")->kind, FieldKind::Float);
+    EXPECT_EQ(_type.Find("name")->kind, FieldKind::String);
+    EXPECT_EQ(_type.Find("home")->kind, FieldKind::Vector3);
     EXPECT_EQ(_type.Find("skin")->kind, FieldKind::Color);
-    EXPECT_EQ(_type.Find("sounds")->kind, FieldKind::TextList);
+    EXPECT_EQ(_type.Find("sounds")->kind, FieldKind::StringList);
     EXPECT_EQ(_type.Find("mood")->kind, FieldKind::Choice);
     EXPECT_EQ(_type.Find("armor")->kind, FieldKind::Group);
-    EXPECT_EQ(_type.Find("stripes")->kind, FieldKind::NumberList);
-    EXPECT_EQ(_type.Find("turn")->kind, FieldKind::Number);
-    EXPECT_EQ(_type.Find("age")->kind, FieldKind::Precise);
+    EXPECT_EQ(_type.Find("stripes")->kind, FieldKind::FloatList);
+    EXPECT_EQ(_type.Find("turn")->kind, FieldKind::Float);
+    EXPECT_EQ(_type.Find("age")->kind, FieldKind::Double);
   }
 
   TEST_F(TypeInfoTest, WhatFollowsAFieldIsAboutThatField)
@@ -281,7 +281,7 @@ namespace
   TEST_F(TypeInfoTest, FindsAFieldOfAGroupByItsPath)
   {
     ASSERT_NE(_type.Find("armor.thickness"), nullptr);
-    EXPECT_EQ(_type.Find("armor.thickness")->kind, FieldKind::Number);
+    EXPECT_EQ(_type.Find("armor.thickness")->kind, FieldKind::Float);
   }
 
   TEST_F(TypeInfoTest, DoesNotFindWhatWasNotDescribed)
@@ -594,9 +594,9 @@ namespace
 
   TEST(FieldValue, ATextIsBothATextAndAChoice)
   {
-    EXPECT_TRUE(neon::Holds(FieldValue{std::string("x")}, FieldKind::Text));
+    EXPECT_TRUE(neon::Holds(FieldValue{std::string("x")}, FieldKind::String));
     EXPECT_TRUE(neon::Holds(FieldValue{std::string("x")}, FieldKind::Choice));
-    EXPECT_FALSE(neon::Holds(FieldValue{std::string("x")}, FieldKind::Number));
+    EXPECT_FALSE(neon::Holds(FieldValue{std::string("x")}, FieldKind::Float));
   }
 
   TEST(FieldValue, NothingIsAGroup)

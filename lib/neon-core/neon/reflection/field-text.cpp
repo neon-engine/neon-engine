@@ -325,7 +325,7 @@ namespace neon
 
     switch (field.kind)
     {
-      case FieldKind::Bool:
+      case FieldKind::Boolean:
       {
         const std::string word = Lowered(Trimmed(text));
         if (word != "true" && word != "false") { return refuse("true or false"); }
@@ -334,7 +334,7 @@ namespace neon
         return true;
       }
 
-      case FieldKind::Whole:
+      case FieldKind::Integer:
       {
         float number = 0.0f;
         if (!ParseNumber(text, number) || number != std::round(number) || std::abs(number) > 2.0e9f)
@@ -346,7 +346,7 @@ namespace neon
         return true;
       }
 
-      case FieldKind::Number:
+      case FieldKind::Float:
       {
         float number = 0.0f;
         if (!ParseNumber(text, number)) { return refuse("a number"); }
@@ -355,7 +355,7 @@ namespace neon
         return true;
       }
 
-      case FieldKind::Precise:
+      case FieldKind::Double:
       {
         double number = 0.0;
         if (!ParseNumber(text, number)) { return refuse("a number"); }
@@ -364,13 +364,13 @@ namespace neon
         return true;
       }
 
-      case FieldKind::Text:
+      case FieldKind::String:
       case FieldKind::Choice:
         // which words a choice has is looked at by Check()
         value = field.kind == FieldKind::Choice ? Trimmed(text) : text;
         return true;
 
-      case FieldKind::Vector:
+      case FieldKind::Vector3:
       {
         const auto words = Words(text);
         glm::vec3 vector{0.0f};
@@ -400,7 +400,7 @@ namespace neon
         return true;
       }
 
-      case FieldKind::TextList:
+      case FieldKind::StringList:
       {
         std::vector<std::string> texts;
         std::string each;
@@ -432,7 +432,7 @@ namespace neon
         return true;
       }
 
-      case FieldKind::NumberList:
+      case FieldKind::FloatList:
       {
         std::vector<float> numbers;
 

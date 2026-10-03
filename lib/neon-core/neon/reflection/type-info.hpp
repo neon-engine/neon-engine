@@ -33,7 +33,7 @@ namespace neon
     /// need not be the name of the member in C++.
     std::string name;
 
-    FieldKind kind = FieldKind::Number;
+    FieldKind kind = FieldKind::Float;
 
     /// What the field is for, in a sentence. For the editor.
     std::string description;

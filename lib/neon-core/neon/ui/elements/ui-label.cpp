@@ -36,7 +36,7 @@ namespace neon
 
   std::vector<UiElement::Field> UiLabel::GetFields() const
   {
-    return {{"text", FieldKind::Text, "What is shown, which may refer to values of the game as {name}", {}}};
+    return {{"text", FieldKind::String, "What is shown, which may refer to values of the game as {name}", {}}};
   }
 
   void UiLabel::ApplyDefaults(UiStyle &style) const

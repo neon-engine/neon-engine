@@ -14,7 +14,7 @@ namespace neon
   {
     std::string name;
 
-    FieldKind kind = FieldKind::Number;
+    FieldKind kind = FieldKind::Float;
 
     /// The default. It is of the type the kind holds, which the layout
     /// checks.

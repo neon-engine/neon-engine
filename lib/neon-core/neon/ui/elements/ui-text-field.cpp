@@ -886,14 +886,14 @@ namespace neon
   std::vector<UiElement::Field> UiTextField::GetFields() const
   {
     return {
-      {"value", FieldKind::Text, "The text, which may follow a value of the game as {name}", {}},
-      {"placeholder", FieldKind::Text, "What is shown while nothing is typed", {}},
-      {"max_length", FieldKind::Whole, "How many characters may be typed. 0 for any number", {}},
-      {"read_only", FieldKind::Bool, "Whether the text can be selected and copied, and not changed", {}},
-      {"enabled", FieldKind::Bool, "Whether it can be typed into", {}},
-      {"pattern", FieldKind::Text, "What the text has to fit, with * for anything and ? for one character", {}},
-      {"valid", FieldKind::Bool, "Whether the text fits its pattern", {}},
-      {"autofocus", FieldKind::Bool, "Whether it has the focus when its file is shown", {}}
+      {"value", FieldKind::String, "The text, which may follow a value of the game as {name}", {}},
+      {"placeholder", FieldKind::String, "What is shown while nothing is typed", {}},
+      {"max_length", FieldKind::Integer, "How many characters may be typed. 0 for any number", {}},
+      {"read_only", FieldKind::Boolean, "Whether the text can be selected and copied, and not changed", {}},
+      {"enabled", FieldKind::Boolean, "Whether it can be typed into", {}},
+      {"pattern", FieldKind::String, "What the text has to fit, with * for anything and ? for one character", {}},
+      {"valid", FieldKind::Boolean, "Whether the text fits its pattern", {}},
+      {"autofocus", FieldKind::Boolean, "Whether it has the focus when its file is shown", {}}
     };
   }
 
@@ -1057,7 +1057,7 @@ namespace neon
   std::vector<UiElement::Field> UiTextArea::GetFields() const
   {
     auto fields = UiTextField::GetFields();
-    fields.insert(fields.begin(), {"rows", FieldKind::Whole, "How many lines are seen", {}});
+    fields.insert(fields.begin(), {"rows", FieldKind::Integer, "How many lines are seen", {}});
     return fields;
   }
 } // neon

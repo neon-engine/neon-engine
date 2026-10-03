@@ -268,28 +268,28 @@ namespace neon
 
     switch (field.kind)
     {
-      case FieldKind::Bool:
+      case FieldKind::Boolean:
         fits = lua_isboolean(lua, index);
         if (fits) { value = lua_toboolean(lua, index) != 0; }
         break;
-      case FieldKind::Whole:
+      case FieldKind::Integer:
         fits = lua_isinteger(lua, index) != 0;
         if (fits) { value = static_cast<int>(lua_tointeger(lua, index)); }
         break;
-      case FieldKind::Number:
+      case FieldKind::Float:
         fits = lua_isnumber(lua, index) != 0;
         if (fits) { value = static_cast<float>(lua_tonumber(lua, index)); }
         break;
-      case FieldKind::Precise:
+      case FieldKind::Double:
         fits = lua_isnumber(lua, index) != 0;
         if (fits) { value = static_cast<double>(lua_tonumber(lua, index)); }
         break;
-      case FieldKind::Text:
+      case FieldKind::String:
       case FieldKind::Choice:
         fits = lua_type(lua, index) == LUA_TSTRING;
         if (fits) { value = std::string(lua_tostring(lua, index)); }
         break;
-      case FieldKind::Vector:
+      case FieldKind::Vector3:
         fits = test_vec3(lua, index) != nullptr;
         if (fits) { value = check_vec3(lua, index); }
         break;
@@ -297,14 +297,14 @@ namespace neon
         fits = test_color(lua, index) != nullptr;
         if (fits) { value = check_color(lua, index); }
         break;
-      case FieldKind::TextList:
+      case FieldKind::StringList:
       {
         std::vector<std::string> texts;
         fits = read_list(lua, index, texts);
         if (fits) { value = texts; }
         break;
       }
-      case FieldKind::NumberList:
+      case FieldKind::FloatList:
       case FieldKind::Layers:
       {
         std::vector<float> numbers;

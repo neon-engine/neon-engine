@@ -28,7 +28,7 @@ namespace neon
     /// Where one field lies.
     struct Slot
     {
-      FieldKind kind = FieldKind::Number;
+      FieldKind kind = FieldKind::Float;
       std::size_t offset = 0;
       FieldValue standard;
     };

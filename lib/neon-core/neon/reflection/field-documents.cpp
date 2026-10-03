@@ -52,42 +52,42 @@ namespace neon
 
       switch (field.kind)
       {
-        case FieldKind::Bool:
+        case FieldKind::Boolean:
         {
           bool read = false;
           if (!reader.Read(field.name, read)) { return false; }
           value = read;
           break;
         }
-        case FieldKind::Whole:
+        case FieldKind::Integer:
         {
           int read = 0;
           if (!reader.Read(field.name, read)) { return false; }
           value = read;
           break;
         }
-        case FieldKind::Number:
+        case FieldKind::Float:
         {
           float read = 0.0f;
           if (!reader.Read(field.name, read)) { return false; }
           value = read;
           break;
         }
-        case FieldKind::Precise:
+        case FieldKind::Double:
         {
           double read = 0.0;
           if (!reader.Read(field.name, read)) { return false; }
           value = read;
           break;
         }
-        case FieldKind::Text:
+        case FieldKind::String:
         {
           std::string read;
           if (!reader.Read(field.name, read)) { return false; }
           value = read;
           break;
         }
-        case FieldKind::Vector:
+        case FieldKind::Vector3:
         {
           glm::vec3 read{0.0f};
           const bool was_read = field.one_number_for_all
@@ -104,14 +104,14 @@ namespace neon
           value = read;
           break;
         }
-        case FieldKind::TextList:
+        case FieldKind::StringList:
         {
           std::vector<std::string> read;
           if (!reader.Read(field.name, read)) { return false; }
           value = read;
           break;
         }
-        case FieldKind::NumberList:
+        case FieldKind::FloatList:
         {
           std::vector<float> read;
           if (!reader.Read(field.name, read)) { return false; }
@@ -229,7 +229,7 @@ namespace neon
 
       ReadField(field, reader, object);
 
-      if (!field.required || field.kind != FieldKind::Text) { continue; }
+      if (!field.required || field.kind != FieldKind::String) { continue; }
 
       // the value may come from the file or from the defaults of the type
       if (!std::get<std::string>(field.get(object)).empty()) { continue; }

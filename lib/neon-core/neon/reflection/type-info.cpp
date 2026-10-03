@@ -24,7 +24,7 @@ namespace neon
     /// one number.
     std::string Written(const FieldKind kind, const std::vector<float> &numbers)
     {
-      if (kind == FieldKind::Number || kind == FieldKind::Whole) { return std::format("{}", numbers.front()); }
+      if (kind == FieldKind::Float || kind == FieldKind::Integer) { return std::format("{}", numbers.front()); }
 
       std::string written;
       for (const float number : numbers)
@@ -62,8 +62,8 @@ namespace neon
         range += limit;
       }
 
-      const bool one = field.kind == FieldKind::Number || field.kind == FieldKind::Whole
-                       || field.kind == FieldKind::Precise;
+      const bool one = field.kind == FieldKind::Float || field.kind == FieldKind::Integer
+                       || field.kind == FieldKind::Double;
 
       if (!field.unit.empty()) { return std::format("{} {} were expected", field.unit, range); }
       if (one) { return std::format("a number {} was expected", range); }
@@ -131,7 +131,7 @@ namespace neon
       return std::format("{} is '{}', where one of these was expected: {}", what, word, Join(choices));
     }
 
-    if (kind == FieldKind::Text && required && std::get<std::string>(value).empty())
+    if (kind == FieldKind::String && required && std::get<std::string>(value).empty())
     {
       return std::format("{} must not be empty", what);
     }
@@ -148,7 +148,7 @@ namespace neon
       return {};
     }
 
-    if (kind == FieldKind::Precise)
+    if (kind == FieldKind::Double)
     {
       // compared as a double, so that a tiny number above 0 is not rounded
       // down onto the limit
@@ -163,16 +163,16 @@ namespace neon
 
     // the numbers that the limits are about
     std::vector<float> numbers;
-    if (kind == FieldKind::Number) { numbers.push_back(std::get<float>(value)); }
-    if (kind == FieldKind::Whole) { numbers.push_back(static_cast<float>(std::get<int>(value))); }
+    if (kind == FieldKind::Float) { numbers.push_back(std::get<float>(value)); }
+    if (kind == FieldKind::Integer) { numbers.push_back(static_cast<float>(std::get<int>(value))); }
 
-    if (kind == FieldKind::Vector)
+    if (kind == FieldKind::Vector3)
     {
       const auto &vector = std::get<glm::vec3>(value);
       numbers = {vector.x, vector.y, vector.z};
     }
 
-    if (kind == FieldKind::NumberList)
+    if (kind == FieldKind::FloatList)
     {
       numbers = std::get<std::vector<float>>(value);
 

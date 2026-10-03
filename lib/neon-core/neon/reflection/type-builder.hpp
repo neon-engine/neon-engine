@@ -45,16 +45,16 @@ namespace neon
     template<typename V>
     static FieldKind KindOf()
     {
-      if constexpr (std::is_same_v<V, bool>) { return FieldKind::Bool; }
-      else if constexpr (std::is_same_v<V, int>) { return FieldKind::Whole; }
-      else if constexpr (std::is_same_v<V, float>) { return FieldKind::Number; }
-      else if constexpr (std::is_same_v<V, std::string>) { return FieldKind::Text; }
-      else if constexpr (std::is_same_v<V, glm::vec3>) { return FieldKind::Vector; }
+      if constexpr (std::is_same_v<V, bool>) { return FieldKind::Boolean; }
+      else if constexpr (std::is_same_v<V, int>) { return FieldKind::Integer; }
+      else if constexpr (std::is_same_v<V, float>) { return FieldKind::Float; }
+      else if constexpr (std::is_same_v<V, std::string>) { return FieldKind::String; }
+      else if constexpr (std::is_same_v<V, glm::vec3>) { return FieldKind::Vector3; }
       else if constexpr (std::is_same_v<V, Color>) { return FieldKind::Color; }
-      else if constexpr (std::is_same_v<V, std::vector<std::string>>) { return FieldKind::TextList; }
+      else if constexpr (std::is_same_v<V, std::vector<std::string>>) { return FieldKind::StringList; }
       else if constexpr (std::is_same_v<V, FieldLength>) { return FieldKind::Length; }
-      else if constexpr (std::is_same_v<V, std::vector<float>>) { return FieldKind::NumberList; }
-      else if constexpr (std::is_same_v<V, double>) { return FieldKind::Precise; }
+      else if constexpr (std::is_same_v<V, std::vector<float>>) { return FieldKind::FloatList; }
+      else if constexpr (std::is_same_v<V, double>) { return FieldKind::Double; }
       else
       {
         // depends on V, so that it is only looked at for a type that gets here

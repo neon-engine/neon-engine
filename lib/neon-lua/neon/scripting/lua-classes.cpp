@@ -75,31 +75,31 @@ namespace neon
     {
       if (lua_isboolean(lua, -1))
       {
-        field.kind = FieldKind::Bool;
+        field.kind = FieldKind::Boolean;
         field.standard = lua_toboolean(lua, -1) != 0;
         return true;
       }
       if (lua_isinteger(lua, -1))
       {
-        field.kind = FieldKind::Whole;
+        field.kind = FieldKind::Integer;
         field.standard = static_cast<int>(lua_tointeger(lua, -1));
         return true;
       }
       if (lua_isnumber(lua, -1))
       {
-        field.kind = FieldKind::Number;
+        field.kind = FieldKind::Float;
         field.standard = static_cast<float>(lua_tonumber(lua, -1));
         return true;
       }
       if (lua_type(lua, -1) == LUA_TSTRING)
       {
-        field.kind = FieldKind::Text;
+        field.kind = FieldKind::String;
         field.standard = std::string(lua_tostring(lua, -1));
         return true;
       }
       if (test_vec3(lua, -1) != nullptr)
       {
-        field.kind = FieldKind::Vector;
+        field.kind = FieldKind::Vector3;
         field.standard = check_vec3(lua, -1);
         return true;
       }

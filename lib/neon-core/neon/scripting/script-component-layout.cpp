@@ -15,12 +15,12 @@ namespace neon
     {
       switch (kind)
       {
-        case FieldKind::Bool: return sizeof(bool);
-        case FieldKind::Whole: return sizeof(int);
-        case FieldKind::Number: return sizeof(float);
-        case FieldKind::Precise: return sizeof(double);
-        case FieldKind::Text: return sizeof(std::string);
-        case FieldKind::Vector: return sizeof(glm::vec3);
+        case FieldKind::Boolean: return sizeof(bool);
+        case FieldKind::Integer: return sizeof(int);
+        case FieldKind::Float: return sizeof(float);
+        case FieldKind::Double: return sizeof(double);
+        case FieldKind::String: return sizeof(std::string);
+        case FieldKind::Vector3: return sizeof(glm::vec3);
         case FieldKind::Color: return sizeof(Color);
         default: return 0;
       }
@@ -30,12 +30,12 @@ namespace neon
     {
       switch (kind)
       {
-        case FieldKind::Bool: return alignof(bool);
-        case FieldKind::Whole: return alignof(int);
-        case FieldKind::Number: return alignof(float);
-        case FieldKind::Precise: return alignof(double);
-        case FieldKind::Text: return alignof(std::string);
-        case FieldKind::Vector: return alignof(glm::vec3);
+        case FieldKind::Boolean: return alignof(bool);
+        case FieldKind::Integer: return alignof(int);
+        case FieldKind::Float: return alignof(float);
+        case FieldKind::Double: return alignof(double);
+        case FieldKind::String: return alignof(std::string);
+        case FieldKind::Vector3: return alignof(glm::vec3);
         case FieldKind::Color: return alignof(Color);
         default: return 1;
       }
@@ -170,17 +170,17 @@ namespace neon
       void *place = static_cast<char *>(at) + slot.offset;
       switch (slot.kind)
       {
-        case FieldKind::Bool: new(place) bool(std::get<bool>(slot.standard));
+        case FieldKind::Boolean: new(place) bool(std::get<bool>(slot.standard));
           break;
-        case FieldKind::Whole: new(place) int(std::get<int>(slot.standard));
+        case FieldKind::Integer: new(place) int(std::get<int>(slot.standard));
           break;
-        case FieldKind::Number: new(place) float(std::get<float>(slot.standard));
+        case FieldKind::Float: new(place) float(std::get<float>(slot.standard));
           break;
-        case FieldKind::Precise: new(place) double(std::get<double>(slot.standard));
+        case FieldKind::Double: new(place) double(std::get<double>(slot.standard));
           break;
-        case FieldKind::Text: new(place) std::string(std::get<std::string>(slot.standard));
+        case FieldKind::String: new(place) std::string(std::get<std::string>(slot.standard));
           break;
-        case FieldKind::Vector: new(place) glm::vec3(std::get<glm::vec3>(slot.standard));
+        case FieldKind::Vector3: new(place) glm::vec3(std::get<glm::vec3>(slot.standard));
           break;
         case FieldKind::Color: new(place) Color(std::get<Color>(slot.standard));
           break;
@@ -194,7 +194,7 @@ namespace neon
     for (const auto &slot : shape.slots)
     {
       // only text holds anything outside the component
-      if (slot.kind == FieldKind::Text) { neon::at<std::string>(at, slot.offset).~basic_string(); }
+      if (slot.kind == FieldKind::String) { neon::at<std::string>(at, slot.offset).~basic_string(); }
     }
   }
 
@@ -204,17 +204,17 @@ namespace neon
     {
       switch (slot.kind)
       {
-        case FieldKind::Bool: at<bool>(to, slot.offset) = at<bool>(from, slot.offset);
+        case FieldKind::Boolean: at<bool>(to, slot.offset) = at<bool>(from, slot.offset);
           break;
-        case FieldKind::Whole: at<int>(to, slot.offset) = at<int>(from, slot.offset);
+        case FieldKind::Integer: at<int>(to, slot.offset) = at<int>(from, slot.offset);
           break;
-        case FieldKind::Number: at<float>(to, slot.offset) = at<float>(from, slot.offset);
+        case FieldKind::Float: at<float>(to, slot.offset) = at<float>(from, slot.offset);
           break;
-        case FieldKind::Precise: at<double>(to, slot.offset) = at<double>(from, slot.offset);
+        case FieldKind::Double: at<double>(to, slot.offset) = at<double>(from, slot.offset);
           break;
-        case FieldKind::Text: at<std::string>(to, slot.offset) = at<std::string>(from, slot.offset);
+        case FieldKind::String: at<std::string>(to, slot.offset) = at<std::string>(from, slot.offset);
           break;
-        case FieldKind::Vector: at<glm::vec3>(to, slot.offset) = at<glm::vec3>(from, slot.offset);
+        case FieldKind::Vector3: at<glm::vec3>(to, slot.offset) = at<glm::vec3>(from, slot.offset);
           break;
         case FieldKind::Color: at<Color>(to, slot.offset) = at<Color>(from, slot.offset);
           break;
@@ -227,14 +227,14 @@ namespace neon
   {
     for (const auto &slot : shape.slots)
     {
-      if (slot.kind == FieldKind::Text)
+      if (slot.kind == FieldKind::String)
       {
         at<std::string>(to, slot.offset) = std::move(at<std::string>(from, slot.offset));
       }
     }
     // everything else is copied as it is
     Shape rest = shape;
-    std::erase_if(rest.slots, [](const Slot &slot) { return slot.kind == FieldKind::Text; });
+    std::erase_if(rest.slots, [](const Slot &slot) { return slot.kind == FieldKind::String; });
     Copy(rest, to, from);
   }
 
@@ -242,12 +242,12 @@ namespace neon
   {
     switch (slot.kind)
     {
-      case FieldKind::Bool: return at<bool>(object, slot.offset);
-      case FieldKind::Whole: return at<int>(object, slot.offset);
-      case FieldKind::Number: return at<float>(object, slot.offset);
-      case FieldKind::Precise: return at<double>(object, slot.offset);
-      case FieldKind::Text: return at<std::string>(object, slot.offset);
-      case FieldKind::Vector: return at<glm::vec3>(object, slot.offset);
+      case FieldKind::Boolean: return at<bool>(object, slot.offset);
+      case FieldKind::Integer: return at<int>(object, slot.offset);
+      case FieldKind::Float: return at<float>(object, slot.offset);
+      case FieldKind::Double: return at<double>(object, slot.offset);
+      case FieldKind::String: return at<std::string>(object, slot.offset);
+      case FieldKind::Vector3: return at<glm::vec3>(object, slot.offset);
       case FieldKind::Color: return at<Color>(object, slot.offset);
       default: return {};
     }
@@ -259,22 +259,22 @@ namespace neon
     // of the field says before anything is set
     switch (slot.kind)
     {
-      case FieldKind::Bool:
+      case FieldKind::Boolean:
         if (const auto *held = std::get_if<bool>(&value)) { at<bool>(object, slot.offset) = *held; }
         break;
-      case FieldKind::Whole:
+      case FieldKind::Integer:
         if (const auto *held = std::get_if<int>(&value)) { at<int>(object, slot.offset) = *held; }
         break;
-      case FieldKind::Number:
+      case FieldKind::Float:
         if (const auto *held = std::get_if<float>(&value)) { at<float>(object, slot.offset) = *held; }
         break;
-      case FieldKind::Precise:
+      case FieldKind::Double:
         if (const auto *held = std::get_if<double>(&value)) { at<double>(object, slot.offset) = *held; }
         break;
-      case FieldKind::Text:
+      case FieldKind::String:
         if (const auto *held = std::get_if<std::string>(&value)) { at<std::string>(object, slot.offset) = *held; }
         break;
-      case FieldKind::Vector:
+      case FieldKind::Vector3:
         if (const auto *held = std::get_if<glm::vec3>(&value)) { at<glm::vec3>(object, slot.offset) = *held; }
         break;
       case FieldKind::Color:

@@ -415,12 +415,12 @@ namespace neon
   std::vector<UiElement::Field> UiSlider::GetFields() const
   {
     return {
-      {"value", FieldKind::Number, "The number chosen, which may follow a value of the game as {name}", {}},
-      {"min", FieldKind::Number, "The least it can be", {}},
-      {"max", FieldKind::Number, "The most it can be", {}},
-      {"step", FieldKind::Number, "What it moves by", {}},
-      {"enabled", FieldKind::Bool, "Whether it can be moved", {}},
-      {"autofocus", FieldKind::Bool, "Whether it has the focus when its file is shown", {}}
+      {"value", FieldKind::Float, "The number chosen, which may follow a value of the game as {name}", {}},
+      {"min", FieldKind::Float, "The least it can be", {}},
+      {"max", FieldKind::Float, "The most it can be", {}},
+      {"step", FieldKind::Float, "What it moves by", {}},
+      {"enabled", FieldKind::Boolean, "Whether it can be moved", {}},
+      {"autofocus", FieldKind::Boolean, "Whether it has the focus when its file is shown", {}}
     };
   }
 

@@ -867,7 +867,7 @@ namespace
   TEST_F(LengthDocumentsTest, DeducesTheKindsFromTheMembers)
   {
     EXPECT_EQ(_type.Find("width")->kind, neon::FieldKind::Length);
-    EXPECT_EQ(_type.Find("corners")->kind, neon::FieldKind::NumberList);
+    EXPECT_EQ(_type.Find("corners")->kind, neon::FieldKind::FloatList);
   }
 
   TEST_F(LengthDocumentsTest, ReadsALengthAsANumberAndAsText)
@@ -990,12 +990,12 @@ namespace
     using neon::FieldValue;
 
     EXPECT_EQ(neon::Describe(FieldKind::Length), "a length");
-    EXPECT_EQ(neon::Describe(FieldKind::NumberList), "a list of numbers");
+    EXPECT_EQ(neon::Describe(FieldKind::FloatList), "a list of numbers");
 
     EXPECT_TRUE(neon::Holds(FieldValue{FieldLength::Pixels(1.0f)}, FieldKind::Length));
     EXPECT_FALSE(neon::Holds(FieldValue{1.0f}, FieldKind::Length));
-    EXPECT_TRUE(neon::Holds(FieldValue{std::vector<float>{1.0f}}, FieldKind::NumberList));
-    EXPECT_FALSE(neon::Holds(FieldValue{std::vector<std::string>{"a"}}, FieldKind::NumberList));
+    EXPECT_TRUE(neon::Holds(FieldValue{std::vector<float>{1.0f}}, FieldKind::FloatList));
+    EXPECT_FALSE(neon::Holds(FieldValue{std::vector<std::string>{"a"}}, FieldKind::FloatList));
 
     EXPECT_TRUE(neon::Same(FieldValue{FieldLength::Percent(5.0f)}, FieldValue{FieldLength::Percent(5.0f)}));
     EXPECT_FALSE(neon::Same(FieldValue{FieldLength::Percent(5.0f)}, FieldValue{FieldLength::Pixels(5.0f)}));

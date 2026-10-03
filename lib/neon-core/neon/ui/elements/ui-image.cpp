@@ -36,7 +36,7 @@ namespace neon
 
   std::vector<UiElement::Field> UiImageElement::GetFields() const
   {
-    return {{"src", FieldKind::Text, "Virtual path of the image", {}}};
+    return {{"src", FieldKind::String, "Virtual path of the image", {}}};
   }
 
   void UiImageElement::ApplyDefaults(UiStyle &style) const

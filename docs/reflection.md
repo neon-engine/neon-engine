@@ -56,15 +56,15 @@ It is deduced from the member.
 
 | Member in C++ | Kind | In a scene recipe |
 |---|---|---|
-| `bool` | Bool | `true` or `false` |
-| `int` | Whole | A number without a fraction |
-| `float` | Number | A number |
-| `double` | Precise | A number, kept with every digit a `double` holds, for what adds up over time such as seconds |
-| `std::string` | Text | Text |
-| `glm::vec3` | Vector | `[x, y, z]` |
+| `bool` | Boolean | `true` or `false` |
+| `int` | Integer | A number without a fraction |
+| `float` | Float | A number |
+| `double` | Double | A number, kept with every digit a `double` holds, for what adds up over time such as seconds |
+| `std::string` | String | Text |
+| `glm::vec3` | Vector3 | `[x, y, z]` |
 | `Color` | Color | `[red, green, blue]`, or with alpha as a fourth |
-| `std::vector<std::string>` | TextList | A list of texts |
-| `std::vector<float>` | NumberList | A list of numbers, such as a size `[width, height]` |
+| `std::vector<std::string>` | StringList | A list of texts |
+| `std::vector<float>` | FloatList | A list of numbers, such as a size `[width, height]` |
 | An enum, with `Choice()` | Choice | One of its words |
 | `std::uint32_t`, with `Layers()` | Layers | One layer from 1 to 32, or a list of them. `[]` is none |
 | Several, with `Group()` | Group | A map |
@@ -168,15 +168,15 @@ back.
 
 | Kind | As text |
 |---|---|
-| Bool | `true`, `false` |
-| Whole, Number | `12`, `0.5` |
-| Precise | `1234.56789012345`, with every digit. A file may write it as `2.0d` to say so; a plain number is read all the same, and the engine never writes the suffix |
-| Text, Choice | The text itself |
-| Vector | `1 2 3` |
+| Boolean | `true`, `false` |
+| Integer, Float | `12`, `0.5` |
+| Double | `1234.56789012345`, with every digit. A file may write it as `2.0d` to say so; a plain number is read all the same, and the engine never writes the suffix |
+| String, Choice | The text itself |
+| Vector3 | `1 2 3` |
 | Color | In the notation of CSS: `#ff8000`, `#ff800080`. `rgb()` and `rgba()` are read as well |
-| TextList | `one, two` |
+| StringList | `one, two` |
 | Length | `12px`, `50%`, `auto` |
-| NumberList | `1 2 3 4` |
+| FloatList | `1 2 3 4` |
 | Layers | `1 3` |
 
 ## Reaching a field by name

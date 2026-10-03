@@ -206,45 +206,45 @@ namespace
 
   TEST(FieldTextTest, ReadsAValueOfEveryKind)
   {
-    EXPECT_EQ(std::get<bool>(Read("true", FieldKind::Bool)), true);
-    EXPECT_EQ(std::get<bool>(Read(" False ", FieldKind::Bool)), false);
+    EXPECT_EQ(std::get<bool>(Read("true", FieldKind::Boolean)), true);
+    EXPECT_EQ(std::get<bool>(Read(" False ", FieldKind::Boolean)), false);
 
-    EXPECT_EQ(std::get<int>(Read("42", FieldKind::Whole)), 42);
-    EXPECT_EQ(std::get<int>(Read("-7", FieldKind::Whole)), -7);
-    EXPECT_EQ(std::get<int>(Read("3.0", FieldKind::Whole)), 3);
+    EXPECT_EQ(std::get<int>(Read("42", FieldKind::Integer)), 42);
+    EXPECT_EQ(std::get<int>(Read("-7", FieldKind::Integer)), -7);
+    EXPECT_EQ(std::get<int>(Read("3.0", FieldKind::Integer)), 3);
 
-    EXPECT_FLOAT_EQ(std::get<float>(Read("0.5", FieldKind::Number)), 0.5f);
-    EXPECT_FLOAT_EQ(std::get<float>(Read(" -12.25 ", FieldKind::Number)), -12.25f);
-    EXPECT_FLOAT_EQ(std::get<float>(Read(".5", FieldKind::Number)), 0.5f);
+    EXPECT_FLOAT_EQ(std::get<float>(Read("0.5", FieldKind::Float)), 0.5f);
+    EXPECT_FLOAT_EQ(std::get<float>(Read(" -12.25 ", FieldKind::Float)), -12.25f);
+    EXPECT_FLOAT_EQ(std::get<float>(Read(".5", FieldKind::Float)), 0.5f);
 
     // a precise number keeps the digits a float would lose
-    EXPECT_EQ(std::get<double>(Read("1234.56789012345", FieldKind::Precise)), 1234.56789012345);
-    EXPECT_EQ(std::get<double>(Read(" -0.25 ", FieldKind::Precise)), -0.25);
+    EXPECT_EQ(std::get<double>(Read("1234.56789012345", FieldKind::Double)), 1234.56789012345);
+    EXPECT_EQ(std::get<double>(Read(" -0.25 ", FieldKind::Double)), -0.25);
 
     // a text is what it is, spaces included
-    EXPECT_EQ(std::get<std::string>(Read("  Hello, world ", FieldKind::Text)), "  Hello, world ");
-    EXPECT_EQ(std::get<std::string>(Read("", FieldKind::Text)), "");
+    EXPECT_EQ(std::get<std::string>(Read("  Hello, world ", FieldKind::String)), "  Hello, world ");
+    EXPECT_EQ(std::get<std::string>(Read("", FieldKind::String)), "");
     EXPECT_EQ(std::get<std::string>(Read(" window ", FieldKind::Choice)), "window");
 
-    EXPECT_EQ(std::get<glm::vec3>(Read("1 2.5 -3", FieldKind::Vector)), (glm::vec3{1.0f, 2.5f, -3.0f}));
-    EXPECT_EQ(std::get<glm::vec3>(Read("1, 2, 3", FieldKind::Vector)), (glm::vec3{1.0f, 2.0f, 3.0f}));
+    EXPECT_EQ(std::get<glm::vec3>(Read("1 2.5 -3", FieldKind::Vector3)), (glm::vec3{1.0f, 2.5f, -3.0f}));
+    EXPECT_EQ(std::get<glm::vec3>(Read("1, 2, 3", FieldKind::Vector3)), (glm::vec3{1.0f, 2.0f, 3.0f}));
 
     EXPECT_FLOAT_EQ(std::get<Color>(Read("#ff8000", FieldKind::Color)).r, 1.0f);
     EXPECT_FLOAT_EQ(std::get<Color>(Read("rgba(0, 0, 255, 0.5)", FieldKind::Color)).a, 0.5f);
 
-    EXPECT_THAT(std::get<std::vector<std::string>>(Read("a, b c ,d", FieldKind::TextList)), ElementsAre("a", "b c", "d"));
-    EXPECT_TRUE(std::get<std::vector<std::string>>(Read("", FieldKind::TextList)).empty());
+    EXPECT_THAT(std::get<std::vector<std::string>>(Read("a, b c ,d", FieldKind::StringList)), ElementsAre("a", "b c", "d"));
+    EXPECT_TRUE(std::get<std::vector<std::string>>(Read("", FieldKind::StringList)).empty());
 
     EXPECT_EQ(std::get<FieldLength>(Read("50%", FieldKind::Length)), FieldLength::Percent(50.0f));
     EXPECT_EQ(std::get<FieldLength>(Read("auto", FieldKind::Length)), FieldLength::Auto());
 
-    EXPECT_THAT(std::get<std::vector<float>>(Read("1 2.5, 3", FieldKind::NumberList)), ElementsAre(1.0f, 2.5f, 3.0f));
-    EXPECT_TRUE(std::get<std::vector<float>>(Read("", FieldKind::NumberList)).empty());
+    EXPECT_THAT(std::get<std::vector<float>>(Read("1 2.5, 3", FieldKind::FloatList)), ElementsAre(1.0f, 2.5f, 3.0f));
+    EXPECT_TRUE(std::get<std::vector<float>>(Read("", FieldKind::FloatList)).empty());
   }
 
   TEST(FieldTextTest, ReadsOneNumberForAVectorWhereTheFieldAllowsIt)
   {
-    FieldInfo field = Field(FieldKind::Vector);
+    FieldInfo field = Field(FieldKind::Vector3);
     field.one_number_for_all = true;
 
     FieldValue value;
@@ -253,22 +253,22 @@ namespace
     EXPECT_EQ(std::get<glm::vec3>(value), (glm::vec3{2.0f, 2.0f, 2.0f}));
 
     EXPECT_EQ(
-      ProblemOf("2", FieldKind::Vector),
+      ProblemOf("2", FieldKind::Vector3),
       "'field' of Thing is '2', where three numbers, such as 1 2 3 was expected");
   }
 
   TEST(FieldTextTest, ComesBackAsItWasWrittenForEveryKind)
   {
     const std::pair<FieldKind, FieldValue> values[] = {
-      {FieldKind::Bool, FieldValue{true}},
-      {FieldKind::Whole, FieldValue{-12}},
-      {FieldKind::Number, FieldValue{0.125f}},
-      {FieldKind::Precise, FieldValue{1234.56789012345}},
-      {FieldKind::Text, FieldValue{std::string("some text")}},
-      {FieldKind::Vector, FieldValue{glm::vec3{1.0f, -2.0f, 0.5f}}},
-      {FieldKind::TextList, FieldValue{std::vector<std::string>{"one", "two"}}},
+      {FieldKind::Boolean, FieldValue{true}},
+      {FieldKind::Integer, FieldValue{-12}},
+      {FieldKind::Float, FieldValue{0.125f}},
+      {FieldKind::Double, FieldValue{1234.56789012345}},
+      {FieldKind::String, FieldValue{std::string("some text")}},
+      {FieldKind::Vector3, FieldValue{glm::vec3{1.0f, -2.0f, 0.5f}}},
+      {FieldKind::StringList, FieldValue{std::vector<std::string>{"one", "two"}}},
       {FieldKind::Length, FieldValue{FieldLength::Sum(4.0f, 25.0f)}},
-      {FieldKind::NumberList, FieldValue{std::vector<float>{8.0f, 16.0f}}}
+      {FieldKind::FloatList, FieldValue{std::vector<float>{8.0f, 16.0f}}}
     };
 
     for (const auto &[kind, value] : values)
@@ -280,15 +280,15 @@ namespace
 
   TEST(FieldTextTest, SaysWhatWasExpected)
   {
-    EXPECT_EQ(ProblemOf("yes", FieldKind::Bool), "'field' of Thing is 'yes', where true or false was expected");
-    EXPECT_EQ(ProblemOf("1.5", FieldKind::Whole), "'field' of Thing is '1.5', where a whole number was expected");
-    EXPECT_EQ(ProblemOf("many", FieldKind::Whole), "'field' of Thing is 'many', where a whole number was expected");
-    EXPECT_EQ(ProblemOf("fast", FieldKind::Number), "'field' of Thing is 'fast', where a number was expected");
-    EXPECT_EQ(ProblemOf("1,5", FieldKind::Number), "'field' of Thing is '1,5', where a number was expected");
-    EXPECT_EQ(ProblemOf("", FieldKind::Number), "'field' of Thing is '', where a number was expected");
-    EXPECT_EQ(ProblemOf("slow", FieldKind::Precise), "'field' of Thing is 'slow', where a number was expected");
+    EXPECT_EQ(ProblemOf("yes", FieldKind::Boolean), "'field' of Thing is 'yes', where true or false was expected");
+    EXPECT_EQ(ProblemOf("1.5", FieldKind::Integer), "'field' of Thing is '1.5', where a whole number was expected");
+    EXPECT_EQ(ProblemOf("many", FieldKind::Integer), "'field' of Thing is 'many', where a whole number was expected");
+    EXPECT_EQ(ProblemOf("fast", FieldKind::Float), "'field' of Thing is 'fast', where a number was expected");
+    EXPECT_EQ(ProblemOf("1,5", FieldKind::Float), "'field' of Thing is '1,5', where a number was expected");
+    EXPECT_EQ(ProblemOf("", FieldKind::Float), "'field' of Thing is '', where a number was expected");
+    EXPECT_EQ(ProblemOf("slow", FieldKind::Double), "'field' of Thing is 'slow', where a number was expected");
     EXPECT_EQ(
-      ProblemOf("1 2", FieldKind::Vector),
+      ProblemOf("1 2", FieldKind::Vector3),
       "'field' of Thing is '1 2', where three numbers, such as 1 2 3 was expected");
     EXPECT_EQ(
       ProblemOf("red", FieldKind::Color),
@@ -297,7 +297,7 @@ namespace
       ProblemOf("wide", FieldKind::Length),
       "'field' of Thing is 'wide', where a length such as 12px, 50%, or auto was expected");
     EXPECT_EQ(
-      ProblemOf("1 two 3", FieldKind::NumberList),
+      ProblemOf("1 two 3", FieldKind::FloatList),
       "'field' of Thing is '1 two 3', where numbers, such as 1 2 3 4 was expected");
     EXPECT_EQ(
       ProblemOf("1 ground", FieldKind::Layers),

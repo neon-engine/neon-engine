@@ -140,9 +140,9 @@ namespace
     ASSERT_NE(format, nullptr);
     ASSERT_NE(format->type, nullptr);
     EXPECT_THAT(format->type->GetPaths(), ::testing::ElementsAre("at", "count", "open", "sound", "speed", "tint"));
-    EXPECT_EQ(format->type->Find("count")->kind, neon::FieldKind::Whole);
-    EXPECT_EQ(format->type->Find("speed")->kind, neon::FieldKind::Number);
-    EXPECT_EQ(format->type->Find("at")->kind, neon::FieldKind::Vector);
+    EXPECT_EQ(format->type->Find("count")->kind, neon::FieldKind::Integer);
+    EXPECT_EQ(format->type->Find("speed")->kind, neon::FieldKind::Float);
+    EXPECT_EQ(format->type->Find("at")->kind, neon::FieldKind::Vector3);
     EXPECT_EQ(format->type->Find("tint")->kind, neon::FieldKind::Color);
   }
 

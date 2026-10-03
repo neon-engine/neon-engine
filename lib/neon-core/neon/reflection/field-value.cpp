@@ -6,19 +6,19 @@ namespace neon
   {
     switch (kind)
     {
-      case FieldKind::Bool: return "true or false";
-      case FieldKind::Whole: return "a whole number";
-      case FieldKind::Number: return "a number";
-      case FieldKind::Text: return "text";
-      case FieldKind::Vector: return "three numbers";
+      case FieldKind::Boolean: return "true or false";
+      case FieldKind::Integer: return "a whole number";
+      case FieldKind::Float: return "a number";
+      case FieldKind::String: return "text";
+      case FieldKind::Vector3: return "three numbers";
       case FieldKind::Color: return "a color";
-      case FieldKind::TextList: return "a list of texts";
+      case FieldKind::StringList: return "a list of texts";
       case FieldKind::Choice: return "one of a few words";
       case FieldKind::Group: return "a group";
       case FieldKind::Length: return "a length";
-      case FieldKind::NumberList: return "a list of numbers";
+      case FieldKind::FloatList: return "a list of numbers";
       case FieldKind::Layers: return "a list of layers";
-      case FieldKind::Precise: return "a number";
+      case FieldKind::Double: return "a number";
     }
     return "unknown";
   }
@@ -27,19 +27,19 @@ namespace neon
   {
     switch (kind)
     {
-      case FieldKind::Bool: return std::holds_alternative<bool>(value);
-      case FieldKind::Whole: return std::holds_alternative<int>(value);
-      case FieldKind::Number: return std::holds_alternative<float>(value);
-      case FieldKind::Text: return std::holds_alternative<std::string>(value);
-      case FieldKind::Vector: return std::holds_alternative<glm::vec3>(value);
+      case FieldKind::Boolean: return std::holds_alternative<bool>(value);
+      case FieldKind::Integer: return std::holds_alternative<int>(value);
+      case FieldKind::Float: return std::holds_alternative<float>(value);
+      case FieldKind::String: return std::holds_alternative<std::string>(value);
+      case FieldKind::Vector3: return std::holds_alternative<glm::vec3>(value);
       case FieldKind::Color: return std::holds_alternative<Color>(value);
-      case FieldKind::TextList: return std::holds_alternative<std::vector<std::string>>(value);
+      case FieldKind::StringList: return std::holds_alternative<std::vector<std::string>>(value);
       case FieldKind::Choice: return std::holds_alternative<std::string>(value);
       case FieldKind::Group: return false;
       case FieldKind::Length: return std::holds_alternative<FieldLength>(value);
-      case FieldKind::NumberList: return std::holds_alternative<std::vector<float>>(value);
+      case FieldKind::FloatList: return std::holds_alternative<std::vector<float>>(value);
       case FieldKind::Layers: return std::holds_alternative<std::vector<float>>(value);
-      case FieldKind::Precise: return std::holds_alternative<double>(value);
+      case FieldKind::Double: return std::holds_alternative<double>(value);
     }
     return false;
   }

@@ -112,11 +112,11 @@ namespace neon
   std::vector<UiElement::Field> UiButton::GetFields() const
   {
     return {
-      {"text", FieldKind::Text, "What is written on it, which may refer to values of the game as {name}", {}},
-      {"enabled", FieldKind::Bool, "Whether it can be chosen", {}},
-      {"autofocus", FieldKind::Bool, "Whether it has the focus when its file is shown", {}},
+      {"text", FieldKind::String, "What is written on it, which may refer to values of the game as {name}", {}},
+      {"enabled", FieldKind::Boolean, "Whether it can be chosen", {}},
+      {"autofocus", FieldKind::Boolean, "Whether it has the focus when its file is shown", {}},
       {"action", FieldKind::Choice, "What choosing it does besides reporting a click: close closes its file, scene asks the game for the scene it names", {"none", "close", "scene"}},
-      {"scene", FieldKind::Text, "Virtual path of the scene that action: scene asks for", {}}
+      {"scene", FieldKind::String, "Virtual path of the scene that action: scene asks for", {}}
     };
   }
 

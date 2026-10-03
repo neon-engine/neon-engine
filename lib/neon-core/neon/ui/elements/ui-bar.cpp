@@ -51,8 +51,8 @@ namespace neon
   std::vector<UiElement::Field> UiBar::GetFields() const
   {
     return {
-      {"value", FieldKind::Number, "How much there is", {}},
-      {"max", FieldKind::Number, "How much there is at the most", {}}
+      {"value", FieldKind::Float, "How much there is", {}},
+      {"max", FieldKind::Float, "How much there is at the most", {}}
     };
   }
 

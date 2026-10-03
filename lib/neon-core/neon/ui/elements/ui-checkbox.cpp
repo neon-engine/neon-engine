@@ -315,10 +315,10 @@ namespace neon
   std::vector<UiElement::Field> UiCheckbox::GetFields() const
   {
     return {
-      {"checked", FieldKind::Bool, "Whether it is ticked, which may follow a value of the game as {name}", {}},
-      {"text", FieldKind::Text, "What is written next to it, which may refer to values of the game as {name}", {}},
-      {"enabled", FieldKind::Bool, "Whether it can be chosen", {}},
-      {"autofocus", FieldKind::Bool, "Whether it has the focus when its file is shown", {}}
+      {"checked", FieldKind::Boolean, "Whether it is ticked, which may follow a value of the game as {name}", {}},
+      {"text", FieldKind::String, "What is written next to it, which may refer to values of the game as {name}", {}},
+      {"enabled", FieldKind::Boolean, "Whether it can be chosen", {}},
+      {"autofocus", FieldKind::Boolean, "Whether it has the focus when its file is shown", {}}
     };
   }
 

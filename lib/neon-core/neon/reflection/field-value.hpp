@@ -14,21 +14,26 @@ namespace neon
   /// What a field holds.
   enum class FieldKind
   {
-    Bool = 0,
+    /// `bool`.
+    Boolean = 0,
 
-    /// A number without a fraction.
-    Whole,
+    /// `int`, a number without a fraction.
+    Integer,
 
-    Number,
-    Text,
+    /// `float`.
+    Float,
 
-    /// Three numbers.
-    Vector,
+    /// `std::string`.
+    String,
 
+    /// `glm::vec3`, three numbers.
+    Vector3,
+
+    /// `Color`, red, green, blue, and alpha.
     Color,
 
-    /// A list of texts.
-    TextList,
+    /// `std::vector<std::string>`.
+    StringList,
 
     /// One of a few words, which is how an enum is seen from outside.
     Choice,
@@ -41,17 +46,17 @@ namespace neon
     /// `auto`, and both added up.
     Length,
 
-    /// A list of numbers.
-    NumberList,
+    /// `std::vector<float>`.
+    FloatList,
 
     /// Some of the 32 layers, such as those a body of the physics is in.
     /// Held as the numbers of the layers, from 1 to 32, and kept as one bit
     /// for each.
     Layers,
 
-    /// A number kept with the precision of a `double`, for what adds up
-    /// over time, such as seconds. It is written and read as a number.
-    Precise
+    /// `double`, a number kept with every digit, for what adds up over
+    /// time, such as seconds. It is written and read as a number.
+    Double
   };
 
   /// A length as a style sheet writes one: pixels, a percentage of

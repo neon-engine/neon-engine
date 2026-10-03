@@ -28,13 +28,13 @@ namespace
   std::vector<ScriptField> door_fields()
   {
     return {
-      {"open", FieldKind::Bool, false, "Whether it stands open"},
-      {"speed", FieldKind::Number, 2.0f, ""},
-      {"count", FieldKind::Whole, 3, ""},
-      {"sound", FieldKind::Text, std::string("assets://sounds/door.wav"), ""},
-      {"at", FieldKind::Vector, glm::vec3{1.0f, 2.0f, 3.0f}, ""},
+      {"open", FieldKind::Boolean, false, "Whether it stands open"},
+      {"speed", FieldKind::Float, 2.0f, ""},
+      {"count", FieldKind::Integer, 3, ""},
+      {"sound", FieldKind::String, std::string("assets://sounds/door.wav"), ""},
+      {"at", FieldKind::Vector3, glm::vec3{1.0f, 2.0f, 3.0f}, ""},
       {"tint", FieldKind::Color, Color{0.5f, 0.25f, 1.0f, 1.0f}, ""},
-      {"seconds", FieldKind::Precise, 0.5, ""},
+      {"seconds", FieldKind::Double, 0.5, ""},
     };
   }
 
@@ -52,7 +52,7 @@ namespace
     EXPECT_EQ(type->description, "A door");
     EXPECT_THAT(type->GetPaths(), ElementsAre("open", "speed", "count", "sound", "at", "tint", "seconds"));
     EXPECT_EQ(type->Find("open")->description, "Whether it stands open");
-    EXPECT_EQ(type->Find("sound")->kind, FieldKind::Text);
+    EXPECT_EQ(type->Find("sound")->kind, FieldKind::String);
   }
 
   TEST(ScriptComponentLayoutTest, ConstructsTheDefaultsAndReadsAndChangesEveryField)
@@ -126,16 +126,16 @@ namespace
   TEST(ScriptComponentLayoutTest, RefusesWhatAFieldCannotBe)
   {
     EXPECT_THAT(
-      ScriptComponentLayout("Door", "", {{"9lives", FieldKind::Number, 1.0f, ""}}).GetProblem(),
+      ScriptComponentLayout("Door", "", {{"9lives", FieldKind::Float, 1.0f, ""}}).GetProblem(),
       HasSubstr("The field '9lives' needs a name of letters, digits, and underscores"));
     EXPECT_THAT(
-      ScriptComponentLayout("Door", "", {{"a", FieldKind::Number, 1.0f, ""}, {"a", FieldKind::Bool, true, ""}}).GetProblem(),
+      ScriptComponentLayout("Door", "", {{"a", FieldKind::Float, 1.0f, ""}, {"a", FieldKind::Boolean, true, ""}}).GetProblem(),
       HasSubstr("The field 'a' is declared twice"));
     EXPECT_THAT(
-      ScriptComponentLayout("Door", "", {{"names", FieldKind::TextList, std::vector<std::string>{}, ""}}).GetProblem(),
+      ScriptComponentLayout("Door", "", {{"names", FieldKind::StringList, std::vector<std::string>{}, ""}}).GetProblem(),
       HasSubstr("The field 'names' holds a list of texts, which a script's component cannot"));
     EXPECT_THAT(
-      ScriptComponentLayout("Door", "", {{"speed", FieldKind::Number, std::string("fast"), ""}}).GetProblem(),
+      ScriptComponentLayout("Door", "", {{"speed", FieldKind::Float, std::string("fast"), ""}}).GetProblem(),
       HasSubstr("The default of 'speed' is not a number"));
   }
 

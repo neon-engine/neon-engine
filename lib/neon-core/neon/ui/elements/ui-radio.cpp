@@ -349,12 +349,12 @@ namespace neon
   std::vector<UiElement::Field> UiRadio::GetFields() const
   {
     return {
-      {"checked", FieldKind::Bool, "Whether it is the one chosen, which may follow a value of the game as {name}", {}},
-      {"value", FieldKind::Text, "What it stands for, which the value of the game becomes when it is chosen", {}},
-      {"group", FieldKind::Text, "Which radios belong together", {}},
-      {"text", FieldKind::Text, "What is written next to it, which may refer to values of the game as {name}", {}},
-      {"enabled", FieldKind::Bool, "Whether it can be chosen", {}},
-      {"autofocus", FieldKind::Bool, "Whether it has the focus when its file is shown", {}}
+      {"checked", FieldKind::Boolean, "Whether it is the one chosen, which may follow a value of the game as {name}", {}},
+      {"value", FieldKind::String, "What it stands for, which the value of the game becomes when it is chosen", {}},
+      {"group", FieldKind::String, "Which radios belong together", {}},
+      {"text", FieldKind::String, "What is written next to it, which may refer to values of the game as {name}", {}},
+      {"enabled", FieldKind::Boolean, "Whether it can be chosen", {}},
+      {"autofocus", FieldKind::Boolean, "Whether it has the focus when its file is shown", {}}
     };
   }
 

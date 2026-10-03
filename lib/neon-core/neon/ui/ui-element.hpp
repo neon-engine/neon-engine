@@ -410,7 +410,7 @@ namespace neon
     struct Field
     {
       std::string name;
-      FieldKind kind = FieldKind::Text;
+      FieldKind kind = FieldKind::String;
       std::string description;
       std::vector<std::string> choices;
     };

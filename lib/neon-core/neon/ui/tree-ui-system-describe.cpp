@@ -34,14 +34,14 @@ namespace neon
     {
       switch (kind)
       {
-        case UiValueKind::Whole: return FieldKind::Whole;
+        case UiValueKind::Whole: return FieldKind::Integer;
         case UiValueKind::Length: return FieldKind::Length;
         case UiValueKind::Color: return FieldKind::Color;
         case UiValueKind::Keyword: return FieldKind::Choice;
-        case UiValueKind::Text: return FieldKind::Text;
-        case UiValueKind::Edges: return FieldKind::NumberList;
-        case UiValueKind::Other: return FieldKind::Text;
-        default: return FieldKind::Number;
+        case UiValueKind::Text: return FieldKind::String;
+        case UiValueKind::Edges: return FieldKind::FloatList;
+        case UiValueKind::Other: return FieldKind::String;
+        default: return FieldKind::Float;
       }
     }
 
@@ -188,12 +188,12 @@ namespace neon
 
     // what every element has
     description.fields.push_back(CommonField(
-      "name", FieldKind::Text, "What the element is found by",
+      "name", FieldKind::String, "What the element is found by",
       [](const UiElement &each) { return each.GetName(); },
       [](UiElement &each, const FieldValue &) { (void) each; }));
 
     description.fields.push_back(CommonField(
-      "class", FieldKind::TextList, "The classes a style sheet asks for",
+      "class", FieldKind::StringList, "The classes a style sheet asks for",
       [](const UiElement &each) { return each.GetClasses(); },
       [](UiElement &each, const FieldValue &value)
       {
@@ -201,7 +201,7 @@ namespace neon
       }));
 
     description.fields.push_back(CommonField(
-      "title", FieldKind::Text, "What is shown in a tooltip while the pointer rests on it",
+      "title", FieldKind::String, "What is shown in a tooltip while the pointer rests on it",
       [](const UiElement &each) { return each.GetTitle(); },
       [](UiElement &each, const FieldValue &value)
       {
@@ -209,7 +209,7 @@ namespace neon
       }));
 
     description.fields.push_back(CommonField(
-      "tab_index", FieldKind::Whole, "Where it comes in the order of the tab key: 0 as the file has it, -1 for never",
+      "tab_index", FieldKind::Integer, "Where it comes in the order of the tab key: 0 as the file has it, -1 for never",
       [](const UiElement &each) { return each.GetTabIndex(); },
       [](UiElement &each, const FieldValue &value)
       {
@@ -217,7 +217,7 @@ namespace neon
       }));
 
     description.fields.push_back(CommonField(
-      "hidden", FieldKind::Bool, "Whether it is left out, as if it were not there",
+      "hidden", FieldKind::Boolean, "Whether it is left out, as if it were not there",
       [](const UiElement &each) { return each.IsHidden(); },
       [](UiElement &each, const FieldValue &value)
       {
