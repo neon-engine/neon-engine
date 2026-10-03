@@ -29,6 +29,9 @@ namespace neon
     std::shared_ptr<const MeshData> mesh;
     std::string shader_path;
     std::vector<std::string> texture_paths;
+    /// Whether the textures repeat as the entity grows, see docs/scenes.md.
+    /// Off unless a recipe says so: without a value here, a Renderable read
+    /// without it took whatever the memory held, in a release build.
     bool scale_textures = false;
     MaterialInfo material_info;
   };

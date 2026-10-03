@@ -102,7 +102,7 @@ by a file a menu wrote.
 |---|---|---|
 | The name and organization of the project, the scenes, the entry scene | `project.yml`, see [projects.md](projects.md) | They say what the project is. A player may not change them |
 | The actions of the game and what is bound to them | The input map, see [input.md](input.md) | A project's recipe. What a player rebinds will be a layer of its own, `user://input.yml`. Whether a sensor is on is a setting, `input.gyro` |
-| `--headless-renderer`, `--frames`, `--screenshot`, `--output-dir`, `--time-step`, `--input` | The command line only | They are for a run, not for a game |
+| `--headless-renderer`, `--frames`, `--screenshot`, `--output-dir`, `--time-step`, `--input` | The command line only, in the editor's set | They are for a run, not for a game |
 | The present mode, the renderer | Nothing yet | Open in [command-line.md](command-line.md#open-questions) |
 
 ## How it is built
@@ -124,8 +124,9 @@ runtime read as it is in the repository.
   `user://settings.yml` needs `DocumentFormat::Write` on the values that
   changed. The volumes of the sound groups are settings now, `audio.volumes`,
   and the menu's sliders start at the values of its file, not at them.
-- **Which command-line options become settings**: `--window-size`,
-  `--ui-scale`, `--vulkan-version`, and `--renderer` have a place here now;
-  whether a shipped runtime keeps the options is #143.
+- **The renderer as a setting**: `--window-size`, `--window-mode`,
+  `--ui-scale`, and `--vulkan-version` have a place here now, and the
+  runtime owns the options too (#143, see [command-line.md](command-line.md)).
+  `--renderer` has no setting yet, since there is one renderer.
 - **Per-platform settings**: a project may want another size or mode on
   another platform. Not needed yet.

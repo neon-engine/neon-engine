@@ -16,7 +16,7 @@ namespace
   using neon::RuntimeOptions;
   using ::testing::HasSubstr;
 
-  /// The options next to those of the runtime, as an application has them.
+  /// The two sets the runtime owns, and nothing of the editor's.
   class DisplayOptionsTest : public ::testing::Test
   {
   protected:
@@ -37,12 +37,16 @@ namespace
       _options.Register(_command_line);
     }
 
-    bool Apply(const std::initializer_list<const char *> arguments)
+    bool Parse(const std::initializer_list<const char *> arguments)
     {
       std::vector<const char *> argv{"NeonRuntime"};
       argv.insert(argv.end(), arguments.begin(), arguments.end());
+      return _command_line.Parse(static_cast<int>(argv.size()), argv.data());
+    }
 
-      if (!_command_line.Parse(static_cast<int>(argv.size()), argv.data()))
+    bool Apply(const std::initializer_list<const char *> arguments)
+    {
+      if (!Parse(arguments))
       {
         ADD_FAILURE() << "The parser refused the arguments: " << _command_line.GetError();
         return false;
@@ -59,10 +63,17 @@ namespace
 
     EXPECT_THAT(help, HasSubstr("Display:\n"));
     EXPECT_THAT(help, HasSubstr("--window-size WxH"));
-    EXPECT_THAT(help, HasSubstr("--render-scale NUMBER"));
+    EXPECT_THAT(help, HasSubstr("--window-mode MODE"));
     EXPECT_THAT(help, HasSubstr("--ui-scale NUMBER"));
-    EXPECT_THAT(help, HasSubstr("--input SCRIPT"));
-    EXPECT_THAT(help, HasSubstr("--input-script PATH"));
+  }
+
+  TEST_F(DisplayOptionsTest, TheOptionsOfTheHeadlessRendererAreNotHere)
+  {
+    for (const char *option : {"--render-scale", "--input", "--input-script"})
+    {
+      EXPECT_FALSE(Parse({option, "value"})) << option;
+      EXPECT_EQ(_command_line.GetError(), "Unknown option '" + std::string(option) + "'");
+    }
   }
 
   TEST_F(DisplayOptionsTest, LeavesTheSettingsAsTheyAreWithoutOptions)
@@ -72,10 +83,7 @@ namespace
     EXPECT_EQ(_settings.width, 1920);
     EXPECT_EQ(_settings.height, 1080);
     EXPECT_EQ(_settings.window_mode, WindowMode::Borderless);
-    EXPECT_EQ(_settings.render_scale, 1.0);
     EXPECT_EQ(_settings.ui_scale, 1.0);
-    EXPECT_TRUE(_settings.input_script.empty());
-    EXPECT_TRUE(_settings.input_script_path.empty());
   }
 
   TEST_F(DisplayOptionsTest, TakesTheSizeOfTheWindowAndShowsAWindowOfThatSize)
@@ -108,36 +116,46 @@ namespace
     }
   }
 
-  TEST_F(DisplayOptionsTest, TakesTheRenderScaleWithoutAWindow)
+  TEST_F(DisplayOptionsTest, TakesTheModeOfTheWindow)
   {
-    ASSERT_TRUE(Apply({"--headless-renderer", "--render-scale", "1.25"}));
-    EXPECT_EQ(_settings.render_scale, 1.25);
+    ASSERT_TRUE(Apply({"--window-mode", "windowed"}));
+    EXPECT_EQ(_settings.window_mode, WindowMode::Windowed);
+
+    ASSERT_TRUE(Apply({"--window-mode", "fullscreen"}));
+    EXPECT_EQ(_settings.window_mode, WindowMode::Fullscreen);
+
+    ASSERT_TRUE(Apply({"--window-mode=borderless"}));
+    EXPECT_EQ(_settings.window_mode, WindowMode::Borderless);
   }
 
-  TEST_F(DisplayOptionsTest, RefusesARenderScaleWithAWindow)
+  TEST_F(DisplayOptionsTest, TheModeWinsOverTheWindowASizeShows)
   {
-    EXPECT_FALSE(Apply({"--render-scale", "2"}));
-    EXPECT_EQ(_error, "Option '--render-scale' needs '--headless-renderer'. A window takes the density of its display");
-    EXPECT_EQ(_settings.render_scale, 1.0);
+    ASSERT_TRUE(Apply({"--window-size", "1920x1080", "--window-mode", "fullscreen"}));
+
+    EXPECT_EQ(_settings.width, 1920);
+    EXPECT_EQ(_settings.height, 1080);
+    EXPECT_EQ(_settings.window_mode, WindowMode::Fullscreen);
+
+    ASSERT_TRUE(Apply({"--window-mode", "fullscreen", "--window-size", "1920x1080"}));
+    EXPECT_EQ(_settings.window_mode, WindowMode::Fullscreen);
   }
 
-  TEST_F(DisplayOptionsTest, RefusesARenderScaleThatIsOutOfRange)
+  TEST_F(DisplayOptionsTest, RefusesAModeThatIsNone)
   {
-    for (const char *scale : {"0", "-1", "0.1", "9", "twice"})
+    for (const char *mode : {"maximised", "Windowed", "full"})
     {
-      _settings.render_scale = 1.0;
-      EXPECT_FALSE(Apply({"--headless-renderer", "--render-scale", scale})) << scale;
-      EXPECT_EQ(_error, "Option '--render-scale' needs a number from 0.25 to 8, such as 2");
-      EXPECT_EQ(_settings.render_scale, 1.0);
+      EXPECT_FALSE(Apply({"--window-mode", mode})) << mode;
+      EXPECT_EQ(_error, "Option '--window-mode' needs windowed, borderless, or fullscreen");
+      EXPECT_EQ(_settings.window_mode, WindowMode::Borderless);
     }
   }
 
-  TEST_F(DisplayOptionsTest, TakesTheScaleOfTheUserInterfaceWithAndWithoutAWindow)
+  TEST_F(DisplayOptionsTest, TakesTheScaleOfTheUserInterface)
   {
     ASSERT_TRUE(Apply({"--ui-scale", "1.5"}));
     EXPECT_EQ(_settings.ui_scale, 1.5);
 
-    ASSERT_TRUE(Apply({"--headless-renderer", "--ui-scale", "0.75"}));
+    ASSERT_TRUE(Apply({"--ui-scale", "0.75"}));
     EXPECT_EQ(_settings.ui_scale, 0.75);
   }
 
@@ -149,29 +167,5 @@ namespace
       EXPECT_EQ(_error, "Option '--ui-scale' needs a number from 0.25 to 8, such as 1.5");
       EXPECT_EQ(_settings.ui_scale, 1.0);
     }
-  }
-
-  TEST_F(DisplayOptionsTest, TakesAScriptOfInputWithoutAWindow)
-  {
-    ASSERT_TRUE(Apply({"--headless-renderer", "--input", "1: pointer 10 10; 2: click"}));
-    EXPECT_EQ(_settings.input_script, "1: pointer 10 10; 2: click");
-
-    ASSERT_TRUE(Apply({"--headless-renderer", "--input-script", "assets://input/menu.input"}));
-    EXPECT_EQ(_settings.input_script_path, "assets://input/menu.input");
-  }
-
-  TEST_F(DisplayOptionsTest, RefusesAScriptOfInputWithAWindow)
-  {
-    EXPECT_FALSE(Apply({"--input", "1: click"}));
-    EXPECT_EQ(_error, "Option '--input' needs '--headless-renderer'. A window takes its input from devices");
-
-    EXPECT_FALSE(Apply({"--input-script", "assets://a.input"}));
-    EXPECT_EQ(_error, "Option '--input-script' needs '--headless-renderer'. A window takes its input from devices");
-  }
-
-  TEST_F(DisplayOptionsTest, RefusesTwoScriptsOfInput)
-  {
-    EXPECT_FALSE(Apply({"--headless-renderer", "--input", "1: click", "--input-script", "assets://a.input"}));
-    EXPECT_EQ(_error, "Option '--input' and '--input-script' cannot be given together");
   }
 } // namespace

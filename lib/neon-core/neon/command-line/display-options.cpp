@@ -9,16 +9,14 @@ namespace neon
   namespace
   {
     const std::string window_size = "window-size";
-    const std::string render_scale = "render-scale";
+    const std::string window_mode = "window-mode";
     const std::string ui_scale = "ui-scale";
-    const std::string input = "input";
-    const std::string input_script = "input-script";
 
-    // declared by the options of the runtime
-    const std::string headless_renderer = "headless-renderer";
+    const std::string windowed = "windowed";
+    const std::string borderless = "borderless";
+    const std::string fullscreen = "fullscreen";
 
     const std::string display = "Display";
-    const std::string development = "Development";
 
     /// Reads a size such as `1280x720`.
     bool read_size(const std::string_view text, int &width, int &height)
@@ -55,15 +53,16 @@ namespace neon
       .name = window_size,
       .value_name = "WxH",
       .description = "Size of the window in points, for example 1280x720. Shows a window of that size in "
-                     "place of one that covers the display",
+                     "place of one that covers the display, unless --window-mode says otherwise",
       .group = display
     });
 
+    // the values are checked in Apply, so that the usage column of the
+    // help stays narrow enough to read
     command_line.Add({
-      .name = render_scale,
-      .value_name = "NUMBER",
-      .description = "Pixels that are drawn for each point, for example 2 for what a display of high "
-                     "density shows. Needs --headless-renderer, a window takes the density of its display",
+      .name = window_mode,
+      .value_name = "MODE",
+      .description = "How the window is shown: windowed, borderless, or fullscreen, over window.mode of the settings",
       .group = display
     });
 
@@ -72,21 +71,6 @@ namespace neon
       .value_name = "NUMBER",
       .description = "Makes the user interface larger or smaller, for example 1.5",
       .group = display
-    });
-
-    command_line.Add({
-      .name = input,
-      .value_name = "SCRIPT",
-      .description = "Input in place of devices, for example \"1: pointer 640 360; 2: click\". "
-                     "Needs --headless-renderer",
-      .group = development
-    });
-
-    command_line.Add({
-      .name = input_script,
-      .value_name = "PATH",
-      .description = "The same from a file, for example assets://input/menu.input. Needs --headless-renderer",
-      .group = development
     });
   }
 
@@ -107,25 +91,23 @@ namespace neon
       settings.window_mode = WindowMode::Windowed;
     }
 
-    const bool is_headless_renderer = command_line.IsSet(headless_renderer);
-
-    if (command_line.IsSet(render_scale))
+    if (command_line.IsSet(window_mode))
     {
-      double scale = 0.0;
-      if (!command_line.GetNumber(render_scale, scale) || scale < 0.25 || scale > 8.0)
+      const std::string mode = command_line.GetValue(window_mode);
+      if (mode == windowed)
       {
-        error = "Option '--" + render_scale + "' needs a number from 0.25 to 8, such as 2";
+        settings.window_mode = WindowMode::Windowed;
+      } else if (mode == borderless)
+      {
+        settings.window_mode = WindowMode::Borderless;
+      } else if (mode == fullscreen)
+      {
+        settings.window_mode = WindowMode::Fullscreen;
+      } else
+      {
+        error = "Option '--" + window_mode + "' needs " + windowed + ", " + borderless + ", or " + fullscreen;
         return false;
       }
-
-      if (!is_headless_renderer)
-      {
-        error = "Option '--" + render_scale + "' needs '--" + headless_renderer +
-                "'. A window takes the density of its display";
-        return false;
-      }
-
-      settings.render_scale = scale;
     }
 
     if (command_line.IsSet(ui_scale))
@@ -138,25 +120,6 @@ namespace neon
       }
       settings.ui_scale = scale;
     }
-
-    if (command_line.IsSet(input) && command_line.IsSet(input_script))
-    {
-      error = "Option '--" + input + "' and '--" + input_script + "' cannot be given together";
-      return false;
-    }
-
-    for (const auto &name : {input, input_script})
-    {
-      if (command_line.IsSet(name) && !is_headless_renderer)
-      {
-        error = "Option '--" + name + "' needs '--" + headless_renderer +
-                "'. A window takes its input from devices";
-        return false;
-      }
-    }
-
-    if (command_line.IsSet(input)) { settings.input_script = command_line.GetValue(input); }
-    if (command_line.IsSet(input_script)) { settings.input_script_path = command_line.GetValue(input_script); }
 
     return true;
   }

@@ -16,6 +16,10 @@ Build configurations live in [CMakePresets.json](../CMakePresets.json). Each
 preset writes into `build/<preset-name>` and the resulting executable lands in
 `bin/<build-type>/<os>-<arch>/<app-name>/`.
 
+| Option | What it does | Default |
+|---|---|---|
+| `NEON_BUILD_TESTS` | Makes the tests available to build | `ON` |
+
 ### Supported targets
 
 | Target | How it is built |
@@ -94,6 +98,15 @@ Run:
 
 ```bash
 ./bin/debug/darwin-arm64/NeonRuntime/NeonRuntime
+```
+
+Every platform has a release preset beside its debug one,
+`macos-arm64-release`, `linux-x64-release`, and `windows-x64-release`, which
+builds into `build/<preset>` and `bin/release/<os>-<arch>/`:
+
+```bash
+cmake --preset macos-arm64-release
+cmake --build --preset macos-arm64-release
 ```
 
 
@@ -203,35 +216,38 @@ the configure step again.
 
 ## Command line
 
-Every option, with whether a shipped game should keep it, is listed in
-[command-line.md](command-line.md).
+Every option, with the application that owns it, is listed in
+[command-line.md](command-line.md). The first two groups are the runtime's
+own; the `Editor` group is the editor's set, which NeonRuntime registers
+only until NeonEditor exists.
 
 ```
 Usage: NeonRuntime [options]
 
   --help                    Show this text
-  --scene PATH              Scene to start with, for example assets://scenes/demo.scene.yml
-  --ui PATH                 User interface to show on top, for example assets://ui/hud.ui.yml
   --renderer vulkan         Renderer to draw with. Default: vulkan
   --vulkan-version 1.N      Highest version of Vulkan to render with, for example 1.2. Default: 1.3
 
-Development:
+Display:
+  --window-size WxH         Size of the window in points, for example 1280x720. Shows a window of that size in place of one that covers the display, unless --window-mode says otherwise
+  --window-mode MODE        How the window is shown: windowed, borderless, or fullscreen, over window.mode of the settings
+  --ui-scale NUMBER         Makes the user interface larger or smaller, for example 1.5
+
+Editor:
+  --scene PATH              Scene to start with in place of the entry scene of the project, for example assets://scenes/demo.scene.yml
+  --ui PATH                 User interface to show on top, for example assets://ui/hud.ui.yml
   --frames N                Stop after N frames
   --screenshot PATH         Save the last frame as a PNG image, for example output://frame.png. Needs --frames or --screenshot-at
   --screenshot-at N[,N...]  Save these frames instead of the last one, counted from 1. Each file gets its frame in its name, as in frame-0030.png. Needs --screenshot
   --output-dir DIR          Folder of this machine that output:// stands for. Created when missing
   --time-step SECONDS       Advance the game by this much time in every frame, for example 0.016667, so that a run gives the same frames every time
   --headless-renderer       Render without a window, for screenshots and checks on a machine with no display
+  --render-scale NUMBER     Pixels that are drawn for each point, for example 2 for what a display of high density shows. Needs --headless-renderer, a window takes the density of its display
+  --input SCRIPT            Input in place of devices, for example "1: pointer 640 360; 2: click". Needs --headless-renderer
+  --input-script PATH       The same from a file, for example assets://input/menu.input. Needs --headless-renderer
   --spawn PATH              Spawn this prefab at the top of the world once the scene is read, as a script would, for example assets://prefabs/target.prefab.yml
   --jit on|off              Compile the scripts as they run, or run them in LuaJIT's interpreter. Over scripting.jit of the settings, for comparing the two
   --headless                Run as a dedicated server. Not available yet, see --headless-renderer
-  --input SCRIPT            Input in place of devices, for example "1: pointer 640 360; 2: click". Needs --headless-renderer
-  --input-script PATH       The same from a file, for example assets://input/menu.input. Needs --headless-renderer
-
-Display:
-  --window-size WxH         Size of the window in points, for example 1280x720. Shows a window of that size in place of one that covers the display
-  --render-scale NUMBER     Pixels that are drawn for each point, for example 2 for what a display of high density shows. Needs --headless-renderer, a window takes the density of its display
-  --ui-scale NUMBER         Makes the user interface larger or smaller, for example 1.5
 ```
 
 A switch is written as `--name`. An option with a value is written as
@@ -324,16 +340,20 @@ the error, and ends with exit code 1.
 
 ### How it is built
 
-Each application decides which options it accepts. NeonRuntime has one set.
-NeonEditor will have that set and one of its own, which the runtime never
-sees.
+Each set of options is owned by one application and registered by it, see
+[command-line.md](command-line.md). The runtime owns `RuntimeOptions` and
+`DisplayOptions`; the editor owns `EditorOptions`. Until NeonEditor exists,
+NeonRuntime registers the editor's set too. The editor will then register
+the runtime's sets plus its own, and the runtime only its own.
 
 | Piece | Location | Role |
 |---|---|---|
 | `CommandLine` | [neon-core](../lib/neon-core/neon/command-line/command-line.hpp) | Parses arguments, checks them, and writes the help text. Knows no application |
 | `CommandLineContext` | [neon-core](../lib/neon-core/neon/command-line/command-line-context.hpp) | The read side, for code that wants to know what was asked for |
 | `CommandLineOptions` | [neon-core](../lib/neon-core/neon/command-line/command-line-options.hpp) | Interface of a set of options: what they are, and what they do to the settings |
-| `RuntimeOptions` | [neon-core](../lib/neon-core/neon/command-line/runtime-options.hpp) | The set every runtime has |
+| `RuntimeOptions` | [neon-core](../lib/neon-core/neon/command-line/runtime-options.hpp) | Owned by the runtime: `--renderer`, `--vulkan-version` |
+| `DisplayOptions` | [neon-core](../lib/neon-core/neon/command-line/display-options.hpp) | Owned by the runtime, the window and the size of what is shown: `--window-size`, `--window-mode`, `--ui-scale` |
+| `EditorOptions` | [neon-core](../lib/neon-core/neon/command-line/editor-options.hpp) | Owned by the editor: another scene, no window, screenshots, input from a script |
 
 An application puts them together in `main.cpp`:
 
@@ -341,18 +361,26 @@ An application puts them together in `main.cpp`:
 neon::CommandLine command_line("NeonRuntime", "Runs a Neon Engine project.");
 neon::RuntimeOptions runtime_options;
 runtime_options.Register(command_line);
+neon::DisplayOptions display_options;
+display_options.Register(command_line);
+// until NeonEditor exists, the runtime registers the editor's set too
+neon::EditorOptions editor_options;
+editor_options.Register(command_line);
 
 if (!command_line.Parse(argc, argv)) { /* print GetError() and GetHelp() */ }
 if (command_line.WantsHelp()) { /* print GetHelp() */ }
 
 SettingsConfig settings_config{ /* defaults of the application */ };
 runtime_options.Apply(command_line, settings_config, error);
+/* and the other sets */
 ```
 
 ### Adding options
 
-To add an option to every runtime, declare it in `RuntimeOptions::Register()`
-and act on it in `RuntimeOptions::Apply()`.
+To add an option the runtime owns, declare it in `RuntimeOptions::Register()`
+or `DisplayOptions::Register()` and act on it in the `Apply()` of the same
+set. An option the editor owns goes in `EditorOptions`, and a row in the
+table of [command-line.md](command-line.md) says who owns it.
 
 To give one application options of its own, write a class that implements
 `CommandLineOptions` and register it next to the runtime set:

@@ -10,12 +10,12 @@
 #include <neon/command-line/runtime-options.hpp>
 #include <neon/data/ryml-document-format.hpp>
 #include <neon/filesystem/sdl2-file-system.hpp>
-#include <neon/input/headless-input-system.hpp>
 #include <neon/input/input-map-file.hpp>
-#include <neon/input/input-script.hpp>
 #include <neon/input/sdl2-clipboard.hpp>
 #include <neon/input/sdl2-input-system.hpp>
 #include <neon/physics/jolt-physics-system.hpp>
+#include <neon/input/headless-input-system.hpp>
+#include <neon/input/input-script.hpp>
 #include <neon/project/project-file.hpp>
 #include <neon/random/os-entropy.hpp>
 #include <neon/scripting/lua-script-system.hpp>
@@ -47,6 +47,8 @@
 #include <neon/world-system/ecs/systems/ui-view-loading.hpp>
 #include <neon/world-system/flecs-entity-store.hpp>
 
+#include <neon/command-line/editor-options.hpp>
+
 #include "neon-runtime.hpp"
 
 // SDL2 provides the real platform entry point (WinMain on Windows) through
@@ -56,14 +58,22 @@
 
 int main(const int argc, char *argv[])
 {
-  // What this application accepts on its command line. The editor will add a
-  // set of its own next to the one every runtime has.
+  // What this application accepts on its command line. Each set of options
+  // is owned by one application and registered by it: the runtime owns the
+  // runtime set and the display set, the editor owns the editor set. Until
+  // NeonEditor exists, NeonRuntime registers the editor's set too, so that
+  // a scene can be started and a frame rendered without a window. The
+  // editor will then register the runtime's sets and its own, and the
+  // runtime only its own. See docs/command-line.md.
   neon::CommandLine command_line("NeonRuntime", "Runs a Neon Engine project.");
   neon::RuntimeOptions runtime_options;
   runtime_options.Register(command_line);
 
   neon::DisplayOptions display_options;
   display_options.Register(command_line);
+
+  neon::EditorOptions editor_options;
+  editor_options.Register(command_line);
 
   if (!command_line.Parse(argc, argv))
   {
@@ -88,7 +98,8 @@ int main(const int argc, char *argv[])
   {
     std::string error;
     if (runtime_options.Apply(command_line, settings_config, error) &&
-        display_options.Apply(command_line, settings_config, error))
+        display_options.Apply(command_line, settings_config, error) &&
+        editor_options.Apply(command_line, settings_config, error))
     {
       return true;
     }
@@ -127,8 +138,8 @@ int main(const int argc, char *argv[])
   settings_config.organization = project.organization;
   settings_config.application = project.name;
 
-  // the command line may start another scene, which is for development: a
-  // shipped runtime runs what its project says
+  // the command line may start another scene, which is an option of the
+  // editor's set
   if (settings_config.scene_path.empty()) { settings_config.scene_path = project.entry_scene; }
 
   if (!file_system.PlaceUserDirectory(settings_config.organization, settings_config.application))

@@ -2,6 +2,7 @@
 neon_add_application_test(runtime-command-line NeonRuntime run.cmake
         CASES
         help
+        window-mode-not-a-mode
         headless-is-not-a-server
         unknown-option
         bare-argument

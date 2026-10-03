@@ -100,7 +100,7 @@ and Windows.
 | From one level to the next | #118 | A scene manager with a loading screen and what carries over |
 | How it looks | #59, #60, #149, #129 | Physically based materials, shadow mapping, skeletal animation, emissive materials |
 | How it sounds | #71 | Weapon sounds, footsteps, music by area, through the groups that exist |
-| Shipping it | #143, #84 | A shipped runtime that runs only its game, and exporting a project, run on a machine without the repository |
+| Shipping it | #143, #84 | The options are owned by the runtime or the editor, see [command-line.md](command-line.md), and every platform has a release preset. Exporting a project into something that runs on a machine without the repository is the editor's to do, once there is one (#84) |
 
 ### The rest of Next
 
@@ -233,7 +233,7 @@ makes them a supported way to run a game, for automated checks and for agents.
 | Interface (#82) | Built with [Dear ImGui](https://github.com/ocornut/imgui) |
 | Editing (#82) | Scenes, assets, and settings of a project |
 | Running a game from the editor (#82) | With options the runtime alone does not have, for debugging |
-| Exporting (#84) | Turning a project into something that can be distributed |
+| Exporting (#84) | Turning a project into something that can be distributed. NeonEditor implements it |
 | Compiler tools (#83) | The tools that prepare a project are packaged with the editor: compiling shaders, preparing models and textures, and baking light maps |
 | Command line (#24) | The options of the runtime, plus a set only the editor has |
 | Agent support (#85) | A Model Context Protocol server. See below |
@@ -252,12 +252,13 @@ The editor can export in two ways.
 
 
 **A shipped runtime (#143)** keeps only the options a player needs, and loads
-only the game it was exported with. Options it does not keep are left out
-when it is built. Which ones those are is proposed in
-[command-line.md](command-line.md). The aim is that a player cannot do what a
-game does not want with an option, a setting, or a file next to the
-executable, not to stop someone who is determined. Lower priority, but for
-1.0.
+only the game it was exported with. The options are owned: the runtime owns
+its sets, the editor owns the set that loads other content, and NeonRuntime
+registers the editor's set only until NeonEditor exists. Which set each
+option is in is decided in [command-line.md](command-line.md). The aim is that a player cannot
+do what a game does not want with an option, a setting, or a file next to the
+executable, not to stop someone who is determined. A stronger binding, a key
+checked against packed assets, comes with #81.
 
 **Containers** already build for Linux and cross-compile for Windows. See
 the [development guide](development.md).

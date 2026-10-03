@@ -5,20 +5,13 @@
 
 namespace neon
 {
-  /// The options every runtime understands, whatever it is built into.
+  /// The options the runtime owns, with DisplayOptions: how to draw.
   ///
   ///   --renderer NAME         Renderer to draw with
   ///   --vulkan-version 1.N    Highest version of Vulkan to render with
   ///
-  ///   Development:
-  ///   --frames N                Stop after N frames
-  ///   --screenshot PATH         Save the last frame as a PNG image
-  ///   --screenshot-at N[,N...]  Save these frames instead of the last one
-  ///   --output-dir DIR          Folder of this machine that output:// stands for
-  ///   --time-step SECONDS       Advance the game by this much in every frame
-  ///   --headless-renderer       Render without a window
-  ///   --spawn PATH              Spawn this prefab once the scene is read
-  ///   --headless                Run as a dedicated server. Refused until there is one (#144)
+  /// What the editor owns, starting another scene, running without a
+  /// window, screenshots, is EditorOptions. See docs/command-line.md.
   class RuntimeOptions final : public CommandLineOptions
   {
   public:

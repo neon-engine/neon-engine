@@ -100,6 +100,8 @@ add_library(${TARGET} STATIC
         neon/command-line/command-line-options.hpp
         neon/command-line/runtime-options.cpp
         neon/command-line/runtime-options.hpp
+        neon/command-line/editor-options.cpp
+        neon/command-line/editor-options.hpp
 
         # common
         neon/common/data-buffer.hpp
@@ -377,6 +379,7 @@ add_library(${TARGET} STATIC
         neon/world-system/ecs/systems/ui-surface-pointing.cpp
         neon/world-system/ecs/systems/ui-surface-pointing.hpp
 )
+
 neon_warnings(${TARGET})
 
 target_include_directories(${TARGET}
@@ -446,6 +449,7 @@ neon_add_unit_test(${TARGET} neon/command-line/display-options.test.cpp)
   neon_add_unit_test(${TARGET} neon/reflection/type-info.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/scene-file/engine-component-formats.test.cpp)
   neon_add_unit_test(${TARGET} neon/command-line/runtime-options.test.cpp)
+  neon_add_unit_test(${TARGET} neon/command-line/editor-options.test.cpp)
   neon_add_unit_test(${TARGET} neon/common/color-space.test.cpp)
   neon_add_unit_test(${TARGET} neon/common/data-buffer.test.cpp)
   neon_add_unit_test(${TARGET} neon/common/rotation.test.cpp)
