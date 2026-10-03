@@ -30,13 +30,16 @@ set(CMAKE_BINARY_DIR build/${CMAKE_BUILD_TYPE})
 string(TOLOWER ${CMAKE_BINARY_DIR} CMAKE_BINARY_DIR)
 set(CMAKE_BINARY_DIR ${CMAKE_SOURCE_DIR}/${CMAKE_BINARY_DIR})
 
-# Set the bin directory
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY bin/${CMAKE_BUILD_TYPE})
-string(TOLOWER ${CMAKE_RUNTIME_OUTPUT_DIRECTORY} CMAKE_RUNTIME_OUTPUT_DIRECTORY)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+# bin/ holds the applications alone, each in its own folder under its
+# platform, with what it needs next to it. Everything else that is built,
+# the tests, their tools, and whatever a library of external/ makes, stays
+# under the build folder, where CMake puts it when nothing says otherwise.
+set(NEON_BIN_DIRECTORY bin/${CMAKE_BUILD_TYPE})
+string(TOLOWER ${NEON_BIN_DIRECTORY} NEON_BIN_DIRECTORY)
+set(NEON_BIN_DIRECTORY ${CMAKE_SOURCE_DIR}/${NEON_BIN_DIRECTORY})
 
 message("cmake binary directory: ${CMAKE_BINARY_DIR}")
-message("runtime output directory: ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+message("applications directory: ${NEON_BIN_DIRECTORY}")
 
 # Add cmake folder where we place our own custom Find*.cmake files
 # And locate custom packages within our file structure
@@ -67,6 +70,9 @@ set(ASSIMP_WARNINGS_AS_ERRORS OFF CACHE BOOL "" FORCE)
 # directory with -I, which on macOS with Homebrew LLVM puts the SDK's C headers
 # ahead of libc++'s and breaks every <cstdio>/<cmath> include.
 set(ASSIMP_BUILD_ZLIB ON CACHE BOOL "" FORCE)
+# assimp builds its own tests by default, a GoogleTest and an executable
+# named `unit` that lands at the root of bin/, next to nothing of ours
+set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 add_subdirectory(external/assimp)
 if(APPLE AND TARGET zlibstatic)
   # assimp's bundled zlib 1.2.13 treats every Apple target as classic Mac OS
@@ -140,7 +146,7 @@ string(TOLOWER ${CMAKE_SYSTEM_NAME} LOWER_CMAKE_SYSTEM_NAME)
 foreach (APP IN LISTS APP_TARGETS)
   message("generating build target ${APP}")
 
-  set(BASE_APP_BIN_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${LOWER_CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}")
+  set(BASE_APP_BIN_DIRECTORY "${NEON_BIN_DIRECTORY}/${LOWER_CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}")
   set(APP_BIN_DIRECTORY "${BASE_APP_BIN_DIRECTORY}/${APP}")
 
   # ensure binaries can run anywhere, assuming they are ABI compatible that is
@@ -152,12 +158,14 @@ foreach (APP IN LISTS APP_TARGETS)
 
   add_subdirectory(app/${APP})
 
-  # Each executable will be in its own folder
+  # Each executable is in its own folder. A shared library of its own would
+  # go next to it, which is where Windows looks for a DLL first; the engine
+  # and everything it links are static, so there is none today.
   set_target_properties(
           ${APP}
           PROPERTIES
           ARCHIVE_OUTPUT_DIRECTORY "${APP_BIN_DIRECTORY}/lib"
-          LIBRARY_OUTPUT_DIRECTORY "${APP_BIN_DIRECTORY}/lib"
+          LIBRARY_OUTPUT_DIRECTORY "${APP_BIN_DIRECTORY}"
           RUNTIME_OUTPUT_DIRECTORY "${APP_BIN_DIRECTORY}"
   )
 endforeach ()
