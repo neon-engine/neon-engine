@@ -277,23 +277,34 @@ A library of its own, `neon-vulkan`.
 
 ### What is shared
 
-A render object is one entity that is drawn: it has a material of its own,
-with the colour, the shader, and the descriptor set the scene gave it. What
-it draws with is held once (#241):
+A render object is one entity that is drawn. What it draws with is held
+once (#241), its material included: two render objects whose material is
+the same draw with one material, one descriptor set, one set of textures.
 
 | What | Held once for every | By | Freed |
 |---|---|---|---|
 | A model from a file: its vertex and index buffers | Path and `fit` | `VK_ModelCache` | When the last render object that drew it is destroyed, and at clean-up |
 | A texture: an image file, or an image a model carries | Image path and how it is kept (colours or numbers, smaller copies, repeating), and the model's path for an image it carries, since two models may each call theirs `*0` | `VK_TextureCache` | When the last material that read it is cleaned up, and at clean-up |
+| A material: the shader, the textures, the colour and the rest of `MaterialInfo`, over a model | Everything it is made from, as `VK_MaterialCache::KeyOf` writes it | `VK_MaterialCache` | When the last render object that drew with it is destroyed, and at clean-up |
 | A mesh a `Geometry` built | Nothing: it belongs to its entity | The model cache, uncounted | With its render object |
 | A render target a material shows | The target | The target | With the target |
 
-`VK_ModelCache` is a `DataBuffer<VK_Model>`, which gives every model the
-id a render object keeps, with a key and a count for every model from a
-file on top. `DataBuffer` stays the store of what is not shared, the render
-objects, the materials, the render targets, and the images of the user
-interface, so the counting lives beside it and not in it. The texture cache
-is a map by key, since a material holds a `VK_Texture` and not an id.
+`VK_ModelCache` and `VK_MaterialCache` are a `DataBuffer`, which gives
+every model or material the id a render object keeps, with a key and a
+count on top. `DataBuffer` stays the store of what is not shared, the
+render objects, the render targets, and the images of the user interface,
+so the counting lives beside it and not in it. The texture cache is a map
+by key, since a material holds a `VK_Texture` and not an id.
+
+A material's descriptor set comes from a pool, and a pool holds a fixed
+number of sets, 256. When the last pool is full another is made, and a
+material remembers the pool its set came from, so that a game may have
+as many distinct materials as it likes. Before this, the one pool of 4096
+sets ran dry in a scene that spawned crates without end, and every crate
+past it failed with "Could not allocate a descriptor set". The frame
+summary says how many materials were made and how many shared, and
+tests/runtime-sharing reads it: three hundred crates of one material make
+one, three hundred of distinct colours make three hundred and two pools.
 
 So the 17 walls, floors, columns, and targets the prototype level places
 from four prefabs read four GLB files and one colormap, not seventeen of

@@ -182,7 +182,10 @@ elseif (CASE STREQUAL "the-kit-pieces-are-loaded-once")
   # every texture once, however many render objects draw them: the walls
   # share one wall.glb, and every piece of the Prototype Kit shares its
   # colormap. The numbers are those of prototype.scene.yml.
-  expect_output("Created 21 render objects: 10 models and 3 textures were loaded, and 11 models and 18 textures were shared")
+  # the 11 shared placements take a shared material too, which reads no
+  # texture again, so 7 textures are shared by the materials that are made
+  expect_output("Created 21 render objects: 10 models and 3 textures were loaded, and 11 models and 7 textures were shared")
+  expect_output("10 materials were made and 11 shared")
   expect_output_count("Created render object [0-9]+ from assets://external/kenney/prototype-kit/wall.glb" 8)
   expect_output_count("Initializing texture from assets://external/kenney/prototype-kit/Textures/colormap.png" 1)
   expect_output("Model assets://external/kenney/prototype-kit/wall.glb is shared, 8 render objects draw it now")

@@ -342,7 +342,7 @@ namespace neon
   bool VK_RenderSystem::CreateDescriptors()
   {
     if (!CreateFrameBuffer(_scene_buffer, sizeof(VK_SceneData), kMax_Scenes_Per_Frame) ||
-        !CreateFrameBuffer(_object_buffer, sizeof(VK_ObjectData), kMax_Render_Objects))
+        !CreateFrameBuffer(_object_buffer, sizeof(VK_ObjectData), static_cast<uint32_t>(_settings_config.max_render_objects)))
     {
       _logger->Critical("Could not create the buffers for shader data");
       return false;
@@ -353,11 +353,16 @@ namespace neon
       return false;
     }
 
+    return CreateDescriptorPool();
+  }
+
+  bool VK_RenderSystem::CreateDescriptorPool()
+  {
     // one set for each material, with its textures and their samplers,
     // and the shadow map with its sampler
-    constexpr uint32_t textures = (VK_Pipelines::kTexture_Count + 1) * kMax_Render_Objects;
+    constexpr uint32_t textures = (VK_Pipelines::kTexture_Count + 1) * kSets_Per_Pool;
     constexpr std::array<VkDescriptorPoolSize, 3> sizes{{
-      {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 2 * kMax_Render_Objects},
+      {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 2 * kSets_Per_Pool},
       {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, textures},
       {VK_DESCRIPTOR_TYPE_SAMPLER, textures},
     }};
@@ -365,30 +370,44 @@ namespace neon
     VkDescriptorPoolCreateInfo pool{};
     pool.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     pool.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-    pool.maxSets = kMax_Render_Objects;
+    pool.maxSets = kSets_Per_Pool;
     pool.poolSizeCount = static_cast<uint32_t>(sizes.size());
     pool.pPoolSizes = sizes.data();
 
-    if (vkCreateDescriptorPool(_device.Device(), &pool, nullptr, &_descriptor_pool) != VK_SUCCESS)
+    VkDescriptorPool made = VK_NULL_HANDLE;
+    if (vkCreateDescriptorPool(_device.Device(), &pool, nullptr, &made) != VK_SUCCESS)
     {
-      _logger->Critical("Could not create the Vulkan descriptor pool");
+      _logger->Error("Could not create a Vulkan descriptor pool");
       return false;
     }
+    _descriptor_pools.push_back(made);
+    const std::size_t pools = _descriptor_pools.size();
+    const uint32_t sets = kSets_Per_Pool;
+    _logger->Debug("Made descriptor pool {} for {} materials", pools, sets);
     return true;
   }
 
-  bool VK_RenderSystem::CreateDescriptorSet(VK_Material &material) const
+  bool VK_RenderSystem::CreateDescriptorSet(VK_Material &material)
   {
     const VkDescriptorSetLayout layout = _pipelines.DescriptorLayout();
+    if (_descriptor_pools.empty() && !CreateDescriptorPool()) { return false; }
 
     VkDescriptorSetAllocateInfo allocation{};
     allocation.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    allocation.descriptorPool = _descriptor_pool;
+    allocation.descriptorPool = _descriptor_pools.back();
     allocation.descriptorSetCount = 1;
     allocation.pSetLayouts = &layout;
 
     VkDescriptorSet set = VK_NULL_HANDLE;
-    if (vkAllocateDescriptorSets(_device.Device(), &allocation, &set) != VK_SUCCESS)
+    VkResult result = vkAllocateDescriptorSets(_device.Device(), &allocation, &set);
+    if (result == VK_ERROR_OUT_OF_POOL_MEMORY || result == VK_ERROR_FRAGMENTED_POOL)
+    {
+      // the pool is full: another, and once more
+      if (!CreateDescriptorPool()) { return false; }
+      allocation.descriptorPool = _descriptor_pools.back();
+      result = vkAllocateDescriptorSets(_device.Device(), &allocation, &set);
+    }
+    if (result != VK_SUCCESS)
     {
       _logger->Error("Could not allocate a descriptor set for a material");
       return false;
@@ -397,6 +416,7 @@ namespace neon
     WriteDescriptorSet(material, set);
 
     material.SetDescriptorSet(set);
+    material.SetDescriptorPool(_descriptor_pools.back());
     return true;
   }
 
@@ -464,10 +484,7 @@ namespace neon
 
     // whatever the scene did not destroy itself: the materials first, since
     // they give their textures back to the cache
-    for (int id = 0; id < _material_refs.Capacity(); id++)
-    {
-      if (_material_refs.Contains(id)) { _material_refs.Remove(id).CleanUp(); }
-    }
+    _materials.RemoveAll([](VK_Material material) { material.CleanUp(); });
     _models.CleanUp();
     _textures.CleanUp();
 
@@ -489,7 +506,7 @@ namespace neon
     _renderer_2d.CleanUp();
 
     _pipelines.CleanUp();
-    if (_descriptor_pool != VK_NULL_HANDLE) { vkDestroyDescriptorPool(device, _descriptor_pool, nullptr); }
+    for (const VkDescriptorPool pool : _descriptor_pools) { vkDestroyDescriptorPool(device, pool, nullptr); }
 
     DestroyFrameBuffer(_scene_buffer);
     DestroyFrameBuffer(_object_buffer);
@@ -504,7 +521,7 @@ namespace neon
     if (_scene_pass != VK_NULL_HANDLE) { vkDestroyRenderPass(device, _scene_pass, nullptr); }
     if (_frame_pass != VK_NULL_HANDLE) { vkDestroyRenderPass(device, _frame_pass, nullptr); }
 
-    _descriptor_pool = VK_NULL_HANDLE;
+    _descriptor_pools.clear();
     _frame_done = VK_NULL_HANDLE;
     _scene_pass = VK_NULL_HANDLE;
     _frame_pass = VK_NULL_HANDLE;
@@ -538,11 +555,11 @@ namespace neon
 
     if (_surfaces_changed)
     {
-      for (int id = 0; id < _material_refs.Capacity(); id++)
+      for (int id = 0; id < _materials.Capacity(); id++)
       {
-        if (!_material_refs.Contains(id) || !_material_refs[id].ShowsSurfaces()) { continue; }
+        if (!_materials.Contains(id) || !_materials[id].ShowsSurfaces()) { continue; }
 
-        VK_Material &material = _material_refs[id];
+        VK_Material &material = _materials[id];
         material.ResolveSurfaces(VK_Texture());
 
         if (material.DescriptorSet() != VK_NULL_HANDLE) { WriteDescriptorSet(material, material.DescriptorSet()); }
@@ -777,6 +794,32 @@ namespace neon
         material_info.color.a * factor.a};
     }
 
+    // the same material as a render object that has one already, shared
+    const std::string key = VK_MaterialCache::KeyOf(render_info, material_info);
+    if (const int shared = _materials.Find(key); shared >= 0)
+    {
+      const auto shared_id = _render_object_buffer.Add(RenderObjectRef{.model_id = model_id, .material_id = shared});
+      if (shared_id < 0)
+      {
+        const std::size_t most = _settings_config.max_render_objects;
+        _logger->Error("There is no room for another render object: rendering.max_render_objects of the settings is {}", most);
+        VK_Material freed;
+        if (_materials.Release(shared, freed)) { freed.CleanUp(); }
+        _models.Release(model_id);
+        return -1;
+      }
+      const int holders = _materials.CountOf(shared);
+      _logger->Debug("Material {} is shared, {} render objects draw with it now", shared, holders);
+      _logger->Debug(
+        "Created render object {} from {} with model id {} and material id {}",
+        shared_id,
+        render_info.mesh != nullptr ? "a mesh that was built" : render_info.model_path,
+        model_id,
+        shared);
+      _objects_created++;
+      return shared_id;
+    }
+
     VK_Material material(
       render_info.shader_path,
       render_info.texture_paths,
@@ -808,10 +851,11 @@ namespace neon
     }
     material.SetPipeline(pipeline);
 
-    const auto material_id = _material_refs.Add(material);
+    const auto material_id = _materials.Keep(key, material);
     if (material_id < 0)
     {
-      _logger->Error("There is no room for another render object");
+      const std::size_t most = _settings_config.max_render_objects;
+        _logger->Error("There is no room for another render object: rendering.max_render_objects of the settings is {}", most);
       material.CleanUp();
       _models.Release(model_id);
       return -1;
@@ -842,10 +886,15 @@ namespace neon
     const auto texture_loads = _textures.Loads() - _texture_loads_reported;
     const auto texture_shares = _textures.Shares() - _texture_shares_reported;
 
+    const auto material_makes = _materials.Makes() - _material_makes_reported;
+    const auto material_shares = _materials.Shares() - _material_shares_reported;
+
     _logger->Info(
       "Created {} render objects: {} models and {} textures were loaded, and {} models and {} textures were "
-      "shared with objects that had them already",
-      _objects_created, model_loads, texture_loads, model_shares, texture_shares);
+      "shared with objects that had them already; {} materials were made and {} shared",
+      _objects_created, model_loads, texture_loads, model_shares, texture_shares, material_makes, material_shares);
+    _material_makes_reported = _materials.Makes();
+    _material_shares_reported = _materials.Shares();
 
     _objects_created = 0;
     _model_loads_reported = _models.Loads();
@@ -965,7 +1014,7 @@ namespace neon
 
     const auto [model_id, material_id] = _render_object_buffer[render_object_id];
     const auto &model = _models[model_id];
-    auto &material = _material_refs[material_id];
+    auto &material = _materials[material_id];
 
     // What is drawn into a render target cannot show that target, since
     // an image is not read while it is written. It is left out there.
@@ -1128,14 +1177,18 @@ namespace neon
     vkDeviceWaitIdle(_device.Device());
 
     const auto [model_id, material_id] = _render_object_buffer.Remove(render_object_id);
-    auto material = _material_refs.Remove(material_id);
 
-    if (const VkDescriptorSet set = material.DescriptorSet(); set != VK_NULL_HANDLE)
+    // the material goes when the last render object that drew with it goes
+    VK_Material material;
+    if (_materials.Release(material_id, material))
     {
-      vkFreeDescriptorSets(_device.Device(), _descriptor_pool, 1, &set);
+      if (const VkDescriptorSet set = material.DescriptorSet(); set != VK_NULL_HANDLE)
+      {
+        vkFreeDescriptorSets(_device.Device(), material.DescriptorPool(), 1, &set);
+      }
+      material.CleanUp();
+      _logger->Debug("Material {} was freed, nothing draws with it any more", material_id);
     }
-
-    material.CleanUp();
     _models.Release(model_id);
   }
 

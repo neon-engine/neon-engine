@@ -103,6 +103,7 @@ namespace neon
       }
 
       read_count(reader, "max_light_sources", settings.max_light_sources);
+      read_count(reader, "max_render_objects", settings.max_render_objects);
       reader.Finish();
     }
 

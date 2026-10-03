@@ -16,6 +16,7 @@
 #include "vk-device.hpp"
 #include "vk-draw-order.hpp"
 #include "vk-material.hpp"
+#include "vk-material-cache.hpp"
 #include "vk-model-cache.hpp"
 #include "vk-pipelines.hpp"
 #include "vk-render-target.hpp"
@@ -63,7 +64,9 @@ namespace neon
       uint32_t used = 0;
     };
 
-    static constexpr uint32_t kMax_Render_Objects = 4096;
+    /// How many materials one descriptor pool serves; another is made when
+    /// one is full.
+    static constexpr uint32_t kSets_Per_Pool = 256;
     // cameras and sets of lights that can differ within one frame
     static constexpr uint32_t kMax_Scenes_Per_Frame = 8;
 
@@ -115,7 +118,9 @@ namespace neon
     int _shadow_target = No_Render_Target;
 
     VK_Pipelines _pipelines;
-    VkDescriptorPool _descriptor_pool = VK_NULL_HANDLE;
+    // the pools the materials' sets are taken from, one more whenever the
+    // last is full
+    std::vector<VkDescriptorPool> _descriptor_pools;
 
     FrameBuffer _scene_buffer;
     FrameBuffer _object_buffer;
@@ -132,11 +137,13 @@ namespace neon
     // every object.
     VK_ModelCache _models;
     VK_TextureCache _textures;
-    DataBuffer<VK_Material> _material_refs;
+    VK_MaterialCache _materials;
 
     // what was created since the last frame said so, and what the caches
     // had done by then
     std::size_t _objects_created = 0;
+    std::size_t _material_makes_reported = 0;
+    std::size_t _material_shares_reported = 0;
     std::size_t _model_loads_reported = 0;
     std::size_t _model_shares_reported = 0;
     std::size_t _texture_loads_reported = 0;
@@ -204,7 +211,12 @@ namespace neon
     bool CreateFrameBuffer(FrameBuffer &buffer, VkDeviceSize entry_size, uint32_t capacity) const;
     void DestroyFrameBuffer(FrameBuffer &buffer) const;
 
-    bool CreateDescriptorSet(VK_Material &material) const;
+    /// Allocates the material's set from the last pool, making another pool
+    /// when that one is full.
+    bool CreateDescriptorSet(VK_Material &material);
+
+    /// Adds a pool to take sets from.
+    bool CreateDescriptorPool();
 
     [[nodiscard]] VK_SceneData BuildSceneData(
       const glm::mat4 &view,
@@ -225,9 +237,9 @@ namespace neon
       FileSystemContext *file_system_context,
       const SettingsConfig &settings_config,
       const std::shared_ptr<Logger> &logger)
-      : RenderSystem(window_context, file_system_context, settings_config, kMax_Render_Objects, logger),
-        _models(kMax_Render_Objects),
-        _material_refs(kMax_Render_Objects) {}
+      : RenderSystem(window_context, file_system_context, settings_config, static_cast<int>(settings_config.max_render_objects), logger),
+        _models(static_cast<int>(settings_config.max_render_objects)),
+        _materials(static_cast<int>(settings_config.max_render_objects)) {}
 
     void Initialize() override;
 

@@ -26,6 +26,8 @@ scenes:
   - assets://scenes/prototype.scene.yml
   - assets://scenes/end.scene.yml
   - assets://scenes/blockout.scene.yml
+  - assets://scenes/sharing-same.scene.yml
+  - assets://scenes/sharing-distinct.scene.yml
   - assets://scenes/scripting-demo.scene.yml
   - assets://scenes/spawn-test.scene.yml
   - assets://scenes/vertex-colours-test.scene.yml

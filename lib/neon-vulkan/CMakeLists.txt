@@ -14,6 +14,8 @@ add_library(${TARGET} STATIC
         neon/render/vk-mesh.hpp
         neon/render/vk-model.cpp
         neon/render/vk-model.hpp
+        neon/render/vk-material-cache.cpp
+        neon/render/vk-material-cache.hpp
         neon/render/vk-model-cache.cpp
         neon/render/vk-model-cache.hpp
         neon/render/vk-renderer-2d.cpp
@@ -80,6 +82,7 @@ if (NEON_BUILD_TESTS)
   # Only what needs no graphics card: what is worked out before the first
   # call to Vulkan, and what happens when a file cannot be used.
   neon_add_unit_test(${TARGET} neon/render/vk-material.test.cpp)
+  neon_add_unit_test(${TARGET} neon/render/vk-material-cache.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/vk-mesh.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/vk-model.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/vk-renderer-2d.test.cpp)

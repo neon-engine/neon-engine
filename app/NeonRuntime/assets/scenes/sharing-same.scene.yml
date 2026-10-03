@@ -1,0 +1,1521 @@
+# 300 crates with one and the same material, drawn with one. Written by tools/make-sharing-scenes.py for
+# tests/runtime-sharing; do not edit by hand.
+scene: sharing-same
+version: 1
+
+entities:
+  - name: camera
+    components:
+      Transform:
+        position: [0, 6, 22]
+        rotation: [-14, 0, 0]
+      Camera: Default
+  - name: sun
+    components:
+      Transform: Default
+      Light:
+        type: direction
+        direction: [-0.3, -1, -0.2]
+        ambient: [0.35, 0.35, 0.4]
+        diffuse: [0.6, 0.6, 0.55]
+        specular: [0.2, 0.2, 0.2]
+  - name: crate-0
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-10.45, 0.00, 0.00]
+  - name: crate-1
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-9.35, 0.00, 0.00]
+  - name: crate-2
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-8.25, 0.00, 0.00]
+  - name: crate-3
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-7.15, 0.00, 0.00]
+  - name: crate-4
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-6.05, 0.00, 0.00]
+  - name: crate-5
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-4.95, 0.00, 0.00]
+  - name: crate-6
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-3.85, 0.00, 0.00]
+  - name: crate-7
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-2.75, 0.00, 0.00]
+  - name: crate-8
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-1.65, 0.00, 0.00]
+  - name: crate-9
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-0.55, 0.00, 0.00]
+  - name: crate-10
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [0.55, 0.00, 0.00]
+  - name: crate-11
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [1.65, 0.00, 0.00]
+  - name: crate-12
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [2.75, 0.00, 0.00]
+  - name: crate-13
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [3.85, 0.00, 0.00]
+  - name: crate-14
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [4.95, 0.00, 0.00]
+  - name: crate-15
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [6.05, 0.00, 0.00]
+  - name: crate-16
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [7.15, 0.00, 0.00]
+  - name: crate-17
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [8.25, 0.00, 0.00]
+  - name: crate-18
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [9.35, 0.00, 0.00]
+  - name: crate-19
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [10.45, 0.00, 0.00]
+  - name: crate-20
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-10.45, 1.10, 0.00]
+  - name: crate-21
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-9.35, 1.10, 0.00]
+  - name: crate-22
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-8.25, 1.10, 0.00]
+  - name: crate-23
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-7.15, 1.10, 0.00]
+  - name: crate-24
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-6.05, 1.10, 0.00]
+  - name: crate-25
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-4.95, 1.10, 0.00]
+  - name: crate-26
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-3.85, 1.10, 0.00]
+  - name: crate-27
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-2.75, 1.10, 0.00]
+  - name: crate-28
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-1.65, 1.10, 0.00]
+  - name: crate-29
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-0.55, 1.10, 0.00]
+  - name: crate-30
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [0.55, 1.10, 0.00]
+  - name: crate-31
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [1.65, 1.10, 0.00]
+  - name: crate-32
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [2.75, 1.10, 0.00]
+  - name: crate-33
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [3.85, 1.10, 0.00]
+  - name: crate-34
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [4.95, 1.10, 0.00]
+  - name: crate-35
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [6.05, 1.10, 0.00]
+  - name: crate-36
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [7.15, 1.10, 0.00]
+  - name: crate-37
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [8.25, 1.10, 0.00]
+  - name: crate-38
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [9.35, 1.10, 0.00]
+  - name: crate-39
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [10.45, 1.10, 0.00]
+  - name: crate-40
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-10.45, 2.20, 0.00]
+  - name: crate-41
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-9.35, 2.20, 0.00]
+  - name: crate-42
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-8.25, 2.20, 0.00]
+  - name: crate-43
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-7.15, 2.20, 0.00]
+  - name: crate-44
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-6.05, 2.20, 0.00]
+  - name: crate-45
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-4.95, 2.20, 0.00]
+  - name: crate-46
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-3.85, 2.20, 0.00]
+  - name: crate-47
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-2.75, 2.20, 0.00]
+  - name: crate-48
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-1.65, 2.20, 0.00]
+  - name: crate-49
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-0.55, 2.20, 0.00]
+  - name: crate-50
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [0.55, 2.20, 0.00]
+  - name: crate-51
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [1.65, 2.20, 0.00]
+  - name: crate-52
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [2.75, 2.20, 0.00]
+  - name: crate-53
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [3.85, 2.20, 0.00]
+  - name: crate-54
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [4.95, 2.20, 0.00]
+  - name: crate-55
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [6.05, 2.20, 0.00]
+  - name: crate-56
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [7.15, 2.20, 0.00]
+  - name: crate-57
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [8.25, 2.20, 0.00]
+  - name: crate-58
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [9.35, 2.20, 0.00]
+  - name: crate-59
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [10.45, 2.20, 0.00]
+  - name: crate-60
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-10.45, 3.30, 0.00]
+  - name: crate-61
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-9.35, 3.30, 0.00]
+  - name: crate-62
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-8.25, 3.30, 0.00]
+  - name: crate-63
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-7.15, 3.30, 0.00]
+  - name: crate-64
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-6.05, 3.30, 0.00]
+  - name: crate-65
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-4.95, 3.30, 0.00]
+  - name: crate-66
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-3.85, 3.30, 0.00]
+  - name: crate-67
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-2.75, 3.30, 0.00]
+  - name: crate-68
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-1.65, 3.30, 0.00]
+  - name: crate-69
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-0.55, 3.30, 0.00]
+  - name: crate-70
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [0.55, 3.30, 0.00]
+  - name: crate-71
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [1.65, 3.30, 0.00]
+  - name: crate-72
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [2.75, 3.30, 0.00]
+  - name: crate-73
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [3.85, 3.30, 0.00]
+  - name: crate-74
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [4.95, 3.30, 0.00]
+  - name: crate-75
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [6.05, 3.30, 0.00]
+  - name: crate-76
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [7.15, 3.30, 0.00]
+  - name: crate-77
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [8.25, 3.30, 0.00]
+  - name: crate-78
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [9.35, 3.30, 0.00]
+  - name: crate-79
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [10.45, 3.30, 0.00]
+  - name: crate-80
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-10.45, 4.40, 0.00]
+  - name: crate-81
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-9.35, 4.40, 0.00]
+  - name: crate-82
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-8.25, 4.40, 0.00]
+  - name: crate-83
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-7.15, 4.40, 0.00]
+  - name: crate-84
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-6.05, 4.40, 0.00]
+  - name: crate-85
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-4.95, 4.40, 0.00]
+  - name: crate-86
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-3.85, 4.40, 0.00]
+  - name: crate-87
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-2.75, 4.40, 0.00]
+  - name: crate-88
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-1.65, 4.40, 0.00]
+  - name: crate-89
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-0.55, 4.40, 0.00]
+  - name: crate-90
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [0.55, 4.40, 0.00]
+  - name: crate-91
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [1.65, 4.40, 0.00]
+  - name: crate-92
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [2.75, 4.40, 0.00]
+  - name: crate-93
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [3.85, 4.40, 0.00]
+  - name: crate-94
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [4.95, 4.40, 0.00]
+  - name: crate-95
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [6.05, 4.40, 0.00]
+  - name: crate-96
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [7.15, 4.40, 0.00]
+  - name: crate-97
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [8.25, 4.40, 0.00]
+  - name: crate-98
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [9.35, 4.40, 0.00]
+  - name: crate-99
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [10.45, 4.40, 0.00]
+  - name: crate-100
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-10.45, 5.50, 0.00]
+  - name: crate-101
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-9.35, 5.50, 0.00]
+  - name: crate-102
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-8.25, 5.50, 0.00]
+  - name: crate-103
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-7.15, 5.50, 0.00]
+  - name: crate-104
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-6.05, 5.50, 0.00]
+  - name: crate-105
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-4.95, 5.50, 0.00]
+  - name: crate-106
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-3.85, 5.50, 0.00]
+  - name: crate-107
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-2.75, 5.50, 0.00]
+  - name: crate-108
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-1.65, 5.50, 0.00]
+  - name: crate-109
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-0.55, 5.50, 0.00]
+  - name: crate-110
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [0.55, 5.50, 0.00]
+  - name: crate-111
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [1.65, 5.50, 0.00]
+  - name: crate-112
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [2.75, 5.50, 0.00]
+  - name: crate-113
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [3.85, 5.50, 0.00]
+  - name: crate-114
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [4.95, 5.50, 0.00]
+  - name: crate-115
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [6.05, 5.50, 0.00]
+  - name: crate-116
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [7.15, 5.50, 0.00]
+  - name: crate-117
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [8.25, 5.50, 0.00]
+  - name: crate-118
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [9.35, 5.50, 0.00]
+  - name: crate-119
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [10.45, 5.50, 0.00]
+  - name: crate-120
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-10.45, 6.60, 0.00]
+  - name: crate-121
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-9.35, 6.60, 0.00]
+  - name: crate-122
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-8.25, 6.60, 0.00]
+  - name: crate-123
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-7.15, 6.60, 0.00]
+  - name: crate-124
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-6.05, 6.60, 0.00]
+  - name: crate-125
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-4.95, 6.60, 0.00]
+  - name: crate-126
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-3.85, 6.60, 0.00]
+  - name: crate-127
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-2.75, 6.60, 0.00]
+  - name: crate-128
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-1.65, 6.60, 0.00]
+  - name: crate-129
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-0.55, 6.60, 0.00]
+  - name: crate-130
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [0.55, 6.60, 0.00]
+  - name: crate-131
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [1.65, 6.60, 0.00]
+  - name: crate-132
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [2.75, 6.60, 0.00]
+  - name: crate-133
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [3.85, 6.60, 0.00]
+  - name: crate-134
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [4.95, 6.60, 0.00]
+  - name: crate-135
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [6.05, 6.60, 0.00]
+  - name: crate-136
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [7.15, 6.60, 0.00]
+  - name: crate-137
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [8.25, 6.60, 0.00]
+  - name: crate-138
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [9.35, 6.60, 0.00]
+  - name: crate-139
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [10.45, 6.60, 0.00]
+  - name: crate-140
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-10.45, 7.70, 0.00]
+  - name: crate-141
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-9.35, 7.70, 0.00]
+  - name: crate-142
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-8.25, 7.70, 0.00]
+  - name: crate-143
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-7.15, 7.70, 0.00]
+  - name: crate-144
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-6.05, 7.70, 0.00]
+  - name: crate-145
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-4.95, 7.70, 0.00]
+  - name: crate-146
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-3.85, 7.70, 0.00]
+  - name: crate-147
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-2.75, 7.70, 0.00]
+  - name: crate-148
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-1.65, 7.70, 0.00]
+  - name: crate-149
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-0.55, 7.70, 0.00]
+  - name: crate-150
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [0.55, 7.70, 0.00]
+  - name: crate-151
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [1.65, 7.70, 0.00]
+  - name: crate-152
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [2.75, 7.70, 0.00]
+  - name: crate-153
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [3.85, 7.70, 0.00]
+  - name: crate-154
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [4.95, 7.70, 0.00]
+  - name: crate-155
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [6.05, 7.70, 0.00]
+  - name: crate-156
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [7.15, 7.70, 0.00]
+  - name: crate-157
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [8.25, 7.70, 0.00]
+  - name: crate-158
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [9.35, 7.70, 0.00]
+  - name: crate-159
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [10.45, 7.70, 0.00]
+  - name: crate-160
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-10.45, 8.80, 0.00]
+  - name: crate-161
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-9.35, 8.80, 0.00]
+  - name: crate-162
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-8.25, 8.80, 0.00]
+  - name: crate-163
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-7.15, 8.80, 0.00]
+  - name: crate-164
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-6.05, 8.80, 0.00]
+  - name: crate-165
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-4.95, 8.80, 0.00]
+  - name: crate-166
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-3.85, 8.80, 0.00]
+  - name: crate-167
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-2.75, 8.80, 0.00]
+  - name: crate-168
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-1.65, 8.80, 0.00]
+  - name: crate-169
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-0.55, 8.80, 0.00]
+  - name: crate-170
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [0.55, 8.80, 0.00]
+  - name: crate-171
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [1.65, 8.80, 0.00]
+  - name: crate-172
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [2.75, 8.80, 0.00]
+  - name: crate-173
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [3.85, 8.80, 0.00]
+  - name: crate-174
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [4.95, 8.80, 0.00]
+  - name: crate-175
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [6.05, 8.80, 0.00]
+  - name: crate-176
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [7.15, 8.80, 0.00]
+  - name: crate-177
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [8.25, 8.80, 0.00]
+  - name: crate-178
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [9.35, 8.80, 0.00]
+  - name: crate-179
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [10.45, 8.80, 0.00]
+  - name: crate-180
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-10.45, 9.90, 0.00]
+  - name: crate-181
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-9.35, 9.90, 0.00]
+  - name: crate-182
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-8.25, 9.90, 0.00]
+  - name: crate-183
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-7.15, 9.90, 0.00]
+  - name: crate-184
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-6.05, 9.90, 0.00]
+  - name: crate-185
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-4.95, 9.90, 0.00]
+  - name: crate-186
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-3.85, 9.90, 0.00]
+  - name: crate-187
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-2.75, 9.90, 0.00]
+  - name: crate-188
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-1.65, 9.90, 0.00]
+  - name: crate-189
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-0.55, 9.90, 0.00]
+  - name: crate-190
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [0.55, 9.90, 0.00]
+  - name: crate-191
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [1.65, 9.90, 0.00]
+  - name: crate-192
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [2.75, 9.90, 0.00]
+  - name: crate-193
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [3.85, 9.90, 0.00]
+  - name: crate-194
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [4.95, 9.90, 0.00]
+  - name: crate-195
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [6.05, 9.90, 0.00]
+  - name: crate-196
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [7.15, 9.90, 0.00]
+  - name: crate-197
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [8.25, 9.90, 0.00]
+  - name: crate-198
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [9.35, 9.90, 0.00]
+  - name: crate-199
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [10.45, 9.90, 0.00]
+  - name: crate-200
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-10.45, 11.00, 0.00]
+  - name: crate-201
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-9.35, 11.00, 0.00]
+  - name: crate-202
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-8.25, 11.00, 0.00]
+  - name: crate-203
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-7.15, 11.00, 0.00]
+  - name: crate-204
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-6.05, 11.00, 0.00]
+  - name: crate-205
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-4.95, 11.00, 0.00]
+  - name: crate-206
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-3.85, 11.00, 0.00]
+  - name: crate-207
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-2.75, 11.00, 0.00]
+  - name: crate-208
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-1.65, 11.00, 0.00]
+  - name: crate-209
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-0.55, 11.00, 0.00]
+  - name: crate-210
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [0.55, 11.00, 0.00]
+  - name: crate-211
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [1.65, 11.00, 0.00]
+  - name: crate-212
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [2.75, 11.00, 0.00]
+  - name: crate-213
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [3.85, 11.00, 0.00]
+  - name: crate-214
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [4.95, 11.00, 0.00]
+  - name: crate-215
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [6.05, 11.00, 0.00]
+  - name: crate-216
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [7.15, 11.00, 0.00]
+  - name: crate-217
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [8.25, 11.00, 0.00]
+  - name: crate-218
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [9.35, 11.00, 0.00]
+  - name: crate-219
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [10.45, 11.00, 0.00]
+  - name: crate-220
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-10.45, 12.10, 0.00]
+  - name: crate-221
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-9.35, 12.10, 0.00]
+  - name: crate-222
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-8.25, 12.10, 0.00]
+  - name: crate-223
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-7.15, 12.10, 0.00]
+  - name: crate-224
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-6.05, 12.10, 0.00]
+  - name: crate-225
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-4.95, 12.10, 0.00]
+  - name: crate-226
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-3.85, 12.10, 0.00]
+  - name: crate-227
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-2.75, 12.10, 0.00]
+  - name: crate-228
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-1.65, 12.10, 0.00]
+  - name: crate-229
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-0.55, 12.10, 0.00]
+  - name: crate-230
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [0.55, 12.10, 0.00]
+  - name: crate-231
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [1.65, 12.10, 0.00]
+  - name: crate-232
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [2.75, 12.10, 0.00]
+  - name: crate-233
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [3.85, 12.10, 0.00]
+  - name: crate-234
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [4.95, 12.10, 0.00]
+  - name: crate-235
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [6.05, 12.10, 0.00]
+  - name: crate-236
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [7.15, 12.10, 0.00]
+  - name: crate-237
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [8.25, 12.10, 0.00]
+  - name: crate-238
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [9.35, 12.10, 0.00]
+  - name: crate-239
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [10.45, 12.10, 0.00]
+  - name: crate-240
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-10.45, 13.20, 0.00]
+  - name: crate-241
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-9.35, 13.20, 0.00]
+  - name: crate-242
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-8.25, 13.20, 0.00]
+  - name: crate-243
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-7.15, 13.20, 0.00]
+  - name: crate-244
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-6.05, 13.20, 0.00]
+  - name: crate-245
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-4.95, 13.20, 0.00]
+  - name: crate-246
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-3.85, 13.20, 0.00]
+  - name: crate-247
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-2.75, 13.20, 0.00]
+  - name: crate-248
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-1.65, 13.20, 0.00]
+  - name: crate-249
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-0.55, 13.20, 0.00]
+  - name: crate-250
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [0.55, 13.20, 0.00]
+  - name: crate-251
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [1.65, 13.20, 0.00]
+  - name: crate-252
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [2.75, 13.20, 0.00]
+  - name: crate-253
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [3.85, 13.20, 0.00]
+  - name: crate-254
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [4.95, 13.20, 0.00]
+  - name: crate-255
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [6.05, 13.20, 0.00]
+  - name: crate-256
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [7.15, 13.20, 0.00]
+  - name: crate-257
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [8.25, 13.20, 0.00]
+  - name: crate-258
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [9.35, 13.20, 0.00]
+  - name: crate-259
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [10.45, 13.20, 0.00]
+  - name: crate-260
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-10.45, 14.30, 0.00]
+  - name: crate-261
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-9.35, 14.30, 0.00]
+  - name: crate-262
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-8.25, 14.30, 0.00]
+  - name: crate-263
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-7.15, 14.30, 0.00]
+  - name: crate-264
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-6.05, 14.30, 0.00]
+  - name: crate-265
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-4.95, 14.30, 0.00]
+  - name: crate-266
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-3.85, 14.30, 0.00]
+  - name: crate-267
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-2.75, 14.30, 0.00]
+  - name: crate-268
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-1.65, 14.30, 0.00]
+  - name: crate-269
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-0.55, 14.30, 0.00]
+  - name: crate-270
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [0.55, 14.30, 0.00]
+  - name: crate-271
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [1.65, 14.30, 0.00]
+  - name: crate-272
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [2.75, 14.30, 0.00]
+  - name: crate-273
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [3.85, 14.30, 0.00]
+  - name: crate-274
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [4.95, 14.30, 0.00]
+  - name: crate-275
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [6.05, 14.30, 0.00]
+  - name: crate-276
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [7.15, 14.30, 0.00]
+  - name: crate-277
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [8.25, 14.30, 0.00]
+  - name: crate-278
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [9.35, 14.30, 0.00]
+  - name: crate-279
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [10.45, 14.30, 0.00]
+  - name: crate-280
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-10.45, 15.40, 0.00]
+  - name: crate-281
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-9.35, 15.40, 0.00]
+  - name: crate-282
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-8.25, 15.40, 0.00]
+  - name: crate-283
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-7.15, 15.40, 0.00]
+  - name: crate-284
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-6.05, 15.40, 0.00]
+  - name: crate-285
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-4.95, 15.40, 0.00]
+  - name: crate-286
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-3.85, 15.40, 0.00]
+  - name: crate-287
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-2.75, 15.40, 0.00]
+  - name: crate-288
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-1.65, 15.40, 0.00]
+  - name: crate-289
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [-0.55, 15.40, 0.00]
+  - name: crate-290
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [0.55, 15.40, 0.00]
+  - name: crate-291
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [1.65, 15.40, 0.00]
+  - name: crate-292
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [2.75, 15.40, 0.00]
+  - name: crate-293
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [3.85, 15.40, 0.00]
+  - name: crate-294
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [4.95, 15.40, 0.00]
+  - name: crate-295
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [6.05, 15.40, 0.00]
+  - name: crate-296
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [7.15, 15.40, 0.00]
+  - name: crate-297
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [8.25, 15.40, 0.00]
+  - name: crate-298
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [9.35, 15.40, 0.00]
+  - name: crate-299
+    prefab: assets://prefabs/sharing-crate.prefab.yml
+    components:
+      Transform:
+        position: [10.45, 15.40, 0.00]

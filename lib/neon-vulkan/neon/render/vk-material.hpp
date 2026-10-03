@@ -58,6 +58,9 @@ namespace neon
     VkPipeline _mirrored_shadow_pipeline = VK_NULL_HANDLE;
     VkDescriptorSet _descriptor_set = VK_NULL_HANDLE;
 
+    // the pool the set was taken from, which is where it goes back
+    VkDescriptorPool _descriptor_pool = VK_NULL_HANDLE;
+
     static glm::vec2 GetMaxPositiveComponents(const glm::vec3 &vector);
 
   public:
@@ -158,6 +161,10 @@ namespace neon
       (mirrored ? _mirrored_shadow_pipeline : _shadow_pipeline) = pipeline;
     }
     void SetDescriptorSet(const VkDescriptorSet descriptor_set) { _descriptor_set = descriptor_set; }
+
+    [[nodiscard]] VkDescriptorPool DescriptorPool() const { return _descriptor_pool; }
+
+    void SetDescriptorPool(const VkDescriptorPool pool) { _descriptor_pool = pool; }
   };
 } // neon
 

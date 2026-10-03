@@ -54,6 +54,7 @@ namespace
     "rendering:\n"
     "  vulkan_version: \"1.2\"\n"
     "  max_light_sources: 64\n"
+    "  max_render_objects: 2048\n"
     "\n"
     "audio:\n"
     "  groups:\n"
@@ -154,6 +155,7 @@ namespace
     EXPECT_EQ(_settings.most_steps_per_frame, 4u);
     EXPECT_EQ(_settings.vulkan_version, (ApiVersion{1, 2}));
     EXPECT_EQ(_settings.max_light_sources, 64u);
+    EXPECT_EQ(_settings.max_render_objects, 2048u);
     EXPECT_EQ(VolumeOf("music"), 0.6f);
     EXPECT_EQ(VolumeOf("effects"), 1.0f);
     EXPECT_EQ(VolumeOf("voices"), 1.0f);

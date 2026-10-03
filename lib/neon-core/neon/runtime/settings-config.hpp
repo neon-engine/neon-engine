@@ -124,6 +124,11 @@ struct SettingsConfig
   std::size_t log_max_files = 1;
   std::size_t max_light_sources = 1024;
 
+  /// How many render objects a frame may hold: what is drawn, one draw each.
+  /// It sizes the per-frame buffer of the objects' data, 208 bytes each,
+  /// so a larger number costs little; what it really budgets is draw calls.
+  std::size_t max_render_objects = 16384;
+
   /// Render without a window: frames are drawn off-screen at width by
   /// height, input comes from a script, and the sound is mixed and
   /// discarded. For screenshots and checks on a machine with no display. It

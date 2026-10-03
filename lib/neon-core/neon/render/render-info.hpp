@@ -29,7 +29,7 @@ namespace neon
     std::shared_ptr<const MeshData> mesh;
     std::string shader_path;
     std::vector<std::string> texture_paths;
-    bool scale_textures;
+    bool scale_textures = false;
     MaterialInfo material_info;
   };
 } // neon

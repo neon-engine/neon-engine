@@ -47,6 +47,7 @@ input:
 rendering:
   vulkan_version: "1.3"
   max_light_sources: 1024
+  max_render_objects: 16384
 
 audio:
   groups:
@@ -76,6 +77,7 @@ The settings of the runtime are
 | `input.gyro` | The player's switch for the gyro of a controller, over what the input map says, see [input.md](input.md#sensors) | Left to the map, which has it off unless an action says `enabled: true` |
 | `rendering.vulkan_version` | The version of Vulkan to ask for, in quotes, since `1.10` as a number is `1.1` | `"1.3"` |
 | `rendering.max_light_sources` | How many lights a frame may hold. A whole number above zero | 1024 |
+| `rendering.max_render_objects` | How many render objects a frame may hold, each one draw. A whole number above zero. It sizes a per-frame buffer of 208 bytes an object, so a larger number costs little; a scene that passes it is told, with this name | 16384 |
 | `audio.groups` | The [groups of sounds](audio.md#groups) the project has besides those of the engine: a list of names, or of maps with a `name` and the `volume` the group starts at. A name that is there already is an error. A group of the project is held still while the game is paused, as the effects are | None. The groups of the engine are `music`, `effects`, `voices`, and `ambience` |
 | `audio.volumes` | The volume of a group by its name, 0 for silence and 1 for the loudness of its sounds, not below 0. A name that is not a group of the engine or of the project, declared above or in a file read before, is an error | 1 for every group |
 
