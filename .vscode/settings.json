@@ -1,0 +1,18 @@
+{
+  // The C++ extension keeps an IntelliSense process per open file and
+  // indexes everything it can see. Without limits it grows past what a
+  // machine with 128 GB can spare and the Mac wakes and sleeps in a loop,
+  // as it did on 2026-10-02. The build and the binaries are left out: they
+  // are made, never edited. The worktrees are left out too: each is a
+  // whole copy of the sources with a build of its own, and is opened on
+  // its own when it is worked on.
+  "C_Cpp.intelliSenseMemoryLimit": 4096,
+  "C_Cpp.maxCachedProcesses": 2,
+  "C_Cpp.maxMemory": 4096,
+  "C_Cpp.files.exclude": {
+    "**/build/**": true,
+    "**/bin/**": true,
+    "**/.git/**": true,
+    "**/worktrees/**": true
+  }
+}

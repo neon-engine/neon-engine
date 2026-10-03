@@ -7,9 +7,9 @@ build/
 # Runtime log output
 logs/
 
-# Personal editor settings, not shared. The tasks, launch configurations, and
-# extension recommendations next to it are.
-.vscode/settings.json
+# The settings of VS Code are shared, since they hold the limits of the C++
+# extension that keep the machine stable. What is personal goes in the
+# user's own settings, not the workspace's.
 
 # Working trees for branches that are worked on side by side
 worktrees/
