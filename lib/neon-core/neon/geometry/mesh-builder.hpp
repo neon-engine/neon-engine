@@ -78,6 +78,12 @@ namespace neon
     /// texels per metre: what shows a picture or a surface, as a screen does.
     MeshBuilder &AddUprightQuad(const glm::vec2 &size, const glm::vec3 &center = {});
 
+    /// A tube of `radius` with `sides` faces round it, along the line
+    /// through `centres` and closed at both ends, with the normals of the
+    /// round surface: a curve that was flattened, drawn as a pipe or a
+    /// rope. Its texture goes round it and along it, see AppendTube().
+    MeshBuilder &AddTube(const std::vector<glm::vec3> &centres, float radius, int sides = 12);
+
     /// One quad with its corners given anticlockwise seen from the front.
     MeshBuilder &AddQuad(const glm::vec3 &a, const glm::vec3 &b, const glm::vec3 &c, const glm::vec3 &d);
 

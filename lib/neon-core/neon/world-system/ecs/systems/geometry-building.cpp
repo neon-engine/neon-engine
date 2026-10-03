@@ -1,5 +1,9 @@
 #include "geometry-building.hpp"
 
+#include <algorithm>
+#include <utility>
+
+#include <neon/curves/bezier-path.hpp>
 #include <neon/geometry/mesh-builder.hpp>
 #include <neon/geometry/mesh-normals.hpp>
 #include <neon/world-system/ecs/components/renderable.hpp>
@@ -33,9 +37,31 @@ namespace neon
       case GeometryShape::Sphere: builder.AddSphere(geometry.size, geometry.sides, geometry.smooth); break;
       case GeometryShape::Cylinder: builder.AddCylinder(geometry.size, geometry.sides, geometry.smooth); break;
       case GeometryShape::Quad: builder.AddUprightQuad({geometry.size.x, geometry.size.y}); break;
+      case GeometryShape::Tube:
+      {
+        std::vector<glm::vec3> points;
+        for (std::size_t i = 0; i + 2 < geometry.points.size(); i += 3)
+        {
+          points.emplace_back(geometry.points[i], geometry.points[i + 1], geometry.points[i + 2]);
+        }
+
+        // straight pieces that stay within a fiftieth of the thickness of
+        // the curve, which is below what shows
+        const float tolerance = std::max(geometry.size.x * 0.02f, 0.0005f);
+        const BezierPath<glm::vec3> path(std::move(points));
+        builder.AddTube(path.Flatten(tolerance), geometry.size.x * 0.5f, geometry.sides);
+        break;
+      }
     }
 
     MeshData mesh = builder.InsideOut(geometry.inside).Build();
+
+    // a tube is built round, and faceted when it is not to be smooth
+    if (geometry.shape == GeometryShape::Tube)
+    {
+      if (!geometry.smooth) { ComputeFlatNormals(mesh); }
+      return mesh;
+    }
 
     // a sphere and a cylinder are built round where they are to be, with
     // the edges of a cylinder's caps kept hard, which smoothing would undo

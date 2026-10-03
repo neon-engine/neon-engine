@@ -226,8 +226,8 @@ namespace
     EXPECT_EQ(_formats.Find("RigidBody")->type->Find("layers")->kind, neon::FieldKind::Layers);
     EXPECT_EQ(_formats.Find("CharacterBody")->type->Find("max_slope")->unit, "degrees");
     EXPECT_THAT(_formats.Find("Joint")->type->GetPaths(), ElementsAre(
-                  "type", "other", "anchor", "axis", "limits", "collide_with_other", "motor_velocity",
-                  "motor_strength", "spring.stiffness", "spring.damping"));
+                  "type", "other", "anchor", "axis", "other_anchor", "length", "limits", "collide_with_other",
+                  "motor_velocity", "motor_strength", "spring.stiffness", "spring.damping"));
   }
 
   TEST_F(PhysicsComponentFormatsTest, SaysThatAWorldWithoutPhysicsCannotHoldThem)
@@ -1289,8 +1289,8 @@ namespace
     const std::string where = "test.scene.yml:7: ";
     const std::string of = " of Joint of entity 'crate' ";
 
-    EXPECT_EQ(ProblemOf("Joint", "type", DataValue::Text("rope")),
-              where + "'type'" + of + "is 'rope', where one of these was expected: fixed, hinge, slider, point");
+    EXPECT_EQ(ProblemOf("Joint", "type", DataValue::Text("weld")),
+              where + "'type'" + of + "is 'weld', where one of these was expected: fixed, hinge, slider, point, rope");
     EXPECT_EQ(ProblemOf("Joint", "other", DataValue::Number(3.0)),
               where + "'other'" + of + "is a number, where text was expected");
     EXPECT_EQ(ProblemOf("Joint", "anchor", Numbers({1.0, 2.0})),

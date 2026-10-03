@@ -9,7 +9,7 @@ engine what it holds. What a model file brings is in
 **Current decision:** a mesh is a plain structure of vertices and triangle
 indices, `MeshData`, that anything may fill. `MeshBuilder` fills it from
 shapes in metres — a box, a plane, a ramp, a prism from an outline, a
-sphere, a cylinder, an upright quad — with flat normals and texture
+sphere, a cylinder, an upright quad, a tube along a curve — with flat normals and texture
 coordinates projected so that a texture repeats once a metre whatever the
 size of the surface. A `Geometry` component builds
 one when a scene loads; its `Renderable` draws it with its shader and
@@ -45,13 +45,14 @@ a room seen from within, a platform, a crate, a ramp, and a step, with nothing f
 
 | Name | Holds | Default |
 |---|---|---|
-| `shape` | `box`, `plane`, `ramp`, `prism`, `sphere`, `cylinder`, or `quad` | `box` |
-| `size` | A box, a ramp, a sphere, or a cylinder in x, y, and z; a plane in x and z; a quad in x and y; the height of a prism in y. Metres | `[1, 1, 1]` |
+| `shape` | `box`, `plane`, `ramp`, `prism`, `sphere`, `cylinder`, `quad`, or `tube` | `box` |
+| `size` | A box, a ramp, a sphere, or a cylinder in x, y, and z; a plane in x and z; a quad in x and y; the height of a prism in y; the thickness of a tube in x. Metres | `[1, 1, 1]` |
 | `segments` | How many quads a plane is cut into along each side. A plane alone | `1` |
-| `sides` | How many faces go round a sphere or a cylinder, at least three. A sphere has half as many rings from pole to pole. A sphere and a cylinder alone | `24` |
+| `sides` | How many faces go round a sphere, a cylinder, or a tube, at least three. A sphere has half as many rings from pole to pole. A sphere, a cylinder, and a tube alone | `24` |
 | `outline` | The outline of a prism on the ground, as pairs of x and z, at least three, going round either way. A prism alone | None |
+| `points` | The control points of the curve a tube follows, as triples of x, y, and z: four for the first piece, three for every further one, see [curves.md](curves.md#a-path). A tube alone | None |
 | `texels_per_metre` | How often a texture repeats over one metre of surface | `1` |
-| `smooth` | Whether the normals are smoothed over shared vertices, for a plane that is to look round. A sphere is lit as a ball with it, and a cylinder as a round column whose caps stay flat | `false` |
+| `smooth` | Whether the normals are smoothed over shared vertices, for a plane that is to look round. A sphere is lit as a ball with it, a cylinder as a round column whose caps stay flat, and a tube as a round pipe | `false` |
 | `inside` | Whether the faces point inward, for a box or a prism that is a room seen from within, a sphere that is a dome, or a cylinder that is a well | `false` |
 
 A `Renderable` with a `Geometry` leaves `model` out. A `Collider` of kind
@@ -69,6 +70,18 @@ that names a model reads the model, as before.
 | Sphere | What fills `size`, centred on the entity: a ball when the three lengths are the same, an ellipsoid otherwise | `sides` round, `sides / 2` rings: a triangle at each pole, quads between. Flat faces, or with `smooth` the normals of the round surface on shared vertices |
 | Cylinder | Along y, filling `size`, centred on the entity. With few `sides` it is a column of that many faces: 6 is a hexagon | `sides` quads round, and a cap at each end. `smooth` rounds the side and keeps the edges of the caps hard |
 | Quad | `size` in x and y, upright, facing +z, centred on the entity | One quad seen from its front, on which a texture lies once, with its top at the top: what shows a picture, a [surface](user-interface.md#surfaces), or what a camera sees. `texels_per_metre` is not read |
+| <a id="tube"></a>Tube | A circle of thickness `size.x` swept along the curve of `points`, a path of cubic Bézier pieces, see [curves.md](curves.md). The curve is cut into straight pieces that stay within a fiftieth of the thickness of it: few where it is straight, more where it bends | `sides` quads round every piece, and a cap at each end. The rings do not twist along the curve. `smooth` rounds the side. It lays its texture itself, round it and along it, `texels_per_metre` times a metre |
+
+A pipe that rises out of the floor and turns to run along a wall:
+
+```yaml
+Geometry:
+  shape: tube
+  size: [0.2, 0, 0]
+  sides: 12
+  smooth: true
+  points: [0, 0, 0,  0, 1, 0,  0, 2, 0,  1, 2, 0]
+```
 
 A sphere of `size: 1` is the `sphere` of a `Collider` with its default
 radius of 0.5, and a cylinder of `size: [1, 2, 1]` its `cylinder`, so a ball
@@ -95,21 +108,33 @@ and reads it pixel by pixel.
 
 A sphere and the side of a cylinder are projected the same way, which is
 right for a plain colour and shows seams with a texture, where the axis a
-normal points most along changes. A quad is the one shape that lays its
-texture itself.
+normal points most along changes. A quad and a tube are the shapes that lay
+their texture themselves.
 
 ## In code
 
 | Piece | Location | Role |
 |---|---|---|
 | `MeshData` | neon-core, `neon/geometry/mesh-data.hpp` | Vertices and triangle indices, nothing else. A vertex has a colour, white from the builder, that a tool or an importer sets to paint a mesh by vertex (#192) |
-| `MeshBuilder` | `neon/geometry/mesh-builder.hpp` | `AddBox`, `AddPlane`, `AddRamp`, `AddPrism`, `AddSphere`, `AddCylinder`, `AddUprightQuad`, `AddQuad`, `InsideOut`, `Build` |
+| `MeshBuilder` | `neon/geometry/mesh-builder.hpp` | `AddBox`, `AddPlane`, `AddRamp`, `AddPrism`, `AddSphere`, `AddCylinder`, `AddUprightQuad`, `AddTube`, `AddQuad`, `InsideOut`, `Build` |
+| `AppendTube` | `neon/geometry/tube.hpp` | A tube along a line of points, straight into a `MeshData`: what `AddTube` calls, and what writes a rope anew every frame without the builder |
 | `ComputeFlatNormals`, `ComputeSmoothNormals` | `neon/geometry/mesh-normals.hpp` | Flat splits shared vertices so every edge is hard; smooth averages by area |
 | `ProjectUvs` | `neon/geometry/mesh-uvs.hpp` | The projection above |
 | `Geometry`, `GeometryShape` | `neon/world-system/ecs/components/` | The component, described with reflection |
 | `GeometryBuilding` | `neon/world-system/ecs/systems/` | Builds the mesh once into `RenderInfo::mesh`; `Build()` is what the physics calls too |
 | `RenderInfo::mesh` | `neon/render/render-info.hpp` | A shared `MeshData` the renderer draws in place of `model_path` |
 | `VK_Model` from a mesh | neon-vulkan | Uploads the mesh as it is, with a `ModelFit` of `None`, whatever a file would get |
+
+## A mesh that changes
+
+A mesh may change after it was first drawn: whoever changed it counts
+`RenderInfo::mesh_version` up, and `RenderSubmission` hands the mesh to the
+renderer again through `UpdateRenderObjectMesh` before the entity is drawn.
+The Vulkan renderer writes a mesh with as many vertices and triangles as
+before over the old one, which is a copy into memory it already has and is
+what a [rope](physics.md#ropes) costs every frame; a mesh of another size
+gets new buffers. A frame is done before the next one starts, so nothing
+draws from the buffers while they are written.
 
 A tool or an importer fills a `MeshData` by hand or through the builder, puts
 it on a `Renderable` as `render_info.mesh`, and hands its points and
@@ -128,9 +153,10 @@ talks to Vulkan or to Jolt.
 - **Welding and smoothing across pieces.** Two boxes that meet keep their own
   vertices; a terrain that wants smooth shading across tiles needs the plane's
   shared vertices and `smooth`, or a merge of pieces.
-- **Changing a Geometry while the game runs.** The mesh is built once, when
-  the entity is first drawn; a changed component is not rebuilt yet. A tool
-  that edits a level live needs the rebuild and the renderer's object remade.
+- **Changing a Geometry while the game runs.** The mesh of a `Geometry` is
+  built once, when the entity is first drawn; a changed component is not
+  rebuilt yet. The renderer does take a mesh that changed, see below, so
+  what a tool that edits a level live still needs is the rebuild.
 - **Textures on round shapes.** A sphere and a cylinder take the projection
   of the flat shapes, which shows seams. Coordinates of their own, round
   the axis and from pole to pole, are the next step once a round shape is

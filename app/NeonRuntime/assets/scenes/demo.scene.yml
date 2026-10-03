@@ -795,7 +795,8 @@ entities:
   # --------------------------------------------------------------------------
   # 01 Shapes
   # What a Geometry builds, each on a pedestal, see docs/geometry.md. The
-  # pedestals are one prefab. The mats of the halls are the plane.
+  # pedestals are one prefab. The mats of the halls are the plane, and the
+  # tube is a pipe on the west wall.
   # --------------------------------------------------------------------------
 
   - name: shapes-box-pedestal
@@ -992,11 +993,13 @@ entities:
       Transform:
         position: [-8.5, 0.5, -1]
 
-  # a box turned inside out is a room: its near walls are left out
+  # a box turned inside out is a room: its near walls are left out. It stands
+  # a few millimetres above its pedestal: its floor faces up as the top of
+  # the pedestal does, and the two would flicker in one plane
   - name: shapes-room
     components:
       Transform:
-        position: [-8.5, 1.4, -1]
+        position: [-8.5, 1.405, -1]
       Geometry:
         shape: box
         size: [0.8, 0.8, 0.8]
@@ -1006,6 +1009,24 @@ entities:
         material:
           color: [0.95, 0.64, 0.23]
           roughness: 0.7
+
+  # a tube along a curve of four pieces: out of the floor, along the west
+  # wall, and back into the floor, see docs/curves.md
+  - name: shapes-tube
+    components:
+      Transform:
+        position: [-10.7, 0, -4]
+      Geometry:
+        shape: tube
+        size: [0.16, 0, 0]
+        sides: 16
+        smooth: true
+        points: [0, 0, -2.5,  0, 0.9, -2.5,  0, 1.6, -2.2,  0, 1.6, -1.5,  0, 1.6, -0.8,  0, 2.4, -0.7,  0, 2.4, 0,  0, 2.4, 0.7,  0, 1.6, 0.8,  0, 1.6, 1.5,  0, 1.6, 2.2,  0, 0.9, 2.5,  0, 0, 2.5]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.85, 0.5, 0.3]
+          roughness: 0.5
 
   # --------------------------------------------------------------------------
   # 02 Materials
@@ -2484,8 +2505,8 @@ entities:
           stiffness: 20
           damping: 4
 
-  # a pendulum on a point joint to the world, from a beam on the wall, let
-  # go from the side
+  # a pendulum on a rope joint to the world, from a beam on the wall, let go
+  # from the side with its rope taut. Lift the ball and the rope hangs slack
   - name: joints-beam
     components:
       Transform:
@@ -2522,8 +2543,66 @@ entities:
         shape: sphere
         radius: 0.3
       Joint:
-        type: point
-        anchor: [0, 1.4, -0.9]
+        type: rope
+        anchor: [0, 0.3, 0]
+        other_anchor: [-6.5, 2.825, -30.2]
+
+  # the rope of that joint, drawn from the ball to where it is held
+  - name: joints-pendulum-rope
+    components:
+      Transform: Default
+      Rope:
+        joint: joints-pendulum
+        thickness: 0.04
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.75, 0.66, 0.45]
+          roughness: 0.9
+
+  # a cable that holds nothing, longer than its pegs are apart, so it hangs
+  - name: joints-cable-peg-a
+    components:
+      Transform:
+        position: [-10.9, 2.7, -31.2]
+      Geometry:
+        shape: box
+        size: [0.2, 0.12, 0.12]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.12, 0.13, 0.15]
+          roughness: 0.6
+
+  - name: joints-cable-peg-b
+    components:
+      Transform:
+        position: [-10.9, 2.7, -28.2]
+      Geometry:
+        shape: box
+        size: [0.2, 0.12, 0.12]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.12, 0.13, 0.15]
+          roughness: 0.6
+
+  - name: joints-cable
+    components:
+      Transform: Default
+      Rope:
+        from: joints-cable-peg-a
+        from_anchor: [0.1, 0, 0]
+        to: joints-cable-peg-b
+        to_anchor: [0.1, 0, 0]
+        length: 3.7
+        thickness: 0.05
+        segments: 24
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.9, 0.4, 0.3]
+          roughness: 0.7
 
   # a block on a slider along its rail, with a spring that brings it back
   - name: joints-rail
@@ -2607,7 +2686,8 @@ entities:
         motor_velocity: 90
         motor_strength: 60
 
-  # two crates held as one by a fixed joint: push one, and both go
+  # two crates held as one by a fixed joint, with a bar between them that
+  # goes with the one it is below: push one, and both go
   - name: joints-fixed-a
     components:
       Transform:
@@ -2645,6 +2725,19 @@ entities:
         type: fixed
         other: joints-fixed-a
         anchor: [0, 0, 0.45]
+    children:
+      - name: bar
+        components:
+          Transform:
+            position: [0, 0, 0.45]
+          Geometry:
+            shape: box
+            size: [0.08, 0.08, 0.4]
+          Renderable:
+            shader: assets://shaders/pbr
+            material:
+              color: [0.12, 0.13, 0.15]
+              roughness: 0.6
 
   # --------------------------------------------------------------------------
   # 08 Character

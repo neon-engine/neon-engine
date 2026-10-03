@@ -315,6 +315,8 @@ namespace neon
 
     void DestroyRenderObject(int render_object_id) override;
 
+    void UpdateRenderObjectMesh(int render_object_id, const MeshData &mesh) override;
+
     void DrawSky(const SkyInfo &sky, const glm::mat4 &view, const glm::mat4 &projection) override;
 
     int CreateTexture(int width, int height, const std::vector<unsigned char> &pixels) override;

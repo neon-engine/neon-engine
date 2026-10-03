@@ -93,11 +93,21 @@ namespace neon
         if (renderable.render_object_id < 0)
         {
           renderable.render_object_id = _render_pipeline->CreateRenderObject(renderable.render_info);
+          renderable.mesh_version_drawn = renderable.render_info.mesh_version;
         }
 
         // the renderer could not create it, and has said why. It knows no
         // render object by that id, so there is nothing to draw
         if (renderable.render_object_id < 0) { continue; }
+
+        // a mesh that was changed since it was last drawn, by a rope that
+        // moved, is handed to the renderer again
+        const auto &info = renderable.render_info;
+        if (info.mesh != nullptr && info.mesh_version != renderable.mesh_version_drawn)
+        {
+          _render_pipeline->UpdateRenderObjectMesh(renderable.render_object_id, *info.mesh);
+          renderable.mesh_version_drawn = info.mesh_version;
+        }
 
         _render_pipeline->EnqueueForRendering(renderable.render_object_id, transforms[i]);
       }

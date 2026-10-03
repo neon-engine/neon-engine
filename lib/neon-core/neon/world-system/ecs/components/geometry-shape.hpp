@@ -12,7 +12,8 @@ namespace neon
     Prism,
     Sphere,
     Cylinder,
-    Quad
+    Quad,
+    Tube
   };
 } // neon
 

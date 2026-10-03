@@ -47,6 +47,7 @@
 #include <Jolt/Physics/Collision/Shape/StaticCompoundShape.h>
 #include <Jolt/Physics/Collision/Shape/TaperedCapsuleShape.h>
 #include <Jolt/Physics/Collision/Shape/TaperedCylinderShape.h>
+#include <Jolt/Physics/Constraints/DistanceConstraint.h>
 #include <Jolt/Physics/Constraints/FixedConstraint.h>
 #include <Jolt/Physics/Constraints/HingeConstraint.h>
 #include <Jolt/Physics/Constraints/MotorSettings.h>
@@ -402,6 +403,7 @@ namespace neon
         case JointKind::Hinge: return "hinge";
         case JointKind::Slider: return "slider";
         case JointKind::Point: return "point";
+        case JointKind::Rope: return "rope";
       }
       return "joint";
     }
@@ -1945,6 +1947,12 @@ namespace neon
       return false;
     }
 
+    if (info.kind == JointKind::Rope && (!IsFinite(info.other_anchor) || !std::isfinite(info.length)))
+    {
+      error = "where the rope is held or how long it is is no number";
+      return false;
+    }
+
     const bool has_axis = info.kind == JointKind::Hinge || info.kind == JointKind::Slider;
     if (has_axis && !(length(info.axis) > 0.0f))
     {
@@ -2035,6 +2043,20 @@ namespace neon
         settings.mSpace = JPH::EConstraintSpace::WorldSpace;
         settings.mPoint1 = anchor;
         settings.mPoint2 = anchor;
+        constraint = settings.Create(*held, *holding);
+        break;
+      }
+
+      case JointKind::Rope:
+      {
+        // a distance that may be anything from nothing up to the length
+        // of the rope, between its end on each body
+        JPH::DistanceConstraintSettings settings;
+        settings.mSpace = JPH::EConstraintSpace::WorldSpace;
+        settings.mPoint1 = ToJolt(info.other_anchor);
+        settings.mPoint2 = anchor;
+        settings.mMinDistance = 0.0f;
+        settings.mMaxDistance = info.length > 0.0f ? info.length : length(info.anchor - info.other_anchor);
         constraint = settings.Create(*held, *holding);
         break;
       }

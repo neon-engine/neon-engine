@@ -27,6 +27,12 @@ namespace neon
     /// the centring and scaling a model from a file gets. Shared, so that
     /// the physics may hold the same mesh.
     std::shared_ptr<const MeshData> mesh;
+
+    /// Counted up by whoever changes `mesh` after it was first drawn, a
+    /// rope that moves or a tool that edits a level, so that the renderer
+    /// is handed the mesh again. A mesh that keeps as many vertices and
+    /// triangles is written over the one before, which costs a copy.
+    unsigned int mesh_version = 0;
     std::string shader_path;
     std::vector<std::string> texture_paths;
     /// Whether the textures repeat as the entity grows, see docs/scenes.md.

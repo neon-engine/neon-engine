@@ -34,6 +34,11 @@ namespace neon
       _render_context->DestroyRenderObject(render_object_id);
     }
 
+    virtual void UpdateRenderObjectMesh(const int render_object_id, const MeshData &mesh)
+    {
+      _render_context->UpdateRenderObjectMesh(render_object_id, mesh);
+    }
+
     virtual void SetCameraInfo(const CameraInfo& camera_info) = 0;
 
     virtual void EnqueueForRendering(

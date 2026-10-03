@@ -79,6 +79,16 @@ namespace neon
     return count;
   }
 
+  void VK_Model::UpdateMesh(const MeshData &mesh)
+  {
+    if (_mesh_data == nullptr || _meshes.empty()) { return; }
+
+    if (mesh.IsEmpty() || !_meshes.front().Rewrite(mesh.vertices, mesh.indices))
+    {
+      _logger->Error("A mesh that was changed could not be drawn again");
+    }
+  }
+
   void VK_Model::CleanUp()
   {
     while (!_meshes.empty())

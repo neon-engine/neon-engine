@@ -843,6 +843,36 @@ namespace
     ExpectVector(_physics.created_joints[0].axis, 0.0f, 1.0f, 0.0f);
   }
 
+  TEST_F(PhysicsSimulationTest, HoldsARopeOnTheOtherEntityOrAtAPlaceInTheWorld)
+  {
+    Transform wide = At(3.0f, 4.0f, 0.0f);
+    wide.scale = {2.0f, 1.0f, 1.0f};
+    Create("beam", wide, RigidBody{.kind = BodyKind::Static});
+    const Entity lamp = Create("lamp", At(4.0f, 2.0f, 0.0f), RigidBody{});
+    const Entity bob = Create("bob", At(0.0f, 1.0f, 0.0f), RigidBody{});
+
+    // the end of the beam, which its scale makes twice as far out
+    _store.Set(lamp, Joint{
+                 .type = JointKind::Rope,
+                 .other = "beam",
+                 .anchor = {0.0f, 0.5f, 0.0f},
+                 .other_anchor = {0.5f, 0.0f, 0.0f},
+                 .length = 2.5f});
+    _store.Set(bob, Joint{.type = JointKind::Rope, .other_anchor = {0.0f, 6.0f, 1.0f}});
+
+    Step();
+
+    ASSERT_EQ(_physics.created_joints.size(), 2u);
+    EXPECT_EQ(_physics.created_joints[0].kind, JointKind::Rope);
+    ExpectVector(_physics.created_joints[0].anchor, 4.0f, 2.5f, 0.0f);
+    ExpectVector(_physics.created_joints[0].other_anchor, 4.0f, 4.0f, 0.0f);
+    EXPECT_EQ(_physics.created_joints[0].length, 2.5f);
+    EXPECT_TRUE(_physics.created_joints[0].collide_with_other);
+
+    ExpectVector(_physics.created_joints[1].other_anchor, 0.0f, 6.0f, 1.0f);
+    EXPECT_EQ(_physics.created_joints[1].length, 0.0f);
+  }
+
   TEST_F(PhysicsSimulationTest, KeepsTheLimitsOfASliderInUnits)
   {
     const Entity sled = Create("sled", At(0.0f, 1.0f, 0.0f), RigidBody{});

@@ -42,6 +42,36 @@ namespace neon
     return true;
   }
 
+  bool VK_Mesh::Overwrite(const void *data, const VkDeviceSize size, const VkDeviceMemory memory) const
+  {
+    void *mapped = nullptr;
+    if (vkMapMemory(_device->Device(), memory, 0, size, 0, &mapped) != VK_SUCCESS) { return false; }
+
+    std::memcpy(mapped, data, size);
+    vkUnmapMemory(_device->Device(), memory);
+    return true;
+  }
+
+  bool VK_Mesh::Rewrite(const std::vector<Vertex> &vertices, const std::vector<unsigned int> &indices)
+  {
+    const bool fits = _initialized && vertices.size() == _vertices.size() && indices.size() == _indices.size();
+
+    // assigned, so that the room they have is kept from frame to frame
+    _vertices = vertices;
+    _indices = indices;
+
+    // The buffers are memory the processor writes to, and a frame is done
+    // before the next one starts, so nothing reads them now.
+    if (fits)
+    {
+      return Overwrite(_vertices.data(), _vertices.size() * sizeof(Vertex), _vertex_memory)
+             && Overwrite(_indices.data(), _indices.size() * sizeof(unsigned int), _index_memory);
+    }
+
+    CleanUp();
+    return Initialize();
+  }
+
   bool VK_Mesh::Initialize()
   {
     if (_initialized)

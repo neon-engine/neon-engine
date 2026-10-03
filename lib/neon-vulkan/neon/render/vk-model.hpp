@@ -54,6 +54,10 @@ namespace neon
     /// material, or for every mesh when `material` is below 0.
     [[nodiscard]] std::size_t MeshCount(int material = -1) const;
 
+    /// Draws `mesh` from now on, for a model that was made from a mesh
+    /// that has changed since. A model from a file is left as it is.
+    void UpdateMesh(const MeshData &mesh);
+
     void CleanUp() override;
   };
 } // neon

@@ -32,10 +32,10 @@ root:
       font_size: 36
       color: "#ffffffc8"
     - type: label
-      text: "on a point, a block on a slider, a wheel on"
+      text: "on a rope, a block on a slider, a wheel on"
       font_size: 36
       color: "#ffffffc8"
     - type: label
-      text: "a motor, and two crates fixed as one."
+      text: "a motor, two crates fixed as one, a cable."
       font_size: 36
       color: "#ffffffc8"

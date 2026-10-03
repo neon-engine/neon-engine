@@ -1796,6 +1796,51 @@ namespace
     EXPECT_LT(state.position.x, -0.5f);
   }
 
+  TEST_F(JoltPhysicsSystemTest, LetsABodyFallOnARopeUntilTheRopeIsTaut)
+  {
+    // held right at the hook, on a rope of two
+    const glm::vec3 hook{0.0f, 5.0f, 0.0f};
+    const auto bob = CreateBody(ball_entity, BodyKind::Dynamic, Sphere(0.2f), {0.0f, 4.8f, 0.0f});
+    Join(JointInfo{
+      .kind = JointKind::Rope,
+      .body = bob,
+      .anchor = {0.0f, 4.8f, 0.0f},
+      .other_anchor = hook,
+      .length = 2.0f});
+
+    // slack at first: it falls as if nothing held it
+    Run(12);
+    const float fallen = 4.8f - StateOf(bob).position.y;
+    EXPECT_NEAR(fallen, 0.5f * 9.81f * 0.2f * 0.2f, 0.05f);
+
+    // then the rope holds it, and it comes no further from the hook
+    float furthest = 0.0f;
+    for (int i = 0; i < 180; i++)
+    {
+      Run(1);
+      furthest = std::max(furthest, length(StateOf(bob).position - hook));
+    }
+    EXPECT_LT(furthest, 2.1f);
+    EXPECT_NEAR(StateOf(bob).position.y, 3.0f, 0.1f);
+  }
+
+  TEST_F(JoltPhysicsSystemTest, MakesARopeAsLongAsItsEndsAreApartWhenItHasNoLength)
+  {
+    // out to the side of the hook: it swings as a pendulum does
+    const glm::vec3 hook{0.0f, 5.0f, 0.0f};
+    const auto bob = CreateBody(ball_entity, BodyKind::Dynamic, Sphere(0.2f), {1.0f, 4.0f, 0.0f});
+    Join(JointInfo{.kind = JointKind::Rope, .body = bob, .anchor = {1.0f, 4.0f, 0.0f}, .other_anchor = hook});
+
+    float lowest = 4.0f;
+    for (int i = 0; i < 72; i++)
+    {
+      Run(1);
+      lowest = std::min(lowest, StateOf(bob).position.y);
+      EXPECT_LT(length(StateOf(bob).position - hook), std::sqrt(2.0f) + 0.05f) << "step " << i;
+    }
+    EXPECT_LT(lowest, 3.7f);
+  }
+
   TEST_F(JoltPhysicsSystemTest, LetsABodyMoveAlongASliderAlone)
   {
     const auto sled = CreateBody(crate_entity, BodyKind::Dynamic, Box({1.0f, 1.0f, 1.0f}), {0.0f, 0.0f, 0.0f},

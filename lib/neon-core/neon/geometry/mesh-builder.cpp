@@ -7,6 +7,7 @@
 #include <glm/gtc/constants.hpp>
 
 #include "mesh-uvs.hpp"
+#include "tube.hpp"
 
 namespace neon
 {
@@ -317,6 +318,19 @@ namespace neon
     _laid_uvs.emplace_back(first + 1, glm::vec2(1.0f, 1.0f));
     _laid_uvs.emplace_back(first + 2, glm::vec2(1.0f, 0.0f));
     _laid_uvs.emplace_back(first + 3, glm::vec2(0.0f, 0.0f));
+    return *this;
+  }
+
+  MeshBuilder &MeshBuilder::AddTube(const std::vector<glm::vec3> &centres, const float radius, const int sides)
+  {
+    const auto first = static_cast<unsigned int>(_mesh.vertices.size());
+    AppendTube(centres, radius, sides, _texels_per_metre, _mesh);
+
+    // a tube lays its texture round itself and along itself
+    for (auto index = first; index < _mesh.vertices.size(); index++)
+    {
+      _laid_uvs.emplace_back(index, _mesh.vertices[index].tex_coords);
+    }
     return *this;
   }
 

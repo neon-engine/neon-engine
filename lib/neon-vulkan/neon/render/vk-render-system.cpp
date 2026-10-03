@@ -1482,6 +1482,15 @@ namespace neon
     _models.Release(object.model_id);
   }
 
+  void VK_RenderSystem::UpdateRenderObjectMesh(const int render_object_id, const MeshData &mesh)
+  {
+    if (!_render_object_buffer.Contains(render_object_id)) { return; }
+
+    // a frame is done before the next one starts, see FinishFrame(), so
+    // nothing draws with the buffers that are written here
+    _models.UpdateMesh(_render_object_buffer[render_object_id].model_id, mesh);
+  }
+
   int VK_RenderSystem::CreateTexture(const int width, const int height, const std::vector<unsigned char> &pixels)
   {
     return _renderer_2d.CreateTexture(width, height, pixels);

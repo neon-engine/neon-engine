@@ -658,8 +658,10 @@ namespace neon
         const auto own = _records.find(entity);
         if (own == _records.end() || own->second.kind != RecordKind::Body) { continue; }
 
-        // the body it is joined to, or the world
+        // the body it is joined to, or the world, where the other end of a
+        // rope is a place as it is written
         BodyId other = No_Body;
+        glm::vec3 other_anchor = joint.other_anchor;
         if (!joint.other.empty())
         {
           const Entity named = store.FindEntity(joint.other);
@@ -684,6 +686,9 @@ namespace neon
           const auto record = _records.find(named);
           if (record == _records.end() || record->second.kind != RecordKind::Body) { continue; }
           other = record->second.body;
+
+          const auto &held = record->second.current;
+          other_anchor = held.position + held.rotation * (record->second.scale * joint.other_anchor);
         }
 
         // The anchor and the axis go with the entity, as it is now. The
@@ -697,6 +702,8 @@ namespace neon
         info.body = own->second.body;
         info.other = other;
         info.anchor = pose.position + pose.rotation * (own->second.scale * joint.anchor);
+        info.other_anchor = other_anchor;
+        info.length = joint.length;
         info.axis = pose.rotation * joint.axis;
         info.has_limits = joint.limits.size() == 2;
         if (info.has_limits)

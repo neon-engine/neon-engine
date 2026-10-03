@@ -34,6 +34,7 @@
 #include <neon/world-system/ecs/scene-file/scene-file.hpp>
 #include <neon/world-system/ecs/systems/audio-playback.hpp>
 #include <neon/world-system/ecs/systems/geometry-building.hpp>
+#include <neon/world-system/ecs/systems/rope-drawing.hpp>
 #include <neon/world-system/ecs/systems/physics-simulation.hpp>
 #include <neon/world-system/ecs/systems/player-movement.hpp>
 #include <neon/world-system/ecs/systems/script-running.hpp>
@@ -422,6 +423,9 @@ int main(const int argc, char *argv[])
     &physics_system,
     &file_system,
     logging_system.CreateLogger("PhysicsSimulation")));
+
+  // ropes, drawn between their ends where the physics has just placed them
+  world.AddSystem(std::make_unique<neon::RopeDrawing>(logging_system.CreateLogger("RopeDrawing")));
 
   // The random numbers of the operating system, for the game. The engine
   // draws none itself, and no option or setting seeds them: a game that is

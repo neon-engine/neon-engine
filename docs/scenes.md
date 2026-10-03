@@ -165,10 +165,29 @@ with one or three of its axes below 0, is still drawn from the front.
 **Geometry**
 
 A shape the engine builds in place of a model, in metres: a box, a plane, a
-ramp, a prism from an outline, a sphere, a cylinder, or an upright quad,
-textured once a metre. The entity's
+ramp, a prism from an outline, a sphere, a cylinder, an upright quad, or a
+tube along a curve, textured once a metre. The entity's
 `Renderable` draws it, and a `Collider` without a `model` takes the same
 shape. The fields are in [geometry.md](geometry.md).
+
+**Rope**
+
+A rope drawn between two ends that move: straight while they are as far
+apart as it is long, hanging in a curve while they are nearer. The entity's
+`Renderable` draws it, with its shader and material. It draws the rope of a
+`Joint` of type `rope` by naming the entity of that joint, or hangs between
+two places of its own, see [physics.md](physics.md#ropes).
+
+| Name | Holds | Default |
+|---|---|---|
+| `joint` | The path of the entity whose `Joint` of type `rope` is drawn. The ends and the length are then those of the joint | Empty |
+| `from`, `to` | The paths of the entities the two ends are on. Empty for the world. Not read with `joint` | Empty |
+| `from_anchor`, `to_anchor` | `[x, y, z]`, where each end is on its entity, sized by its `scale`, or in the world | `[0, 0, 0]` |
+| `length` | How long the rope is, in metres. `0` for a rope that is always straight. Not read with `joint` | `0` |
+| `thickness` | How thick the rope is, across, in metres | `0.03` |
+| `sides` | How many faces go round it | `8` |
+| `segments` | How many straight pieces it is drawn as from end to end | `16` |
+| `texels_per_metre` | How often a texture repeats over one metre of it | `1` |
 
 **Camera**
 
@@ -340,7 +359,7 @@ are the components of the physics. What they hold is listed in
 | `Collider` | The shape of the body of its entity, or of the nearest entity above it that has one | `shape`, `offset`, `rotation`, and what belongs to the shape: `size`, `radius`, `height`, `top_radius`, `bottom_radius`, `model`, `fit`. A `mesh` or `convex_hull` without a `model` takes the entity's `Geometry` |
 | `Trigger` | An area that reports what enters and leaves it | `layers`, `mask` |
 | `CharacterBody` | Something that is moved by a velocity, stops at what is in its way, and slides along it | `velocity`, `fall_velocity`, `gravity_scale`, `max_slope`, `step_height`, `mass`, `push_strength`, `layers`, `mask` |
-| `Joint` | Holds the body of its entity to another body, named by its path, or to the world | `type`, `other`, `anchor`, `collide_with_other`, and for a hinge and a slider: `axis`, `limits`, `motor_velocity`, `motor_strength`, `spring` |
+| `Joint` | Holds the body of its entity to another body, named by its path, or to the world | `type`, `other`, `anchor`, `collide_with_other`, for a rope: `other_anchor`, `length`, and for a hinge and a slider: `axis`, `limits`, `motor_velocity`, `motor_strength`, `spring` |
 
 ## The museum
 
@@ -353,13 +372,13 @@ places.
 
 | Hall | Shows | Read more |
 |---|---|---|
-| 01 Shapes | Every shape a `Geometry` builds, flat and smooth | [geometry.md](geometry.md) |
+| 01 Shapes | Every shape a `Geometry` builds, flat and smooth, and a pipe on the wall that is a tube along a curve | [geometry.md](geometry.md), [curves.md](curves.md) |
 | 02 Materials | The `pbr` shader over roughness, metalness, and colour; `basic-lit`, `color`, and an `emissive` material | [vulkan-renderer.md](vulkan-renderer.md#the-shaders-that-ship) |
 | 03 Lights | Point lights that mix, a spot light, and a cube that glows, in a room the sun does not reach | [Light](#components) |
 | 04 Transparency | `alpha_mode: blend` in order of distance, and `double_sided` | [Renderable](#components) |
 | 05 Shadows | The shadows of the sun, of what stands still and of what a script turns | [vulkan-renderer.md](vulkan-renderer.md#shadows) |
 | 06 Physics | Static, dynamic, and kinematic bodies, and a collider of every shape | [physics.md](physics.md) |
-| 07 Joints | A hinge with a spring, a point, a slider, a motor, and a fixed joint | [physics.md](physics.md#joints) |
+| 07 Joints | A hinge with a spring, a pendulum on a rope that hangs slack when the ball is lifted, a slider, a motor, a fixed joint with its bar, and a cable that hangs between two pegs | [physics.md](physics.md#joints), [curves.md](curves.md) |
 | 08 Character | Steps, slopes, a lift, and a second character that a script walks | [physics.md](physics.md#the-player) |
 | 09 Scripts | The `Spinner`, the `Mover`, and the `TriggerLamp` of `assets/scripts` | [scripting.md](scripting.md) |
 | 10 Surfaces | A terminal that is pointed at and pressed, and what a second camera sees | [user-interface.md](user-interface.md#surfaces) |

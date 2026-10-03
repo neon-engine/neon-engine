@@ -19,7 +19,12 @@ namespace neon
 
     /// They stay joined at the anchor and turn around it as they like. A
     /// pendulum, a chain.
-    Point
+    Point,
+
+    /// Two points, one on each, stay within a length of each other and are
+    /// free below it. A weight on a rope, a lamp on a chain, a dog on a
+    /// lead.
+    Rope
   };
 } // neon
 

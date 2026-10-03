@@ -16,7 +16,7 @@ namespace neon
 {
   /// Holds the body of the entity to another body, or to the world. A door
   /// on a hinge, a pendulum on a point, a drawer on a slider, a load that is
-  /// fixed to a cart.
+  /// fixed to a cart, a weight that hangs on a rope.
   ///
   /// The joint is made once both bodies exist, and is gone when either of
   /// them is. It is made again when both are back. The anchor and the axis
@@ -37,6 +37,16 @@ namespace neon
     /// Of a hinge, what it turns around. Of a slider, what it moves along.
     /// On the entity.
     glm::vec3 axis{0.0f, 1.0f, 0.0f};
+
+    /// Of a rope, where it is held at its other end: on the other entity,
+    /// sized by its scale as `anchor` is by this one's, or a place in the
+    /// world when `other` is empty. `anchor` is its end on this entity.
+    glm::vec3 other_anchor{0.0f};
+
+    /// Of a rope, how long it is: its two ends come no further apart, and
+    /// are free while they are nearer. 0 for as far as they are apart when
+    /// the joint is made, which is a rope that starts taut.
+    float length = 0.0f;
 
     /// How far the body may go, as `[least, most]`: degrees around the axis
     /// for a hinge, units along it for a slider, from where the body is
@@ -90,9 +100,11 @@ namespace neon
 
     // the type is what a joint is, so it is written even when it is the
     // default
-    type.Choice("type", &Joint::type, {"fixed", "hinge", "slider", "point"})
+    type.Choice("type", &Joint::type, {"fixed", "hinge", "slider", "point", "rope"})
         .AlwaysWritten()
-        .Describe("Moves as one with the other body, turns around an axis, moves along one, or turns around a point");
+        .Describe(
+          "Moves as one with the other body, turns around an axis, moves along one, turns around a point, or "
+          "stays within the length of a rope");
 
     type.Field("other", &Joint::other)
         .Describe("Path of the entity the body is joined to, from the top. Empty for the world itself");
@@ -103,6 +115,18 @@ namespace neon
     type.Field("axis", &Joint::axis)
         .OnlyWhen("type", {"hinge", "slider"})
         .Describe("What a hinge turns around, or a slider moves along, on the entity");
+
+    type.Field("other_anchor", &Joint::other_anchor)
+        .OnlyWhen("type", {"rope"})
+        .Describe(
+          "Where a rope is held at its other end: on the other entity, sized by its scale, or in the world when "
+          "'other' is empty");
+
+    type.Field("length", &Joint::length)
+        .Unit("m")
+        .AtLeast(0.0f)
+        .OnlyWhen("type", {"rope"})
+        .Describe("How long a rope is. 0 for as far as its ends are apart when the joint is made");
 
     type.Field("limits", &Joint::limits)
         .OnlyWhen("type", {"hinge", "slider"})

@@ -77,6 +77,13 @@ namespace neon
 
     [[nodiscard]] const VK_Model &operator[](const int id) const { return _models[id]; }
 
+    /// Draws the model at `id`, which was made from a mesh, with `mesh`
+    /// from now on.
+    void UpdateMesh(const int id, const MeshData &mesh)
+    {
+      if (_models.Contains(id)) { _models[id].UpdateMesh(mesh); }
+    }
+
     /// How many models are held.
     [[nodiscard]] int Size() const { return _models.Size(); }
 

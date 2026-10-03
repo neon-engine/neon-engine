@@ -24,19 +24,25 @@ namespace neon
     GeometryShape shape = GeometryShape::Box;
 
     /// The size of a box, a ramp, a sphere, or a cylinder in x, y, and z; of
-    /// a plane in x and z; of a quad in x and y.
+    /// a plane in x and z; of a quad in x and y. The thickness of a tube in
+    /// x.
     glm::vec3 size{1.0f};
 
     /// How many quads a plane is cut into along each side.
     int segments = 1;
 
-    /// How many faces go round a sphere or a cylinder. A sphere has half as
-    /// many rings from pole to pole.
+    /// How many faces go round a sphere, a cylinder, or a tube. A sphere has
+    /// half as many rings from pole to pole.
     int sides = 24;
 
     /// The outline of a prism on the ground, as pairs of x and z, going
     /// round either way. Its height is `size.y`.
     std::vector<float> outline;
+
+    /// The control points of a tube's curve, as triples of x, y, and z: a
+    /// path of cubic Bézier pieces, four points for the first and three for
+    /// every further one, see docs/curves.md. Its thickness is `size.x`.
+    std::vector<float> points;
 
     /// How often a texture repeats over one metre of surface.
     float texels_per_metre = 1.0f;
@@ -56,14 +62,14 @@ namespace neon
   {
     type.Named("Geometry", "A shape the engine builds in place of a model");
 
-    type.Choice("shape", &Geometry::shape, {"box", "plane", "ramp", "prism", "sphere", "cylinder", "quad"})
+    type.Choice("shape", &Geometry::shape, {"box", "plane", "ramp", "prism", "sphere", "cylinder", "quad", "tube"})
         .Describe("What is built. Which of the other values count depends on it");
 
     type.Field("size", &Geometry::size)
         .Unit("m")
         .Describe(
           "A box, a ramp, a sphere, or a cylinder in x, y, and z; a plane in x and z; a quad in x and y; the height "
-          "of a prism in y");
+          "of a prism in y; the thickness of a tube in x");
 
     type.Field("segments", &Geometry::segments)
         .AtLeast(1)
@@ -72,12 +78,18 @@ namespace neon
 
     type.Field("sides", &Geometry::sides)
         .AtLeast(3)
-        .OnlyWhen("shape", {"sphere", "cylinder"})
-        .Describe("How many faces go round a sphere or a cylinder");
+        .OnlyWhen("shape", {"sphere", "cylinder", "tube"})
+        .Describe("How many faces go round a sphere, a cylinder, or a tube");
 
     type.Field("outline", &Geometry::outline)
         .OnlyWhen("shape", {"prism"})
         .Describe("Pairs of x and z on the ground, going round either way, at least three");
+
+    type.Field("points", &Geometry::points)
+        .OnlyWhen("shape", {"tube"})
+        .Describe(
+          "The control points of the curve a tube follows, as triples of x, y, and z: four for the first piece of "
+          "the curve, three for every further one");
 
     type.Field("texels_per_metre", &Geometry::texels_per_metre)
         .Above(0)
@@ -95,6 +107,15 @@ namespace neon
       if (geometry.shape != GeometryShape::Prism) { return {}; }
       if (geometry.outline.size() >= 6 && geometry.outline.size() % 2 == 0) { return {}; }
       return "'outline' of " + where + " needs at least three points, as pairs of x and z";
+    });
+
+    type.Rule("points", [](const Geometry &geometry, const std::string &where) -> std::string
+    {
+      if (geometry.shape != GeometryShape::Tube) { return {}; }
+
+      const std::size_t count = geometry.points.size() / 3;
+      if (geometry.points.size() % 3 == 0 && count >= 4 && (count - 1) % 3 == 0) { return {}; }
+      return "'points' of " + where + " needs 4, 7, 10, or 3 more points, as triples of x, y, and z";
     });
   }
 } // neon

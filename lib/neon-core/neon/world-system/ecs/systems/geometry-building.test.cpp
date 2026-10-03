@@ -1,5 +1,6 @@
 #include "geometry-building.hpp"
 
+#include <algorithm>
 #include <cmath>
 
 #include <gmock/gmock.h>
@@ -106,6 +107,43 @@ namespace
       GeometryBuilding::Build(Geometry{.shape = GeometryShape::Cylinder, .sides = 8}).TriangleCount(),
       8u * 2u + 6u + 6u);
     EXPECT_EQ(GeometryBuilding::Build(Geometry{.shape = GeometryShape::Quad}).TriangleCount(), 2u);
+  }
+
+  TEST_F(GeometryBuildingTest, ATubeFollowsTheCurveOfItsPoints)
+  {
+    // a quarter turn from along x to along y, 0.2 thick
+    const Geometry bend{
+      .shape = GeometryShape::Tube,
+      .size = glm::vec3(0.2f),
+      .sides = 8,
+      .points = {0, 0, 0, 1, 0, 0, 2, 1, 0, 2, 2, 0},
+      .smooth = true};
+    const auto pipe = GeometryBuilding::Build(bend);
+
+    ASSERT_FALSE(pipe.IsEmpty());
+
+    // it reaches both ends of the curve, and is nowhere thicker than it says
+    float least_x = 1e9f;
+    float most_y = -1e9f;
+    float most_z = 0.0f;
+    for (const auto &vertex : pipe.vertices)
+    {
+      least_x = std::min(least_x, vertex.position.x);
+      most_y = std::max(most_y, vertex.position.y);
+      most_z = std::max(most_z, std::fabs(vertex.position.z));
+    }
+    EXPECT_NEAR(least_x, 0.0f, 0.01f);
+    EXPECT_NEAR(most_y, 2.0f, 0.01f);
+    EXPECT_NEAR(most_z, 0.1f, 1e-4f);
+
+    // without `smooth` every face has its own corners
+    Geometry faceted = bend;
+    faceted.smooth = false;
+    EXPECT_GT(GeometryBuilding::Build(faceted).vertices.size(), pipe.vertices.size());
+    EXPECT_EQ(GeometryBuilding::Build(faceted).TriangleCount(), pipe.TriangleCount());
+
+    // too few points for a piece of a curve build nothing
+    EXPECT_TRUE(GeometryBuilding::Build(Geometry{.shape = GeometryShape::Tube, .points = {0, 0, 0, 1, 0, 0}}).IsEmpty());
   }
 
   TEST_F(GeometryBuildingTest, ASmoothSphereIsRoundAndASmoothCylinderKeepsItsCaps)

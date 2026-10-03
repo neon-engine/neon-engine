@@ -36,6 +36,6 @@ root:
       font_size: 36
       color: "#ffffffc8"
     - type: label
-      text: "a cylinder, or a quad. No model files."
+      text: "a cylinder, a quad, or a tube. No models."
       font_size: 36
       color: "#ffffffc8"

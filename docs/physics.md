@@ -194,12 +194,14 @@ runtime does. A character that the input drives is the [player](#the-player).
 
 | Name | Holds | Default | Belongs to |
 |---|---|---|---|
-| `type` | `fixed`, `hinge`, `slider`, or `point`, see [joints](#joints) | `fixed` | |
+| `type` | `fixed`, `hinge`, `slider`, `point`, or `rope`, see [joints](#joints) | `fixed` | |
 | `other` | The path of the entity the body is joined to, from the top, such as `house/frame`. Empty for the world itself, which holds the body where it is | Empty | Every type |
 | `anchor` | `[x, y, z]`, where the joint sits on the entity. Sized by the `scale` of the `Transform`, as the `offset` of a `Collider` is, so `[-0.5, 0, 0]` is the left edge of a scaled cube | `[0, 0, 0]` | Every type |
 | `axis` | `[x, y, z]` on the entity: what a hinge turns around, or a slider moves along. A direction, which the scale does not change | `[0, 1, 0]` | `hinge`, `slider` |
+| `other_anchor` | `[x, y, z]`, where a rope is held at its other end: on the other entity, sized by its `scale`, or a place in the world when `other` is empty. `anchor` is its end on this entity | `[0, 0, 0]` | `rope` |
+| `length` | How long a rope is, in metres: its two ends come no further apart, and are free while they are nearer. `0` for as far as they are apart when the joint is made, a rope that starts taut | `0` | `rope` |
 | `limits` | `[least, most]`, how far the body may go from where it is when the joint is made: degrees around the axis for a hinge, from -180 to 180, or units along it for a slider. The least is 0 or below, the most 0 or above. `[]` for no limit | `[]` | `hinge`, `slider` |
-| `collide_with_other` | Whether the body collides with the other body. `false` keeps the two apart, so a door can hang at its frame | `false` for `fixed` and `hinge`, `true` for `slider` and `point` | Every type |
+| `collide_with_other` | Whether the body collides with the other body. `false` keeps the two apart, so a door can hang at its frame | `false` for `fixed` and `hinge`, `true` for `slider`, `point`, and `rope` | Every type |
 | `motor_velocity` | How fast a motor drives the joint: degrees per second around the axis for a hinge, units per second along it for a slider. Against the limits, the motor pushes and the limit holds. `0` with a strength holds the joint where it is, as a brake does | `0` | `hinge`, `slider` |
 | `motor_strength` | The most the motor puts in: newton metres of torque for a hinge, newtons of force for a slider. `0` is no motor. What pushes harder than the strength wins | `0` | `hinge`, `slider` |
 | `spring` | A spring that pulls the joint back to where it was made, with `stiffness` and `damping`. The stiffness is the torque in newton metres for every radian a hinge is turned, or the force in newtons for every unit a slider is moved. The damping is the torque or the force against every radian or unit per second of its speed. A stiffness of `0` is no spring. A joint has a motor or a spring, not both | `{stiffness: 0, damping: 0}` | `hinge`, `slider` |
@@ -467,12 +469,61 @@ was replaced. Removing the `Joint` component takes it apart.
 | `hinge` | The two at the anchor, turning around the axis | The turn around the axis, within `limits` | `anchor`, `axis` | HingeJoint3D |
 | `slider` | The two along the axis | Moving along the axis, within `limits` | `anchor`, `axis` | SliderJoint3D |
 | `point` | The two at the anchor | Every turn around the anchor | `anchor` | PinJoint3D |
+| `rope` | A point on each within a length of the other | Everything, while the two points are nearer than the length | `anchor`, `other_anchor`, `length` | None; a PinJoint3D holds at a fixed distance |
 
 The anchor and the axis are on the entity, and are turned and moved with the
 entity to where it is when the joint is made. A door that hangs on its left
 edge has its anchor at `[-0.5, 0, 0]`, whatever way the door faces. The
 limits count from there: a hinge with `limits: [-100, 100]` turns 100 degrees
 either way from where the door hung.
+
+### Ropes
+
+A joint of type `rope` holds two points, one on each body or one in the
+world, within `length` of each other. While they are nearer, the rope is
+slack and holds nothing: a ball on a rope falls freely until the rope is
+taut, swings on it as a pendulum does, and is free again when it is lifted.
+In Jolt it is a distance constraint from nothing up to the length.
+
+The joint is not seen. A `Rope` component on an entity of its own, with a
+`Renderable` for its shader and material, draws it:
+
+```yaml
+- name: lamp
+  components:
+    Transform:
+      position: [0, 2, 0]
+    RigidBody: Default
+    Collider:
+      shape: sphere
+      radius: 0.3
+    Joint:
+      type: rope
+      anchor: [0, 0.3, 0]
+      other_anchor: [0, 4, 0]
+      length: 2.5
+
+- name: lamp-rope
+  components:
+    Transform: Default
+    Rope:
+      joint: lamp
+    Renderable:
+      shader: assets://shaders/pbr
+```
+
+`RopeDrawing` finds the two ends where their entities are drawn in the
+frame, between the last two steps, lays the curve a rope of that length
+[hangs as](curves.md#a-rope-that-hangs) between them, and writes it as a
+[tube](geometry.md#tube) into the mesh of the `Renderable`, over the mesh
+of the frame before. A rope whose ends did not move is not written again.
+A `Rope` with `from`, `to`, and a `length` of its own in place of `joint`
+hangs between two places with nothing held: a cable between two poles.
+
+What a rope does not do: it collides with nothing and lies over no edge,
+and it has no swing of its own, since it is the shape of rest between its
+ends in every frame. A rope that is simulated is an open question of
+[curves.md](curves.md#open-questions).
 
 ### Bodies that are joined
 
@@ -968,9 +1019,9 @@ Jolt Physics is a submodule in `external/jolt-physics`. Its options are set in
 | A character | Stays upright. Its shape is not turned with its entity |
 | The shapes of a body | Follow its `Collider` components. The `Transform` of an entity below the body, and the `scale` of the body, are read when it is created |
 | The shape of a character | Is read when it is created. A `Collider` that changes is said once, and changes nothing |
-| Joints | `fixed`, `hinge`, `slider`, and `point`, with limits, a motor, and a spring on a hinge and a slider, and joined bodies kept apart. Not there: a cone or a swing-twist joint, a distance joint, a joint that breaks under a force, a motor that drives to an angle or a position, and a spring whose rest is somewhere else than where the joint was made |
+| Joints | `fixed`, `hinge`, `slider`, `point`, and `rope`, with limits, a motor, and a spring on a hinge and a slider, and joined bodies kept apart. Not there: a cone or a swing-twist joint, a distance joint that holds two bodies apart, a joint that breaks under a force, a motor that drives to an angle or a position, and a spring whose rest is somewhere else than where the joint was made |
 | A joint | Has a motor or a spring, not both. A motor and a spring of a joint are read when it is made, as the limits are, and do not follow the component after that |
-| The state of a joint | Is read for a hinge and a slider. A fixed joint and a point joint read as zeros |
+| The state of a joint | Is read for a hinge and a slider. A fixed joint, a point joint, and a rope read as zeros |
 | A hinge | Turns at most 180 degrees either way from where it was made, which is what Jolt holds |
 | Locking an axis | On a dynamic body, along and around the axes of the world. Not around an axis that turns with the body |
 | Height fields, soft bodies, vehicles | Jolt has them. The interface does not |

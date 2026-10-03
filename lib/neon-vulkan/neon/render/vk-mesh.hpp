@@ -18,6 +18,9 @@ namespace neon
 
     bool Upload(const void *data, VkDeviceSize size, VkBufferUsageFlags usage, VkBuffer &buffer, VkDeviceMemory &memory) const;
 
+    /// Copies `size` bytes over what `memory` holds.
+    bool Overwrite(const void *data, VkDeviceSize size, VkDeviceMemory memory) const;
+
   public:
     VK_Mesh(
       const std::vector<Vertex> &vertices,
@@ -35,6 +38,13 @@ namespace neon
     /// told which object each is by gl_InstanceIndex, counted from
     /// `first_instance`. The shadow pass records apart from the frame.
     void Draw(VkCommandBuffer commands, uint32_t instances = 1, uint32_t first_instance = 0) const;
+
+    /// Draws these vertices and indices from now on. As many of both as
+    /// before are written over the old ones, which is what a mesh that
+    /// moves every frame costs; any other number makes the buffers anew.
+    /// Called between frames, when nothing is being drawn. Returns false
+    /// when the buffers could not be made, and the mesh is then not drawn.
+    bool Rewrite(const std::vector<Vertex> &vertices, const std::vector<unsigned int> &indices);
 
     void CleanUp() override;
   };

@@ -500,6 +500,48 @@ namespace
     _system.Update(_store, 0.016);
   }
 
+  TEST_F(RenderSubmissionTest, HandsAMeshThatWasChangedToTheRendererAgain)
+  {
+    const auto mesh = std::make_shared<neon::MeshData>();
+    mesh->vertices.resize(3);
+    mesh->indices = {0, 1, 2};
+
+    Renderable built;
+    built.render_info.mesh = mesh;
+    const Entity rope = Create(Placed(0.0f, 0.0f, 0.0f), built);
+
+    EXPECT_CALL(_pipeline, CreateRenderObject(_)).WillOnce(Return(4));
+    EXPECT_CALL(_pipeline, EnqueueForRendering(4, _)).Times(4);
+
+    // drawn as it was made, and as long as nothing counts its version up
+    _system.Update(_store, 0.016);
+    _system.Update(_store, 0.016);
+
+    // changed: handed over once, before it is drawn, and not again after
+    mesh->vertices[1].position = {1.0f, 2.0f, 3.0f};
+    _store.Get<Renderable>(rope)->render_info.mesh_version++;
+    EXPECT_CALL(
+      _pipeline,
+      UpdateRenderObjectMesh(4, Field("vertices", &neon::MeshData::vertices, ::testing::SizeIs(3)))).Times(1);
+
+    _system.Update(_store, 0.016);
+    _system.Update(_store, 0.016);
+  }
+
+  TEST_F(RenderSubmissionTest, DoesNotHandOverAMeshAgainThatChangedBeforeItWasFirstDrawn)
+  {
+    Renderable built;
+    built.render_info.mesh = std::make_shared<neon::MeshData>();
+    built.render_info.mesh_version = 3;
+    Create(Placed(0.0f, 0.0f, 0.0f), built);
+
+    // the renderer is created with the mesh as it is by then
+    EXPECT_CALL(_pipeline, CreateRenderObject(_)).WillOnce(Return(4));
+    EXPECT_CALL(_pipeline, EnqueueForRendering(4, _));
+
+    _system.Update(_store, 0.016);
+  }
+
   TEST_F(RenderSubmissionTest, StopsDrawingAnEntityThatIsNoLongerVisible)
   {
     const Entity cube = Create(Placed(1.0f, 0.0f, 0.0f), Model("assets://models/cube.obj"));

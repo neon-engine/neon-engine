@@ -52,6 +52,12 @@ namespace neon
 
     virtual void DestroyRenderObject(int render_object_id) = 0;
 
+    /// Draws a render object that was created from a mesh with `mesh` from
+    /// now on, since what built the mesh changed it. A render object from
+    /// a model file is left as it is. A renderer that cannot change a mesh
+    /// keeps drawing the first.
+    virtual void UpdateRenderObjectMesh(int render_object_id, const MeshData &mesh) {}
+
     virtual const RenderResolution& GetRenderResolution() = 0;
 
     // What follows can be left as it is by a renderer, which then draws

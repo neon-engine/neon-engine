@@ -32,6 +32,14 @@ namespace neon
     /// Where the joint sits.
     glm::vec3 anchor{0.0f};
 
+    /// Of a rope, where it is held on `other`, or in the world; `anchor` is
+    /// its end on `body`.
+    glm::vec3 other_anchor{0.0f};
+
+    /// Of a rope, how far its two ends may be apart. 0 or below for as far
+    /// as they are when the joint is made.
+    float length = 0.0f;
+
     /// Of a hinge, what it turns around. Of a slider, what it moves along.
     glm::vec3 axis{0.0f, 1.0f, 0.0f};
 

@@ -14,6 +14,10 @@ namespace neon
     /// What the renderer knows the entity as. Filled in by the engine the
     /// first time the entity is drawn. -1 until then.
     int render_object_id = -1;
+
+    /// The `mesh_version` of the mesh the renderer has. Filled in by the
+    /// engine.
+    unsigned int mesh_version_drawn = 0;
   };
 
   /// What the renderer knows the entity as is not described. It belongs to
