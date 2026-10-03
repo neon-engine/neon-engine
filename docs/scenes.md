@@ -125,7 +125,12 @@ from the farthest to the nearest.
 what the `Renderable` leaves out: the textures of the model are shown when
 `textures` is not written, the base colour factor of a glTF material is
 multiplied into `color`, and a colour painted on the vertices of the model
-is multiplied in as well. A model is drawn at its own size, as the file says:
+is multiplied in as well. A model whose meshes use different materials is
+drawn with each of them, and the `Renderable` is the override of the whole:
+`color`, the shader, and what else `material` holds apply to every
+material of the file, and `textures` replace those of the first material
+alone, see [several materials](models.md#several-materials). A model is
+drawn at its own size, as the file says:
 a piece of a kit is in metres and stands on its origin. A model that is not
 in metres is drawn with `fit: unit`, scaled so that its longest side is 1,
 and `scale` then gives it a size; the `.obj` models of the demo scenes are

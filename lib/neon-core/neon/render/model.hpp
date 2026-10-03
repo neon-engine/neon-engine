@@ -23,12 +23,13 @@ namespace neon
 
     bool ProcessNode(aiNode *root, const aiScene *scene);
 
-    /// Reads the materials of a scene into `_materials`, and says once
-    /// what of them the renderer does not show.
+    /// Reads the materials of a scene into `_materials`.
     void LoadMaterials(const aiScene *scene);
 
-    // the material of the first mesh, which the model is drawn with
-    int _drawn_material = -1;
+    // the material of every mesh, in the order the meshes were handed to
+    // the backend, and the materials they use, in the order of first use
+    std::vector<int> _mesh_materials;
+    std::vector<int> _used_materials;
 
   protected:
     /// The matrix the fit gives the model, see GetNormalizedModelMatrix().
@@ -104,9 +105,20 @@ namespace neon
     /// Empty until the model is loaded.
     [[nodiscard]] const std::vector<ModelMaterial> &GetMaterials() const { return _materials; }
 
-    /// The material the model is drawn with, which is that of its first
-    /// mesh. Nothing until the model is loaded, or when it has no mesh.
-    [[nodiscard]] const ModelMaterial *GetDrawnMaterial() const;
+    /// The materials the meshes use, as indices into GetMaterials(), each
+    /// once, in the order a mesh first uses them. A renderer draws the
+    /// model with one material of its own for each. Empty until the model
+    /// is loaded, or when it has no mesh.
+    [[nodiscard]] const std::vector<int> &GetUsedMaterials() const { return _used_materials; }
+
+    /// The material of the mesh that was handed to the backend at `mesh`,
+    /// as an index into GetMaterials(), or -1 for a mesh that was built.
+    [[nodiscard]] int GetMaterialOfMesh(std::size_t mesh) const;
+
+    /// The material of the first mesh, which is the one a scene's own
+    /// textures replace. Nothing until the model is loaded, or when it has
+    /// no mesh.
+    [[nodiscard]] const ModelMaterial *GetFirstMaterial() const;
 
     /// The virtual path of the folder a model is in, with its slash, so that
     /// a file the model names is found next to it.

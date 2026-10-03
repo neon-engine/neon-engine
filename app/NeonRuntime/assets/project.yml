@@ -31,6 +31,7 @@ scenes:
   - assets://scenes/scripting-demo.scene.yml
   - assets://scenes/spawn-test.scene.yml
   - assets://scenes/vertex-colours-test.scene.yml
+  - assets://scenes/materials-test.scene.yml
 
 entry_scene: assets://scenes/demo.scene.yml
 

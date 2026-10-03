@@ -155,15 +155,23 @@ namespace neon
       _logger->Info("Model {} has cameras or lights, which are left out", _path);
     }
 
-    _drawn_material = -1;
+    _mesh_materials.clear();
+    _used_materials.clear();
     LoadMaterials(scene);
     return ProcessNode(scene->mRootNode, scene);
   }
 
-  const ModelMaterial *Model::GetDrawnMaterial() const
+  int Model::GetMaterialOfMesh(const std::size_t mesh) const
   {
-    if (_drawn_material < 0 || static_cast<size_t>(_drawn_material) >= _materials.size()) { return nullptr; }
-    return &_materials[_drawn_material];
+    return mesh < _mesh_materials.size() ? _mesh_materials[mesh] : -1;
+  }
+
+  const ModelMaterial *Model::GetFirstMaterial() const
+  {
+    if (_used_materials.empty()) { return nullptr; }
+    const int first = _used_materials.front();
+    if (first < 0 || static_cast<size_t>(first) >= _materials.size()) { return nullptr; }
+    return &_materials[first];
   }
 
   std::string Model::FolderOf(const std::string &model_path)
@@ -198,17 +206,6 @@ namespace neon
       }
 
       _materials.push_back(loaded);
-    }
-
-    // the renderer draws a model with one material, see docs/models.md
-    bool several_used = false;
-    for (unsigned int i = 0; i < scene->mNumMeshes; i++)
-    {
-      several_used = several_used || scene->mMeshes[i]->mMaterialIndex != scene->mMeshes[0]->mMaterialIndex;
-    }
-    if (several_used)
-    {
-      _logger->Info("Model {} uses several materials, it is drawn with the first", _path);
     }
   }
 
@@ -291,7 +288,16 @@ namespace neon
       // Process all meshes in this node
       for (unsigned int i = 0; i < node->mNumMeshes; i++) {
         aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
-        if (_drawn_material < 0) { _drawn_material = static_cast<int>(mesh->mMaterialIndex); }
+
+        // which material the mesh uses, so that a renderer draws it with
+        // that one, see docs/models.md
+        const auto material = static_cast<int>(mesh->mMaterialIndex);
+        _mesh_materials.push_back(material);
+        if (std::find(_used_materials.begin(), _used_materials.end(), material) == _used_materials.end())
+        {
+          _used_materials.push_back(material);
+        }
+
         if (!ProcessMesh(mesh, scene, placed)) {
           return false;
         }

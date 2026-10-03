@@ -20,6 +20,10 @@ namespace neon
     // shaders read by gl_InstanceIndex
     uint32_t object_index = 0;
     int model_id = -1;
+
+    // the material of the model whose meshes are drawn, every mesh when
+    // below 0
+    int material = -1;
     float distance = 0.0f;
   };
 

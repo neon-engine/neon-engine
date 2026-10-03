@@ -25,7 +25,7 @@ plan.
 | The file | `Model::LoadModel()` hands assimp an `IOSystem` that opens every file through `FileSystemContext::ReadBytes`: the model, and anything it names, such as the `.mtl` of an `.obj`. No native path leaves the file system |
 | The scene | assimp triangulates every face and flips the texture coordinates, so that `0, 0` is the top left of an image, as the textures are uploaded. The glTF importer of assimp flips them the other way first, so a GLB ends up the same way round as an `.obj` |
 | The materials | Each material of the file becomes a `ModelMaterial`: its diffuse and specular textures, and its base colour factor. See [materials](#what-of-a-material-is-read) |
-| The nodes | The tree of nodes is walked from the root, with the transform of every node under those above it. Each mesh of a node is handed to the backend with that transform, which bakes it into the vertices: the renderer draws a model as one piece and has no nodes of its own |
+| The nodes | The tree of nodes is walked from the root, with the transform of every node under those above it. Each mesh of a node is handed to the backend with that transform, which bakes it into the vertices: the renderer draws a model as one piece and has no nodes of its own. The model notes which material each mesh uses, see [several materials](#several-materials) |
 | The meshes | `Model::ReadVertices()` makes a `Vertex` of every position, normal, texture coordinate, and vertex colour of a mesh, white where the mesh has no colours. A backend makes a mesh of its own from them and the indices: the Vulkan backend uploads them, the physics keeps the positions for a `mesh` or `convex_hull` collider |
 | The size | A model is drawn at its own size and around its own origin, as the file says, unless the `Renderable` asks for a `fit` of `unit`, which moves it to the origin and scales it so that its longest side is 1. See [the size of a model](#the-size-of-a-model) |
 
@@ -108,7 +108,8 @@ those and not the model's. Its `material.color` is multiplied with the
 model's factor, so white, the default, shows the model as the file means it.
 Its `material.double_sided` is `model` unless written, which takes the
 file's. What else a `Renderable` says, `shininess` and `alpha_mode`, comes
-from the scene only.
+from the scene only. A model with several materials takes the scene's word
+on every one of them, see [several materials](#several-materials).
 
 ## doubleSided
 
@@ -131,11 +132,40 @@ before, and the editor's conversion (#98) is the place to clear the flag
 for a whole kit. `tests/runtime-vertex-colours` draws a model the file marks
 double-sided from behind, with and without the scene's `never`.
 
+## Several materials
 
-A model with several materials is drawn with the material of its first mesh.
-The renderer binds one material per entity, and a model is one entity. The
-log says so, once per model, at the level of information. The kit pieces
-used so far have one material each.
+**Decision (#193):** a model whose meshes use different materials is drawn
+with each of them, by the renderer, inside one render object. The other
+way, splitting such a model into one model per material when the editor
+prepares it (#98), waits for an editor, and a character or a vehicle with
+a material for its skin and one for its clothes is drawn whole until then.
+Kenney's kits are one material per file, so the prototype is not touched.
+
+The loader keeps, for every mesh in the order the backend gets them, the
+index of the material the mesh uses, and the list of the materials any mesh
+uses, each once, in the order of first use: `Model::GetMaterialOfMesh()`
+and `Model::GetUsedMaterials()`. A renderer makes one material of its own
+for each of the used materials, and draws the meshes of each with it, in
+that order; a model with one material is one draw, as it always was. The
+Vulkan renderer does this with a descriptor set and an entry of object data
+per material, see [the render object's materials](vulkan-renderer.md#what-is-shared).
+
+The `Renderable` of the scene stays the override of the whole model:
+
+| In the `Renderable` | Applies to |
+|---|---|
+| `material.color` | Every material: it multiplies the base colour factor of each |
+| `textures` | The first material alone, whose own textures it replaces. The others keep what the file names. The first material is that of the first mesh, which is the only one a model with one material has |
+| `shader`, `scale_textures`, `use_textures`, `shininess`, `metallic`, `roughness`, `alpha_mode` | Every material |
+| `material.double_sided` | Every material when `always` or `never`. `model` takes the `doubleSided` of each material of the file for its own meshes |
+
+`tests/runtime-materials` draws a model of two boxes, a red and a blue one
+with a material each, and reads both colours as they are, lit, and
+multiplied by a colour of the scene. The model, `coloured-boxes.glb`, is
+written by `tools/make-coloured-boxes.py`. A material per mesh in the file
+of the scene, so that one mesh of a model can be given another texture
+without touching the file, is not planned: that is what the editor's
+conversion (#98) is for.
 
 ## What of a GLB is not used
 
@@ -173,9 +203,6 @@ stretched by a `Transform` keeps its colours.
   image file next to the model too, whether the source embedded it or carried
   raw pixels, so that a texture is a file of its own that is shared, replaced,
   and compressed by the exporter.
-- **Several materials.** A model whose meshes have different textures or
-  colours needs one material per mesh in the renderer, or to be split into
-  one model per material by the editor (#98).
 - **The colour and the texture.** `basic-lit` shows either the colour or the
   texture of a material, by `use_textures`. glTF multiplies the two. A tinted
   texture, a red and a blue of the same piece, waits for #59.

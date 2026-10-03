@@ -150,7 +150,7 @@ namespace neon
       vkCmdBindDescriptorSets(
         _commands, VK_PIPELINE_BIND_POINT_GRAPHICS, _shared->pipeline_layout, 0, 1, &draw.set, 1, &draw.scene_offset);
 
-      models[draw.model_id].Draw(_commands, 1, draw.object_index);
+      models[draw.model_id].Draw(_commands, 1, draw.object_index, draw.material);
     }
 
     _see_through.clear();

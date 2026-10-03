@@ -790,13 +790,73 @@ namespace neon
     if (model_id < 0) { return -1; }
     const VK_Model &model = _models[model_id];
 
+    // One material for each material of the file that a mesh uses, so that
+    // every mesh is drawn with its own, see docs/models.md. A mesh that
+    // was built, and a file without a mesh, get one that takes nothing
+    // from a file. Each is shared with the render objects that draw with
+    // the same one already.
+    std::vector<int> model_materials = model.GetUsedMaterials();
+    if (model_materials.empty()) { model_materials.push_back(-1); }
+
+    RenderObjectRef object{.model_id = model_id};
+    const auto give_back = [this, &object, model_id]
+    {
+      for (const int held : object.material_ids) { ReleaseObjectMaterial(held); }
+      _models.Release(model_id);
+    };
+
+    for (const int model_material : model_materials)
+    {
+      const int material_id = AcquireObjectMaterial(render_info, model, model_material, object.material_ids.empty());
+      if (material_id < 0)
+      {
+        give_back();
+        return -1;
+      }
+      object.material_ids.push_back(material_id);
+    }
+
+    const auto render_id = _render_object_buffer.Add(object);
+    if (render_id < 0)
+    {
+      const std::size_t most = _settings_config.max_render_objects;
+      _logger->Error("There is no room for another render object: rendering.max_render_objects of the settings is {}", most);
+      give_back();
+      return -1;
+    }
+
+    // the logger takes what it is given by reference
+    const std::string from = render_info.mesh != nullptr ? "a mesh that was built" : render_info.model_path;
+    std::string material_ids;
+    for (const int material_id : object.material_ids)
+    {
+      material_ids += (material_ids.empty() ? "" : ", ") + std::to_string(material_id);
+    }
+    _logger->Debug(
+      "Created render object {} from {} with model id {} and material ids {}", render_id, from, model_id, material_ids);
+
+    _objects_created++;
+    return render_id;
+  }
+
+  int VK_RenderSystem::AcquireObjectMaterial(
+    const RenderInfo &render_info,
+    const VK_Model &model,
+    const int material,
+    const bool first)
+  {
+    const auto &file_materials = model.GetMaterials();
+    const ModelMaterial *model_material =
+      material >= 0 && static_cast<std::size_t>(material) < file_materials.size()
+        ? &file_materials[static_cast<std::size_t>(material)]
+        : nullptr;
+
     // What the model file says about its look fills in what the scene does
     // not: its colour factor multiplies the colour of the material, its
     // textures are shown when the scene names none, and its doubleSided
-    // holds unless the scene says always or never. A model with several
-    // materials is drawn with its first, see docs/models.md.
+    // holds unless the scene says always or never. The textures the scene
+    // names replace those of the first material of the model alone.
     MaterialInfo material_info = render_info.material_info;
-    const ModelMaterial *model_material = model.GetDrawnMaterial();
     if (material_info.double_sided == DoubleSided::Model)
     {
       const bool from_file = model_material != nullptr && model_material->double_sided;
@@ -812,44 +872,33 @@ namespace neon
         material_info.color.a * factor.a};
     }
 
+    // What the material is made from, which is what tells two apart: the
+    // scene's part, without its textures for a material that is not the
+    // first, and which material of the file it is.
+    RenderInfo made_from = render_info;
+    if (!first) { made_from.texture_paths.clear(); }
+    const std::string key = VK_MaterialCache::KeyOf(made_from, material_info) + "|material " + std::to_string(material);
+
     // the same material as a render object that has one already, shared
-    const std::string key = VK_MaterialCache::KeyOf(render_info, material_info);
     if (const int shared = _materials.Find(key); shared >= 0)
     {
-      const auto shared_id = _render_object_buffer.Add(RenderObjectRef{.model_id = model_id, .material_id = shared});
-      if (shared_id < 0)
-      {
-        const std::size_t most = _settings_config.max_render_objects;
-        _logger->Error("There is no room for another render object: rendering.max_render_objects of the settings is {}", most);
-        VK_Material freed;
-        if (_materials.Release(shared, freed)) { freed.CleanUp(); }
-        _models.Release(model_id);
-        return -1;
-      }
       const int holders = _materials.CountOf(shared);
       _logger->Debug("Material {} is shared, {} render objects draw with it now", shared, holders);
-      _logger->Debug(
-        "Created render object {} from {} with model id {} and material id {}",
-        shared_id,
-        render_info.mesh != nullptr ? "a mesh that was built" : render_info.model_path,
-        model_id,
-        shared);
-      _objects_created++;
-      return shared_id;
+      return shared;
     }
 
-    VK_Material material(
+    VK_Material made(
       render_info.shader_path,
-      render_info.texture_paths,
+      made_from.texture_paths,
       material_info,
       render_info.scale_textures,
       _file_system_context,
       &_device,
       _logger);
-    material.SetTextureCache(&_textures);
-    if (model_material != nullptr) { material.SetModelTextures(model_material->textures, render_info.model_path); }
+    made.SetTextureCache(&_textures);
+    if (model_material != nullptr) { made.SetModelTextures(model_material->textures, render_info.model_path); }
 
-    material.SetSurfaceLookup([this](const std::string &name, VK_Texture &texture)
+    made.SetSurfaceLookup([this](const std::string &name, VK_Texture &texture)
     {
       return FindSurface(name, texture);
     });
@@ -857,42 +906,43 @@ namespace neon
     // The pipeline for a mirrored object, which turns its triangles round,
     // is left until one is drawn: most materials never have one.
     VkPipeline pipeline = VK_NULL_HANDLE;
-    if (!material.Initialize() ||
+    if (!made.Initialize() ||
         !_pipelines.Get(
-          render_info.shader_path, material_info.alpha_mode, material.IsDoubleSided(), false, pipeline) ||
-        !CreateDescriptorSet(material))
+          render_info.shader_path, material_info.alpha_mode, made.IsDoubleSided(), false, pipeline) ||
+        !CreateDescriptorSet(made))
     {
       _logger->Error("Could not initialize material with shader {}", render_info.shader_path);
-      material.CleanUp();
-      _models.Release(model_id);
+      made.CleanUp();
       return -1;
     }
-    material.SetPipeline(pipeline);
+    made.SetPipeline(pipeline);
 
-    const auto material_id = _materials.Keep(key, material);
+    const int material_id = _materials.Keep(key, made);
     if (material_id < 0)
     {
       const std::size_t most = _settings_config.max_render_objects;
-        _logger->Error("There is no room for another render object: rendering.max_render_objects of the settings is {}", most);
-      material.CleanUp();
-      _models.Release(model_id);
-      return -1;
+      _logger->Error("There is no room for another material: rendering.max_render_objects of the settings is {}", most);
+      if (const VkDescriptorSet set = made.DescriptorSet(); set != VK_NULL_HANDLE)
+      {
+        vkFreeDescriptorSets(_device.Device(), made.DescriptorPool(), 1, &set);
+      }
+      made.CleanUp();
     }
+    return material_id;
+  }
 
-    const auto render_id = _render_object_buffer.Add(RenderObjectRef{
-      .model_id = model_id,
-      .material_id = material_id
-    });
+  void VK_RenderSystem::ReleaseObjectMaterial(const int material_id)
+  {
+    // the material goes when the last render object that drew with it goes
+    VK_Material material;
+    if (!_materials.Release(material_id, material)) { return; }
 
-    _logger->Debug(
-      "Created render object {} from {} with model id {} and material id {}",
-      render_id,
-      render_info.mesh != nullptr ? "a mesh that was built" : render_info.model_path,
-      model_id,
-      material_id);
-
-    _objects_created++;
-    return render_id;
+    if (const VkDescriptorSet set = material.DescriptorSet(); set != VK_NULL_HANDLE)
+    {
+      vkFreeDescriptorSets(_device.Device(), material.DescriptorPool(), 1, &set);
+    }
+    material.CleanUp();
+    _logger->Debug("Material {} was freed, nothing draws with it any more", material_id);
   }
 
   void VK_RenderSystem::ReportCreated()
@@ -1061,15 +1111,19 @@ namespace neon
   {
     if (!_frame_open) { return; }
 
-    const auto [model_id, material_id] = _render_object_buffer[render_object_id];
+    const RenderObjectRef &object = _render_object_buffer[render_object_id];
+    const int model_id = object.model_id;
     const auto &model = _models[model_id];
-    auto &material = _materials[material_id];
 
     // What is drawn into a render target cannot show that target, since
     // an image is not read while it is written. It is left out there.
-    if (_current_target != No_Render_Target && material.Shows(_targets[_current_target].target.Name()))
+    if (_current_target != No_Render_Target)
     {
-      return;
+      const std::string &target = _targets[_current_target].target.Name();
+      for (const int material_id : object.material_ids)
+      {
+        if (_materials[material_id].Shows(target)) { return; }
+      }
     }
 
     VK_Canvas &canvas = CurrentCanvas();
@@ -1105,7 +1159,7 @@ namespace neon
       _last_lights = lights;
     }
 
-    if (_object_buffer.used + _draws.Size() >= _object_buffer.capacity)
+    if (_object_buffer.used + _draws.Size() + object.material_ids.size() > _object_buffer.capacity)
     {
       if (!_warned_about_capacity)
       {
@@ -1123,47 +1177,62 @@ namespace neon
     // object of a variant is drawn, which pays for it; the pipeline is
     // shared by every material of the variant from then on.
     const bool mirrored = VK_Culling::IsMirrored(model_matrix);
-    VkPipeline pipeline = material.Pipeline(mirrored);
-    if (pipeline == VK_NULL_HANDLE)
+    const float distance = VK_DrawOrder::DistanceOf(view, glm::vec3(model_matrix[3]));
+
+    // one draw for each material of the object: the meshes of the model
+    // that use the material of the file it was made from
+    const auto &model_materials = model.GetUsedMaterials();
+    for (std::size_t i = 0; i < object.material_ids.size(); i++)
     {
-      if (!_pipelines.Get(material.ShaderPath(), material.GetAlphaMode(), material.IsDoubleSided(), true, pipeline))
+      const int material_id = object.material_ids[i];
+      auto &material = _materials[material_id];
+      const int model_material = i < model_materials.size() ? model_materials[i] : -1;
+
+      VkPipeline pipeline = material.Pipeline(mirrored);
+      if (pipeline == VK_NULL_HANDLE)
       {
-        return;
+        if (!_pipelines.Get(material.ShaderPath(), material.GetAlphaMode(), material.IsDoubleSided(), true, pipeline))
+        {
+          continue;
+        }
+        material.SetMirroredPipeline(pipeline);
       }
-      material.SetMirroredPipeline(pipeline);
-    }
 
-    // what is see-through casts no shadow for now, and is drawn when the
-    // scene is finished, over what is opaque, from the farthest to the
-    // nearest
-    const bool see_through = material.GetAlphaMode() == AlphaMode::Blend;
-    const bool casts = _last_scene.direction_light.shadow.x > 0.5f && !see_through;
+      // what is see-through casts no shadow for now, and is drawn when the
+      // scene is finished, over what is opaque, from the farthest to the
+      // nearest
+      const bool see_through = material.GetAlphaMode() == AlphaMode::Blend;
+      const bool casts = _last_scene.direction_light.shadow.x > 0.5f && !see_through;
 
-    VkPipeline shadow_pipeline = VK_NULL_HANDLE;
-    if (casts)
-    {
-      // the pipeline of the pass is made when the first object that casts
-      // is drawn with the material, culled as the material is
-      shadow_pipeline = material.ShadowPipeline(mirrored);
-      if (shadow_pipeline == VK_NULL_HANDLE && _pipelines.GetShadow(material.IsDoubleSided(), mirrored, shadow_pipeline))
+      VkPipeline shadow_pipeline = VK_NULL_HANDLE;
+      if (casts)
       {
-        material.SetShadowPipeline(mirrored, shadow_pipeline);
+        // the pipeline of the pass is made when the first object that casts
+        // is drawn with the material, culled as the material is
+        shadow_pipeline = material.ShadowPipeline(mirrored);
+        if (shadow_pipeline == VK_NULL_HANDLE &&
+            _pipelines.GetShadow(material.IsDoubleSided(), mirrored, shadow_pipeline))
+        {
+          material.SetShadowPipeline(mirrored, shadow_pipeline);
+        }
       }
-    }
 
-    // kept until the scene ends, see FlushDraws()
-    _draws.Add({
-      .pipeline = pipeline,
-      .shadow_pipeline = shadow_pipeline,
-      .set = material.DescriptorSet(),
-      .scene_offset = _last_scene_offset,
-      .model_id = model_id,
-      .material_id = material_id,
-      .distance = VK_DrawOrder::DistanceOf(view, glm::vec3(model_matrix[3])),
-      .see_through = see_through,
-      .casts_shadow = casts && shadow_pipeline != VK_NULL_HANDLE,
-      .data = material.GetObjectData(model_matrix, transform)
-    });
+      // kept until the scene ends, see FlushDraws()
+      _draws.Add({
+        .pipeline = pipeline,
+        .shadow_pipeline = shadow_pipeline,
+        .set = material.DescriptorSet(),
+        .scene_offset = _last_scene_offset,
+        .model_id = model_id,
+        .material_id = material_id,
+        .model_material = model_material,
+        .distance = distance,
+        .see_through = see_through,
+        .casts_shadow = casts && shadow_pipeline != VK_NULL_HANDLE,
+        .data = material.GetObjectData(model_matrix, transform)
+      });
+    }
+    _frame_objects++;
   }
 
   void VK_RenderSystem::FlushDraws(VK_Canvas &canvas)
@@ -1211,9 +1280,8 @@ namespace neon
       }
 
       const VK_Model &model = _models[batch.model_id];
-      model.Draw(commands, batch.instances, base + batch.first_instance);
-      _frame_draws += model.MeshCount();
-      _frame_objects += batch.instances;
+      model.Draw(commands, batch.instances, base + batch.first_instance, batch.model_material);
+      _frame_draws += model.MeshCount(batch.model_material);
       casts = casts || batch.casts_shadow;
     }
 
@@ -1251,8 +1319,8 @@ namespace neon
           }
 
           const VK_Model &model = _models[batch.model_id];
-          model.Draw(_shadow_commands, batch.instances, base + batch.first_instance);
-          _frame_draws += model.MeshCount();
+          model.Draw(_shadow_commands, batch.instances, base + batch.first_instance, batch.model_material);
+          _frame_draws += model.MeshCount(batch.model_material);
         }
         _shadow_map.End(_shadow_commands);
       }
@@ -1269,9 +1337,9 @@ namespace neon
         .scene_offset = draw.scene_offset,
         .object_index = base + static_cast<uint32_t>(i),
         .model_id = draw.model_id,
+        .material = draw.model_material,
         .distance = draw.distance
       });
-      _frame_objects++;
     }
 
     _draws.Clear();
@@ -1302,20 +1370,9 @@ namespace neon
     // nothing may still be drawing with what is about to be destroyed
     vkDeviceWaitIdle(_device.Device());
 
-    const auto [model_id, material_id] = _render_object_buffer.Remove(render_object_id);
-
-    // the material goes when the last render object that drew with it goes
-    VK_Material material;
-    if (_materials.Release(material_id, material))
-    {
-      if (const VkDescriptorSet set = material.DescriptorSet(); set != VK_NULL_HANDLE)
-      {
-        vkFreeDescriptorSets(_device.Device(), material.DescriptorPool(), 1, &set);
-      }
-      material.CleanUp();
-      _logger->Debug("Material {} was freed, nothing draws with it any more", material_id);
-    }
-    _models.Release(model_id);
+    const RenderObjectRef object = _render_object_buffer.Remove(render_object_id);
+    for (const int material_id : object.material_ids) { ReleaseObjectMaterial(material_id); }
+    _models.Release(object.model_id);
   }
 
   int VK_RenderSystem::CreateTexture(const int width, const int height, const std::vector<unsigned char> &pixels)

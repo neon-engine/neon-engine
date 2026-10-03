@@ -54,9 +54,29 @@ namespace neon
     for (const auto &mesh : _meshes) { mesh.Use(); }
   }
 
-  void VK_Model::Draw(const VkCommandBuffer commands, const uint32_t instances, const uint32_t first_instance) const
+  void VK_Model::Draw(
+    const VkCommandBuffer commands,
+    const uint32_t instances,
+    const uint32_t first_instance,
+    const int material) const
   {
-    for (const auto &mesh : _meshes) { mesh.Draw(commands, instances, first_instance); }
+    // the meshes stand in the order they were read, which is the order the
+    // model knows their materials in
+    for (std::size_t i = 0; i < _meshes.size(); i++)
+    {
+      if (material < 0 || GetMaterialOfMesh(i) == material) { _meshes[i].Draw(commands, instances, first_instance); }
+    }
+  }
+
+  std::size_t VK_Model::MeshCount(const int material) const
+  {
+    if (material < 0) { return _meshes.size(); }
+    std::size_t count = 0;
+    for (std::size_t i = 0; i < _meshes.size(); i++)
+    {
+      if (GetMaterialOfMesh(i) == material) { count++; }
+    }
+    return count;
   }
 
   void VK_Model::CleanUp()

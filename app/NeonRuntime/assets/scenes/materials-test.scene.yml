@@ -1,0 +1,67 @@
+# A scene for checking that a model whose meshes use different materials is
+# drawn with each of them, which tests read pixel by pixel:
+#
+#   NeonRuntime --scene assets://scenes/materials-test.scene.yml
+#
+# The model, coloured-boxes.glb, is two boxes 0.8 on every side at x = -1
+# and x = 1, each a mesh with a material of its own: the left one red, the
+# right one blue, as the base colour factor of each material, without a
+# texture. One white light shines from the camera, as in pbr-test.scene.yml,
+# so that what the pbr shader makes of a colour is a known number, see
+# tests/runtime-materials/run.cmake.
+
+scene: materials-test
+version: 1
+
+entities:
+  - name: camera
+    components:
+      Transform:
+        position: [0, 0, 5]
+      Camera: Default
+
+  - name: light
+    components:
+      Transform: Default
+      Light:
+        type: direction
+        direction: [0, 0, -1]
+        ambient: [0, 0, 0]
+        diffuse: [1, 1, 1]
+        specular: [0, 0, 0]
+
+  # the top row: the colour of each material as it is, without lighting,
+  # which the color shader shows
+  - name: boxes-unlit
+    components:
+      Transform:
+        position: [0, 1.2, 0]
+      Renderable:
+        model: assets://models/coloured-boxes.glb
+        shader: assets://shaders/color
+
+  # the middle row: each colour lit, as the base colour of a matte
+  # dielectric, which the scene says since the loader does not read the
+  # roughness of the file yet (#59)
+  - name: boxes-lit
+    components:
+      Transform:
+        position: [0, 0, 0]
+      Renderable:
+        model: assets://models/coloured-boxes.glb
+        shader: assets://shaders/pbr
+        material:
+          metallic: 0
+          roughness: 1
+
+  # the bottom row: the colour of the scene multiplies the colour of every
+  # material of the model, so both boxes are drawn at half their light
+  - name: boxes-tinted
+    components:
+      Transform:
+        position: [0, -1.2, 0]
+      Renderable:
+        model: assets://models/coloured-boxes.glb
+        shader: assets://shaders/color
+        material:
+          color: [0.5, 0.5, 0.5]

@@ -276,7 +276,7 @@ A library of its own, `neon-vulkan`.
 | `VK_ModelCache`, `VK_TextureCache` | What the render objects draw, held once each: a model for every path and fit, a texture for every image, counted and freed when the last object that drew it goes. See [what is shared](#what-is-shared) |
 | `VK_Samplers` | The five samplers every texture is read through, one for each way of reading, made once and shared |
 | `VK_Shader` | Shader modules from SPIR-V |
-| `VK_Material` | Textures, descriptor set, per-object data, and which pipelines draw it |
+| `VK_Material` | Textures, descriptor set, per-object data, and which pipelines draw it. A render object holds one for each material of its model that a mesh uses |
 | `VK_SceneImage` | The image of linear light a scene is lit in, with its depth |
 | `VK_ShadowMap` | The depth of the scene as the direction light sees it, with the pass that draws it |
 | `VK_Resolve` | The resolve step, which turns a scene image into the colours of the image that is shown |
@@ -286,9 +286,20 @@ A library of its own, `neon-vulkan`.
 
 ### What is shared
 
-A render object is one entity that is drawn. What it draws with is held
-once (#241), its material included: two render objects whose material is
-the same draw with one material, one descriptor set, one set of textures.
+A render object is one entity that is drawn. It draws with a material for
+each material of its model that a mesh uses (#193): one for a model with one
+material, and for a mesh a `Geometry` built. Each is a draw of its own, the
+meshes that use the material with the pipeline, the descriptor set, and an
+entry of object data of that material, so that the colour factor of every
+material of the file reaches the shader; draws alike are batched as every
+draw is, see [The order of a frame](#the-order-of-a-frame), a see-through
+material is kept for the end of the scene, and the shadow pass draws the
+meshes of each material with its covering. The scene's `Renderable`
+overrides every material, and its `textures` the first alone, see
+[models.md](models.md#several-materials). What a render object draws with
+is held once (#241), its materials included: two render objects whose
+material of a model's material is the same draw with one material, one
+descriptor set, one set of textures.
 
 | What | Held once for every | By | Freed |
 |---|---|---|---|

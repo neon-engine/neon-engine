@@ -152,8 +152,9 @@ namespace neon
     VK_Texture _white_texture;
 
     // What the render objects draw: each model and each texture is held
-    // once, however many objects draw it, and a material of its own for
-    // every object.
+    // once, however many objects draw it, and a material for each material
+    // of its model that a mesh uses, shared with the objects that draw with
+    // the same one.
     VK_ModelCache _models;
     VK_TextureCache _textures;
     VK_MaterialCache _materials;
@@ -234,6 +235,20 @@ namespace neon
 
     /// Adds a pool to take sets from.
     bool CreateDescriptorPool();
+
+    /// The material a render object draws the meshes of one material of
+    /// its model with: what the scene says, filled in with what the file
+    /// says about that material, see docs/models.md. `material` is an
+    /// index into the model's materials, or -1 for a mesh that was built;
+    /// `first` says whether it is the first of the object, which is the
+    /// one the scene's own textures replace. Shared with the render objects
+    /// that draw with the same one already, made otherwise. Returns the id
+    /// it is held under, or -1 when it cannot be made, which is logged.
+    int AcquireObjectMaterial(const RenderInfo &render_info, const VK_Model &model, int material, bool first);
+
+    /// Gives a material of a render object back, which frees it and its
+    /// descriptor set when nothing else draws with it.
+    void ReleaseObjectMaterial(int material_id);
 
     [[nodiscard]] VK_SceneData BuildSceneData(
       const glm::mat4 &view,

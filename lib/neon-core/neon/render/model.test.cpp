@@ -222,7 +222,7 @@ namespace
 
     EXPECT_THAT(model.meshes, IsEmpty());
     EXPECT_THAT(model.GetMaterials(), IsEmpty());
-    EXPECT_EQ(model.GetDrawnMaterial(), nullptr);
+    EXPECT_EQ(model.GetFirstMaterial(), nullptr);
     EXPECT_EQ(_logger->Count(LogLevel::Error), 0u);
     EXPECT_EQ(model.GetNormalizedModelMatrix(), glm::mat4(1.0f));
   }
@@ -419,9 +419,9 @@ namespace
 
     // the same textures, for the renderer to show when the scene names none
     ASSERT_EQ(model.GetMaterials().size(), 2u) << "assimp adds a default material in front";
-    ASSERT_NE(model.GetDrawnMaterial(), nullptr);
-    ASSERT_EQ(model.GetDrawnMaterial()->textures.size(), 2u);
-    EXPECT_EQ(model.GetDrawnMaterial()->textures[0].path, "assets://models/textures/red.png");
+    ASSERT_NE(model.GetFirstMaterial(), nullptr);
+    ASSERT_EQ(model.GetFirstMaterial()->textures.size(), 2u);
+    EXPECT_EQ(model.GetFirstMaterial()->textures[0].path, "assets://models/textures/red.png");
   }
 
   TEST_F(ModelTest, LeavesOutTheTexturesOfAKindItDoesNotSupportAndWarns)
@@ -552,8 +552,8 @@ namespace
       ElementsAre(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
 
     ASSERT_EQ(model.GetMaterials().size(), 2u) << "assimp adds a default material behind";
-    ASSERT_NE(model.GetDrawnMaterial(), nullptr);
-    const auto &material = *model.GetDrawnMaterial();
+    ASSERT_NE(model.GetFirstMaterial(), nullptr);
+    const auto &material = *model.GetFirstMaterial();
     ASSERT_EQ(material.textures.size(), 1u);
     EXPECT_EQ(material.textures[0].texture_type, TextureType::Diffuse);
     EXPECT_EQ(material.textures[0].path, "*0");
@@ -575,8 +575,8 @@ namespace
 
     ASSERT_TRUE(model.Initialize()) << _logger->Messages(LogLevel::Error);
 
-    ASSERT_NE(model.GetDrawnMaterial(), nullptr);
-    const auto &[r, g, b, a] = model.GetDrawnMaterial()->color;
+    ASSERT_NE(model.GetFirstMaterial(), nullptr);
+    const auto &[r, g, b, a] = model.GetFirstMaterial()->color;
     EXPECT_FLOAT_EQ(r, 1.0f);
     EXPECT_FLOAT_EQ(g, 0.5f);
     EXPECT_FLOAT_EQ(b, 0.25f);
@@ -592,13 +592,13 @@ namespace
 
     ASSERT_TRUE(model.Initialize()) << _logger->Messages(LogLevel::Error);
 
-    ASSERT_NE(model.GetDrawnMaterial(), nullptr);
-    const auto &[r, g, b, a] = model.GetDrawnMaterial()->color;
+    ASSERT_NE(model.GetFirstMaterial(), nullptr);
+    const auto &[r, g, b, a] = model.GetFirstMaterial()->color;
     EXPECT_FLOAT_EQ(r, 1.0f);
     EXPECT_FLOAT_EQ(g, 1.0f);
     EXPECT_FLOAT_EQ(b, 1.0f);
     EXPECT_FLOAT_EQ(a, 1.0f);
-    EXPECT_THAT(model.GetDrawnMaterial()->textures, IsEmpty());
+    EXPECT_THAT(model.GetFirstMaterial()->textures, IsEmpty());
   }
 
   TEST_F(ModelTest, ReadsWhetherAGlbMaterialIsDoubleSided)
@@ -611,8 +611,8 @@ namespace
 
     ASSERT_TRUE(model.Initialize()) << _logger->Messages(LogLevel::Error);
 
-    ASSERT_NE(model.GetDrawnMaterial(), nullptr);
-    EXPECT_TRUE(model.GetDrawnMaterial()->double_sided);
+    ASSERT_NE(model.GetFirstMaterial(), nullptr);
+    EXPECT_TRUE(model.GetFirstMaterial()->double_sided);
   }
 
   TEST_F(ModelTest, LeavesAMaterialThatSaysNothingOneSided)
@@ -624,8 +624,8 @@ namespace
 
     ASSERT_TRUE(model.Initialize()) << _logger->Messages(LogLevel::Error);
 
-    ASSERT_NE(model.GetDrawnMaterial(), nullptr);
-    EXPECT_FALSE(model.GetDrawnMaterial()->double_sided);
+    ASSERT_NE(model.GetFirstMaterial(), nullptr);
+    EXPECT_FALSE(model.GetFirstMaterial()->double_sided);
   }
 
   TEST_F(ModelTest, NamesTheImageFileOfAGlbFromTheFolderOfTheModel)
@@ -637,10 +637,10 @@ namespace
 
     ASSERT_TRUE(model.Initialize()) << _logger->Messages(LogLevel::Error);
 
-    ASSERT_NE(model.GetDrawnMaterial(), nullptr);
-    ASSERT_EQ(model.GetDrawnMaterial()->textures.size(), 1u);
-    EXPECT_EQ(model.GetDrawnMaterial()->textures[0].path, "assets://external/kit/Textures/colormap.png");
-    EXPECT_FALSE(model.GetDrawnMaterial()->textures[0].IsEmbedded());
+    ASSERT_NE(model.GetFirstMaterial(), nullptr);
+    ASSERT_EQ(model.GetFirstMaterial()->textures.size(), 1u);
+    EXPECT_EQ(model.GetFirstMaterial()->textures[0].path, "assets://external/kit/Textures/colormap.png");
+    EXPECT_FALSE(model.GetFirstMaterial()->textures[0].IsEmbedded());
   }
 
   TEST_F(ModelTest, PlacesAMeshWhereItsNodeAndTheNodesAboveItStand)
@@ -711,7 +711,7 @@ namespace
     EXPECT_THAT(model.meshes[0].colors, ElementsAre(glm::vec4(1.0f), glm::vec4(1.0f), glm::vec4(1.0f)));
   }
 
-  TEST_F(ModelTest, SaysWhenAModelUsesSeveralMaterials)
+  TEST_F(ModelTest, KnowsWhichMaterialEveryMeshUses)
   {
     constexpr auto two_primitives =
       R"({"primitives": [
@@ -727,7 +727,39 @@ namespace
 
     EXPECT_EQ(model.meshes.size(), 2u);
     EXPECT_EQ(model.GetMaterials().size(), 3u) << "the two, and the default behind them";
-    EXPECT_TRUE(_logger->Contains(LogLevel::Info, "several materials")) << _logger->Messages(LogLevel::Info);
+    EXPECT_EQ(model.GetMaterialOfMesh(0), 0);
+    EXPECT_EQ(model.GetMaterialOfMesh(1), 1);
+    EXPECT_EQ(model.GetMaterialOfMesh(2), -1) << "there is no third mesh";
+    EXPECT_THAT(model.GetUsedMaterials(), ElementsAre(0, 1));
+    EXPECT_EQ(model.GetFirstMaterial(), &model.GetMaterials()[0]);
+  }
+
+  TEST_F(ModelTest, ListsAMaterialOnceHoweverManyMeshesUseIt)
+  {
+    constexpr auto three_primitives =
+      R"({"primitives": [
+        {"attributes": {"POSITION": 0}, "indices": 1, "material": 1},
+        {"attributes": {"POSITION": 0}, "indices": 1, "material": 0},
+        {"attributes": {"POSITION": 0}, "indices": 1, "material": 1}]})";
+    constexpr auto materials = R"({"name": "one"}, {"name": "two"})";
+    _file_system.AddNativeFile(
+      "/assets/models/cube.glb",
+      Glb(TriangleJson(one_node, three_primitives, materials, embedded_image), TriangleBuffer()));
+    TestModel model("assets://models/cube.glb", &_file_system, _logger);
+
+    ASSERT_TRUE(model.Initialize()) << _logger->Messages(LogLevel::Error);
+
+    ASSERT_EQ(model.meshes.size(), 3u);
+
+    // assimp hands the primitives over in an order of its own, so the
+    // test follows the meshes as they came
+    const int first = model.GetMaterialOfMesh(0);
+    const int other = first == 0 ? 1 : 0;
+    EXPECT_THAT(model.GetUsedMaterials(), ElementsAre(first, other)) << "each once, in the order of first use";
+    EXPECT_EQ(
+      (model.GetMaterialOfMesh(1) == first ? 1 : 0) + (model.GetMaterialOfMesh(2) == first ? 1 : 0), 1)
+      << "the two meshes of material 1 share it";
+    EXPECT_EQ(model.GetFirstMaterial(), &model.GetMaterials()[first]) << "the material of the first mesh";
   }
 
   // ApplyNodeTransform

@@ -107,6 +107,25 @@ namespace
     EXPECT_EQ(queue.Batches().size(), 2u);
   }
 
+  TEST(VkDrawQueueTest, TheMeshesOfTwoMaterialsOfOneModelAreTwoBatches)
+  {
+    VK_DrawQueue queue;
+    VK_Draw first = Draw(1, 1, 1, 1.0f);
+    first.model_material = 0;
+    VK_Draw second = Draw(1, 1, 1, 1.0f);
+    second.model_material = 1;
+    queue.Add(second);
+    queue.Add(first);
+    queue.Add(second);
+    queue.Settle();
+
+    ASSERT_EQ(queue.Batches().size(), 2u);
+    EXPECT_EQ(queue.Batches()[0].model_material, 0);
+    EXPECT_EQ(queue.Batches()[0].instances, 1u);
+    EXPECT_EQ(queue.Batches()[1].model_material, 1);
+    EXPECT_EQ(queue.Batches()[1].instances, 2u);
+  }
+
   TEST(VkDrawQueueTest, IsEmptyAfterItIsCleared)
   {
     VK_DrawQueue queue;

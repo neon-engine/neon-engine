@@ -43,13 +43,16 @@ namespace neon
     /// Draws the model as part of the frame that is being recorded.
     void Use() const override;
 
-    /// Draws the model into `commands` `instances` times over, the shaders
-    /// told which object each is by gl_InstanceIndex, counted from
-    /// `first_instance`. The shadow pass records apart from the frame.
-    void Draw(VkCommandBuffer commands, uint32_t instances = 1, uint32_t first_instance = 0) const;
+    /// Draws the meshes that use the material at `material` of the file
+    /// into `commands` `instances` times over, the shaders told which
+    /// object each is by gl_InstanceIndex, counted from `first_instance`.
+    /// Every mesh when `material` is below 0, which is what a mesh that
+    /// was built has. The shadow pass records apart from the frame.
+    void Draw(VkCommandBuffer commands, uint32_t instances = 1, uint32_t first_instance = 0, int material = -1) const;
 
-    /// How many draws the model takes, one for each of its meshes.
-    [[nodiscard]] std::size_t MeshCount() const { return _meshes.size(); }
+    /// How many draws that takes: one for each mesh that uses the
+    /// material, or for every mesh when `material` is below 0.
+    [[nodiscard]] std::size_t MeshCount(int material = -1) const;
 
     void CleanUp() override;
   };

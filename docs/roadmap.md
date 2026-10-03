@@ -42,6 +42,7 @@ Principles that hold for both:
 | Linear light (#67) | The world is lit and blended in linear light in a floating-point scene image, and a resolve step turns it into the colours of the screen. User interfaces blend in sRGB, as CSS does. See [vulkan-renderer.md](vulkan-renderer.md#colour-spaces) |
 | See-through materials (#67) | `alpha_mode: blend`, drawn after what is opaque, from the farthest to the nearest. The first of the alpha modes of #106 |
 | Back faces left out (#136, #194) | The back of every triangle is left out unless a material is double-sided, as the model file says or the scene's `double_sided` overrides, and what is mirrored is still drawn from the front |
+| Several materials in one model (#193) | A model whose meshes use different materials is drawn with each of them, inside one render object, and the scene's `Renderable` overrides them all. See [models.md](models.md#several-materials) |
 | Vertex colours (#192) | A `Vertex` carries a colour, white unless the model paints its vertices, and `pbr`, `basic-lit`, and `unlit` multiply it into the base colour. See [models.md](models.md#the-colours-of-the-vertices) |
 | `VK_RenderSystem` split (#163) | The swapchain, the pipelines of materials, the canvas a frame or a render target is drawn on, and the reading back of a frame are types of their own. The render system wires them. Done ahead of the programmable pipeline (#102) |
 | File system (#22) | Virtual paths with `assets://`, `user://`, and `output://`. See [file-systems.md](file-systems.md) |

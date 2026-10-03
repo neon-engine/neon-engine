@@ -21,6 +21,10 @@ namespace neon
     int model_id = -1;
     int material_id = -1;
 
+    // the material of the model whose meshes are drawn, every mesh when
+    // below 0, which is what a mesh that was built has
+    int model_material = -1;
+
     // how far in front of the camera, for drawing the nearest first
     float distance = 0.0f;
     bool see_through = false;
