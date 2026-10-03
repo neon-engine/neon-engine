@@ -488,6 +488,81 @@ namespace neon
       }
     };
 
+    /// Walks a character up a step that lies along a wall it leans on.
+    ///
+    /// Jolt steps up in the direction the character asks for. One that
+    /// leans on a wall and moves along it asks mostly for the wall, so the
+    /// step forward is eaten by the wall, and what is left along it is too
+    /// short to find the top of the step: Jolt gives up, and the character
+    /// stands at the side of the step. Here, when the character came short
+    /// of its way after Jolt's own try, each wall it pushes into is taken
+    /// out of the way it asks for, one at a time, and the step is tried
+    /// again along what is left. Head on into a step, nothing is left, and
+    /// nothing is tried.
+    void WalkStairsAlongAWall(
+      JPH::CharacterVirtual &moved,
+      const JPH::RVec3 &before,
+      const JPH::Vec3 desired_velocity,
+      const float time,
+      const JPH::CharacterVirtual::ExtendedUpdateSettings &update,
+      const JPH::BroadPhaseLayerFilter &broad_phase_filter,
+      const JPH::ObjectLayerFilter &layer_filter,
+      JPH::TempAllocator &temporary)
+    {
+      if (update.mWalkStairsStepUp.IsNearZero()) { return; }
+
+      const auto up = moved.GetUp();
+      const auto desired = desired_velocity - desired_velocity.Dot(up) * up;
+      const float desired_length = desired.Length() * time;
+      if (desired_length < 1.0e-6f) { return; }
+
+      // how far it came the way it asked for. Jolt's own step, when it
+      // worked, took it the whole way
+      auto achieved = JPH::Vec3(moved.GetPosition() - before);
+      achieved -= achieved.Dot(up) * up;
+      const float achieved_length = std::max(0.0f, achieved.Dot(desired) / desired.Length());
+      if (achieved_length + 1.0e-4f >= desired_length || !moved.CanWalkStairs(desired_velocity)) { return; }
+
+      // the walls the character pushes into, as the last move found them
+      std::vector<JPH::Vec3> walls;
+      for (const auto &contact : moved.GetActiveContacts())
+      {
+        if (!contact.mHadCollision || contact.mIsSensorB || !moved.IsSlopeTooSteep(contact.mSurfaceNormal)) { continue; }
+
+        auto normal = contact.mSurfaceNormal - contact.mSurfaceNormal.Dot(up) * up;
+        if (normal.IsNearZero() || normal.Dot(desired) >= 0.0f) { continue; }
+
+        walls.push_back(normal.Normalized());
+      }
+
+      for (const auto &wall : walls)
+      {
+        // what is asked for without the part that goes into this wall
+        const auto along = desired - desired.Dot(wall) * wall;
+        const float length = along.Length();
+        if (length < 1.0e-6f) { continue; }
+
+        const auto direction = along / length;
+        const auto step_forward = direction * std::max(update.mWalkStairsMinStepForward, length * time);
+        const auto step_forward_test = direction * update.mWalkStairsStepForwardTest;
+
+        if (moved.WalkStairs(
+          time,
+          update.mWalkStairsStepUp,
+          step_forward,
+          step_forward_test,
+          update.mWalkStairsStepDownExtra,
+          broad_phase_filter,
+          layer_filter,
+          {},
+          {},
+          temporary))
+        {
+          return;
+        }
+      }
+    }
+
     /// Decides what a character and a body do to each other when they
     /// touch.
     class CharacterContacts final : public JPH::CharacterContactListener
@@ -515,6 +590,34 @@ namespace neon
 
         settings.mCanPushCharacter = motion != JPH::EMotionType::Dynamic;
         settings.mCanReceiveImpulses = true;
+      }
+
+      /// Whether the character that is being moved may slide down ground
+      /// it can stand on. Set before every move: a character that asked
+      /// for no way along the ground stays where it is, as the sample of
+      /// Jolt does, and one that walks, jumps, or is in the air slides.
+      bool sliding_allowed = true;
+
+      void OnContactSolve(
+        const JPH::CharacterVirtual *character,
+        const JPH::BodyID &,
+        const JPH::SubShapeID &,
+        JPH::RVec3Arg,
+        JPH::Vec3Arg normal,
+        JPH::Vec3Arg contact_velocity,
+        const JPH::PhysicsMaterial *,
+        JPH::Vec3Arg,
+        JPH::Vec3 &new_velocity) override
+      {
+        // A character at rest is pulled into the ground by one step of
+        // gravity, which Jolt would turn into a slide down any slope.
+        // Against ground that stands still and is not too steep, nothing
+        // is left of it. Ground that is too steep is a wall, and the
+        // character slides down it as it should.
+        if (!sliding_allowed && contact_velocity.IsNearZero() && !character->IsSlopeTooSteep(normal))
+        {
+          new_velocity = JPH::Vec3::sZero();
+        }
       }
     };
 
@@ -1730,6 +1833,11 @@ namespace neon
 
       moved.SetLinearVelocity(ToJolt(velocity));
 
+      // what asks for no way along the ground, and does not rise, stands
+      // still on a slope instead of creeping down it
+      const auto along_ground = glm::length(glm::vec2(velocity.x, velocity.z));
+      _state->character_contacts.sliding_allowed = along_ground > 1e-6f || velocity.y > 0.0f || !moved.IsSupported();
+
       JPH::CharacterVirtual::ExtendedUpdateSettings update;
       update.mWalkStairsStepUp = JPH::Vec3(0.0f, record.step_height, 0.0f);
 
@@ -1750,6 +1858,8 @@ namespace neon
         {},
         {},
         _state->temporary);
+
+      WalkStairsAlongAWall(moved, before, ToJolt(velocity), time, update, everything, layer_filter, _state->temporary);
 
       state.velocity = ToGlm(JPH::Vec3(moved.GetPosition() - before)) / time;
     } else

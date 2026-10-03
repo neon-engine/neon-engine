@@ -1,7 +1,7 @@
 # Draws blockout.scene.yml without a window and reads pixels of the result.
 # Nothing in the scene comes from a model file: the room is a prism with its
-# faces pointing inward, the platform a plane, the crate a box, the ramp a
-# ramp, all built by the engine in metres and textured once a metre.
+# faces pointing inward, the platform and the crate boxes, the ramp a ramp,
+# all built by the engine in metres and textured once a metre.
 #
 # The colours were read from the first render that was checked by eye, with
 # the room's ceiling, walls, and floor all drawn and the brick upright. They
@@ -19,6 +19,12 @@ if (CASE STREQUAL "the-eyes-glide-up-a-step-after-the-body-stops")
           --output-dir shots --screenshot output://frame.png --screenshot-at 43,47,80,90
           --scene assets://scenes/blockout.scene.yml
           --input "1: hold-key w 27\n28: hold-key a 10\n38: hold-key w 5")
+elseif (CASE STREQUAL "the-player-is-stopped-at-the-edge-of-the-platform")
+  # the player holds D for three seconds, which is to the right into the
+  # edge of the platform, 0.4 high and above what the player steps up
+  run(--headless-renderer --window-size 1920x1080 --render-scale 1 --time-step 0.05 --frames 60
+          --output-dir shots --screenshot output://frame.png --screenshot-at 20,60
+          --scene assets://scenes/blockout.scene.yml --input "1: hold-key d 60")
 else ()
   run(--headless-renderer --window-size 1920x1080 --render-scale 1 --time-step 0.05 --frames 5
           --output-dir shots --screenshot output://frame.png --scene assets://scenes/blockout.scene.yml)
@@ -86,6 +92,17 @@ elseif (CASE STREQUAL "the-eyes-glide-up-a-step-after-the-body-stops")
   endif ()
   if (NOT SETTLED STREQUAL STILL)
     fail("Expected the eyes to have settled, and frame 80 differs from frame 90")
+  endif ()
+elseif (CASE STREQUAL "the-player-is-stopped-at-the-edge-of-the-platform")
+  # stopped at the edge after a second, the player stands there two seconds
+  # later: the same image, byte for byte. A platform of no thickness let
+  # the player ride up its edge and slide back, and the images differed
+  expect_image("shots/frame-0020.png")
+  expect_image("shots/frame-0060.png")
+  file(SHA256 "${DIRECTORY}/shots/frame-0020.png" AT_THE_EDGE)
+  file(SHA256 "${DIRECTORY}/shots/frame-0060.png" TWO_SECONDS_LATER)
+  if (NOT AT_THE_EDGE STREQUAL TWO_SECONDS_LATER)
+    fail("Expected the player to stand at the edge of the platform from the first second to the third, and the frames differ: ${AT_THE_EDGE} and ${TWO_SECONDS_LATER}")
   endif ()
 else ()
   message(FATAL_ERROR "There is no case '${CASE}'")

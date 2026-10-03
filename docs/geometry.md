@@ -61,7 +61,7 @@ that names a model reads the model, as before.
 | Shape | What it is | Faces |
 |---|---|---|
 | Box | `size` in three axes, centred on the entity | 6 quads, outward |
-| Plane | `size` in x and z, facing up, cut into `segments²` quads | Up only; no thickness, so a platform is seen from above and not from below |
+| Plane | `size` in x and z, facing up, cut into `segments²` quads. For ground: a floor, a terrain. Not for a platform with an edge a character can meet, which is a box, see [physics.md](physics.md#shapes) | Up only; no thickness, so a platform is seen from above and not from below |
 | Ramp | A wedge of `size` that rises along z, its low edge at the front (positive z) and its full height at the back | The slope, the back, the bottom, two triangular sides |
 | Prism | An outline on the ground pulled up by `size.y`, floor and ceiling included | Walls, ceiling, floor. The outline has to be convex: the floor and the ceiling are fans from its first point |
 

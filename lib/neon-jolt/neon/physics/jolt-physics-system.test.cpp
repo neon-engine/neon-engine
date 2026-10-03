@@ -847,6 +847,71 @@ namespace
     EXPECT_NEAR(at_high.position.y, 1.0f, 0.05f);
   }
 
+  TEST_F(JoltPhysicsSystemTest, LetsACharacterWalkUpAStepWhilePressedAgainstAWall)
+  {
+    CreateFloor();
+    // a wall whose face lies at 4 to the right, and a step of 0.2 across
+    // the way along it, which reaches the wall
+    CreateBody(wall_entity, BodyKind::Static, Box({1.0f, 4.0f, 40.0f}), {4.5f, 2.0f, 0.0f});
+    CreateBody(other_entity, BodyKind::Static, Box({4.0f, 0.2f, 1.0f}), {2.0f, 0.1f, -3.5f});
+    const auto player = CreateCharacter({3.0f, 1.1f, 0.0f}, [](CharacterInfo &info)
+    {
+      info.shapes = {Capsule(0.4f, 1.8f)};
+    });
+    Walk(player, {0.0f, 0.0f, 0.0f}, 30);
+
+    // mostly into the wall, and a little along it, onto the step: what a
+    // player does who leans on a wall and strafes along it
+    const auto state = Walk(player, {3.86f, 0.0f, -1.03f}, 240);
+
+    EXPECT_NEAR(state.position.x, 3.58f, 0.05f);
+    EXPECT_LT(state.position.z, -3.5f);
+    EXPECT_NEAR(state.position.y, 1.1f, 0.05f);
+    EXPECT_TRUE(state.on_floor);
+    EXPECT_EQ(state.floor, other_entity);
+  }
+
+  TEST_F(JoltPhysicsSystemTest, LetsACharacterStandStillOnASlope)
+  {
+    // a slope of 14 degrees that falls to the right, well under the 45 a
+    // character can stand on, with its top through the origin
+    CreateBody(floor_entity, BodyKind::Static, Box({20.0f, 1.0f, 20.0f}), {0.0f, -0.5f, 0.0f}, [](BodyInfo &info)
+    {
+      info.rotation = Rotation{.roll = -14.0f}.GetQuaternion();
+    });
+    const auto player = CreateCharacter({0.0f, 1.1f, 0.0f});
+    const auto settled = Walk(player, {0.0f, 0.0f, 0.0f}, 60);
+    ASSERT_TRUE(settled.on_floor);
+
+    const auto state = Walk(player, {0.0f, 0.0f, 0.0f}, 300);
+
+    // five seconds later it stands where it stood, within a millimetre
+    EXPECT_TRUE(state.on_floor);
+    EXPECT_FALSE(state.on_wall);
+    EXPECT_NEAR(state.position.x, settled.position.x, 1e-3f);
+    EXPECT_NEAR(state.position.y, settled.position.y, 1e-3f);
+    EXPECT_NEAR(state.position.z, settled.position.z, 1e-3f);
+    EXPECT_NEAR(state.velocity.x, 0.0f, 1e-3f);
+  }
+
+  TEST_F(JoltPhysicsSystemTest, LetsACharacterSlideDownASlopeThatIsTooSteep)
+  {
+    // a slope of 60 degrees that falls to the right, which is a wall to a
+    // character that stands on 45 at most
+    CreateBody(floor_entity, BodyKind::Static, Box({20.0f, 1.0f, 20.0f}), {0.0f, -0.5f, 0.0f}, [](BodyInfo &info)
+    {
+      info.rotation = Rotation{.roll = -60.0f}.GetQuaternion();
+    });
+    const auto player = CreateCharacter({0.0f, 1.5f, 0.0f});
+
+    const auto state = Walk(player, {0.0f, 0.0f, 0.0f}, 30);
+
+    EXPECT_FALSE(state.on_floor);
+    EXPECT_TRUE(state.on_wall);
+    EXPECT_GT(state.position.x, 0.3f);
+    EXPECT_LT(state.position.y, 1.0f);
+  }
+
   TEST_F(JoltPhysicsSystemTest, PutsACharacterSomewhereAtOnce)
   {
     const auto player = CreateCharacter({0.0f, 1.0f, 0.0f});

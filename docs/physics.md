@@ -168,7 +168,7 @@ A trigger is where its `Transform` puts it, and follows when that is moved.
 | `fall_velocity` | `[x, y, z]`, what falling has added. A game writes it to jump | `[0, 0, 0]` |
 | `gravity_scale` | 0 for what does not fall, such as something that flies | `1` |
 | `max_slope` | Degrees from 0 to 90. Steeper ground is a wall | `45` |
-| `step_height` | A step up to this height is walked up as if it were a ramp | `0.25` |
+| `step_height` | A step up to this height is walked up as if it were a ramp, head on or along a wall the entity leans on | `0.25` |
 | `mass` | What dynamic bodies feel of the entity, above 0 | `70` |
 | `push_strength` | The most force it pushes dynamic bodies with | `100` |
 | `layers`, `mask` | See [layers](#layers-and-masks) | `1` |
@@ -182,7 +182,8 @@ in the way. And `character` and `failed`, as the others.
 |---|---|---|
 | Moving | The script calls `move_and_slide()` in `_physics_process` | The engine moves every `CharacterBody` in every step |
 | `velocity` | Is changed by `move_and_slide()` to what was left after sliding | Is kept as the game wrote it. An entity that a wall stopped moves on once the wall is gone. What it moved with is `real_velocity` |
-| Gravity | The script adds it | The engine adds it to `fall_velocity` while the entity is in the air, and ends it on the ground. `gravity_scale: 0` leaves it to the game |
+| Gravity | The script adds it | The engine adds it to `fall_velocity` while the entity is in the air, and ends it on the ground, where one step of it is left to hold the entity down. `gravity_scale: 0` leaves it to the game |
+| Standing on a slope | The body stays put | The body stays put on ground up to `max_slope`, however long, and slides down what is steeper |
 | Jumping | `velocity.y = 5` | `fall_velocity = {0, 5, 0}` |
 | Turning | The script turns the node | The game turns the `Transform`. The shape stays upright |
 
@@ -327,6 +328,16 @@ the body static or kinematic, or give it a convex hull
 
 The same holds for a plane on anything but a static body, and for a mesh and
 a plane on a `CharacterBody`.
+
+**A platform a character can walk against is a box.** A mesh of a plane has
+no thickness, so its edge is nothing a character is stopped by: the
+character rides up the edge and slides back. And the edge of a mesh of a
+box, higher than `step_height` and at the height of the round end of the
+character's capsule, is ridden up as well, and the character climbs what it
+should not, which is how Jolt meets a capsule with the edge of a triangle.
+A `box` collider stops the character at its edge as a wall does, so a
+platform, a kerb, a crate is a `box`, and a `mesh` of a `Geometry` is for
+the room and the ground, see [geometry.md](geometry.md#the-shapes).
 
 What could not be created is not tried again, since it would fail and say so
 in every step. `failed` of the component says that it happened.
@@ -873,6 +884,9 @@ What a game does with a body, through `PhysicsContext` and the `body` of its
 | A collider is a component of its own | One shape can be on a body, a trigger, and a character, and a body can have several |
 | A kinematic body is moved by its `Transform` | It is what a game, an animation, and an editor write already |
 | A character is a component of its own, not a kind of `RigidBody` | It has other values, and is moved another way: by a sweep of its shape and not by the simulation |
+| A character that asks for no way along the ground does not slide down a slope it can stand on | On the ground the engine hands Jolt one step of gravity, which keeps the character on the ground and lets it walk down a ramp. Jolt turns that pull into a slide down any slope, a centimetre a frame on a ramp of 14 degrees. So when nothing along the ground is asked for, and the character neither rises nor is in the air, the backend tells Jolt in `OnContactSolve` to leave no velocity against ground that stands still and is not too steep, which is what the sample of Jolt does. Ground above `max_slope` is a wall, and the character slides down it as before (#270) |
+| A step along a wall the character leans on is climbed as a step head on is | Jolt steps up in the direction the character asks for. One that leans on a wall and strafes along it asks mostly for the wall, which eats the step forward, and what is left along the wall is too short to find the top of the step, so Jolt gives up and the character stands at the side of the step. Jolt has no setting for it: `WalkStairs` takes one direction. So the backend, when the character came short of its way after Jolt's own try, takes each wall it pushes into out of the way it asks for, one at a time, and asks Jolt for the step again along what is left, with the length that is left. Head on into a step, nothing is left and nothing is tried. It is a workaround around `ExtendedUpdate`, which Jolt calls an example of how its pieces combine (#271) |
+| The platform of the blockout is a box with a `box` collider, not a plane | A plane has no thickness, so a character walking into its edge rode up it and slid back. A `mesh` of the box lets the character climb its edge of 0.4 as well, which Jolt makes of a capsule against the edge of a triangle at the height of its round end, and a `box` collider stops it as a wall. The backend is left as it is: a plane that is a thin box would hide what a mesh does at its edges, and a mesh at an edge is a limit of Jolt that is written down instead (#272) |
 | The physics is handed the file system, and the backend is not | Reading a model is the same for every backend. The backend is handed points |
 | Nothing of Jolt is made with `new` | The factory Jolt shares is one static object, whose address Jolt is given while a physics is in use. A character is built in place in a map, whose nodes do not move, and marked as embedded so that Jolt, which counts references to it, never deletes it. What Jolt makes itself, such as shapes, is held by its own references |
 | The formats of the components are part of those of the engine | A scene with a `RigidBody` loads in every application. One without physics says so: `RigidBody of entity 'crate' needs the physics, which is not part of this world` |
@@ -959,16 +973,18 @@ Jolt Physics is a submodule in `external/jolt-physics`. Its options are set in
 | Locking an axis | On a dynamic body, along and around the axes of the world. Not around an axis that turns with the body |
 | Height fields, soft bodies, vehicles | Jolt has them. The interface does not |
 | A shape that is cast | Is any but a mesh and a plane. It finds the first body, not every body on the way |
+| A character at the edge of a mesh | Rides up an edge that is higher than `step_height` when the edge lies at the height of the round end of its capsule, and climbs what a `box` would stop it at. Give what a character walks against a `box` collider |
 
 ## How it was checked
 
 | Check | Result |
 |---|---|
-| 135 checks of `Jolt_PhysicsSystem` through the interface | Pass. A box falls and comes to rest, a sphere rolls down a slope, a character stops at a wall and slides along it and is not pushed by a body of 500 kg, a trigger reports enter and leave once each and changes nothing of what passes, layers and masks, rays and overlaps, a mesh is refused on a dynamic body, bodies are released, a crate with its rotation locked slides upright where a free one falls over, a cast box meets a post a ray down its middle misses, a body that grows touches what it did not and keeps its mass, a door turns on its hinge and stops at its limits, a pendulum swings on a point, a sled moves along its slider alone, a glued pair moves as one, a joint goes with either of its bodies, a door hangs at its frame without being pushed out of it and still touches a ball and the floor, a motor turns a door at its velocity and stops at a limit and a brake holds it, a spring pulls a door and a sled back to rest, a motored sled moves at its velocity, the angle of a turning hinge and the position of a slider read true and change sign with the way, and a point joint reads as zeros with one warning |
+| 138 checks of `Jolt_PhysicsSystem` through the interface | Pass. A box falls and comes to rest, a sphere rolls down a slope, a character stops at a wall and slides along it and is not pushed by a body of 500 kg, stands still on a slope of 14 degrees for 300 steps and slides down one of 60, walks up a step of 0.2 along a wall it leans on, a trigger reports enter and leave once each and changes nothing of what passes, layers and masks, rays and overlaps, a mesh is refused on a dynamic body, bodies are released, a crate with its rotation locked slides upright where a free one falls over, a cast box meets a post a ray down its middle misses, a body that grows touches what it did not and keeps its mass, a door turns on its hinge and stops at its limits, a pendulum swings on a point, a sled moves along its slider alone, a glued pair moves as one, a joint goes with either of its bodies, a door hangs at its frame without being pushed out of it and still touches a ball and the floor, a motor turns a door at its velocity and stops at a limit and a brake holds it, a spring pulls a door and a sled back to rest, a motored sled moves at its velocity, the angle of a turning hinge and the position of a slider read true and change sign with the way, and a point joint reads as zeros with one warning |
 | The same world twice, with 21 bodies, a mesh, a trigger, and a character, for 300 steps | The same state down to the last bit, and the same events in the same order |
 | The same pendulum twice, for 200 steps | The same state down to the last bit |
 | 99 checks of `PhysicsSimulation` with a physics that is a fake | Pass |
 | 28 checks of `PlayerMovement` with an input that is a fake, and 6 of the format of `Player` | Pass. Walking the way the body faces at the walking and the running speed, turning the body and pitching the camera within the clamp, the camera at the eyes, jumping from the ground once per press and not in the air, and what is no player left alone |
+| The blockout, with D held for three seconds without a window | The player stands at the edge of the platform, 0.4 high and above its step, from the first second to the third: the same image, byte for byte |
 | The prototype level, with W held for a second without a window | The player stands in the doorway, with the lintel above it where the black behind the walls was, and the first frame is the same byte for byte as before the player could walk |
 | 62 checks of the formats of the components | Pass. Reading, writing, reading what was written, and every message |
 | 21 checks of `Rotation` | Pass |

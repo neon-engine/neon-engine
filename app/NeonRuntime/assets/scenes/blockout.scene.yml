@@ -4,7 +4,11 @@
 #
 # Every piece is a Geometry in metres, drawn by its Renderable with the pbr
 # shader and a texture that repeats once a metre, and collided with through a
-# Collider of kind mesh that takes the same shape. It is what a tool that
+# Collider of kind mesh that takes the same shape, but for the crate and the
+# platform, which are boxes with a box for a collider. The platform is not a
+# plane: a plane has no thickness, so its edge is nothing the player can be
+# stopped by, and it is not a mesh: the edge of a mesh at the height of the
+# player's round end is ridden up, where the edge of a box is a wall. It is what a tool that
 # blocks out levels writes, and what an importer of a map format would fill.
 
 scene: blockout
@@ -41,15 +45,16 @@ entities:
       Collider:
         shape: mesh
 
-  # a raised platform: a plane, which has a top and no thickness
+  # a raised platform: a box, with a box for its collider, so that its edge
+  # is a wall to the player. A plane has a top and no thickness, and the
+  # edge of a mesh at the height of the player's round end is ridden up
   - name: platform
     components:
       Transform:
-        position: [2, 0.4, 2]
+        position: [2, 0.2, 2]
       Geometry:
-        shape: plane
-        size: [3, 0, 3]
-        segments: 3
+        shape: box
+        size: [3, 0.4, 3]
       Renderable:
         shader: assets://shaders/pbr
         textures: [assets://textures/concrete.png]
@@ -58,7 +63,8 @@ entities:
       RigidBody:
         kind: static
       Collider:
-        shape: mesh
+        shape: box
+        size: [3, 0.4, 3]
 
   # a ledge of 0.2 along the north wall, west of the crate: a box the
   # character walks up without a jump, since it is below its step_height
