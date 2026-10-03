@@ -105,9 +105,16 @@ function(neon_add_extension NAME)
   )
 
   # An extension brings its own C++ runtime, as the applications do, so that
-  # it runs where none is installed. Apple has no static one to link.
-  if (NOT APPLE)
-    target_link_options(${EXTENSION_TARGET} PRIVATE -static-libstdc++)
+  # it runs where none is installed. Apple has no static one to link. With
+  # llvm-mingw the flag for the C++ runtime alone leaves libunwind.dll to be
+  # found when the extension is opened, so everything is linked statically
+  # there, as the toolchain file does for the executables.
+  if (MINGW)
+    target_link_options(${EXTENSION_TARGET} PRIVATE -static)
+  elseif (NOT APPLE)
+    # The static runtime is not built hidden, and would be exported with the
+    # extension, hundreds of names next to the one it marks.
+    target_link_options(${EXTENSION_TARGET} PRIVATE -static-libstdc++ -Wl,--exclude-libs,ALL)
   endif ()
 
   add_custom_command(TARGET ${EXTENSION_TARGET} POST_BUILD

@@ -55,10 +55,9 @@
 
 #include "neon-runtime.hpp"
 
-// SDL2 provides the real platform entry point (WinMain on Windows) through
-// SDL2main and renames main to SDL_main behind this include. It requires the
-// full argc/argv signature.
-#include <SDL_main.h>
+// What the platform starts the application by, which calls the main() below.
+// It is the window backend's, and this is its header for it.
+#include <neon/application/sdl2-main.hpp>
 
 int main(const int argc, char *argv[])
 {

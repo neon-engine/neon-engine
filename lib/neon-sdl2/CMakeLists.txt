@@ -26,8 +26,27 @@ target_compile_definitions(${TARGET} PRIVATE NEON_PLATFORM="${NEON_PLATFORM}")
 
 target_link_libraries(${TARGET}
         neon-core
-        SDL2::SDL2main
         SDL2::SDL2-static
+)
+
+# The entry point of an application, apart from the library: SDL2main is what
+# the platform starts the application by, WinMain on Windows, and it calls a
+# main() that the application defines. An application links this next to
+# neon-sdl2 and includes neon/application/sdl2-main.hpp where its main() is.
+# A test links neon-sdl2 alone: it has the main() of GoogleTest, and none for
+# SDL2main to call, which fails to link for Windows.
+add_library(neon-sdl2-main INTERFACE
+        main/neon/application/sdl2-main.hpp
+)
+
+target_include_directories(neon-sdl2-main
+        INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/main
+)
+
+target_link_libraries(neon-sdl2-main
+        INTERFACE
+        ${TARGET}
+        SDL2::SDL2main
 )
 
 if (NEON_BUILD_TESTS)
