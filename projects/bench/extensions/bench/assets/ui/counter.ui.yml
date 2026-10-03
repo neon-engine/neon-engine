@@ -1,0 +1,36 @@
+# the name of the scene, what its crates do, and the count of crates on the
+# scene, all set by the system Counting of the extension
+ui: counter
+version: 1
+
+reference_size: [1920, 1080]
+
+values:
+  scene: ""
+  about: ""
+  crates: 0
+
+root:
+  type: panel
+  width: 100%
+  height: 100%
+  children:
+    - type: panel
+      position: absolute
+      top: 24
+      left: 24
+      flex_direction: column
+      gap: 8
+      children:
+        - type: label
+          text: "{scene}"
+          font_size: 36
+          color: "#ffffffe0"
+        - type: label
+          text: "{about}"
+          font_size: 24
+          color: "#ffffffb0"
+        - type: label
+          text: "Crates: {crates}"
+          font_size: 48
+          color: "#ffffffe0"

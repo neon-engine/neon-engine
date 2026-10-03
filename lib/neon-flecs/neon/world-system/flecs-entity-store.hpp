@@ -70,6 +70,8 @@ namespace neon
 
     ComponentId FindComponent(const std::string &name) override;
 
+    std::size_t GetComponentSize(ComponentId component) override;
+
     using EntityStore::CreateEntity;
 
     Entity CreateEntity(const std::string &name, Entity parent) override;

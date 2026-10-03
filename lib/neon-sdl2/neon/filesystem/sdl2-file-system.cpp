@@ -28,7 +28,11 @@ namespace neon
     _native_separator = application_directory.back();
     _assets_directory = application_directory + "assets" + _native_separator;
 
+    // next to the executable as well. The folder need not be there
+    _extensions_directory = application_directory + "extensions" + _native_separator;
+
     _logger->Info("assets:// is {}", _assets_directory);
+    _logger->Info("extensions:// is {}", _extensions_directory);
 
     InitializeOutputDirectory();
   }
@@ -95,6 +99,7 @@ namespace neon
   {
     _logger->Info("Cleaning up SDL2 file system");
     _assets_directory.clear();
+    _extensions_directory.clear();
     _user_directory.clear();
     _output_directory.clear();
   }

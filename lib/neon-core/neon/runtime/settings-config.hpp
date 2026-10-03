@@ -144,7 +144,7 @@ struct SettingsConfig
   /// in metres, along its view; what is further is lit. The shadow map is
   /// cascaded, see shadow_cascades, so the farther it reaches the coarser
   /// the far cascades, the near one less so.
-  double shadow_distance = 50.0;
+  double shadow_distance = 120.0;
   /// How many cascades the shadow map has, 1 to 4: slices of what the
   /// camera sees, the nearest drawn the finest. More cascades are finer
   /// shadows near the camera at the same distance, and the casters drawn

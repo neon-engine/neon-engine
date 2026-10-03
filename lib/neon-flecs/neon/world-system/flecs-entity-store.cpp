@@ -206,6 +206,12 @@ namespace neon
     return it == _components_by_name.end() ? No_Component : it->second->id;
   }
 
+  std::size_t Flecs_EntityStore::GetComponentSize(const ComponentId component)
+  {
+    const auto it = _components_by_id.find(component);
+    return it == _components_by_id.end() ? 0 : it->second->info.size;
+  }
+
   Entity Flecs_EntityStore::CreateEntity(const std::string &name, const Entity parent)
   {
     ecs_entity_desc_t desc = {};

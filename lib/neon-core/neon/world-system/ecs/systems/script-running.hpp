@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include <neon/logging/logger.hpp>
 #include <neon/physics/physics-context.hpp>
@@ -26,6 +27,10 @@ namespace neon
     PhysicsContext *_physics;
     ComponentFormats *_formats;
     std::string _folder;
+
+    // folders besides the first that are read when they are there, such as
+    // the assets of the extensions
+    std::vector<std::string> _more_folders;
     std::shared_ptr<Logger> _logger;
 
   public:
@@ -38,6 +43,12 @@ namespace neon
       ComponentFormats *formats,
       std::string folder,
       const std::shared_ptr<Logger> &logger);
+
+    /// Reads the scripts of another folder as well, after those of the
+    /// first, when the folder is there; one that is not there is left out
+    /// without a word. For what brings scripts besides the project, such as
+    /// an extension. Call it before the world is initialized.
+    void AddFolder(const std::string &folder);
 
     void Register(EntityStore &store) override;
 

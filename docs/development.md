@@ -502,6 +502,7 @@ also never depends on the directory the app was started from.
 | `assets://` | `<directory of executable>/assets` | Read-only |
 | `user://` | A folder of the current user, for saves, settings, and anything else the app writes | Read and write |
 | `output://` | A folder chosen with `--output-dir` when the app is started, for what a run hands back, such as screenshots | Read and write. Rejected when no folder was chosen |
+| `extensions://` | `<directory of executable>/extensions`, one folder for each extension, see [extensions.md](extensions.md) | Read-only. The folder need not be there, and nothing is found in it then |
 
 Where `user://` lives depends on the platform, and on the `organization` and
 `name` of the project (`assets://project.yml`, see
@@ -833,7 +834,7 @@ what it left behind.
 | neon-core | `common/rotation` | 21 | The quaternion of known angles, the order of the turns, and the angles of a quaternion |
 | neon-core | `common/transform` | 11 | `Forward` and `Right`. 1 disabled |
 | neon-core | `common/util` | 12 | All four functions |
-| neon-core | `filesystem/file-system` | 164 | Every path rule for reading and writing, letter case, the native path, `output://` without a folder, where the log file is placed |
+| neon-core | `filesystem/file-system` | 171 | Every path rule for reading and writing, letter case, the native path, `output://` without a folder, `extensions://` with and without its folder, where the log file is placed |
 | neon-core | `input/input-state` | 17 | Actions, the motion of the mouse, the pointer, `Reset` |
 | neon-core | `input/headless-input-system` | 7 | Nothing is ever pressed |
 | neon-core | `logging/spd-logger` | 10 | Levels, arguments, what is thrown for a message that cannot be formatted |
@@ -876,6 +877,7 @@ what it left behind.
 | `tests/` | `runtime-headless` | 8 | NeonRuntime without a window: exit code, and the images it saved, with and without a user interface |
 | `tests/` | `user-interface` | 300 | UI recipes through the whole user interface: every element, every message for a file that is wrong, layout in frames of several sizes, values, input, focus, events, and what is drawn |
 | `tests/` | `physics-with-jolt` | 21 | The physics as an application puts it together, with Flecs, Jolt, and a scene recipe. The same state after the same steps at every frame rate |
+| `tests/` | `extensions` | 42 | Extensions as an application finds and starts them: eleven small ones built next to the test, in C and in C++, opened through SDL2; one that refuses, one of a later version, one of an earlier, a library that is none; a component registered, read from a recipe, set, and queried in a store of Flecs; systems in C and in C++ run per frame, per step, and between; an entity moved by the input through the fields of its Transform, a file read, a prefab spawned, a scene asked for; what touched what told to a system, and a ray cast; a field of the engine read and written in place, values of the user interface, a prefab spawned at a place; structs that are not what they describe, and calls at the wrong time; and every message of a recipe, from memory. See [extensions.md](extensions.md) |
 | `tests/` | `runtime-physics` | 2 | NeonRuntime with the scene of the physics: the same images twice, and at every frame rate |
 | neon-core | `text/glyph-atlas`, `text/shaped-text`, `text/text-case` | 75 | Glyphs that are drawn on demand into pages, parts of a text by font, script, and direction, lines, quarters of a pixel, capitals |
 | neon-core | `ui/css-functions`, `ui/ui-paint`, `ui/ui-box-paint`, `ui/ui-values-fallback` | 69 | Gradients, shadows, and transforms as CSS writes them, the shape of a box, where an image goes, values that fall back on others |

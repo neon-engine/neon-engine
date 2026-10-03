@@ -1,0 +1,12 @@
+# The code of the bench in C++: the twins of the scripts under
+# assets/scripts/bench, the spawner, and the counter.
+version: 1
+name: bench
+
+libraries:
+  macos-arm64: bench-macos-arm64.dylib
+  macos-x86_64: bench-macos-x86_64.dylib
+  linux-x86_64: bench-linux-x86_64.so
+  linux-arm64: bench-linux-arm64.so
+  windows-x86_64: bench-windows-x86_64.dll
+  windows-arm64: bench-windows-arm64.dll

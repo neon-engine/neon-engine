@@ -1,0 +1,20 @@
+# A crate that is spawned while the game runs, with the behaviour in Lua that does the least. Half a metre,
+# in one plain colour, so that nothing is read from an image.
+version: 1
+prefab: crate-lua-light-copy
+
+entity:
+  components:
+    Transform:
+      scale: 0.5
+    Renderable:
+      model: assets://models/cube.obj
+      fit: unit
+      shader: assets://shaders/basic-lit
+      material:
+        shininess: 16
+        color: [0.75, 0.55, 0.3]
+    RigidBody: Default
+    Collider:
+      shape: box
+    LightCopy: Default

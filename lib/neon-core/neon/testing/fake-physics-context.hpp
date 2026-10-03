@@ -17,7 +17,7 @@ namespace neon::testing
   /// lets it fall, and puts every kinematic body where it was moved to. A
   /// character moves by the velocity it is moved with. Everything that was
   /// asked of it is written down, so that a test can look at it.
-  class FakePhysicsContext final : public PhysicsContext
+  class FakePhysicsContext : public PhysicsContext
   {
   public:
     struct Body

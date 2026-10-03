@@ -48,6 +48,9 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake/find")
 # The warnings every target of the engine is built with
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/Warnings.cmake")
 
+# Native extensions, what a platform is called for them, and how one is built
+include("${CMAKE_CURRENT_LIST_DIR}/cmake/NeonExtensions.cmake")
+
 
 # Find packages installed on the toolchain/sysroot
 find_package(stb REQUIRED)
@@ -143,6 +146,11 @@ set(APP_TARGETS
 
 string(TOLOWER ${CMAKE_SYSTEM_NAME} LOWER_CMAKE_SYSTEM_NAME)
 
+# where neon_add_extension puts an extension unless it is told otherwise:
+# next to NeonRuntime
+set(NEON_EXTENSIONS_DIRECTORY
+        "${NEON_BIN_DIRECTORY}/${LOWER_CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}/NeonRuntime/extensions")
+
 foreach (APP IN LISTS APP_TARGETS)
   message("generating build target ${APP}")
 
@@ -170,6 +178,18 @@ foreach (APP IN LISTS APP_TARGETS)
           LIBRARY_OUTPUT_DIRECTORY "${APP_BIN_DIRECTORY}"
           RUNTIME_OUTPUT_DIRECTORY "${APP_BIN_DIRECTORY}"
   )
+endforeach ()
+
+# Projects with code of their own, each a folder of projects/ with a
+# CMakeLists.txt that calls neon_add_project. They are found here, so that a
+# new one needs no edit of this file, and built on request alone.
+include("${CMAKE_CURRENT_LIST_DIR}/cmake/NeonProjects.cmake")
+file(GLOB NEON_PROJECT_LISTS CONFIGURE_DEPENDS "${CMAKE_CURRENT_LIST_DIR}/projects/*/CMakeLists.txt")
+foreach (PROJECT_LIST IN LISTS NEON_PROJECT_LISTS)
+  get_filename_component(PROJECT_FOLDER "${PROJECT_LIST}" DIRECTORY)
+  get_filename_component(PROJECT_NAME_OF_FOLDER "${PROJECT_FOLDER}" NAME)
+  message("found the project ${PROJECT_NAME_OF_FOLDER}")
+  add_subdirectory("${PROJECT_FOLDER}")
 endforeach ()
 
 # Functional tests come last, they start the applications declared above

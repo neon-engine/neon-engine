@@ -22,6 +22,7 @@ namespace neon::testing
     MOCK_METHOD(ComponentId, RegisterComponent, (const ComponentInfo &info), (override));
 
     MOCK_METHOD(ComponentId, FindComponent, (const std::string &name), (override));
+    MOCK_METHOD(std::size_t, GetComponentSize, (ComponentId component), (override));
 
     using EntityStore::CreateEntity;
 

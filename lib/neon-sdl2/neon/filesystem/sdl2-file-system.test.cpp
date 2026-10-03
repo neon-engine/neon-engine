@@ -122,6 +122,7 @@ namespace
   TEST_F(Sdl2FileSystemTest, SaysWhereEveryFolderIs)
   {
     EXPECT_TRUE(_logger->Contains(LogLevel::Info, "assets:// is "));
+    EXPECT_TRUE(_logger->Contains(LogLevel::Info, "extensions:// is "));
     EXPECT_TRUE(_logger->Contains(LogLevel::Info, "user:// is " + _directory.Native()));
     EXPECT_TRUE(_logger->Contains(LogLevel::Info, "output:// is " + _directory.Native("output")));
     ExpectNoErrors();

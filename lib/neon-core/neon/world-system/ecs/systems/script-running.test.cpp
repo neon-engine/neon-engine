@@ -93,4 +93,21 @@ namespace
     EXPECT_CALL(_scripts, Update(_, 0.25));
     system.Update(_store, 0.25);
   }
+  TEST_F(ScriptRunningTest, ReadsTheScriptsOfMoreFoldersAfterTheFirstAndLeavesOutThoseThatAreNotThere)
+  {
+    ScriptRunning system(&_scripts, &_physics, &_formats, "assets://", _logger);
+    system.AddFolder("extensions://bench/assets/");
+    system.AddFolder("extensions://quake/assets/");
+
+    ::testing::InSequence in_order;
+    EXPECT_CALL(_scripts, LoadScripts("assets://", _, _)).WillOnce(Return(false));
+    EXPECT_CALL(_scripts, LoadScripts("extensions://bench/assets/", _, _)).WillOnce(Return(true));
+    EXPECT_CALL(_scripts, LoadScripts("extensions://quake/assets/", _, _)).WillOnce(Return(false));
+
+    system.Register(_store);
+
+    EXPECT_TRUE(_logger->Contains(LogLevel::Info, "With the scripts under extensions://bench/assets/, "));
+    EXPECT_FALSE(_logger->Contains(LogLevel::Info, "extensions://quake"));
+  }
+
 }

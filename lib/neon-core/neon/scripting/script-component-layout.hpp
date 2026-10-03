@@ -82,6 +82,9 @@ namespace neon
 
     [[nodiscard]] std::size_t GetAlignment() const;
 
+    /// Where a field lies in the component, by its place among the fields.
+    [[nodiscard]] std::size_t GetOffset(std::size_t field) const;
+
     /// What the store registers.
     [[nodiscard]] ComponentInfo GetComponentInfo() const;
 

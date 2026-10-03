@@ -1,0 +1,738 @@
+// Extensions, as an application finds and starts them: ExtensionHost with
+// the document format for YAML. The libraries are real ones, built next to
+// the test and opened through SDL2, see CMakeLists.txt. What needs no
+// library is read from a file system in memory.
+
+#include <memory>
+#include <string>
+#include <vector>
+
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+
+#include <neon/data/ryml-document-format.hpp>
+#include <neon/extension/extension-host.hpp>
+#include <neon/extension/sdl2-library-loader.hpp>
+#include <neon/filesystem/sdl2-file-system.hpp>
+#include <neon/testing/fake-physics-context.hpp>
+#include <neon/testing/memory-file-system.hpp>
+#include <neon/world-system/ecs/systems/extension-running.hpp>
+#include <neon/world-system/flecs-entity-store.hpp>
+#include <neon/common/transform.hpp>
+#include <neon/testing/mock-input-context.hpp>
+#include <neon/testing/mock-library-loader.hpp>
+#include <neon/testing/mock-ui-system.hpp>
+#include <neon/testing/mock-world-system.hpp>
+#include <neon/testing/recording-logger.hpp>
+#include <neon/testing/recording-logging-context.hpp>
+
+namespace
+{
+  using neon::ExtensionHost;
+  using neon::RYML_DocumentFormat;
+  using neon::SDL2_FileSystem;
+  using neon::SDL2_LibraryLoader;
+  using neon::testing::LogLevel;
+  using neon::testing::MemoryFileSystem;
+  using neon::testing::MockLibraryLoader;
+  using neon::testing::RecordingLogger;
+  using neon::testing::RecordingLoggingContext;
+  using ::testing::_;
+  using ::testing::ElementsAre;
+  using ::testing::IsEmpty;
+  using ::testing::NiceMock;
+  using ::testing::Return;
+
+  /// The extensions the build put next to the test, started for real.
+  class ExtensionsTest : public ::testing::Test
+  {
+  protected:
+    std::shared_ptr<RecordingLogger> _logger = std::make_shared<RecordingLogger>();
+    RecordingLoggingContext _logging;
+    SDL2_FileSystem _file_system{SettingsConfig{}, std::make_shared<RecordingLogger>()};
+    SDL2_LibraryLoader _library_loader{&_file_system};
+    RYML_DocumentFormat _yaml;
+    ExtensionHost _host{&_file_system, &_yaml, &_library_loader, &_logging, _logger};
+
+    void SetUp() override
+    {
+      _file_system.Initialize();
+      _host.Initialize();
+    }
+
+    void TearDown() override
+    {
+      _host.CleanUp();
+      _file_system.CleanUp();
+    }
+
+    void ExpectError(const std::string &text) const
+    {
+      EXPECT_TRUE(_logger->Contains(LogLevel::Error, text)) << _logger->Messages(LogLevel::Error);
+    }
+  };
+
+  TEST_F(ExtensionsTest, StartsTheExtensionsThatCanStartInTheOrderOfTheirNames)
+  {
+    EXPECT_THAT(_host.GetLoaded(), ElementsAre("eager", "hello", "mislaid", "old", "polite", "spinner", "tumbler", "visitor"));
+    EXPECT_TRUE(_logger->Contains(LogLevel::Info, "Started the extension 'hello' from extensions://hello/hello-"))
+      << _logger->Messages(LogLevel::Info);
+    EXPECT_TRUE(_logger->Contains(LogLevel::Info, "Started 8 of 11 extensions")) << _logger->Messages(LogLevel::Info);
+  }
+
+  TEST_F(ExtensionsTest, NamesTheAssetsOfTheExtensionsThatAreThereToBeUsed)
+  {
+    const auto folders = _host.GetAssetFolders();
+    ASSERT_FALSE(folders.empty());
+    EXPECT_EQ(folders[1], "extensions://hello/assets/");
+    EXPECT_THAT(folders, ::testing::Not(::testing::Contains("extensions://refuses/assets/")));
+
+    // the build copies what an extension brings next to its library
+    std::string greeting;
+    EXPECT_TRUE(_file_system.ReadText("extensions://hello/assets/greeting.txt", greeting));
+    EXPECT_EQ(greeting, "Hello from the assets of an extension\n");
+  }
+
+  TEST_F(ExtensionsTest, LetsAnExtensionLogUnderItsNameAtTheLevelItChooses)
+  {
+    EXPECT_TRUE(_logging.Of("extension:hello")->Contains(LogLevel::Info, "Hello from an extension in C"));
+    EXPECT_TRUE(_logging.Of("extension:polite")->Contains(LogLevel::Warn, "Hello from an extension in C++"));
+  }
+
+  TEST_F(ExtensionsTest, TellsAnExtensionToCleanUpWithWhatItKept)
+  {
+    const auto polite = _logging.Of("extension:polite");
+    EXPECT_FALSE(polite->Contains(LogLevel::Info, "Goodbye from an extension in C++"));
+
+    _host.CleanUp();
+
+    EXPECT_TRUE(polite->Contains(LogLevel::Info, "Goodbye from an extension in C++"));
+    EXPECT_THAT(_host.GetLoaded(), IsEmpty());
+  }
+
+  TEST_F(ExtensionsTest, CanBeCleanedUpTwice)
+  {
+    _host.CleanUp();
+    _host.CleanUp();
+
+    EXPECT_EQ(_logging.Of("extension:polite")->Count(LogLevel::Info), 1u);
+  }
+
+  TEST_F(ExtensionsTest, LeavesOutAnExtensionThatDoesNotStartAndKeepsWhatItSaid)
+  {
+    ExpectError("The extension 'refuses' did not start");
+    EXPECT_TRUE(_logging.Of("extension:refuses")->Contains(LogLevel::Error, "The data of the game is not here"));
+  }
+
+  TEST_F(ExtensionsTest, LeavesOutAnExtensionThatWasBuiltWithALaterVersionOfTheInterface)
+  {
+    ExpectError("The extension 'from-the-future' was built with version 99 of the interface of extensions, "
+      "and this application has version " + std::to_string(NEON_EXTENSION_ABI_VERSION));
+  }
+
+  TEST_F(ExtensionsTest, LeavesOutALibraryThatExportsNoFunctionToStartItBy)
+  {
+    ExpectError("exports no function 'neon_extension_initialize', so it is no extension");
+    EXPECT_TRUE(_logger->Contains(LogLevel::Error, "extensions://no-entry/no-entry-"));
+  }
+
+  /// A physics whose rays hit what the test says, and remembers what was
+  /// asked.
+  class RayPhysics final : public neon::testing::FakePhysicsContext
+  {
+  public:
+    bool hits = false;
+    neon::Ray asked;
+    neon::QueryFilter asked_filter;
+
+    bool CastRay(const neon::Ray &ray, const neon::QueryFilter &filter, neon::RayHit &hit) override
+    {
+      asked = ray;
+      asked_filter = filter;
+      hit.entity = 42;
+      hit.distance = 5.0f;
+      return hits;
+    }
+  };
+
+  /// The extensions in a world: a store of Flecs, the formats a scene reads
+  /// components by, and the system that lets the extensions take part.
+  class ExtensionsInTheWorldTest : public ExtensionsTest
+  {
+  protected:
+    neon::Flecs_EntityStore _store{std::make_shared<RecordingLogger>()};
+    neon::ComponentFormats _formats;
+    neon::ExtensionRunning _running{&_host, &_formats};
+    NiceMock<neon::testing::MockInputContext> _input;
+    RayPhysics _physics;
+    NiceMock<neon::testing::MockUiSystem> _ui;
+    NiceMock<neon::testing::MockWorldSystem> _world{std::make_shared<RecordingLogger>()};
+
+    void SetUp() override
+    {
+      ExtensionsTest::SetUp();
+
+      _store.Initialize();
+      // a component of the engine, whose name is taken, and whose fields an
+      // extension reaches by their names
+      _store.Register<neon::Transform>("Transform");
+      _formats.Add(neon::ComponentFormat::Of<neon::Transform>());
+
+      _host.SetInput(&_input);
+      _host.SetWorld(&_world);
+      _host.SetPhysics(&_physics);
+      _host.SetUi(&_ui);
+
+      _running.Register(_store);
+      _running.Initialize(_store);
+    }
+
+    void TearDown() override
+    {
+      _host.LeaveWorld();
+      _store.CleanUp();
+      ExtensionsTest::TearDown();
+    }
+
+    [[nodiscard]] std::shared_ptr<RecordingLogger> LogOf(const std::string &extension)
+    {
+      return _logging.Of("extension:" + extension);
+    }
+
+    void ExpectErrorOf(const std::string &extension, const std::string &text)
+    {
+      EXPECT_TRUE(LogOf(extension)->Contains(LogLevel::Error, text)) << LogOf(extension)->Messages(LogLevel::Error);
+    }
+  };
+
+  TEST_F(ExtensionsInTheWorldTest, RegistersTheComponentOfAnExtensionWithTheStoreAndForRecipes)
+  {
+    EXPECT_NE(_store.FindComponent("Spinner"), neon::No_Component);
+
+    const neon::ComponentFormat *format = _formats.Find("Spinner");
+    ASSERT_NE(format, nullptr);
+    ASSERT_NE(format->type, nullptr);
+    EXPECT_EQ(format->type->description, "Turns what carries it");
+    ASSERT_EQ(format->type->fields.size(), 4u);
+    EXPECT_EQ(format->type->fields[0].name, "speed");
+    EXPECT_EQ(format->type->fields[0].description, "How far it turns in a second, in degrees");
+    EXPECT_EQ(format->type->fields[1].kind, neon::FieldKind::Vector3);
+  }
+
+  TEST_F(ExtensionsInTheWorldTest, LetsAnExtensionCreateEntitiesSetComponentsAndQueryThem)
+  {
+    EXPECT_TRUE(LogOf("spinner")->Contains(
+      LogLevel::Info,
+      "1 entity spins, at 360 degrees, after 4 turns, under its parent: 1, without a Spinner at the top: 1"))
+      << LogOf("spinner")->Messages(LogLevel::Info) << LogOf("spinner")->Messages(LogLevel::Error);
+
+    EXPECT_NE(_store.FindEntity("made-by-spinner/wheel"), neon::No_Entity);
+  }
+
+  TEST_F(ExtensionsInTheWorldTest, ReadsTheComponentOfAnExtensionFromARecipeWithItsDefaultsAndWritesItBack)
+  {
+    neon::DataValue written;
+    std::string error;
+    ASSERT_TRUE(_yaml.Read("a recipe", "speed: 45\nturns: 7\n", written, error)) << error;
+
+    const neon::Entity entity = _store.CreateEntity("from-a-recipe");
+    const neon::ComponentFormat *format = _formats.Find("Spinner");
+    ASSERT_NE(format, nullptr);
+
+    std::vector<std::string> errors;
+    format->read(neon::DataReader(written, "a recipe", "Spinner", errors), _store, entity);
+    EXPECT_THAT(errors, IsEmpty());
+
+    // as the struct of the extension has it
+    struct Spinner
+    {
+      float speed;
+      float axis[3];
+      int turns;
+      bool enabled;
+    };
+    const auto *spinner = static_cast<const Spinner *>(_store.GetComponent(entity, _store.FindComponent("Spinner")));
+    ASSERT_NE(spinner, nullptr);
+    EXPECT_EQ(spinner->speed, 45.0f);
+    EXPECT_EQ(spinner->axis[1], 1.0f);
+    EXPECT_EQ(spinner->turns, 7);
+    EXPECT_TRUE(spinner->enabled);
+
+    neon::DataValue back;
+    ASSERT_TRUE(format->write(_store, entity, back));
+    EXPECT_NE(back.Find("speed"), nullptr);
+    EXPECT_EQ(back.Find("axis"), nullptr) << "what holds its default is left out";
+  }
+
+  TEST_F(ExtensionsInTheWorldTest, RefusesAComponentWhoseStructIsNotWhatItDescribes)
+  {
+    ExpectErrorOf("mislaid", "The component 'Padded' cannot be registered: the struct of the extension has 16 bytes, "
+      "and 4 by its description");
+    ExpectErrorOf("mislaid", "The component 'Swapped' cannot be registered: its field 'speed' lies at byte 8 of the "
+      "struct of the extension, and at byte 0 by its description");
+    ExpectErrorOf("mislaid", "The field 'what' of the component 'Unknown' is of kind 999");
+    ExpectErrorOf("mislaid", "The component 'Transform' cannot be registered: there is a component of that name");
+    ExpectErrorOf("mislaid", "A component was registered without a name");
+
+    EXPECT_EQ(LogOf("mislaid")->Count(LogLevel::Critical), 0u);
+    EXPECT_EQ(_store.FindComponent("Padded"), neon::No_Component);
+    EXPECT_EQ(_formats.Find("Swapped"), nullptr);
+  }
+
+  TEST_F(ExtensionsInTheWorldTest, RefusesWhatAnExtensionDoesAtTheWrongTime)
+  {
+    ExpectErrorOf("eager", "register_component was called outside of 'register_components'");
+    ExpectErrorOf("eager", "create_entity was called while there is no world");
+    EXPECT_EQ(LogOf("eager")->Count(LogLevel::Critical), 0u);
+    EXPECT_EQ(_store.FindComponent("Marker"), neon::No_Component);
+    EXPECT_EQ(_store.FindEntity("too-early"), neon::No_Entity);
+  }
+
+  TEST_F(ExtensionsInTheWorldTest, RefusesCallsWithoutAComponentAnEntityOrAQuery)
+  {
+    ExpectErrorOf("eager", "set_component was called with no component");
+    ExpectErrorOf("eager", "get_component was called with an entity that is not alive");
+    ExpectErrorOf("eager", "create_query takes from 1 to 8 components, and was given 0");
+    ExpectErrorOf("eager", "each was called without a query");
+  }
+
+  TEST_F(ExtensionsInTheWorldTest, CallsNothingPastWhatTheVersionOfAnExtensionHolds)
+  {
+    EXPECT_TRUE(LogOf("old")->Contains(LogLevel::Info, "Hello from an extension of version 1"));
+    EXPECT_EQ(LogOf("old")->Count(LogLevel::Error), 0u) << LogOf("old")->Messages(LogLevel::Error);
+  }
+
+  // as the struct of the extension has it
+  struct Tumbler
+  {
+    float speed;
+    float axis[3];
+    float angle;
+    int frames;
+    bool enabled;
+  };
+
+  TEST_F(ExtensionsInTheWorldTest, RunsTheSystemOfAnExtensionInCInEveryFrame)
+  {
+    struct Spinner
+    {
+      float speed;
+      float axis[3];
+      int turns;
+      bool enabled;
+    };
+    const auto wheel = _store.FindEntity("made-by-spinner/wheel");
+    const auto id = _store.FindComponent("Spinner");
+
+    // once by the extension when it started
+    ASSERT_EQ(static_cast<const Spinner *>(_store.GetComponent(wheel, id))->turns, 4);
+
+    _running.Update(_store, 0.016);
+    _running.Update(_store, 0.016);
+
+    EXPECT_EQ(static_cast<const Spinner *>(_store.GetComponent(wheel, id))->turns, 6);
+    EXPECT_TRUE(LogOf("spinner")->Contains(LogLevel::Info, "Added the system 'Turning'"));
+  }
+
+  TEST_F(ExtensionsInTheWorldTest, RunsTheSystemOfAnExtensionInCppInEveryStepFrameAndBetween)
+  {
+    const auto id = _store.FindComponent("Tumbler");
+    ASSERT_NE(id, neon::No_Component);
+
+    // one from a recipe, with the defaults the struct of the extension has
+    neon::DataValue written;
+    std::string error;
+    ASSERT_TRUE(_yaml.Read("a recipe", "speed: 45\n", written, error)) << error;
+    const neon::Entity entity = _store.CreateEntity("from-a-recipe");
+    std::vector<std::string> errors;
+    _formats.Find("Tumbler")->read(neon::DataReader(written, "a recipe", "Tumbler", errors), _store, entity);
+    ASSERT_THAT(errors, IsEmpty());
+
+    const auto *tumbler = static_cast<const Tumbler *>(_store.GetComponent(entity, id));
+    ASSERT_NE(tumbler, nullptr);
+    EXPECT_EQ(tumbler->axis[1], 1.0f);
+    EXPECT_TRUE(tumbler->enabled);
+
+    _running.FixedUpdate(_store, 0.5);
+    _running.FixedUpdate(_store, 0.5);
+    _running.Update(_store, 0.016);
+    _running.Interpolate(_store, 0.25);
+
+    // 45 degrees a second, for a second, at the pace of 2 the system was added with
+    tumbler = static_cast<const Tumbler *>(_store.GetComponent(entity, id));
+    EXPECT_EQ(tumbler->angle, 90.0f);
+    EXPECT_EQ(tumbler->frames, 1);
+
+    // the one the extension made stands still
+    const auto still = _store.FindEntity("made-by-tumbler");
+    ASSERT_NE(still, neon::No_Entity);
+    EXPECT_EQ(static_cast<const Tumbler *>(_store.GetComponent(still, id))->angle, 0.0f);
+    EXPECT_EQ(static_cast<const Tumbler *>(_store.GetComponent(still, id))->speed, 10.0f);
+
+    EXPECT_TRUE(LogOf("tumbler")->Contains(LogLevel::Info, "A tumbler that stands still was made: yes"));
+    EXPECT_TRUE(LogOf("tumbler")->Contains(LogLevel::Info, "Between two steps, a quarter of the way"));
+    EXPECT_EQ(LogOf("tumbler")->Count(LogLevel::Error), 0u) << LogOf("tumbler")->Messages(LogLevel::Error);
+  }
+
+  TEST_F(ExtensionsInTheWorldTest, CleansUpAnExtensionInCpp)
+  {
+    _host.CleanUp();
+
+    EXPECT_TRUE(LogOf("tumbler")->Contains(LogLevel::Info, "The tumblers are put away"));
+  }
+
+  TEST_F(ExtensionsInTheWorldTest, RefusesASystemThatIsNoneOrComesTooLate)
+  {
+    ExpectErrorOf("eager", "The system 'Empty' has no function to call");
+    ExpectErrorOf("eager", "A system was added without a name");
+    ExpectErrorOf("eager", "The system 'Late' was added after the world came up");
+    ExpectErrorOf("eager", "listen_to_physics was called after the world came up");
+    ExpectErrorOf("eager", "listen_to_physics was called without a function to tell");
+    ExpectErrorOf("eager", "cast_ray was called with a direction of no length");
+    EXPECT_EQ(LogOf("eager")->Count(LogLevel::Critical), 0u);
+  }
+
+  TEST_F(ExtensionsInTheWorldTest, FindsTheFieldsOfAComponentOfTheEngineByTheirNamesAndReadsAFile)
+  {
+    EXPECT_TRUE(LogOf("visitor")->Contains(
+      LogLevel::Info, "Found position and scale of Transform: yes, and what is not there: no"))
+      << LogOf("visitor")->Messages(LogLevel::Info);
+    EXPECT_TRUE(LogOf("visitor")->Contains(LogLevel::Info, "Read its own recipe: yes, a file that is not there: no"))
+      << LogOf("visitor")->Messages(LogLevel::Info);
+  }
+
+  TEST_F(ExtensionsInTheWorldTest, MovesAnEntityByTheInputThroughTheFieldsOfItsTransform)
+  {
+    const neon::Entity visited = _store.CreateEntity("visited");
+    neon::Transform transform;
+    transform.position = {1.0f, 2.0f, 3.0f};
+    _store.Set(visited, transform);
+
+    ON_CALL(_input, ActionAxis2("move")).WillByDefault(Return(glm::vec2(0.5f, -1.0f)));
+    ON_CALL(_input, WasActionPressed("jump")).WillByDefault(Return(true));
+    ON_CALL(_input, IsActionDown("grow")).WillByDefault(Return(true));
+
+    _running.Update(_store, 0.016);
+
+    const auto *moved = _store.Get<neon::Transform>(visited);
+    EXPECT_EQ(moved->position, glm::vec3(1.5f, 3.0f, 2.0f));
+    EXPECT_EQ(moved->scale, glm::vec3(2.0f));
+    EXPECT_EQ(LogOf("visitor")->Count(LogLevel::Error), 0u) << LogOf("visitor")->Messages(LogLevel::Error);
+  }
+
+  TEST_F(ExtensionsInTheWorldTest, RefusesAValueAFieldDoesNotTake)
+  {
+    const neon::Entity visited = _store.CreateEntity("visited");
+    _store.Set(visited, neon::Transform{});
+    ON_CALL(_input, IsActionDown("vanish")).WillByDefault(Return(true));
+
+    _running.Update(_store, 0.016);
+
+    EXPECT_EQ(_store.Get<neon::Transform>(visited)->scale, glm::vec3(1.0f));
+    ExpectErrorOf("visitor", "set_field_text: ");
+    EXPECT_FALSE(LogOf("visitor")->Contains(LogLevel::Error, "A scale of text was taken"));
+  }
+
+  TEST_F(ExtensionsInTheWorldTest, SaysWhenAnEntityHasNoComponentToSetAFieldOf)
+  {
+    _store.CreateEntity("visited");
+
+    _running.Update(_store, 0.016);
+
+    ExpectErrorOf("visitor", "set_field of Transform.position: the entity has no such component");
+  }
+
+  TEST_F(ExtensionsInTheWorldTest, SpawnsAPrefabAndAsksForAnotherSceneThroughTheWorld)
+  {
+    const neon::Entity visited = _store.CreateEntity("visited");
+    _store.Set(visited, neon::Transform{});
+    ON_CALL(_input, WasActionPressed("spawn")).WillByDefault(Return(true));
+    ON_CALL(_input, WasActionPressed("leave")).WillByDefault(Return(true));
+
+    EXPECT_CALL(_world, Spawn("assets://prefabs/crate.prefab.yml", visited, _)).WillOnce(Return(neon::Entity{77}));
+    EXPECT_CALL(_world, LoadScene("assets://scenes/next.scene.yml")).Times(1);
+
+    _running.Update(_store, 0.016);
+
+    EXPECT_TRUE(LogOf("visitor")->Contains(LogLevel::Info, "Spawned 77"));
+  }
+
+  TEST_F(ExtensionsInTheWorldTest, SaysWhenTheApplicationHasNoInputOrWorldForItsExtensions)
+  {
+    const neon::Entity visited = _store.CreateEntity("visited");
+    _store.Set(visited, neon::Transform{});
+    _host.SetInput(nullptr);
+
+    _running.Update(_store, 0.016);
+
+    ExpectErrorOf("visitor", "action_axis2 was called, and this application has no input for its extensions");
+  }
+
+  TEST_F(ExtensionsInTheWorldTest, TellsASystemWhatBeganAndEndedToTouchBeforeItsUpdate)
+  {
+    _physics.next_events.push_back({
+      .kind = neon::PhysicsEventKind::Began, .trigger = true, .first = 7, .second = 8, .point = {0.0f, 3.0f, 0.0f}
+    });
+    _physics.next_events.push_back({.kind = neon::PhysicsEventKind::Ended, .first = 5, .second = 6});
+    _physics.Step(1.0 / 60.0);
+
+    _running.Update(_store, 0.016);
+
+    EXPECT_TRUE(LogOf("visitor")->Contains(LogLevel::Info, "A trigger 7 was entered by 8 at height 3"))
+      << LogOf("visitor")->Messages(LogLevel::Info);
+    EXPECT_TRUE(LogOf("visitor")->Contains(LogLevel::Info, "A body 5 was left by 6 at height 0"));
+  }
+
+  TEST_F(ExtensionsInTheWorldTest, CastsARayThroughThePhysics)
+  {
+    _store.Set(_store.CreateEntity("visited"), neon::Transform{});
+    ON_CALL(_input, WasActionPressed("look")).WillByDefault(Return(true));
+
+    _running.Update(_store, 0.016);
+    EXPECT_TRUE(LogOf("visitor")->Contains(LogLevel::Info, "Looked down and saw nothing"));
+
+    _physics.hits = true;
+    _running.Update(_store, 0.016);
+
+    EXPECT_TRUE(LogOf("visitor")->Contains(LogLevel::Info, "Looked down and saw 42 at a distance of 5"));
+    EXPECT_EQ(_physics.asked.origin, glm::vec3(0.0f, 5.0f, 0.0f));
+    EXPECT_EQ(_physics.asked.direction, glm::vec3(0.0f, -1.0f, 0.0f));
+    EXPECT_EQ(_physics.asked.distance, 100.0f);
+    EXPECT_EQ(_physics.asked_filter.ignore, neon::Entity{9});
+    EXPECT_FALSE(_physics.asked_filter.triggers);
+  }
+
+  TEST_F(ExtensionsInTheWorldTest, ReadsAndWritesAFieldOfTheEngineInPlaceForEveryEntityAndSetsValuesOfTheUi)
+  {
+    EXPECT_TRUE(LogOf("visitor")->Contains(LogLevel::Info, "The position has a place: yes, and what has none: no"))
+      << LogOf("visitor")->Messages(LogLevel::Info);
+
+    const neon::Entity visited = _store.CreateEntity("visited");
+    const neon::Entity other = _store.CreateEntity("other");
+    neon::Transform transform;
+    transform.position = {1.0f, 2.0f, 3.0f};
+    _store.Set(visited, transform);
+    _store.Set(other, neon::Transform{});
+    ON_CALL(_input, WasActionPressed("lift")).WillByDefault(Return(true));
+
+    EXPECT_CALL(_ui, SetNumber("lifted", 2.0)).Times(1);
+    EXPECT_CALL(_ui, SetText("who", "visitor")).Times(1);
+
+    _running.Update(_store, 0.016);
+
+    EXPECT_EQ(_store.Get<neon::Transform>(visited)->position, glm::vec3(1.0f, 3.0f, 3.0f));
+    EXPECT_EQ(_store.Get<neon::Transform>(other)->position, glm::vec3(0.0f, 1.0f, 0.0f));
+  }
+
+  TEST_F(ExtensionsInTheWorldTest, SpawnsAPrefabAtAPlaceWrittenOnTopOfItsTransform)
+  {
+    _store.Set(_store.CreateEntity("visited"), neon::Transform{});
+    ON_CALL(_input, WasActionPressed("drop")).WillByDefault(Return(true));
+
+    neon::DataValue overrides;
+    EXPECT_CALL(_world, Spawn("assets://prefabs/crate.prefab.yml", neon::No_Entity, _))
+      .WillOnce([&overrides](const std::string &, neon::Entity, const neon::DataValue &given)
+      {
+        overrides = given;
+        return neon::Entity{88};
+      });
+
+    _running.Update(_store, 0.016);
+
+    EXPECT_TRUE(LogOf("visitor")->Contains(LogLevel::Info, "Dropped 88"));
+    const neon::DataValue *transform = overrides.Find("Transform");
+    ASSERT_NE(transform, nullptr);
+    ASSERT_NE(transform->Find("position"), nullptr);
+    float height = 0.0f;
+    ASSERT_TRUE(transform->Find("position")->GetItems()[1].GetNumber(height));
+    EXPECT_EQ(height, 30.0f);
+    float yaw = 0.0f;
+    ASSERT_TRUE(transform->Find("rotation")->GetItems()[1].GetNumber(yaw));
+    EXPECT_EQ(yaw, 90.0f);
+  }
+
+  TEST_F(ExtensionsInTheWorldTest, TakesTheStoreFromTheExtensionsWhenTheWorldIsLeft)
+  {
+    _host.LeaveWorld();
+    _host.Start(_store);
+    _host.LeaveWorld();
+
+    // started twice by the test, which a world never does; what matters is
+    // that the store was there again and is gone again
+    EXPECT_EQ(LogOf("spinner")->Count(LogLevel::Error), 0u) << LogOf("spinner")->Messages(LogLevel::Error);
+  }
+
+  /// Recipes in memory, and a loader that opens nothing.
+  class ExtensionRecipesTest : public ::testing::Test
+  {
+  protected:
+    std::shared_ptr<RecordingLogger> _logger = std::make_shared<RecordingLogger>();
+    RecordingLoggingContext _logging;
+    MemoryFileSystem _file_system{SettingsConfig{}, std::make_shared<RecordingLogger>()};
+    NiceMock<MockLibraryLoader> _library_loader;
+    RYML_DocumentFormat _yaml;
+    ExtensionHost _host{&_file_system, &_yaml, &_library_loader, &_logging, _logger};
+
+    void SetUp() override
+    {
+      _file_system.Initialize();
+      ON_CALL(_library_loader, GetPlatform()).WillByDefault(Return("linux-x86_64"));
+    }
+
+    /// Puts a recipe into the folder of an extension.
+    void Write(const std::string &folder, const std::string &text)
+    {
+      _file_system.AddNativeFile("/extensions/" + folder + "/extension.yml", text);
+    }
+
+    /// Starts the extensions, and expects an error that holds the text and
+    /// that none was started.
+    void ExpectLeftOut(const std::string &text)
+    {
+      _host.Initialize();
+
+      EXPECT_TRUE(_logger->Contains(LogLevel::Error, text)) << _logger->Messages(LogLevel::Error);
+      EXPECT_THAT(_host.GetLoaded(), IsEmpty());
+    }
+  };
+
+  TEST_F(ExtensionRecipesTest, HasNoExtensionsWithoutTheFolderWhichIsNoError)
+  {
+    EXPECT_CALL(_library_loader, Open(_, _)).Times(0);
+
+    _host.Initialize();
+
+    EXPECT_THAT(_host.GetLoaded(), IsEmpty());
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 0u) << _logger->Messages(LogLevel::Error);
+    EXPECT_TRUE(_logger->Contains(LogLevel::Info, "No extensions"));
+  }
+
+  TEST_F(ExtensionRecipesTest, OpensTheLibraryOfThePlatformInTheFolderOfTheExtension)
+  {
+    Write("quake",
+          "version: 1\n"
+          "name: quake\n"
+          "libraries:\n"
+          "  macos-arm64: quake-macos-arm64.dylib\n"
+          "  linux-x86_64: quake-linux-x86_64.so\n");
+
+    EXPECT_CALL(_library_loader, Open("extensions://quake/quake-linux-x86_64.so", _))
+      .WillOnce([](const std::string &, std::string &error)
+      {
+        error = "it is of another platform";
+        return nullptr;
+      });
+
+    ExpectLeftOut("The library extensions://quake/quake-linux-x86_64.so of the extension 'quake' cannot be opened: "
+      "it is of another platform");
+  }
+
+  TEST_F(ExtensionRecipesTest, LeavesOutAnExtensionWithoutALibraryForThePlatform)
+  {
+    Write("quake",
+          "version: 1\n"
+          "name: quake\n"
+          "libraries:\n"
+          "  macos-arm64: quake-macos-arm64.dylib\n");
+
+    EXPECT_CALL(_library_loader, Open(_, _)).Times(0);
+
+    ExpectLeftOut("The extension 'quake' has no library for this platform, linux-x86_64");
+  }
+
+  TEST_F(ExtensionRecipesTest, AcceptsAnExtensionThatBringsNoLibrary)
+  {
+    Write("palette",
+          "version: 1\n"
+          "name: palette\n");
+
+    EXPECT_CALL(_library_loader, Open(_, _)).Times(0);
+
+    _host.Initialize();
+
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 0u) << _logger->Messages(LogLevel::Error);
+    EXPECT_TRUE(_logger->Contains(LogLevel::Info, "The extension 'palette' brings no library"));
+    // what brings no library still brings its assets
+    EXPECT_THAT(_host.GetAssetFolders(), ElementsAre("extensions://palette/assets/"));
+  }
+
+  TEST_F(ExtensionRecipesTest, LeavesOutAFolderWithoutARecipe)
+  {
+    _file_system.AddNativeFile("/extensions/quake/quake-linux-x86_64.so", "");
+
+    ExpectLeftOut("extensions://quake has no extension.yml");
+  }
+
+  TEST_F(ExtensionRecipesTest, LeavesAFileAtTheTopAlone)
+  {
+    _file_system.AddNativeFile("/extensions/README.md", "");
+
+    _host.Initialize();
+
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 0u) << _logger->Messages(LogLevel::Error);
+    EXPECT_TRUE(_logger->Contains(LogLevel::Warn, "extensions://README.md is not in the folder of an extension"));
+  }
+
+  TEST_F(ExtensionRecipesTest, RefusesARecipeWhoseNameIsNotThatOfItsFolder)
+  {
+    Write("quake",
+          "version: 1\n"
+          "name: doom\n");
+
+    ExpectLeftOut("extensions://quake/extension.yml:2: 'name' is 'doom', and the folder of the extension is 'quake'");
+  }
+
+  TEST_F(ExtensionRecipesTest, RefusesARecipeWithoutAVersionOrAName)
+  {
+    Write("quake", "libraries:\n  linux-x86_64: quake.so\n");
+
+    ExpectLeftOut("'version' is missing");
+    EXPECT_TRUE(_logger->Contains(LogLevel::Error, "'name' is missing"));
+  }
+
+  TEST_F(ExtensionRecipesTest, RefusesARecipeOfALaterLayout)
+  {
+    Write("quake",
+          "version: 2\n"
+          "name: quake\n");
+
+    ExpectLeftOut("the extension has version 2, and this engine reads up to version 1");
+  }
+
+  TEST_F(ExtensionRecipesTest, RefusesAPlatformThatIsNotKnown)
+  {
+    Write("quake",
+          "version: 1\n"
+          "name: quake\n"
+          "libraries:\n"
+          "  amiga-m68k: quake.library\n");
+
+    ExpectLeftOut("extensions://quake/extension.yml:4: 'amiga-m68k' is not a platform. Those are macos-arm64, ");
+  }
+
+  TEST_F(ExtensionRecipesTest, RefusesANameThatIsNotKnown)
+  {
+    Write("quake",
+          "version: 1\n"
+          "name: quake\n"
+          "library: quake.so\n");
+
+    ExpectLeftOut("library");
+  }
+
+  TEST_F(ExtensionRecipesTest, StartsTheOthersWhenOneHasAProblem)
+  {
+    Write("broken", "version: 1\n");
+    Write("quake",
+          "version: 1\n"
+          "name: quake\n"
+          "libraries:\n"
+          "  linux-x86_64: quake-linux-x86_64.so\n");
+
+    EXPECT_CALL(_library_loader, Open("extensions://quake/quake-linux-x86_64.so", _)).Times(1);
+
+    _host.Initialize();
+
+    EXPECT_TRUE(_logger->Contains(LogLevel::Error, "The extension 'broken' is left out until its recipe is corrected"));
+  }
+}

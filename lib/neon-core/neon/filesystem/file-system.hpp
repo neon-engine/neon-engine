@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "file-system-context.hpp"
+#include "neon/extension/native-library.hpp"
 #include "neon/runtime/settings-config.hpp"
 #include "neon/logging/log-file-target.hpp"
 #include "neon/logging/logger.hpp"
@@ -39,6 +40,11 @@ namespace neon
     /// settings, and make sure it exists. It stays empty when no folder was
     /// chosen, or when the chosen one cannot be used.
     std::string _output_directory;
+
+    /// Native folder behind `extensions://`, ending with a native separator.
+    /// Backends set this in Initialize(). The folder need not be there: an
+    /// application without extensions has none, and nothing is found in it.
+    std::string _extensions_directory;
 
     /// Separator the platform uses between folders in a native path.
     /// Backends set this in Initialize().
@@ -81,6 +87,7 @@ namespace neon
     static constexpr std::string_view assets_scheme = "assets://";
     static constexpr std::string_view user_scheme = "user://";
     static constexpr std::string_view output_scheme = "output://";
+    static constexpr std::string_view extensions_scheme = "extensions://";
 
     explicit FileSystem(const SettingsConfig &settings_config, const std::shared_ptr<Logger> &logger)
     {
@@ -88,7 +95,7 @@ namespace neon
       _logger = logger;
     }
 
-    /// Finds the folders behind `assets://` and `output://`. `user://` has
+    /// Finds the folders behind `assets://`, `extensions://`, and `output://`. `user://` has
     /// no folder yet, see PlaceUserDirectory().
     virtual void Initialize() = 0;
 
@@ -121,6 +128,17 @@ namespace neon
     /// Returns false if the path cannot be written to, or the target cannot
     /// open the file. Both say why, and the target goes on without a file.
     bool PlaceLogFile(const std::string &path, LogFileTarget &target);
+
+    /// Opens a library of the platform at a virtual path, such as
+    /// `extensions://quake/quake-macos-arm64.dylib`.
+    ///
+    /// The platform opens the file itself, so it needs a native path. The
+    /// path goes from here straight to the library and is never returned,
+    /// as with PlaceLogFile.
+    ///
+    /// Returns false when the file is not there or cannot be opened, and
+    /// says why in `error`.
+    bool OpenLibrary(const std::string &path, NativeLibrary &library, std::string &error);
 
   private:
     /// Splits a virtual path into the native folder of its scheme and the

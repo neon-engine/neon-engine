@@ -66,7 +66,7 @@ folder each inside it. Two organizations never share one.
 | Step | What happens | Why in this order |
 |---|---|---|
 | 1 | The command line is read | Options such as `--headless-renderer` and `--output-dir` decide how the file system comes up |
-| 2 | The file system finds `assets://` and `output://` | `assets://` is next to the executable, `output://` is `--output-dir`. `user://` has no folder yet, and every `user://` path is refused |
+| 2 | The file system finds `assets://`, `extensions://`, and `output://` | `assets://` and `extensions://` are next to the executable, `output://` is `--output-dir`. `user://` has no folder yet, and every `user://` path is refused |
 | 3 | `assets://project.yml` is read | It is the only file that can be read before `user://` exists, and it is what places `user://` |
 | 4 | `user://` is placed under the organization and the name | `FileSystem::PlaceUserDirectory`. The SDL2 backend asks the platform for the folder and creates it |
 | 5 | The log file is opened under `user://` | What was logged before is written into it first, see [file-systems.md](file-systems.md#the-log-file) |
@@ -108,3 +108,63 @@ How the folder is organised is in [project-layout.md](project-layout.md).
   `input` was with the input maps.
 - **A shipped runtime** (#143) runs only its project. `--scene` and the other
   options that load content are then for the editor.
+
+## A project with code in C++
+
+A game's code is Lua, see [scripting.md](scripting.md), or C++ in an
+extension, see [extensions.md](extensions.md), or both. What a game is made
+of follows from that:
+
+| A game is | Then it has |
+|---|---|
+| A project alone | `assets/` with its `project.yml`, scenes, and scripts in Lua. Nothing is compiled |
+| An extension alone | `extensions/<name>/` with its library and its `assets/`, put next to a runtime that runs some project. A loader for another engine's files, a tool, something several projects use |
+| A project and an extension | Both, side by side. The bench is one |
+
+```
+bench/
+  CMakeLists.txt             neon_add_project(bench SOURCES extensions/bench/bench.cpp …)
+  README.md
+  assets/
+    project.yml              the project: its name, its scenes, the scene it starts with
+  extensions/
+    bench/                   laid out as it lies next to the runtime
+      extension.yml
+      bench.cpp …            its code
+      assets/                its scenes, prefabs, scripts, user interfaces
+```
+
+| Decision | Reason |
+|---|---|
+| The code is an extension, a library next to the runtime | The runtime is not built again for a game. Whoever writes the game builds the game's own files and nothing else, see [extensions.md](extensions.md#building-an-extension) |
+| What depends on the extension's components lives in the extension's `assets/` | A scene that holds a `NativeSpawner` is of no use without the library that brings it. The project names it as `extensions://bench/assets/scenes/rain-cpp-heavy-copy.scene.yml` |
+| `extensions/<name>/` in the source is laid out as next to the runtime | One layout to know. The build adds the library to it |
+| `project.yml` is in `assets/` | It is where the runtime reads it. It belongs at the root, next to `assets/` and `extensions/`, which waits for a scheme of its own (#368) |
+| `neon_add_project(<name> SOURCES …)` puts the game together: `NeonRuntime`, `assets/`, `extensions/<name>/` | It is what a shipped game looks like, and it runs from there. Exporting (#84) will make the same folder for another platform |
+| The runtime's assets are copied first, and the project's on top | The runtime reads some of its own whatever the project is: its shaders, its fonts, the pause menu, the input map. Which of the runtime's assets are the engine's and which are the museum's is not separated yet, so the museum's come along |
+
+**Built on its own**, which is how a game is worked on: the folder is a
+build of its own that includes `cmake/NeonSdk.cmake` of the engine. Only the
+extension is compiled, with any compiler, and the game is put together in
+the build folder with a runtime that is built already, the engine's release
+build, else its debug build, or the folder `-DNEON_RUNTIME_DIRECTORY=` names.
+
+```sh
+cmake -S projects/bench -B build/bench -G Ninja
+cmake --build build/bench
+build/bench/bench/NeonRuntime
+```
+
+**Built by the engine**, for a project in `projects/` of the engine: the
+folders there are found by the engine's build, so that a new one needs no
+edit outside its folder. The target is built on request alone and puts the
+game together under `bin/<build>/<platform>/<name>/`, with the runtime the
+engine builds.
+
+```sh
+cmake --build build/macos-arm64-debug --target bench
+bin/debug/darwin-arm64/bench/NeonRuntime
+```
+
+The functions are in [NeonProjects.cmake](../cmake/NeonProjects.cmake) and
+[NeonSdk.cmake](../cmake/NeonSdk.cmake).

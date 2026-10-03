@@ -9,6 +9,8 @@
 #include <neon/command-line/display-options.hpp>
 #include <neon/command-line/runtime-options.hpp>
 #include <neon/data/ryml-document-format.hpp>
+#include <neon/extension/extension-host.hpp>
+#include <neon/extension/sdl2-library-loader.hpp>
 #include <neon/filesystem/sdl2-file-system.hpp>
 #include <neon/input/input-map-file.hpp>
 #include <neon/input/sdl2-clipboard.hpp>
@@ -33,6 +35,7 @@
 #include <neon/world-system/ecs/entity-world.hpp>
 #include <neon/world-system/ecs/scene-file/scene-file.hpp>
 #include <neon/world-system/ecs/systems/audio-playback.hpp>
+#include <neon/world-system/ecs/systems/extension-running.hpp>
 #include <neon/world-system/ecs/systems/geometry-building.hpp>
 #include <neon/world-system/ecs/systems/rope-drawing.hpp>
 #include <neon/world-system/ecs/systems/physics-simulation.hpp>
@@ -186,6 +189,19 @@ int main(const int argc, char *argv[])
     file_system.CleanUp();
     return EXIT_FAILURE;
   }
+
+  // What extends the runtime: every folder of extensions://, next to the
+  // executable. Nothing lists them, and without the folder there are none.
+  // They are started once the log has its file and before any other system
+  // comes up, so that what one brings is there for all of them.
+  neon::SDL2_LibraryLoader library_loader(&file_system);
+  neon::ExtensionHost extension_host(
+    &file_system,
+    &yaml,
+    &library_loader,
+    &logging_system,
+    logging_system.CreateLogger("ExtensionHost"));
+  extension_host.Initialize();
 
   // the window is named after the project unless the settings say otherwise
   if (settings_config.title.empty()) { settings_config.title = project.name; }
@@ -398,6 +414,14 @@ int main(const int argc, char *argv[])
   neon::Jolt_PhysicsSystem physics_system(settings_config, logging_system.CreateLogger("Jolt_PhysicsSystem"));
   physics_system.Initialize();
 
+  // What the extensions bring to the world. They register their components
+  // before the scripts are read, so that a script finds them.
+  extension_host.SetInput(ui_system.GetGameInput());
+  extension_host.SetWorld(&world);
+  extension_host.SetPhysics(&physics_system);
+  extension_host.SetUi(&ui_system);
+  world.AddSystem(std::make_unique<neon::ExtensionRunning>(&extension_host, &scene.GetComponentFormats()));
+
   // The game's own code: scripts in Lua anywhere under assets://, which
   // declare components and systems as the engine's code does. They read
   // the input the user interface left, and may ask for another scene.
@@ -406,12 +430,16 @@ int main(const int argc, char *argv[])
   script_system.Initialize();
   script_system.SetInput(ui_system.GetGameInput());
   script_system.SetWorld(&world);
-  world.AddSystem(std::make_unique<neon::ScriptRunning>(
+  auto script_running = std::make_unique<neon::ScriptRunning>(
     &script_system,
     &physics_system,
     &scene.GetComponentFormats(),
     "assets://",
-    logging_system.CreateLogger("ScriptRunning")));
+    logging_system.CreateLogger("ScriptRunning"));
+  // an extension brings scripts as it brings everything else of its own,
+  // under its assets
+  for (const auto &folder : extension_host.GetAssetFolders()) { script_running->AddFolder(folder); }
+  world.AddSystem(std::move(script_running));
 
   // the player, driven by what the user interface left of the input. It
   // sets the velocity of its body, which the physics moves by
@@ -465,10 +493,14 @@ int main(const int argc, char *argv[])
 
   // CleanUp is safe to call more than once. Doing it here guarantees the
   // systems shut down before the file system they depend on.
+  // the extensions reach the store no more once the world is cleaned up
+  extension_host.LeaveWorld();
   app.CleanUp();
   script_system.CleanUp();
   audio_system.CleanUp();
   physics_system.CleanUp();
+  // after everything that could hold what an extension brought
+  extension_host.CleanUp();
   file_system.CleanUp();
 
   return failed ? EXIT_FAILURE : EXIT_SUCCESS;

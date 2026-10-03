@@ -6,6 +6,8 @@ add_library(${TARGET} STATIC
         neon/command-line/display-options.cpp
         neon/command-line/display-options.hpp
         neon/input/clipboard-context.hpp
+        neon/reflection/field-numbers.cpp
+        neon/reflection/field-numbers.hpp
         neon/reflection/field-text.cpp
         neon/reflection/field-text.hpp
         neon/input/input-script.cpp
@@ -97,6 +99,22 @@ add_library(${TARGET} STATIC
         neon/world-system/ecs/systems/rope-drawing.cpp
         neon/world-system/ecs/systems/rope-drawing.hpp
 
+        # extensions: libraries that are loaded when the application starts
+        neon/extension/extension-field.hpp
+        neon/extension/extension-physics-listener.hpp
+        neon/extension/extension-services.hpp
+        neon/extension/extension-file.cpp
+        neon/extension/extension-file.hpp
+        neon/extension/extension-host.cpp
+        neon/extension/extension-host.hpp
+        neon/extension/extension-host-table.cpp
+        neon/extension/extension-host-table.hpp
+        neon/world-system/ecs/systems/extension-running.cpp
+        neon/world-system/ecs/systems/extension-running.hpp
+        neon/extension/extension-recipe.hpp
+        neon/extension/library-loader.hpp
+        neon/extension/loaded-extension.hpp
+        neon/extension/native-library.hpp
         # project
         neon/project/project.hpp
         neon/project/project-file.cpp
@@ -404,6 +422,7 @@ target_include_directories(${TARGET}
 )
 
 target_link_libraries(${TARGET}
+        neon-extension-api
         glm::glm
         spdlog::spdlog
         assimp::assimp
@@ -422,6 +441,9 @@ if (NEON_BUILD_TESTS)
           neon/testing/mock-entity-store.hpp
           neon/testing/mock-entity-world.hpp
           neon/testing/mock-file-system-context.hpp
+          neon/testing/mock-library-loader.hpp
+          neon/testing/mock-input-context.hpp
+          neon/testing/recording-logging-context.hpp
           neon/testing/mock-script-context.hpp
           neon/testing/mock-input-system.hpp
           neon/testing/mock-render-2d-context.hpp
@@ -450,6 +472,7 @@ neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/script-running.test.c
 neon_add_unit_test(${TARGET} neon/command-line/display-options.test.cpp)
   neon_add_unit_test(${TARGET} neon/input/input-script.test.cpp)
   neon_add_unit_test(${TARGET} neon/reflection/field-text.test.cpp)
+  neon_add_unit_test(${TARGET} neon/reflection/field-numbers.test.cpp)
   neon_add_unit_test(${TARGET} neon/ui/css/css-expression.test.cpp)
   neon_add_unit_test(${TARGET} neon/ui/css/css-media.test.cpp)
   neon_add_unit_test(${TARGET} neon/ui/css/css-selector.test.cpp)

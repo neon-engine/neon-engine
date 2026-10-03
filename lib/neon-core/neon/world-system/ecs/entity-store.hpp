@@ -48,6 +48,11 @@ namespace neon
     /// The component registered under this name, or No_Component.
     virtual ComponentId FindComponent(const std::string &name) = 0;
 
+    /// How many bytes a component of a kind takes, which is how far one lies
+    /// from the next in the column of a block. 0 for a kind that was never
+    /// registered.
+    [[nodiscard]] virtual std::size_t GetComponentSize(ComponentId component) = 0;
+
     /// Creates an entity. A name has to be unique among the children of the
     /// parent, and may be empty. When an entity of that name exists under the
     /// parent already, it is returned instead.

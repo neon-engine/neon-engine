@@ -68,7 +68,7 @@ namespace
   };
 
   constexpr auto unknown_scheme =
-    "it does not start with a known scheme, which are assets://, user:// or output://";
+    "it does not start with a known scheme, which are assets://, user://, output:// or extensions://";
   constexpr auto backslash = "it contains a backslash, folders are separated by forward slashes on every platform";
   constexpr auto forbidden_character =
     "it contains a character that is not allowed in file names on every platform";
@@ -143,6 +143,40 @@ namespace
     EXPECT_EQ(contents, "a save");
     EXPECT_TRUE(_file_system.ReadText("output://frame.png", contents));
     EXPECT_EQ(contents, "a frame");
+  }
+
+  TEST_F(FileSystemTest, ReadsWhatAnExtensionBrings)
+  {
+    _file_system.AddNativeFile("/extensions/quake/extension.yml", "a recipe");
+
+    std::string contents;
+    EXPECT_TRUE(_file_system.ReadText("extensions://quake/extension.yml", contents));
+    EXPECT_EQ(contents, "a recipe");
+  }
+
+  TEST_F(FileSystemTest, RefusesToWriteToExtensions)
+  {
+    EXPECT_FALSE(_file_system.WriteText("extensions://quake/extension.yml", "another recipe"));
+    ExpectRefused("extensions://quake/extension.yml", "its scheme is read-only");
+  }
+
+  TEST_F(FileSystemTest, FindsNothingInExtensionsWhenTheFolderIsNotThereAndLogsNoError)
+  {
+    std::vector<std::string> paths;
+    EXPECT_FALSE(_file_system.ListFiles("extensions://", paths));
+    EXPECT_FALSE(_file_system.Exists("extensions://quake/extension.yml"));
+    EXPECT_THAT(paths, IsEmpty());
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 0u) << _logger->Messages(LogLevel::Error);
+  }
+
+  TEST_F(FileSystemTest, ListsTheExtensionsWhenGivenTheSchemeAlone)
+  {
+    _file_system.AddNativeFile("/extensions/quake/extension.yml", "");
+    _file_system.AddNativeFile("/extensions/bench/extension.yml", "");
+
+    std::vector<std::string> paths;
+    EXPECT_TRUE(_file_system.ListFiles("extensions://", paths));
+    EXPECT_THAT(paths, ElementsAre("extensions://bench/extension.yml", "extensions://quake/extension.yml"));
   }
 
   TEST_F(FileSystemTest, KeepsTheSchemesApart)

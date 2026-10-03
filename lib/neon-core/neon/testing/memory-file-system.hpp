@@ -19,8 +19,9 @@ namespace neon::testing
   /// them. It also serves as the file system of anything that reads files.
   ///
   /// Its native paths are made up. `assets://` is the folder `assets` at the
-  /// top, `user://` is `user`, and `output://` is what the settings name as
-  /// output directory. With the separator `\` that gives `\assets\`.
+  /// top, `user://` is `user`, `extensions://` is `extensions`, which is
+  /// only there once a file is put into it, and `output://` is what the
+  /// settings name as output directory. With the separator `\` that gives `\assets\`.
   class MemoryFileSystem final : public FileSystem
   {
     std::map<std::string, std::vector<unsigned char>> _files;
@@ -116,6 +117,7 @@ namespace neon::testing
 
       _assets_directory = separator + "assets" + separator;
       _user_directory = separator + "user" + separator;
+      _extensions_directory = separator + "extensions" + separator;
       AddDirectories(_assets_directory);
       AddDirectories(_user_directory);
 

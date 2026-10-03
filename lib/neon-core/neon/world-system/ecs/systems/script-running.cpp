@@ -12,17 +12,31 @@ namespace neon
     const std::shared_ptr<Logger> &logger)
     : _scripts(scripts), _physics(physics), _formats(formats), _folder(std::move(folder)), _logger(logger) {}
 
+  void ScriptRunning::AddFolder(const std::string &folder)
+  {
+    _more_folders.push_back(folder);
+  }
+
   void ScriptRunning::Register(EntityStore &store)
   {
     if (!_scripts->LoadScripts(_folder, store, *_formats))
     {
       _logger->Info("No scripts: there is no folder {}", _folder);
-      return;
+    } else
+    {
+      const std::size_t components = _scripts->GetComponentCount();
+      const std::size_t systems = _scripts->GetSystemCount();
+      _logger->Info("Scripts under {} declare {} components and {} systems", _folder, components, systems);
     }
 
-    const std::size_t components = _scripts->GetComponentCount();
-    const std::size_t systems = _scripts->GetSystemCount();
-    _logger->Info("Scripts under {} declare {} components and {} systems", _folder, components, systems);
+    for (const auto &folder : _more_folders)
+    {
+      if (!_scripts->LoadScripts(folder, store, *_formats)) { continue; }
+
+      const std::size_t components = _scripts->GetComponentCount();
+      const std::size_t systems = _scripts->GetSystemCount();
+      _logger->Info("With the scripts under {}, {} components and {} systems are declared", folder, components, systems);
+    }
   }
 
   void ScriptRunning::Initialize(EntityStore &store)

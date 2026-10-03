@@ -193,6 +193,11 @@ namespace neon
     return _shape->alignment;
   }
 
+  std::size_t ScriptComponentLayout::GetOffset(const std::size_t field) const
+  {
+    return _shape->slots[field].offset;
+  }
+
   void ScriptComponentLayout::Construct(const Shape &shape, void *at)
   {
     for (const auto &slot : shape.slots)

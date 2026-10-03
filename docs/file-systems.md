@@ -17,6 +17,7 @@ Resource paths carry a scheme prefix, in the style of Godot.
 | `assets://` | `<directory of executable>/assets` | Implemented |
 | `user://` | A folder of the current user, for saves, settings, and anything else the app writes | Implemented, read and write |
 | `output://` | A folder chosen with `--output-dir` when the app is started, for what a run hands back, such as screenshots | Implemented, read and write. Rejected when no folder was chosen |
+| `extensions://` | `<directory of executable>/extensions`, one folder for each extension, see [extensions.md](extensions.md) | Implemented, read-only. The folder need not be there |
 
 File access sits behind an interface, following the same split as windowing
 and rendering.

@@ -5,6 +5,10 @@ add_library(${TARGET} STATIC
         neon/input/sdl2-clipboard.hpp
         neon/filesystem/sdl2-file-system.cpp
         neon/filesystem/sdl2-file-system.hpp
+        neon/extension/sdl2-library-loader.cpp
+        neon/extension/sdl2-library-loader.hpp
+        neon/extension/sdl2-native-library.cpp
+        neon/extension/sdl2-native-library.hpp
         neon/window/sdl2-window-system.cpp
         neon/window/sdl2-window-system.hpp
         neon/input/sdl2-input-system.cpp
@@ -15,6 +19,10 @@ neon_warnings(${TARGET})
 target_include_directories(${TARGET}
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
 )
+
+# what this platform is called where a library is named for it, which is
+# what the build names the libraries of extensions by, see NeonExtensions.cmake
+target_compile_definitions(${TARGET} PRIVATE NEON_PLATFORM="${NEON_PLATFORM}")
 
 target_link_libraries(${TARGET}
         neon-core

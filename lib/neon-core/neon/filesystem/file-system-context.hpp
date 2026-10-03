@@ -17,6 +17,9 @@ namespace neon
   ///     for what a run hands back, such as screenshots. It can be written
   ///     to. It only exists when a folder was chosen. Without one, every
   ///     path in it is rejected.
+  ///   - `extensions://` is what extends the application: one folder for
+  ///     each extension, with its recipe, its library, and what else it
+  ///     brings. It is read-only, and it need not be there.
   ///
   /// A virtual path is written the same way on every platform, so content
   /// that refers to files, such as a scene file, works everywhere unchanged.

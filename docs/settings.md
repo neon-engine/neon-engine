@@ -81,7 +81,7 @@ The settings of the runtime are
 | `rendering.vulkan_version` | The version of Vulkan to ask for, in quotes, since `1.10` as a number is `1.1` | `"1.3"` |
 | `rendering.max_light_sources` | How many lights a frame may hold. A whole number above zero | 1024 |
 | `rendering.max_render_objects` | How many render objects a frame may hold, each one draw. A whole number above zero. It sizes a per-frame buffer of twice 208 bytes an object, once for the scene and once for the shadow pass, so a larger number costs little; a scene that passes it is told, with this name | 16384 |
-| `rendering.shadow_distance` | How far from the camera the shadow of the direction light reaches, in metres, along its view, see [vulkan-renderer.md](vulkan-renderer.md#shadows). What is further is lit. Farther is coarser in the far cascades. Above zero | 50 |
+| `rendering.shadow_distance` | How far from the camera the shadow of the direction light reaches, in metres, along its view, see [vulkan-renderer.md](vulkan-renderer.md#shadows). What is further is lit. Farther is coarser in the far cascades. Above zero | 120 |
 | `rendering.shadow_cascades` | How many cascades the shadow map has, 1 to 4: slices of what the camera sees, the nearest drawn the finest. More is finer near the camera at the same distance, and the casters drawn once more each | 4 |
 | `rendering.tonemapper` | The curve the resolve step maps light brighter than white through: `none` cuts it off flat, `aces` and `agx` roll it off, see [vulkan-renderer.md](vulkan-renderer.md#tonemapping) | `none` |
 | `rendering.exposure` | How bright the scene is taken to be: the light of the scene is multiplied by it before the curve. A number above zero; 2 doubles the light, 0.5 halves it | 1 |

@@ -153,10 +153,16 @@ namespace neon
       scheme = output_scheme;
       scheme_directory = _output_directory;
       writable = true;
+    } else if (path.starts_with(extensions_scheme))
+    {
+      scheme = extensions_scheme;
+      scheme_directory = _extensions_directory;
+      writable = false;
     } else
     {
       const std::string known =
-        std::string(assets_scheme) + ", " + std::string(user_scheme) + " or " + std::string(output_scheme);
+        std::string(assets_scheme) + ", " + std::string(user_scheme) + ", " + std::string(output_scheme) +
+        " or " + std::string(extensions_scheme);
       _logger->Error("Invalid path '{}': it does not start with a known scheme, which are {}", path, known);
       return false;
     }
@@ -288,6 +294,18 @@ namespace neon
     return target.OpenLogFile(native_path);
   }
 
+  bool FileSystem::OpenLibrary(const std::string &path, NativeLibrary &library, std::string &error)
+  {
+    std::string native_path;
+    if (!Locate(path, native_path))
+    {
+      error = "the file is not there";
+      return false;
+    }
+
+    return library.OpenAt(native_path, error);
+  }
+
   bool FileSystem::ListFiles(const std::string &directory, std::vector<std::string> &paths)
   {
     // a folder may be written with a slash at its end, which names nothing
@@ -300,6 +318,7 @@ namespace neon
     if (folder == assets_scheme) { native_directory = _assets_directory; }
     else if (folder == user_scheme) { native_directory = _user_directory; }
     else if (folder == output_scheme) { native_directory = _output_directory; }
+    else if (folder == extensions_scheme) { native_directory = _extensions_directory; }
     else if (!Locate(folder, native_directory)) { return false; }
     if (native_directory.empty()) { return false; }
     while (native_directory.size() > 1 && native_directory.back() == _native_separator) { native_directory.pop_back(); }

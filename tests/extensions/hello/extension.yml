@@ -1,0 +1,10 @@
+version: 1
+name: hello
+
+libraries:
+  macos-arm64: hello-macos-arm64.dylib
+  macos-x86_64: hello-macos-x86_64.dylib
+  linux-x86_64: hello-linux-x86_64.so
+  linux-arm64: hello-linux-arm64.so
+  windows-x86_64: hello-windows-x86_64.dll
+  windows-arm64: hello-windows-arm64.dll

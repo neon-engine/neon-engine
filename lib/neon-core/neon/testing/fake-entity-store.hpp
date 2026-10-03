@@ -171,6 +171,12 @@ namespace neon::testing
       return No_Component;
     }
 
+    std::size_t GetComponentSize(const ComponentId component) override
+    {
+      const auto it = _components.find(component);
+      return it == _components.end() ? 0 : it->second.size;
+    }
+
     using EntityStore::CreateEntity;
 
     Entity CreateEntity(const std::string &name, const Entity parent) override
