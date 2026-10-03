@@ -39,7 +39,7 @@ namespace neon
       for (std::size_t i = 0; i < _model_textures.size(); i++)
       {
         const TextureInfo &info = _model_textures[i];
-        if (!LoadTexture(info.path, info.file, TextureOptionsFor(i)))
+        if (!LoadListedTexture(info.path, info.file, TextureOptionsFor(i)))
         {
           _logger->Error("Could not initialize the texture {} of the model", info.path);
           CleanUp();
@@ -65,12 +65,18 @@ namespace neon
         continue;
       }
 
-      if (!LoadTexture(texture_path, nullptr, TextureOptionsFor(i)))
+      if (!LoadListedTexture(texture_path, nullptr, TextureOptionsFor(i)))
       {
         _logger->Error("Could not initialize texture");
         CleanUp();
         return false;
       }
+    }
+
+    if (!LoadEmissiveTexture())
+    {
+      CleanUp();
+      return false;
     }
 
     _initialized = true;
@@ -80,25 +86,66 @@ namespace neon
   bool VK_Material::LoadTexture(
     const std::string &path,
     const std::shared_ptr<const std::vector<unsigned char>> &file,
-    const VK_TextureOptions &options)
+    const VK_TextureOptions &options,
+    VK_Texture &texture,
+    std::string &key) const
   {
-    VK_Texture texture(path, _file_system_context, _device, _logger);
-    std::string key;
+    texture = VK_Texture(path, _file_system_context, _device, _logger);
+    key.clear();
 
     if (_texture_cache != nullptr)
     {
       // an image a model carries is known by the model as well
       key = VK_TextureCache::KeyOf(path, file != nullptr ? _model_path : "", options);
-      if (!_texture_cache->Acquire(key, path, file, options, texture)) { return false; }
-    } else
-    {
-      const bool loaded = file != nullptr ? texture.InitializeWithFile(*file, options) : texture.Initialize(options);
-      if (!loaded) { return false; }
+      return _texture_cache->Acquire(key, path, file, options, texture);
     }
+
+    return file != nullptr ? texture.InitializeWithFile(*file, options) : texture.Initialize(options);
+  }
+
+  bool VK_Material::LoadListedTexture(
+    const std::string &path,
+    const std::shared_ptr<const std::vector<unsigned char>> &file,
+    const VK_TextureOptions &options)
+  {
+    VK_Texture texture;
+    std::string key;
+    if (!LoadTexture(path, file, options, texture, key)) { return false; }
 
     _textures.push_back(texture);
     _surface_names.emplace_back();
     _texture_keys.push_back(key);
+    return true;
+  }
+
+  bool VK_Material::LoadEmissiveTexture()
+  {
+    // the scene has the last word here too
+    if (const std::string &path = _material_info.emissive_texture; !path.empty())
+    {
+      if (const std::string surface = VK_RenderTarget::NameOf(path); !surface.empty())
+      {
+        if (!_surface_lookup || !_surface_lookup(surface, _emissive_texture)) { _emissive_texture = VK_Texture(); }
+        _emissive_surface = surface;
+      } else if (!LoadTexture(path, nullptr, EmissiveTextureOptions(), _emissive_texture, _emissive_key))
+      {
+        _logger->Error("Could not initialize the emissive texture {}", path);
+        return false;
+      }
+      _has_emissive_texture = true;
+      return true;
+    }
+
+    if (_model_emissive_texture.has_value())
+    {
+      const TextureInfo &info = *_model_emissive_texture;
+      if (!LoadTexture(info.path, info.file, EmissiveTextureOptions(), _emissive_texture, _emissive_key))
+      {
+        _logger->Error("Could not initialize the emissive texture {} of the model", info.path);
+        return false;
+      }
+      _has_emissive_texture = true;
+    }
     return true;
   }
 
@@ -108,6 +155,14 @@ namespace neon
     // how much each part of it shines, which is a number and not a colour.
     VK_TextureOptions options;
     options.is_color = index == 0;
+    return options;
+  }
+
+  VK_TextureOptions VK_Material::EmissiveTextureOptions()
+  {
+    // the light a surface gives off is kept in sRGB, as an image file is
+    VK_TextureOptions options;
+    options.is_color = true;
     return options;
   }
 
@@ -135,13 +190,33 @@ namespace neon
     }
     _surface_names.clear();
     _texture_keys.clear();
+
+    // what the surface gives off, held the same three ways
+    if (_has_emissive_texture)
+    {
+      if (!_emissive_key.empty())
+      {
+        _texture_cache->Release(_emissive_key);
+      } else if (_emissive_surface.empty())
+      {
+        _emissive_texture.CleanUp();
+      }
+    }
+    _emissive_texture = VK_Texture();
+    _emissive_key.clear();
+    _emissive_surface.clear();
+    _has_emissive_texture = false;
     _initialized = false;
   }
 
-  void VK_Material::SetModelTextures(const std::vector<TextureInfo> &textures, const std::string &model_path)
+  void VK_Material::SetModelTextures(
+    const std::vector<TextureInfo> &textures,
+    const std::string &model_path,
+    const std::optional<TextureInfo> &emissive_texture)
   {
     _model_textures = textures;
     _model_path = model_path;
+    _model_emissive_texture = emissive_texture;
   }
 
   void VK_Material::SetTextureCache(VK_TextureCache *cache)
@@ -156,6 +231,7 @@ namespace neon
 
   bool VK_Material::Shows(const std::string &surface_name) const
   {
+    if (!_emissive_surface.empty() && _emissive_surface == surface_name) { return true; }
     for (const auto &name : _surface_names)
     {
       if (!name.empty() && name == surface_name) { return true; }
@@ -165,6 +241,7 @@ namespace neon
 
   bool VK_Material::ShowsSurfaces() const
   {
+    if (!_emissive_surface.empty()) { return true; }
     for (const auto &name : _surface_names)
     {
       if (!name.empty()) { return true; }
@@ -174,15 +251,18 @@ namespace neon
 
   void VK_Material::ResolveSurfaces(const VK_Texture &fallback)
   {
+    const auto find = [this, &fallback](const std::string &surface_name, VK_Texture &texture)
+    {
+      VK_Texture shown;
+      if (!_surface_lookup || !_surface_lookup(surface_name, shown)) { shown = fallback; }
+      texture = shown;
+    };
+
     for (std::size_t i = 0; i < _textures.size() && i < _surface_names.size(); i++)
     {
-      if (_surface_names[i].empty()) { continue; }
-
-      VK_Texture shown;
-      if (!_surface_lookup || !_surface_lookup(_surface_names[i], shown)) { shown = fallback; }
-
-      _textures[i] = shown;
+      if (!_surface_names[i].empty()) { find(_surface_names[i], _textures[i]); }
     }
+    if (!_emissive_surface.empty()) { find(_emissive_surface, _emissive_texture); }
   }
 
   VK_ObjectData VK_Material::GetObjectData(const glm::mat4 &model, const Transform &transform) const
@@ -203,6 +283,17 @@ namespace neon
       _material_info.alpha_mode == AlphaMode::Blend ? 1.0f : 0.0f,
       0.0f};
     data.surface = {_material_info.metallic, _material_info.roughness, 0.0f, 0.0f};
+
+    // what the surface gives off is written as a screen shows it too, and
+    // its strength multiplies the light; w tells the shaders whether a
+    // texture of it is bound
+    const auto [glow_red, glow_green, glow_blue, glow_alpha] = SrgbToLinear(_material_info.emissive);
+    const float strength = _material_info.emissive_strength;
+    data.emissive = {
+      glow_red * strength,
+      glow_green * strength,
+      glow_blue * strength,
+      _has_emissive_texture ? 1.0f : 0.0f};
     return data;
   }
 

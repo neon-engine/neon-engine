@@ -102,13 +102,17 @@ namespace neon
     glm::vec4 material{0.0f};
     // x metallic, y roughness, for the pbr shader
     glm::vec4 surface{0.0f};
+    // rgb the light the object gives off itself, in linear light with its
+    // strength multiplied in; w is 1 when an emissive texture is bound
+    // and 0 when the colour alone glows
+    glm::vec4 emissive{0.0f};
   };
 
   static_assert(sizeof(VK_DirectionLight) == 352);
   static_assert(sizeof(VK_PointLight) == 80);
   static_assert(sizeof(VK_SpotLight) == 112);
   static_assert(sizeof(VK_SceneData) == 512 + kMax_Point_Lights * 80 + kMax_Spot_Lights * 112);
-  static_assert(sizeof(VK_ObjectData) == 192);
+  static_assert(sizeof(VK_ObjectData) == 208);
 } // neon
 
 #endif //VK_SHADER_DATA_HPP

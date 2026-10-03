@@ -22,6 +22,12 @@ namespace neon
     const std::string output_dir = "output-dir";
     const std::string spawn = "spawn";
     const std::string jit = "jit";
+    const std::string tonemapper = "tonemapper";
+    const std::string exposure = "exposure";
+
+    const std::string none = "none";
+    const std::string aces = "aces";
+    const std::string agx = "agx";
     const std::string on = "on";
     const std::string off = "off";
     const std::string render_scale = "render-scale";
@@ -33,6 +39,16 @@ namespace neon
     /// Reads a list of frame numbers such as `1,30,60`. Returns false when a
     /// part of it is not a whole number above zero. The frames come out in
     /// rising order, each of them once.
+    /// Reads the name of a tonemapper, as the setting `rendering.tonemapper`
+    /// names them. Returns false for a name that is none of them.
+    bool read_tonemapper(const std::string &name, Tonemapper &curve)
+    {
+      if (name == none) { curve = Tonemapper::None; return true; }
+      if (name == aces) { curve = Tonemapper::Aces; return true; }
+      if (name == agx) { curve = Tonemapper::Agx; return true; }
+      return false;
+    }
+
     bool read_frames(const std::string_view list, std::vector<std::size_t> &frames)
     {
       std::size_t start = 0;
@@ -152,6 +168,22 @@ namespace neon
     });
 
     command_line.Add({
+      .name = tonemapper,
+      .value_name = "NAME",
+      .description = "Curve for light brighter than white: none, aces, or agx, over rendering.tonemapper of "
+                     "the settings",
+      .group = editor
+    });
+
+    command_line.Add({
+      .name = exposure,
+      .value_name = "NUMBER",
+      .description = "How bright the scene is taken to be, for example 2 for twice the light, over "
+                     "rendering.exposure of the settings",
+      .group = editor
+    });
+
+    command_line.Add({
       .name = jit,
       .value_name = "MODE",
       .description = "Compile the scripts as they run, or run them in LuaJIT's interpreter. Over scripting.jit "
@@ -202,6 +234,23 @@ namespace neon
     if (command_line.IsSet(spawn))
     {
       settings.spawn_path = command_line.GetValue(spawn);
+    }
+
+    if (command_line.IsSet(tonemapper) && !read_tonemapper(command_line.GetValue(tonemapper), settings.tonemapper))
+    {
+      error = "Option '--" + tonemapper + "' needs none, aces, or agx";
+      return false;
+    }
+
+    if (command_line.IsSet(exposure))
+    {
+      double amount = 0.0;
+      if (!command_line.GetNumber(exposure, amount) || amount <= 0.0)
+      {
+        error = "Option '--" + exposure + "' needs a number above zero, such as 2";
+        return false;
+      }
+      settings.exposure = amount;
     }
 
     // the parser only lets on and off through

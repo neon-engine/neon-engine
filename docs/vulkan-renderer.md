@@ -168,10 +168,12 @@ declare.
 | | 0 | 1 | Storage buffer | `ObjectBuffer`: every object of the frame, `ObjectData` each, read by `gl_InstanceIndex`, `scene-data.glsl` |
 | | 0 | 2 | Sampled image | The first texture: the colours of the surface |
 | | 0 | 3 | Sampled image | The second texture: the metallic-roughness map, or the specular map |
-| | 0 | 4 | Sampler | What the first texture is read through |
-| | 0 | 5 | Sampler | What the second texture is read through |
-| | 0 | 6 | Sampled image, an array | The shadow map of the direction light, a layer a cascade, `shadows.glsl` |
-| | 0 | 7 | Sampler | What the shadow map is compared through |
+| | 0 | 4 | Sampled image | The third texture: what the surface gives off, see [emissive surfaces](#emissive-surfaces) |
+| | 0 | 5 | Sampler | What the first texture is read through |
+| | 0 | 6 | Sampler | What the second texture is read through |
+| | 0 | 7 | Sampler | What the third texture is read through |
+| | 0 | 8 | Sampled image, an array | The shadow map of the direction light, a layer a cascade, `shadows.glsl` |
+| | 0 | 9 | Sampler | What the shadow map is compared through |
 | Shadow pass: `shadow` | 0 | 0, 1 | As above | The same set as the models; the vertex half reads the matrix of the cascade a push constant names from `SceneData` and the object from the `ObjectBuffer`, the fragment half does nothing |
 
 The scene is bound by an offset into its buffer, which the dynamic binding
@@ -184,6 +186,7 @@ one `object` is before it includes `scene-data.glsl`, as the shaders that
 ship do.
 | Resolve: `resolve` | 0 | 0 | Sampled image | The scene image |
 | | 0 | 1 | Sampler | What it is read through, pixel by pixel |
+| | 0 | 2 | Uniform buffer | `ResolveData`: the tonemapper and the exposure of the run, see [tonemapping](#tonemapping) |
 | User interface: `flat`, `ui/*` | 0 | 0 | Sampled image | The texture of the call, `ui-shader.glsl` |
 | | 0 | 1 | Sampler | What it is read through |
 | | 1 | 0 | Storage buffer | The shapes of the frame |
@@ -240,9 +243,34 @@ red with the 4 percent it reflects in white (250, 11, 11).
 Both lit shaders take the shadow of the direction light into account, see
 [Shadows](#shadows).
 
-What `pbr` does not do yet: normal maps, emissive (#129), occlusion, image
-based lighting from an environment (#64). The ubershader of #106 adds them
-as variants.
+Both lit shaders add what a surface gives off after the lighting, see
+[emissive surfaces](#emissive-surfaces).
+
+What `pbr` does not do yet: normal maps, occlusion, image based lighting
+from an environment (#64). The ubershader of #106 adds them as variants.
+
+### Emissive surfaces
+
+A material can give off light of its own (#129): `material.emissive`, a
+colour written in sRGB as `color` is, `material.emissive_strength`, what
+it is multiplied by in linear light, and `material.emissive_texture`, a
+texture or a render target the colour multiplies. See
+[scenes.md](scenes.md#renderable) for the fields and
+[models.md](models.md#what-of-a-material-is-read) for what a glTF file
+contributes. `VK_Material` hands the colour, with the strength multiplied
+in, to the shaders as `ObjectData.emissive`, with its `w` saying whether a
+texture is bound; the texture is the third of the material's bindings, and
+plain white when there is none.
+
+`pbr` and `basic-lit` add the result after everything the lights do, so a
+surface that gives off light shows in a room without any, and `unlit` and
+`color` ignore it. The light goes into the scene image as it is, which
+holds floats: an `emissive_strength` of 4 makes a surface four times
+brighter than white, which only the resolve step then decides about. Without
+a tonemapper such light is cut off at white, and it does not glow around its
+edges and lights nothing nearby: that is bloom (#130) and light cast by
+screens (#132). `tests/runtime-tonemapping` draws planes that give off
+light in a scene without any.
 
 ## Changes to neon-core
 
@@ -354,7 +382,7 @@ what a screenshot shows is what a window would show.
 | Shadow pass | The shadow map, `D32_SFLOAT`, 2048 by 2048, a layer a cascade | The opaque models of the first scene of the frame whose direction light casts, as the light sees them, depth alone, once into every cascade. Recorded apart and run before everything below, so that every scene of the frame reads the finished map. Left out when no light casts. See [Shadows](#shadows) |
 | Render targets | Each target, in the order they are drawn | Each goes through the stages below on its own: a camera that draws into a texture lights a scene in a scene image of the target, a user interface on a surface draws on top. A target that shows only a user interface has no scene image |
 | Scene | The scene image, `R16G16B16A16_SFLOAT`, and its depth | Opaque models in the order that costs the least, see below, then see-through ones from the farthest to the nearest, tested against depth but not writing it. The back of every triangle is left out unless the material is double-sided. Lighting and blending are in linear light. An opaque model replaces what is behind it and leaves the alpha of the scene image at 1, whatever its shader wrote |
-| Resolve | The image that is shown, `R8G8B8A8_UNORM` | A triangle that covers it reads the scene image pixel by pixel, clamps it, and writes it in sRGB. The one place where light becomes the colours of a screen |
+| Resolve | The image that is shown, `R8G8B8A8_UNORM` | A triangle that covers it reads the scene image pixel by pixel, multiplies the exposure in, maps it through the tonemapper, and writes it in sRGB. The one place where light becomes the colours of a screen, see [tonemapping](#tonemapping) |
 | On top | The same image | What is drawn in two dimensions: user interfaces, blended in sRGB as CSS blends them |
 | Copy | The window, or a file | Byte for byte. The bytes are sRGB already |
 
@@ -390,9 +418,67 @@ object of such a variant pays for it once. `VK_Culling` holds these rules,
 apart from the graphics card, so that they are tested.
 
 The resolve is where what changes how light looks on a screen goes. Light
-that bleeds around what is bright is added to the scene image just before
-it. A curve for light brighter than white replaces the clamp in
-`resolve.frag`. The scene image keeps such light until then.
+that bleeds around what is bright (#130) is added to the scene image just
+before it. The scene image keeps such light until then.
+
+## Tonemapping
+
+The scene image holds light, which has no top: a surface that gives off
+light, a strong light on a white wall, and later bloom all make values
+above 1. A screen shows nothing above white, so the resolve step decides
+what becomes of such light (#131). Two settings say how, read from
+`settings.yml` and the command line, see [settings.md](settings.md) and
+[command-line.md](command-line.md):
+
+| Setting | What it does | Default |
+|---|---|---|
+| `rendering.exposure` | How bright the scene is taken to be. The light is multiplied by it before the curve, so 2 doubles everything and 0.5 halves it. A number above zero | 1 |
+| `rendering.tonemapper` | The curve: `none`, `aces`, or `agx` | `none` |
+
+The default keeps every frame as it was: at an exposure of 1 and without a
+curve, what is at most white is written as it is and what is above is cut
+off flat at white, as before. A game chooses a curve when it has light
+above white to show.
+
+| Curve | What it is | What it does with white |
+|---|---|---|
+| `none` | A clamp | 1.0 stays white; 4.0 is white too, cut off flat |
+| `aces` | The ACES filmic curve, as Krzysztof Narkowicz fits it (2016): one rational function, `x (2.51 x + 0.03) / (x (2.43 x + 0.59) + 0.14)`. Cheap, and close to the reference ACES transform for most of its range; the fit does not carry the hue shifts of the reference, which bends bright colours towards yellow | 1.0 comes out at 0.80 of white, sRGB 232; 4.0 at 0.97, sRGB 252; the light keeps a little contrast all the way up |
+| `agx` | AgX in the minimal form of Benjamin Wrensch (2023), after Troy Sobotka's: a small mix of the three channels into each other, a log encoding over sixteen and a half stops, a sigmoid fitted by a polynomial, the mix undone, and a 2.2 power back to linear light. The mix keeps a bright colour from turning white or yellow | 1.0 comes out at 0.59 of white, sRGB 202; 4.0 at 0.85, sRGB 239; white is reached about four stops above 1. A game that chooses AgX raises its exposure, or its lights, to match |
+
+`resolve.frag` holds both fits, named after their authors, and the test
+`tests/runtime-tonemapping` holds the numbers above: planes that give off
+known light are read pixel by pixel under each curve, and under an exposure
+of 2 without one. The numbers are worked out from the fits in the test's
+script.
+
+The curve is applied to the straight colour, with alpha taken out, as the
+clamp was, and the two matrices of AgX are written by columns in the
+shader, as GLSL lays a matrix out. The settings reach the shader in one
+uniform buffer, `ResolveData`, written once at start, and not as a push
+constant, since the sources keep push constants for what changes every
+draw, see [shaders.md](shaders.md#what-the-sources-keep-to).
+
+What is not tonemapped:
+
+- The user interface. It is drawn after the resolve, on the image that is
+  shown, and keeps the colours of its style sheets: a button is the colour
+  CSS says, whatever the scene behind it does.
+- A render target, in a way: a camera that draws into a texture goes
+  through the same resolve, so the picture it makes is tonemapped once
+  into the target's bytes, and once more when a model that shows it is
+  resolved with the frame. With `none` that changes nothing. A game that
+  shows a camera view on a screen in the world and tonemaps may see the
+  picture a little flatter than the world around it.
+
+What is left for later: an exposure that adapts to the scene, as eyes do,
+needs the average brightness of the frame, which is a reduction over the
+scene image before the resolve, and a speed at which the eye follows. It
+comes with bloom (#130), which needs the same pass over the image. A
+white point or a look of a game's own, such as the full ACES transform
+with its reference rendering transform, can be added as more values of
+`rendering.tonemapper` without touching anything but the shader and the
+setting.
 
 ## Shadows
 
@@ -446,6 +532,7 @@ interfaces are drawn in sRGB, which is what CSS blends in.
 | The first texture of a material | An sRGB format, read as linear light. Its smaller copies are made by the graphics card in linear light |
 | The second texture of a material | Plain bytes. It says how much a surface shines, which is a number and not a colour |
 | The `color` of a material, the colour a camera clears its texture to | Turned into linear light before the shaders see it |
+| The `emissive` of a material, and its texture | As the colour and the first texture: written in sRGB, turned into linear light, and multiplied by `emissive_strength` in linear light, which is how it goes above white |
 | `ambient`, `diffuse`, and `specular` of a light | Amounts of light, handed over as they are. 0.5 is half the light |
 | Images, glyphs, and colours of a user interface | Plain bytes and sRGB numbers, blended as they are, as before and as CSS does |
 | A render target | Holds sRGB colours as bytes. A model reads it through an sRGB view, as linear light. A user interface reads it through a view of plain bytes |
@@ -528,7 +615,7 @@ right before may want weaker `ambient` and `diffuse` values.
 | Buffers live in memory the processor writes to | Fine for the sizes in use. Copying to memory owned by the graphics card is the next step if a profile asks for it |
 | No validation layers | They need the Vulkan SDK. See open questions |
 | Image decoding lives in the backend | stb_image is compiled into neon-vulkan. It belongs in neon-core, where a second renderer could share it |
-| What a camera draws into a texture is clamped | Its scene is resolved into the bytes of the target, so light brighter than white, and what is later done with it, stays in the frame |
+| What a camera draws into a texture is resolved into bytes | Its scene goes through the resolve, with the tonemapper of the run, into the bytes of the target, so light brighter than white, and what is later done with it, stays in the frame. See [tonemapping](#tonemapping) |
 | An opaque material writes alpha 1 over an opaque clear | The pipeline of an opaque material keeps the larger of the alpha the shader wrote and the alpha of the scene image (`VK_BLEND_OP_MAX`), since Vulkan has no blend factor that writes a constant. Over a frame, which is cleared opaque, that is 1 whatever the shader wrote. A texture a camera clears to a see-through colour relies on the shader, and the shaders of the engine write 1 through `object_alpha()` in `scene-data.glsl` for that case |
 
 ## Order of work

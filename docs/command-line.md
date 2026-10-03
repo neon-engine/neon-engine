@@ -53,6 +53,8 @@ The last column is the decision of #143: who owns the option.
 | `--input-script PATH` | Editor | The same from a file | Editor |
 | `--spawn PATH` | Editor | Spawns this prefab at the top of the world once the scene is read, as a script would, see [prefabs.md](prefabs.md#spawning-at-run-time) | **Editor.** It is for checking a prefab on its own |
 | `--jit on\|off` | Editor | Compiles the scripts as they run, or runs them in LuaJIT's interpreter, over `scripting.jit` of the settings, see [scripting.md](scripting.md) | **Editor.** A setting serves a game; the option compares the two |
+| `--tonemapper NAME` | Editor | The curve for light brighter than white, `none`, `aces`, or `agx`, over `rendering.tonemapper` of the settings, see [vulkan-renderer.md](vulkan-renderer.md#tonemapping) | **Editor**. For comparing the curves on one scene; a game chooses in its settings |
+| `--exposure NUMBER` | Editor | How bright the scene is taken to be, over `rendering.exposure` of the settings | **Editor**, for the same reason |
 | `--headless` | Editor | A dedicated server (#144): no display, no renderer, no sound, no input devices. Not available yet, the option is refused and points at `--headless-renderer` | **Editor** for now. A server is a build of its own when #144 makes it, not an option of the runtime a player gets |
 
 The command line is the last of the layers of settings, see

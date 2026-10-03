@@ -8,6 +8,7 @@
 
 #include "neon/audio/sound-group-setting.hpp"
 #include "neon/render/api-version.hpp"
+#include "neon/render/tonemapper.hpp"
 
 enum class RenderingApi
 {
@@ -108,6 +109,16 @@ struct SettingsConfig
   /// renderer does not start.
   static constexpr neon::ApiVersion default_vulkan_version{1, 3};
   neon::ApiVersion vulkan_version = default_vulkan_version;
+
+  /// The curve the resolve step maps light brighter than white through
+  /// before it is shown. `None` cuts it off flat, which keeps every frame
+  /// of a scene that never goes above white as it is.
+  neon::Tonemapper tonemapper = neon::Tonemapper::None;
+
+  /// How bright the scene is taken to be: the light of the scene is
+  /// multiplied by it before the curve. Above 0. 1 shows the light as the
+  /// scene makes it, 2 doubles it, 0.5 halves it.
+  double exposure = 1.0;
   AudioOutput audio_output = AudioOutput::Device;
 
   /// The groups of sounds and their volumes: the groups of the engine,

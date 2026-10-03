@@ -6,7 +6,10 @@ namespace neon
   enum class TextureType
   {
     Diffuse,
-    Specular
+    Specular,
+
+    /// What a surface gives off itself, `emissiveTexture` of glTF.
+    Emissive
   };
 } // neon
 

@@ -9,6 +9,8 @@ namespace neon
   ///
   ///   --renderer NAME         Renderer to draw with
   ///   --vulkan-version 1.N    Highest version of Vulkan to render with
+  ///   --tonemapper NAME       Curve for light brighter than white: none, aces, or agx
+  ///   --exposure NUMBER       How bright the scene is taken to be
   ///
   /// What the editor owns, starting another scene, running without a
   /// window, screenshots, is EditorOptions. See docs/command-line.md.

@@ -81,6 +81,29 @@ namespace neon
           .Describe(
             "Whether the back of every triangle is drawn too: model takes what the model file says, always draws "
             "it, never leaves it out");
+
+      material.Field(
+            "emissive",
+            [](Renderable &renderable) -> Color & { return renderable.render_info.material_info.emissive; })
+          .Describe(
+            "The light the surface gives off itself, shown in the dark by the pbr and basic-lit shaders. Black, "
+            "the default, takes what the model file says");
+
+      material.Field(
+            "emissive_strength",
+            [](Renderable &renderable) -> float & { return renderable.render_info.material_info.emissive_strength; })
+          .AtLeast(0.0f)
+          .Describe("What the emissive light is multiplied by: above 1 is brighter than white, 0 turns it off");
+
+      material.Field(
+            "emissive_texture",
+            [](Renderable &renderable) -> std::string &
+            {
+              return renderable.render_info.material_info.emissive_texture;
+            })
+          .Describe(
+            "Virtual path of a texture of what the surface gives off, or surface://<name> for a render target. "
+            "Left out takes the model file's");
     });
   }
 } // neon

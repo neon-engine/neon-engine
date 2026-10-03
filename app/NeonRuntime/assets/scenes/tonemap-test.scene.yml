@@ -1,0 +1,112 @@
+# A scene for checking the resolve step, which tests read pixel by pixel:
+#
+#   NeonRuntime --scene assets://scenes/tonemap-test.scene.yml --tonemapper aces
+#
+# Flat planes face the camera in a scene without light, so that what each
+# shows is the light its material gives off: a plain colour, or an
+# emissive colour of the pbr and basic-lit shaders, one of them four
+# times brighter than white. What a screen shows of that light depends on
+# the tonemapper and the exposure alone, see tests/runtime-tonemapping.
+
+scene: tonemap-test
+version: 1
+
+entities:
+  - name: camera
+    components:
+      Transform:
+        position: [0, 0, 5]
+      Camera: Default
+
+  # a light that gives nothing, so that the direction the shaders
+  # normalise is a direction and not zero
+  - name: dark
+    components:
+      Transform: Default
+      Light:
+        type: direction
+        direction: [0, 0, -1]
+        ambient: [0, 0, 0]
+        diffuse: [0, 0, 0]
+        specular: [0, 0, 0]
+
+  # the top row, from the left: a plain grey, white given off, four times
+  # white given off, and blue given off by the basic-lit shader
+  - name: grey
+    components:
+      Transform:
+        position: [-2.7, 1, 0]
+        scale: 1.5
+      Renderable:
+        model: assets://models/quad.obj
+        fit: unit
+        shader: assets://shaders/color
+        material:
+          color: [0.5, 0.5, 0.5]
+
+  - name: white
+    components:
+      Transform:
+        position: [-0.9, 1, 0]
+        scale: 1.5
+      Renderable:
+        model: assets://models/quad.obj
+        fit: unit
+        shader: assets://shaders/pbr
+        material:
+          color: [0, 0, 0]
+          emissive: [1, 1, 1]
+
+  - name: brighter-than-white
+    components:
+      Transform:
+        position: [0.9, 1, 0]
+        scale: 1.5
+      Renderable:
+        model: assets://models/quad.obj
+        fit: unit
+        shader: assets://shaders/pbr
+        material:
+          color: [0, 0, 0]
+          emissive: [1, 1, 1]
+          emissive_strength: 4
+
+  - name: blue
+    components:
+      Transform:
+        position: [2.7, 1, 0]
+        scale: 1.5
+      Renderable:
+        model: assets://models/quad.obj
+        fit: unit
+        shader: assets://shaders/basic-lit
+        material:
+          color: [0, 0, 0]
+          emissive: [0, 0, 1]
+
+  # the bottom row: red given off, and half of white given off
+  - name: red
+    components:
+      Transform:
+        position: [-0.9, -1, 0]
+        scale: 1.5
+      Renderable:
+        model: assets://models/quad.obj
+        fit: unit
+        shader: assets://shaders/pbr
+        material:
+          color: [0, 0, 0]
+          emissive: [1, 0, 0]
+
+  - name: half
+    components:
+      Transform:
+        position: [0.9, -1, 0]
+        scale: 1.5
+      Renderable:
+        model: assets://models/quad.obj
+        fit: unit
+        shader: assets://shaders/pbr
+        material:
+          color: [0, 0, 0]
+          emissive: [0.5, 0.5, 0.5]

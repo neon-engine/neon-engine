@@ -82,6 +82,19 @@ namespace
     rough.roughness = 1.0f;
     EXPECT_NE(VK_MaterialCache::KeyOf(Crate(), rough), same);
 
+    // what the surface gives off tells two apart as well
+    MaterialInfo glowing;
+    glowing.emissive = {1.0f, 0.5f, 0.0f, 1.0f};
+    EXPECT_NE(VK_MaterialCache::KeyOf(Crate(), glowing), same);
+
+    MaterialInfo brighter;
+    brighter.emissive_strength = 4.0f;
+    EXPECT_NE(VK_MaterialCache::KeyOf(Crate(), brighter), same);
+
+    MaterialInfo lit_by_texture;
+    lit_by_texture.emissive_texture = "assets://textures/glow.png";
+    EXPECT_NE(VK_MaterialCache::KeyOf(Crate(), lit_by_texture), same);
+
     // two textures and one are not the same, even with the same text
     RenderInfo two = Crate();
     two.texture_paths = {"assets://textures/wood.png", "assets://textures/wood.png"};

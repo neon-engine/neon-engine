@@ -23,6 +23,7 @@ namespace
   using neon::RYML_DocumentFormat;
   using neon::SettingsFile;
   using neon::SoundGroupSetting;
+  using neon::Tonemapper;
   using neon::testing::LogLevel;
   using neon::testing::MemoryFileSystem;
   using neon::testing::RecordingLogger;
@@ -60,6 +61,8 @@ namespace
     "  max_render_objects: 2048\n"
     "  shadow_distance: 80\n"
     "  shadow_cascades: 2\n"
+    "  tonemapper: aces\n"
+    "  exposure: 1.5\n"
     "\n"
     "audio:\n"
     "  groups:\n"
@@ -164,6 +167,8 @@ namespace
     EXPECT_EQ(_settings.max_render_objects, 2048u);
     EXPECT_DOUBLE_EQ(_settings.shadow_distance, 80.0);
     EXPECT_EQ(_settings.shadow_cascades, 2u);
+    EXPECT_EQ(_settings.tonemapper, Tonemapper::Aces);
+    EXPECT_DOUBLE_EQ(_settings.exposure, 1.5);
     EXPECT_EQ(VolumeOf("music"), 0.6f);
     EXPECT_EQ(VolumeOf("effects"), 1.0f);
     EXPECT_EQ(VolumeOf("voices"), 1.0f);
@@ -287,6 +292,43 @@ namespace
     WriteOfTheProject("version: 1\nrendering:\n  vulkan_version: \"2.0\"\n");
 
     ExpectRefused("is not a version of Vulkan 1 in quotes");
+  }
+
+  TEST_F(SettingsFilesTest, ClampsLightAboveWhiteAtExposureOneWithoutAFile)
+  {
+    // the defaults keep every frame of a scene that never goes above white
+    EXPECT_EQ(_settings.tonemapper, Tonemapper::None);
+    EXPECT_DOUBLE_EQ(_settings.exposure, 1.0);
+  }
+
+  TEST_F(SettingsFilesTest, ReadsEveryTonemapperByName)
+  {
+    WriteOfTheProject("version: 1\nrendering:\n  tonemapper: agx\n");
+    ASSERT_TRUE(ReadOfTheProject()) << ::testing::PrintToString(_errors);
+    EXPECT_EQ(_settings.tonemapper, Tonemapper::Agx);
+
+    WriteOfTheProject("version: 1\nrendering:\n  tonemapper: none\n");
+    ASSERT_TRUE(ReadOfTheProject()) << ::testing::PrintToString(_errors);
+    EXPECT_EQ(_settings.tonemapper, Tonemapper::None);
+  }
+
+  TEST_F(SettingsFilesTest, RefusesATonemapperItDoesNotKnow)
+  {
+    WriteOfTheProject("version: 1\nrendering:\n  tonemapper: reinhard\n");
+
+    EXPECT_FALSE(ReadOfTheProject());
+    ASSERT_EQ(_errors.size(), 1u) << ::testing::PrintToString(_errors);
+    EXPECT_THAT(_errors.front(), HasSubstr("'tonemapper'"));
+    EXPECT_THAT(_errors.front(), HasSubstr("aces"));
+    EXPECT_THAT(_errors.front(), HasSubstr("agx"));
+  }
+
+  TEST_F(SettingsFilesTest, RefusesAnExposureThatIsNotAboveZero)
+  {
+    WriteOfTheProject("version: 1\nrendering:\n  exposure: 0\n");
+
+    ExpectRefused("assets://settings.yml:3: 'exposure' of 'rendering' of the settings is 0, "
+                  "where a number above zero was expected");
   }
 
   TEST_F(SettingsFilesTest, RefusesANameItDoesNotKnow)

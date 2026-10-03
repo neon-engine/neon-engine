@@ -38,7 +38,8 @@ namespace
     // a texture is bound as an image alone, and the sampler it is read
     // through two bindings on, so that every target of the shaders binds
     // what the source says
-    EXPECT_EQ(VK_Pipelines::kTexture_Count, 2u);
+    EXPECT_EQ(VK_Pipelines::kTexture_Count, 3u);
+    EXPECT_EQ(VK_Pipelines::kEmissive_Texture, VK_Pipelines::kTexture_Count - 1);
     EXPECT_EQ(VK_Pipelines::kFirst_Sampler_Binding, VK_Pipelines::kFirst_Texture_Binding + VK_Pipelines::kTexture_Count);
 
     for (uint32_t i = 0; i < VK_Pipelines::kTexture_Count; i++)

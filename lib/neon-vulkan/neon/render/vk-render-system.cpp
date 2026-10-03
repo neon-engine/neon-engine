@@ -87,7 +87,15 @@ namespace neon
     if (!_samplers.Initialize(&_device, _logger) ||
         !CreateRenderPasses() ||
         !_shadow_map.Initialize(&_device, _logger) ||
-        !_resolve.Initialize(&_device, _file_system_context, _frame_pass, &_samplers, max_scene_images, _logger) ||
+        !_resolve.Initialize(
+          &_device,
+          _file_system_context,
+          _frame_pass,
+          &_samplers,
+          max_scene_images,
+          _settings_config.tonemapper,
+          static_cast<float>(_settings_config.exposure),
+          _logger) ||
         !CreateDescriptors())
     {
       throw std::runtime_error("Failed to set up the Vulkan renderer");
@@ -427,9 +435,10 @@ namespace neon
   {
     // The first texture is the diffuse one and the second the specular one.
     // A material with a single texture uses it for both. One with none gets
-    // plain white.
+    // plain white. The third is what the surface gives off, plain white
+    // when there is none, which the shaders then leave out.
     // A render target that is not there is drawn as plain white as well.
-    // Each is read through the shared sampler of its way, bound two
+    // Each is read through the shared sampler of its way, bound three
     // bindings on from the texture.
     const auto &textures = material.Textures();
     const auto usable = [this](const VK_Texture &texture) -> const VK_Texture &
@@ -439,17 +448,20 @@ namespace neon
 
     const VK_Texture &diffuse = textures.empty() ? _white_texture : usable(textures[0]);
     const VK_Texture &specular = textures.size() > 1 ? usable(textures[1]) : diffuse;
+    const VK_Texture &emissive = material.HasEmissiveTexture() ? usable(material.EmissiveTexture()) : _white_texture;
 
     const VkDescriptorBufferInfo scene{_scene_buffer.buffer, 0, sizeof(VK_SceneData)};
     const VkDescriptorBufferInfo object{_object_buffer.buffer, 0, VK_WHOLE_SIZE};
-    const VkDescriptorImageInfo diffuse_image{
-      VK_NULL_HANDLE, diffuse.View(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
-    const VkDescriptorImageInfo specular_image{
-      VK_NULL_HANDLE, specular.View(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
-    const VkDescriptorImageInfo diffuse_sampler{
-      _samplers.Of(diffuse.Sampling()), VK_NULL_HANDLE, VK_IMAGE_LAYOUT_UNDEFINED};
-    const VkDescriptorImageInfo specular_sampler{
-      _samplers.Of(specular.Sampling()), VK_NULL_HANDLE, VK_IMAGE_LAYOUT_UNDEFINED};
+    const std::array<VkDescriptorImageInfo, VK_Pipelines::kTexture_Count> images{{
+      {VK_NULL_HANDLE, diffuse.View(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL},
+      {VK_NULL_HANDLE, specular.View(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL},
+      {VK_NULL_HANDLE, emissive.View(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL},
+    }};
+    const std::array<VkDescriptorImageInfo, VK_Pipelines::kTexture_Count> samplers{{
+      {_samplers.Of(diffuse.Sampling()), VK_NULL_HANDLE, VK_IMAGE_LAYOUT_UNDEFINED},
+      {_samplers.Of(specular.Sampling()), VK_NULL_HANDLE, VK_IMAGE_LAYOUT_UNDEFINED},
+      {_samplers.Of(emissive.Sampling()), VK_NULL_HANDLE, VK_IMAGE_LAYOUT_UNDEFINED},
+    }};
     const VkDescriptorImageInfo shadow_map{VK_NULL_HANDLE, _shadow_map.View(), VK_ShadowMap::kRead_Layout};
     const VkDescriptorImageInfo shadow_sampler{
       _samplers.Of(VK_Sampling::ShadowCompare), VK_NULL_HANDLE, VK_IMAGE_LAYOUT_UNDEFINED};
@@ -463,14 +475,15 @@ namespace neon
       writes[i].descriptorType = VK_Pipelines::kBindings[i].descriptorType;
       writes[i].descriptorCount = 1;
     }
-    writes[0].pBufferInfo = &scene;
-    writes[1].pBufferInfo = &object;
-    writes[2].pImageInfo = &diffuse_image;
-    writes[3].pImageInfo = &specular_image;
-    writes[4].pImageInfo = &diffuse_sampler;
-    writes[5].pImageInfo = &specular_sampler;
-    writes[6].pImageInfo = &shadow_map;
-    writes[7].pImageInfo = &shadow_sampler;
+    writes[VK_Pipelines::kScene_Binding].pBufferInfo = &scene;
+    writes[VK_Pipelines::kObject_Binding].pBufferInfo = &object;
+    for (std::size_t i = 0; i < VK_Pipelines::kTexture_Count; i++)
+    {
+      writes[VK_Pipelines::kFirst_Texture_Binding + i].pImageInfo = &images[i];
+      writes[VK_Pipelines::kFirst_Sampler_Binding + i].pImageInfo = &samplers[i];
+    }
+    writes[VK_Pipelines::kShadow_Map_Binding].pImageInfo = &shadow_map;
+    writes[VK_Pipelines::kShadow_Sampler_Binding].pImageInfo = &shadow_sampler;
 
     vkUpdateDescriptorSets(_device.Device(), static_cast<uint32_t>(writes.size()), writes.data(), 0, nullptr);
     return true;
@@ -872,6 +885,25 @@ namespace neon
         material_info.color.a * factor.a};
     }
 
+    // What the surface gives off, see docs/scenes.md. The scene's emissive
+    // colour replaces the file's factor, and black, the default, leaves it
+    // to the file; a texture the scene names without a colour glows as the
+    // texture is. The strengths multiply, so that 0 turns a file's glow off.
+    const Color &glow = material_info.emissive;
+    const bool scene_names_colour = glow.r > 0.0f || glow.g > 0.0f || glow.b > 0.0f;
+    const bool scene_names_texture = !material_info.emissive_texture.empty();
+    if (!scene_names_colour)
+    {
+      if (scene_names_texture)
+      {
+        material_info.emissive = Color{1.0f, 1.0f, 1.0f, 1.0f};
+      } else if (model_material != nullptr)
+      {
+        material_info.emissive = model_material->emissive;
+      }
+    }
+    if (model_material != nullptr) { material_info.emissive_strength *= model_material->emissive_strength; }
+
     // What the material is made from, which is what tells two apart: the
     // scene's part, without its textures for a material that is not the
     // first, and which material of the file it is.
@@ -896,7 +928,10 @@ namespace neon
       &_device,
       _logger);
     made.SetTextureCache(&_textures);
-    if (model_material != nullptr) { made.SetModelTextures(model_material->textures, render_info.model_path); }
+    if (model_material != nullptr)
+    {
+      made.SetModelTextures(model_material->textures, render_info.model_path, model_material->emissive_texture);
+    }
 
     made.SetSurfaceLookup([this](const std::string &name, VK_Texture &texture)
     {

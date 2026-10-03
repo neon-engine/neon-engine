@@ -30,10 +30,15 @@ layout (set = 0, binding = 2) uniform texture2D base_color_texture;
 // the material's numbers. Read as numbers, not colours.
 layout (set = 0, binding = 3) uniform texture2D metallic_roughness_texture;
 
-// Every texture is read through a sampler bound next to it, two bindings
+// what the surface gives off, in sRGB as an image keeps it, read as linear
+// light; plain white when the material has none
+layout (set = 0, binding = 4) uniform texture2D emissive_texture;
+
+// Every texture is read through a sampler bound next to it, three bindings
 // on: the one the texture asks for, shared with all that are read alike.
-layout (set = 0, binding = 4) uniform sampler base_color_sampler;
-layout (set = 0, binding = 5) uniform sampler metallic_roughness_sampler;
+layout (set = 0, binding = 5) uniform sampler base_color_sampler;
+layout (set = 0, binding = 6) uniform sampler metallic_roughness_sampler;
+layout (set = 0, binding = 7) uniform sampler emissive_sampler;
 
 const float PI = 3.14159265359;
 
@@ -47,6 +52,16 @@ vec3 BaseColor()
 {
     vec3 texture_color = texture(sampler2D(base_color_texture, base_color_sampler), tex_coord).rgb;
     return object.color.rgb * vertex_color.rgb * mix(vec3(1.0), texture_color, object.material.y);
+}
+
+// The light the surface gives off itself, as glTF makes it: the emissive
+// colour, with its strength multiplied in, times the emissive texture
+// where there is one. Added after lighting, so that it shows in the dark,
+// and free to be brighter than white.
+vec3 Emissive()
+{
+    vec3 texture_color = texture(sampler2D(emissive_texture, emissive_sampler), tex_coord).rgb;
+    return object.emissive.rgb * mix(vec3(1.0), texture_color, object.emissive.w);
 }
 
 vec2 MetallicRoughness()
@@ -180,6 +195,8 @@ void main()
             metallic,
             roughness);
     }
+
+    result += Emissive();
 
     frag_color = vec4(result, object_alpha(object.material, object.color.a));
 }

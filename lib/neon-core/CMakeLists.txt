@@ -266,6 +266,7 @@ add_library(${TARGET} STATIC
         neon/render/forward-render-pipeline.hpp
         neon/render/render-system.hpp
         neon/render/api-version.hpp
+        neon/render/tonemapper.hpp
         neon/render/render-capabilities.hpp
         neon/render/render-context.hpp
         neon/render/render-2d-context.hpp

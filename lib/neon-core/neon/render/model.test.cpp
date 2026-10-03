@@ -601,6 +601,53 @@ namespace
     EXPECT_THAT(model.GetFirstMaterial()->textures, IsEmpty());
   }
 
+  TEST_F(ModelTest, ReadsWhatAGlbMaterialGivesOff)
+  {
+    constexpr auto glowing =
+      R"({"name": "screen", "emissiveFactor": [1, 0.5, 0], "emissiveTexture": {"index": 0},
+          "extensions": {"KHR_materials_emissive_strength": {"emissiveStrength": 4}}})";
+    // assimp reads an extension only when the file says it uses it
+    std::string json = TriangleJson(one_node, one_mesh, glowing, embedded_image);
+    json.insert(1, R"("extensionsUsed": ["KHR_materials_emissive_strength"], )");
+    _file_system.AddNativeFile("/assets/models/cube.glb", Glb(json, TriangleBuffer()));
+    TestModel model("assets://models/cube.glb", &_file_system, _logger);
+
+    ASSERT_TRUE(model.Initialize()) << _logger->Messages(LogLevel::Error);
+
+    ASSERT_NE(model.GetFirstMaterial(), nullptr);
+    const auto &material = *model.GetFirstMaterial();
+    EXPECT_FLOAT_EQ(material.emissive.r, 1.0f);
+    EXPECT_FLOAT_EQ(material.emissive.g, 0.5f);
+    EXPECT_FLOAT_EQ(material.emissive.b, 0.0f);
+    EXPECT_FLOAT_EQ(material.emissive_strength, 4.0f);
+    ASSERT_TRUE(material.emissive_texture.has_value());
+    EXPECT_EQ(material.emissive_texture->texture_type, TextureType::Emissive);
+    EXPECT_EQ(material.emissive_texture->path, "*0");
+    EXPECT_TRUE(material.emissive_texture->IsEmbedded());
+
+    // the emissive texture is not one of the colours of the surface
+    EXPECT_THAT(material.textures, IsEmpty());
+    EXPECT_EQ(_logger->Count(LogLevel::Warn), 0u) << _logger->Messages(LogLevel::Warn);
+  }
+
+  TEST_F(ModelTest, LeavesAMaterialThatGivesOffNothingBlackAtStrengthOne)
+  {
+    _file_system.AddNativeFile(
+      "/assets/models/cube.glb",
+      Glb(TriangleJson(one_node, one_mesh, textured_material, embedded_image), TriangleBuffer()));
+    TestModel model("assets://models/cube.glb", &_file_system, _logger);
+
+    ASSERT_TRUE(model.Initialize()) << _logger->Messages(LogLevel::Error);
+
+    ASSERT_NE(model.GetFirstMaterial(), nullptr);
+    const auto &material = *model.GetFirstMaterial();
+    EXPECT_FLOAT_EQ(material.emissive.r, 0.0f);
+    EXPECT_FLOAT_EQ(material.emissive.g, 0.0f);
+    EXPECT_FLOAT_EQ(material.emissive.b, 0.0f);
+    EXPECT_FLOAT_EQ(material.emissive_strength, 1.0f);
+    EXPECT_FALSE(material.emissive_texture.has_value());
+  }
+
   TEST_F(ModelTest, ReadsWhetherAGlbMaterialIsDoubleSided)
   {
     constexpr auto two_sided = R"({"name": "sheet", "doubleSided": true})";

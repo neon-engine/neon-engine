@@ -24,7 +24,7 @@ plan.
 |---|---|
 | The file | `Model::LoadModel()` hands assimp an `IOSystem` that opens every file through `FileSystemContext::ReadBytes`: the model, and anything it names, such as the `.mtl` of an `.obj`. No native path leaves the file system |
 | The scene | assimp triangulates every face and flips the texture coordinates, so that `0, 0` is the top left of an image, as the textures are uploaded. The glTF importer of assimp flips them the other way first, so a GLB ends up the same way round as an `.obj` |
-| The materials | Each material of the file becomes a `ModelMaterial`: its diffuse and specular textures, and its base colour factor. See [materials](#what-of-a-material-is-read) |
+| The materials | Each material of the file becomes a `ModelMaterial`: its diffuse and specular textures, its base colour factor, and what it gives off. See [materials](#what-of-a-material-is-read) |
 | The nodes | The tree of nodes is walked from the root, with the transform of every node under those above it. Each mesh of a node is handed to the backend with that transform, which bakes it into the vertices: the renderer draws a model as one piece and has no nodes of its own. The model notes which material each mesh uses, see [several materials](#several-materials) |
 | The meshes | `Model::ReadVertices()` makes a `Vertex` of every position, normal, texture coordinate, and vertex colour of a mesh, white where the mesh has no colours. A backend makes a mesh of its own from them and the indices: the Vulkan backend uploads them, the physics keeps the positions for a `mesh` or `convex_hull` collider |
 | The size | A model is drawn at its own size and around its own origin, as the file says, unless the `Renderable` asks for a `fit` of `unit`, which moves it to the origin and scales it so that its longest side is 1. See [the size of a model](#the-size-of-a-model) |
@@ -98,6 +98,9 @@ it. `tests/runtime-vertex-colours` reads a painted model pixel by pixel.
 | The diffuse texture (`map_Kd` of an `.obj`, `baseColorTexture` of glTF) | The first texture of the material | Shown when the `Renderable` names no `textures` of its own |
 | The specular texture (`map_Ks`) | The second texture | glTF has none; its `metallicRoughnessTexture` is not read (#59) |
 | The base colour factor (`baseColorFactor` of glTF) | Multiplied into `material.color` of the `Renderable` | The `Kd` of an `.obj` is not read: the scenes set the colour themselves, and a grey `Kd` would darken them |
+| What the material gives off (`emissiveFactor` of glTF, `Ke` of an `.obj`) | `ModelMaterial::emissive`, taken as `material.emissive` when the `Renderable` leaves it black | Black when the file says nothing, which gives off nothing |
+| Its strength (`KHR_materials_emissive_strength` of glTF) | `ModelMaterial::emissive_strength`, multiplied into `material.emissive_strength` | 1 when the file says nothing. Read only when the file lists the extension in `extensionsUsed`, as the standard asks |
+| The emissive texture (`emissiveTexture` of glTF, `map_Ke` of an `.obj`) | `ModelMaterial::emissive_texture`, shown when the `Renderable` names no `emissive_texture` | Kept apart from the textures of the colours, and read as colours, in sRGB |
 | An image kept inside the file (`*0` in assimp, a `bufferView` image of a GLB) | The texture is made from the bytes of the image | Only PNG and JPEG, as glTF allows. Raw pixels in a file are warned about and left out |
 | An image file next to the model (`Textures/colormap.png`) | A virtual path from the folder of the model, `assets://external/kenney/prototype-kit/Textures/colormap.png` | The file has to be where the model says, with the letter case the model uses |
 
@@ -110,6 +113,21 @@ Its `material.double_sided` is `model` unless written, which takes the
 file's. What else a `Renderable` says, `shininess` and `alpha_mode`, comes
 from the scene only. A model with several materials takes the scene's word
 on every one of them, see [several materials](#several-materials).
+
+What a surface gives off follows the same idea, with black in place of
+white, since black is what gives off nothing:
+
+| `emissive` | `emissive_texture` | What glows |
+|---|---|---|
+| Left out, or black | Left out | What the file says: its factor times its texture. Nothing for a file that says nothing, and for a `Geometry` |
+| Written | Left out | The colour, times the file's emissive texture when it has one |
+| Left out, or black | Written | The texture as it is, as if the colour were white |
+| Written | Written | The colour times the texture |
+
+`emissive_strength` of the `Renderable` is multiplied with the file's in
+every row, so `0` turns a file's glow off and `4` makes it four times
+brighter. A factor the file gives is read as `material.color` is: as a
+colour written in sRGB, although glTF keeps both factors in linear light.
 
 ## doubleSided
 
@@ -175,6 +193,7 @@ conversion (#98) is for.
 | Skins and skeletons | The mesh is drawn in its bind pose | #149 |
 | Cameras and lights | Left out. The log says the model has them | A scene places its own |
 | Metalness and roughness | Not read. `basic-lit` has shininess and a specular texture | Physically based materials (#59) |
+| A second emissive texture, or one on another set of texture coordinates | The first is read, on the first set | |
 | Tangents, a second set of texture coordinates | Not read | Normal maps come with #59 |
 | `KHR_texture_transform` | assimp reads it; only a transform that is the identity has been seen | |
 

@@ -199,6 +199,23 @@ namespace neon
         loaded.color = Color{color.r, color.g, color.b, color.a};
       }
 
+      // What the material gives off itself: the emissiveFactor of glTF,
+      // the strength of KHR_materials_emissive_strength, and the first
+      // emissiveTexture, which the factor multiplies. The Ke of an .obj
+      // comes the same way. A scene that writes an emissive of its own
+      // replaces them, see docs/models.md
+      if (aiColor3D emissive; material->Get(AI_MATKEY_COLOR_EMISSIVE, emissive) == aiReturn_SUCCESS)
+      {
+        loaded.emissive = Color{emissive.r, emissive.g, emissive.b, 1.0f};
+      }
+      if (float strength = 1.0f; material->Get(AI_MATKEY_EMISSIVE_INTENSITY, strength) == aiReturn_SUCCESS)
+      {
+        loaded.emissive_strength = strength;
+      }
+      std::vector<TextureInfo> emissive_textures;
+      LoadMaterialTextures(scene, material, aiTextureType_EMISSIVE, emissive_textures);
+      if (!emissive_textures.empty()) { loaded.emissive_texture = emissive_textures.front(); }
+
       // doubleSided of glTF, which the scene may override, see docs/models.md
       if (int two_sided = 0; material->Get(AI_MATKEY_TWOSIDED, two_sided) == aiReturn_SUCCESS)
       {
@@ -230,6 +247,11 @@ namespace neon
         case aiTextureType_SPECULAR:
         {
           texture.texture_type = TextureType::Specular;
+          break;
+        }
+        case aiTextureType_EMISSIVE:
+        {
+          texture.texture_type = TextureType::Emissive;
           break;
         }
         default:

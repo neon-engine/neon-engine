@@ -112,7 +112,7 @@ keeps what the prefab says instead.
 | `shader` | Virtual path of the shader, without an extension | None. It has to be written |
 | `textures` | A list of virtual paths | None |
 | `scale_textures` | Whether textures repeat as the entity grows | `false` |
-| `material` | `color` as `[red, green, blue]` or with alpha as a fourth, `metallic` and `roughness` from 0 to 1 (the `pbr` shader), `shininess` (the `basic-lit` shader), `use_textures`, `alpha_mode`, and `double_sided` as `model`, `always`, or `never` | white, `0`, `0.5`, `0`, `true`, `opaque`, `model` |
+| `material` | `color` as `[red, green, blue]` or with alpha as a fourth, `metallic` and `roughness` from 0 to 1 (the `pbr` shader), `shininess` (the `basic-lit` shader), `use_textures`, `alpha_mode`, `double_sided` as `model`, `always`, or `never`, and what the surface gives off: `emissive` as a colour, `emissive_strength` from 0 up, and `emissive_texture` as a virtual path, see below | white, `0`, `0.5`, `0`, `true`, `opaque`, `model`, black, `1`, none |
 
 `color` is written as a screen shows it, in sRGB, like the colours of an
 image. The first texture holds colours, the second how much each part of a
@@ -121,16 +121,32 @@ surface shines. `alpha_mode` is `opaque`, which covers what is behind, or
 behind show through. See-through surfaces are drawn after the opaque ones,
 from the farthest to the nearest.
 
+A surface gives off light of its own with `emissive`: a colour, written in
+sRGB as `color` is, that the `pbr` and `basic-lit` shaders add after the
+lighting, so that it shows in a dark room. `emissive_strength` multiplies it
+in linear light, and is how a surface gets brighter than white: a strength
+of 4 gives four times the light of its colour, which a tonemapper in the
+settings then rolls off, see
+[vulkan-renderer.md](vulkan-renderer.md#tonemapping). `emissive_texture` is
+an image, or `surface://<name>` for a render target such as a screen that
+shows a user interface, which the colour multiplies; written without an
+`emissive`, the texture is shown as it is. `unlit` and `color` ignore all
+three. A surface that gives off light does not light anything around it,
+and does not glow around its edges: that is #132 and #130.
+
 `model` is an `.obj` or a `.glb`. What the file says about its look fills in
 what the `Renderable` leaves out: the textures of the model are shown when
 `textures` is not written, the base colour factor of a glTF material is
-multiplied into `color`, and a colour painted on the vertices of the model
-is multiplied in as well. A model whose meshes use different materials is
-drawn with each of them, and the `Renderable` is the override of the whole:
-`color`, the shader, and what else `material` holds apply to every
-material of the file, and `textures` replace those of the first material
-alone, see [several materials](models.md#several-materials). A model is
-drawn at its own size, as the file says:
+multiplied into `color`, a colour painted on the vertices of the model
+is multiplied in as well, and what the file's material gives off is shown
+when `emissive` is left black and `emissive_texture` is not written, with
+`emissive_strength` multiplied into the file's, so that `0` turns a file's
+glow off. A model whose meshes use different materials is drawn with each of
+them, and the `Renderable` is the override of the whole: `color`, the
+shader, and what else `material` holds apply to every material of the file,
+and `textures` replace those of the first material alone, see
+[several materials](models.md#several-materials). A model is drawn at its
+own size, as the file says:
 a piece of a kit is in metres and stands on its origin. A model that is not
 in metres is drawn with `fit: unit`, scaled so that its longest side is 1,
 and `scale` then gives it a size; the `.obj` models of the demo scenes are

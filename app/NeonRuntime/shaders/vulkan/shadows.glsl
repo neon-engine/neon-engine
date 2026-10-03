@@ -11,8 +11,8 @@
 // reach it is within, by its distance along the camera's view, so that
 // the shadows near the camera come from the finest layer.
 
-layout (set = 0, binding = 6) uniform texture2DArray shadow_map;
-layout (set = 0, binding = 7) uniform samplerShadow shadow_sampler;
+layout (set = 0, binding = 8) uniform texture2DArray shadow_map;
+layout (set = 0, binding = 9) uniform samplerShadow shadow_sampler;
 
 // 1 where the direction light reaches `world_position`, 0 where something
 // stands between, and in between along the edge of a shadow: the nine

@@ -165,9 +165,9 @@ and a system. A script declares components and systems of its own.
 | Compute in the pipeline (#107) | Compute passes next to draw passes, with shared buffers and images |
 | PBR and an ubershader out of the box (#106) | One shader that covers a traditionally rendered game, chosen by variants |
 | Skeletal animation (#149) | Skinned meshes, skeletons, and animations, read from glTF, with skinning on the graphics card and animations that blend |
-| Emissive materials (#129) | Screens and holograms that glow. A screen shows a render target and makes it emissive; a CRT look is a material shader |
+| Emissive materials (#129) | **Done:** `material.emissive`, `emissive_strength`, and `emissive_texture`, a file or a render target, added after lighting by `pbr` and `basic-lit`, and read from a glTF material's `emissiveFactor`, `emissiveTexture`, and `KHR_materials_emissive_strength`, see [scenes.md](scenes.md#renderable). Open: a CRT or hologram look as a material shader, which waits for the stitching tool of [shaders.md](shaders.md#the-stitching-tool) |
 | Bloom (#130) | What is brighter than white bleeds into a soft glow. The first post-processing step |
-| Tonemapping and exposure (#131) | Light above white mapped into what a screen shows, in place of clipping. The user interface is drawn after it and keeps its colours |
+| Tonemapping and exposure (#131) | **Done:** `rendering.tonemapper` as `none`, `aces`, or `agx`, and `rendering.exposure`, applied in the resolve step, see [vulkan-renderer.md](vulkan-renderer.md#tonemapping). The user interface is drawn after it and keeps its colours. Open: an exposure that adapts to the scene, which comes with bloom (#130) |
 | Light cast by screens (#132) | A screen can light what is around it with the average colour of its picture, if a game chooses so. A hologram only glows |
 | Projected and area lights (#133) | Lights that throw a picture, and lights from a rectangle, such as a screen or a window |
 | Frustum and occlusion culling (#115) | Draw what the camera sees: bounds against the frustum, and occlusion by occluder volumes or a hierarchical depth buffer |

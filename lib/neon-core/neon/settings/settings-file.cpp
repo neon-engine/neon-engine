@@ -118,6 +118,14 @@ namespace neon
                         "'shadow_cascades' of {} is {}, where 1 to 4 was expected", reader.GetWhere(), settings.shadow_cascades));
         settings.shadow_cascades = 4;
       }
+
+      // the curve of the resolve step, and how bright the scene is taken
+      // to be before it, see docs/vulkan-renderer.md
+      if (std::size_t curve = 0; reader.ReadChoice("tonemapper", {"none", "aces", "agx"}, curve))
+      {
+        settings.tonemapper = static_cast<Tonemapper>(curve);
+      }
+      read_amount(reader, "exposure", settings.exposure);
       reader.Finish();
     }
 

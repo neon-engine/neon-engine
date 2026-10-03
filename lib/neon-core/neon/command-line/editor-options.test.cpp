@@ -104,9 +104,62 @@ namespace
       "Needs --headless-renderer\n"
       "  --spawn PATH              Spawn this prefab at the top of the world once the scene is read, as a script "
       "would, for example assets://prefabs/target.prefab.yml\n"
+      "  --tonemapper NAME         Curve for light brighter than white: none, aces, or agx, over "
+      "rendering.tonemapper of the settings\n"
+      "  --exposure NUMBER         How bright the scene is taken to be, for example 2 for twice the light, over "
+      "rendering.exposure of the settings\n"
       "  --jit on|off              Compile the scripts as they run, or run them in LuaJIT's interpreter. Over "
       "scripting.jit of the settings, for comparing the two\n"
       "  --headless                Run as a dedicated server. Not available yet, see --headless-renderer\n");
+  }
+
+  // --tonemapper and --exposure
+
+  TEST_F(EditorOptionsTest, LeavesTheTonemapperAndTheExposureToTheSettingsWhenNotGiven)
+  {
+    _settings.tonemapper = neon::Tonemapper::Agx;
+    _settings.exposure = 0.5;
+
+    ASSERT_TRUE(Apply({"--scene", "assets://scenes/demo.scene.yml"}));
+
+    EXPECT_EQ(_settings.tonemapper, neon::Tonemapper::Agx);
+    EXPECT_DOUBLE_EQ(_settings.exposure, 0.5);
+  }
+
+  TEST_F(EditorOptionsTest, TonemapperTakesEveryCurveByItsName)
+  {
+    ASSERT_TRUE(Apply({"--tonemapper", "aces"}));
+    EXPECT_EQ(_settings.tonemapper, neon::Tonemapper::Aces);
+
+    ASSERT_TRUE(Apply({"--tonemapper=agx"}));
+    EXPECT_EQ(_settings.tonemapper, neon::Tonemapper::Agx);
+
+    ASSERT_TRUE(Apply({"--tonemapper", "none"}));
+    EXPECT_EQ(_settings.tonemapper, neon::Tonemapper::None);
+  }
+
+  TEST_F(EditorOptionsTest, TonemapperRefusesACurveItDoesNotHave)
+  {
+    EXPECT_FALSE(Apply({"--tonemapper", "reinhard"}));
+    EXPECT_EQ(_error, "Option '--tonemapper' needs none, aces, or agx");
+  }
+
+  TEST_F(EditorOptionsTest, ExposureIsANumberAboveZero)
+  {
+    ASSERT_TRUE(Apply({"--exposure", "2"}));
+    EXPECT_DOUBLE_EQ(_settings.exposure, 2.0);
+
+    ASSERT_TRUE(Apply({"--exposure=0.25"}));
+    EXPECT_DOUBLE_EQ(_settings.exposure, 0.25);
+  }
+
+  TEST_F(EditorOptionsTest, ExposureRefusesZeroAndWhatIsNoNumber)
+  {
+    EXPECT_FALSE(Apply({"--exposure", "0"}));
+    EXPECT_EQ(_error, "Option '--exposure' needs a number above zero, such as 2");
+
+    EXPECT_FALSE(Apply({"--exposure", "bright"}));
+    EXPECT_EQ(_error, "Option '--exposure' needs a number above zero, such as 2");
   }
 
   // --jit
@@ -177,7 +230,8 @@ namespace
   TEST_F(EditorOptionsTest, EveryOptionButTheHeadlessOnesNeedsAValue)
   {
     for (const char *option : {"--scene", "--ui", "--frames", "--screenshot", "--screenshot-at", "--output-dir",
-                               "--time-step", "--spawn", "--render-scale", "--input", "--input-script", "--jit"})
+                               "--time-step", "--spawn", "--render-scale", "--input", "--input-script", "--jit",
+                               "--tonemapper", "--exposure"})
     {
       EXPECT_FALSE(Parse({option})) << option;
       EXPECT_EQ(_command_line.GetError(), "Option '" + std::string(option) + "' needs a value");

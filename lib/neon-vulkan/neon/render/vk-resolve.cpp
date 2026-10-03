@@ -1,6 +1,7 @@
 #include "vk-resolve.hpp"
 
 #include <array>
+#include <cstring>
 
 namespace neon
 {
@@ -10,6 +11,8 @@ namespace neon
     const VkRenderPass render_pass,
     const VK_Samplers *samplers,
     const uint32_t max_images,
+    const Tonemapper tonemapper,
+    const float exposure,
     const std::shared_ptr<Logger> &logger)
   {
     _device = device;
@@ -21,6 +24,26 @@ namespace neon
     _shader = VK_Shader(kShader_Path, file_system_context, _device, _logger);
     if (!_shader.Initialize()) { return false; }
 
+    // the settings of the run, written once and read by every resolve
+    const Data data{
+      .tonemapper = static_cast<float>(tonemapper),
+      .exposure = exposure,
+    };
+    void *mapped = nullptr;
+    if (!_device->CreateBuffer(
+          sizeof(Data),
+          VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+          VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+          _data_buffer,
+          _data_memory) ||
+        vkMapMemory(vk_device, _data_memory, 0, sizeof(Data), 0, &mapped) != VK_SUCCESS)
+    {
+      _logger->Critical("Could not hand the settings of the resolve step to the graphics card");
+      return false;
+    }
+    std::memcpy(mapped, &data, sizeof(Data));
+    vkUnmapMemory(vk_device, _data_memory);
+
     VkDescriptorSetLayoutCreateInfo layout{};
     layout.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
     layout.bindingCount = static_cast<uint32_t>(kBindings.size());
@@ -31,10 +54,11 @@ namespace neon
     pipeline_layout.setLayoutCount = 1;
     pipeline_layout.pSetLayouts = &_descriptor_layout;
 
-    // every scene image, and the sampler bound next to it
-    const std::array<VkDescriptorPoolSize, 2> sizes{{
+    // every scene image, the sampler bound next to it, and the settings
+    const std::array<VkDescriptorPoolSize, 3> sizes{{
       {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, max_images},
       {VK_DESCRIPTOR_TYPE_SAMPLER, max_images},
+      {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, max_images},
     }};
 
     VkDescriptorPoolCreateInfo pool{};
@@ -140,12 +164,16 @@ namespace neon
     if (_descriptor_pool != VK_NULL_HANDLE) { vkDestroyDescriptorPool(device, _descriptor_pool, nullptr); }
     if (_pipeline_layout != VK_NULL_HANDLE) { vkDestroyPipelineLayout(device, _pipeline_layout, nullptr); }
     if (_descriptor_layout != VK_NULL_HANDLE) { vkDestroyDescriptorSetLayout(device, _descriptor_layout, nullptr); }
+    if (_data_buffer != VK_NULL_HANDLE) { vkDestroyBuffer(device, _data_buffer, nullptr); }
+    if (_data_memory != VK_NULL_HANDLE) { vkFreeMemory(device, _data_memory, nullptr); }
     _shader.CleanUp();
 
     _pipeline = VK_NULL_HANDLE;
     _descriptor_pool = VK_NULL_HANDLE;
     _pipeline_layout = VK_NULL_HANDLE;
     _descriptor_layout = VK_NULL_HANDLE;
+    _data_buffer = VK_NULL_HANDLE;
+    _data_memory = VK_NULL_HANDLE;
   }
 
   VkDescriptorSet VK_Resolve::Keep(const VkImageView scene_view) const
@@ -167,6 +195,7 @@ namespace neon
     const VkDescriptorImageInfo image{VK_NULL_HANDLE, scene_view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
     const VkDescriptorImageInfo sampler{
       _samplers->Of(VK_Sampling::NearestClamp), VK_NULL_HANDLE, VK_IMAGE_LAYOUT_UNDEFINED};
+    const VkDescriptorBufferInfo data{_data_buffer, 0, sizeof(Data)};
 
     std::array<VkWriteDescriptorSet, kBindings.size()> writes{};
     for (std::size_t i = 0; i < writes.size(); i++)
@@ -179,6 +208,7 @@ namespace neon
     }
     writes[0].pImageInfo = &image;
     writes[1].pImageInfo = &sampler;
+    writes[2].pBufferInfo = &data;
 
     vkUpdateDescriptorSets(_device->Device(), static_cast<uint32_t>(writes.size()), writes.data(), 0, nullptr);
     return set;

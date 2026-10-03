@@ -2,6 +2,7 @@
 #define VK_MATERIAL_HPP
 
 #include <functional>
+#include <optional>
 #include <string>
 #include <vector>
 #include <neon/common/transform.hpp>
@@ -27,8 +28,16 @@ namespace neon
     // what the model names, which is shown when the scene names no texture,
     // and the model that names it
     std::vector<TextureInfo> _model_textures;
+    std::optional<TextureInfo> _model_emissive_texture;
     std::string _model_path;
     std::vector<VK_Texture> _textures{};
+
+    // what the surface gives off, apart from the textures of its colours:
+    // the one the scene names, or the model's, held as the others are
+    VK_Texture _emissive_texture;
+    std::string _emissive_key;
+    std::string _emissive_surface;
+    bool _has_emissive_texture = false;
 
     // Where the textures come from, which holds each once for every
     // material that reads it. Without one the material loads its own.
@@ -38,12 +47,26 @@ namespace neon
     // for one the material loaded itself or that a render target owns
     std::vector<std::string> _texture_keys;
 
-    /// Loads one texture, or takes it from the cache when there is one.
-    /// `file` is the image a model carries, or nothing.
+    /// Loads one texture into `texture`, or takes it from the cache when
+    /// there is one, and says in `key` what it is held under there. `file`
+    /// is the image a model carries, or nothing.
     bool LoadTexture(
       const std::string &path,
       const std::shared_ptr<const std::vector<unsigned char>> &file,
+      const VK_TextureOptions &options,
+      VK_Texture &texture,
+      std::string &key) const;
+
+    /// Loads one of the textures of the colours of the surface, at its
+    /// place in the list.
+    bool LoadListedTexture(
+      const std::string &path,
+      const std::shared_ptr<const std::vector<unsigned char>> &file,
       const VK_TextureOptions &options);
+
+    /// Loads what the surface gives off: the texture the scene names, a
+    /// file or a render target, or else the model's when it has one.
+    bool LoadEmissiveTexture();
     MaterialInfo _material_info;
     bool _scale_textures = false;
     bool _initialized = false;
@@ -91,8 +114,13 @@ namespace neon
     bool Initialize();
 
     /// Hands over the textures the model file at `model_path` names, which
-    /// are shown when the scene names none. Call it before Initialize().
-    void SetModelTextures(const std::vector<TextureInfo> &textures, const std::string &model_path = "");
+    /// are shown when the scene names none, and the texture of what the
+    /// file's material gives off, shown when the scene names no
+    /// `emissive_texture`. Call it before Initialize().
+    void SetModelTextures(
+      const std::vector<TextureInfo> &textures,
+      const std::string &model_path = "",
+      const std::optional<TextureInfo> &emissive_texture = std::nullopt);
 
     /// Says where the textures are held, so that one is loaded once for
     /// every material that reads it. Call it before Initialize().
@@ -124,9 +152,17 @@ namespace neon
     /// first as colours, the others as numbers.
     [[nodiscard]] static VK_TextureOptions TextureOptionsFor(std::size_t index);
 
+    /// How the texture of what a surface gives off is kept: as colours.
+    [[nodiscard]] static VK_TextureOptions EmissiveTextureOptions();
+
     [[nodiscard]] const std::string &ShaderPath() const { return _shader_path; }
     [[nodiscard]] AlphaMode GetAlphaMode() const { return _material_info.alpha_mode; }
     [[nodiscard]] const std::vector<VK_Texture> &Textures() const { return _textures; }
+
+    /// Whether the surface gives off a texture, and the texture. Without
+    /// one the emissive colour alone glows, and the shaders are told so.
+    [[nodiscard]] bool HasEmissiveTexture() const { return _has_emissive_texture; }
+    [[nodiscard]] const VK_Texture &EmissiveTexture() const { return _emissive_texture; }
 
     /// Whether both sides are drawn. The render system settles `Model`
     /// against the file before the material is made, so `Model` here is

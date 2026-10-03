@@ -67,6 +67,10 @@ struct ObjectData {
     vec4 material;
     // x metallic, y roughness, for the pbr shader
     vec4 surface;
+    // rgb the light the object gives off itself, in linear light with its
+    // strength multiplied in; w is 1 when an emissive texture is bound
+    // and 0 when the colour alone glows
+    vec4 emissive;
 };
 
 // Every object of the frame, side by side. A draw names its first with

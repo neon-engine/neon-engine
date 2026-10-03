@@ -20,9 +20,9 @@ namespace neon
   /// asked for, made when it is first asked for, and kept until the end.
   ///
   /// The layout is what every material's descriptor set is made to: the
-  /// camera and the lights, the object, two textures, the two samplers
-  /// they are read through, and the shadow map with the sampler it is
-  /// compared through.
+  /// camera and the lights, the object, three textures, the three
+  /// samplers they are read through, and the shadow map with the sampler
+  /// it is compared through.
   ///
   /// The pass that draws the shadow map has variants of its own, which
   /// write depth alone with the one shader of the pass, and are told
@@ -67,23 +67,31 @@ namespace neon
     static constexpr uint32_t kScene_Binding = 0;
     static constexpr uint32_t kObject_Binding = 1;
     static constexpr uint32_t kFirst_Texture_Binding = 2;
-    static constexpr uint32_t kFirst_Sampler_Binding = 4;
-    static constexpr uint32_t kTexture_Count = 2;
+    static constexpr uint32_t kTexture_Count = 3;
+    static constexpr uint32_t kFirst_Sampler_Binding = kFirst_Texture_Binding + kTexture_Count;
+
+    /// The textures by their place: the colours of the surface, the
+    /// metallic-roughness or specular map, and what the surface gives off.
+    static constexpr uint32_t kDiffuse_Texture = 0;
+    static constexpr uint32_t kSecond_Texture = 1;
+    static constexpr uint32_t kEmissive_Texture = 2;
 
     /// The shadow map of the direction light, and the sampler it is
     /// compared through, after the textures of the material: shadows.glsl.
-    static constexpr uint32_t kShadow_Map_Binding = 6;
-    static constexpr uint32_t kShadow_Sampler_Binding = 7;
+    static constexpr uint32_t kShadow_Map_Binding = kFirst_Sampler_Binding + kTexture_Count;
+    static constexpr uint32_t kShadow_Sampler_Binding = kShadow_Map_Binding + 1;
 
-    static constexpr std::array<VkDescriptorSetLayoutBinding, 8> kBindings{{
+    static constexpr std::array<VkDescriptorSetLayoutBinding, 10> kBindings{{
       {kScene_Binding, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1,
         VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
       {kObject_Binding, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1,
         VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
       {kFirst_Texture_Binding, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
       {kFirst_Texture_Binding + 1, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
+      {kFirst_Texture_Binding + 2, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
       {kFirst_Sampler_Binding, VK_DESCRIPTOR_TYPE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
       {kFirst_Sampler_Binding + 1, VK_DESCRIPTOR_TYPE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
+      {kFirst_Sampler_Binding + 2, VK_DESCRIPTOR_TYPE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
       {kShadow_Map_Binding, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
       {kShadow_Sampler_Binding, VK_DESCRIPTOR_TYPE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
     }};

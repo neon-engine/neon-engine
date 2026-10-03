@@ -25,6 +25,16 @@ namespace neon
       material_info.metallic,
       material_info.roughness,
       static_cast<int>(material_info.double_sided));
+
+    // what the surface gives off, which two materials alike in all else
+    // may differ in
+    key += std::format(
+      "|{}|{}|{}|{}|{}",
+      material_info.emissive.r,
+      material_info.emissive.g,
+      material_info.emissive.b,
+      material_info.emissive_strength,
+      material_info.emissive_texture);
     return key;
   }
 

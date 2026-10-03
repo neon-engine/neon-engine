@@ -147,6 +147,38 @@ namespace
     EXPECT_FALSE(VK_Material::TextureOptionsFor(2).is_color);
   }
 
+  TEST_F(VkMaterialTest, KeepsWhatASurfaceGivesOffAsColours)
+  {
+    EXPECT_TRUE(VK_Material::EmissiveTextureOptions().is_color);
+  }
+
+  TEST_F(VkMaterialTest, GivesOffNothingUnlessToldTo)
+  {
+    const VK_Material material = Create({}, false);
+
+    const VK_ObjectData data = material.GetObjectData(glm::mat4(1.0f), Transform{});
+
+    EXPECT_EQ(data.emissive, glm::vec4(0.0f));
+    EXPECT_FALSE(material.HasEmissiveTexture());
+  }
+
+  TEST_F(VkMaterialTest, HandsWhatTheSurfaceGivesOffToTheShadersAsLinearLightTimesItsStrength)
+  {
+    // written in sRGB as the colour is, and brighter than white by the
+    // strength; w says that no texture of it is bound
+    MaterialInfo info;
+    info.emissive = {.r = 1.0f, .g = 0.5f, .b = 0.0f, .a = 1.0f};
+    info.emissive_strength = 4.0f;
+    const VK_Material material = Create(info, false);
+
+    const VK_ObjectData data = material.GetObjectData(glm::mat4(1.0f), Transform{});
+
+    EXPECT_FLOAT_EQ(data.emissive.r, 4.0f);
+    EXPECT_NEAR(data.emissive.g, 4.0f * 0.214041f, 1e-3f);
+    EXPECT_FLOAT_EQ(data.emissive.b, 0.0f);
+    EXPECT_FLOAT_EQ(data.emissive.a, 0.0f);
+  }
+
   TEST_F(VkMaterialTest, HandsShininessAndWhetherTexturesAreUsedToTheShaders)
   {
     MaterialInfo with_textures;
@@ -274,6 +306,40 @@ namespace
 
     EXPECT_TRUE(_logger->Contains(LogLevel::Error, "Failed to load texture assets://textures/notes.png"))
       << _logger->Messages(LogLevel::Error);
+  }
+
+  TEST_F(VkMaterialTest, FailsWhenTheEmissiveTextureIsMissing)
+  {
+    MaterialInfo info;
+    info.emissive_texture = "assets://textures/glow.png";
+    VK_Material material = Create(info, false);
+
+    EXPECT_FALSE(material.Initialize());
+
+    EXPECT_FALSE(material.HasEmissiveTexture());
+    EXPECT_TRUE(
+      _logger->Contains(LogLevel::Error, "Could not initialize the emissive texture assets://textures/glow.png"))
+      << _logger->Messages(LogLevel::Error);
+  }
+
+  TEST_F(VkMaterialTest, ShowsARenderTargetAsWhatItGivesOff)
+  {
+    MaterialInfo info;
+    info.emissive_texture = "surface://screen";
+    VK_Material material = Create(info, false);
+    material.SetSurfaceLookup([](const std::string &, neon::VK_Texture &) { return false; });
+
+    ASSERT_TRUE(material.Initialize()) << _logger->Messages(LogLevel::Error);
+
+    EXPECT_TRUE(material.HasEmissiveTexture());
+    EXPECT_TRUE(material.Shows("screen"));
+    EXPECT_TRUE(material.ShowsSurfaces());
+    EXPECT_THAT(material.Textures(), IsEmpty());
+    EXPECT_EQ(material.GetObjectData(glm::mat4(1.0f), Transform{}).emissive.a, 1.0f);
+
+    material.CleanUp();
+    EXPECT_FALSE(material.HasEmissiveTexture());
+    EXPECT_FALSE(material.ShowsSurfaces());
   }
 
   TEST_F(VkMaterialTest, CanBeInitializedAgainAfterItFailed)

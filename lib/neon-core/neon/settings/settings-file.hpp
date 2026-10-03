@@ -36,6 +36,8 @@ namespace neon
   ///
   ///     rendering:
   ///       vulkan_version: "1.3"
+  ///       tonemapper: aces
+  ///       exposure: 1
   ///
   ///     audio:
   ///       groups:

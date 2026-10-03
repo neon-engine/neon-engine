@@ -15,12 +15,16 @@ layout (location = 4) flat in uint object_index;
 
 layout (location = 0) out vec4 frag_color;
 
-// Every texture is read through a sampler bound next to it, two bindings
+// Every texture is read through a sampler bound next to it, three bindings
 // on: the one the texture asks for, shared with all that are read alike.
+// The third texture is what the surface gives off, plain white when the
+// material has none.
 layout (set = 0, binding = 2) uniform texture2D diffuse_texture;
 layout (set = 0, binding = 3) uniform texture2D specular_texture;
-layout (set = 0, binding = 4) uniform sampler diffuse_sampler;
-layout (set = 0, binding = 5) uniform sampler specular_sampler;
+layout (set = 0, binding = 4) uniform texture2D emissive_texture;
+layout (set = 0, binding = 5) uniform sampler diffuse_sampler;
+layout (set = 0, binding = 6) uniform sampler specular_sampler;
+layout (set = 0, binding = 7) uniform sampler emissive_sampler;
 
 vec3 GetDiffuseColor()
 {
@@ -32,6 +36,15 @@ vec3 GetSpecularColor()
 {
     vec3 texture_color = texture(sampler2D(specular_texture, specular_sampler), tex_coord).rgb;
     return mix(vec3(0.0), texture_color, object.material.y);
+}
+
+// The light the surface gives off itself: the emissive colour, with its
+// strength multiplied in, times the emissive texture where there is one.
+// Added after lighting, so that it shows in the dark.
+vec3 GetEmissive()
+{
+    vec3 texture_color = texture(sampler2D(emissive_texture, emissive_sampler), tex_coord).rgb;
+    return object.emissive.rgb * mix(vec3(1.0), texture_color, object.emissive.w);
 }
 
 // The part every kind of light shares, given the direction towards the
@@ -113,5 +126,5 @@ void main()
             1.0);
     }
 
-    frag_color = vec4(object.color.rgb * result, object_alpha(object.material, object.color.a));
+    frag_color = vec4(object.color.rgb * result + GetEmissive(), object_alpha(object.material, object.color.a));
 }

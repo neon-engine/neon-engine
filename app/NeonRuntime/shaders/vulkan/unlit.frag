@@ -12,9 +12,11 @@ layout (location = 2) flat in uint object_index;
 
 layout (location = 0) out vec4 frag_color;
 
-// the texture, and the sampler it is read through, bound two bindings on
+// the texture, and the sampler it is read through, bound three bindings
+// on. What the surface gives off is not read: the texture is shown as it
+// is.
 layout (set = 0, binding = 2) uniform texture2D diffuse_texture;
-layout (set = 0, binding = 4) uniform sampler diffuse_sampler;
+layout (set = 0, binding = 5) uniform sampler diffuse_sampler;
 
 void main()
 {

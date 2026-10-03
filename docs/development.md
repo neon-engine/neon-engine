@@ -274,6 +274,8 @@ Editor:
   --input SCRIPT            Input in place of devices, for example "1: pointer 640 360; 2: click". Needs --headless-renderer
   --input-script PATH       The same from a file, for example assets://input/menu.input. Needs --headless-renderer
   --spawn PATH              Spawn this prefab at the top of the world once the scene is read, as a script would, for example assets://prefabs/target.prefab.yml
+  --tonemapper NAME         Curve for light brighter than white: none, aces, or agx, over rendering.tonemapper of the settings
+  --exposure NUMBER         How bright the scene is taken to be, for example 2 for twice the light, over rendering.exposure of the settings
   --jit on|off              Compile the scripts as they run, or run them in LuaJIT's interpreter. Over scripting.jit of the settings, for comparing the two
   --headless                Run as a dedicated server. Not available yet, see --headless-renderer
 ```
