@@ -58,3 +58,10 @@ expect_pixel("the fully lit right of the square" 1191 360 255 255 255)
 # after it had been drawn, which every frame after shows
 expect_output("The signal was set again")
 expect_pixel("the square whose picture was set again" 162 360 255 255 0)
+
+# Below the lit square: red glass, half of it solid, in front of blue glass.
+# The entities they are placed by stand the other way round, so the order
+# they are drawn in has to come from where the squares are: red over blue,
+# which a screen writes as 188 0 187. Drawn the other way, the blue one is
+# all there is to see.
+expect_pixel("the red glass over the blue glass" 1118 635 188 0 187)

@@ -123,6 +123,7 @@ namespace
     using Model::Model;
     using Model::ApplyNodeTransform;
     using Model::ComputeNormalizationMatrix;
+    using Model::ComputeMiddle;
 
     bool Initialize() override
     {
@@ -896,6 +897,27 @@ namespace
     EXPECT_NEAR(lowest.y, -0.5f, 1e-5f);
     EXPECT_NEAR(highest.x, 0.5f, 1e-5f);
     EXPECT_NEAR(highest.y, 0.5f, 1e-5f);
+  }
+
+  // ComputeMiddle
+
+  TEST(Model, HasItsMiddleInTheMiddleOfTheBoxAroundItsMeshes)
+  {
+    const TestMesh near_box({{0.0f, 0.0f, 0.0f}, {2.0f, 4.0f, 1.0f}});
+    const TestMesh far_box({{10.0f, 0.0f, -3.0f}});
+
+    EXPECT_EQ(TestModel::ComputeMiddle({&near_box}), glm::vec3(1.0f, 2.0f, 0.5f));
+    // the box around both
+    EXPECT_EQ(TestModel::ComputeMiddle({&near_box, &far_box}), glm::vec3(5.0f, 2.0f, -1.0f));
+  }
+
+  TEST(Model, HasItsMiddleAtTheOriginWithoutVertices)
+  {
+    const TestMesh empty({});
+
+    EXPECT_EQ(TestModel::ComputeMiddle(std::vector<const neon::Mesh *>{}), glm::vec3(0.0f));
+    EXPECT_EQ(TestModel::ComputeMiddle({&empty}), glm::vec3(0.0f));
+    EXPECT_EQ(TestModel::ComputeMiddle(std::span<const neon::Vertex>()), glm::vec3(0.0f));
   }
 
   // ComputeNormalizationMatrix

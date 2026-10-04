@@ -35,6 +35,7 @@ namespace neon
 
       // the numbers of a built mesh are meant as they are
       _model_matrix = glm::mat4(1.0f);
+      _middle = ComputeMiddle(std::span<const Vertex>(_mesh_data->vertices));
       return true;
     }
 
@@ -86,7 +87,11 @@ namespace neon
     if (mesh.IsEmpty() || !_meshes.front().Rewrite(mesh.vertices, mesh.indices))
     {
       _logger->Error("A mesh that was changed could not be drawn again");
+      return;
     }
+
+    // it may lie elsewhere now
+    _middle = ComputeMiddle(std::span<const Vertex>(mesh.vertices));
   }
 
   void VK_Model::CleanUp()
@@ -104,6 +109,7 @@ namespace neon
     for (const auto &mesh : _meshes) { meshes.push_back(&mesh); }
 
     _model_matrix = ComputeNormalizationMatrix(meshes, GetFit());
+    _middle = ComputeMiddle(meshes);
   }
 
   bool VK_Model::ProcessMesh(aiMesh *mesh, const aiScene *scene, const glm::mat4 &transform)

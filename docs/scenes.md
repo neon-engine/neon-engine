@@ -119,7 +119,7 @@ image. The first texture holds colours, the second how much each part of a
 surface shines. `alpha_mode` is `opaque`, which covers what is behind, or
 `blend`, where the alpha of the colour, or of the texture, lets what is
 behind show through. See-through surfaces are drawn after the opaque ones,
-from the farthest to the nearest.
+from the farthest to the nearest, by where the middle of each thing is.
 
 A surface gives off light of its own with `emissive`: a colour, written in
 sRGB as `color` is, that the `pbr` and `basic-lit` shaders add after the

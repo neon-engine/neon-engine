@@ -131,6 +131,51 @@ namespace
       world.Info(lightmapped ? "The square is lit by " + light : "The square could not be lit");
     }
 
+    /// A square of one colour that is seen through, as far from its entity
+    /// along z as `offset` says.
+    static void ShowGlass(
+      World &world,
+      const std::string &name,
+      const NeonVector3 &position,
+      const float offset,
+      const float half_side,
+      const std::vector<std::uint8_t> &pixel)
+    {
+      const std::string picture = world.SetImage(name, 1, 1, pixel);
+
+      const Entity glass = world.CreateEntity(name);
+      world.AddComponent(glass, "Transform");
+      world.AddComponent(glass, "Renderable");
+      world.SetVector3(glass, world.FindField("Transform", "position"), position);
+      world.SetText(glass, world.FindField("Renderable", "shader"), "assets://shaders/unlit");
+      world.SetText(glass, world.FindField("Renderable", "material.alpha_mode"), "blend");
+      world.SetTexts(glass, world.FindField("Renderable", "textures"), {picture});
+
+      const NeonVector3 towards{0.0f, 0.0f, 1.0f};
+      const NeonColor plain{1.0f, 1.0f, 1.0f, 1.0f};
+      world.SetMesh(
+        glass,
+        {
+          {{-half_side, -half_side, offset}, towards, {0.0f, 1.0f}, plain},
+          {{half_side, -half_side, offset}, towards, {1.0f, 1.0f}, plain},
+          {{half_side, half_side, offset}, towards, {1.0f, 0.0f}, plain},
+          {{-half_side, half_side, offset}, towards, {0.0f, 0.0f}, plain},
+        },
+        {0, 1, 2, 0, 2, 3});
+    }
+
+    /// Two squares that are seen through, one behind the other below the lit
+    /// square: red in front, half of it solid, and blue behind. Each lies a
+    /// metre and a half from the entity it is placed by, the other way
+    /// round: the entity of the red one is the farther. What is seen through
+    /// is drawn from the farthest to the nearest, and only the order of
+    /// where the squares are gives red over blue.
+    static void ShowGlasses(World &world)
+    {
+      ShowGlass(world, "front-glass", {1.375f, -0.79f, -4.0f}, 1.5f, 0.25f, {255, 0, 0, 128});
+      ShowGlass(world, "back-glass", {1.925f, -1.108f, -2.0f}, -1.5f, 0.35f, {0, 0, 255, 255});
+    }
+
   public:
     bool Initialize(World &world) override
     {
@@ -166,6 +211,7 @@ namespace
 
       ShowLit(world);
       ShowSignal(world);
+      ShowGlasses(world);
     }
   };
 }

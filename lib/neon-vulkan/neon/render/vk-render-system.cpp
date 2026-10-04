@@ -1284,7 +1284,10 @@ namespace neon
     // object of a variant is drawn, which pays for it; the pipeline is
     // shared by every material of the variant from then on.
     const bool mirrored = VK_Culling::IsMirrored(model_matrix);
-    const float distance = VK_DrawOrder::DistanceOf(view, glm::vec3(model_matrix[3]));
+    // How far the object is, for the order of what is see-through: its
+    // middle, not the origin it is placed by, which a mesh may lie far from.
+    const float distance =
+      VK_DrawOrder::DistanceOf(view, glm::vec3(model_matrix * glm::vec4(model.GetMiddle(), 1.0f)));
 
     // one draw for each material of the object: the meshes of the model
     // that use the material of the file it was made from

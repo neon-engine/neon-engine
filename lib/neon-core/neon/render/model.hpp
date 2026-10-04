@@ -1,6 +1,7 @@
 #ifndef MODEL_HPP
 #define MODEL_HPP
 
+#include <span>
 #include <assimp/scene.h>
 #include <neon/filesystem/file-system-context.hpp>
 #include <neon/logging/logger.hpp>
@@ -34,6 +35,9 @@ namespace neon
   protected:
     /// The matrix the fit gives the model, see GetNormalizedModelMatrix().
     glm::mat4 _model_matrix{1.0f};
+
+    /// The middle of the model, see GetMiddle().
+    glm::vec3 _middle{0.0f};
     FileSystemContext *_file_system_context;
     std::shared_ptr<Logger> _logger;
 
@@ -71,6 +75,14 @@ namespace neon
     /// the meshes they loaded.
     static glm::mat4 ComputeNormalizationMatrix(const std::vector<const Mesh *> &meshes, ModelFit fit);
 
+    /// The middle of the box around vertices, as they are. The origin for
+    /// none. Backends keep it in `_middle` for the meshes they loaded, and
+    /// again when a mesh is changed.
+    static glm::vec3 ComputeMiddle(std::span<const Vertex> vertices);
+
+    /// The same for all the vertices of meshes.
+    static glm::vec3 ComputeMiddle(const std::vector<const Mesh *> &meshes);
+
     /// Takes one mesh of the model. `transform` is where the node that
     /// carries the mesh places it, with every node above it applied: a
     /// backend bakes it into the vertices with ApplyNodeTransform(), since
@@ -97,6 +109,12 @@ namespace neon
     /// between the vertices and the Transform of the entity. The identity
     /// for a fit of `None`, and until the model is loaded.
     [[nodiscard]] glm::mat4 GetNormalizedModelMatrix() const;
+
+    /// The middle of the box around the model, as its vertices are, before
+    /// the fit: where the model is, as far as one place can say it. What
+    /// draws see-through things orders them by it and not by where their
+    /// entity is, since a mesh may lie far from the origin it is placed by.
+    [[nodiscard]] glm::vec3 GetMiddle() const { return _middle; }
 
     [[nodiscard]] ModelFit GetFit() const { return _fit; }
 

@@ -440,7 +440,8 @@ its whole model with one of its draws when all of them cast alike
 every descriptor set binds the same, so it binds one set for a camera and
 its lights. See-through draws keep the order they
 came in, behind the opaque ones, and the canvas sorts them from the farthest
-to the nearest as before. The order is worked out apart from the graphics
+to the nearest as before, by the middle of the box around each model in the
+world: a mesh may lie far from the origin its entity places it by. The order is worked out apart from the graphics
 card, in `VK_DrawQueue`, which is tested; what a frame cost, objects, draws,
 pipelines and sets bound, is said at the level of debugging every three
 hundred frames. Indirect draws from a buffer, and textures by index so that

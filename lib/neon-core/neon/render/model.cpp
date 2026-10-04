@@ -419,6 +419,38 @@ namespace neon
     return scale(glm::mat4(1.0f), glm::vec3(1.0f / longest)) * translate(glm::mat4(1.0f), -center);
   }
 
+  glm::vec3 Model::ComputeMiddle(const std::span<const Vertex> vertices)
+  {
+    if (vertices.empty()) { return glm::vec3(0.0f); }
+
+    auto lowest = glm::vec3(std::numeric_limits<float>::max());
+    auto highest = glm::vec3(std::numeric_limits<float>::lowest());
+    for (const Vertex &vertex : vertices)
+    {
+      lowest = glm::min(lowest, vertex.position);
+      highest = glm::max(highest, vertex.position);
+    }
+    return (lowest + highest) / 2.0f;
+  }
+
+  glm::vec3 Model::ComputeMiddle(const std::vector<const Mesh *> &meshes)
+  {
+    auto lowest = glm::vec3(std::numeric_limits<float>::max());
+    auto highest = glm::vec3(std::numeric_limits<float>::lowest());
+    for (const auto *mesh : meshes)
+    {
+      for (const auto &vertex : mesh->GetVertices())
+      {
+        lowest = glm::min(lowest, vertex.position);
+        highest = glm::max(highest, vertex.position);
+      }
+    }
+
+    // nothing was loaded
+    if (lowest.x > highest.x) { return glm::vec3(0.0f); }
+    return (lowest + highest) / 2.0f;
+  }
+
   glm::mat4 Model::GetNormalizedModelMatrix() const
   {
     return _model_matrix;
