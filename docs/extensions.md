@@ -272,8 +272,14 @@ gives every corner of the mesh its place in the lightmap, and the field
 handed over apart from the corners, so that a corner is what it was in
 version 7.
 
-Not yet: a mesh for the physics to collide with, and letting a picture go
-again.
+What an extension draws can be collided with as it is: an entity with a
+`Collider` of the shape `mesh` or `convex_hull` that names no model takes the
+mesh that was handed to its `Renderable`, as it would take a `Geometry`, see
+[physics.md](physics.md). So a level is given a `RigidBody` of the kind
+`static` and such a `Collider` with `add_component` and `set_field_text`, and
+what is seen is what is walked on.
+
+Not yet: letting a picture go again.
 
 ## Systems
 

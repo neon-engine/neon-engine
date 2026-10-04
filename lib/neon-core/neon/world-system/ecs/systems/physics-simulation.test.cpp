@@ -8,6 +8,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <neon/world-system/ecs/components/renderable.hpp>
 #include <neon/testing/fake-entity-store.hpp>
 #include <neon/testing/fake-physics-context.hpp>
 #include <neon/testing/memory-file-system.hpp>
@@ -477,6 +478,53 @@ namespace
     EXPECT_TRUE(shape.triangles.empty());
   }
 
+  TEST_F(PhysicsSimulationTest, MakesAMeshFromTheMeshThatWasHandedToWhatDrawsTheEntity)
+  {
+    _store.Register<neon::Renderable>("Renderable");
+
+    const Entity wall = Create("wall", At(0.0f, 0.0f, 0.0f), RigidBody{.kind = BodyKind::Static},
+                               Collider{.shape = ShapeKind::Mesh});
+
+    // a square of two triangles, as an importer or an extension hands one over
+    auto mesh = std::make_shared<neon::MeshData>();
+    mesh->vertices.resize(4);
+    mesh->vertices[0].position = {0.0f, 0.0f, 0.0f};
+    mesh->vertices[1].position = {1.0f, 0.0f, 0.0f};
+    mesh->vertices[2].position = {1.0f, 1.0f, 0.0f};
+    mesh->vertices[3].position = {0.0f, 1.0f, 0.0f};
+    mesh->indices = {0, 1, 2, 0, 2, 3};
+
+    neon::Renderable renderable;
+    renderable.render_info.mesh = mesh;
+    _store.Set(wall, renderable);
+
+    Step();
+
+    ASSERT_EQ(_physics.created.size(), 1u);
+    const auto &shape = _physics.created[0].shapes[0];
+    EXPECT_EQ(shape.kind, ShapeKind::Mesh);
+    ASSERT_EQ(shape.points.size(), 4u);
+    EXPECT_EQ(shape.points[2], glm::vec3(1.0f, 1.0f, 0.0f));
+    EXPECT_EQ(shape.triangles.size(), 2u * 3u);
+  }
+
+  TEST_F(PhysicsSimulationTest, SaysWhenTheMeshThatWasHandedOverIsEmpty)
+  {
+    _store.Register<neon::Renderable>("Renderable");
+
+    const Entity wall = Create("wall", At(0.0f, 0.0f, 0.0f), RigidBody{.kind = BodyKind::Static},
+                               Collider{.shape = ShapeKind::Mesh});
+    neon::Renderable renderable;
+    renderable.render_info.mesh = std::make_shared<neon::MeshData>();
+    _store.Set(wall, renderable);
+
+    Step(2);
+
+    EXPECT_TRUE(BodyOf(wall).failed);
+    EXPECT_TRUE(_logger->Contains(LogLevel::Error, "the mesh of entity 'wall' has nothing in it for its mesh"))
+      << _logger->Messages(LogLevel::Error);
+  }
+
   TEST_F(PhysicsSimulationTest, SaysWhenAColliderHasNeitherAModelNorAGeometry)
   {
     const Entity rock = Create("rock", At(0.0f, 5.0f, 0.0f), RigidBody{}, Collider{.shape = ShapeKind::Mesh});
@@ -486,7 +534,8 @@ namespace
     EXPECT_TRUE(BodyOf(rock).failed);
     EXPECT_TRUE(_logger->Contains(
       LogLevel::Error,
-      "the mesh of entity 'rock' names no model and the entity has no Geometry to take its shape from"))
+      "the mesh of entity 'rock' names no model, and the entity has neither a Geometry nor a mesh of its own "
+      "to take its shape from"))
       << _logger->Messages(LogLevel::Error);
   }
 

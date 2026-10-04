@@ -4,6 +4,7 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
+#include <neon/world-system/ecs/components/renderable.hpp>
 #include <neon/world-system/ecs/components/character-body.hpp>
 #include <neon/world-system/ecs/components/collider.hpp>
 #include <neon/world-system/ecs/components/geometry.hpp>
@@ -331,20 +332,33 @@ namespace neon
         // that what is drawn is what collides
         if (collider->model.empty())
         {
+          // The shape the entity builds, or else the mesh that was handed
+          // to what draws it, by a tool, an importer, or an extension.
           const auto *built = store.Get<Geometry>(entity);
-          if (built == nullptr)
+          const ComponentId renderable_id = store.FindComponent("Renderable");
+          const auto *drawn = built != nullptr || renderable_id == No_Component
+                                ? nullptr
+                                : static_cast<const Renderable *>(store.GetComponent(entity, renderable_id));
+          const std::shared_ptr<const MeshData> handed = drawn == nullptr ? nullptr : drawn->render_info.mesh;
+
+          if (built == nullptr && handed == nullptr)
           {
             error = std::format(
-              "the {} of entity '{}' names no model and the entity has no Geometry to take its shape from",
+              "the {} of entity '{}' names no model, and the entity has neither a Geometry nor a mesh of its own "
+              "to take its shape from",
               Describe(collider->shape), PathOf(store, entity));
             return false;
           }
 
-          const MeshData mesh = GeometryBuilding::Build(*built);
+          const MeshData built_mesh = built != nullptr ? GeometryBuilding::Build(*built) : MeshData{};
+          const MeshData &mesh = built != nullptr ? built_mesh : *handed;
           if (mesh.IsEmpty())
           {
             error = std::format(
-              "the Geometry of entity '{}' builds nothing for its {}", PathOf(store, entity), Describe(collider->shape));
+              "the {} of entity '{}' has nothing in it for its {}",
+              built != nullptr ? "Geometry" : "mesh",
+              PathOf(store, entity),
+              Describe(collider->shape));
             return false;
           }
 

@@ -94,7 +94,9 @@ namespace neon
     type.Field("model", &Collider::model)
         .AlwaysWritten()
         .OnlyWhen("shape", {"convex_hull", "mesh"})
-        .Describe("Virtual path of the model the shape is made from. Left out, the shape is the entity's Geometry");
+        .Describe(
+          "Virtual path of the model the shape is made from. Left out, the shape is the entity's Geometry, or "
+          "else the mesh that was handed to its Renderable");
 
     type.Choice("fit", &Collider::fit, {"none", "unit"})
         .OnlyWhen("shape", {"convex_hull", "mesh"})

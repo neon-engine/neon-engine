@@ -885,6 +885,7 @@ A character is found as a body is.
 | `FixedClock` | neon-core | Turns the time of frames into steps. It belongs to `EntityWorld` |
 | `LoadModelGeometry` | neon-core | Reads the points and triangles of a model through the file system |
 | `GeometryBuilding::Build` | neon-core | The points and triangles of an entity's `Geometry`, for a `Collider` of kind `mesh` or `convex_hull` that names no model, so that what is drawn is what collides. See [geometry.md](geometry.md) |
+| `RenderInfo::mesh` | neon-core | The points and triangles of a mesh that was handed to the `Renderable` of an entity, by a tool, an importer, or an extension: what such a `Collider` takes when the entity has no `Geometry`, see [extensions.md](extensions.md#what-an-extension-draws) |
 | `FakePhysicsContext` | neon-core, `neon/testing` | A physics in which nothing collides, for tests |
 
 Nothing outside neon-jolt includes a header of Jolt. The library is linked
