@@ -490,6 +490,35 @@ namespace
     ExpectQuad(_renderer.Quads().at(0), 200, 200, 64, 64);
   }
 
+  TEST_F(UiImageTest, AnImageThatIsToldAnotherPathShowsThatImage)
+  {
+    ShowImage("src: assets://ui/heart.png\n");
+    ExpectBox("picture", 100, 100, 64, 64);
+    const auto before = _renderer.Quads().at(0).texture;
+
+    ASSERT_TRUE(_ui->SetField(_ui->FindByName("picture"), "src", std::string("assets://ui/wide.png")));
+    Frame();
+
+    // the other image, with the size it has
+    ExpectBox("picture", 100, 100, 200, 100);
+    ASSERT_EQ(_renderer.Quads().size(), 1u);
+    EXPECT_NE(_renderer.Quads().at(0).texture, before);
+    int width = 0;
+    int height = 0;
+    ASSERT_TRUE(_renderer.GetTextureSize(_renderer.Quads().at(0).texture, width, height));
+    EXPECT_EQ(width, 200);
+
+    // and one of a list of images is told a single one
+    StartAgain();
+    ShowImage(
+      "src:\n"
+      "  - { src: assets://ui/gem-1x.png, scale: 1 }\n"
+      "  - { src: assets://ui/gem-2x.png, scale: 2 }\n");
+    ASSERT_TRUE(_ui->SetField(_ui->FindByName("picture"), "src", std::string("assets://ui/tile.png")));
+    Frame();
+    ExpectBox("picture", 100, 100, 40, 20);
+  }
+
   TEST_F(UiImageTest, SaysWhatIsWrongWithAListOfImages)
   {
     EXPECT_THAT(

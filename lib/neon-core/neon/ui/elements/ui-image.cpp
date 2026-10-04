@@ -29,6 +29,11 @@ namespace neon
 
     if (!TakeText(value, "'src' of " + Describe(), _source, error)) { return false; }
 
+    // it is the one image there is, for every screen, as one that a file
+    // writes as a path is
+    _sources.clear();
+    if (!_source.empty()) { _sources.push_back({_source, 1.0f}); }
+
     // another image may have another size
     Invalidate(UiDirty::Layout | UiDirty::Paint);
     return true;
