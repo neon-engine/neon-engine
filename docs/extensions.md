@@ -148,6 +148,7 @@ something of its own and is told to clean up.
 | 7 | `add_component`, `set_field_texts`, `set_image`, `set_mesh`, and `name`, the name of the extension | |
 | 8 | `set_mesh_lightmap` | |
 | 9 | `set_sound` | |
+| 10 | `write_file`, `list_files`, `request_quit` | |
 
 ## Components
 
@@ -218,12 +219,13 @@ What an extension reaches besides the store. Like the store, they are for
 |---|---|---|
 | The fields of any component | `find_field`, `get_field`, `set_field`, `get_field_text`, `set_field_text` | By the names a recipe writes them with: `find_field(host->context, "Transform", "position")`, once, in `start`. It works for a component of the engine, of a script, and of another extension alike, through the same description the scene file and Lua use |
 | Input | `is_action_down`, `was_action_pressed`, `action_axis`, `action_axis2`, `action_axis3` | The actions of the input map, less what the user interface used, see [input.md](input.md) |
-| Files | `file_exists`, `read_file` | Virtual paths, under every rule of [file-systems.md](file-systems.md). An extension's own files are `extensions://<name>/…` |
+| Files | `file_exists`, `read_file`, `write_file`, `list_files` | Virtual paths, under every rule of [file-systems.md](file-systems.md). An extension's own files are `extensions://<name>/…`. What it writes goes under `user://`, see [what an extension keeps](#what-an-extension-keeps) |
 | The world | `spawn`, `spawn_at`, `load_scene` | A prefab under a parent or at the top, see [prefabs.md](prefabs.md), with `spawn_at` at a position and a rotation written on top of its `Transform`; another scene when the frame is done |
 | The user interface | `set_ui_number`, `set_ui_text` | The values its files show as `{name}`, see [user-interface.md](user-interface.md) |
 | Components of the engine | `add_component` | Gives an entity a component by its name, with what its fields start with, as `Renderable: Default` in a recipe. An extension has no struct for the engine's components, so this is how an entity it creates gets a `Transform` or a `Renderable`; the fields are then set with `set_field`, and a list of text, such as `textures`, with `set_field_texts` |
 | What is drawn | `set_image`, `set_mesh` | A picture and a mesh the extension made, see [what an extension draws](#what-an-extension-draws) |
 | Physics | `listen_to_physics`, `cast_ray` | What began and ended to touch in a frame, before `update`, as the hooks of a script are told; and the first thing a ray hits. A body itself is a component, `RigidBody`, `CharacterBody`, or `Trigger` with a `Collider`, and is moved through its fields, see [physics.md](physics.md) |
+| The application | `request_quit` | Asks it to close once the frame is done, see [what an extension keeps](#what-an-extension-keeps) |
 | Audio | none of its own | A sound is a component and is played through its fields, see [audio.md](audio.md) |
 
 | Decision | Reason |
@@ -304,6 +306,33 @@ mesh that was handed to its `Renderable`, as it would take a `Geometry`, see
 what is seen is what is walked on.
 
 Not yet: letting a picture go again.
+
+## What an extension keeps
+
+A game keeps what is the player's, a saved game, the settings of its menu,
+under `user://`, and finds it there the next time. Its own menu has a quit as
+well, which asks the application to close.
+
+```cpp
+world.WriteFile("user://saves/slot-1.sav", bytes);        // the folder is created
+
+for (const std::string &name : world.ListFiles("user://saves"))   // slot-1.sav, slot-2.sav
+{
+  std::vector<std::uint8_t> saved;
+  world.ReadFile("user://saves/" + name, saved);
+}
+
+world.RequestQuit();   // the frame is finished, then everything is cleaned up
+```
+
+| Decision | Reason |
+|---|---|
+| An extension writes under `user://` alone | It is the one place a game may write, on every platform. `output://`, which the file system writes as well, is for what a run hands back to whoever started it, and is not the game's |
+| A path that is empty, is under another scheme, or has `..` in it is refused, with the reason in the log of the extension | The file system would refuse most of them too, in a log of its own. Who wrote the path reads why in the log that carries the name of the extension |
+| `write_file` writes a whole file and replaces one that is there; folders on the way are created | It is `WriteBytes` of the file system, which a screenshot and a scene that is saved go through. A file may hold nothing |
+| `list_files` gives the names of the files directly in a folder, in the order of their names, to a function of the extension | As `read_file` hands over its bytes: nothing is allocated on one side and freed on the other. Folders, and what is in them, are left out, so a folder of saved games lists the saved games. Any folder that can be read can be listed |
+| A folder that is not there lists as nothing, without an error | `user://saves` is not there before the first game was saved |
+| `request_quit` tells the window to close, as the button `quit` of the pause menu does | The application leaves its loop once the frame is done and cleans up as it always does. An extension that ends the process itself skips that: the log is cut short, and what the audio and the renderer hold is never let go of |
 
 ## Systems
 
@@ -447,7 +476,7 @@ A game is a project, an extension, or both, see
 | `LibraryLoader`, `NativeLibrary` | neon-core | The interfaces for opening a library of the platform at a virtual path |
 | `SDL2_LibraryLoader`, `SDL2_NativeLibrary` | neon-sdl2 | The backend. The file system hands it the native path, `FileSystem::OpenLibrary`, which the rest of the engine never sees |
 
-The tests are in [tests/extensions](../tests/extensions): eleven small
+The tests are in [tests/extensions](../tests/extensions): thirteen small
 extensions that are built next to the test and started for real, with a store
 of Flecs for those that bring components, and recipes in memory.
 

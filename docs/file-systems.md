@@ -31,12 +31,20 @@ memory, and only where a texture, an image, or a sound is named.
 
 All seven are built in. Maps a developer defines are #380.
 
+What may be written:
+
+| Who writes | Where |
+|---|---|
+| The engine | `user://`, such as the log, and `output://`, such as a screenshot |
+| An extension, through `write_file` | `user://` alone: the saved games and the settings of a game. Everything else is refused with the reason in the log of the extension, see [extensions.md](extensions.md#what-an-extension-keeps) |
+| Nobody | `assets://` and `extensions://`, which are read-only |
+
 File access sits behind an interface, following the same split as windowing
 and rendering.
 
 | Piece | Location | Role |
 |---|---|---|
-| `FileSystemContext` | neon-core | The interface consumers depend on: `Exists`, `ReadBytes`, `ReadText`, `WriteBytes`, `WriteText` |
+| `FileSystemContext` | neon-core | The interface consumers depend on: `Exists`, `ReadBytes`, `ReadText`, `WriteBytes`, `WriteText`, `ListFiles` |
 | `FileSystem` | neon-core | Base class for backends. Owns the lifecycle, the path rules, and the conversion to native paths |
 | `SDL2_FileSystem` | neon-sdl2 | The implementation. Finds the executable's folder and reads files through SDL2 |
 

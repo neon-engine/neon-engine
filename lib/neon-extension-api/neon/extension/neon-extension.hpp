@@ -76,7 +76,7 @@ namespace neon::extension
   using Vertex = NeonVertex;
 
   /// The version of the C file this header needs of the application.
-  inline constexpr std::uint32_t needed_abi_version = 9;
+  inline constexpr std::uint32_t needed_abi_version = 10;
 
   /// The kind of a field from its type, and its value as the numbers a
   /// description carries. A type of the extension's own that lies in memory
@@ -661,6 +661,35 @@ namespace neon::extension
                  static_cast<std::vector<std::uint8_t> *>(user)->assign(bytes, bytes + size);
                },
                &contents) != 0;
+    }
+
+    /// Writes a whole file under `user://`, the folder of the player, such
+    /// as `user://saves/slot-1.sav`. The folders in the path are created.
+    /// Returns false, after the log said why, for a path anywhere else.
+    bool WriteFile(const std::string &path, const std::vector<std::uint8_t> &bytes) const
+    {
+      return _host->write_file(_host->context, path.c_str(), bytes.data(), bytes.size()) != 0;
+    }
+
+    /// The names of the files directly in a folder, in their order, such
+    /// as the saved games in `user://saves`. Nothing when there is no such
+    /// folder.
+    [[nodiscard]] std::vector<std::string> ListFiles(const std::string &folder) const
+    {
+      std::vector<std::string> names;
+      _host->list_files(
+        _host->context,
+        folder.c_str(),
+        [](void *user, const char *name) { static_cast<std::vector<std::string> *>(user)->emplace_back(name); },
+        &names);
+      return names;
+    }
+
+    /// Asks the application to close once the frame is done, as the quit
+    /// of its pause menu does, with all of its clean-up.
+    void RequestQuit() const
+    {
+      _host->request_quit(_host->context);
     }
 
     /// Casts a ray into the world of the physics, at every layer and past

@@ -88,6 +88,10 @@ namespace neon
     /// show.
     void SetUi(UiContext *ui);
 
+    /// Gives the extensions the window, which is what one that asks the
+    /// application to close tells, as the pause menu does.
+    void SetWindow(WindowContext *window);
+
     /// Gives the extensions the world, for placing prefabs and asking for
     /// another scene.
     void SetWorld(WorldSystem *world);

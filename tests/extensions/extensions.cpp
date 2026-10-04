@@ -26,6 +26,7 @@
 #include <neon/testing/mock-audio-context.hpp>
 #include <neon/testing/mock-render-context.hpp>
 #include <neon/testing/mock-ui-system.hpp>
+#include <neon/testing/mock-window-system.hpp>
 #include <neon/testing/mock-world-system.hpp>
 #include <neon/testing/recording-logger.hpp>
 #include <neon/testing/recording-logging-context.hpp>
@@ -47,6 +48,57 @@ namespace
   using ::testing::NiceMock;
   using ::testing::Return;
 
+  /// The files of the disk, with user:// in memory: what an extension
+  /// writes for the player stays out of the folder of whoever runs the
+  /// test, and is gone with it.
+  class PlayerFilesInMemory final : public neon::FileSystemContext
+  {
+    neon::FileSystemContext *_disk;
+    neon::FileSystemContext *_memory;
+
+    [[nodiscard]] neon::FileSystemContext *For(const std::string &path) const
+    {
+      return path.starts_with(neon::FileSystem::user_scheme) ? _memory : _disk;
+    }
+
+  public:
+    PlayerFilesInMemory(neon::FileSystemContext *disk, neon::FileSystemContext *memory)
+    {
+      _disk = disk;
+      _memory = memory;
+    }
+
+    bool Exists(const std::string &path) override
+    {
+      return For(path)->Exists(path);
+    }
+
+    bool ReadBytes(const std::string &path, std::vector<unsigned char> &contents) override
+    {
+      return For(path)->ReadBytes(path, contents);
+    }
+
+    bool ReadText(const std::string &path, std::string &contents) override
+    {
+      return For(path)->ReadText(path, contents);
+    }
+
+    bool WriteBytes(const std::string &path, const std::vector<unsigned char> &contents) override
+    {
+      return For(path)->WriteBytes(path, contents);
+    }
+
+    bool WriteText(const std::string &path, const std::string &contents) override
+    {
+      return For(path)->WriteText(path, contents);
+    }
+
+    bool ListFiles(const std::string &directory, std::vector<std::string> &paths) override
+    {
+      return For(directory)->ListFiles(directory, paths);
+    }
+  };
+
   /// The extensions the build put next to the test, started for real.
   class ExtensionsTest : public ::testing::Test
   {
@@ -54,13 +106,19 @@ namespace
     std::shared_ptr<RecordingLogger> _logger = std::make_shared<RecordingLogger>();
     RecordingLoggingContext _logging;
     SDL2_FileSystem _file_system{SettingsConfig{}, std::make_shared<RecordingLogger>()};
+
+    // user://, which the file system of the disk has no folder for here
+    MemoryFileSystem _player_files{SettingsConfig{}, std::make_shared<RecordingLogger>()};
+    PlayerFilesInMemory _files{&_file_system, &_player_files};
+
     SDL2_LibraryLoader _library_loader{&_file_system};
     RYML_DocumentFormat _yaml;
-    ExtensionHost _host{&_file_system, &_yaml, &_library_loader, &_logging, _logger};
+    ExtensionHost _host{&_files, &_yaml, &_library_loader, &_logging, _logger};
 
     void SetUp() override
     {
       _file_system.Initialize();
+      _player_files.Initialize();
       _host.Initialize();
     }
 
@@ -78,10 +136,10 @@ namespace
 
   TEST_F(ExtensionsTest, StartsTheExtensionsThatCanStartInTheOrderOfTheirNames)
   {
-    EXPECT_THAT(_host.GetLoaded(), ElementsAre("eager", "hello", "mislaid", "old", "painter", "polite", "spinner", "tumbler", "visitor"));
+    EXPECT_THAT(_host.GetLoaded(), ElementsAre("eager", "hello", "keeper", "mislaid", "old", "painter", "polite", "spinner", "tumbler", "visitor"));
     EXPECT_TRUE(_logger->Contains(LogLevel::Info, "Started the extension 'hello' from extensions://hello/hello-"))
       << _logger->Messages(LogLevel::Info);
-    EXPECT_TRUE(_logger->Contains(LogLevel::Info, "Started 9 of 12 extensions")) << _logger->Messages(LogLevel::Info);
+    EXPECT_TRUE(_logger->Contains(LogLevel::Info, "Started 10 of 13 extensions")) << _logger->Messages(LogLevel::Info);
   }
 
   TEST_F(ExtensionsTest, NamesTheAssetsOfTheExtensionsThatAreThereToBeUsed)
@@ -181,6 +239,9 @@ namespace
     std::map<std::string, std::vector<std::uint8_t>> _sounds;
     NiceMock<neon::testing::MockWorldSystem> _world{std::make_shared<RecordingLogger>()};
 
+    // what an extension that asks the application to close tells
+    NiceMock<neon::testing::MockWindowContext> _window;
+
     void SetUp() override
     {
       ExtensionsTest::SetUp();
@@ -197,6 +258,7 @@ namespace
       _host.SetUi(&_ui);
       _host.SetRender(&_render);
       _host.SetAudio(&_audio);
+      _host.SetWindow(&_window);
       ON_CALL(_audio, SetSound(_, _)).WillByDefault([this](const std::string &name, std::vector<std::uint8_t> bytes)
       {
         _sounds[name] = std::move(bytes);
@@ -648,6 +710,72 @@ namespace
     ExpectErrorOf("painter", "set_mesh_lightmap takes one pair of coordinates for every corner; the mesh has 4 corners and 1 were given");
     ExpectErrorOf("painter", "set_mesh_lightmap: the entity has no mesh; one is set with set_mesh first");
     EXPECT_FALSE(_images.contains("painter/short"));
+  }
+
+  TEST_F(ExtensionsInTheWorldTest, WritesAFileOfThePlayerAndFindsItAgain)
+  {
+    EXPECT_TRUE(LogOf("keeper")->Contains(
+      LogLevel::Info, "Saved: yes, found slot-1.sav, slot-2.sav, and read back: shamblers: 2"))
+      << LogOf("keeper")->Messages(LogLevel::Info) << LogOf("keeper")->Messages(LogLevel::Error);
+
+    // what the file system holds of it, the folders that were not there included
+    std::string saved;
+    EXPECT_TRUE(_player_files.ReadText("user://saves/slot-1.sav", saved));
+    EXPECT_EQ(saved, "shamblers: 2");
+    EXPECT_TRUE(_player_files.ReadText("user://saves/old/slot-0.sav", saved));
+    EXPECT_EQ(saved, "");
+  }
+
+  TEST_F(ExtensionsInTheWorldTest, ListsTheFilesDirectlyInAFolderThatCanBeRead)
+  {
+    EXPECT_TRUE(LogOf("keeper")->Contains(LogLevel::Info, "a folder that is not there holds 0 files"))
+      << LogOf("keeper")->Messages(LogLevel::Info);
+
+    // the recipe and the library, not what a folder below would hold
+    EXPECT_TRUE(LogOf("keeper")->Contains(LogLevel::Info, "Its own folder holds 2 files, the first extension.yml"))
+      << LogOf("keeper")->Messages(LogLevel::Info);
+  }
+
+  TEST_F(ExtensionsInTheWorldTest, RefusesToWriteAFileThatIsNotThePlayers)
+  {
+    EXPECT_TRUE(LogOf("keeper")->Contains(LogLevel::Info, "What is not the player's was refused: yes"))
+      << LogOf("keeper")->Messages(LogLevel::Info);
+
+    ExpectErrorOf("keeper", "write_file: 'assets://saves/slot-1.sav' is not under user://, which is the one place "
+      "an extension writes");
+    ExpectErrorOf("keeper", "write_file: 'output://slot-1.sav' is not under user://");
+    ExpectErrorOf("keeper", "write_file: 'saves/slot-1.sav' is not under user://");
+    ExpectErrorOf("keeper", "write_file: 'user://../outside.sav' has '..' in it, which would leave the folder of "
+      "the player");
+    ExpectErrorOf("keeper", "write_file: 'user://saves/../../outside.sav' has '..' in it");
+    ExpectErrorOf("keeper", "write_file was called without a path");
+
+    EXPECT_FALSE(_player_files.Exists("user://outside.sav"));
+    EXPECT_FALSE(_file_system.Exists("assets://saves/slot-1.sav"));
+  }
+
+  TEST_F(ExtensionsInTheWorldTest, TellsTheWindowToCloseWhenAnExtensionAsksToQuit)
+  {
+    EXPECT_CALL(_window, SignalToClose()).Times(0);
+    _running.Update(_store, 0.016);
+    ::testing::Mock::VerifyAndClearExpectations(&_window);
+
+    ON_CALL(_input, WasActionPressed("quit")).WillByDefault(Return(true));
+    EXPECT_CALL(_window, SignalToClose()).Times(1);
+
+    _running.Update(_store, 0.016);
+
+    EXPECT_TRUE(LogOf("keeper")->Contains(LogLevel::Info, "The extension asked the application to close"));
+  }
+
+  TEST_F(ExtensionsInTheWorldTest, SaysWhenTheApplicationHasNoWindowForItsExtensions)
+  {
+    _host.SetWindow(nullptr);
+    ON_CALL(_input, WasActionPressed("quit")).WillByDefault(Return(true));
+
+    _running.Update(_store, 0.016);
+
+    ExpectErrorOf("keeper", "request_quit was called, and this application has no window for its extensions");
   }
 
   TEST_F(ExtensionsInTheWorldTest, TakesTheStoreFromTheExtensionsWhenTheWorldIsLeft)

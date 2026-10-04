@@ -4,8 +4,10 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <string_view>
 #include <vector>
 
+#include <neon/filesystem/file-system.hpp>
 #include <neon/reflection/field-numbers.hpp>
 #include <neon/scripting/script-component-layout.hpp>
 #include <neon/world-system/ecs/components/renderable.hpp>
@@ -613,6 +615,104 @@ namespace neon
       return 1;
     }
 
+    /// Whether a virtual path has a segment `..`, which would leave the
+    /// folder of its scheme.
+    bool climbs_out(const std::string_view path)
+    {
+      std::size_t start = 0;
+      while (start <= path.size())
+      {
+        const std::size_t end = std::min(path.find_first_of("/\\", start), path.size());
+        if (path.substr(start, end - start) == "..") { return true; }
+        start = end + 1;
+      }
+      return false;
+    }
+
+    // An extension writes under user:// alone, which is what a game may
+    // write. The file system would write under output:// as well, which is
+    // for what a run hands back to whoever started it, and so is not the
+    // game's. What is refused is said here, in the log of the extension.
+    int write_file(void *context, const char *path, const std::uint8_t *bytes, const std::uint64_t size)
+    {
+      const auto &extension = of(context);
+      if (path == nullptr || path[0] == '\0')
+      {
+        extension.logger->Error("write_file was called without a path");
+        return 0;
+      }
+      if (bytes == nullptr && size != 0)
+      {
+        extension.logger->Error("write_file was called without bytes for '{}'", path);
+        return 0;
+      }
+
+      const std::string_view written(path);
+      if (!written.starts_with(FileSystem::user_scheme))
+      {
+        extension.logger->Error(
+          "write_file: '{}' is not under {}, which is the one place an extension writes",
+          path,
+          FileSystem::user_scheme);
+        return 0;
+      }
+      if (climbs_out(written.substr(FileSystem::user_scheme.size())))
+      {
+        extension.logger->Error("write_file: '{}' has '..' in it, which would leave the folder of the player", path);
+        return 0;
+      }
+
+      const std::vector<unsigned char> contents(bytes, bytes + size);
+      if (!extension.services->file_system->WriteBytes(path, contents))
+      {
+        extension.logger->Error("write_file: the file system did not write '{}'", path);
+        return 0;
+      }
+      return 1;
+    }
+
+    int list_files(void *context, const char *folder, void (*visit)(void *user, const char *name), void *user)
+    {
+      const auto &extension = of(context);
+      if (folder == nullptr || visit == nullptr) { return 0; }
+
+      // the file system lists a folder with everything below it, the files
+      // of the folder itself first
+      std::vector<std::string> paths;
+      if (!extension.services->file_system->ListFiles(folder, paths)) { return 0; }
+
+      // a folder may be written with a slash at its end, as the file system
+      // takes it; a scheme alone keeps its two
+      std::string prefix = folder;
+      while (prefix.ends_with('/') && !prefix.ends_with("://")) { prefix.pop_back(); }
+      if (!prefix.ends_with('/')) { prefix += '/'; }
+
+      for (const auto &path : paths)
+      {
+        if (!path.starts_with(prefix)) { continue; }
+
+        const std::string name = path.substr(prefix.size());
+        if (name.find('/') != std::string::npos) { continue; }
+        visit(user, name.c_str());
+      }
+      return 1;
+    }
+
+    // The window is told to close, which is what the quit of the pause
+    // menu does: the application leaves its loop once the frame is done.
+    void request_quit(void *context)
+    {
+      const auto &extension = of(context);
+      if (extension.services->window == nullptr)
+      {
+        extension.logger->Error("request_quit was called, and this application has no window for its extensions");
+        return;
+      }
+
+      extension.logger->Info("The extension asked the application to close");
+      extension.services->window->SignalToClose();
+    }
+
     /// The world, or nullptr after saying that there is none.
     WorldSystem *world_for(LoadedExtension &extension, const std::string &function, const char *path)
     {
@@ -1088,6 +1188,10 @@ namespace neon
     host.set_mesh_lightmap = &set_mesh_lightmap;
 
     host.set_sound = &set_sound;
+
+    host.write_file = &write_file;
+    host.list_files = &list_files;
+    host.request_quit = &request_quit;
 
     // the extension keeps its name for as long as it is loaded
     host.name = extension.name.c_str();

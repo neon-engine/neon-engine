@@ -7,6 +7,7 @@
 #include <neon/physics/physics-context.hpp>
 #include <neon/render/render-context.hpp>
 #include <neon/ui/ui-context.hpp>
+#include <neon/window/window-context.hpp>
 #include <neon/world-system/ecs/scene-file/component-format.hpp>
 #include <neon/world-system/world-system.hpp>
 
@@ -38,6 +39,9 @@ namespace neon
 
     /// For the values the files of the user interface show.
     UiContext *ui = nullptr;
+
+    /// For asking the application to close, as its own pause menu does.
+    WindowContext *window = nullptr;
 
     /// Every kind of component a recipe reads, with its description, which
     /// is how a field is found by its name. Known once the world comes up.

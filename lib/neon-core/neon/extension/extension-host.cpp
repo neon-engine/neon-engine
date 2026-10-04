@@ -50,6 +50,11 @@ namespace neon
     _services.ui = ui;
   }
 
+  void ExtensionHost::SetWindow(WindowContext *window)
+  {
+    _services.window = window;
+  }
+
   void ExtensionHost::SetWorld(WorldSystem *world)
   {
     _services.world = world;

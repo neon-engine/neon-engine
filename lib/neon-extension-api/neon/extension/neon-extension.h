@@ -32,7 +32,7 @@ extern "C" {
 #endif
 
 /* The version of this file. It goes up by one whenever a table grows. */
-#define NEON_EXTENSION_ABI_VERSION 9
+#define NEON_EXTENSION_ABI_VERSION 10
 
 /* Marks the function an extension exports. Everything else of an extension
  * stays hidden, which neon_add_extension sees to. */
@@ -540,6 +540,36 @@ typedef struct NeonExtensionHost
    * `sound` of `SoundSource`. A name that is set again names the new bytes
    * for the sources made from then on. Returns 1, or 0 after saying why. */
   int (*set_sound)(void *context, const char *name, const uint8_t *bytes, uint64_t size);
+
+  /* Since version 10: files of the player, and closing the application. */
+
+  /* Writes a whole file under `user://`, the folder of the player and the
+   * one place a game may write: a saved game, the settings of its menu.
+   * The file is replaced if it is there, and the folders in the path that
+   * are not there are created. `size` may be 0, for a file that holds
+   * nothing. Returns 1, or 0 after saying why: the path is empty, is not
+   * under `user://`, or climbs out with `..`, or the file cannot be
+   * written. It is read back with read_file. */
+  int (*write_file)(void *context, const char *path, const uint8_t *bytes, uint64_t size);
+
+  /* Calls `visit` with the name of every file directly in a folder, such
+   * as `user://saves`, in the order of the names: `slot-1.sav`, without
+   * the folder in front. Folders in it, and what is in them, are left
+   * out. The name is gone when `visit` returns, which copies what it
+   * keeps. `user` is the caller's own. Any folder that can be read can be
+   * listed. Returns 1, or 0 when there is no such folder, and `visit` is
+   * then not called. */
+  int (*list_files)(
+    void *context,
+    const char *folder,
+    void (*visit)(void *user, const char *name),
+    void *user);
+
+  /* Asks the application to close, as the quit of its own pause menu
+   * does: the frame is finished, and then everything is cleaned up as it
+   * is when the window is closed. An extension never ends the process
+   * itself, which would skip that. */
+  void (*request_quit)(void *context);
 } NeonExtensionHost;
 
 /* What an extension brings. The application hands it over with every field
