@@ -114,6 +114,10 @@ audio->SetGroupVolume(neon::sound_group::music, 0.4f);
 float music_volume = audio->GetGroupVolume(neon::sound_group::music);
 ```
 
+An extension does the same through `World`, for a menu of settings it
+brings itself: `world.SetGroupVolume("music", 0.4f)` and
+`world.GetGroupVolume("music")`, see [extensions.md](extensions.md).
+
 A project declares groups of its own in its settings file, under
 `audio.groups`, with the volume each starts at, and sets the volumes of every
 group under `audio.volumes`, see [settings.md](settings.md#the-file). A group

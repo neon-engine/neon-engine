@@ -84,7 +84,7 @@ namespace neon::extension
   using UiListening = std::function<void(const UiEvent &event)>;
 
   /// The version of the C file this header needs of the application.
-  inline constexpr std::uint32_t needed_abi_version = 12;
+  inline constexpr std::uint32_t needed_abi_version = 13;
 
   /// The kind of a field from its type, and its value as the numbers a
   /// description carries. A type of the extension's own that lies in memory
@@ -528,6 +528,20 @@ namespace neon::extension
       if (bytes.empty()) { return ""; }
       if (_host->set_sound(_host->context, name.c_str(), bytes.data(), bytes.size()) == 0) { return ""; }
       return "sound://" + GetName() + "/" + name;
+    }
+
+    /// Sets how loud every sound of a group is, such as `music` or
+    /// `effects`: 1 as the sounds are, 0 for silence. It is what a slider
+    /// of a menu of settings sets.
+    bool SetGroupVolume(const std::string &group, const float volume) const
+    {
+      return _host->set_group_volume(_host->context, group.c_str(), volume) != 0;
+    }
+
+    /// How loud a group of sounds is. 0 for a group that is not there.
+    [[nodiscard]] float GetGroupVolume(const std::string &group) const
+    {
+      return _host->get_group_volume(_host->context, group.c_str());
     }
 
     /// Sets four numbers that every shader reads as `scene.numbers[place]`,

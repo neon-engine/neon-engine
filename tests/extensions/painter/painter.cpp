@@ -71,6 +71,13 @@ namespace
       world.Info("Handed over " + sound + ", and nothing without bytes: " +
         (world.SetSound("silence", {}).empty() ? "yes" : "no"));
 
+      // how loud a group of sounds is, as a slider of a menu sets it; a
+      // group without a name is refused
+      const bool quieter = world.SetGroupVolume("music", 0.25f);
+      world.Info("Turned the music down: " + std::string(quieter ? "yes" : "no") + ", to a quarter: " +
+        (world.GetGroupVolume("music") == 0.25f ? "yes" : "no") + ", and no group without a name: " +
+        (world.SetGroupVolume("", 1.0f) ? "no" : "yes"));
+
       // numbers for the shaders an extension brings, at one of eight places;
       // a place that there is not is refused
       const bool numbered = world.SetShaderNumbers(2, {0.5f, 0.25f, 1.0f, 8.0f});

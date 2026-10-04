@@ -32,7 +32,7 @@ extern "C" {
 #endif
 
 /* The version of this file. It goes up by one whenever a table grows. */
-#define NEON_EXTENSION_ABI_VERSION 12
+#define NEON_EXTENSION_ABI_VERSION 13
 
 /* Marks the function an extension exports. Everything else of an extension
  * stays hidden, which neon_add_extension sees to. */
@@ -692,6 +692,21 @@ typedef struct NeonExtensionHost
    * pointer may be zero. Returns 1, or 0 when there is no renderer. Since
    * version 12. */
   int (*get_view_size)(void *context, int32_t *width, int32_t *height);
+
+  /* Since version 13: how loud the groups of sounds are. */
+
+  /* Sets how loud every sound of a group is: `effects`, `music`,
+   * `ambience`, `voices`, `ui`, or a group of the game. 1 leaves the
+   * sounds as they are, 0 is silence, and a number below 0 counts as 0.
+   * It is what a menu of settings an extension brings sets with a slider.
+   * Returns 1, or 0 after saying why: the name is empty, or the
+   * application has no audio. A group that is not there is reported by
+   * the audio and left alone. */
+  int (*set_group_volume)(void *context, const char *group, float volume);
+
+  /* How loud a group is, as set_group_volume set it or as it started.
+   * 0 for a group that is not there, and when there is no audio. */
+  float (*get_group_volume)(void *context, const char *group);
 } NeonExtensionHost;
 
 /* What an extension brings. The application hands it over with every field

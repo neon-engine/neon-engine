@@ -250,6 +250,9 @@ namespace
 
     // the sounds the extensions handed over, by their names
     std::map<std::string, std::vector<std::uint8_t>> _sounds;
+
+    // how loud the extensions set the groups of sounds, by the name of each
+    std::map<std::string, float> _volumes;
     NiceMock<neon::testing::MockWorldSystem> _world{std::make_shared<RecordingLogger>()};
 
     // what an extension that asks the application to close tells
@@ -284,6 +287,15 @@ namespace
       {
         _sounds[name] = std::move(bytes);
         return true;
+      });
+      ON_CALL(_audio, SetGroupVolume(_, _)).WillByDefault([this](const std::string &group, const float volume)
+      {
+        _volumes[group] = volume;
+      });
+      ON_CALL(_audio, GetGroupVolume(_)).WillByDefault([this](const std::string &group)
+      {
+        const auto known = _volumes.find(group);
+        return known == _volumes.end() ? 0.0f : known->second;
       });
       ON_CALL(_render, SetImage(_, _)).WillByDefault([this](const std::string &name, const neon::ImagePixels &pixels)
       {
@@ -668,6 +680,20 @@ namespace
     float yaw = 0.0f;
     ASSERT_TRUE(transform->Find("rotation")->GetItems()[1].GetNumber(yaw));
     EXPECT_EQ(yaw, 90.0f);
+  }
+
+  TEST_F(ExtensionsInTheWorldTest, AnExtensionSetsAndReadsHowLoudAGroupOfSoundsIs)
+  {
+    EXPECT_TRUE(LogOf("painter")->Contains(
+      LogLevel::Info, "Turned the music down: yes, to a quarter: yes, and no group without a name: yes"))
+      << LogOf("painter")->Messages(LogLevel::Info);
+    EXPECT_TRUE(LogOf("painter")->Contains(
+      LogLevel::Error, "set_group_volume was called without the name of a group"));
+
+    // the audio was told, by the name the extension gave
+    ASSERT_TRUE(_volumes.contains("music"));
+    EXPECT_EQ(_volumes["music"], 0.25f);
+    EXPECT_EQ(_volumes.size(), 1u);
   }
 
   TEST_F(ExtensionsInTheWorldTest, ShowsAMeshAndAPictureAnExtensionMadeOnAnEntityWithTheEnginesComponents)

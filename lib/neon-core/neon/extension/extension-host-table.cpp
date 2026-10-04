@@ -1272,6 +1272,32 @@ namespace neon
       return 1;
     }
 
+    int set_group_volume(void *context, const char *group, const float volume)
+    {
+      auto &extension = of(context);
+      if (group == nullptr || group[0] == '\0')
+      {
+        extension.logger->Error("set_group_volume was called without the name of a group");
+        return 0;
+      }
+      if (extension.services->audio == nullptr)
+      {
+        extension.logger->Error("set_group_volume was called, and this application has no audio for its extensions");
+        return 0;
+      }
+
+      extension.services->audio->SetGroupVolume(group, volume);
+      return 1;
+    }
+
+    float get_group_volume(void *context, const char *group)
+    {
+      const auto &extension = of(context);
+      if (group == nullptr || group[0] == '\0' || extension.services->audio == nullptr) { return 0.0f; }
+
+      return extension.services->audio->GetGroupVolume(group);
+    }
+
     int set_shader_numbers(
       void *context, const std::int32_t place, const float x, const float y, const float z, const float w)
     {
@@ -1490,6 +1516,9 @@ namespace neon
     host.ui_listen = &ui_listen;
     host.ui_unlisten = &ui_unlisten;
     host.get_view_size = &get_view_size;
+
+    host.set_group_volume = &set_group_volume;
+    host.get_group_volume = &get_group_volume;
 
     // the extension keeps its name for as long as it is loaded
     host.name = extension.name.c_str();
