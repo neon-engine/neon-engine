@@ -32,7 +32,7 @@ extern "C" {
 #endif
 
 /* The version of this file. It goes up by one whenever a table grows. */
-#define NEON_EXTENSION_ABI_VERSION 10
+#define NEON_EXTENSION_ABI_VERSION 11
 
 /* Marks the function an extension exports. Everything else of an extension
  * stays hidden, which neon_add_extension sees to. */
@@ -570,6 +570,19 @@ typedef struct NeonExtensionHost
    * is when the window is closed. An extension never ends the process
    * itself, which would skip that. */
   void (*request_quit)(void *context);
+
+  /* Since version 11: numbers for the shaders an extension brings. */
+
+  /* Sets four numbers every shader reads, as `scene.numbers[place]`, at one
+   * of 8 places, 0 to 7. They are for the shaders an extension brings and
+   * names in a material as `extensions://<name>/assets/shaders/<shader>`:
+   * how thick its fog is, a colour, whatever they are written to read. The
+   * shaders of the engine read none of them. The numbers stay until they
+   * are set again; two extensions that bring shaders agree on their places
+   * among themselves. The time needs no setting: every shader reads the
+   * seconds the world has run as `scene.time.x`. Returns 1, or 0 after
+   * saying why. */
+  int (*set_shader_numbers)(void *context, int32_t place, float x, float y, float z, float w);
 } NeonExtensionHost;
 
 /* What an extension brings. The application hands it over with every field

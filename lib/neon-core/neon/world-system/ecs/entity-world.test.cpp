@@ -705,6 +705,8 @@ namespace
     EntityWorld world(&_store, &_scene, &pipeline, &_input, &_window, _logger);
     world.Initialize();
 
+    // an empty world still has a time, which the shaders are told
+    EXPECT_CALL(pipeline, SetTime(_, _));
     EXPECT_CALL(pipeline, RenderFrame());
 
     world.Update();

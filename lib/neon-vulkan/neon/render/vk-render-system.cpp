@@ -600,6 +600,19 @@ namespace neon
     _changed_images.clear();
   }
 
+  void VK_RenderSystem::SetShaderTime(const double seconds, const double delta)
+  {
+    _shader_time = {static_cast<float>(seconds), static_cast<float>(delta), 0.0f, 0.0f};
+  }
+
+  bool VK_RenderSystem::SetShaderNumbers(const int place, const glm::vec4 &numbers)
+  {
+    if (place < 0 || place >= kShader_Number_Places) { return false; }
+
+    _shader_numbers[static_cast<std::size_t>(place)] = numbers;
+    return true;
+  }
+
   bool VK_RenderSystem::FindSurface(const std::string &name, VK_Texture &texture) const
   {
     for (int id = 0; id < _targets.Capacity(); id++)
@@ -1078,6 +1091,10 @@ namespace neon
     scene.projection = depth_correction * projection;
     // where the camera stands, which the view matrix holds in reverse
     scene.view_position = glm::inverse(view)[3];
+
+    // the time, and the numbers of a game, for the shaders that read them
+    scene.time = _shader_time;
+    for (std::size_t place = 0; place < _shader_numbers.size(); place++) { scene.numbers[place] = _shader_numbers[place]; }
 
     // The shadow map is fitted around the camera of the frame, the one the
     // window shows. A camera that draws into a render target is drawn

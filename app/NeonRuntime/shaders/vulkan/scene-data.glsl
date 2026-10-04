@@ -3,6 +3,7 @@
 
 #define MAX_POINT_LIGHTS 64
 #define MAX_SPOT_LIGHTS 64
+#define SHADER_NUMBER_PLACES 8
 #define MAX_SHADOW_CASCADES 4
 
 struct DirectionLight {
@@ -53,6 +54,14 @@ layout (std140, set = 0, binding = 0) uniform SceneData {
     ivec4 light_counts;
     PointLight point_lights[MAX_POINT_LIGHTS];
     SpotLight spot_lights[MAX_SPOT_LIGHTS];
+    // x the seconds the world has run, y how long its last frame took. The
+    // time stands still while the world does.
+    vec4 time;
+    // Numbers of a game, which the shaders it brings read: how thick its
+    // fog is, a colour, whatever they are written for. The shaders of the
+    // engine read none. Set with RenderContext::SetShaderNumbers(), and by
+    // an extension with set_shader_numbers.
+    vec4 numbers[SHADER_NUMBER_PLACES];
 } scene;
 
 // what differs from one object to the next

@@ -3,6 +3,8 @@
 
 #include <glm/glm.hpp>
 
+#include <neon/render/render-context.hpp>
+
 namespace neon
 {
   // The data handed to the shaders. The layout has to match
@@ -12,6 +14,10 @@ namespace neon
 
   constexpr int kMax_Point_Lights = 64;
   constexpr int kMax_Spot_Lights = 64;
+
+  /// How many places there are for the numbers of a game, as
+  /// RenderContext::kShader_Number_Places says.
+  constexpr int kShader_Number_Places = RenderContext::kShader_Number_Places;
 
   /// What the shaders are told about the shadow map of the direction
   /// light, in VK_DirectionLight::shadow.
@@ -86,6 +92,12 @@ namespace neon
     glm::ivec4 light_counts{0};
     VK_PointLight point_lights[kMax_Point_Lights];
     VK_SpotLight spot_lights[kMax_Spot_Lights];
+    // x the seconds the world has run, y how long its last frame took. They
+    // stand behind the lights, so that what was there before stays where a
+    // shader that was compiled before looks for it.
+    glm::vec4 time{0.0f};
+    // the numbers of a game, see RenderContext::SetShaderNumbers()
+    glm::vec4 numbers[kShader_Number_Places];
   };
 
   /// What differs from one object to the next.
@@ -114,7 +126,8 @@ namespace neon
   static_assert(sizeof(VK_DirectionLight) == 352);
   static_assert(sizeof(VK_PointLight) == 80);
   static_assert(sizeof(VK_SpotLight) == 112);
-  static_assert(sizeof(VK_SceneData) == 512 + kMax_Point_Lights * 80 + kMax_Spot_Lights * 112);
+  static_assert(sizeof(VK_SceneData) ==
+                512 + kMax_Point_Lights * 80 + kMax_Spot_Lights * 112 + 16 + kShader_Number_Places * 16);
   static_assert(sizeof(VK_ObjectData) == 224);
 } // neon
 

@@ -52,6 +52,10 @@ namespace neon
     /// has no sky. A pipeline that leaves it as it is draws none.
     virtual void SetSky(const SkyInfo &sky) {}
 
+    /// Tells the shaders the time of the world, see
+    /// RenderContext::SetShaderTime().
+    virtual void SetTime(double seconds, double delta) {}
+
     virtual void Initialize() = 0;
 
     virtual void RenderFrame() = 0;

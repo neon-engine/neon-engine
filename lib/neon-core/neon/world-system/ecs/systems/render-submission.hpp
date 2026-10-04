@@ -11,6 +11,9 @@ namespace neon
   class RenderSubmission final : public EntitySystem
   {
     RenderPipeline *_render_pipeline;
+
+    // the seconds the world has run, which the shaders are told
+    double _time = 0.0;
     QueryId _cameras = 0;
     QueryId _lights = 0;
     QueryId _skies = 0;

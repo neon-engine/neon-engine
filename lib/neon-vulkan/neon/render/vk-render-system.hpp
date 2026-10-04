@@ -225,6 +225,11 @@ namespace neon
     // are written anew before the next is drawn
     std::set<std::string> _changed_images;
 
+    // What the shaders are told of the time, and the numbers of a game, kept
+    // for every scene that is drawn from now on.
+    glm::vec4 _shader_time{0.0f};
+    std::array<glm::vec4, kShader_Number_Places> _shader_numbers{};
+
     [[nodiscard]] bool FindSurface(const std::string &name, VK_Texture &texture) const;
 
     /// Does what waited for the frame to be finished.
@@ -333,6 +338,10 @@ namespace neon
     void UpdateRenderObjectMesh(int render_object_id, const MeshData &mesh) override;
 
     bool SetImage(const std::string &name, const ImagePixels &pixels) override;
+
+    void SetShaderTime(double seconds, double delta) override;
+
+    bool SetShaderNumbers(int place, const glm::vec4 &numbers) override;
 
     void DrawSky(const SkyInfo &sky, const glm::mat4 &view, const glm::mat4 &projection) override;
 

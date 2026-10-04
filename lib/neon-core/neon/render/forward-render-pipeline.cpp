@@ -141,6 +141,12 @@ namespace neon
     _sky.reset();
   }
 
+  void Forward_RenderPipeline::SetTime(const double seconds, const double delta)
+  {
+    // the renderer keeps it for the frames it draws
+    _render_context->SetShaderTime(seconds, delta);
+  }
+
   void Forward_RenderPipeline::SetSky(const SkyInfo &sky)
   {
     _sky = sky;

@@ -25,6 +25,12 @@ namespace neon
 
   void RenderSubmission::Update(EntityStore &store, const double delta_time)
   {
+    // The shaders are told how long the world has run. This is asked once
+    // for every frame the world takes part in, so the time stands still
+    // while the world does, as while a game is paused.
+    _time += delta_time;
+    _render_pipeline->SetTime(_time, delta_time);
+
     store.Each(_cameras, [&](const EntityBlock &block)
     {
       const auto *transforms = block.Column<Transform>(0);

@@ -1,0 +1,13 @@
+# Draws a square with a shader of its own, which the test reads pixel by
+# pixel: the shader shows the numbers the extension set, and whether the
+# time runs.
+version: 1
+name: tinted
+
+libraries:
+  macos-arm64: tinted-macos-arm64.dylib
+  macos-x86_64: tinted-macos-x86_64.dylib
+  linux-x86_64: tinted-linux-x86_64.so
+  linux-arm64: tinted-linux-arm64.so
+  windows-x86_64: tinted-windows-x86_64.dll
+  windows-arm64: tinted-windows-arm64.dll

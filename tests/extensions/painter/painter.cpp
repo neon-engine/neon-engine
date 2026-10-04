@@ -70,6 +70,12 @@ namespace
       const std::string sound = world.SetSound("beep", {82, 73, 70, 70});
       world.Info("Handed over " + sound + ", and nothing without bytes: " +
         (world.SetSound("silence", {}).empty() ? "yes" : "no"));
+
+      // numbers for the shaders an extension brings, at one of eight places;
+      // a place that there is not is refused
+      const bool numbered = world.SetShaderNumbers(2, {0.5f, 0.25f, 1.0f, 8.0f});
+      world.Info(std::string("Numbers for the shaders: ") + (numbered ? "yes" : "no") + ", and none at place 8: " +
+        (world.SetShaderNumbers(8, {0.0f, 0.0f, 0.0f, 0.0f}) ? "no" : "yes"));
     }
   };
 }

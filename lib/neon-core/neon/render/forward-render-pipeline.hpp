@@ -52,6 +52,8 @@ namespace neon
     void EnqueueLightSource(const LightSource &light_source) override;
 
     void SetSky(const SkyInfo &sky) override;
+
+    void SetTime(double seconds, double delta) override;
   };
 } // neon
 

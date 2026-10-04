@@ -1009,6 +1009,27 @@ namespace neon
       return 1;
     }
 
+    int set_shader_numbers(
+      void *context, const std::int32_t place, const float x, const float y, const float z, const float w)
+    {
+      auto &extension = of(context);
+      if (extension.services->render == nullptr)
+      {
+        extension.logger->Error(
+          "set_shader_numbers was called, and this application has no renderer for its extensions");
+        return 0;
+      }
+      if (!extension.services->render->SetShaderNumbers(place, {x, y, z, w}))
+      {
+        const int last = RenderContext::kShader_Number_Places - 1;
+        extension.logger->Error(
+          "set_shader_numbers: there is no place {} for the numbers of a game, the places are 0 to {}",
+          place, last);
+        return 0;
+      }
+      return 1;
+    }
+
     // A corner of the extension is the start of a corner of the engine,
     // which has grown since: what follows keeps what it starts with.
     static_assert(sizeof(NeonVertex) <= sizeof(Vertex));
@@ -1192,6 +1213,8 @@ namespace neon
     host.write_file = &write_file;
     host.list_files = &list_files;
     host.request_quit = &request_quit;
+
+    host.set_shader_numbers = &set_shader_numbers;
 
     // the extension keeps its name for as long as it is loaded
     host.name = extension.name.c_str();

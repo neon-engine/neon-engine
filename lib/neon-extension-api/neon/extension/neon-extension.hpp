@@ -76,7 +76,7 @@ namespace neon::extension
   using Vertex = NeonVertex;
 
   /// The version of the C file this header needs of the application.
-  inline constexpr std::uint32_t needed_abi_version = 10;
+  inline constexpr std::uint32_t needed_abi_version = 11;
 
   /// The kind of a field from its type, and its value as the numbers a
   /// description carries. A type of the extension's own that lies in memory
@@ -516,6 +516,14 @@ namespace neon::extension
       if (bytes.empty()) { return ""; }
       if (_host->set_sound(_host->context, name.c_str(), bytes.data(), bytes.size()) == 0) { return ""; }
       return "sound://" + GetName() + "/" + name;
+    }
+
+    /// Sets four numbers that every shader reads as `scene.numbers[place]`,
+    /// at one of 8 places: what the shaders an extension brings are told of
+    /// the game, such as how thick its fog is. They stay until set again.
+    bool SetShaderNumbers(const int place, const Vector4 &numbers) const
+    {
+      return _host->set_shader_numbers(_host->context, place, numbers.x, numbers.y, numbers.z, numbers.w) != 0;
     }
 
     /// Sets a value that the files of the user interface show as `{name}`.

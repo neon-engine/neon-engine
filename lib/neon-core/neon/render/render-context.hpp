@@ -120,6 +120,24 @@ namespace neon
     /// among its models. A renderer that leaves it as it is shows what the
     /// frame is cleared to.
     virtual void DrawSky(const SkyInfo &sky, const glm::mat4 &view, const glm::mat4 &projection) {}
+
+    /// How many places there are for numbers of a game that every shader
+    /// reads, see SetShaderNumbers().
+    static constexpr int kShader_Number_Places = 8;
+
+    /// Tells the shaders the time: the seconds the world has run, and how
+    /// long its last frame took. Every shader reads them as `scene.time`.
+    /// The time stands still while the world does.
+    virtual void SetShaderTime(double seconds, double delta) {}
+
+    /// Sets four numbers of a game that every shader reads, at one of
+    /// kShader_Number_Places places, as `scene.numbers[place]`. They are for
+    /// the shaders a game brings: how thick its fog is, the colour of it,
+    /// whatever its own shaders are written to read. The shaders of the
+    /// engine read none of them. They stay until they are set again. Returns
+    /// false for a place that there is not, and for a renderer that keeps
+    /// none.
+    virtual bool SetShaderNumbers(int place, const glm::vec4 &numbers) { return false; }
   };
 } // neon
 

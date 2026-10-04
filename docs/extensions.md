@@ -149,6 +149,7 @@ something of its own and is told to clean up.
 | 8 | `set_mesh_lightmap` | |
 | 9 | `set_sound` | |
 | 10 | `write_file`, `list_files`, `request_quit` | |
+| 11 | `set_shader_numbers` | |
 
 ## Components
 
@@ -262,6 +263,45 @@ world.SetMesh(wall, corners, indices);
 | A picture is four bytes a pixel, set under a name, and read by a material as the texture `image://<extension>/<name>` | A texture is named by a path everywhere in the engine, in a recipe, a prefab, a field; this makes a picture from memory one more thing a path can name, as `surface://` names what a camera drew. The name of the extension stands in front, so two extensions cannot take each other's |
 | A picture that is set again under its name is drawn anew, from the next frame on, when it keeps its size | A game works some pictures out while it runs: the light of a level that flickers, a map that fills in. The renderer writes the new pixels into the texture that is there, so no material is made again and nothing that names the picture has to know. It waits for the frame before to finish first, so a picture is set again a few times a second, not a few hundred. Another size is refused: what was made keeps the size it was made with |
 | `image://` is no scheme of the file system | Nothing reads or lists it as a file. It is the renderer's, `RenderContext::SetImage`. What the path of a texture names, a file, a `surface://`, or an `image://`, is said in one place, `TextureSource` of neon-core, which every renderer and the user interface ask |
+
+## The shaders an extension brings
+
+An extension that draws what the shaders of the engine do not, water that
+swims, a sky that drifts, a texture read pixel by pixel, brings shaders of
+its own. A material names one as it names any other, by a path without an
+ending, and the renderer reads the two compiled files next to it:
+
+```cpp
+world.SetText(wall, world.FindField("Renderable", "shader"), "extensions://quake/assets/shaders/liquid");
+// reads extensions://quake/assets/shaders/liquid.vert.spv and liquid.frag.spv
+```
+
+The extension compiles them when it is built, with `glslang`, the compiler
+the engine compiles its own with, and with the folder of the engine's
+shaders to include from (`app/NeonRuntime/shaders/vulkan`):
+
+```sh
+glslang -V -I<engine>/app/NeonRuntime/shaders/vulkan liquid.frag -o <game>/extensions/quake/assets/shaders/liquid.frag.spv
+```
+
+| What such a shader may rely on | |
+|---|---|
+| `scene-data.glsl` | The declarations every shader of the engine starts with: `scene`, with the view, the projection, where the camera stands, and the lights; `objects[]`, with the matrix, the colour, and the material of what is drawn. A shader includes it and reads what it needs |
+| The corners | Position, normal, texture coordinates, colour, and lightmap coordinates, at locations 0 to 4, as `unlit.vert` reads them |
+| The textures | The first texture of the material at binding 2, read through the sampler at binding 5, as `unlit.frag` does; a lightmap through `lightmap.glsl` |
+| `scene.time` | `x` is the seconds the world has run, `y` how long its last frame took. The time stands still while the world does, as while a game is paused |
+| `scene.numbers[0..7]` | Eight places of four numbers each for what the game tells its shaders, set with `SetShaderNumbers` |
+
+```cpp
+world.SetShaderNumbers(0, {fog_density, 0.0f, 0.0f, 0.0f});   // scene.numbers[0].x in every shader
+```
+
+| Decision | Reason |
+|---|---|
+| The time is in what every shader is told of a scene | A shader that moves something needs it, and nothing an object carries changes by itself. It is the time of the world, so what a shader moves stands still with the game |
+| A game has eight places of four numbers, by place and not by name | A shader reads a place without looking anything up, and a block of numbers costs nothing to hand over. What a place means is between a game and its own shaders. Two extensions that both bring shaders agree on their places; names are for when that hurts |
+| The numbers are of the scene, not of an object | What differs from one object to the next is its material. These are what holds for everything that is drawn: fog, a wind, the light of a storm |
+| They stand behind the lights in `SceneData` | A shader that was compiled before reads what it read, where it read it |
 
 ## What an extension plays
 

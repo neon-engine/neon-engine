@@ -233,6 +233,9 @@ namespace
     // the pictures the extensions made, by their names
     std::map<std::string, neon::ImagePixels> _images;
 
+    // the numbers the extensions set for their shaders, by their places
+    std::map<int, glm::vec4> _shader_numbers;
+
     NiceMock<neon::testing::MockAudioContext> _audio;
 
     // the sounds the extensions handed over, by their names
@@ -267,6 +270,12 @@ namespace
       ON_CALL(_render, SetImage(_, _)).WillByDefault([this](const std::string &name, const neon::ImagePixels &pixels)
       {
         _images[name] = pixels;
+        return true;
+      });
+      ON_CALL(_render, SetShaderNumbers(_, _)).WillByDefault([this](const int place, const glm::vec4 &numbers)
+      {
+        if (place < 0 || place >= neon::RenderContext::kShader_Number_Places) { return false; }
+        _shader_numbers[place] = numbers;
         return true;
       });
 
@@ -682,6 +691,18 @@ namespace
     // counted up with each, so that an entity that is drawn already is
     // handed the mesh
     EXPECT_EQ(renderable->render_info.mesh_version, 2u);
+  }
+
+  TEST_F(ExtensionsInTheWorldTest, AnExtensionSetsNumbersForTheShadersItBrings)
+  {
+    EXPECT_TRUE(LogOf("painter")->Contains(LogLevel::Info, "Numbers for the shaders: yes, and none at place 8: yes"))
+      << LogOf("painter")->Messages(LogLevel::Info);
+
+    ASSERT_TRUE(_shader_numbers.contains(2));
+    EXPECT_EQ(_shader_numbers[2], glm::vec4(0.5f, 0.25f, 1.0f, 8.0f));
+    EXPECT_FALSE(_shader_numbers.contains(8));
+    ExpectErrorOf(
+      "painter", "set_shader_numbers: there is no place 8 for the numbers of a game, the places are 0 to 7");
   }
 
   TEST_F(ExtensionsInTheWorldTest, AnExtensionHandsOverASoundFromMemory)

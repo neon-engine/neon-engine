@@ -71,7 +71,12 @@ namespace
     EXPECT_EQ(offsetof(VK_SceneData, light_counts), 2 * mat4 + vec4 + sizeof(VK_DirectionLight));
     EXPECT_EQ(offsetof(VK_SceneData, point_lights), lights);
     EXPECT_EQ(offsetof(VK_SceneData, spot_lights), lights + 64 * sizeof(VK_PointLight));
-    EXPECT_EQ(sizeof(VK_SceneData), lights + 64 * sizeof(VK_PointLight) + 64 * sizeof(VK_SpotLight));
+    // the time and the numbers of a game stand behind the lights, so that
+    // nothing before them moved
+    const std::size_t after_lights = lights + 64 * sizeof(VK_PointLight) + 64 * sizeof(VK_SpotLight);
+    EXPECT_EQ(offsetof(VK_SceneData, time), after_lights);
+    EXPECT_EQ(offsetof(VK_SceneData, numbers), after_lights + vec4);
+    EXPECT_EQ(sizeof(VK_SceneData), after_lights + vec4 + 8 * vec4);
   }
 
   TEST(VkShaderData, LaysOutAnObjectAsTheShadersReadIt)

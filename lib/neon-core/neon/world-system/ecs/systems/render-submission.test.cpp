@@ -89,6 +89,9 @@ namespace
       _store.Register<Sky>("Sky");
       _store.Register<Renderable>("Renderable");
       _system.Initialize(_store);
+
+      // the time is handed over in every frame, whatever else a test expects
+      EXPECT_CALL(_pipeline, SetTime(_, _)).Times(::testing::AnyNumber());
     }
 
     template<typename Component>
@@ -269,6 +272,19 @@ namespace
           << "column " << column << ", row " << row;
       }
     }
+  }
+
+  TEST_F(RenderSubmissionTest, TellsTheShadersHowLongTheWorldHasRun)
+  {
+    {
+      const InSequence in_order;
+      EXPECT_CALL(_pipeline, SetTime(::testing::DoubleEq(0.25), ::testing::DoubleEq(0.25)));
+      EXPECT_CALL(_pipeline, SetTime(::testing::DoubleEq(0.75), ::testing::DoubleEq(0.5)));
+    }
+
+    // a frame of a quarter of a second, and one of half a second
+    _system.Update(_store, 0.25);
+    _system.Update(_store, 0.5);
   }
 
   TEST_F(RenderSubmissionTest, HandsOverTheCameraInEveryFrame)

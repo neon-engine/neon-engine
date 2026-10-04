@@ -1,0 +1,11 @@
+# The project the test of an extension's own shaders runs: everything of it
+# is in its extension, see ../extensions/tinted.
+
+version: 1
+name: runtime-shaders
+organization: neon-engine
+
+scenes:
+  - extensions://tinted/assets/scenes/tinted.scene.yml
+
+entry_scene: extensions://tinted/assets/scenes/tinted.scene.yml
