@@ -3,10 +3,12 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <vector>
 
 #include <neon/reflection/field-numbers.hpp>
 #include <neon/scripting/script-component-layout.hpp>
+#include <neon/world-system/ecs/components/renderable.hpp>
 
 namespace neon
 {
@@ -788,6 +790,165 @@ namespace neon
       overrides.Set("Transform", transform);
       return world->Spawn(prefab_path, parent, overrides);
     }
+
+    int add_component(void *context, const NeonEntity entity, const char *component)
+    {
+      auto &extension = of(context);
+      auto *store = store_for(extension, "add_component");
+      if (store == nullptr || component == nullptr) { return 0; }
+
+      if (!store->IsAlive(entity))
+      {
+        extension.logger->Error("add_component was called with an entity that is not alive");
+        return 0;
+      }
+
+      const ComponentFormats *formats = extension.services->formats;
+      const ComponentFormat *format = formats == nullptr ? nullptr : formats->Find(component);
+      const ComponentId id = store->FindComponent(component);
+      if (format == nullptr || id == No_Component)
+      {
+        extension.logger->Error("add_component: there is no component '{}' that a recipe could write", component);
+        return 0;
+      }
+
+      if (store->HasComponent(entity, id)) { return 1; }
+
+      // Read as a recipe that names the component and nothing of it, which
+      // gives every field what it starts with. What a recipe would be told
+      // is missing, the shader of a Renderable, is not a problem here: the
+      // extension sets its fields next.
+      std::vector<std::string> errors;
+      const DataValue nothing = DataValue::Map();
+      format->read(DataReader(nothing, "add_component", component, errors), *store, entity);
+      if (store->HasComponent(entity, id)) { return 1; }
+
+      for (const auto &error : errors) { extension.logger->Error("add_component: {}", error); }
+      extension.logger->Error("add_component: the component '{}' could not be given to the entity", component);
+      return 0;
+    }
+
+    int set_field_texts(
+      void *context,
+      const NeonEntity entity,
+      const NeonField field,
+      const char *const *texts,
+      const std::uint64_t count)
+    {
+      auto &extension = of(context);
+      const ExtensionField *found = nullptr;
+      void *component = nullptr;
+      if ((texts == nullptr && count > 0) || !field_of(extension, "set_field_texts", entity, field, found, component))
+      {
+        return 0;
+      }
+
+      std::vector<std::string> list;
+      for (std::uint64_t i = 0; i < count; i++) { list.emplace_back(texts[i] == nullptr ? "" : texts[i]); }
+
+      return set_checked(extension, "set_field_texts", *found, component, FieldValue(list));
+    }
+
+    int set_image(
+      void *context,
+      const char *name,
+      const std::uint32_t width,
+      const std::uint32_t height,
+      const std::uint8_t *pixels)
+    {
+      auto &extension = of(context);
+      if (store_for(extension, "set_image") == nullptr) { return 0; }
+
+      if (name == nullptr || name[0] == '\0' || pixels == nullptr || width == 0 || height == 0)
+      {
+        extension.logger->Error("set_image was called without a name, or without pixels");
+        return 0;
+      }
+      if (extension.services->render == nullptr)
+      {
+        extension.logger->Error("set_image was called, and this application has no renderer for its extensions");
+        return 0;
+      }
+
+      ImagePixels image;
+      image.width = static_cast<int>(width);
+      image.height = static_cast<int>(height);
+      image.pixels.assign(pixels, pixels + static_cast<std::size_t>(width) * height * 4);
+
+      const std::string full_name = extension.name + "/" + name;
+      if (!extension.services->render->SetImage(full_name, image))
+      {
+        extension.logger->Error("set_image: the renderer did not take the picture '{}'", full_name);
+        return 0;
+      }
+      return 1;
+    }
+
+    // a corner crosses as it lies, without a copy of each number
+    static_assert(sizeof(NeonVertex) == sizeof(Vertex));
+    static_assert(offsetof(NeonVertex, normal) == offsetof(Vertex, normal));
+    static_assert(offsetof(NeonVertex, texture) == offsetof(Vertex, tex_coords));
+    static_assert(offsetof(NeonVertex, color) == offsetof(Vertex, color));
+
+    int set_mesh(
+      void *context,
+      const NeonEntity entity,
+      const NeonVertex *vertices,
+      const std::uint64_t vertex_count,
+      const std::uint32_t *indices,
+      const std::uint64_t index_count)
+    {
+      auto &extension = of(context);
+      auto *store = store_for(extension, "set_mesh");
+      if (store == nullptr) { return 0; }
+
+      if (!store->IsAlive(entity))
+      {
+        extension.logger->Error("set_mesh was called with an entity that is not alive");
+        return 0;
+      }
+      if (vertices == nullptr || indices == nullptr || vertex_count == 0 || index_count == 0 || index_count % 3 != 0)
+      {
+        extension.logger->Error(
+          "set_mesh takes corners, and three indices for every triangle; it was given {} corners and {} indices",
+          vertex_count,
+          index_count);
+        return 0;
+      }
+
+      const ComponentId id = store->FindComponent("Renderable");
+      auto *renderable = id == No_Component ? nullptr : static_cast<Renderable *>(store->GetComponent(entity, id));
+      if (renderable == nullptr)
+      {
+        extension.logger->Error("set_mesh: the entity has no Renderable to draw the mesh with");
+        return 0;
+      }
+
+      for (std::uint64_t i = 0; i < index_count; i++)
+      {
+        if (indices[i] >= vertex_count)
+        {
+          const std::uint32_t index = indices[i];
+          extension.logger->Error(
+            "set_mesh: index {} names corner {}, and there are {} corners",
+            i,
+            index,
+            vertex_count);
+          return 0;
+        }
+      }
+
+      auto mesh = std::make_shared<MeshData>();
+      mesh->vertices.resize(vertex_count);
+      std::memcpy(mesh->vertices.data(), vertices, vertex_count * sizeof(Vertex));
+      mesh->indices.assign(indices, indices + index_count);
+
+      // counted up, so that an entity that is drawn already is handed the
+      // new mesh, as a rope that moves is
+      renderable->render_info.mesh = std::move(mesh);
+      renderable->render_info.mesh_version++;
+      return 1;
+    }
   }
 
   // the two sides count the components of a query alike, and name entities
@@ -843,5 +1004,13 @@ namespace neon
     host.set_ui_number = &set_ui_number;
     host.set_ui_text = &set_ui_text;
     host.spawn_at = &spawn_at;
+
+    host.add_component = &add_component;
+    host.set_field_texts = &set_field_texts;
+    host.set_image = &set_image;
+    host.set_mesh = &set_mesh;
+
+    // the extension keeps its name for as long as it is loaded
+    host.name = extension.name.c_str();
   }
 } // neon

@@ -1,6 +1,7 @@
 #ifndef VK_RENDER_SYSTEM_HPP
 #define VK_RENDER_SYSTEM_HPP
 
+#include <unordered_map>
 #include <cstddef>
 #include <memory>
 #include <optional>
@@ -214,6 +215,11 @@ namespace neon
 
     bool WriteDescriptorSet(const VK_Material &material, VkDescriptorSet set) const;
 
+    // The images that were made at run time, by their names, kept as pixels
+    // until a material reads one as a texture, and after, for the next
+    // material that is made of it once the first was let go.
+    std::unordered_map<std::string, std::shared_ptr<const ImagePixels>> _images;
+
     [[nodiscard]] bool FindSurface(const std::string &name, VK_Texture &texture) const;
 
     /// Does what waited for the frame to be finished.
@@ -316,6 +322,8 @@ namespace neon
     void DestroyRenderObject(int render_object_id) override;
 
     void UpdateRenderObjectMesh(int render_object_id, const MeshData &mesh) override;
+
+    bool SetImage(const std::string &name, const ImagePixels &pixels) override;
 
     void DrawSky(const SkyInfo &sky, const glm::mat4 &view, const glm::mat4 &projection) override;
 

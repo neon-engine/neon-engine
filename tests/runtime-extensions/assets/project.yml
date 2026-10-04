@@ -1,0 +1,11 @@
+# The project the test of extensions runs: everything of it is in its
+# extension, see ../extensions/canvas.
+
+version: 1
+name: runtime-extensions
+organization: neon-engine
+
+scenes:
+  - extensions://canvas/assets/scenes/canvas.scene.yml
+
+entry_scene: extensions://canvas/assets/scenes/canvas.scene.yml

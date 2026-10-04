@@ -53,6 +53,38 @@ namespace neon
     return true;
   }
 
+  bool VK_TextureCache::AcquirePixels(
+    const std::string &key,
+    const std::string &path,
+    const ImagePixels &pixels,
+    const VK_TextureOptions &options,
+    VK_Texture &texture)
+  {
+    if (const auto it = _shared.find(key); it != _shared.end())
+    {
+      it->second.count++;
+      _shares++;
+      _logger->Debug("Texture {} is shared, {} materials read it now", path, it->second.count);
+      texture = it->second.texture;
+      return true;
+    }
+
+    VK_Texture made(path, _file_system_context, _device, _logger);
+    if (!made.InitializeWithPixels(
+      pixels.pixels.data(),
+      static_cast<uint32_t>(pixels.width),
+      static_cast<uint32_t>(pixels.height),
+      options))
+    {
+      return false;
+    }
+
+    _loads++;
+    _shared[key] = Shared{.texture = made, .count = 1};
+    texture = made;
+    return true;
+  }
+
   void VK_TextureCache::Release(const std::string &key)
   {
     const auto it = _shared.find(key);

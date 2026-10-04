@@ -73,9 +73,10 @@ namespace neon::extension
   using IntegerVector3 = NeonIntegerVector3;
   using Color = NeonColor;
   using Quaternion = NeonQuaternion;
+  using Vertex = NeonVertex;
 
   /// The version of the C file this header needs of the application.
-  inline constexpr std::uint32_t needed_abi_version = 6;
+  inline constexpr std::uint32_t needed_abi_version = 7;
 
   /// The kind of a field from its type, and its value as the numbers a
   /// description carries. A type of the extension's own that lies in memory
@@ -450,6 +451,52 @@ namespace neon::extension
       if (field == 0 || _host->get_field_layout(_host->context, field, &layout) == 0) { return {}; }
       if (layout.kind != FieldKindOf<T>::kind) { return {}; }
       return {layout.offset, layout.stride};
+    }
+
+    /// The name of the extension, as its recipe has it.
+    [[nodiscard]] std::string GetName() const { return _host->name; }
+
+    /// Gives the entity a component by its name with what its fields start
+    /// with, as a recipe that writes `Renderable: Default` does. It is how
+    /// an entity gets a component of the engine.
+    bool AddComponent(const Entity entity, const std::string &component) const
+    {
+      return _host->add_component(_host->context, entity, component.c_str()) != 0;
+    }
+
+    /// Changes a field that is a list of text, such as `textures` of
+    /// `Renderable`.
+    bool SetTexts(const Entity entity, const NeonField field, const std::vector<std::string> &texts) const
+    {
+      std::vector<const char *> pointers;
+      for (const auto &text : texts) { pointers.push_back(text.c_str()); }
+      return _host->set_field_texts(_host->context, entity, field, pointers.data(), pointers.size()) != 0;
+    }
+
+    /// Makes a picture in memory known to the renderer: four bytes for each
+    /// pixel, red, green, blue, and alpha, row after row from the top.
+    /// Returns the path a material reads it by, `image://<extension>/<name>`,
+    /// or nothing when it was refused. Once, before what shows it is drawn.
+    [[nodiscard]] std::string SetImage(
+      const std::string &name,
+      const std::uint32_t width,
+      const std::uint32_t height,
+      const std::vector<std::uint8_t> &pixels) const
+    {
+      if (pixels.size() != static_cast<std::size_t>(width) * height * 4) { return ""; }
+      if (_host->set_image(_host->context, name.c_str(), width, height, pixels.data()) == 0) { return ""; }
+      return "image://" + GetName() + "/" + name;
+    }
+
+    /// Gives the `Renderable` of an entity a mesh to draw, in place of a
+    /// model file: in metres, y up, triangles anticlockwise from outside.
+    bool SetMesh(
+      const Entity entity,
+      const std::vector<Vertex> &vertices,
+      const std::vector<std::uint32_t> &indices) const
+    {
+      return _host->set_mesh(
+               _host->context, entity, vertices.data(), vertices.size(), indices.data(), indices.size()) != 0;
     }
 
     /// Sets a value that the files of the user interface show as `{name}`.

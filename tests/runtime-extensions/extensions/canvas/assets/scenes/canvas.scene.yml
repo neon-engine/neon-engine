@@ -1,0 +1,10 @@
+# A camera and nothing else. What it sees, the extension makes when the
+# world comes up: a square three metres in front of it.
+scene: canvas
+version: 1
+
+entities:
+  - name: camera
+    components:
+      Transform: Default
+      Camera: Default

@@ -32,6 +32,8 @@ namespace neon::testing
 
     MOCK_METHOD(void, UpdateRenderObjectMesh, (int render_object_id, const MeshData &mesh), (override));
 
+    MOCK_METHOD(bool, SetImage, (const std::string &name, const ImagePixels &pixels), (override));
+
     MOCK_METHOD(const RenderResolution &, GetRenderResolution, (), (override));
   };
 } // neon::testing

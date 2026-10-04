@@ -19,6 +19,17 @@ Resource paths carry a scheme prefix, in the style of Godot.
 | `output://` | A folder chosen with `--output-dir` when the app is started, for what a run hands back, such as screenshots | Implemented, read and write. Rejected when no folder was chosen |
 | `extensions://` | `<directory of executable>/extensions`, one folder for each extension, see [extensions.md](extensions.md) | Implemented, read-only. The folder need not be there |
 
+Two more starts of a path look like schemes and are none: nothing reads or
+lists them as files. They name what the renderer holds in memory, and only
+where a texture or an image is named.
+
+| Start | Names | Said in |
+|---|---|---|
+| `surface://` | What a render target was drawn to: a camera's view, or a user interface in the world | `TextureSource`, neon-core |
+| `image://` | Pixels that were handed to the renderer under a name, by an extension or an importer, see [extensions.md](extensions.md#what-an-extension-draws) | `TextureSource`, neon-core |
+
+All six are built in. Maps a developer defines are #380.
+
 File access sits behind an interface, following the same split as windowing
 and rendering.
 

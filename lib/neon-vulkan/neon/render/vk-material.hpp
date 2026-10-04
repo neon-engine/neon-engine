@@ -91,8 +91,14 @@ namespace neon
     /// target. Returns false when there is no such target.
     using SurfaceLookup = std::function<bool(const std::string &name, VK_Texture &texture)>;
 
+    /// Hands over the pixels of an image that was made at run time, by its
+    /// name, see RenderContext::SetImage. Returns nullptr when there is no
+    /// such image.
+    using ImageLookup = std::function<std::shared_ptr<const ImagePixels>(const std::string &name)>;
+
   private:
     SurfaceLookup _surface_lookup;
+    ImageLookup _image_lookup;
 
     // for each texture the name of the render target it shows, or empty
     // for one that is a file
@@ -129,6 +135,11 @@ namespace neon
     /// Says where the textures come from that are no files: those whose
     /// path starts with `surface://`. Call it before Initialize().
     void SetSurfaceLookup(const SurfaceLookup &lookup);
+
+    /// Says where the images that were made at run time are found, for a
+    /// texture whose path starts with `image://`. Call it before
+    /// Initialize(). Without it, such a texture cannot be made.
+    void SetImageLookup(const ImageLookup &lookup);
 
     /// Whether one of the textures shows the render target of that name.
     [[nodiscard]] bool Shows(const std::string &surface_name) const;

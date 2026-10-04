@@ -1,5 +1,6 @@
 #include "vk-material.hpp"
 
+#include <neon/render/texture-source.hpp>
 #include <utility>
 #include <neon/common/color-space.hpp>
 
@@ -92,6 +93,31 @@ namespace neon
   {
     texture = VK_Texture(path, _file_system_context, _device, _logger);
     key.clear();
+
+    // an image that was made at run time is in no file: its pixels are
+    // asked for by its name
+    if (const TextureSource source = TextureSource::Of(path); source.kind == TextureSourceKind::Image)
+    {
+      const std::string &name = source.name;
+      const std::shared_ptr<const ImagePixels> pixels = _image_lookup ? _image_lookup(name) : nullptr;
+      if (pixels == nullptr)
+      {
+        _logger->Error("There is no image '{}' for the texture {}. An image is made before what shows it", name, path);
+        return false;
+      }
+
+      if (_texture_cache != nullptr)
+      {
+        key = VK_TextureCache::KeyOf(path, "", options);
+        return _texture_cache->AcquirePixels(key, path, *pixels, options, texture);
+      }
+
+      return texture.InitializeWithPixels(
+        pixels->pixels.data(),
+        static_cast<uint32_t>(pixels->width),
+        static_cast<uint32_t>(pixels->height),
+        options);
+    }
 
     if (_texture_cache != nullptr)
     {
@@ -227,6 +253,11 @@ namespace neon
   void VK_Material::SetSurfaceLookup(const SurfaceLookup &lookup)
   {
     _surface_lookup = lookup;
+  }
+
+  void VK_Material::SetImageLookup(const ImageLookup &lookup)
+  {
+    _image_lookup = lookup;
   }
 
   bool VK_Material::Shows(const std::string &surface_name) const

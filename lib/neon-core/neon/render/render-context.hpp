@@ -6,12 +6,14 @@
 #include <neon/common/color.hpp>
 #include <neon/common/data-buffer.hpp>
 #include <neon/common/transform.hpp>
+#include <neon/image/image-pixels.hpp>
 #include <neon/logging/logger.hpp>
 
 #include "light-source.hpp"
 #include "render-info.hpp"
 #include "render-object-ref.hpp"
 #include "sky-info.hpp"
+#include "texture-source.hpp"
 
 
 namespace neon
@@ -57,6 +59,20 @@ namespace neon
     /// a model file is left as it is. A renderer that cannot change a mesh
     /// keeps drawing the first.
     virtual void UpdateRenderObjectMesh(int render_object_id, const MeshData &mesh) {}
+
+    /// Makes pixels in memory known under a name, which a material then
+    /// reads as the texture `image://<name>`, see TextureSource: red, green, blue, and alpha
+    /// for each pixel, row after row from the top. It is how what reads a
+    /// format of its own, an importer or an extension, hands over a texture
+    /// that is in no file. The pixels are copied. A name is set once, before
+    /// the first material that reads it is made; setting it again changes
+    /// nothing that was made already. Returns false when the pixels are not
+    /// width by height of four bytes, or for a renderer that keeps no
+    /// images.
+    virtual bool SetImage(const std::string &name, const ImagePixels &pixels)
+    {
+      return false;
+    }
 
     virtual const RenderResolution& GetRenderResolution() = 0;
 

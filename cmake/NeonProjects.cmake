@@ -18,7 +18,7 @@ endif ()
 set(NEON_RUNTIME_DIRECTORY "${NEON_RUNTIME_DIRECTORY}" CACHE PATH
         "The folder of a NeonRuntime that is built already, with its assets, for projects built without the engine")
 
-# neon_add_project(<name> [SOURCES <file>...])
+# neon_add_project(<name> [SOURCES <file>...] [DIRECTORY <folder>])
 #
 # Declares the project in the folder of the CMakeLists.txt that calls it:
 #
@@ -45,6 +45,9 @@ set(NEON_RUNTIME_DIRECTORY "${NEON_RUNTIME_DIRECTORY}" CACHE PATH
 # map. The project's replace what has the same path, project.yml above all,
 # which the runtime reads from assets:// (#368 moves it to the root).
 #
+# DIRECTORY is where the game is put together, when it is not where the two
+# ways below say.
+#
 # There are two ways to build it, and the CMakeLists.txt is the same for both.
 #
 # On its own, which is how a game is worked on: the folder of the project is
@@ -58,7 +61,8 @@ set(NEON_RUNTIME_DIRECTORY "${NEON_RUNTIME_DIRECTORY}" CACHE PATH
 # next to the applications, and the target is built on request alone,
 # `cmake --build <build> --target <name>`.
 function(neon_add_project NAME)
-  cmake_parse_arguments(PARSE_ARGV 1 PROJECT "" "" "SOURCES")
+  cmake_parse_arguments(PARSE_ARGV 1 PROJECT "" "DIRECTORY" "SOURCES")
+  set(PROJECT_DIRECTORY_GIVEN "${PROJECT_DIRECTORY}")
 
   if (TARGET NeonRuntime)
     set(BUILT_BY_THE_ENGINE ON)
@@ -78,6 +82,11 @@ function(neon_add_project NAME)
     set(RUNTIME_FILE "${NEON_RUNTIME_DIRECTORY}/NeonRuntime${CMAKE_EXECUTABLE_SUFFIX}")
     set(IN_DEFAULT_BUILD ALL)
     message("the project ${NAME} is put together in ${PROJECT_DIRECTORY} with the runtime of ${RUNTIME_DIRECTORY}")
+  endif ()
+
+  # somewhere else when asked, as a test puts its game where the tests are
+  if (PROJECT_DIRECTORY_GIVEN)
+    set(PROJECT_DIRECTORY "${PROJECT_DIRECTORY_GIVEN}")
   endif ()
 
   if (PROJECT_SOURCES)

@@ -145,6 +145,7 @@ something of its own and is told to clean up.
 | 4 | `find_field`, `get_field`, `set_field`, `get_field_text`, `set_field_text`, `is_action_down`, `was_action_pressed`, `action_axis`, `action_axis2`, `action_axis3`, `file_exists`, `read_file`, `spawn`, `load_scene` | |
 | 5 | `listen_to_physics`, `cast_ray` | |
 | 6 | `get_field_layout`, `set_ui_number`, `set_ui_text`, `spawn_at` | |
+| 7 | `add_component`, `set_field_texts`, `set_image`, `set_mesh`, and `name`, the name of the extension | |
 
 ## Components
 
@@ -218,6 +219,8 @@ What an extension reaches besides the store. Like the store, they are for
 | Files | `file_exists`, `read_file` | Virtual paths, under every rule of [file-systems.md](file-systems.md). An extension's own files are `extensions://<name>/…` |
 | The world | `spawn`, `spawn_at`, `load_scene` | A prefab under a parent or at the top, see [prefabs.md](prefabs.md), with `spawn_at` at a position and a rotation written on top of its `Transform`; another scene when the frame is done |
 | The user interface | `set_ui_number`, `set_ui_text` | The values its files show as `{name}`, see [user-interface.md](user-interface.md) |
+| Components of the engine | `add_component` | Gives an entity a component by its name, with what its fields start with, as `Renderable: Default` in a recipe. An extension has no struct for the engine's components, so this is how an entity it creates gets a `Transform` or a `Renderable`; the fields are then set with `set_field`, and a list of text, such as `textures`, with `set_field_texts` |
+| What is drawn | `set_image`, `set_mesh` | A picture and a mesh the extension made, see [what an extension draws](#what-an-extension-draws) |
 | Physics | `listen_to_physics`, `cast_ray` | What began and ended to touch in a frame, before `update`, as the hooks of a script are told; and the first thing a ray hits. A body itself is a component, `RigidBody`, `CharacterBody`, or `Trigger` with a `Collider`, and is moved through its fields, see [physics.md](physics.md) |
 | Audio | none of its own | A sound is a component and is played through its fields, see [audio.md](audio.md) |
 
@@ -230,6 +233,38 @@ What an extension reaches besides the store. Like the store, they are for
 | `read_file` hands the bytes to a function of the extension | Nothing is allocated on one side and freed on the other. The extension copies what it keeps |
 | Reading a field with `get_field` costs a call and a conversion | It is for the handful of entities a system touches, and for a field that is worked out when it is read, such as the rotation of a `Transform` in degrees |
 | `get_field_layout` says where a field lies, and the extension reads it in place | For a system that runs over thousands of entities: a query that names `Transform` hands over its column, and the position of entity `i` is at `column + i * stride + offset`. The layout is asked of the application that runs, in `start`, so nothing of it is compiled into the extension, and an engine that moves the field breaks no extension. What is written in place is not checked |
+
+## What an extension draws
+
+An extension that reads a format of its own, a level, a model, a picture of
+another engine, shows what it read by handing the engine a mesh and
+pictures. Nothing of it is in a file the engine could open.
+
+```cpp
+const std::string picture = world.SetImage("wall", 64, 64, pixels);   // image://quake/wall
+
+const Entity wall = world.CreateEntity("wall");
+world.AddComponent(wall, "Transform");
+world.AddComponent(wall, "Renderable");
+world.SetText(wall, world.FindField("Renderable", "shader"), "assets://shaders/basic-lit");
+world.SetTexts(wall, world.FindField("Renderable", "textures"), {picture});
+world.SetMesh(wall, corners, indices);
+```
+
+| Decision | Reason |
+|---|---|
+| A mesh is given to the `Renderable` of an entity, in place of a model file | It is the path a `Geometry` goes, and a rope: `RenderInfo::mesh`. The shader, the material, and everything else of the `Renderable` stay what they are, and an entity that is drawn already is drawn with the new mesh from the next frame |
+| A corner is as the engine keeps its own: position, normal, where in the texture, and a colour; in metres, y up, triangles anticlockwise from outside | The corners cross as they lie, without a copy of each number. Another engine's units and axes are the extension's to convert |
+| A picture is four bytes a pixel, set under a name, and read by a material as the texture `image://<extension>/<name>` | A texture is named by a path everywhere in the engine, in a recipe, a prefab, a field; this makes a picture from memory one more thing a path can name, as `surface://` names what a camera drew. The name of the extension stands in front, so two extensions cannot take each other's |
+| A picture is set once, before what shows it is first drawn | The renderer makes a texture of it when the first material asks, and shares it. Setting the name again changes nothing that was made |
+| `image://` is no scheme of the file system | Nothing reads or lists it as a file. It is the renderer's, `RenderContext::SetImage`. What the path of a texture names, a file, a `surface://`, or an `image://`, is said in one place, `TextureSource` of neon-core, which every renderer and the user interface ask |
+
+The test [tests/runtime-extensions](../tests/runtime-extensions) does this
+with a picture of four colours on a square, and reads the pixels of what the
+runtime drew.
+
+Not yet: a second set of coordinates for a lightmap, a mesh for the physics
+to collide with, and letting a picture go again.
 
 ## Systems
 
@@ -301,7 +336,7 @@ NEON_EXTENSION(Game)
 |---|---|
 | `Extension` | The class of the extension: `Initialize`, `RegisterComponents`, `Start`, `CleanUp`, and `AddSystem<S>(name, arguments…)` |
 | `System` | `Start`, `OnPhysicsEvent`, `Update`, `FixedUpdate`, `Interpolate` |
-| `World` | What the application offers: the log, `RegisterComponent<T>`, entities, `Set<T>`, `Get<T>`, `Has<T>`, `Remove<T>`, `CreateQuery<Ts…>`, `FindField` with `GetNumber`, `GetVector3`, `GetText` and their `Set…`, `IsActionDown`, `WasActionPressed`, `ActionAxis2`, `ReadFile`, `Spawn`, `SpawnAt`, `LoadScene`, `CastRay`, `SetUiNumber`, `SetUiText`, and `CreateBlockQuery` with `PlaceField<T>` for a field of the engine in place |
+| `World` | What the application offers: the log, `RegisterComponent<T>`, entities, `Set<T>`, `Get<T>`, `Has<T>`, `Remove<T>`, `CreateQuery<Ts…>`, `FindField` with `GetNumber`, `GetVector3`, `GetText` and their `Set…`, `IsActionDown`, `WasActionPressed`, `ActionAxis2`, `ReadFile`, `Spawn`, `SpawnAt`, `LoadScene`, `CastRay`, `SetUiNumber`, `SetUiText`, `AddComponent`, `SetTexts`, `SetImage`, `SetMesh`, and `CreateBlockQuery` with `PlaceField<T>` for a field of the engine in place |
 | `Query<Ts…>` | `Each([](Entity, Ts &…) { … })` |
 | `Field(name, &T::member, description)` | A field from the member itself: its kind from its type, its offset from where it lies, and its default from what `T{}` holds, so a default is written once, in the struct |
 | `NEON_EXTENSION(Class)` | The function the application starts the extension by |

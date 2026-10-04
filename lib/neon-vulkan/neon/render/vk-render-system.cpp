@@ -508,6 +508,7 @@ namespace neon
     _materials.RemoveAll([](VK_Material material) { material.CleanUp(); });
     _models.CleanUp();
     _textures.CleanUp();
+    _images.clear();
 
     for (int id = 0; id < _targets.Capacity(); id++)
     {
@@ -552,6 +553,19 @@ namespace neon
     _shadow_open = false;
 
     _device.CleanUp();
+  }
+
+  bool VK_RenderSystem::SetImage(const std::string &name, const ImagePixels &pixels)
+  {
+    if (name.empty() || pixels.width <= 0 || pixels.height <= 0 ||
+        pixels.pixels.size() != static_cast<std::size_t>(pixels.width) * static_cast<std::size_t>(pixels.height) * 4)
+    {
+      _logger->Error("The image '{}' is not its width by its height of four bytes each, and is left out", name);
+      return false;
+    }
+
+    _images[name] = std::make_shared<const ImagePixels>(pixels);
+    return true;
   }
 
   bool VK_RenderSystem::FindSurface(const std::string &name, VK_Texture &texture) const
@@ -947,6 +961,12 @@ namespace neon
     made.SetSurfaceLookup([this](const std::string &name, VK_Texture &texture)
     {
       return FindSurface(name, texture);
+    });
+
+    made.SetImageLookup([this](const std::string &name) -> std::shared_ptr<const ImagePixels>
+    {
+      const auto image = _images.find(name);
+      return image == _images.end() ? nullptr : image->second;
     });
 
     // The pipeline for a mirrored object, which turns its triangles round,

@@ -1,6 +1,7 @@
 #ifndef VK_TEXTURE_CACHE_HPP
 #define VK_TEXTURE_CACHE_HPP
 
+#include <neon/image/image-pixels.hpp>
 #include <cstddef>
 #include <map>
 #include <memory>
@@ -61,6 +62,16 @@ namespace neon
       const std::string &key,
       const std::string &path,
       const std::shared_ptr<const std::vector<unsigned char>> &file,
+      const VK_TextureOptions &options,
+      VK_Texture &texture);
+
+    /// The texture of a key, as Acquire, made from pixels in memory when it
+    /// is not held yet: an image that was made at run time and is in no
+    /// file. `path` names it in the log.
+    bool AcquirePixels(
+      const std::string &key,
+      const std::string &path,
+      const ImagePixels &pixels,
       const VK_TextureOptions &options,
       VK_Texture &texture);
 

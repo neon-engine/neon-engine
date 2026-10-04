@@ -6,6 +6,7 @@
 #include <format>
 
 #include <neon/data/data-reader.hpp>
+#include <neon/render/texture-source.hpp>
 
 #include "ui-style.hpp"
 #include "ui-values.hpp"
@@ -546,9 +547,9 @@ namespace neon
     // What a render target was drawn to: a surface of a user interface,
     // or what a camera sees. It may be made after what shows it, so it is
     // looked for whenever it is asked for, and missed once.
-    if (path.rfind(kSurface_Scheme, 0) == 0)
+    if (const TextureSource source = TextureSource::Of(path); source.kind == TextureSourceKind::Surface)
     {
-      const std::string name = path.substr(std::string(kSurface_Scheme).size());
+      const std::string &name = source.name;
       const int target = _renderer->FindRenderTarget(name);
 
       UiImage image;

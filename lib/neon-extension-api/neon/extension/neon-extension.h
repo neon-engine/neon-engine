@@ -32,7 +32,7 @@ extern "C" {
 #endif
 
 /* The version of this file. It goes up by one whenever a table grows. */
-#define NEON_EXTENSION_ABI_VERSION 6
+#define NEON_EXTENSION_ABI_VERSION 7
 
 /* Marks the function an extension exports. Everything else of an extension
  * stays hidden, which neon_add_extension sees to. */
@@ -203,6 +203,22 @@ typedef struct NeonFieldLayout
   uint64_t offset;
   uint64_t stride;
 } NeonFieldLayout;
+
+/* One corner of a mesh an extension hands over to be drawn, as the engine
+ * keeps its own: in metres, with y up, and with the triangles wound
+ * anticlockwise seen from outside. */
+typedef struct NeonVertex
+{
+  NeonVector3 position;
+  NeonVector3 normal;
+
+  /* Where in the texture the corner is, from 0 to 1, with 0, 0 at the top
+   * left. */
+  NeonVector2 texture;
+
+  /* Multiplied into the colour of the surface. White leaves it as it is. */
+  NeonColor color;
+} NeonVertex;
 
 /* Two bodies of the physics began or ended to touch. */
 typedef struct NeonPhysicsEvent
@@ -457,6 +473,53 @@ typedef struct NeonExtensionHost
     NeonEntity parent,
     const NeonVector3 *position,
     const NeonVector3 *rotation);
+
+  /* Since version 7: components of the engine given to an entity, lists of
+   * text, and meshes and pictures made by the extension, which is how what
+   * reads a format of its own shows what it read. */
+
+  /* Gives the entity a component by its name, as a recipe that writes
+   * `Renderable: Default` does: with what its fields start with. It is how
+   * an entity gets a component of the engine, which an extension has no
+   * struct for; its fields are then set with set_field. An entity that has
+   * the component keeps it as it is. Returns 1, or 0 after saying why. */
+  int (*add_component)(void *context, NeonEntity entity, const char *component);
+
+  /* Changes a field that is a list of text, such as `textures` of
+   * `Renderable`, to `count` texts. Returns as set_field does. */
+  int (*set_field_texts)(
+    void *context,
+    NeonEntity entity,
+    NeonField field,
+    const char *const *texts,
+    uint64_t count);
+
+  /* Makes a picture in memory known to the renderer: `width` by `height`
+   * pixels of four bytes, red, green, blue, and alpha, row after row from
+   * the top, which are copied. A material reads it as the texture
+   * `image://<extension>/<name>`, the name of the extension in front, so
+   * that two extensions cannot take each other's. A name is set once,
+   * before anything that shows it is first drawn. Returns 1, or 0 after
+   * saying why. */
+  int (*set_image)(void *context, const char *name, uint32_t width, uint32_t height, const uint8_t *pixels);
+
+  /* Gives the `Renderable` of an entity a mesh to draw, in place of a
+   * model file: `vertex_count` corners, and three indices into them for
+   * every triangle. Both are copied. An entity that is drawn already is
+   * drawn with the new mesh from the next frame. Returns 1, or 0 after
+   * saying why: the entity has no Renderable, an index names no corner. */
+  int (*set_mesh)(
+    void *context,
+    NeonEntity entity,
+    const NeonVertex *vertices,
+    uint64_t vertex_count,
+    const uint32_t *indices,
+    uint64_t index_count);
+
+  /* The name of the extension, as its recipe has it. It is what stands in
+   * front of the names of its pictures, and of its files under
+   * `extensions://`. Since version 7. */
+  const char *name;
 } NeonExtensionHost;
 
 /* What an extension brings. The application hands it over with every field

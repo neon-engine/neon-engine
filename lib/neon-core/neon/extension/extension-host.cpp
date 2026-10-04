@@ -35,6 +35,11 @@ namespace neon
     _services.physics = physics;
   }
 
+  void ExtensionHost::SetRender(RenderContext *render)
+  {
+    _services.render = render;
+  }
+
   void ExtensionHost::SetUi(UiContext *ui)
   {
     _services.ui = ui;

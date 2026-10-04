@@ -1,9 +1,9 @@
 #include "vk-render-target.hpp"
 
+#include <neon/render/texture-source.hpp>
 #include <algorithm>
 #include <array>
 #include <cmath>
-#include <cstring>
 
 namespace neon
 {
@@ -32,10 +32,9 @@ namespace neon
 
   std::string VK_RenderTarget::NameOf(const std::string &texture_path)
   {
-    const std::size_t length = std::strlen(kScheme);
-    if (texture_path.compare(0, length, kScheme) != 0) { return ""; }
-
-    return texture_path.substr(length);
+    // what a path names is said in one place, for every renderer
+    const TextureSource source = TextureSource::Of(texture_path);
+    return source.kind == TextureSourceKind::Surface ? source.name : "";
   }
 
   bool VK_RenderTarget::Initialize(

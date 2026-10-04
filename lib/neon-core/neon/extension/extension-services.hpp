@@ -4,6 +4,7 @@
 #include <neon/filesystem/file-system-context.hpp>
 #include <neon/input/input-context.hpp>
 #include <neon/physics/physics-context.hpp>
+#include <neon/render/render-context.hpp>
 #include <neon/ui/ui-context.hpp>
 #include <neon/world-system/ecs/scene-file/component-format.hpp>
 #include <neon/world-system/world-system.hpp>
@@ -26,6 +27,9 @@ namespace neon
 
     /// For what touched what, and for rays.
     PhysicsContext *physics = nullptr;
+
+    /// For the pictures an extension makes, which materials read.
+    RenderContext *render = nullptr;
 
     /// For the values the files of the user interface show.
     UiContext *ui = nullptr;

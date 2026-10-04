@@ -290,6 +290,8 @@ add_library(${TARGET} STATIC
         neon/render/render-target.hpp
         neon/render/render-info.hpp
         neon/render/render-object-ref.hpp
+        neon/render/texture-source.hpp
+        neon/render/texture-source-kind.hpp
         neon/render/vertex.hpp
         neon/render/mesh.hpp
         neon/render/render-pipeline.hpp
@@ -520,6 +522,7 @@ neon_add_unit_test(${TARGET} neon/command-line/display-options.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/rope-drawing.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/geometry-building.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/api-version.test.cpp)
+  neon_add_unit_test(${TARGET} neon/render/texture-source.test.cpp)
   neon_add_unit_test(${TARGET} neon/runtime/frame-capture.test.cpp)
   neon_add_unit_test(${TARGET} neon/runtime/runtime.test.cpp)
   neon_add_unit_test(${TARGET} neon/text/font-atlas.test.cpp)

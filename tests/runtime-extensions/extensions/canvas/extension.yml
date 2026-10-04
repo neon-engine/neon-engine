@@ -1,0 +1,12 @@
+# Paints a picture of its own making on a square of its own making, which
+# the test reads pixel by pixel.
+version: 1
+name: canvas
+
+libraries:
+  macos-arm64: canvas-macos-arm64.dylib
+  macos-x86_64: canvas-macos-x86_64.dylib
+  linux-x86_64: canvas-linux-x86_64.so
+  linux-arm64: canvas-linux-arm64.so
+  windows-x86_64: canvas-windows-x86_64.dll
+  windows-arm64: canvas-windows-arm64.dll

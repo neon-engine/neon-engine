@@ -3,6 +3,7 @@
 // the test and opened through SDL2, see CMakeLists.txt. What needs no
 // library is read from a file system in memory.
 
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -16,11 +17,13 @@
 #include <neon/filesystem/sdl2-file-system.hpp>
 #include <neon/testing/fake-physics-context.hpp>
 #include <neon/testing/memory-file-system.hpp>
+#include <neon/world-system/ecs/components/renderable.hpp>
 #include <neon/world-system/ecs/systems/extension-running.hpp>
 #include <neon/world-system/flecs-entity-store.hpp>
 #include <neon/common/transform.hpp>
 #include <neon/testing/mock-input-context.hpp>
 #include <neon/testing/mock-library-loader.hpp>
+#include <neon/testing/mock-render-context.hpp>
 #include <neon/testing/mock-ui-system.hpp>
 #include <neon/testing/mock-world-system.hpp>
 #include <neon/testing/recording-logger.hpp>
@@ -74,10 +77,10 @@ namespace
 
   TEST_F(ExtensionsTest, StartsTheExtensionsThatCanStartInTheOrderOfTheirNames)
   {
-    EXPECT_THAT(_host.GetLoaded(), ElementsAre("eager", "hello", "mislaid", "old", "polite", "spinner", "tumbler", "visitor"));
+    EXPECT_THAT(_host.GetLoaded(), ElementsAre("eager", "hello", "mislaid", "old", "painter", "polite", "spinner", "tumbler", "visitor"));
     EXPECT_TRUE(_logger->Contains(LogLevel::Info, "Started the extension 'hello' from extensions://hello/hello-"))
       << _logger->Messages(LogLevel::Info);
-    EXPECT_TRUE(_logger->Contains(LogLevel::Info, "Started 8 of 11 extensions")) << _logger->Messages(LogLevel::Info);
+    EXPECT_TRUE(_logger->Contains(LogLevel::Info, "Started 9 of 12 extensions")) << _logger->Messages(LogLevel::Info);
   }
 
   TEST_F(ExtensionsTest, NamesTheAssetsOfTheExtensionsThatAreThereToBeUsed)
@@ -166,6 +169,10 @@ namespace
     NiceMock<neon::testing::MockInputContext> _input;
     RayPhysics _physics;
     NiceMock<neon::testing::MockUiSystem> _ui;
+    NiceMock<neon::testing::MockRenderContext> _render{std::make_shared<RecordingLogger>()};
+
+    // the pictures the extensions made, by their names
+    std::map<std::string, neon::ImagePixels> _images;
     NiceMock<neon::testing::MockWorldSystem> _world{std::make_shared<RecordingLogger>()};
 
     void SetUp() override
@@ -182,6 +189,16 @@ namespace
       _host.SetWorld(&_world);
       _host.SetPhysics(&_physics);
       _host.SetUi(&_ui);
+      _host.SetRender(&_render);
+      ON_CALL(_render, SetImage(_, _)).WillByDefault([this](const std::string &name, const neon::ImagePixels &pixels)
+      {
+        _images[name] = pixels;
+        return true;
+      });
+
+      // what draws an entity, which an extension gives a mesh and textures
+      _store.Register<neon::Renderable>("Renderable");
+      _formats.Add(neon::ComponentFormat::Of<neon::Renderable>());
 
       _running.Register(_store);
       _running.Initialize(_store);
@@ -515,7 +532,8 @@ namespace
     _store.Set(other, neon::Transform{});
     ON_CALL(_input, WasActionPressed("lift")).WillByDefault(Return(true));
 
-    EXPECT_CALL(_ui, SetNumber("lifted", 2.0)).Times(1);
+    // the two of the test, and the one the painter made
+    EXPECT_CALL(_ui, SetNumber("lifted", 3.0)).Times(1);
     EXPECT_CALL(_ui, SetText("who", "visitor")).Times(1);
 
     _running.Update(_store, 0.016);
@@ -549,6 +567,53 @@ namespace
     float yaw = 0.0f;
     ASSERT_TRUE(transform->Find("rotation")->GetItems()[1].GetNumber(yaw));
     EXPECT_EQ(yaw, 90.0f);
+  }
+
+  TEST_F(ExtensionsInTheWorldTest, ShowsAMeshAndAPictureAnExtensionMadeOnAnEntityWithTheEnginesComponents)
+  {
+    EXPECT_TRUE(LogOf("painter")->Contains(
+      LogLevel::Info, "Painted image://painter/checker: components yes, textures yes, mesh yes"))
+      << LogOf("painter")->Messages(LogLevel::Info) << LogOf("painter")->Messages(LogLevel::Error);
+
+    // the picture reached the renderer under the name of the extension
+    ASSERT_TRUE(_images.contains("painter/checker"));
+    EXPECT_EQ(_images["painter/checker"].width, 2);
+    EXPECT_EQ(_images["painter/checker"].height, 2);
+    EXPECT_THAT(_images["painter/checker"].pixels, ::testing::SizeIs(16));
+    EXPECT_EQ(_images["painter/checker"].pixels[5], 255);
+
+    const neon::Entity painted = _store.FindEntity("painted");
+    ASSERT_NE(painted, neon::No_Entity);
+    EXPECT_EQ(_store.Get<neon::Transform>(painted)->position, glm::vec3(0.0f, 0.0f, -3.0f));
+
+    const auto *renderable = _store.Get<neon::Renderable>(painted);
+    ASSERT_NE(renderable, nullptr);
+    EXPECT_EQ(renderable->render_info.shader_path, "assets://shaders/unlit");
+    EXPECT_THAT(renderable->render_info.texture_paths, ElementsAre("image://painter/checker"));
+
+    ASSERT_NE(renderable->render_info.mesh, nullptr);
+    EXPECT_THAT(renderable->render_info.mesh->indices, ElementsAre(0u, 1u, 2u, 0u, 2u, 3u));
+    ASSERT_THAT(renderable->render_info.mesh->vertices, ::testing::SizeIs(4));
+    EXPECT_EQ(renderable->render_info.mesh->vertices[2].position, glm::vec3(1.0f, 1.0f, 0.0f));
+    EXPECT_EQ(renderable->render_info.mesh->vertices[2].normal, glm::vec3(0.0f, 0.0f, 1.0f));
+    EXPECT_EQ(renderable->render_info.mesh->vertices[2].tex_coords, glm::vec2(1.0f, 0.0f));
+    EXPECT_EQ(renderable->render_info.mesh->vertices[2].color, glm::vec4(1.0f));
+
+    // counted up, so that an entity that is drawn already is handed the mesh
+    EXPECT_EQ(renderable->render_info.mesh_version, 1u);
+  }
+
+  TEST_F(ExtensionsInTheWorldTest, RefusesAMeshAPictureOrAComponentThatIsNone)
+  {
+    EXPECT_TRUE(LogOf("painter")->Contains(
+      LogLevel::Info, "What is no mesh, picture, or component was refused: yes"))
+      << LogOf("painter")->Messages(LogLevel::Info);
+
+    ExpectErrorOf("painter", "set_mesh: the entity has no Renderable to draw the mesh with");
+    ExpectErrorOf("painter", "set_mesh: index 2 names corner 4, and there are 4 corners");
+    ExpectErrorOf("painter", "set_mesh takes corners, and three indices for every triangle; it was given 4 corners and 2");
+    ExpectErrorOf("painter", "add_component: there is no component 'Nothing' that a recipe could write");
+    EXPECT_FALSE(_images.contains("painter/short"));
   }
 
   TEST_F(ExtensionsInTheWorldTest, TakesTheStoreFromTheExtensionsWhenTheWorldIsLeft)

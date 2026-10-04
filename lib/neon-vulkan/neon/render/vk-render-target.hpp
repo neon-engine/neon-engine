@@ -52,10 +52,6 @@ namespace neon
     /// The largest target, along each side.
     static constexpr int kMax_Size = 8192;
 
-    /// What the texture of a model is called that shows a target:
-    /// `surface://` and the name of the target.
-    static constexpr const char *kScheme = "surface://";
-
     VK_RenderTarget() = default;
 
     VK_RenderTarget(const std::string &name, VK_Device *device, const std::shared_ptr<Logger> &logger);

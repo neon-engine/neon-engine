@@ -366,10 +366,6 @@ namespace neon
     /// here, where no frame refers to it.
     void BeginFrame();
 
-    /// What the path of an image starts with that is what a render target
-    /// was drawn to.
-    static constexpr const char *kSurface_Scheme = "surface://";
-
     /// An image by what a file calls it:
     ///
     ///     assets://ui/heart.png             an image file
