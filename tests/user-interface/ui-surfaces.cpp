@@ -406,6 +406,65 @@ namespace
     EXPECT_EQ(_renderer.Quads()[0].texture, _renderer.GetRenderTargetTexture(target));
   }
 
+  TEST_F(UiSurfaceTest, AnImageShowsPixelsThatWereHandedToTheRendererUnderAName)
+  {
+    // what an extension does with set_image: four pixels under a name
+    auto pixels = std::make_shared<neon::ImagePixels>();
+    pixels->width = 2;
+    pixels->height = 2;
+    pixels->pixels.assign(16, 255);
+    _renderer.images["quake/face"] = pixels;
+
+    ASSERT_GE(ShowUnderRoot(
+      "- type: image\n"
+      "  name: face\n"
+      "  src: image://quake/face\n"
+      "  width: 48\n"
+      "  height: 48\n"), 0) << _logger->Messages(LogLevel::Error);
+    Frame();
+
+    // drawn with a texture of the size of the picture, made once
+    const auto quads = _renderer.Quads();
+    ASSERT_EQ(quads.size(), 1u);
+    int width = 0;
+    int height = 0;
+    ASSERT_TRUE(_renderer.GetTextureSize(quads[0].texture, width, height));
+    EXPECT_EQ(width, 2);
+    EXPECT_EQ(height, 2);
+
+    const std::size_t textures = _renderer.TextureCount();
+    Frame();
+    EXPECT_EQ(_renderer.TextureCount(), textures);
+    EXPECT_EQ(_logger->Count(LogLevel::Warn), 0u) << _logger->Messages(LogLevel::Warn);
+  }
+
+  TEST_F(UiSurfaceTest, AnImageOfPixelsThatWereNotHandedOverYetIsDrawnOnceTheyAre)
+  {
+    ASSERT_GE(ShowUnderRoot(
+      "- type: image\n"
+      "  name: face\n"
+      "  src: image://quake/face\n"
+      "  width: 48\n"
+      "  height: 48\n"), 0) << _logger->Messages(LogLevel::Error);
+
+    Frame();
+    Frame();
+
+    EXPECT_TRUE(_renderer.batches.empty());
+    EXPECT_EQ(_logger->Count(LogLevel::Warn), 1u) << _logger->Messages(LogLevel::Warn);
+    EXPECT_TRUE(_logger->Contains(
+      LogLevel::Warn, "There is no image 'quake/face', image 'face' is drawn without it until there is"));
+
+    auto pixels = std::make_shared<neon::ImagePixels>();
+    pixels->width = 1;
+    pixels->height = 1;
+    pixels->pixels.assign(4, 255);
+    _renderer.images["quake/face"] = pixels;
+    Frame();
+
+    EXPECT_EQ(_renderer.Quads().size(), 1u);
+  }
+
   // values
 
   TEST_F(UiSurfaceTest, AUserInterfaceInTheWorldKeepsWhatItStartsWithToItself)

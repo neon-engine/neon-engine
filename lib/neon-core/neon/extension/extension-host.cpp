@@ -307,6 +307,15 @@ namespace neon
       const auto &extension = _extensions.back();
       _logger->Info("Cleaning up the extension '{}'", extension->name);
 
+      // What the extension listens to the user interface with is taken away
+      // first: the user interface outlives the library, and would call into
+      // what is closed.
+      if (_services.ui != nullptr)
+      {
+        for (const int listening : extension->ui_listeners) { _services.ui->Off(listening); }
+      }
+      extension->ui_listeners.clear();
+
       if (extension->table.clean_up != nullptr) { extension->table.clean_up(extension->table.context); }
       extension->library->Close();
 

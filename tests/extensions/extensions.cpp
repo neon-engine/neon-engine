@@ -15,6 +15,8 @@
 #include <neon/extension/extension-host.hpp>
 #include <neon/extension/sdl2-library-loader.hpp>
 #include <neon/filesystem/sdl2-file-system.hpp>
+#include <neon/layout/flex-layout-engine.hpp>
+#include <neon/testing/fake-font-rasterizer.hpp>
 #include <neon/testing/fake-physics-context.hpp>
 #include <neon/testing/memory-file-system.hpp>
 #include <neon/world-system/ecs/components/renderable.hpp>
@@ -22,14 +24,17 @@
 #include <neon/world-system/flecs-entity-store.hpp>
 #include <neon/common/transform.hpp>
 #include <neon/testing/mock-input-context.hpp>
+#include <neon/testing/mock-input-system.hpp>
 #include <neon/testing/mock-library-loader.hpp>
 #include <neon/testing/mock-audio-context.hpp>
+#include <neon/testing/mock-render-2d-context.hpp>
 #include <neon/testing/mock-render-context.hpp>
 #include <neon/testing/mock-ui-system.hpp>
 #include <neon/testing/mock-window-system.hpp>
 #include <neon/testing/mock-world-system.hpp>
 #include <neon/testing/recording-logger.hpp>
 #include <neon/testing/recording-logging-context.hpp>
+#include <neon/ui/tree-ui-system.hpp>
 
 namespace
 {
@@ -136,10 +141,11 @@ namespace
 
   TEST_F(ExtensionsTest, StartsTheExtensionsThatCanStartInTheOrderOfTheirNames)
   {
-    EXPECT_THAT(_host.GetLoaded(), ElementsAre("eager", "hello", "keeper", "mislaid", "old", "painter", "polite", "spinner", "tumbler", "visitor"));
+    EXPECT_THAT(_host.GetLoaded(), ElementsAre(
+      "eager", "hello", "keeper", "mislaid", "old", "painter", "polite", "sign", "spinner", "tumbler", "visitor"));
     EXPECT_TRUE(_logger->Contains(LogLevel::Info, "Started the extension 'hello' from extensions://hello/hello-"))
       << _logger->Messages(LogLevel::Info);
-    EXPECT_TRUE(_logger->Contains(LogLevel::Info, "Started 10 of 13 extensions")) << _logger->Messages(LogLevel::Info);
+    EXPECT_TRUE(_logger->Contains(LogLevel::Info, "Started 11 of 14 extensions")) << _logger->Messages(LogLevel::Info);
   }
 
   TEST_F(ExtensionsTest, NamesTheAssetsOfTheExtensionsThatAreThereToBeUsed)
@@ -230,6 +236,10 @@ namespace
     NiceMock<neon::testing::MockUiSystem> _ui;
     NiceMock<neon::testing::MockRenderContext> _render{std::make_shared<RecordingLogger>()};
 
+    // what the renderer draws to, which is the view an extension asks the
+    // size of
+    neon::RenderResolution _resolution{640, 360};
+
     // the pictures the extensions made, by their names
     std::map<std::string, neon::ImagePixels> _images;
 
@@ -245,6 +255,13 @@ namespace
     // what an extension that asks the application to close tells
     NiceMock<neon::testing::MockWindowContext> _window;
 
+    /// The user interface the extensions are given. One that takes every
+    /// call and does nothing, unless a test brings another.
+    [[nodiscard]] virtual neon::UiContext *Ui()
+    {
+      return &_ui;
+    }
+
     void SetUp() override
     {
       ExtensionsTest::SetUp();
@@ -258,8 +275,9 @@ namespace
       _host.SetInput(&_input);
       _host.SetWorld(&_world);
       _host.SetPhysics(&_physics);
-      _host.SetUi(&_ui);
+      _host.SetUi(Ui());
       _host.SetRender(&_render);
+      ON_CALL(_render, GetRenderResolution()).WillByDefault(::testing::ReturnRef(_resolution));
       _host.SetAudio(&_audio);
       _host.SetWindow(&_window);
       ON_CALL(_audio, SetSound(_, _)).WillByDefault([this](const std::string &name, std::vector<std::uint8_t> bytes)
@@ -808,6 +826,375 @@ namespace
     // started twice by the test, which a world never does; what matters is
     // that the store was there again and is gone again
     EXPECT_EQ(LogOf("spinner")->Count(LogLevel::Error), 0u) << LogOf("spinner")->Messages(LogLevel::Error);
+  }
+
+  /// A user interface that hands every call an extension makes on to
+  /// another, and keeps what listens: what On() returned and Off() has not
+  /// taken away.
+  class WatchedUi final : public neon::UiContext
+  {
+    neon::UiContext *_shown;
+
+  public:
+    std::vector<int> listening;
+
+    explicit WatchedUi(neon::UiContext *shown)
+    {
+      _shown = shown;
+    }
+
+    int Load(const std::string &path) override { return _shown->Load(path); }
+
+    void Unload(const int document) override { _shown->Unload(document); }
+
+    [[nodiscard]] bool IsShown(const int document) const override { return _shown->IsShown(document); }
+
+    [[nodiscard]] bool IsAlive(const neon::UiHandle element) const override { return _shown->IsAlive(element); }
+
+    [[nodiscard]] neon::UiHandle GetRoot(const int document) const override { return _shown->GetRoot(document); }
+
+    [[nodiscard]] neon::UiHandle FindByName(const std::string &name, const neon::UiHandle from) const override
+    {
+      return _shown->FindByName(name, from);
+    }
+
+    [[nodiscard]] std::string GetElementType(const neon::UiHandle element) const override
+    {
+      return _shown->GetElementType(element);
+    }
+
+    [[nodiscard]] bool DescribeElement(const std::string &type, neon::TypeInfo &description) const override
+    {
+      return _shown->DescribeElement(type, description);
+    }
+
+    bool Set(const neon::UiHandle element, const std::string &property, const std::string &value) override
+    {
+      return _shown->Set(element, property, value);
+    }
+
+    bool SetField(const neon::UiHandle element, const std::string &name, const neon::FieldValue &value) override
+    {
+      return _shown->SetField(element, name, value);
+    }
+
+    bool SetVisible(const neon::UiHandle element, const bool visible) override
+    {
+      return _shown->SetVisible(element, visible);
+    }
+
+    neon::UiHandle Create(const std::string &description, const neon::UiHandle parent, const int index) override
+    {
+      return _shown->Create(description, parent, index);
+    }
+
+    bool Remove(const neon::UiHandle element) override { return _shown->Remove(element); }
+
+    int On(const neon::UiHandle element, const std::string &event, const neon::UiListener &listener) override
+    {
+      const int subscription = _shown->On(element, event, listener);
+      if (subscription != 0) { listening.push_back(subscription); }
+      return subscription;
+    }
+
+    void Off(const int subscription) override
+    {
+      std::erase(listening, subscription);
+      _shown->Off(subscription);
+    }
+
+    void SetNumber(const std::string &name, const double number) override { _shown->SetNumber(name, number); }
+
+    void SetText(const std::string &name, const std::string &text) override { _shown->SetText(name, text); }
+
+    void SetFlag(const std::string &name, const bool flag) override { _shown->SetFlag(name, flag); }
+
+    void OnClick(const std::string &element, const std::function<void()> &callback) override
+    {
+      _shown->OnClick(element, callback);
+    }
+
+    [[nodiscard]] const std::vector<neon::UiEvent> &GetEvents() const override { return _shown->GetEvents(); }
+
+    [[nodiscard]] bool WasClicked(const std::string &element) const override { return _shown->WasClicked(element); }
+
+    bool Focus(const std::string &element) override { return _shown->Focus(element); }
+
+    [[nodiscard]] std::string GetFocused() const override { return _shown->GetFocused(); }
+  };
+
+  /// The extensions with the user interface of the engine: its files in
+  /// memory, drawn to a renderer that keeps what it is asked to draw, and
+  /// pointed at through an input the test sets.
+  class ExtensionsOnTheUiTest : public ExtensionsInTheWorldTest
+  {
+  protected:
+    std::shared_ptr<RecordingLogger> _ui_logger = std::make_shared<RecordingLogger>();
+    MemoryFileSystem _ui_files{SettingsConfig{}, _ui_logger};
+    neon::testing::FakeFontRasterizer _rasterizer;
+    neon::Flex_LayoutEngine _layout;
+    neon::testing::RecordingRenderer2D _renderer;
+    NiceMock<neon::testing::FakeInputContext> _pointer{_ui_logger};
+    std::unique_ptr<neon::Tree_UiSystem> _tree;
+    std::unique_ptr<WatchedUi> _watched;
+
+    [[nodiscard]] neon::UiContext *Ui() override
+    {
+      return _watched.get();
+    }
+
+    void SetUp() override
+    {
+      _ui_files.Initialize();
+      _ui_files.AddNativeFile("/assets/fonts/regular.ttf", "a font");
+
+      // the file the extension `sign` shows when it starts
+      _ui_files.AddNativeFile(
+        "/assets/ui/board.ui.yml",
+        "ui: board\n"
+        "root:\n"
+        "  type: panel\n"
+        "  width: 100%\n"
+        "  height: 100%\n"
+        "  align_items: flex-start\n"
+        "  children:\n"
+        "    - type: panel\n"
+        "      name: board\n"
+        "      width: 200\n"
+        "      height: 100\n");
+
+      _tree = std::make_unique<neon::Tree_UiSystem>(
+        &_renderer,
+        &_rasterizer,
+        &_layout,
+        &_pointer,
+        &_ui_files,
+        &_yaml,
+        neon::UiSettings{.fonts = {{"sans-serif", 400, "assets://fonts/regular.ttf"}}, .start_path = ""},
+        _ui_logger);
+      _watched = std::make_unique<WatchedUi>(_tree.get());
+
+      ExtensionsInTheWorldTest::SetUp();
+    }
+
+    void TearDown() override
+    {
+      ExtensionsInTheWorldTest::TearDown();
+      _tree->CleanUp();
+    }
+
+    /// A frame of the user interface, as the runtime runs it.
+    void Frame()
+    {
+      _tree->Update();
+      _tree->Draw();
+    }
+
+    /// A frame with the button of the pointer held down in the middle of an
+    /// element, and one with it released.
+    void Click(const std::string &element)
+    {
+      // placed first, so that there is a middle to point at
+      Frame();
+
+      const neon::UiElement *found = _tree->Find(element);
+      ASSERT_NE(found, nullptr) << element;
+      const auto &box = found->GetBox();
+
+      _pointer.state.Reset();
+      _pointer.state.SetPointer(box.left + box.Width() / 2.0, box.top + box.Height() / 2.0);
+      _pointer.state.SetAction(neon::Action::Pointer_Primary);
+      Frame();
+
+      _pointer.state.Reset();
+      Frame();
+    }
+
+    /// A field of an element by its name, as the user interface holds it.
+    template<typename T>
+    [[nodiscard]] T FieldOf(const std::string &element, const std::string &field) const
+    {
+      neon::FieldValue value;
+      EXPECT_TRUE(_tree->GetField(_tree->FindByName(element), field, value)) << field << " of " << element;
+
+      const T *held = std::get_if<T>(&value);
+      EXPECT_NE(held, nullptr) << field << " of " << element;
+      return held != nullptr ? *held : T{};
+    }
+
+    /// A frame of the world with one action pressed.
+    void Press(const std::string &action)
+    {
+      ON_CALL(_input, WasActionPressed(action)).WillByDefault(Return(true));
+      _running.Update(_store, 0.016);
+      ON_CALL(_input, WasActionPressed(action)).WillByDefault(Return(false));
+    }
+  };
+
+  TEST_F(ExtensionsOnTheUiTest, AnExtensionShowsAFileAndMakesElementsInItThatAreFoundByTheirNames)
+  {
+    EXPECT_TRUE(LogOf("sign")->Contains(
+      LogLevel::Info,
+      "Showed the board: yes, made a sign and a button: yes, wrote on it: yes, styled it: yes, found it by its "
+      "name: yes"))
+      << LogOf("sign")->Messages(LogLevel::Info) << LogOf("sign")->Messages(LogLevel::Error);
+
+    // the file once, though it was shown twice
+    EXPECT_TRUE(_tree->IsShown(0));
+    EXPECT_FALSE(_tree->IsShown(1));
+
+    // the sign at the top of the file, and the button inside what the file
+    // calls `board`
+    const neon::UiHandle sign = _tree->FindByName("sign");
+    ASSERT_TRUE(_tree->IsAlive(sign));
+    EXPECT_EQ(_tree->GetElementType(sign), "label");
+    EXPECT_EQ(_tree->GetParent(sign), _tree->GetRoot());
+
+    const neon::UiHandle button = _tree->FindByName("knock");
+    ASSERT_TRUE(_tree->IsAlive(button));
+    EXPECT_EQ(_tree->GetParent(button), _tree->FindByName("board"));
+  }
+
+  TEST_F(ExtensionsOnTheUiTest, AnExtensionSetsTheFieldsAndTheStyleOfAnElementFromText)
+  {
+    // what an element shows is worked out in a frame
+    Frame();
+
+    EXPECT_EQ(_tree->GetElementText(_tree->FindByName("sign")), "Closed");
+    EXPECT_EQ(_tree->GetComputed(_tree->FindByName("sign"), "color"), "rgb(255, 128, 0)");
+    EXPECT_EQ(_tree->GetComputed(_tree->FindByName("sign"), "margin-left"), "12px");
+
+    // a number and a flag are read from the text, as the field holds them
+    EXPECT_TRUE(LogOf("sign")->Contains(LogLevel::Info, "A number from text: yes, a flag from text: yes"))
+      << LogOf("sign")->Messages(LogLevel::Error);
+    EXPECT_EQ(FieldOf<float>("filled", "value"), 75.0f);
+    EXPECT_TRUE(FieldOf<bool>("lit", "checked"));
+  }
+
+  TEST_F(ExtensionsOnTheUiTest, AnExtensionIsToldOfAClickOnAnElementItListensTo)
+  {
+    EXPECT_TRUE(LogOf("sign")->Contains(LogLevel::Info, "Listens to the button: yes"));
+    EXPECT_THAT(_watched->listening, ::testing::SizeIs(1));
+
+    Click("knock");
+    Click("knock");
+
+    EXPECT_TRUE(LogOf("sign")->Contains(LogLevel::Info, "Heard a click on the button, knock 1"))
+      << LogOf("sign")->Messages(LogLevel::Info);
+    EXPECT_TRUE(LogOf("sign")->Contains(LogLevel::Info, "Heard a click on the button, knock 2"));
+
+    // what the listener did to another element
+    EXPECT_EQ(_tree->GetElementText(_tree->FindByName("sign")), "Knocked 2");
+  }
+
+  TEST_F(ExtensionsOnTheUiTest, AnExtensionIsToldNoMoreOnceItStopsListening)
+  {
+    Click("knock");
+    Press("stop_listening");
+    Click("knock");
+
+    EXPECT_THAT(_watched->listening, IsEmpty());
+    EXPECT_TRUE(LogOf("sign")->Contains(LogLevel::Info, "knock 1"));
+    EXPECT_FALSE(LogOf("sign")->Contains(LogLevel::Info, "knock 2"));
+
+    // a second time there is nothing of the extension's to take away
+    Press("stop_listening");
+    ExpectErrorOf("sign", "ui_unlisten was called with what the extension does not listen with");
+  }
+
+  TEST_F(ExtensionsOnTheUiTest, WhatAnExtensionListensWithIsTakenAwayWhenItIsCleanedUp)
+  {
+    ASSERT_THAT(_watched->listening, ::testing::SizeIs(1));
+
+    _host.LeaveWorld();
+    _host.CleanUp();
+
+    // nothing of the user interface calls into a library that is closed
+    EXPECT_THAT(_watched->listening, IsEmpty());
+    Click("knock");
+    EXPECT_FALSE(LogOf("sign")->Contains(LogLevel::Info, "Heard a click"));
+  }
+
+  TEST_F(ExtensionsOnTheUiTest, AnExtensionHidesAndRemovesAnElementAndItsHandleNamesNothingAfterwards)
+  {
+    const neon::UiHandle sign = _tree->FindByName("sign");
+    Frame();
+    ASSERT_TRUE(_tree->IsVisible(sign));
+
+    Press("hide_sign");
+    Frame();
+    EXPECT_FALSE(_tree->IsVisible(sign));
+
+    Press("take_down");
+    EXPECT_TRUE(LogOf("sign")->Contains(LogLevel::Info, "Took the sign down: yes"));
+    EXPECT_FALSE(_tree->IsAlive(sign));
+    EXPECT_FALSE(_tree->FindByName("sign").IsSet());
+
+    // the handle the extension kept names nothing now
+    Press("take_down");
+    EXPECT_TRUE(LogOf("sign")->Contains(LogLevel::Info, "Took the sign down: no"));
+    ExpectErrorOf("sign", "ui_remove was called with an element that is not there");
+  }
+
+  TEST_F(ExtensionsOnTheUiTest, AnExtensionClosesTheFileItShowedAndItsElementsAreGone)
+  {
+    Press("close_board");
+
+    EXPECT_TRUE(LogOf("sign")->Contains(LogLevel::Info, "Closed the board: yes, and the button is gone"))
+      << LogOf("sign")->Messages(LogLevel::Info);
+    EXPECT_FALSE(_tree->IsShown(0));
+
+    // it shows the file no more, so there is nothing of it to close
+    Press("close_board");
+    ExpectErrorOf("sign", "ui_close: the extension shows no file 'assets://ui/board.ui.yml'");
+  }
+
+  TEST_F(ExtensionsOnTheUiTest, AnExtensionAsksHowLargeTheViewIs)
+  {
+    EXPECT_TRUE(LogOf("sign")->Contains(LogLevel::Info, "The view is 640 by 360"))
+      << LogOf("sign")->Messages(LogLevel::Info);
+  }
+
+  TEST_F(ExtensionsOnTheUiTest, RefusesWhatIsNoElementFieldPropertyOrFileAndSaysWhy)
+  {
+    EXPECT_TRUE(LogOf("sign")->Contains(
+      LogLevel::Info, "What is no element, field, property, or file was refused: yes"))
+      << LogOf("sign")->Messages(LogLevel::Info);
+
+    ExpectErrorOf("sign", "ui_create was called without text to make an element from");
+    ExpectErrorOf("sign", "ui_create: the user interface made no element from the text, and said why");
+    ExpectErrorOf("sign", "ui_create was called with a parent that is not there");
+    ExpectErrorOf("sign", "ui_set_field was called with an element that is not there");
+    ExpectErrorOf("sign", "ui_set_field: 'weight' is not a field of a label");
+    ExpectErrorOf("sign", "ui_set_field: 'value' of a bar");
+    ExpectErrorOf("sign", "ui_set_style: 'colour' was not set to 'red'");
+    ExpectErrorOf("sign", "ui_set_visible was called with an element that is not there");
+    ExpectErrorOf("sign", "ui_remove was called with an element that is not there");
+    ExpectErrorOf("sign", "ui_close: the extension shows no file 'assets://ui/never.ui.yml'");
+    ExpectErrorOf("sign", "ui_show: the user interface did not take 'assets://ui/never.ui.yml', and said why");
+    ExpectErrorOf("sign", "ui_listen was called without an event, or without a function to tell");
+    ExpectErrorOf("sign", "ui_listen was called with an element that is not there");
+
+    // what the user interface itself said of the text that is no element
+    EXPECT_TRUE(_ui_logger->Contains(LogLevel::Warn, "type 'nothing' of the element is not known")
+                || _ui_logger->Contains(LogLevel::Error, "type 'nothing' of the element is not known"))
+      << _ui_logger->Messages(LogLevel::Warn) << _ui_logger->Messages(LogLevel::Error);
+  }
+
+  TEST_F(ExtensionsOnTheUiTest, SaysWhenTheApplicationHasNoUserInterfaceForItsExtensions)
+  {
+    _host.SetUi(nullptr);
+
+    Press("take_down");
+
+    ExpectErrorOf("sign", "ui_remove was called, and this application has no user interface for its extensions");
+  }
+
+  TEST_F(ExtensionsInTheWorldTest, SaysWhyNothingIsMadeWhileNoFileOfTheUserInterfaceIsShown)
+  {
+    // the user interface of this test takes every call and shows nothing
+    ExpectErrorOf("sign", "ui_create: no file of the user interface is shown, so there is nothing to put an element "
+      "into");
   }
 
   /// Recipes in memory, and a loader that opens nothing.

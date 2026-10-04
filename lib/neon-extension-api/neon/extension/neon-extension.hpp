@@ -54,7 +54,9 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <initializer_list>
+#include <map>
 #include <memory>
 #include <string>
 #include <type_traits>
@@ -74,9 +76,15 @@ namespace neon::extension
   using Color = NeonColor;
   using Quaternion = NeonQuaternion;
   using Vertex = NeonVertex;
+  using UiElement = NeonUiElement;
+  using UiListener = NeonUiListener;
+  using UiEvent = NeonUiEvent;
+
+  /// What is told of an event of the user interface, see World::ListenToUi.
+  using UiListening = std::function<void(const UiEvent &event)>;
 
   /// The version of the C file this header needs of the application.
-  inline constexpr std::uint32_t needed_abi_version = 11;
+  inline constexpr std::uint32_t needed_abi_version = 12;
 
   /// The kind of a field from its type, and its value as the numbers a
   /// description carries. A type of the extension's own that lies in memory
@@ -338,6 +346,10 @@ namespace neon::extension
   {
     const NeonExtensionHost *_host;
 
+    // what listens to the user interface, each where it stays while the
+    // application calls it
+    std::map<UiListener, std::unique_ptr<UiListening>> _ui_listeners;
+
   public:
     explicit World(const NeonExtensionHost *host) { _host = host; }
 
@@ -535,6 +547,94 @@ namespace neon::extension
     void SetUiText(const std::string &name, const std::string &text) const
     {
       _host->set_ui_text(_host->context, name.c_str(), text.c_str());
+    }
+
+    /// Shows the user interface of a file at a virtual path, on top of what
+    /// is shown already. Returns false when the file cannot be used.
+    bool ShowUi(const std::string &path) const { return _host->ui_show(_host->context, path.c_str()) != 0; }
+
+    /// Stops showing a file that ShowUi showed. Its elements are gone.
+    bool CloseUi(const std::string &path) const { return _host->ui_close(_host->context, path.c_str()) != 0; }
+
+    /// The first element of a name in the files that are shown, or 0.
+    [[nodiscard]] UiElement FindUi(const std::string &name) const
+    {
+      return _host->ui_find(_host->context, name.c_str());
+    }
+
+    /// Makes an element from text in the format of the files and puts it at
+    /// the end of what `parent` holds, or of the element at the top of the
+    /// topmost file. Returns 0 when it could not be, which the log says why.
+    [[nodiscard]] UiElement CreateUi(const std::string &yaml, const UiElement parent = 0) const
+    {
+      return _host->ui_create(_host->context, yaml.c_str(), parent);
+    }
+
+    /// Removes an element with everything inside it.
+    bool RemoveUi(const UiElement element) const { return _host->ui_remove(_host->context, element) != 0; }
+
+    /// Sets a field of an element, such as `text`, `src`, `value`, or
+    /// `checked`, from text as a file writes it: `Hello`, `0.5`, `true`.
+    bool SetUiField(const UiElement element, const std::string &field, const std::string &text) const
+    {
+      return _host->ui_set_field(_host->context, element, field.c_str(), text.c_str()) != 0;
+    }
+
+    /// Sets a property of the style of an element as CSS writes both, such
+    /// as `left` and `12px`. An empty value takes back what was set.
+    bool SetUiStyle(const UiElement element, const std::string &property, const std::string &text) const
+    {
+      return _host->ui_set_style(_host->context, element, property.c_str(), text.c_str()) != 0;
+    }
+
+    /// Hides an element and shows it again.
+    bool SetUiVisible(const UiElement element, const bool visible) const
+    {
+      return _host->ui_set_visible(_host->context, element, visible ? 1 : 0) != 0;
+    }
+
+    /// Calls `listener` whenever something of that name, such as `click`,
+    /// happens to the element or, for an event that goes up, to one inside
+    /// of it. Returns what UnlistenToUi takes it away with, or 0. The
+    /// listener is kept until then, or until the extension is cleaned up.
+    UiListener ListenToUi(const UiElement element, const std::string &event, UiListening listener)
+    {
+      auto kept = std::make_unique<UiListening>(std::move(listener));
+      const UiListener listening = _host->ui_listen(
+        _host->context,
+        element,
+        event.c_str(),
+        [](void *user, const NeonUiEvent *happened)
+        {
+          // a copy, so that a listener that takes itself away is there
+          // until it returns
+          const UiListening told = *static_cast<const UiListening *>(user);
+          told(*happened);
+        },
+        kept.get());
+
+      if (listening != 0) { _ui_listeners[listening] = std::move(kept); }
+      return listening;
+    }
+
+    /// Takes away what ListenToUi returned.
+    void UnlistenToUi(const UiListener listener)
+    {
+      _host->ui_unlisten(_host->context, listener);
+      _ui_listeners.erase(listener);
+    }
+
+    /// The size in pixels of what the camera of the window draws to.
+    /// Returns false, and leaves both alone, when there is no renderer.
+    bool GetViewSize(int &width, int &height) const
+    {
+      std::int32_t wide = 0;
+      std::int32_t high = 0;
+      if (_host->get_view_size(_host->context, &wide, &high) == 0) { return false; }
+
+      width = wide;
+      height = high;
+      return true;
     }
 
     /// Places a prefab at a position, turned by pitch, yaw, and roll in

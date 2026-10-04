@@ -32,7 +32,7 @@ extern "C" {
 #endif
 
 /* The version of this file. It goes up by one whenever a table grows. */
-#define NEON_EXTENSION_ABI_VERSION 11
+#define NEON_EXTENSION_ABI_VERSION 12
 
 /* Marks the function an extension exports. Everything else of an extension
  * stays hidden, which neon_add_extension sees to. */
@@ -66,6 +66,16 @@ typedef uint64_t NeonQuery;
 /* Names a field of a kind of component, as returned when it was found.
  * 0 stands for none. */
 typedef uint64_t NeonField;
+
+/* Names an element of the user interface, as returned when it was found or
+ * created. 0 stands for none. A number is given once and never again, so the
+ * name of an element that is gone, removed or closed with its file, names
+ * nothing from then on: a call that is handed it does nothing and returns 0. */
+typedef uint64_t NeonUiElement;
+
+/* Names what listens to an element, as returned when it began to. 0 stands
+ * for none. */
+typedef uint64_t NeonUiListener;
 
 /* What the fields of a component hold, as they lie in memory. A component
  * of an extension is a struct of these and nothing else, in the order its
@@ -275,6 +285,21 @@ typedef struct NeonRayHit
   /* From the origin of the ray to the point. */
   float distance;
 } NeonRayHit;
+
+/* Something that happened to an element of the user interface. */
+typedef struct NeonUiEvent
+{
+  /* The element it happened to, which is the one that is listened to or
+   * one inside of it. */
+  NeonUiElement target;
+
+  /* What happened, such as `click`. Valid during the call only. */
+  const char *name;
+
+  /* Where the pointer is, in units of the file of the element. */
+  float x;
+  float y;
+} NeonUiEvent;
 
 /* What the application offers an extension. It stays valid until the
  * extension was cleaned up, so the extension may keep the pointer.
@@ -583,6 +608,90 @@ typedef struct NeonExtensionHost
    * seconds the world has run as `scene.time.x`. Returns 1, or 0 after
    * saying why. */
   int (*set_shader_numbers)(void *context, int32_t place, float x, float y, float z, float w);
+
+  /* Since version 12: the elements of the user interface, and the size of
+   * the view. The values a file shows as `{name}` are set with
+   * set_ui_number and set_ui_text; these are for what a file cannot write
+   * ahead: a picture at a place that changes with the game, a row for
+   * every saved game, a menu that is shown and closed. Like the store,
+   * they are for `start` and what runs after it. See
+   * docs/user-interface.md for the files, the elements, and their fields. */
+
+  /* Shows the user interface of a file at a virtual path, such as
+   * `extensions://quake/assets/ui/hud.ui.yml`, on top of what is shown
+   * already. A file the extension shows already stays as it is. Returns 1,
+   * or 0 when the file cannot be used, and every problem of it is logged. */
+  int (*ui_show)(void *context, const char *path);
+
+  /* Stops showing a file that ui_show showed. Its elements are gone, and
+   * their names name nothing. Returns 1, or 0 after saying that the
+   * extension shows no such file. */
+  int (*ui_close)(void *context, const char *path);
+
+  /* The first element of a name, which is its `id` in a selector, in every
+   * file that is shown, the topmost first. Returns 0 when there is none,
+   * which is not an error. */
+  NeonUiElement (*ui_find)(void *context, const char *name);
+
+  /* Makes an element from text in the format of the files, such as
+   *
+   *     type: image
+   *     name: face
+   *     src: image://quake/face
+   *
+   * and puts it at the end of what `parent` holds. A parent of 0 is the
+   * element at the top of the topmost file. Returns 0 after saying why:
+   * the text is empty or wrong, no file is shown, or the parent is gone or
+   * takes nothing inside. */
+  NeonUiElement (*ui_create)(void *context, const char *yaml, NeonUiElement parent);
+
+  /* Removes an element with everything inside it. Returns 1, or 0 for an
+   * element that is gone, and for the element at the top of a file, which
+   * ui_close removes. */
+  int (*ui_remove)(void *context, NeonUiElement element);
+
+  /* Sets a field of an element, such as `text` of a label, `src` of an
+   * image, `value` of a bar, and `checked` of a checkbox. The value is
+   * written as a file writes it, whatever the field holds: `Hello`, `0.5`,
+   * `true`. Returns 1, or 0 after saying why: the element is gone, has no
+   * such field, or the field cannot hold the text. */
+  int (*ui_set_field)(void *context, NeonUiElement element, const char *field, const char *text);
+
+  /* Sets a property of the style of an element, as CSS writes both:
+   * `left` and `12px`, `background-color` and `#334`. It counts as written
+   * for the element itself, on top of what its file and its style sheets
+   * write. An empty value takes back what was set. Returns 1, or 0 after
+   * saying why. */
+  int (*ui_set_style)(void *context, NeonUiElement element, const char *property, const char *text);
+
+  /* Hides an element and shows it again, as `hidden` of its file does.
+   * `visible` is 1 or 0. Returns 1, or 0 for an element that is gone. */
+  int (*ui_set_visible)(void *context, NeonUiElement element, int visible);
+
+  /* Asks to be told whenever something of that name happens to the
+   * element, or to an element inside of it for an event that goes up:
+   * `click`, `pointer_enter`, `changed`, and the others of
+   * docs/user-interface.md. `listen` is called where the user interface is
+   * updated in a frame, with `user` as it was given, and is free to change
+   * anything. Returns what ui_unlisten takes it away with, or 0 after
+   * saying why. What an extension listens to is taken away when the
+   * extension is cleaned up. */
+  NeonUiListener (*ui_listen)(
+    void *context,
+    NeonUiElement element,
+    const char *event,
+    void (*listen)(void *user, const NeonUiEvent *event),
+    void *user);
+
+  /* Takes away what ui_listen returned. `listen` is not called again. */
+  void (*ui_unlisten)(void *context, NeonUiListener listener);
+
+  /* The size in pixels of what the camera of the window draws to: the
+   * window, or the frame of a run without one. It is what the user
+   * interface on the window is laid out in, before its scale. Either
+   * pointer may be zero. Returns 1, or 0 when there is no renderer. Since
+   * version 12. */
+  int (*get_view_size)(void *context, int32_t *width, int32_t *height);
 } NeonExtensionHost;
 
 /* What an extension brings. The application hands it over with every field

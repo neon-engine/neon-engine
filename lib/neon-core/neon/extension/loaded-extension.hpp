@@ -1,6 +1,7 @@
 #ifndef LOADED_EXTENSION_HPP
 #define LOADED_EXTENSION_HPP
 
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -40,6 +41,15 @@ namespace neon
     /// What of the extension is told what began and ended to touch, in the
     /// order it asked to be.
     std::vector<ExtensionPhysicsListener> physics_listeners;
+
+    /// The files of the user interface the extension shows, by their
+    /// paths, as what the user interface knows each as.
+    std::map<std::string, int> ui_documents;
+
+    /// What of the extension listens to elements of the user interface, as
+    /// the user interface knows each. They are taken away before the
+    /// library is closed, so that nothing calls into it afterwards.
+    std::vector<int> ui_listeners;
 
     /// Whether `start` was reached, after which no system is added: the
     /// world runs.

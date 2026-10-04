@@ -150,6 +150,7 @@ something of its own and is told to clean up.
 | 9 | `set_sound` | |
 | 10 | `write_file`, `list_files`, `request_quit` | |
 | 11 | `set_shader_numbers` | |
+| 12 | `ui_show`, `ui_close`, `ui_find`, `ui_create`, `ui_remove`, `ui_set_field`, `ui_set_style`, `ui_set_visible`, `ui_listen`, `ui_unlisten`, `get_view_size` | |
 
 ## Components
 
@@ -222,7 +223,8 @@ What an extension reaches besides the store. Like the store, they are for
 | Input | `is_action_down`, `was_action_pressed`, `action_axis`, `action_axis2`, `action_axis3` | The actions of the input map, less what the user interface used, see [input.md](input.md) |
 | Files | `file_exists`, `read_file`, `write_file`, `list_files` | Virtual paths, under every rule of [file-systems.md](file-systems.md). An extension's own files are `extensions://<name>/…`. What it writes goes under `user://`, see [what an extension keeps](#what-an-extension-keeps) |
 | The world | `spawn`, `spawn_at`, `load_scene` | A prefab under a parent or at the top, see [prefabs.md](prefabs.md), with `spawn_at` at a position and a rotation written on top of its `Transform`; another scene when the frame is done |
-| The user interface | `set_ui_number`, `set_ui_text` | The values its files show as `{name}`, see [user-interface.md](user-interface.md) |
+| The user interface | `set_ui_number`, `set_ui_text`, and the `ui_…` functions | The values its files show as `{name}`, see [user-interface.md](user-interface.md); and its files and elements themselves, see [what an extension shows on the screen](#what-an-extension-shows-on-the-screen) |
+| The view | `get_view_size` | The size in pixels of what the camera of the window draws to |
 | Components of the engine | `add_component` | Gives an entity a component by its name, with what its fields start with, as `Renderable: Default` in a recipe. An extension has no struct for the engine's components, so this is how an entity it creates gets a `Transform` or a `Renderable`; the fields are then set with `set_field`, and a list of text, such as `textures`, with `set_field_texts` |
 | What is drawn | `set_image`, `set_mesh` | A picture and a mesh the extension made, see [what an extension draws](#what-an-extension-draws) |
 | Physics | `listen_to_physics`, `cast_ray` | What began and ended to touch in a frame, before `update`, as the hooks of a script are told; and the first thing a ray hits. A body itself is a component, `RigidBody`, `CharacterBody`, or `Trigger` with a `Collider`, and is moved through its fields, see [physics.md](physics.md) |
@@ -374,6 +376,58 @@ world.RequestQuit();   // the frame is finished, then everything is cleaned up
 | A folder that is not there lists as nothing, without an error | `user://saves` is not there before the first game was saved |
 | `request_quit` tells the window to close, as the button `quit` of the pause menu does | The application leaves its loop once the frame is done and cleans up as it always does. An extension that ends the process itself skips that: the log is cut short, and what the audio and the renderer hold is never let go of |
 
+## What an extension shows on the screen
+
+A file of the user interface says ahead what is shown, and an extension sets
+the values it shows as `{name}`. What a file cannot say ahead, a picture at a
+place that changes with the game, a row for every saved game, a menu that is
+shown and closed, an extension does with the elements themselves: the part
+of `UiContext` a game needs, see
+[from code and scripts](user-interface.md#from-code-and-scripts).
+
+```cpp
+world.ShowUi("extensions://quake/assets/ui/hud.ui.yml");
+
+const UiElement face = world.CreateUi(
+  "type: label\n"
+  "name: face\n"
+  "text: 100\n",
+  world.FindUi("status-bar"));               // or under the top of the topmost file
+
+world.SetUiField(face, "text", "75");        // a field, from text as a file writes it
+world.SetUiStyle(face, "left", "112px");     // a property, as CSS writes both
+world.SetUiVisible(face, false);
+
+const UiListener listening = world.ListenToUi(world.FindUi("new-game"), "click", [&world](const UiEvent &event)
+{
+  world.CloseUi("extensions://quake/assets/ui/menu.ui.yml");
+});
+
+int width = 0;
+int height = 0;
+world.GetViewSize(width, height);            // pixels of what the window's camera draws to
+
+world.RemoveUi(face);                        // `face` names nothing from here on
+```
+
+In C the same are `ui_show`, `ui_close`, `ui_find`, `ui_create`, `ui_remove`,
+`ui_set_field`, `ui_set_style`, `ui_set_visible`, `ui_listen`, `ui_unlisten`,
+and `get_view_size` of the table, see
+[sign.cpp](../tests/extensions/sign/sign.cpp) for all of them at work.
+
+| Decision | Reason |
+|---|---|
+| An element is named by a number of 64 bits, `NeonUiElement`, 0 for none | It is the handle of the engine, `UiHandle`, as it is: a number that is given once and never again. The name of an element that was removed, or whose file was closed, names nothing, and a call that is handed it does nothing, returns 0, and says so in the log. Nothing dangles |
+| A file is shown and closed by its path | `ui_show` is `UiContext::Load`, which the runtime shows `--ui PATH` and its pause menu with, and `ui_close` is `Unload`. The host keeps which file of the extension is which, so no number of a file crosses, and an extension closes only what it showed itself. A file that is shown already stays as it is |
+| `ui_create` takes YAML, as the files are written | It is `UiContext::Create`: one format for an element, in a file and from code, with the same checks and the same messages. A parent of 0 is the element at the top of the topmost file, so a game that shows one file needs to find nothing first |
+| A field is set from text, whatever it holds | `SetField` of the engine takes a text, a number, or a flag, by the kind of the field. The host asks the description of the element, `DescribeElement`, what the field holds and reads the text as that, as an inspector does: `75` for `value` of a bar, `true` for `checked`. One function crosses in place of one for every kind, and a text that is no such value is refused with the reason |
+| The style is set as CSS writes it, by `ui_set_style` | It is `UiContext::Set`: the property counts as written on the element itself, on top of its file and its sheets, and an empty value takes it back. It is how an element is placed: `left`, `top`, `width` |
+| A listener is a function and a pointer of the extension, and gets the target, the name of the event, and where the pointer is | It is `UiContext::On`, so an event that goes up reaches what listens above its target. The name is valid during the call. More of an event, the key, the wheel, can be appended to `NeonUiEvent` when something needs it |
+| What an extension listens with is taken away before its library is closed | The user interface outlives the extensions, and would call into a library that is gone. The host keeps what each extension listens with, as it keeps what is told of the physics, and `ui_unlisten` takes away only what is the extension's own |
+| The elements are reached from `start` on, like the store | Before that the world is not up, and a call says so in the log |
+| `get_view_size` gives what the renderer draws to, in pixels | It is `RenderContext::GetRenderResolution`, which follows the window when it is resized and is the frame of a run without a window. The user interface on the window is laid out in it, divided by its scale, see [points, pixels, and density](user-interface.md#points-pixels-and-density) |
+| An `image` of the user interface shows a picture of `set_image`, as `src: image://<extension>/<name>` | The status bar of a game is pictures out of its own archives. The user interface asks the renderer for the pixels of the name the first time the image is drawn, makes a texture of them, and keeps it; a picture that is handed over later is looked for again until it is there, as a surface is. A picture that is set again is not drawn anew by the user interface: the element is given another name |
+
 ## Systems
 
 A system is a name and up to three functions: `update` once per frame,
@@ -444,7 +498,7 @@ NEON_EXTENSION(Game)
 |---|---|
 | `Extension` | The class of the extension: `Initialize`, `RegisterComponents`, `Start`, `CleanUp`, and `AddSystem<S>(name, arguments…)` |
 | `System` | `Start`, `OnPhysicsEvent`, `Update`, `FixedUpdate`, `Interpolate` |
-| `World` | What the application offers: the log, `RegisterComponent<T>`, entities, `Set<T>`, `Get<T>`, `Has<T>`, `Remove<T>`, `CreateQuery<Ts…>`, `FindField` with `GetNumber`, `GetVector3`, `GetText` and their `Set…`, `IsActionDown`, `WasActionPressed`, `ActionAxis2`, `ReadFile`, `Spawn`, `SpawnAt`, `LoadScene`, `CastRay`, `SetUiNumber`, `SetUiText`, `AddComponent`, `SetTexts`, `SetImage`, `SetMesh`, `SetMeshLightmap`, and `CreateBlockQuery` with `PlaceField<T>` for a field of the engine in place |
+| `World` | What the application offers: the log, `RegisterComponent<T>`, entities, `Set<T>`, `Get<T>`, `Has<T>`, `Remove<T>`, `CreateQuery<Ts…>`, `FindField` with `GetNumber`, `GetVector3`, `GetText` and their `Set…`, `IsActionDown`, `WasActionPressed`, `ActionAxis2`, `ReadFile`, `Spawn`, `SpawnAt`, `LoadScene`, `CastRay`, `SetUiNumber`, `SetUiText`, `ShowUi`, `CloseUi`, `FindUi`, `CreateUi`, `RemoveUi`, `SetUiField`, `SetUiStyle`, `SetUiVisible`, `ListenToUi`, `UnlistenToUi`, `GetViewSize`, `AddComponent`, `SetTexts`, `SetImage`, `SetMesh`, `SetMeshLightmap`, and `CreateBlockQuery` with `PlaceField<T>` for a field of the engine in place |
 | `Query<Ts…>` | `Each([](Entity, Ts &…) { … })` |
 | `Field(name, &T::member, description)` | A field from the member itself: its kind from its type, its offset from where it lies, and its default from what `T{}` holds, so a default is written once, in the struct |
 | `NEON_EXTENSION(Class)` | The function the application starts the extension by |

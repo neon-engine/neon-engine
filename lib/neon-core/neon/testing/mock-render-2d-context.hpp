@@ -405,6 +405,16 @@ namespace neon::testing
       }
       return No_Render_Target;
     }
+
+    /// The images a test made known under their names, as something with
+    /// SetImage would.
+    std::map<std::string, std::shared_ptr<const ImagePixels>> images;
+
+    std::shared_ptr<const ImagePixels> FindImage(const std::string &name) override
+    {
+      const auto found = images.find(name);
+      return found != images.end() ? found->second : nullptr;
+    }
   };
 } // neon::testing
 

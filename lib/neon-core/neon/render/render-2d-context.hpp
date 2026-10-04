@@ -2,10 +2,12 @@
 #define RENDER_2D_CONTEXT_HPP
 
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <vector>
 
 #include <neon/common/color.hpp>
+#include <neon/image/image-pixels.hpp>
 
 #include "render-context.hpp"
 
@@ -356,6 +358,15 @@ namespace neon
     virtual int FindRenderTarget(const std::string &name)
     {
       return No_Render_Target;
+    }
+
+    /// The pixels that were made known under a name with
+    /// RenderContext::SetImage(), which a user interface shows as the image
+    /// `image://<name>`, see TextureSource. Nothing for a name that was not
+    /// set, and for a renderer that keeps no images.
+    virtual std::shared_ptr<const ImagePixels> FindImage(const std::string &name)
+    {
+      return nullptr;
     }
   };
 } // neon

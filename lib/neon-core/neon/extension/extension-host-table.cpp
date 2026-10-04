@@ -9,6 +9,7 @@
 
 #include <neon/filesystem/file-system.hpp>
 #include <neon/reflection/field-numbers.hpp>
+#include <neon/reflection/field-text.hpp>
 #include <neon/scripting/script-component-layout.hpp>
 #include <neon/world-system/ecs/components/renderable.hpp>
 
@@ -861,6 +862,268 @@ namespace neon
       if (auto *ui = ui_for(of(context), "set_ui_text", name)) { ui->SetText(name, text == nullptr ? "" : text); }
     }
 
+    // The elements of the user interface are named by the numbers of the
+    // handles of the engine, which are given once and never again.
+    static_assert(sizeof(NeonUiElement) == sizeof(UiHandle::id));
+
+    int ui_show(void *context, const char *path)
+    {
+      auto &extension = of(context);
+      auto *ui = ui_for(extension, "ui_show", path);
+      if (ui == nullptr) { return 0; }
+
+      if (path[0] == '\0')
+      {
+        extension.logger->Error("ui_show was called without a path");
+        return 0;
+      }
+
+      // what is shown already stays; what cancel closed meanwhile is shown
+      // again
+      const auto shown = extension.ui_documents.find(path);
+      if (shown != extension.ui_documents.end() && ui->IsShown(shown->second)) { return 1; }
+
+      const int document = ui->Load(path);
+      if (document < 0)
+      {
+        extension.ui_documents.erase(path);
+        extension.logger->Error("ui_show: the user interface did not take '{}', and said why", path);
+        return 0;
+      }
+
+      extension.ui_documents[path] = document;
+      return 1;
+    }
+
+    int ui_close(void *context, const char *path)
+    {
+      auto &extension = of(context);
+      auto *ui = ui_for(extension, "ui_close", path);
+      if (ui == nullptr) { return 0; }
+
+      const auto shown = extension.ui_documents.find(path);
+      if (shown == extension.ui_documents.end())
+      {
+        extension.logger->Error("ui_close: the extension shows no file '{}'. A file is shown with ui_show first", path);
+        return 0;
+      }
+
+      ui->Unload(shown->second);
+      extension.ui_documents.erase(shown);
+      return 1;
+    }
+
+    NeonUiElement ui_find(void *context, const char *name)
+    {
+      auto *ui = ui_for(of(context), "ui_find", name);
+      return ui == nullptr ? 0 : ui->FindByName(name).id;
+    }
+
+    /// The user interface when the element is still there, or nullptr after
+    /// saying that it is gone.
+    UiContext *ui_with(LoadedExtension &extension, const std::string &function, const NeonUiElement element)
+    {
+      auto *ui = ui_for(extension, function, "");
+      if (ui == nullptr) { return nullptr; }
+
+      if (!ui->IsAlive(UiHandle{element}))
+      {
+        extension.logger->Error(
+          "{} was called with an element that is not there: it was never found or created, or it is gone", function);
+        return nullptr;
+      }
+      return ui;
+    }
+
+    NeonUiElement ui_create(void *context, const char *yaml, const NeonUiElement parent)
+    {
+      auto &extension = of(context);
+      auto *ui = ui_for(extension, "ui_create", yaml);
+      if (ui == nullptr) { return 0; }
+
+      if (std::string_view(yaml).find_first_not_of(" \t\r\n") == std::string_view::npos)
+      {
+        extension.logger->Error("ui_create was called without text to make an element from");
+        return 0;
+      }
+
+      // no parent is the element at the top of the topmost file
+      UiHandle into{parent};
+      if (parent == 0)
+      {
+        into = ui->GetRoot();
+        if (!into.IsSet())
+        {
+          extension.logger->Error(
+            "ui_create: no file of the user interface is shown, so there is nothing to put an element into. One is "
+            "shown with ui_show first");
+          return 0;
+        }
+      } else if (!ui->IsAlive(into))
+      {
+        extension.logger->Error("ui_create was called with a parent that is not there");
+        return 0;
+      }
+
+      const UiHandle made = ui->Create(yaml, into);
+      if (!made.IsSet())
+      {
+        extension.logger->Error("ui_create: the user interface made no element from the text, and said why");
+      }
+      return made.id;
+    }
+
+    int ui_remove(void *context, const NeonUiElement element)
+    {
+      auto &extension = of(context);
+      auto *ui = ui_with(extension, "ui_remove", element);
+      if (ui == nullptr) { return 0; }
+
+      if (!ui->Remove(UiHandle{element}))
+      {
+        extension.logger->Error("ui_remove: the element was not removed. The one at the top of a file is closed with it");
+        return 0;
+      }
+      return 1;
+    }
+
+    // A field is set from text, whatever it holds, as a file writes it. What
+    // the kind of the element says the field holds is what the text is read
+    // as, so that one function does for texts, numbers, and flags.
+    int ui_set_field(void *context, const NeonUiElement element, const char *field, const char *text)
+    {
+      auto &extension = of(context);
+      if (field == nullptr || text == nullptr) { return 0; }
+
+      auto *ui = ui_with(extension, "ui_set_field", element);
+      if (ui == nullptr) { return 0; }
+
+      const UiHandle handle{element};
+      const std::string type = ui->GetElementType(handle);
+
+      TypeInfo described;
+      const FieldInfo *known = ui->DescribeElement(type, described) ? described.Find(field) : nullptr;
+      if (known == nullptr || known->kind == FieldKind::Group)
+      {
+        extension.logger->Error("ui_set_field: '{}' is not a field of a {}", field, type);
+        return 0;
+      }
+
+      FieldValue value;
+      const std::string what = "'" + std::string(field) + "' of a " + type;
+      if (std::string error; !ParseField(text, *known, what, value, error))
+      {
+        extension.logger->Error("ui_set_field: {}", error);
+        return 0;
+      }
+
+      if (!ui->SetField(handle, field, value))
+      {
+        extension.logger->Error("ui_set_field: {} did not take '{}', and the user interface said why", what, text);
+        return 0;
+      }
+      return 1;
+    }
+
+    int ui_set_style(void *context, const NeonUiElement element, const char *property, const char *text)
+    {
+      auto &extension = of(context);
+      if (property == nullptr) { return 0; }
+
+      auto *ui = ui_with(extension, "ui_set_style", element);
+      if (ui == nullptr) { return 0; }
+
+      const std::string value = text == nullptr ? "" : text;
+      if (!ui->Set(UiHandle{element}, property, value))
+      {
+        extension.logger->Error(
+          "ui_set_style: '{}' was not set to '{}': it is no property that is known, or cannot hold the value",
+          property,
+          value);
+        return 0;
+      }
+      return 1;
+    }
+
+    int ui_set_visible(void *context, const NeonUiElement element, const int visible)
+    {
+      auto *ui = ui_with(of(context), "ui_set_visible", element);
+      return ui != nullptr && ui->SetVisible(UiHandle{element}, visible != 0) ? 1 : 0;
+    }
+
+    NeonUiListener ui_listen(
+      void *context,
+      const NeonUiElement element,
+      const char *event,
+      void (*listen)(void *user, const NeonUiEvent *event),
+      void *user)
+    {
+      auto &extension = of(context);
+
+      if (listen == nullptr || event == nullptr || event[0] == '\0')
+      {
+        extension.logger->Error("ui_listen was called without an event, or without a function to tell");
+        return 0;
+      }
+
+      auto *ui = ui_with(extension, "ui_listen", element);
+      if (ui == nullptr) { return 0; }
+
+      const int listening = ui->On(UiHandle{element}, event, [listen, user](const UiElementEvent &happened)
+      {
+        NeonUiEvent told{};
+        told.target = happened.target.id;
+        told.name = happened.name.c_str();
+        told.x = happened.x;
+        told.y = happened.y;
+        listen(user, &told);
+      });
+      if (listening <= 0)
+      {
+        extension.logger->Error("ui_listen: the user interface does not tell of '{}' on the element", event);
+        return 0;
+      }
+
+      extension.ui_listeners.push_back(listening);
+      return static_cast<NeonUiListener>(listening);
+    }
+
+    // Only what the extension itself listens with is taken away, so that
+    // a number that was made up cannot take away what the game, a script,
+    // or another extension listens with.
+    void ui_unlisten(void *context, const NeonUiListener listener)
+    {
+      auto &extension = of(context);
+      const auto kept = std::ranges::find_if(
+        extension.ui_listeners, [listener](const int each) { return static_cast<NeonUiListener>(each) == listener; });
+      if (kept == extension.ui_listeners.end())
+      {
+        extension.logger->Error("ui_unlisten was called with what the extension does not listen with");
+        return;
+      }
+
+      // the user interface may be gone at the end, and what listens with it
+      if (extension.services->ui != nullptr) { extension.services->ui->Off(*kept); }
+      extension.ui_listeners.erase(kept);
+    }
+
+    // What the camera of the window draws to is what the renderer draws to,
+    // which knows its size from the window and when it changes.
+    int get_view_size(void *context, std::int32_t *width, std::int32_t *height)
+    {
+      auto &extension = of(context);
+      if (extension.services->render == nullptr)
+      {
+        extension.logger->Error("get_view_size was called, and this application has no renderer for its extensions");
+        return 0;
+      }
+
+      const RenderResolution &resolution = extension.services->render->GetRenderResolution();
+      if (width != nullptr) { *width = resolution.width; }
+      if (height != nullptr) { *height = resolution.height; }
+      return 1;
+    }
+
     DataValue list_of(const NeonVector3 &vector)
     {
       auto list = DataValue::List();
@@ -1215,6 +1478,18 @@ namespace neon
     host.request_quit = &request_quit;
 
     host.set_shader_numbers = &set_shader_numbers;
+
+    host.ui_show = &ui_show;
+    host.ui_close = &ui_close;
+    host.ui_find = &ui_find;
+    host.ui_create = &ui_create;
+    host.ui_remove = &ui_remove;
+    host.ui_set_field = &ui_set_field;
+    host.ui_set_style = &ui_set_style;
+    host.ui_set_visible = &ui_set_visible;
+    host.ui_listen = &ui_listen;
+    host.ui_unlisten = &ui_unlisten;
+    host.get_view_size = &get_view_size;
 
     // the extension keeps its name for as long as it is loaded
     host.name = extension.name.c_str();

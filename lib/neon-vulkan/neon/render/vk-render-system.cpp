@@ -613,6 +613,12 @@ namespace neon
     return true;
   }
 
+  std::shared_ptr<const ImagePixels> VK_RenderSystem::FindImage(const std::string &name)
+  {
+    const auto image = _images.find(name);
+    return image != _images.end() ? image->second : nullptr;
+  }
+
   bool VK_RenderSystem::FindSurface(const std::string &name, VK_Texture &texture) const
   {
     for (int id = 0; id < _targets.Capacity(); id++)

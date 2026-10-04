@@ -570,6 +570,44 @@ namespace neon
       return image;
     }
 
+    // Pixels that were handed to the renderer under a name, by an extension
+    // or an importer. They may be handed over after what shows them, so one
+    // that is not there is looked for again, and missed once. A texture is
+    // made of them the first time and kept, as for an image of a file.
+    if (const TextureSource source = TextureSource::Of(path); source.kind == TextureSourceKind::Image)
+    {
+      if (const auto found = _images.find(path); found != _images.end()) { return found->second; }
+
+      const std::string asked = element.empty() ? "what asks for it" : element;
+      const std::shared_ptr<const ImagePixels> pixels = _renderer->FindImage(source.name);
+      if (pixels == nullptr)
+      {
+        WarnOnce(
+          "image " + source.name,
+          std::format("There is no image '{}', {} is drawn without it until there is", source.name, asked));
+        _waits_for_surface = true;
+        return {};
+      }
+
+      TextureOptions2D options;
+      options.has_smaller_copies = true;
+
+      UiImage image;
+      image.texture = _renderer->CreateTextureWith(pixels->width, pixels->height, pixels->pixels, options);
+      if (image.texture == No_Texture)
+      {
+        _logger->Error("The renderer took no texture for the image {}, {} is drawn without it", path, asked);
+      } else
+      {
+        image.width = pixels->width;
+        image.height = pixels->height;
+      }
+
+      // what failed is kept as well, so that it is not tried again
+      _images[path] = image;
+      return image;
+    }
+
     if (const std::size_t hash = path.find('#'); hash != std::string::npos)
     {
       return GetRegion(path.substr(0, hash), path.substr(hash + 1), element);

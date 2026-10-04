@@ -30,14 +30,16 @@ namespace neon
     /// For what touched what, and for rays.
     PhysicsContext *physics = nullptr;
 
-    /// For the pictures an extension makes, which materials read.
+    /// For the pictures an extension makes, which materials read, and for
+    /// the size of what is drawn to.
     RenderContext *render = nullptr;
 
     /// For the sounds an extension hands over in memory, which sound
     /// sources play.
     AudioContext *audio = nullptr;
 
-    /// For the values the files of the user interface show.
+    /// For the values the files of the user interface show, and for its
+    /// elements.
     UiContext *ui = nullptr;
 
     /// For asking the application to close, as its own pause menu does.

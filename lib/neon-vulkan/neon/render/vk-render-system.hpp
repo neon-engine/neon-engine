@@ -389,6 +389,8 @@ namespace neon
     bool GetRenderTargetSize(int target, int &width, int &height) override;
 
     int FindRenderTarget(const std::string &name) override;
+
+    std::shared_ptr<const ImagePixels> FindImage(const std::string &name) override;
   };
 } // neon
 

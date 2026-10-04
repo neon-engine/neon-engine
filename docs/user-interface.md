@@ -852,12 +852,13 @@ src: assets://ui/heart.png               # a file of pixels
 src: assets://ui/shield.svg              # an image of shapes
 src: assets://ui/icons.atlas.yml#coin    # a part of an atlas
 src: surface://minimap                   # what a camera sees, or a surface
+src: image://quake/face                  # pixels that were handed to the renderer under a name
 src:                                     # for screens of several densities
   - { src: assets://ui/gem-1x.png, scale: 1 }
   - { src: assets://ui/gem-2x.png, scale: 2 }
 ```
 
-The first four are read by `src`, `background_image`, and
+The first five are read by `src`, `background_image`, and
 `border_image_source` alike. The list is read by `src` of an `image`.
 
 | | |
@@ -1583,6 +1584,12 @@ ui.on_any("changed", function(event) sound.play("switch") end)
 Every field a script sets goes through `SetField` and is checked as the
 description says, so that a script that writes `sword.tex` or gives `rows`
 a text is told what is wrong.
+
+A native extension reaches the same `UiContext` through the interface of
+extensions, in C: it shows and closes files, finds, makes, and removes
+elements, sets their fields and their style from text, and listens to their
+events, see
+[what an extension shows on the screen](extensions.md#what-an-extension-shows-on-the-screen).
 
 ## How it is drawn
 

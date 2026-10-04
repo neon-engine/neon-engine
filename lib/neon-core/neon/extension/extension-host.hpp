@@ -85,7 +85,9 @@ namespace neon
     void SetAudio(AudioContext *audio);
 
     /// Gives the extensions the user interface, for the values its files
-    /// show.
+    /// show and for its elements. It has to outlive the extensions, or be
+    /// taken from them with nullptr before it goes: what they listen with
+    /// is taken away from it when they are cleaned up.
     void SetUi(UiContext *ui);
 
     /// Gives the extensions the window, which is what one that asks the
