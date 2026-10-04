@@ -106,13 +106,16 @@ namespace neon
     // strength multiplied in; w is 1 when an emissive texture is bound
     // and 0 when the colour alone glows
     glm::vec4 emissive{0.0f};
+    // x what the lightmap is multiplied by, y is 1 when a lightmap is bound
+    // and 0 when the material has none
+    glm::vec4 lightmap{1.0f, 0.0f, 0.0f, 0.0f};
   };
 
   static_assert(sizeof(VK_DirectionLight) == 352);
   static_assert(sizeof(VK_PointLight) == 80);
   static_assert(sizeof(VK_SpotLight) == 112);
   static_assert(sizeof(VK_SceneData) == 512 + kMax_Point_Lights * 80 + kMax_Spot_Lights * 112);
-  static_assert(sizeof(VK_ObjectData) == 208);
+  static_assert(sizeof(VK_ObjectData) == 224);
 } // neon
 
 #endif //VK_SHADER_DATA_HPP

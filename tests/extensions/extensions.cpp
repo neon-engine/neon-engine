@@ -599,8 +599,15 @@ namespace
     EXPECT_EQ(renderable->render_info.mesh->vertices[2].tex_coords, glm::vec2(1.0f, 0.0f));
     EXPECT_EQ(renderable->render_info.mesh->vertices[2].color, glm::vec4(1.0f));
 
-    // counted up, so that an entity that is drawn already is handed the mesh
-    EXPECT_EQ(renderable->render_info.mesh_version, 1u);
+    // the second set of coordinates, and the lightmap they are for
+    EXPECT_TRUE(LogOf("painter")->Contains(LogLevel::Info, "Lightmap: yes"));
+    EXPECT_EQ(renderable->render_info.mesh->vertices[0].lightmap_coords, glm::vec2(0.1f, 0.9f));
+    EXPECT_EQ(renderable->render_info.mesh->vertices[2].lightmap_coords, glm::vec2(0.9f, 0.1f));
+    EXPECT_EQ(renderable->render_info.material_info.lightmap, "image://painter/checker");
+
+    // counted up with each, so that an entity that is drawn already is
+    // handed the mesh
+    EXPECT_EQ(renderable->render_info.mesh_version, 2u);
   }
 
   TEST_F(ExtensionsInTheWorldTest, RefusesAMeshAPictureOrAComponentThatIsNone)
@@ -613,6 +620,8 @@ namespace
     ExpectErrorOf("painter", "set_mesh: index 2 names corner 4, and there are 4 corners");
     ExpectErrorOf("painter", "set_mesh takes corners, and three indices for every triangle; it was given 4 corners and 2");
     ExpectErrorOf("painter", "add_component: there is no component 'Nothing' that a recipe could write");
+    ExpectErrorOf("painter", "set_mesh_lightmap takes one pair of coordinates for every corner; the mesh has 4 corners and 1 were given");
+    ExpectErrorOf("painter", "set_mesh_lightmap: the entity has no mesh; one is set with set_mesh first");
     EXPECT_FALSE(_images.contains("painter/short"));
   }
 

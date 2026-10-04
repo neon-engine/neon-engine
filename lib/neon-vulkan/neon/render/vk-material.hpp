@@ -39,6 +39,11 @@ namespace neon
     std::string _emissive_surface;
     bool _has_emissive_texture = false;
 
+    // the lightmap, when the material names one
+    VK_Texture _lightmap_texture;
+    std::string _lightmap_key;
+    bool _has_lightmap = false;
+
     // Where the textures come from, which holds each once for every
     // material that reads it. Without one the material loads its own.
     VK_TextureCache *_texture_cache = nullptr;
@@ -67,6 +72,9 @@ namespace neon
     /// Loads what the surface gives off: the texture the scene names, a
     /// file or a render target, or else the model's when it has one.
     bool LoadEmissiveTexture();
+
+    /// Loads the lightmap the material names, if any.
+    bool LoadLightmap();
     MaterialInfo _material_info;
     bool _scale_textures = false;
     bool _initialized = false;
@@ -174,6 +182,15 @@ namespace neon
     /// one the emissive colour alone glows, and the shaders are told so.
     [[nodiscard]] bool HasEmissiveTexture() const { return _has_emissive_texture; }
     [[nodiscard]] const VK_Texture &EmissiveTexture() const { return _emissive_texture; }
+
+    /// How a lightmap is read: as colours, without smaller copies, which
+    /// would blend the light of one surface into that of its neighbour in
+    /// an atlas, and without repeating.
+    [[nodiscard]] static VK_TextureOptions LightmapOptions();
+
+    /// Whether the material has a lightmap, which the shaders are told.
+    [[nodiscard]] bool HasLightmap() const { return _has_lightmap; }
+    [[nodiscard]] const VK_Texture &Lightmap() const { return _lightmap_texture; }
 
     /// Whether both sides are drawn. The render system settles `Model`
     /// against the file before the material is made, so `Model` here is

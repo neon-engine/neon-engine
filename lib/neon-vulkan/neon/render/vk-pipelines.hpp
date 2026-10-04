@@ -81,7 +81,12 @@ namespace neon
     static constexpr uint32_t kShadow_Map_Binding = kFirst_Sampler_Binding + kTexture_Count;
     static constexpr uint32_t kShadow_Sampler_Binding = kShadow_Map_Binding + 1;
 
-    static constexpr std::array<VkDescriptorSetLayoutBinding, 10> kBindings{{
+    /// The lightmap of a material and its sampler, after everything that
+    /// was there before, so that no binding a shader names has moved.
+    static constexpr uint32_t kLightmap_Binding = kShadow_Sampler_Binding + 1;
+    static constexpr uint32_t kLightmap_Sampler_Binding = kLightmap_Binding + 1;
+
+    static constexpr std::array<VkDescriptorSetLayoutBinding, 12> kBindings{{
       {kScene_Binding, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1,
         VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
       {kObject_Binding, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1,
@@ -94,6 +99,8 @@ namespace neon
       {kFirst_Sampler_Binding + 2, VK_DESCRIPTOR_TYPE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
       {kShadow_Map_Binding, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
       {kShadow_Sampler_Binding, VK_DESCRIPTOR_TYPE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
+      {kLightmap_Binding, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
+      {kLightmap_Sampler_Binding, VK_DESCRIPTOR_TYPE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
     }};
 
     /// The shader of the pass that draws the shadow map.

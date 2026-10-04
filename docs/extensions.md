@@ -146,6 +146,7 @@ something of its own and is told to clean up.
 | 5 | `listen_to_physics`, `cast_ray` | |
 | 6 | `get_field_layout`, `set_ui_number`, `set_ui_text`, `spawn_at` | |
 | 7 | `add_component`, `set_field_texts`, `set_image`, `set_mesh`, and `name`, the name of the extension | |
+| 8 | `set_mesh_lightmap` | |
 
 ## Components
 
@@ -263,8 +264,16 @@ The test [tests/runtime-extensions](../tests/runtime-extensions) does this
 with a picture of four colours on a square, and reads the pixels of what the
 runtime drew.
 
-Not yet: a second set of coordinates for a lightmap, a mesh for the physics
-to collide with, and letting a picture go again.
+Light that was worked out ahead, as a level of another engine carries it, is
+a second set of coordinates and a picture: `SetMeshLightmap(entity, coordinates)`
+gives every corner of the mesh its place in the lightmap, and the field
+`material.lightmap` of the `Renderable` names the picture, see
+[vulkan-renderer.md](vulkan-renderer.md#lightmaps). The coordinates are
+handed over apart from the corners, so that a corner is what it was in
+version 7.
+
+Not yet: a mesh for the physics to collide with, and letting a picture go
+again.
 
 ## Systems
 
@@ -336,7 +345,7 @@ NEON_EXTENSION(Game)
 |---|---|
 | `Extension` | The class of the extension: `Initialize`, `RegisterComponents`, `Start`, `CleanUp`, and `AddSystem<S>(name, arguments…)` |
 | `System` | `Start`, `OnPhysicsEvent`, `Update`, `FixedUpdate`, `Interpolate` |
-| `World` | What the application offers: the log, `RegisterComponent<T>`, entities, `Set<T>`, `Get<T>`, `Has<T>`, `Remove<T>`, `CreateQuery<Ts…>`, `FindField` with `GetNumber`, `GetVector3`, `GetText` and their `Set…`, `IsActionDown`, `WasActionPressed`, `ActionAxis2`, `ReadFile`, `Spawn`, `SpawnAt`, `LoadScene`, `CastRay`, `SetUiNumber`, `SetUiText`, `AddComponent`, `SetTexts`, `SetImage`, `SetMesh`, and `CreateBlockQuery` with `PlaceField<T>` for a field of the engine in place |
+| `World` | What the application offers: the log, `RegisterComponent<T>`, entities, `Set<T>`, `Get<T>`, `Has<T>`, `Remove<T>`, `CreateQuery<Ts…>`, `FindField` with `GetNumber`, `GetVector3`, `GetText` and their `Set…`, `IsActionDown`, `WasActionPressed`, `ActionAxis2`, `ReadFile`, `Spawn`, `SpawnAt`, `LoadScene`, `CastRay`, `SetUiNumber`, `SetUiText`, `AddComponent`, `SetTexts`, `SetImage`, `SetMesh`, `SetMeshLightmap`, and `CreateBlockQuery` with `PlaceField<T>` for a field of the engine in place |
 | `Query<Ts…>` | `Each([](Entity, Ts &…) { … })` |
 | `Field(name, &T::member, description)` | A field from the member itself: its kind from its type, its offset from where it lies, and its default from what `T{}` holds, so a default is written once, in the struct |
 | `NEON_EXTENSION(Class)` | The function the application starts the extension by |

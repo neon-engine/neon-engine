@@ -39,6 +39,48 @@ namespace
 
   class Canvas final : public neon::extension::Extension
   {
+    /// A white square of a metre to the right of the canvas, lit by a
+    /// lightmap of its own: half the light on its left half, all of it on
+    /// its right.
+    static void ShowLit(World &world)
+    {
+      const std::string white = world.SetImage("white", 1, 1, {255, 255, 255, 255});
+
+      // Two pixels by two. 188 is how a screen writes half the light.
+      const std::string light = world.SetImage(
+        "light",
+        2,
+        2,
+        {
+          188, 188, 188, 255, 255, 255, 255, 255,
+          188, 188, 188, 255, 255, 255, 255, 255,
+        });
+
+      const Entity lit = world.CreateEntity("lit");
+      world.AddComponent(lit, "Transform");
+      world.AddComponent(lit, "Renderable");
+      world.SetVector3(lit, world.FindField("Transform", "position"), {1.65f, 0.0f, -3.0f});
+      world.SetText(lit, world.FindField("Renderable", "shader"), "assets://shaders/unlit");
+      world.SetTexts(lit, world.FindField("Renderable", "textures"), {white});
+      world.SetText(lit, world.FindField("Renderable", "material.lightmap"), light);
+
+      const NeonVector3 towards{0.0f, 0.0f, 1.0f};
+      const NeonColor plain{1.0f, 1.0f, 1.0f, 1.0f};
+      world.SetMesh(
+        lit,
+        {
+          {{-0.5f, -0.5f, 0.0f}, towards, {0.0f, 1.0f}, plain},
+          {{0.5f, -0.5f, 0.0f}, towards, {1.0f, 1.0f}, plain},
+          {{0.5f, 0.5f, 0.0f}, towards, {1.0f, 0.0f}, plain},
+          {{-0.5f, 0.5f, 0.0f}, towards, {0.0f, 0.0f}, plain},
+        },
+        {0, 1, 2, 0, 2, 3});
+
+      // the lightmap lies over the square once, whatever its texture does
+      const bool lightmapped = world.SetMeshLightmap(lit, {{0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f}, {0.0f, 0.0f}});
+      world.Info(lightmapped ? "The square is lit by " + light : "The square could not be lit");
+    }
+
   public:
     void Start(World &world) override
     {
@@ -65,6 +107,8 @@ namespace
         {0, 1, 2, 0, 2, 3});
 
       world.Info(shown ? "The canvas shows " + picture : "The canvas could not be shown");
+
+      ShowLit(world);
     }
   };
 }

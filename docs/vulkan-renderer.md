@@ -174,6 +174,8 @@ declare.
 | | 0 | 7 | Sampler | What the third texture is read through |
 | | 0 | 8 | Sampled image, an array | The shadow map of the direction light, a layer a cascade, `shadows.glsl` |
 | | 0 | 9 | Sampler | What the shadow map is compared through |
+| | 0 | 10 | Sampled image | The lightmap of the material, see [lightmaps](#lightmaps), `lightmap.glsl` |
+| | 0 | 11 | Sampler | What the lightmap is read through |
 | Shadow pass: `shadow` | 0 | 0, 1 | As above | The same set as the models; the vertex half reads the matrix of the cascade a push constant names from `SceneData` and the object from the `ObjectBuffer`, the fragment half does nothing |
 
 The scene is bound by an offset into its buffer, which the dynamic binding
@@ -252,6 +254,33 @@ Both lit shaders add what a surface gives off after the lighting, see
 
 What `pbr` does not do yet: normal maps, occlusion, image based lighting
 from an environment (#64). The ubershader of #106 adds them as variants.
+
+### Lightmaps
+
+Light that was worked out ahead of time and kept in a texture (#240). It is
+not a shadow map: a shadow map is drawn again in every frame from where the
+light is, and follows what moves; a lightmap is made once, for what stands
+still, and costs one read of a texture when it is drawn.
+
+| Piece | Is |
+|---|---|
+| `Vertex::lightmap_coords` | A second set of coordinates, from 0 to 1, apart from those of the textures: a lightmap lies over a surface once, where a texture repeats. Attribute 4 of every model |
+| `material.lightmap` | The texture, a path of the file system or `image://<name>`. Read as colours, in sRGB, without smaller copies, which would blend the light of one surface of an atlas into its neighbour's, and without repeating |
+| `material.lightmap_strength` | What it is multiplied by, in linear light, so that baked light can be brighter than eight bits hold |
+| `ObjectData::lightmap` | The strength, and whether a lightmap is bound; a material without one binds plain white and the shaders leave it out |
+| `lightmap.glsl` | `has_lightmap` and `baked_light`, included by the shaders that read it |
+
+| Shader | Does with it |
+|---|---|
+| `unlit` | Multiplies it into what it shows: baked light is the one light it knows. It is how a level whose light is all baked is drawn |
+| `basic-lit`, `pbr` | Add it to the light of the lights, on the diffuse colour, as ambient light is |
+| `color` | Nothing |
+
+The bindings come after those of the shadow map, so that none a shader named
+before has moved. Where the coordinates come from is whoever makes the mesh:
+an extension hands them over, see [extensions.md](extensions.md#what-an-extension-draws).
+A model file's second set of coordinates is not read yet, and nothing in the
+engine makes a lightmap; both belong to #240.
 
 ### Emissive surfaces
 

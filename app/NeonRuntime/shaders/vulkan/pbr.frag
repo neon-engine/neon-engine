@@ -20,6 +20,7 @@ layout (location = 2) in vec2 tex_coord;
 // model has none
 layout (location = 3) in vec4 vertex_color;
 layout (location = 4) flat in uint object_index;
+layout (location = 5) in vec2 lightmap_coord;
 
 layout (location = 0) out vec4 frag_color;
 
@@ -48,6 +49,8 @@ const vec3 DIELECTRIC_F0 = vec3(0.04);
 
 // the material's colour, the vertex colour, and the texture multiplied, as
 // glTF's base colour is made
+#include "lightmap.glsl"
+
 vec3 BaseColor()
 {
     vec3 texture_color = texture(sampler2D(base_color_texture, base_color_sampler), tex_coord).rgb;
@@ -194,6 +197,13 @@ void main()
             base_color,
             metallic,
             roughness);
+    }
+
+    // light that was worked out ahead reaches the diffuse colour, as the
+    // ambient light does
+    if (has_lightmap(object.lightmap))
+    {
+        result += base_color * (1.0 - metallic) * baked_light(object.lightmap, lightmap_coord);
     }
 
     result += Emissive();

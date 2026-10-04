@@ -884,8 +884,9 @@ namespace neon
       return 1;
     }
 
-    // a corner crosses as it lies, without a copy of each number
-    static_assert(sizeof(NeonVertex) == sizeof(Vertex));
+    // A corner of the extension is the start of a corner of the engine,
+    // which has grown since: what follows keeps what it starts with.
+    static_assert(sizeof(NeonVertex) <= sizeof(Vertex));
     static_assert(offsetof(NeonVertex, normal) == offsetof(Vertex, normal));
     static_assert(offsetof(NeonVertex, texture) == offsetof(Vertex, tex_coords));
     static_assert(offsetof(NeonVertex, color) == offsetof(Vertex, color));
@@ -940,11 +941,60 @@ namespace neon
 
       auto mesh = std::make_shared<MeshData>();
       mesh->vertices.resize(vertex_count);
-      std::memcpy(mesh->vertices.data(), vertices, vertex_count * sizeof(Vertex));
+      for (std::uint64_t i = 0; i < vertex_count; i++)
+      {
+        std::memcpy(&mesh->vertices[i], &vertices[i], sizeof(NeonVertex));
+      }
       mesh->indices.assign(indices, indices + index_count);
 
       // counted up, so that an entity that is drawn already is handed the
       // new mesh, as a rope that moves is
+      renderable->render_info.mesh = std::move(mesh);
+      renderable->render_info.mesh_version++;
+      return 1;
+    }
+
+    int set_mesh_lightmap(
+      void *context,
+      const NeonEntity entity,
+      const NeonVector2 *coordinates,
+      const std::uint64_t count)
+    {
+      auto &extension = of(context);
+      auto *store = store_for(extension, "set_mesh_lightmap");
+      if (store == nullptr) { return 0; }
+
+      if (!store->IsAlive(entity))
+      {
+        extension.logger->Error("set_mesh_lightmap was called with an entity that is not alive");
+        return 0;
+      }
+
+      const ComponentId id = store->FindComponent("Renderable");
+      auto *renderable = id == No_Component ? nullptr : static_cast<Renderable *>(store->GetComponent(entity, id));
+      if (renderable == nullptr || renderable->render_info.mesh == nullptr)
+      {
+        extension.logger->Error("set_mesh_lightmap: the entity has no mesh; one is set with set_mesh first");
+        return 0;
+      }
+
+      const std::size_t corners = renderable->render_info.mesh->vertices.size();
+      if (coordinates == nullptr || count != corners)
+      {
+        extension.logger->Error(
+          "set_mesh_lightmap takes one pair of coordinates for every corner; the mesh has {} corners and {} were given",
+          corners,
+          count);
+        return 0;
+      }
+
+      // the mesh may be held by others, so it is another mesh from here on
+      auto mesh = std::make_shared<MeshData>(*renderable->render_info.mesh);
+      for (std::size_t i = 0; i < corners; i++)
+      {
+        mesh->vertices[i].lightmap_coords = {coordinates[i].x, coordinates[i].y};
+      }
+
       renderable->render_info.mesh = std::move(mesh);
       renderable->render_info.mesh_version++;
       return 1;
@@ -1009,6 +1059,8 @@ namespace neon
     host.set_field_texts = &set_field_texts;
     host.set_image = &set_image;
     host.set_mesh = &set_mesh;
+
+    host.set_mesh_lightmap = &set_mesh_lightmap;
 
     // the extension keeps its name for as long as it is loaded
     host.name = extension.name.c_str();

@@ -467,6 +467,14 @@ namespace neon
       {_samplers.Of(specular.Sampling()), VK_NULL_HANDLE, VK_IMAGE_LAYOUT_UNDEFINED},
       {_samplers.Of(emissive.Sampling()), VK_NULL_HANDLE, VK_IMAGE_LAYOUT_UNDEFINED},
     }};
+    // the lightmap, plain white for a material that has none, which the
+    // shaders then leave out
+    const VK_Texture &lightmap = material.HasLightmap() ? usable(material.Lightmap()) : _white_texture;
+    const VkDescriptorImageInfo lightmap_image{
+      VK_NULL_HANDLE, lightmap.View(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
+    const VkDescriptorImageInfo lightmap_sampler{
+      _samplers.Of(lightmap.Sampling()), VK_NULL_HANDLE, VK_IMAGE_LAYOUT_UNDEFINED};
+
     const VkDescriptorImageInfo shadow_map{VK_NULL_HANDLE, _shadow_map.View(), VK_ShadowMap::kRead_Layout};
     const VkDescriptorImageInfo shadow_sampler{
       _samplers.Of(VK_Sampling::ShadowCompare), VK_NULL_HANDLE, VK_IMAGE_LAYOUT_UNDEFINED};
@@ -489,6 +497,8 @@ namespace neon
     }
     writes[VK_Pipelines::kShadow_Map_Binding].pImageInfo = &shadow_map;
     writes[VK_Pipelines::kShadow_Sampler_Binding].pImageInfo = &shadow_sampler;
+    writes[VK_Pipelines::kLightmap_Binding].pImageInfo = &lightmap_image;
+    writes[VK_Pipelines::kLightmap_Sampler_Binding].pImageInfo = &lightmap_sampler;
 
     vkUpdateDescriptorSets(_device.Device(), static_cast<uint32_t>(writes.size()), writes.data(), 0, nullptr);
     return true;

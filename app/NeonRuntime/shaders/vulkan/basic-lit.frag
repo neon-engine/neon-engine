@@ -12,6 +12,7 @@ layout (location = 2) in vec2 tex_coord;
 // model has none
 layout (location = 3) in vec4 vertex_color;
 layout (location = 4) flat in uint object_index;
+layout (location = 5) in vec2 lightmap_coord;
 
 layout (location = 0) out vec4 frag_color;
 
@@ -25,6 +26,8 @@ layout (set = 0, binding = 4) uniform texture2D emissive_texture;
 layout (set = 0, binding = 5) uniform sampler diffuse_sampler;
 layout (set = 0, binding = 6) uniform sampler specular_sampler;
 layout (set = 0, binding = 7) uniform sampler emissive_sampler;
+
+#include "lightmap.glsl"
 
 vec3 GetDiffuseColor()
 {
@@ -125,6 +128,10 @@ void main()
             Attenuation(light.attenuation, light.position.xyz) * intensity,
             1.0);
     }
+
+    // light that was worked out ahead falls on the surface next to the light
+    // of the lights
+    if (has_lightmap(object.lightmap)) { result += GetDiffuseColor() * baked_light(object.lightmap, lightmap_coord); }
 
     frag_color = vec4(object.color.rgb * result + GetEmissive(), object_alpha(object.material, object.color.a));
 }

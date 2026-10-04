@@ -18,6 +18,12 @@ namespace neon
     /// default, leaves a model without vertex colours as it is. The alpha
     /// is 1 for every vertex of a model file, see docs/models.md.
     glm::vec4 color{1.0f};
+
+    /// Where in the lightmap of its material the vertex is, from 0 to 1: a
+    /// second set of coordinates, apart from those of the textures, since
+    /// light that was worked out ahead lies over a surface once, where a
+    /// texture repeats. Not read by a material without a lightmap.
+    glm::vec2 lightmap_coords{0.0f};
   };
 } // neon
 

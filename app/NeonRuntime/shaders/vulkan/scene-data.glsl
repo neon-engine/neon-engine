@@ -71,6 +71,9 @@ struct ObjectData {
     // strength multiplied in; w is 1 when an emissive texture is bound
     // and 0 when the colour alone glows
     vec4 emissive;
+    // x what the lightmap is multiplied by, y is 1 when a lightmap is bound
+    // and 0 when the material has none
+    vec4 lightmap;
 };
 
 // Every object of the frame, side by side. A draw names its first with

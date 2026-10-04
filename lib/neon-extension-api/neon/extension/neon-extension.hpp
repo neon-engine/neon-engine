@@ -76,7 +76,7 @@ namespace neon::extension
   using Vertex = NeonVertex;
 
   /// The version of the C file this header needs of the application.
-  inline constexpr std::uint32_t needed_abi_version = 7;
+  inline constexpr std::uint32_t needed_abi_version = 8;
 
   /// The kind of a field from its type, and its value as the numbers a
   /// description carries. A type of the extension's own that lies in memory
@@ -497,6 +497,13 @@ namespace neon::extension
     {
       return _host->set_mesh(
                _host->context, entity, vertices.data(), vertices.size(), indices.data(), indices.size()) != 0;
+    }
+
+    /// Gives the mesh of an entity a second set of coordinates, one pair for
+    /// every corner: where in the lightmap of its material the corner is.
+    bool SetMeshLightmap(const Entity entity, const std::vector<Vector2> &coordinates) const
+    {
+      return _host->set_mesh_lightmap(_host->context, entity, coordinates.data(), coordinates.size()) != 0;
     }
 
     /// Sets a value that the files of the user interface show as `{name}`.

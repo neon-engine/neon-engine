@@ -14,7 +14,7 @@ add_dependencies(neon-tests canvas)
 # as neon_add_application_test, for an application that is put together and
 # is no target of its own
 if (NOT CMAKE_CROSSCOMPILING)
-  foreach (CASE IN ITEMS a-mesh-and-a-picture-of-an-extension-are-drawn)
+  foreach (CASE IN ITEMS a-mesh-a-picture-and-a-lightmap-of-an-extension-are-drawn)
     add_test(
             NAME "runtime-extensions.${CASE}"
             COMMAND "${CMAKE_COMMAND}"

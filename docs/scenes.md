@@ -112,7 +112,7 @@ keeps what the prefab says instead.
 | `shader` | Virtual path of the shader, without an extension | None. It has to be written |
 | `textures` | A list of virtual paths | None |
 | `scale_textures` | Whether textures repeat as the entity grows | `false` |
-| `material` | `color` as `[red, green, blue]` or with alpha as a fourth, `metallic` and `roughness` from 0 to 1 (the `pbr` shader), `shininess` (the `basic-lit` shader), `use_textures`, `alpha_mode`, `double_sided` as `model`, `always`, or `never`, and what the surface gives off: `emissive` as a colour, `emissive_strength` from 0 up, and `emissive_texture` as a virtual path, see below | white, `0`, `0.5`, `0`, `true`, `opaque`, `model`, black, `1`, none |
+| `material` | `color` as `[red, green, blue]` or with alpha as a fourth, `metallic` and `roughness` from 0 to 1 (the `pbr` shader), `shininess` (the `basic-lit` shader), `use_textures`, `alpha_mode`, `double_sided` as `model`, `always`, or `never`, what the surface gives off: `emissive` as a colour, `emissive_strength` from 0 up, and `emissive_texture` as a virtual path, see below; and light that was worked out ahead: `lightmap` as a virtual path and `lightmap_strength` from 0 up, see [vulkan-renderer.md](vulkan-renderer.md#lightmaps) | white, `0`, `0.5`, `0`, `true`, `opaque`, `model`, black, `1`, none, none, `1` |
 
 `color` is written as a screen shows it, in sRGB, like the colours of an
 image. The first texture holds colours, the second how much each part of a

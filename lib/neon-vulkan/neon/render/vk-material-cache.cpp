@@ -35,6 +35,9 @@ namespace neon
       material_info.emissive.b,
       material_info.emissive_strength,
       material_info.emissive_texture);
+
+    // and the light that was worked out ahead for it
+    key += std::format("|{}|{}", material_info.lightmap, material_info.lightmap_strength);
     return key;
   }
 

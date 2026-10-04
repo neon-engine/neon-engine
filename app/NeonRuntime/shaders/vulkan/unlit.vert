@@ -10,16 +10,19 @@ layout (location = 0) in vec3 attr_pos_coords;
 layout (location = 1) in vec3 attr_normal_coords;
 layout (location = 2) in vec2 attr_tex_coords;
 layout (location = 3) in vec4 attr_color;
+layout (location = 4) in vec2 attr_lightmap_coords;
 
 layout (location = 0) out vec2 tex_coord;
 layout (location = 1) out vec4 vertex_color;
 layout (location = 2) flat out uint object_index;
+layout (location = 3) out vec2 lightmap_coord;
 
 void main()
 {
     object_index = gl_InstanceIndex;
     tex_coord = attr_tex_coords * object.texture_scale.xy;
     vertex_color = attr_color;
+    lightmap_coord = attr_lightmap_coords;
 
     gl_Position = scene.projection * scene.view * object.model * vec4(attr_pos_coords, 1.0);
 }

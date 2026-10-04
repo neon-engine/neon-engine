@@ -47,3 +47,9 @@ expect_pixel("the top left of the picture" 560 280 255 0 0)
 expect_pixel("the top right of the picture" 720 280 0 255 0)
 expect_pixel("the bottom left of the picture" 560 440 0 0 255)
 expect_pixel("the bottom right of the picture" 720 440 128 128 128)
+
+# the white square next to it, lit by its lightmap: half the light on the
+# left, which a screen writes as 188, and all of it on the right
+expect_output("The square is lit by image://canvas/light")
+expect_pixel("the half-lit left of the square" 1046 360 188 188 188)
+expect_pixel("the fully lit right of the square" 1191 360 255 255 255)

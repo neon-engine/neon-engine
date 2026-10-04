@@ -80,6 +80,12 @@ namespace neon
       return false;
     }
 
+    if (!LoadLightmap())
+    {
+      CleanUp();
+      return false;
+    }
+
     _initialized = true;
     return true;
   }
@@ -141,6 +147,30 @@ namespace neon
     _textures.push_back(texture);
     _surface_names.emplace_back();
     _texture_keys.push_back(key);
+    return true;
+  }
+
+  VK_TextureOptions VK_Material::LightmapOptions()
+  {
+    VK_TextureOptions options;
+    options.is_color = true;
+    options.mip_levels = false;
+    options.repeat = false;
+    return options;
+  }
+
+  bool VK_Material::LoadLightmap()
+  {
+    const std::string &path = _material_info.lightmap;
+    if (path.empty()) { return true; }
+
+    if (!LoadTexture(path, nullptr, LightmapOptions(), _lightmap_texture, _lightmap_key))
+    {
+      _logger->Error("Could not initialize the lightmap {}", path);
+      return false;
+    }
+
+    _has_lightmap = true;
     return true;
   }
 
@@ -232,6 +262,15 @@ namespace neon
     _emissive_key.clear();
     _emissive_surface.clear();
     _has_emissive_texture = false;
+
+    if (_has_lightmap)
+    {
+      if (!_lightmap_key.empty()) { _texture_cache->Release(_lightmap_key); }
+      else { _lightmap_texture.CleanUp(); }
+    }
+    _lightmap_texture = VK_Texture();
+    _lightmap_key.clear();
+    _has_lightmap = false;
     _initialized = false;
   }
 
@@ -325,6 +364,9 @@ namespace neon
       glow_green * strength,
       glow_blue * strength,
       _has_emissive_texture ? 1.0f : 0.0f};
+
+    // the lightmap multiplies in linear light as well
+    data.lightmap = {_material_info.lightmap_strength, _has_lightmap ? 1.0f : 0.0f, 0.0f, 0.0f};
     return data;
   }
 

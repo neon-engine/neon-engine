@@ -108,6 +108,19 @@ namespace neon
           .Describe(
             "Virtual path of a texture of what the surface gives off, or surface://<name> for a render target. "
             "Left out takes the model file's");
+
+      material.Field(
+            "lightmap",
+            [](Renderable &renderable) -> std::string & { return renderable.render_info.material_info.lightmap; })
+          .Describe(
+            "Virtual path of a lightmap, light worked out ahead of time, which lies over the mesh by the second "
+            "set of coordinates of its vertices");
+
+      material.Field(
+            "lightmap_strength",
+            [](Renderable &renderable) -> float & { return renderable.render_info.material_info.lightmap_strength; })
+          .AtLeast(0.0f)
+          .Describe("What the lightmap is multiplied by, in linear light");
     });
   }
 } // neon

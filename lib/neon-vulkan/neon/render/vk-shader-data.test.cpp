@@ -83,7 +83,8 @@ namespace
     EXPECT_EQ(offsetof(VK_ObjectData, material), 2 * mat4 + 2 * vec4);
     EXPECT_EQ(offsetof(VK_ObjectData, surface), 2 * mat4 + 3 * vec4);
     EXPECT_EQ(offsetof(VK_ObjectData, emissive), 2 * mat4 + 4 * vec4);
-    EXPECT_EQ(sizeof(VK_ObjectData), 2 * mat4 + 5 * vec4);
+    EXPECT_EQ(offsetof(VK_ObjectData, lightmap), 2 * mat4 + 5 * vec4);
+    EXPECT_EQ(sizeof(VK_ObjectData), 2 * mat4 + 6 * vec4);
   }
 
   TEST(VkShaderData, StartsASceneWithoutLights)

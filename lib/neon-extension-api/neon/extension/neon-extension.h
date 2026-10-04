@@ -32,7 +32,7 @@ extern "C" {
 #endif
 
 /* The version of this file. It goes up by one whenever a table grows. */
-#define NEON_EXTENSION_ABI_VERSION 7
+#define NEON_EXTENSION_ABI_VERSION 8
 
 /* Marks the function an extension exports. Everything else of an extension
  * stays hidden, which neon_add_extension sees to. */
@@ -520,6 +520,17 @@ typedef struct NeonExtensionHost
    * front of the names of its pictures, and of its files under
    * `extensions://`. Since version 7. */
   const char *name;
+
+  /* Since version 8: light that was worked out ahead. */
+
+  /* Gives the mesh of an entity, as set_mesh set it, a second set of
+   * coordinates: where in the lightmap each corner is, from 0 to 1, one
+   * for every corner of the mesh, in their order. The lightmap itself is
+   * a texture the material names, the field `material.lightmap` of
+   * `Renderable`, such as a picture of set_image. Returns 1, or 0 after
+   * saying why: the entity has no mesh, or `count` is not its number of
+   * corners. */
+  int (*set_mesh_lightmap)(void *context, NeonEntity entity, const NeonVector2 *coordinates, uint64_t count);
 } NeonExtensionHost;
 
 /* What an extension brings. The application hands it over with every field

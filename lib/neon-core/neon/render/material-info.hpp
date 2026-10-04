@@ -59,6 +59,20 @@ namespace neon
     /// target. Empty takes the model file's, when it has one.
     std::string emissive_texture;
 
+    /// Virtual path of a lightmap: light that was worked out ahead of time
+    /// and kept in a texture, which lies over the mesh by the second set of
+    /// coordinates of its vertices, `Vertex::lightmap_coords`. The `unlit`
+    /// shader multiplies it into what it shows, and the shaders that light
+    /// add it to the light of the lights. Written as colours, in sRGB, and
+    /// read without smaller copies and without repeating. A path of the file
+    /// system, or `image://<name>` for one that was made at run time. Empty
+    /// for none.
+    std::string lightmap;
+
+    /// What the lightmap is multiplied by, in linear light, so that baked
+    /// light can be brighter than what a texture of eight bits holds.
+    float lightmap_strength = 1.0f;
+
     /// Whether both sides of every triangle are drawn: as the model file
     /// says unless the scene says otherwise, see DoubleSided. A renderer
     /// settles `Model` against the file before it draws.

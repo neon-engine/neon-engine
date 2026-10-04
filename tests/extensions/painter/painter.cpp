@@ -44,6 +44,11 @@ namespace
       };
       const bool meshed = world.SetMesh(painted, corners, {0, 1, 2, 0, 2, 3});
 
+      // where each corner is in a lightmap, and the lightmap its material names
+      const bool lit = world.SetMeshLightmap(painted, {{0.1f, 0.9f}, {0.9f, 0.9f}, {0.9f, 0.1f}, {0.1f, 0.1f}})
+                       && world.SetText(painted, world.FindField("Renderable", "material.lightmap"), picture);
+      world.Info(std::string("Lightmap: ") + (lit ? "yes" : "no"));
+
       world.Info("Painted " + picture + ": components " + (added ? "yes" : "no") + ", textures "
                  + (textured ? "yes" : "no") + ", mesh " + (meshed ? "yes" : "no"));
 
@@ -54,6 +59,8 @@ namespace
       const bool refused = !world.SetMesh(bare, corners, {0, 1, 2})
                            && !world.SetMesh(painted, corners, {0, 1, 4})
                            && !world.SetMesh(painted, corners, {0, 1})
+                           && !world.SetMeshLightmap(painted, {{0.0f, 0.0f}})
+                           && !world.SetMeshLightmap(bare, {{0.0f, 0.0f}})
                            && world.SetImage("short", 2, 2, {255, 0, 0}).empty()
                            && !world.AddComponent(bare, "Nothing");
       world.Info(std::string("What is no mesh, picture, or component was refused: ") + (refused ? "yes" : "no"));
