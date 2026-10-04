@@ -62,6 +62,10 @@ namespace neon
       group = sound_group::effects;
     }
 
+    // Nothing is read where nothing is heard, but a sound in memory that
+    // was never handed over is a mistake of the game all the same.
+    if (SoundMemory::IsNamedBy(sound_info.path) && ReadSound(sound_info.path) == nullptr) { return -1; }
+
     const int id = _next_id++;
     _sounds[id] = {.playing = false, .looping = sound_info.looping, .group = group};
     return id;

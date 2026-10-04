@@ -40,6 +40,11 @@ namespace neon
     _services.render = render;
   }
 
+  void ExtensionHost::SetAudio(AudioContext *audio)
+  {
+    _services.audio = audio;
+  }
+
   void ExtensionHost::SetUi(UiContext *ui)
   {
     _services.ui = ui;

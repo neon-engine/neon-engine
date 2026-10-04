@@ -1,7 +1,9 @@
 #ifndef AUDIO_CONTEXT_HPP
 #define AUDIO_CONTEXT_HPP
 
+#include <cstdint>
 #include <string>
+#include <vector>
 
 #include "sound-info.hpp"
 
@@ -26,6 +28,17 @@ namespace neon
     virtual int CreateSound(const SoundInfo &sound_info) = 0;
 
     virtual void DestroySound(int sound_id) = 0;
+
+    /// Keeps the bytes of a sound file under a name: WAV, FLAC, MP3, or Ogg
+    /// Vorbis, as a file would hold them. A sound whose path is
+    /// `sound://<name>` is created from them, see SoundMemory. It is how an
+    /// extension plays what it reads out of an archive of its own.
+    ///
+    /// A name that is set again names the new bytes from then on; sounds
+    /// that were created keep what they were created from. Returns false
+    /// for no name or no bytes. Whether the bytes are a sound is found when
+    /// one is created from them.
+    virtual bool SetSound(const std::string &name, std::vector<std::uint8_t> bytes) = 0;
 
     /// Plays a sound from its start. A sound that is playing starts over.
     virtual void Play(int sound_id) = 0;

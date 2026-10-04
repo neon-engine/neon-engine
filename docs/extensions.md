@@ -147,6 +147,7 @@ something of its own and is told to clean up.
 | 6 | `get_field_layout`, `set_ui_number`, `set_ui_text`, `spawn_at` | |
 | 7 | `add_component`, `set_field_texts`, `set_image`, `set_mesh`, and `name`, the name of the extension | |
 | 8 | `set_mesh_lightmap` | |
+| 9 | `set_sound` | |
 
 ## Components
 
@@ -259,6 +260,29 @@ world.SetMesh(wall, corners, indices);
 | A picture is four bytes a pixel, set under a name, and read by a material as the texture `image://<extension>/<name>` | A texture is named by a path everywhere in the engine, in a recipe, a prefab, a field; this makes a picture from memory one more thing a path can name, as `surface://` names what a camera drew. The name of the extension stands in front, so two extensions cannot take each other's |
 | A picture is set once, before what shows it is first drawn | The renderer makes a texture of it when the first material asks, and shares it. Setting the name again changes nothing that was made |
 | `image://` is no scheme of the file system | Nothing reads or lists it as a file. It is the renderer's, `RenderContext::SetImage`. What the path of a texture names, a file, a `surface://`, or an `image://`, is said in one place, `TextureSource` of neon-core, which every renderer and the user interface ask |
+
+## What an extension plays
+
+A sound an extension reads out of an archive of its own is in no file the
+engine could open either. The extension hands over the bytes as a file would
+hold them, WAV, FLAC, MP3, or Ogg Vorbis, and a `SoundSource` plays them by
+the path it gets back.
+
+```cpp
+const std::string sound = world.SetSound("doors/open", bytes);   // sound://quake/doors/open
+
+const Entity door = world.CreateEntity("door sound");
+world.AddComponent(door, "Transform");
+world.AddComponent(door, "SoundSource");
+world.SetText(door, world.FindField("SoundSource", "sound"), sound);
+```
+
+| Decision | Reason |
+|---|---|
+| The bytes of a sound file are set under a name, and played as the sound `sound://<extension>/<name>` | It is what `image://` is for a picture: a sound is named by a path everywhere, and this makes one from memory one more thing a path can name. Everything else of a sound, its place, its group, whether it loops, stays with `SoundSource` |
+| The bytes are those of a file, not samples | The audio decodes a file already, so a WAV out of an archive plays as it is, with its rate and its channels, and the extension needs no decoder |
+| A name that is set again names the new bytes for the sounds made from then on | A sound that plays keeps what it was made from |
+| `sound://` is no scheme of the file system | Nothing reads or lists it as a file. It is the audio's, `AudioContext::SetSound`, and it is written down in one place, `SoundMemory` of neon-core |
 
 The test [tests/runtime-extensions](../tests/runtime-extensions) does this
 with a picture of four colours on a square, and reads the pixels of what the

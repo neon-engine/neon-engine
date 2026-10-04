@@ -31,7 +31,7 @@ namespace neon
     {
       // the decoder reads from the file, and the sound from the decoder, so
       // they are released in the opposite order
-      std::shared_ptr<FileContents> file;
+      std::shared_ptr<const FileContents> file;
       ma_decoder decoder{};
       ma_sound sound{};
 
@@ -76,7 +76,7 @@ namespace neon
     std::map<int, Sound> sounds;
     int next_id = 0;
 
-    std::map<std::string, std::weak_ptr<FileContents>> files;
+    std::map<std::string, std::weak_ptr<const FileContents>> files;
 
     std::map<std::string, Group> groups;
     bool paused = false;
@@ -261,21 +261,24 @@ namespace neon
     const int id = _state->next_id;
     Sound *sound = &_state->sounds[id];
 
-    if (const auto known = _state->files.find(sound_info.path); known != _state->files.end())
+    // A sound that was handed over in memory is kept under its name already,
+    // and is whatever was last set under it. A file is read once for all the
+    // sounds made from it.
+    const bool is_in_memory = SoundMemory::IsNamedBy(sound_info.path);
+    if (const auto known = _state->files.find(sound_info.path); !is_in_memory && known != _state->files.end())
     {
       sound->file = known->second.lock();
     }
 
     if (sound->file == nullptr)
     {
-      sound->file = std::make_shared<FileContents>();
-      if (!_file_system->ReadBytes(sound_info.path, *sound->file))
+      sound->file = ReadSound(sound_info.path);
+      if (sound->file == nullptr)
       {
-        _logger->Error("Sound {} cannot be read", sound_info.path);
         _state->sounds.erase(id);
         return -1;
       }
-      _state->files[sound_info.path] = sound->file;
+      if (!is_in_memory) { _state->files[sound_info.path] = sound->file; }
     }
 
     const auto decoder_config = ma_decoder_config_init(ma_format_f32, 0, sample_rate);

@@ -420,6 +420,7 @@ int main(const int argc, char *argv[])
   extension_host.SetPhysics(&physics_system);
   extension_host.SetUi(&ui_system);
   extension_host.SetRender(render_system);
+  extension_host.SetAudio(&audio_system);
   world.AddSystem(std::make_unique<neon::ExtensionRunning>(&extension_host, &scene.GetComponentFormats()));
 
   // The game's own code: scripts in Lua anywhere under assets://, which

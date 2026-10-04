@@ -32,7 +32,7 @@ extern "C" {
 #endif
 
 /* The version of this file. It goes up by one whenever a table grows. */
-#define NEON_EXTENSION_ABI_VERSION 8
+#define NEON_EXTENSION_ABI_VERSION 9
 
 /* Marks the function an extension exports. Everything else of an extension
  * stays hidden, which neon_add_extension sees to. */
@@ -531,6 +531,15 @@ typedef struct NeonExtensionHost
    * saying why: the entity has no mesh, or `count` is not its number of
    * corners. */
   int (*set_mesh_lightmap)(void *context, NeonEntity entity, const NeonVector2 *coordinates, uint64_t count);
+
+  /* Since version 9: sounds from memory. */
+
+  /* Hands the audio the bytes of a sound file under a name: WAV, FLAC, MP3,
+   * or Ogg Vorbis, as a file would hold them. They are copied. A sound
+   * source plays them as the sound `sound://<extension>/<name>`, the field
+   * `sound` of `SoundSource`. A name that is set again names the new bytes
+   * for the sources made from then on. Returns 1, or 0 after saying why. */
+  int (*set_sound)(void *context, const char *name, const uint8_t *bytes, uint64_t size);
 } NeonExtensionHost;
 
 /* What an extension brings. The application hands it over with every field

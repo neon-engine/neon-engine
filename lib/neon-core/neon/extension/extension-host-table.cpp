@@ -884,6 +884,31 @@ namespace neon
       return 1;
     }
 
+    int set_sound(void *context, const char *name, const std::uint8_t *bytes, const std::uint64_t size)
+    {
+      auto &extension = of(context);
+      if (store_for(extension, "set_sound") == nullptr) { return 0; }
+
+      if (name == nullptr || name[0] == '\0' || bytes == nullptr || size == 0)
+      {
+        extension.logger->Error("set_sound was called without a name, or without bytes");
+        return 0;
+      }
+      if (extension.services->audio == nullptr)
+      {
+        extension.logger->Error("set_sound was called, and this application has no audio for its extensions");
+        return 0;
+      }
+
+      const std::string full_name = extension.name + "/" + name;
+      if (!extension.services->audio->SetSound(full_name, std::vector<std::uint8_t>(bytes, bytes + size)))
+      {
+        extension.logger->Error("set_sound: the audio did not take the sound '{}'", full_name);
+        return 0;
+      }
+      return 1;
+    }
+
     // A corner of the extension is the start of a corner of the engine,
     // which has grown since: what follows keeps what it starts with.
     static_assert(sizeof(NeonVertex) <= sizeof(Vertex));
@@ -1061,6 +1086,8 @@ namespace neon
     host.set_mesh = &set_mesh;
 
     host.set_mesh_lightmap = &set_mesh_lightmap;
+
+    host.set_sound = &set_sound;
 
     // the extension keeps its name for as long as it is loaded
     host.name = extension.name.c_str();

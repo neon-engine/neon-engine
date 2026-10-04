@@ -76,7 +76,7 @@ namespace neon::extension
   using Vertex = NeonVertex;
 
   /// The version of the C file this header needs of the application.
-  inline constexpr std::uint32_t needed_abi_version = 8;
+  inline constexpr std::uint32_t needed_abi_version = 9;
 
   /// The kind of a field from its type, and its value as the numbers a
   /// description carries. A type of the extension's own that lies in memory
@@ -504,6 +504,17 @@ namespace neon::extension
     bool SetMeshLightmap(const Entity entity, const std::vector<Vector2> &coordinates) const
     {
       return _host->set_mesh_lightmap(_host->context, entity, coordinates.data(), coordinates.size()) != 0;
+    }
+
+    /// Hands the audio the bytes of a sound file, as a file would hold them:
+    /// WAV, FLAC, MP3, or Ogg Vorbis. Returns the path a `SoundSource` plays
+    /// it by, `sound://<extension>/<name>`, or nothing when it was refused.
+    /// It is how a game plays what it reads out of an archive of its own.
+    [[nodiscard]] std::string SetSound(const std::string &name, const std::vector<std::uint8_t> &bytes) const
+    {
+      if (bytes.empty()) { return ""; }
+      if (_host->set_sound(_host->context, name.c_str(), bytes.data(), bytes.size()) == 0) { return ""; }
+      return "sound://" + GetName() + "/" + name;
     }
 
     /// Sets a value that the files of the user interface show as `{name}`.

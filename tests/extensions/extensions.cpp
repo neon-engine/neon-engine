@@ -23,6 +23,7 @@
 #include <neon/common/transform.hpp>
 #include <neon/testing/mock-input-context.hpp>
 #include <neon/testing/mock-library-loader.hpp>
+#include <neon/testing/mock-audio-context.hpp>
 #include <neon/testing/mock-render-context.hpp>
 #include <neon/testing/mock-ui-system.hpp>
 #include <neon/testing/mock-world-system.hpp>
@@ -173,6 +174,11 @@ namespace
 
     // the pictures the extensions made, by their names
     std::map<std::string, neon::ImagePixels> _images;
+
+    NiceMock<neon::testing::MockAudioContext> _audio;
+
+    // the sounds the extensions handed over, by their names
+    std::map<std::string, std::vector<std::uint8_t>> _sounds;
     NiceMock<neon::testing::MockWorldSystem> _world{std::make_shared<RecordingLogger>()};
 
     void SetUp() override
@@ -190,6 +196,12 @@ namespace
       _host.SetPhysics(&_physics);
       _host.SetUi(&_ui);
       _host.SetRender(&_render);
+      _host.SetAudio(&_audio);
+      ON_CALL(_audio, SetSound(_, _)).WillByDefault([this](const std::string &name, std::vector<std::uint8_t> bytes)
+      {
+        _sounds[name] = std::move(bytes);
+        return true;
+      });
       ON_CALL(_render, SetImage(_, _)).WillByDefault([this](const std::string &name, const neon::ImagePixels &pixels)
       {
         _images[name] = pixels;
@@ -608,6 +620,19 @@ namespace
     // counted up with each, so that an entity that is drawn already is
     // handed the mesh
     EXPECT_EQ(renderable->render_info.mesh_version, 2u);
+  }
+
+  TEST_F(ExtensionsInTheWorldTest, AnExtensionHandsOverASoundFromMemory)
+  {
+    EXPECT_TRUE(LogOf("painter")->Contains(
+      LogLevel::Info, "Handed over sound://painter/beep, and nothing without bytes: yes"))
+      << LogOf("painter")->Messages(LogLevel::Info);
+
+    // under the name of the extension, so that two extensions do not take
+    // each other's
+    ASSERT_TRUE(_sounds.contains("painter/beep"));
+    EXPECT_THAT(_sounds["painter/beep"], ElementsAre(82, 73, 70, 70));
+    EXPECT_FALSE(_sounds.contains("painter/silence"));
   }
 
   TEST_F(ExtensionsInTheWorldTest, RefusesAMeshAPictureOrAComponentThatIsNone)

@@ -1,6 +1,7 @@
 #ifndef EXTENSION_SERVICES_HPP
 #define EXTENSION_SERVICES_HPP
 
+#include <neon/audio/audio-context.hpp>
 #include <neon/filesystem/file-system-context.hpp>
 #include <neon/input/input-context.hpp>
 #include <neon/physics/physics-context.hpp>
@@ -30,6 +31,10 @@ namespace neon
 
     /// For the pictures an extension makes, which materials read.
     RenderContext *render = nullptr;
+
+    /// For the sounds an extension hands over in memory, which sound
+    /// sources play.
+    AudioContext *audio = nullptr;
 
     /// For the values the files of the user interface show.
     UiContext *ui = nullptr;

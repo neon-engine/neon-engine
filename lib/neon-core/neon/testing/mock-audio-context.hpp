@@ -14,6 +14,8 @@ namespace neon::testing
 
     MOCK_METHOD(void, DestroySound, (int sound_id), (override));
 
+    MOCK_METHOD(bool, SetSound, (const std::string &name, std::vector<std::uint8_t> bytes), (override));
+
     MOCK_METHOD(void, Play, (int sound_id), (override));
 
     MOCK_METHOD(void, Stop, (int sound_id), (override));

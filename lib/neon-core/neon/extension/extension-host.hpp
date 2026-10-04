@@ -80,6 +80,10 @@ namespace neon
     /// Gives the extensions the renderer, for the pictures they make.
     void SetRender(RenderContext *render);
 
+    /// Gives the extensions the audio, for the sounds they hand over in
+    /// memory.
+    void SetAudio(AudioContext *audio);
+
     /// Gives the extensions the user interface, for the values its files
     /// show.
     void SetUi(UiContext *ui);

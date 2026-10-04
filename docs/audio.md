@@ -233,6 +233,12 @@ and group to the scene, as the settings demo does for the three.
 | MP3 | miniaudio |
 | Ogg Vorbis | stb_vorbis, which miniaudio ships |
 
+A sound need not be a file. A path that starts with `sound://` names the
+bytes of such a file that were handed to the audio in memory, with
+`AudioContext::SetSound`, which is how an extension plays what it reads out
+of an archive of its own, see
+[extensions.md](extensions.md#what-an-extension-plays).
+
 ## What exists today
 
 | Piece | Location | Role |

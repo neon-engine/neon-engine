@@ -64,6 +64,12 @@ namespace
                            && world.SetImage("short", 2, 2, {255, 0, 0}).empty()
                            && !world.AddComponent(bare, "Nothing");
       world.Info(std::string("What is no mesh, picture, or component was refused: ") + (refused ? "yes" : "no"));
+
+      // a sound from memory, which a sound source plays by the path it is
+      // given; one without bytes is refused
+      const std::string sound = world.SetSound("beep", {82, 73, 70, 70});
+      world.Info("Handed over " + sound + ", and nothing without bytes: " +
+        (world.SetSound("silence", {}).empty() ? "yes" : "no"));
     }
   };
 }

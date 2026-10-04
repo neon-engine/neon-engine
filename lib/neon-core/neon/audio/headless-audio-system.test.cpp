@@ -46,6 +46,25 @@ namespace
     EXPECT_GE(_audio.CreateSound({.path = "assets://sounds/missing.wav"}), 0);
   }
 
+  TEST_F(HeadlessAudioSystemTest, CreatesASoundThatWasHandedOverInMemory)
+  {
+    EXPECT_TRUE(_audio.SetSound("quake/door", {1, 2, 3}));
+    EXPECT_GE(_audio.CreateSound(SoundInfo{.path = "sound://quake/door"}), 0);
+  }
+
+  TEST_F(HeadlessAudioSystemTest, RefusesASoundInMemoryThatWasNotHandedOver)
+  {
+    EXPECT_EQ(_audio.CreateSound(SoundInfo{.path = "sound://quake/nothing"}), -1);
+    EXPECT_TRUE(_logger->Contains(
+      LogLevel::Error, "Sound sound://quake/nothing was not handed to the audio, so there is nothing to play"));
+  }
+
+  TEST_F(HeadlessAudioSystemTest, TakesNoSoundWithoutANameOrWithoutBytes)
+  {
+    EXPECT_FALSE(_audio.SetSound("", {1, 2, 3}));
+    EXPECT_FALSE(_audio.SetSound("quake/door", {}));
+  }
+
   TEST_F(HeadlessAudioSystemTest, GivesEverySoundAnIdOfItsOwn)
   {
     const int first = _audio.CreateSound({.path = "assets://sounds/step.wav"});
