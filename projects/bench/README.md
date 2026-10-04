@@ -101,6 +101,14 @@ Everything is under `extensions/bench/`.
 | `assets/prefabs/crate-*.prefab.yml` | A crate for each behaviour |
 | `assets/scenes/*.scene.yml`, `assets/ui/counter.ui.yml` | The scenes, and the counter |
 
-The numbers of the bench that was closed with #314, and what it found, are
-in the README on the branch `bench/lua-vs-cpp`. They were taken with the
-game linked into the runtime and are not carried over.
+For Windows, from the image of `docker/windows-x64.dockerfile`, with the
+toolchain file by its whole path:
+
+```sh
+cmake -S projects/bench -B build/bench-windows -G Ninja \
+  -DCMAKE_TOOLCHAIN_FILE="$PWD/cmake/toolchains/windows-x64-llvm-mingw.cmake"
+cmake --build build/bench-windows
+```
+
+The bench that was closed with #314 was linked into the runtime. Its numbers
+are not carried over, and none have been taken with this one yet.

@@ -114,7 +114,12 @@ function(neon_add_extension NAME)
   elseif (NOT APPLE)
     # The static runtime is not built hidden, and would be exported with the
     # extension, hundreds of names next to the one it marks.
-    target_link_options(${EXTENSION_TARGET} PRIVATE -static-libstdc++ -Wl,--exclude-libs,ALL)
+    # An extension in C links no C++ runtime, and is not told to link one
+    # statically, which the compiler would call an unused argument (#375).
+    target_link_options(${EXTENSION_TARGET} PRIVATE
+            $<$<LINK_LANGUAGE:CXX>:-static-libstdc++>
+            -Wl,--exclude-libs,ALL
+    )
   endif ()
 
   add_custom_command(TARGET ${EXTENSION_TARGET} POST_BUILD

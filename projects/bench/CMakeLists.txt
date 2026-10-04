@@ -7,7 +7,7 @@
 #   cmake -S projects/bench -B build/bench && cmake --build build/bench
 #
 # The engine's build finds it too, and then brings these functions itself.
-cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
 if (NOT COMMAND neon_add_project)
   project(bench C CXX)
   include("${CMAKE_CURRENT_LIST_DIR}/../../cmake/NeonSdk.cmake")

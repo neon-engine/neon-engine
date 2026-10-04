@@ -325,7 +325,7 @@ and takes as long as its own files do. This is how a game in C++ is worked
 on.
 
 ```cmake
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.18)
 project(quake C CXX)
 include(<the engine>/cmake/NeonSdk.cmake)
 
@@ -350,6 +350,8 @@ builds one and puts it where the application finds it.
 |---|---|
 | `NeonSdk.cmake` is one include and compiles nothing of the engine | Someone who writes a game in C++ should not build the engine, wait for it, or think about it. The runtime is used as it was built, by the engine's build or from a release |
 | Any compiler | The boundary is C. The bench builds with Apple's clang against a runtime built with LLVM's |
+| For another platform, the build is given the engine's toolchain file | `-DCMAKE_TOOLCHAIN_FILE=<the engine>/cmake/toolchains/windows-x64-llvm-mingw.cmake`, in the image of [docker/windows-x64.dockerfile](../docker/windows-x64.dockerfile). The presets of the engine name it themselves; a build of its own has no presets, so it is said once when configuring, by its whole path |
+| CMake 3.18 or later | An extension in C++ links its runtime statically and one in C links none, which the build says by the language that is linked |
 | The engine's build can build an extension too | For the extensions of the tests, and the projects under `projects/`. The same `CMakeLists.txt` serves both |
 
 A game is a project, an extension, or both, see
