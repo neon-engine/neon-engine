@@ -11,6 +11,7 @@
 
 #include "vk-device.hpp"
 #include "vk-draw-order.hpp"
+#include "vk-effect-images.hpp"
 #include "vk-frame-stages.hpp"
 #include "vk-model.hpp"
 #include "vk-resolve.hpp"
@@ -45,6 +46,18 @@ namespace neon
     VK_SceneImage _scene;
     VkDescriptorSet _scene_set = VK_NULL_HANDLE;
 
+    // The effects of the camera that draws into the canvas in this frame:
+    // those run on the light of its scene, and those run on the colours a
+    // screen is given. And the pictures each kind is run between, made when
+    // a camera first names an effect of the kind.
+    std::vector<std::string> _effects;
+    std::vector<std::string> _screen_effects;
+    VK_EffectImages _light_images;
+    VK_EffectImages _screen_images;
+
+    // what the first effect on the light reads the scene image through
+    VkDescriptorSet _scene_effect_set = VK_NULL_HANDLE;
+
     // what the canvas is cleared to, as an sRGB colour, and how far its
     // drawing got in this frame
     Color _clear{0.0f, 0.0f, 0.0f, 1.0f};
@@ -58,6 +71,21 @@ namespace neon
     /// Draws the see-through models that were kept, from the farthest to
     /// the nearest, and forgets them.
     void DrawSeeThrough();
+
+    /// The pipelines of the effects of a list that can be run, in their
+    /// order. Empty when the pictures of the kind cannot be made.
+    [[nodiscard]] std::vector<VkPipeline> FindEffects(
+      VK_EffectKind kind,
+      const std::vector<std::string> &paths,
+      VK_EffectImages &images) const;
+
+    /// Begins a render pass of the effects that draws into a picture.
+    void BeginEffectPass(VK_EffectKind kind, VkFramebuffer framebuffer) const;
+
+    /// Runs the effects on the light of the scene, once the scene is drawn.
+    /// Returns what the resolve step reads the outcome through: the scene
+    /// image itself when there is no effect to run.
+    [[nodiscard]] VkDescriptorSet RunLightEffects();
 
   public:
     VK_Canvas() = default;
@@ -84,6 +112,11 @@ namespace neon
     /// Starts a frame: nothing is drawn yet, and what is drawn first clears
     /// the canvas to `clear`, which is an sRGB colour.
     void Begin(const Color &clear);
+
+    /// Says which effects the camera that draws into the canvas names, for
+    /// this frame: the paths of those run on the light of its scene, and of
+    /// those run on the colours a screen is given. Begin() forgets them.
+    void SetEffects(const std::vector<std::string> &effects, const std::vector<std::string> &screen_effects);
 
     /// Gets the canvas to the stage that draws models of the scene.
     /// Returns false when they cannot be drawn any more.

@@ -58,6 +58,8 @@ namespace neon
         info.view = view;
         info.near = camera.near_plane;
         info.far = camera.far_plane;
+        info.effects = camera.effects;
+        info.screen_effects = camera.screen_effects;
         info.texture = camera.texture;
         info.width = camera.texture_width;
         info.height = camera.texture_height;

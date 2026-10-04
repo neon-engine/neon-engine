@@ -1,4 +1,6 @@
-# A shader an extension brings is told the time and the numbers of the game:
+# The shaders a game brings. A shader an extension brings for a material is
+# told the time and the numbers of the game, and the effects a camera names
+# are run over its picture, before and after the tonemapper. Both with
 # a project of the test's own, put together next to a copy of the runtime,
 # whose extension draws a square with a shader of its own, read pixel by
 # pixel from what the runtime saved. Needs a graphics card with a Vulkan
@@ -33,11 +35,28 @@ foreach (STAGE IN ITEMS vert frag)
   )
   list(APPEND TINTED_SHADER_OUTPUTS "${TINTED_SHADER_OUTPUT}/tinted.${STAGE}.spv")
 endforeach ()
+
+# the effects of a camera are fragment shaders alone: the engine brings the
+# vertex half
+foreach (EFFECT IN ITEMS mirrored halved swapped told)
+  add_custom_command(
+          OUTPUT "${TINTED_SHADER_OUTPUT}/${EFFECT}.frag.spv"
+          COMMAND ${CMAKE_COMMAND} -E make_directory "${TINTED_SHADER_OUTPUT}"
+          COMMAND "${GLSLANG_EXECUTABLE}" -V --quiet "-I${CMAKE_SOURCE_DIR}/app/NeonRuntime/shaders/vulkan"
+          "${TINTED_SHADER_SOURCES}/${EFFECT}.frag" -o "${TINTED_SHADER_OUTPUT}/${EFFECT}.frag.spv"
+          DEPENDS "${TINTED_SHADER_SOURCES}/${EFFECT}.frag" ${ENGINE_SHADER_INCLUDES}
+          COMMENT "Compiling the effect ${EFFECT}.frag of the test"
+          VERBATIM
+  )
+  list(APPEND TINTED_SHADER_OUTPUTS "${TINTED_SHADER_OUTPUT}/${EFFECT}.frag.spv")
+endforeach ()
 add_custom_target(tinted-shaders DEPENDS ${TINTED_SHADER_OUTPUTS})
 add_dependencies(tinted tinted-shaders)
 
 if (NOT CMAKE_CROSSCOMPILING)
-  foreach (CASE IN ITEMS a-shader-of-an-extension-reads-the-time-and-the-numbers-of-the-game)
+  foreach (CASE IN ITEMS
+          a-shader-of-an-extension-reads-the-time-and-the-numbers-of-the-game
+          the-effects-of-a-camera-are-run-over-its-picture)
     add_test(
             NAME "runtime-shaders.${CASE}"
             COMMAND "${CMAKE_COMMAND}"

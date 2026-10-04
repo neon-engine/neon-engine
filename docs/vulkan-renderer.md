@@ -417,7 +417,9 @@ what a screenshot shows is what a window would show.
 | Shadow pass | The shadow map, `D32_SFLOAT`, 2048 by 2048, a layer a cascade | The opaque models of the first scene of the frame whose direction light casts, as the light sees them, depth alone, once into every cascade. Recorded apart and run before everything below, so that every scene of the frame reads the finished map. Left out when no light casts. See [Shadows](#shadows) |
 | Render targets | Each target, in the order they are drawn | Each goes through the stages below on its own: a camera that draws into a texture lights a scene in a scene image of the target, a user interface on a surface draws on top. A target that shows only a user interface has no scene image |
 | Scene | The scene image, `R16G16B16A16_SFLOAT`, and its depth | Opaque models in the order that costs the least, see below, then the sky wherever none of them is, see [The sky](#the-sky), then see-through ones from the farthest to the nearest, tested against depth but not writing it. The back of every triangle is left out unless the material is double-sided. Lighting and blending are in linear light. An opaque model replaces what is behind it and leaves the alpha of the scene image at 1, whatever its shader wrote |
+| Effects on the light | Two pictures as the scene image, in turn | The `effects` of the camera, each a triangle that covers the picture: the first reads the scene image, and each one after it what the one before wrote. Left out, with the pictures, for a camera that names none. See [the effects of a camera](#the-effects-of-a-camera) |
 | Resolve | The image that is shown, `R8G8B8A8_UNORM` | A triangle that covers it reads the scene image pixel by pixel, multiplies the exposure in, maps it through the tonemapper, and writes it in sRGB. The one place where light becomes the colours of a screen, see [tonemapping](#tonemapping) |
+| Effects on the screen | Two pictures as the image that is shown, in turn, and then that image | The `screen_effects` of the camera. The resolve then writes into the first of the pictures, and the last effect writes into the image that is shown, where the resolve would. Left out for a camera that names none |
 | On top | The same image | What is drawn in two dimensions: user interfaces, blended in sRGB as CSS blends them |
 | Copy | The window, or a file | Byte for byte. The bytes are sRGB already |
 
@@ -464,6 +466,66 @@ apart from the graphics card, so that they are tested.
 The resolve is where what changes how light looks on a screen goes. Light
 that bleeds around what is bright (#130) is added to the scene image just
 before it. The scene image keeps such light until then.
+
+## The effects of a camera
+
+A camera names shaders that are run over the whole picture it drew, in two
+lists, see [scenes.md](scenes.md):
+
+```yaml
+Camera:
+  effects:
+    - extensions://quake/assets/shaders/under-water
+  screen_effects:
+    - assets://shaders/effects/scan-lines
+```
+
+| List | Run | The picture holds | For |
+|---|---|---|---|
+| `effects` | After the scene is drawn, before the resolve | Linear light, with room above white, as half floats | What changes the light: a view that waves, a vignette, a colour laid over everything |
+| `screen_effects` | After the resolve, before what is drawn on top | The colours a screen is given, sRGB encoded, as bytes | What is about the picture that is shown: the rows of a monitor, a palette, a pattern of dots |
+
+An effect is a fragment shader alone, named as a shader is and read from
+the file with `.frag.spv` added. The engine brings the vertex half,
+`effect.vert`. It starts with `effect.glsl`, which gives it:
+
+| Name | What it is |
+|---|---|
+| `frame_coord` | Where the pixel is in the picture: 0, 0 at the top left, 1, 1 at the bottom right |
+| `read_frame(at)` | The picture at a place of it, as it is before this effect, read smoothly, with its edge drawn on past it |
+| `frame_size()` | The size of the picture in pixels |
+| `scene.time`, `scene.numbers[0..7]` | What the shaders of a material read under the same names: the time of the world, and the numbers of the game, see [extensions.md](extensions.md#the-shaders-an-extension-brings) |
+| `frag_color` | What the effect writes |
+
+```glsl
+#version 450
+#extension GL_GOOGLE_include_directive : require
+#include "effect.glsl"
+
+void main()
+{
+    vec2 swayed = frame_coord + 0.004 * sin(frame_coord.yx * 16.0 + scene.time.x);
+    frag_color = read_frame(swayed);
+}
+```
+
+| Decision | Why |
+|---|---|
+| The lists are on the camera | A camera that draws into a texture has effects of its own, and the camera of the window others. A game turns an effect on by writing the field, as it writes any field |
+| Two lists | An effect on light has to come before the tonemapper, which is where light ends. One that counts rows or picks from a palette wants the picture as it is shown |
+| An effect is no material | It is bound to a layout of its own, three bindings, and never to an object. A shader of a material is drawn into the scene as before and does not know that an effect follows |
+| The user interface is drawn after both | A menu is not waved with the water behind it |
+| A camera without effects costs nothing | The pictures the effects are run between are made when a camera first names one. Each effect is one pass over the picture |
+| The alpha of the picture is multiplied into its colours | As everywhere after the scene, see [colour spaces](#colour-spaces). An effect hands on what it does not change |
+
+An effect that cannot be read is said once and left out; the others are run.
+The engine ships two, in `assets://shaders/effects`: `vignette`, for
+`effects`, and `scan-lines`, for `screen_effects`. The monitor of hall 10 of
+the museum shows both.
+
+Not there yet: an effect cannot read the depth of the scene, has no
+pictures of its own to draw into (a blur in several steps), and is told
+nothing beyond the time and the numbers of the game.
 
 ## Tonemapping
 

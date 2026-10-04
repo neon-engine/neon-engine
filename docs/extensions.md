@@ -287,6 +287,11 @@ shaders to include from (`app/NeonRuntime/shaders/vulkan`):
 glslang -V -I<engine>/app/NeonRuntime/shaders/vulkan liquid.frag -o <game>/extensions/quake/assets/shaders/liquid.frag.spv
 ```
 
+A shader that is run over the whole picture of a camera, an effect, is
+brought the same way, as a fragment shader alone, and named in `effects` or
+`screen_effects` of a `Camera`: see
+[the effects of a camera](vulkan-renderer.md#the-effects-of-a-camera).
+
 | What such a shader may rely on | |
 |---|---|
 | `scene-data.glsl` | The declarations every shader of the engine starts with: `scene`, with the view, the projection, where the camera stands, and the lights; `objects[]`, with the matrix, the colour, and the material of what is drawn. A shader includes it and reads what it needs |

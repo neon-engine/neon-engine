@@ -35,6 +35,11 @@ namespace neon::testing
     MOCK_METHOD(bool, SetImage, (const std::string &name, const ImagePixels &pixels), (override));
 
     MOCK_METHOD(void, SetShaderTime, (double seconds, double delta), (override));
+    MOCK_METHOD(
+      void,
+      SetEffects,
+      (const std::vector<std::string> &effects, const std::vector<std::string> &screen_effects),
+      (override));
 
     MOCK_METHOD(bool, SetShaderNumbers, (int place, const glm::vec4 &numbers), (override));
 

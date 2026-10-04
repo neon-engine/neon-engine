@@ -185,6 +185,22 @@ namespace
     }
   }
 
+  TEST_F(RenderSubmissionTest, HandsOverTheEffectsOfACameraInTheirOrder)
+  {
+    Camera camera;
+    camera.effects = {"assets://shaders/effects/vignette", "extensions://game/assets/shaders/waves"};
+    camera.screen_effects = {"assets://shaders/effects/scan-lines"};
+    Create(Placed(0.0f, 0.0f, 0.0f, 0.0f), camera);
+
+    CameraInfo handed_over;
+    EXPECT_CALL(_pipeline, SetCameraInfo(_)).WillOnce(::testing::SaveArg<0>(&handed_over));
+
+    _system.Update(_store, 0.016);
+
+    EXPECT_EQ(handed_over.effects, camera.effects);
+    EXPECT_EQ(handed_over.screen_effects, camera.screen_effects);
+  }
+
   TEST_F(RenderSubmissionTest, LooksFromWhereTheCameraIsInTheWorldAndNotFromItsPosition)
   {
     // the child of something that was moved: its own position is 0

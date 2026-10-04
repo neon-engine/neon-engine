@@ -17,6 +17,6 @@ setup_compile_shaders(
         ${TARGET}
         "${CMAKE_CURRENT_SOURCE_DIR}/shaders/vulkan"
         "${APP_BIN_DIRECTORY}/assets/shaders"
-        # the shaders of elements of a user interface
-        FOLDERS ui
+        # the shaders of elements of a user interface, and effects of cameras
+        FOLDERS ui effects
 )

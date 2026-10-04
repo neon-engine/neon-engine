@@ -95,6 +95,11 @@ namespace neon
 
         if (!_render_context->BeginRenderTarget(target, camera.clear)) { continue; }
 
+        if (!camera.effects.empty() || !camera.screen_effects.empty())
+        {
+          _render_context->SetEffects(camera.effects, camera.screen_effects);
+        }
+
         const auto seen = glm::perspective(
           glm::radians(camera.fov),
           static_cast<float>(target_width) / static_cast<float>(std::max(target_height, 1)),
@@ -112,6 +117,12 @@ namespace neon
       }
 
       _texture_cameras.clear();
+    }
+
+    // what is run over the picture of the camera of the window
+    if (!_camera_info.effects.empty() || !_camera_info.screen_effects.empty())
+    {
+      _render_context->SetEffects(_camera_info.effects, _camera_info.screen_effects);
     }
 
     while (!_render_queue.empty())

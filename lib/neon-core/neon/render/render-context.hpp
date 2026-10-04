@@ -121,6 +121,18 @@ namespace neon
     /// frame is cleared to.
     virtual void DrawSky(const SkyInfo &sky, const glm::mat4 &view, const glm::mat4 &projection) {}
 
+    /// Says which effects the camera names that draws what is drawn next:
+    /// into the render target that was begun, or else into the frame. An
+    /// effect is a fragment shader a game brings that is run over the whole
+    /// picture the camera drew, named as a shader is. Those of `effects`
+    /// are run on the light of the scene, before the tonemapper, and those
+    /// of `screen_effects` on the colours a screen is given, after it and
+    /// before the user interface. Each list is run in its order. They hold
+    /// for the frame. A renderer that leaves this as it is runs none.
+    virtual void SetEffects(
+      const std::vector<std::string> &effects,
+      const std::vector<std::string> &screen_effects) {}
+
     /// How many places there are for numbers of a game that every shader
     /// reads, see SetShaderNumbers().
     static constexpr int kShader_Number_Places = 8;

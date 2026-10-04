@@ -46,6 +46,8 @@ add_library(${TARGET} STATIC
         neon/render/vk-frame-stages.cpp
         neon/render/vk-frame-stages.hpp
         neon/render/vk-resolve.cpp
+        neon/render/vk-effects.cpp
+        neon/render/vk-effect-images.cpp
         neon/render/vk-resolve.hpp
         neon/render/vk-samplers.cpp
         neon/render/vk-samplers.hpp
@@ -105,6 +107,7 @@ if (NEON_BUILD_TESTS)
   neon_add_unit_test(${TARGET} neon/render/vk-render-target.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/vk-pipelines.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/vk-resolve.test.cpp)
+  neon_add_unit_test(${TARGET} neon/render/vk-effects.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/vk-samplers.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/vk-sky.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/vk-swapchain-sizing.test.cpp)

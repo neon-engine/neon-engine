@@ -6,6 +6,7 @@
 #include <vector>
 
 #include <glm/gtc/matrix_transform.hpp>
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <neon/testing/recording-logger.hpp>
@@ -60,6 +61,15 @@ namespace
       glm::mat4 view{1.0f};
     };
 
+    /// The effects of a camera, and what it draws into.
+    struct Effects
+    {
+      int target = -1;
+      std::vector<std::string> effects;
+      std::vector<std::string> screen_effects;
+    };
+
+    std::vector<Effects> effects;
     std::vector<Drawn> drawn;
     std::vector<DrawnSky> skies;
     std::map<int, Target> targets;
@@ -83,6 +93,13 @@ namespace
     }
 
     void DestroyRenderObject(int render_object_id) override {}
+
+    void SetEffects(
+      const std::vector<std::string> &of_light,
+      const std::vector<std::string> &of_screen) override
+    {
+      effects.push_back({current, of_light, of_screen});
+    }
 
     const RenderResolution &GetRenderResolution() override { return _resolution; }
 
@@ -169,6 +186,7 @@ namespace
     void Frame(const std::vector<CameraInfo> &cameras, const std::vector<int> &objects)
     {
       _renderer.drawn.clear();
+      _renderer.effects.clear();
 
       for (const auto &camera : cameras) { _pipeline.SetCameraInfo(camera); }
       for (const int object : objects) { _pipeline.EnqueueForRendering(object, Transform{}); }
@@ -212,6 +230,33 @@ namespace
     EXPECT_FLOAT_EQ(_renderer.drawn[2].view[3].x, 1) << "as the camera of the window sees it";
 
     EXPECT_EQ(_renderer.current, -1);
+  }
+
+  TEST_F(ForwardRenderPipelineCamerasTest, TellsTheRendererTheEffectsOfEachCameraForWhatItDrawsInto)
+  {
+    CameraInfo window = Window(1);
+    window.effects = {"assets://shaders/effects/vignette"};
+    CameraInfo mirror = Into("mirror", 5);
+    mirror.effects = {"assets://shaders/a", "assets://shaders/b"};
+    mirror.screen_effects = {"assets://shaders/effects/scan-lines"};
+
+    Frame({window, mirror}, {7});
+
+    // the texture first, while it is drawn into, and then the window
+    ASSERT_EQ(_renderer.effects.size(), 2u);
+    EXPECT_EQ(_renderer.effects[0].target, _renderer.targets.begin()->first);
+    EXPECT_THAT(_renderer.effects[0].effects, ::testing::ElementsAre("assets://shaders/a", "assets://shaders/b"));
+    EXPECT_THAT(_renderer.effects[0].screen_effects, ::testing::ElementsAre("assets://shaders/effects/scan-lines"));
+    EXPECT_EQ(_renderer.effects[1].target, -1);
+    EXPECT_THAT(_renderer.effects[1].effects, ::testing::ElementsAre("assets://shaders/effects/vignette"));
+    EXPECT_TRUE(_renderer.effects[1].screen_effects.empty());
+  }
+
+  TEST_F(ForwardRenderPipelineCamerasTest, ACameraWithoutEffectsTellsTheRendererOfNone)
+  {
+    Frame({Window(1), Into("mirror", 5)}, {7});
+
+    EXPECT_TRUE(_renderer.effects.empty());
   }
 
   TEST_F(ForwardRenderPipelineCamerasTest, ACameraOfATextureDoesNotTakeThePlaceOfTheOneOfTheWindow)

@@ -2,6 +2,7 @@
 #define CAMERA_INFO_HPP
 
 #include <string>
+#include <vector>
 #include <glm/glm.hpp>
 #include <neon/common/color.hpp>
 #include "render-target.hpp"
@@ -23,6 +24,13 @@ namespace neon
     std::string texture;
     int width{512};
     int height{512};
+
+    /// The effects that are run over what the camera drew, as the paths of
+    /// their shaders: on the light of the scene, before the tonemapper, and
+    /// on the colours a screen is given, after it. See
+    /// RenderContext::SetEffects().
+    std::vector<std::string> effects;
+    std::vector<std::string> screen_effects;
 
     /// What the texture is cleared to before the camera draws.
     Color clear{0.0f, 0.0f, 0.0f, 1.0f};

@@ -7,5 +7,6 @@ organization: neon-engine
 
 scenes:
   - extensions://tinted/assets/scenes/tinted.scene.yml
+  - extensions://tinted/assets/scenes/effects.scene.yml
 
 entry_scene: extensions://tinted/assets/scenes/tinted.scene.yml

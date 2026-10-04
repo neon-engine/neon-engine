@@ -94,9 +94,20 @@ namespace neon
           _file_system_context,
           _frame_pass,
           &_samplers,
-          max_scene_images,
+          // the scene image of each, and the two pictures the effects on
+          // its light are run between
+          max_scene_images * 3,
           _settings_config.tonemapper,
           static_cast<float>(_settings_config.exposure),
+          _logger) ||
+        // the scene image of each, and the two pictures of either kind
+        !_effects.Initialize(
+          &_device,
+          _file_system_context,
+          &_samplers,
+          VK_SceneImage::kFormat,
+          color_format,
+          max_scene_images * 5,
           _logger) ||
         !_sky.Initialize(&_device, _file_system_context, _scene_pass, &_samplers, _logger) ||
         !CreateDescriptors())
@@ -107,6 +118,8 @@ namespace neon
     _canvas_shared = {
       .device = &_device,
       .resolve = &_resolve,
+      .effects = &_effects,
+      .screen_format = color_format,
       .sky = &_sky,
       .scene_pass = _scene_pass,
       .frame_pass = _frame_pass,
@@ -548,6 +561,7 @@ namespace neon
     _swapchain.CleanUp();
 
     DestroyFrameImages();
+    _effects.CleanUp();
     _resolve.CleanUp();
     _sky.CleanUp();
     _shadow_map.CleanUp();
@@ -598,6 +612,17 @@ namespace neon
       _textures.ReplacePixels(TextureSource::For(TextureSourceKind::Image, name), *image->second);
     }
     _changed_images.clear();
+  }
+
+  void VK_RenderSystem::SetEffects(
+    const std::vector<std::string> &effects,
+    const std::vector<std::string> &screen_effects)
+  {
+    if (!_frame_open) { return; }
+
+    // of the render target that is drawn to, or else of the frame
+    VK_Canvas &canvas = _current_target != No_Render_Target ? _targets[_current_target].canvas : _frame;
+    canvas.SetEffects(effects, screen_effects);
   }
 
   void VK_RenderSystem::SetShaderTime(const double seconds, const double delta)
@@ -769,6 +794,13 @@ namespace neon
     if (_current_target != No_Render_Target) { EndRenderTarget(); }
 
     _frame.Leave();
+
+    // what the effects of the cameras are told of the game, which they read
+    // once the commands of the frame are run
+    VK_Effects::Data told;
+    told.time = _shader_time;
+    for (std::size_t place = 0; place < _shader_numbers.size(); place++) { told.numbers[place] = _shader_numbers[place]; }
+    _effects.SetData(told);
 
     // what the frame cost in calls, every few seconds, for the bench
     if (++_frames_since_said >= 300 && _frame_objects > 0)

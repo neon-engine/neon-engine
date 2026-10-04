@@ -6,6 +6,7 @@
 
 #include <neon/logging/logger.hpp>
 
+#include "vk-effects.hpp"
 #include "vk-device.hpp"
 #include "vk-model-cache.hpp"
 #include "vk-resolve.hpp"
@@ -22,6 +23,11 @@ namespace neon
   {
     VK_Device *device = nullptr;
     VK_Resolve *resolve = nullptr;
+
+    // what the effects of the cameras are run with, and the format of the
+    // image that is shown, which those after the tonemapper are run in
+    VK_Effects *effects = nullptr;
+    VkFormat screen_format = VK_FORMAT_UNDEFINED;
 
     // what the sky of a canvas is drawn with
     const VK_Sky *sky = nullptr;

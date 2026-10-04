@@ -36,6 +36,10 @@ namespace neon
 
     _shared->resolve->Release(_scene_set);
     _scene_set = VK_NULL_HANDLE;
+    if (_shared->effects != nullptr) { _shared->effects->Release(_scene_effect_set); }
+    _scene_effect_set = VK_NULL_HANDLE;
+    _light_images.CleanUp();
+    _screen_images.CleanUp();
     _scene.CleanUp();
   }
 
@@ -46,6 +50,84 @@ namespace neon
     _stage = VK_FrameStage::Nothing;
     _see_through.clear();
     _sky.reset();
+    _effects.clear();
+    _screen_effects.clear();
+  }
+
+  void VK_Canvas::SetEffects(const std::vector<std::string> &effects, const std::vector<std::string> &screen_effects)
+  {
+    _effects = effects;
+    _screen_effects = screen_effects;
+  }
+
+  std::vector<VkPipeline> VK_Canvas::FindEffects(
+    const VK_EffectKind kind,
+    const std::vector<std::string> &paths,
+    VK_EffectImages &images) const
+  {
+    std::vector<VkPipeline> pipelines;
+    if (paths.empty() || _shared->effects == nullptr) { return pipelines; }
+
+    // one that cannot be read or made is left out, and was said
+    for (const std::string &path : paths)
+    {
+      if (const VkPipeline pipeline = _shared->effects->Find(kind, path); pipeline != VK_NULL_HANDLE)
+      {
+        pipelines.push_back(pipeline);
+      }
+    }
+    if (pipelines.empty()) { return pipelines; }
+
+    if (!images.IsReady())
+    {
+      const bool is_light = kind == VK_EffectKind::Light;
+      if (!images.Initialize(
+            _shared->device,
+            _shared->effects,
+            is_light ? _shared->resolve : nullptr,
+            kind,
+            is_light ? VK_SceneImage::kFormat : _shared->screen_format,
+            _extent))
+      {
+        _shared->logger->Error("Could not make the pictures the effects of {} are run between", _name);
+        pipelines.clear();
+      }
+    }
+    return pipelines;
+  }
+
+  void VK_Canvas::BeginEffectPass(const VK_EffectKind kind, const VkFramebuffer framebuffer) const
+  {
+    VkRenderPassBeginInfo pass{};
+    pass.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    pass.renderPass = _shared->effects->PassOf(kind);
+    pass.framebuffer = framebuffer;
+    pass.renderArea = {{0, 0}, _extent};
+
+    vkCmdBeginRenderPass(_commands, &pass, VK_SUBPASS_CONTENTS_INLINE);
+  }
+
+  VkDescriptorSet VK_Canvas::RunLightEffects()
+  {
+    const std::vector<VkPipeline> pipelines = FindEffects(VK_EffectKind::Light, _effects, _light_images);
+    if (pipelines.empty()) { return _scene_set; }
+
+    if (_scene_effect_set == VK_NULL_HANDLE) { _scene_effect_set = _shared->effects->Keep(_scene.View()); }
+    if (_scene_effect_set == VK_NULL_HANDLE) { return _scene_set; }
+
+    // the first reads the scene image, and each one after it what the one
+    // before it wrote
+    VkDescriptorSet read = _scene_effect_set;
+    std::size_t written = 0;
+    for (std::size_t i = 0; i < pipelines.size(); i++)
+    {
+      written = i % 2;
+      BeginEffectPass(VK_EffectKind::Light, _light_images.Framebuffer(written));
+      _shared->effects->Draw(_commands, pipelines[i], read, _extent);
+      vkCmdEndRenderPass(_commands);
+      read = _light_images.EffectSet(written);
+    }
+    return _light_images.ResolveSet(written);
   }
 
   bool VK_Canvas::EnterScene()
@@ -117,6 +199,37 @@ namespace neon
       vkCmdEndRenderPass(_commands);
     }
 
+    // The effects of the camera, between its scene and what is drawn on
+    // top. Those on the light are run first, and the resolve step reads
+    // what they made. Those on the colours of the screen follow the
+    // resolve: it writes into a picture of theirs, and the last of them
+    // writes into the image that is shown, where the resolve would.
+    VkDescriptorSet resolved_from = _scene_set;
+    std::vector<VkPipeline> screen_effects;
+    VkDescriptorSet last_read = VK_NULL_HANDLE;
+    if (steps.resolve)
+    {
+      resolved_from = RunLightEffects();
+
+      screen_effects = FindEffects(VK_EffectKind::Screen, _screen_effects, _screen_images);
+      if (!screen_effects.empty())
+      {
+        BeginEffectPass(VK_EffectKind::Screen, _screen_images.Framebuffer(0));
+        _shared->resolve->Draw(_commands, resolved_from, _extent);
+        vkCmdEndRenderPass(_commands);
+
+        std::size_t read = 0;
+        for (std::size_t i = 0; i + 1 < screen_effects.size(); i++)
+        {
+          BeginEffectPass(VK_EffectKind::Screen, _screen_images.Framebuffer(1 - read));
+          _shared->effects->Draw(_commands, screen_effects[i], _screen_images.EffectSet(read), _extent);
+          vkCmdEndRenderPass(_commands);
+          read = 1 - read;
+        }
+        last_read = _screen_images.EffectSet(read);
+      }
+    }
+
     if (steps.begin_overlay)
     {
       // where a scene was drawn the resolve covers what is cleared here
@@ -134,7 +247,11 @@ namespace neon
       vkCmdBeginRenderPass(_commands, &pass, VK_SUBPASS_CONTENTS_INLINE);
     }
 
-    if (steps.resolve) { _shared->resolve->Draw(_commands, _scene_set, _extent); }
+    if (steps.resolve)
+    {
+      if (screen_effects.empty()) { _shared->resolve->Draw(_commands, resolved_from, _extent); }
+      else { _shared->effects->Draw(_commands, screen_effects.back(), last_read, _extent); }
+    }
 
     _stage = VK_FrameStage::Overlay;
   }

@@ -24,6 +24,7 @@
 #include "vk-pipelines.hpp"
 #include "vk-render-target.hpp"
 #include "vk-renderer-2d.hpp"
+#include "vk-effects.hpp"
 #include "vk-resolve.hpp"
 #include "vk-samplers.hpp"
 #include "vk-shader-data.hpp"
@@ -91,6 +92,9 @@ namespace neon
     VkFormat _depth_format = VK_FORMAT_UNDEFINED;
     VkRenderPass _scene_pass = VK_NULL_HANDLE;
     VK_Resolve _resolve;
+
+    // what the effects of the cameras are run with
+    VK_Effects _effects;
 
     // what is seen behind the models of a scene, and the images of it
     VK_Sky _sky;
@@ -338,6 +342,10 @@ namespace neon
     void UpdateRenderObjectMesh(int render_object_id, const MeshData &mesh) override;
 
     bool SetImage(const std::string &name, const ImagePixels &pixels) override;
+
+    void SetEffects(
+      const std::vector<std::string> &effects,
+      const std::vector<std::string> &screen_effects) override;
 
     void SetShaderTime(double seconds, double delta) override;
 

@@ -6,8 +6,15 @@
 
 include("${CMAKE_CURRENT_LIST_DIR}/../../cmake/scripts/run-application.cmake")
 
+# The second case shows the same square through a camera with effects, see
+# effects.scene.yml.
+set(SCENE)
+if (CASE STREQUAL "the-effects-of-a-camera-are-run-over-its-picture")
+  set(SCENE --scene extensions://tinted/assets/scenes/effects.scene.yml)
+endif ()
+
 run(--headless-renderer --window-size 1280x720 --render-scale 1 --time-step 0.05 --frames 5
-        --tonemapper none --output-dir shots --screenshot output://frame.png)
+        --tonemapper none --output-dir shots --screenshot output://frame.png ${SCENE})
 
 expect_exit_code(0)
 expect_no_output("[error]")
@@ -41,6 +48,21 @@ function(expect_pixel WHAT X Y RED GREEN BLUE)
     endif ()
   endforeach ()
 endfunction()
+
+if (CASE STREQUAL "the-effects-of-a-camera-are-run-over-its-picture")
+  # Mirrored, so the right half of the square is on the left: green, at half
+  # its light, which a screen writes as 188. Red and blue then change
+  # places, which leaves green as it is.
+  expect_pixel("what says that time runs, mirrored and halved" 560 360 0 188 0)
+
+  # The numbers of the game, 1, 0.5, 0, are on the right: at half their
+  # light 188 137 0 on a screen, and with red and blue swapped 0 137 188.
+  expect_pixel("the numbers of the game, mirrored, halved, and swapped" 720 360 0 137 188)
+
+  # next to the square nothing was drawn, and the effects leave black black
+  expect_pixel("what is next to the square" 100 360 0 0 0)
+  return()
+endif ()
 
 # the numbers at place 3 are 1, 0.5, 0 in linear light, which a screen
 # writes as 255 188 0

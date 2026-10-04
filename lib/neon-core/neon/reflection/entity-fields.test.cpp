@@ -112,7 +112,7 @@ namespace
   {
     EXPECT_FALSE(neon::GetField(_store, _entity, _camera, "zoom", _value, _error));
 
-    EXPECT_EQ(_error, "'zoom' is not known to Camera. Known are: target, fov, near, far, up, rolls_with_entity, texture, size");
+    EXPECT_EQ(_error, "'zoom' is not known to Camera. Known are: target, fov, near, far, up, rolls_with_entity, effects, screen_effects, texture, size");
   }
 
   TEST_F(EntityFieldsTest, DoesNotReachWhatIsNotDescribed)

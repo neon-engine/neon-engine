@@ -31,6 +31,16 @@ namespace neon
     /// hangs from is turned.
     bool rolls_with_entity = false;
 
+    /// The effects that are run over the whole picture the camera drew,
+    /// one after the other: fragment shaders a game brings, named as a
+    /// shader is, such as `extensions://quake/assets/shaders/under-water`.
+    /// These are run on the light of the scene, before the tonemapper.
+    std::vector<std::string> effects;
+
+    /// As `effects`, but run on the colours a screen is given: after the
+    /// tonemapper, and before the user interface is drawn on top.
+    std::vector<std::string> screen_effects;
+
     /// For `target: texture`: what the texture is called, and its size in
     /// pixels. A model shows what the camera sees as the texture
     /// `surface://` and the name, and so does an image of a user
@@ -61,6 +71,12 @@ namespace neon
 
     type.Field("rolls_with_entity", &Camera::rolls_with_entity)
         .Describe("Whether the view rolls with the rotation of its entity, as a view from the eyes does");
+
+    type.Field("effects", &Camera::effects)
+        .Describe("Shaders that are run over the picture of the camera, on the light of its scene before the tonemapper");
+
+    type.Field("screen_effects", &Camera::screen_effects)
+        .Describe("Shaders that are run over the picture of the camera, on the colours of the screen after the tonemapper");
 
     type.Field("texture", &Camera::texture)
         .Describe("For a texture: what it is called, which a model shows as surface:// and the name");

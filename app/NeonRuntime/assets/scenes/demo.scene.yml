@@ -3198,7 +3198,10 @@ entities:
           color: [0.12, 0.13, 0.15]
           roughness: 0.6
 
-  # on the north wall, looking back down the corridor
+  # On the north wall, looking back down the corridor. Its picture is that
+  # of a monitor: darker towards its corners, which is taken from the light
+  # of what it sees, and with the rows of a tube, which are laid over the
+  # picture that is shown.
   - name: surfaces-camera
     components:
       Transform:
@@ -3209,6 +3212,10 @@ entities:
         texture: security
         size: [512, 512]
         fov: 60
+        effects:
+          - assets://shaders/effects/vignette
+        screen_effects:
+          - assets://shaders/effects/scan-lines
 
   - name: surfaces-camera-case
     components:
