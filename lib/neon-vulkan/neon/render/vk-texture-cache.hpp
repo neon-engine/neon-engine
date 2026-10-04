@@ -30,6 +30,12 @@ namespace neon
     {
       VK_Texture texture;
       int count = 0;
+
+      /// How the texture was made, for when its pixels are replaced.
+      VK_TextureOptions options;
+
+      /// Whether it was made from pixels in memory, which can be replaced.
+      bool is_of_pixels = false;
     };
 
     std::map<std::string, Shared> _shared;
@@ -74,6 +80,14 @@ namespace neon
       const ImagePixels &pixels,
       const VK_TextureOptions &options,
       VK_Texture &texture);
+
+    /// Writes other pixels into every texture that was made from the pixels
+    /// in memory of a path, in whichever ways it is kept, so that what is
+    /// drawn with them shows the new ones. The textures stay the same
+    /// textures, so no material has to be made again. Nothing may be drawing
+    /// while this runs. Returns how many textures were written; pixels of
+    /// another size than a texture has are refused for it, which is logged.
+    std::size_t ReplacePixels(const std::string &path, const ImagePixels &pixels);
 
     /// Gives a texture back. It is freed when nothing holds it any more.
     void Release(const std::string &key);

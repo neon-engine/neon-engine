@@ -64,9 +64,11 @@ namespace neon
     /// reads as the texture `image://<name>`, see TextureSource: red, green, blue, and alpha
     /// for each pixel, row after row from the top. It is how what reads a
     /// format of its own, an importer or an extension, hands over a texture
-    /// that is in no file. The pixels are copied. A name is set once, before
-    /// the first material that reads it is made; setting it again changes
-    /// nothing that was made already. Returns false when the pixels are not
+    /// that is in no file. The pixels are copied. A name that is set again
+    /// with pixels of the same size shows them from the next frame on,
+    /// wherever the image is drawn, without a material being made anew: it
+    /// is how a picture that is worked out while the game runs is shown.
+    /// Another size is refused for what was made already. Returns false when the pixels are not
     /// width by height of four bytes, or for a renderer that keeps no
     /// images.
     virtual bool SetImage(const std::string &name, const ImagePixels &pixels)

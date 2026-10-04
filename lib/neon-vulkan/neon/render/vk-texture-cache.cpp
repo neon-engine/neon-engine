@@ -80,9 +80,28 @@ namespace neon
     }
 
     _loads++;
-    _shared[key] = Shared{.texture = made, .count = 1};
+    _shared[key] = Shared{.texture = made, .count = 1, .options = options, .is_of_pixels = true};
     texture = made;
     return true;
+  }
+
+  std::size_t VK_TextureCache::ReplacePixels(const std::string &path, const ImagePixels &pixels)
+  {
+    std::size_t replaced = 0;
+    for (auto &[key, shared] : _shared)
+    {
+      if (!shared.is_of_pixels || shared.texture.Path() != path) { continue; }
+
+      if (shared.texture.Replace(
+        pixels.pixels.data(),
+        static_cast<uint32_t>(pixels.width),
+        static_cast<uint32_t>(pixels.height),
+        shared.options))
+      {
+        replaced++;
+      }
+    }
+    return replaced;
   }
 
   void VK_TextureCache::Release(const std::string &key)

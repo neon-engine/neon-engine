@@ -498,9 +498,9 @@ typedef struct NeonExtensionHost
    * pixels of four bytes, red, green, blue, and alpha, row after row from
    * the top, which are copied. A material reads it as the texture
    * `image://<extension>/<name>`, the name of the extension in front, so
-   * that two extensions cannot take each other's. A name is set once,
-   * before anything that shows it is first drawn. Returns 1, or 0 after
-   * saying why. */
+   * that two extensions cannot take each other's. A name that is
+   * set again with pixels of the same size is drawn anew from the next
+   * frame on, wherever it is shown. Returns 1, or 0 after saying why. */
   int (*set_image)(void *context, const char *name, uint32_t width, uint32_t height, const uint8_t *pixels);
 
   /* Gives the `Renderable` of an entity a mesh to draw, in place of a

@@ -53,3 +53,8 @@ expect_pixel("the bottom right of the picture" 720 440 128 128 128)
 expect_output("The square is lit by image://canvas/light")
 expect_pixel("the half-lit left of the square" 1046 360 188 188 188)
 expect_pixel("the fully lit right of the square" 1191 360 255 255 255)
+
+# the square on the left: its picture was red, and was set again to yellow
+# after it had been drawn, which every frame after shows
+expect_output("The signal was set again")
+expect_pixel("the square whose picture was set again" 162 360 255 255 0)

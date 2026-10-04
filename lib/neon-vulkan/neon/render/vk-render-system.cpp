@@ -6,6 +6,7 @@
 #include <format>
 #include <stdexcept>
 #include <glm/gtc/matrix_transform.hpp>
+#include <neon/render/texture-source.hpp>
 
 #include "vk-culling.hpp"
 #include "vk-shadow-casting.hpp"
@@ -574,8 +575,29 @@ namespace neon
       return false;
     }
 
+    // A name that is set again: the textures that were made of it are
+    // written anew before the next frame is drawn, see SettleImages().
+    if (_images.contains(name)) { _changed_images.insert(name); }
+
     _images[name] = std::make_shared<const ImagePixels>(pixels);
     return true;
+  }
+
+  void VK_RenderSystem::SettleImages()
+  {
+    if (_changed_images.empty()) { return; }
+
+    // the frame before is finished, and nothing draws with what is written
+    vkDeviceWaitIdle(_device.Device());
+
+    for (const std::string &name : _changed_images)
+    {
+      const auto image = _images.find(name);
+      if (image == _images.end()) { continue; }
+
+      _textures.ReplacePixels(TextureSource::For(TextureSourceKind::Image, name), *image->second);
+    }
+    _changed_images.clear();
   }
 
   bool VK_RenderSystem::FindSurface(const std::string &name, VK_Texture &texture) const
@@ -666,6 +688,7 @@ namespace neon
   void VK_RenderSystem::PrepareFrame()
   {
     SettleRenderTargets();
+    SettleImages();
 
     // a window that changed its size, or has no area to draw to
     if (_device.Surface() != VK_NULL_HANDLE && !FitWindow()) { return; }

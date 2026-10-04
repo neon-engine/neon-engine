@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <memory>
 #include <optional>
+#include <set>
 #include <string>
 #include <vector>
 #include <neon/runtime/settings-config.hpp>
@@ -220,10 +221,18 @@ namespace neon
     // material that is made of it once the first was let go.
     std::unordered_map<std::string, std::shared_ptr<const ImagePixels>> _images;
 
+    // the images that were set again since the last frame, whose textures
+    // are written anew before the next is drawn
+    std::set<std::string> _changed_images;
+
     [[nodiscard]] bool FindSurface(const std::string &name, VK_Texture &texture) const;
 
     /// Does what waited for the frame to be finished.
     void SettleRenderTargets();
+
+    /// Writes the pixels of every image that was set again into the
+    /// textures that were made of it, once the frame before is finished.
+    void SettleImages();
 
     void ReleaseTarget(Target &target) const;
 

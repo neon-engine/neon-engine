@@ -1,6 +1,7 @@
 // Makes a picture of four plain colours and a square to show it on, and
 // puts the square in front of the camera, with the engine's Transform and
-// Renderable. Nothing of it is in a file.
+// Renderable. Nothing of it is in a file. Next to it are a square lit by a
+// lightmap, and one whose picture is set again while the game runs.
 
 #include <string>
 #include <vector>
@@ -37,8 +38,57 @@ namespace
     return pixels;
   }
 
+  /// Sets the picture of the square on the left again once it was drawn:
+  /// red at first, yellow from the third frame on. What draws the square
+  /// is not touched, only the picture.
+  class Repainting final : public neon::extension::System
+  {
+    int _frames = 0;
+
+  public:
+    void Update(World &world, const double delta_time) override
+    {
+      if (++_frames != 3) { return; }
+
+      const std::string again = world.SetImage("signal", 2, 2, {
+        255, 255, 0, 255, 255, 255, 0, 255,
+        255, 255, 0, 255, 255, 255, 0, 255,
+      });
+      world.Info(again.empty() ? "The signal could not be set again" : "The signal was set again");
+    }
+  };
+
   class Canvas final : public neon::extension::Extension
   {
+    /// A square of a metre to the left of the canvas, whose picture is set
+    /// again while the game runs, see Repainting.
+    static void ShowSignal(World &world)
+    {
+      const std::string signal = world.SetImage("signal", 2, 2, {
+        255, 0, 0, 255, 255, 0, 0, 255,
+        255, 0, 0, 255, 255, 0, 0, 255,
+      });
+
+      const Entity shown = world.CreateEntity("signal");
+      world.AddComponent(shown, "Transform");
+      world.AddComponent(shown, "Renderable");
+      world.SetVector3(shown, world.FindField("Transform", "position"), {-1.65f, 0.0f, -3.0f});
+      world.SetText(shown, world.FindField("Renderable", "shader"), "assets://shaders/unlit");
+      world.SetTexts(shown, world.FindField("Renderable", "textures"), {signal});
+
+      const NeonVector3 towards{0.0f, 0.0f, 1.0f};
+      const NeonColor plain{1.0f, 1.0f, 1.0f, 1.0f};
+      world.SetMesh(
+        shown,
+        {
+          {{-0.5f, -0.5f, 0.0f}, towards, {0.0f, 1.0f}, plain},
+          {{0.5f, -0.5f, 0.0f}, towards, {1.0f, 1.0f}, plain},
+          {{0.5f, 0.5f, 0.0f}, towards, {1.0f, 0.0f}, plain},
+          {{-0.5f, 0.5f, 0.0f}, towards, {0.0f, 0.0f}, plain},
+        },
+        {0, 1, 2, 0, 2, 3});
+    }
+
     /// A white square of a metre to the right of the canvas, lit by a
     /// lightmap of its own: half the light on its left half, all of it on
     /// its right.
@@ -82,6 +132,12 @@ namespace
     }
 
   public:
+    bool Initialize(World &world) override
+    {
+      AddSystem<Repainting>("Repainting");
+      return true;
+    }
+
     void Start(World &world) override
     {
       const std::string picture = world.SetImage("quarters", side, side, MakePicture());
@@ -109,6 +165,7 @@ namespace
       world.Info(shown ? "The canvas shows " + picture : "The canvas could not be shown");
 
       ShowLit(world);
+      ShowSignal(world);
     }
   };
 }

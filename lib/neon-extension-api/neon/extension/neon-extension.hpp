@@ -476,7 +476,8 @@ namespace neon::extension
     /// Makes a picture in memory known to the renderer: four bytes for each
     /// pixel, red, green, blue, and alpha, row after row from the top.
     /// Returns the path a material reads it by, `image://<extension>/<name>`,
-    /// or nothing when it was refused. Once, before what shows it is drawn.
+    /// or nothing when it was refused. A name that is set again with pixels of
+    /// the same size is drawn anew from the next frame on.
     [[nodiscard]] std::string SetImage(
       const std::string &name,
       const std::uint32_t width,

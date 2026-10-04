@@ -69,6 +69,18 @@ namespace neon
       uint32_t height,
       const VK_TextureOptions &options = {});
 
+    /// Writes pixels into the image that is there, and makes its smaller
+    /// copies of them. `from` is the layout every level of the image is in:
+    /// undefined for an image that was just made, and read by shaders for
+    /// one that is drawn with already.
+    bool Fill(
+      const unsigned char *pixels,
+      uint32_t width,
+      uint32_t height,
+      uint32_t mip_levels,
+      const VK_TextureOptions &options,
+      VkImageLayout from);
+
   public:
     /// How many faces a cube has.
     static constexpr std::size_t kCube_Faces = 6;
@@ -98,6 +110,18 @@ namespace neon
       uint32_t width,
       uint32_t height,
       const VK_TextureOptions &options);
+
+    /// Writes other pixels into a texture that was made from pixels in
+    /// memory, of the same size, so that everything that draws with it shows
+    /// them from the next frame. The image and its view stay what they are,
+    /// which is what lets materials keep them. Nothing may be drawing with
+    /// the texture while this runs: the caller waits for the graphics card
+    /// first. Returns false, and leaves the texture as it was, for another
+    /// size, or for a texture that is not made or belongs to something else.
+    bool Replace(const unsigned char *pixels, uint32_t width, uint32_t height, const VK_TextureOptions &options);
+
+    /// The path the texture was created with, which names it.
+    [[nodiscard]] const std::string &Path() const { return _texture_path; }
 
     /// Makes the texture a single colour. Used where a material names no
     /// texture, so that shaders always have something to read.

@@ -115,8 +115,6 @@ namespace neon
     const uint32_t height,
     const VK_TextureOptions &options)
   {
-    const VkDevice device = _device->Device();
-    const VkDeviceSize size = static_cast<VkDeviceSize>(width) * height * 4;
     const VkFormat texture_format = FormatFor(options.is_color);
 
     // Smaller copies of the image are made for when it is seen from afar,
@@ -132,6 +130,48 @@ namespace neon
     const uint32_t mip_levels = can_scale && options.mip_levels
       ? static_cast<uint32_t>(std::floor(std::log2(std::max(width, height)))) + 1
       : 1;
+
+    if (!_device->CreateImage(
+          width,
+          height,
+          mip_levels,
+          texture_format,
+          VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+          _image,
+          _memory))
+    {
+      return false;
+    }
+
+    constexpr VkImageAspectFlags color = VK_IMAGE_ASPECT_COLOR_BIT;
+    if (!Fill(pixels, width, height, mip_levels, options, VK_IMAGE_LAYOUT_UNDEFINED) ||
+        !_device->CreateImageView(_image, texture_format, color, mip_levels, _view))
+    {
+      _logger->Error("Could not upload texture {}", _texture_path);
+      CleanUp();
+      return false;
+    }
+
+    // read smoothly, and from the side without blurring, as the surface
+    // of a model is seen
+    _sampling = options.repeat ? VK_Sampling::AnisotropicRepeat : VK_Sampling::AnisotropicClamp;
+    _width = width;
+    _height = height;
+    _mip_levels = mip_levels;
+    _initialized = true;
+    return true;
+  }
+
+  bool VK_Texture::Fill(
+    const unsigned char *pixels,
+    const uint32_t width,
+    const uint32_t height,
+    const uint32_t mip_levels,
+    const VK_TextureOptions &options,
+    const VkImageLayout from)
+  {
+    const VkDevice device = _device->Device();
+    const VkDeviceSize size = static_cast<VkDeviceSize>(width) * height * 4;
 
     VkBuffer staging = VK_NULL_HANDLE;
     VkDeviceMemory staging_memory = VK_NULL_HANDLE;
@@ -175,25 +215,12 @@ namespace neon
 
     vkUnmapMemory(device, staging_memory);
 
-    if (!_device->CreateImage(
-          width,
-          height,
-          mip_levels,
-          texture_format,
-          VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-          _image,
-          _memory))
-    {
-      release_staging();
-      return false;
-    }
-
     const VkCommandBuffer commands = _device->BeginCommands();
     constexpr VkImageAspectFlags color = VK_IMAGE_ASPECT_COLOR_BIT;
 
     VK_Device::TransitionImage(
       commands, _image, color, 0, mip_levels,
-      VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+      from, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
     VkBufferImageCopy region{};
     region.imageSubresource = {color, 0, 0, 1};
@@ -239,21 +266,26 @@ namespace neon
 
     const bool uploaded = _device->EndCommands(commands);
     release_staging();
+    return uploaded;
+  }
 
-    if (!uploaded || !_device->CreateImageView(_image, texture_format, color, mip_levels, _view))
+  bool VK_Texture::Replace(
+    const unsigned char *pixels,
+    const uint32_t width,
+    const uint32_t height,
+    const VK_TextureOptions &options)
+  {
+    if (!_initialized || _is_borrowed || _image == VK_NULL_HANDLE || pixels == nullptr) { return false; }
+
+    if (width != _width || height != _height)
     {
-      _logger->Error("Could not upload texture {}", _texture_path);
-      CleanUp();
+      _logger->Error(
+        "Texture {} is {} by {} pixels and cannot take {} by {}: a picture that is set again keeps its size",
+        _texture_path, _width, _height, width, height);
       return false;
     }
 
-    // read smoothly, and from the side without blurring, as the surface
-    // of a model is seen
-    _sampling = options.repeat ? VK_Sampling::AnisotropicRepeat : VK_Sampling::AnisotropicClamp;
-    _width = width;
-    _height = height;
-    _initialized = true;
-    return true;
+    return Fill(pixels, width, height, _mip_levels, options, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
   }
 
   bool VK_Texture::InitializeWithFaces(const std::array<std::string, kCube_Faces> &paths)
