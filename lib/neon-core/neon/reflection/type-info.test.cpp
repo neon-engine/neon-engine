@@ -220,6 +220,29 @@ namespace
 
   // what is described
 
+  TEST_F(TypeInfoTest, ATypeSaysWhatIsDoneWithAnObjectThatWasWritten)
+  {
+    struct Counted
+    {
+      float size = 1.0f;
+      int writes = 0;
+    };
+
+    neon::TypeBuilder<Counted> builder;
+    builder.Named("Counted");
+    builder.Field("size", &Counted::size);
+    builder.Written([](Counted &counted) { counted.writes++; });
+    const TypeInfo type = builder.Build();
+
+    // what writes a field calls it afterwards, with the object
+    Counted counted;
+    ASSERT_TRUE(static_cast<bool>(type.written));
+    type.Find("size")->set(&counted, 2.0f);
+    type.written(&counted);
+    EXPECT_EQ(counted.size, 2.0f);
+    EXPECT_EQ(counted.writes, 1);
+  }
+
   TEST_F(TypeInfoTest, KnowsTheNameAndTheDescriptionOfTheType)
   {
     EXPECT_EQ(_type.name, "Monster");

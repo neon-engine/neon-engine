@@ -111,6 +111,7 @@ keeps what the prefab says instead.
 | `fit` | How the model is sized: `none` draws it at its own size and origin, as the file says; `unit` moves its middle to the origin and scales it so that its longest side is 1 | `none` |
 | `shader` | Virtual path of the shader, without an extension | None. It has to be written |
 | `textures` | A list of virtual paths | None |
+| `preload` | A list of virtual paths of textures the entity will show later in place of its first one: the faces of a character, the skins of what a player holds. Each is loaded when the entity is first drawn and stays loaded for as long as the entity is there, so that showing it the first time costs nothing while the game runs. It changes nothing that is drawn | None |
 | `scale_textures` | Whether textures repeat as the entity grows | `false` |
 | `material` | `color` as `[red, green, blue]` or with alpha as a fourth, `metallic` and `roughness` from 0 to 1 (the `pbr` shader), `shininess` (the `basic-lit` shader), `use_textures`, `alpha_mode`, `double_sided` as `model`, `always`, or `never`, what the surface gives off: `emissive` as a colour, `emissive_strength` from 0 up, and `emissive_texture` as a virtual path, see below; and light that was worked out ahead: `lightmap` as a virtual path and `lightmap_strength` from 0 up, see [vulkan-renderer.md](vulkan-renderer.md#lightmaps) | white, `0`, `0.5`, `0`, `true`, `opaque`, `model`, black, `1`, none, none, `1` |
 
@@ -161,6 +162,17 @@ what the model file says, the `doubleSided` of a glTF material, and one
 side when the file says nothing or the entity has a `Geometry`. See
 [models.md](models.md#doublesided). An entity whose `scale` mirrors it,
 with one or three of its axes below 0, is still drawn from the front.
+
+A `Renderable` can be written while the game runs: a script, an extension,
+or the editor sets `textures`, `shader`, `model`, or anything of `material`,
+and the entity is drawn with what it says from the next frame on. That is
+how a face blinks and a button lights up: the entity is told another
+texture. The renderer is told once for each write, and an entity that is
+never written costs nothing for it, see
+[vulkan-renderer.md](vulkan-renderer.md#what-is-shared). A texture that was
+shown stays loaded until the scene is over, so going back and forth between
+two reads no file and sends nothing to the graphics card. `preload` loads
+the ones that will be shown before they are.
 
 **Geometry**
 

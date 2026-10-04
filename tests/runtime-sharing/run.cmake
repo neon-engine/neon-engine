@@ -44,16 +44,17 @@ expect_output("1 models were loaded and 299 shared")
 expect_output_count("Model assets://external/kenney/prototype-kit/crate.glb was freed" 1)
 
 if (CASE STREQUAL "crates-with-one-material-share-it")
-  # one material, 299 shares, freed once; one pool
+  # one material, 299 shares, freed once, when the renderer is cleaned up:
+  # a material that nothing draws with stays until then; one pool
   expect_output("1 materials were made and 299 shared")
   expect_output("Material 0 is shared, 300 render objects draw with it now")
-  expect_output_count("was freed, nothing draws with it any more" 1)
+  expect_output("1 materials were freed, nothing draws with them any more")
   expect_output_count("Made descriptor pool" 1)
 else ()
   # a material each, each taking the texture from the cache, none shared,
   # two pools of 256
   expect_output("300 materials were made and 0 shared")
-  expect_output_count("was freed, nothing draws with it any more" 300)
+  expect_output("300 materials were freed, nothing draws with them any more")
   expect_output("Made descriptor pool 2 for 256 materials")
   expect_output_count("Made descriptor pool" 2)
 endif ()

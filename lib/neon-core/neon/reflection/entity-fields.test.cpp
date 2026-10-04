@@ -93,6 +93,26 @@ namespace
     EXPECT_EQ(_store.Get<Renderable>(_entity)->render_info.material_info.color.g, 0.0f);
   }
 
+  TEST_F(EntityFieldsTest, AFieldOfARenderableThatIsWrittenCountsItsVersionUp)
+  {
+    const unsigned int before = _store.Get<Renderable>(_entity)->render_info.version;
+
+    ASSERT_TRUE(neon::SetField(
+      _store, _entity, _renderable, "textures", std::vector<std::string>{"assets://textures/face-closed.png"}, _error))
+      << _error;
+    EXPECT_EQ(_store.Get<Renderable>(_entity)->render_info.version, before + 1);
+
+    ASSERT_TRUE(neon::SetField(_store, _entity, _renderable, "material.color", Color{1.0f, 0.0f, 0.0f, 1.0f}, _error));
+    EXPECT_EQ(_store.Get<Renderable>(_entity)->render_info.version, before + 2);
+
+    // a value that is refused writes nothing, and counts nothing
+    EXPECT_FALSE(neon::SetField(_store, _entity, _renderable, "shader", 4.0f, _error));
+    EXPECT_EQ(_store.Get<Renderable>(_entity)->render_info.version, before + 2);
+
+    // and a type that marks nothing is written as before
+    ASSERT_TRUE(neon::SetField(_store, _entity, _camera, "fov", 70.0f, _error));
+  }
+
   TEST_F(EntityFieldsTest, RefusesAValueOfAnotherKindAndLeavesTheFieldAlone)
   {
     EXPECT_FALSE(neon::SetField(_store, _entity, _camera, "fov", std::string("wide"), _error));

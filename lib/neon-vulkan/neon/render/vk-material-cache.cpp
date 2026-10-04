@@ -46,6 +46,9 @@ namespace neon
     const auto found = _shared.find(key);
     if (found == _shared.end()) { return -1; }
 
+    // one that nothing held is held again
+    if (found->second.count == 0) { _unused--; }
+
     found->second.count++;
     _shares++;
     return found->second.id;
@@ -62,19 +65,19 @@ namespace neon
     return id;
   }
 
-  bool VK_MaterialCache::Release(const int id, VK_Material &freed)
+  void VK_MaterialCache::Release(const int id, const std::uint64_t now)
   {
     const auto key = _keys.find(id);
-    if (key == _keys.end()) { return false; }
+    if (key == _keys.end()) { return; }
 
     Shared &shared = _shared[key->second];
-    shared.count--;
-    if (shared.count > 0) { return false; }
+    if (shared.count == 0) { return; }
 
-    _shared.erase(key->second);
-    _keys.erase(key);
-    freed = _materials.Remove(id);
-    return true;
+    shared.count--;
+    if (shared.count > 0) { return; }
+
+    shared.unused_since = now;
+    _unused++;
   }
 
   int VK_MaterialCache::CountOf(const int id) const

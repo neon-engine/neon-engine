@@ -338,6 +338,9 @@ namespace neon
     }
 
     CheckRules(type, reader, object);
+
+    // what keeps a copy of the object is told that it may have changed
+    if (type.written) { type.written(object); }
   }
 
   DataValue ToDataValue(const FieldValue &value)

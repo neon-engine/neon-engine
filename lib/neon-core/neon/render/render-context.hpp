@@ -54,6 +54,24 @@ namespace neon
 
     virtual void DestroyRenderObject(int render_object_id) = 0;
 
+    /// Draws a render object with what `render_info` says from now on: its
+    /// textures, its shader, its material, and its model when it is drawn
+    /// from a file. It keeps its id. A mesh that was built stays the one
+    /// the object has, see UpdateRenderObjectMesh(). What cannot be made,
+    /// a shader that is not there, is said, and the object is drawn as it
+    /// was. A renderer that leaves this as it is draws it as it was first
+    /// created.
+    virtual void UpdateRenderObject(int render_object_id, const RenderInfo &render_info) {}
+
+    /// Frees what nothing draws with any more. A material and its textures
+    /// stay loaded once nothing shows them, since what showed them may show
+    /// them again: a face that blinks, a level that is walked back through.
+    /// They are freed when this is asked for, which the world does once a
+    /// scene has taken the place of another, and a game that changes its
+    /// levels itself does when it does; and when there is no room for
+    /// another. A renderer that keeps nothing leaves this as it is.
+    virtual void FreeUnused() {}
+
     /// Draws a render object that was created from a mesh with `mesh` from
     /// now on, since what built the mesh changed it. A render object from
     /// a model file is left as it is. A renderer that cannot change a mesh

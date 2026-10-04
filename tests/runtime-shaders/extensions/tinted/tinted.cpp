@@ -10,9 +10,34 @@ namespace
   using neon::extension::Entity;
   using neon::extension::World;
 
+  /// Tells a small square, drawn red, another texture once it was drawn
+  /// for two frames: it is blue from then on.
+  class Flipping final : public neon::extension::System
+  {
+    int _frames = 0;
+
+  public:
+    void Update(World &world, const double delta_time) override
+    {
+      if (++_frames != 3) { return; }
+
+      const Entity flipped = world.FindEntity("flipped");
+      if (flipped == 0) { return; }
+
+      const bool told = world.SetTexts(flipped, world.FindField("Renderable", "textures"), {"image://tinted/blue"});
+      world.Info(told ? "The small square is told another texture" : "The small square could not be told a texture");
+    }
+  };
+
   class Tinted final : public neon::extension::Extension
   {
   public:
+    bool Initialize(World &world) override
+    {
+      AddSystem<Flipping>("Flipping");
+      return true;
+    }
+
     void Start(World &world) override
     {
       // The numbers at place 3: a colour in linear light, which a screen
@@ -38,6 +63,28 @@ namespace
           {{1.0f, -1.0f, 0.0f}, towards, {1.0f, 1.0f}, plain},
           {{1.0f, 1.0f, 0.0f}, towards, {1.0f, 0.0f}, plain},
           {{-1.0f, 1.0f, 0.0f}, towards, {0.0f, 0.0f}, plain},
+        },
+        {0, 1, 2, 0, 2, 3});
+
+      // A small square below and to the left, drawn with a shader of the
+      // engine and a red picture. The blue one it is told later is made
+      // ready ahead, with `preload`.
+      const std::string red = world.SetImage("red", 1, 1, {255, 0, 0, 255});
+      const std::string blue = world.SetImage("blue", 1, 1, {0, 0, 255, 255});
+      const Entity flipped = world.CreateEntity("flipped");
+      world.AddComponent(flipped, "Transform");
+      world.AddComponent(flipped, "Renderable");
+      world.SetVector3(flipped, world.FindField("Transform", "position"), {-1.6f, -0.9f, -3.0f});
+      world.SetText(flipped, world.FindField("Renderable", "shader"), "assets://shaders/unlit");
+      world.SetTexts(flipped, world.FindField("Renderable", "textures"), {red});
+      world.SetTexts(flipped, world.FindField("Renderable", "preload"), {blue});
+      world.SetMesh(
+        flipped,
+        {
+          {{-0.25f, -0.25f, 0.0f}, towards, {0.0f, 1.0f}, plain},
+          {{0.25f, -0.25f, 0.0f}, towards, {1.0f, 1.0f}, plain},
+          {{0.25f, 0.25f, 0.0f}, towards, {1.0f, 0.0f}, plain},
+          {{-0.25f, 0.25f, 0.0f}, towards, {0.0f, 0.0f}, plain},
         },
         {0, 1, 2, 0, 2, 3});
 

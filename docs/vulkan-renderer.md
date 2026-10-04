@@ -368,9 +368,40 @@ descriptor set, one set of textures.
 |---|---|---|---|
 | A model from a file: its vertex and index buffers | Path and `fit` | `VK_ModelCache` | When the last render object that drew it is destroyed, and at clean-up |
 | A texture: an image file, or an image a model carries | Image path and how it is kept (colours or numbers, smaller copies, repeating), and the model's path for an image it carries, since two models may each call theirs `*0` | `VK_TextureCache` | When the last material that read it is cleaned up, and at clean-up |
-| A material: the shader, the textures, the colour and the rest of `MaterialInfo`, over a model | Everything it is made from, as `VK_MaterialCache::KeyOf` writes it | `VK_MaterialCache` | When the last render object that drew with it is destroyed, and at clean-up |
+| A material: the shader, the textures, the colour and the rest of `MaterialInfo`, over a model | Everything it is made from, as `VK_MaterialCache::KeyOf` writes it | `VK_MaterialCache` | When nothing draws with it any more and what is unused is freed, see below, and at clean-up |
 | A mesh a `Geometry` built | Nothing: it belongs to its entity | The model cache, uncounted | With its render object |
 | A render target a material shows | The target | The target | With the target |
+
+A material that nothing draws with any more is not freed at once. It stays,
+with its textures, until what is unused is asked to be freed
+(`RenderContext::FreeUnused`), which happens at three times:
+
+| When | Who asks |
+|---|---|
+| A scene took the place of another, after its first frame was drawn | `EntityWorld`. What both scenes show is held by the new one by then, and is not read again |
+| A game that changes its levels within one scene says a level is over | The game: `free_unused` of an extension, `World::FreeUnused()` |
+| There is no room for another material | The renderer itself |
+
+It is how a game with levels loads: what a level showed stays until the
+level is over. An entity that shows one texture after another, a face, a
+button, a weapon with several skins, goes back and forth between materials
+that are held, and nothing is read or sent to the graphics card for a
+texture that was shown before. What is freed is what was given back before
+the frame in which it is freed, at the start of a frame, so no draw waits
+with it.
+
+An entity is drawn with what its `Renderable` says now. The description of
+`Renderable` counts a version up whenever a field of it is written through
+it, by a script, an extension, or a document (`TypeInfo::written`), and
+`RenderSubmission` tells the renderer when the version is not the one it
+drew: one comparison of two numbers for each entity in a frame, and nothing
+for what was not written. `UpdateRenderObject` takes the materials of what
+the entity looks like now before it gives back those it had, so what both
+share is never let go of, and keeps the id and, for a mesh that was built,
+the mesh. What writes a field in place, through its address, is not
+noticed; it counts `RenderInfo::version` up itself. `preload` of a
+`Renderable` takes the material for each texture it names when the entity
+is first drawn, and holds it with the entity.
 
 `VK_ModelCache` and `VK_MaterialCache` are a `DataBuffer`, which gives
 every model or material the id a render object keeps, with a key and a

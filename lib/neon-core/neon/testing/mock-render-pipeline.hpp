@@ -21,6 +21,8 @@ namespace neon::testing
 
     MOCK_METHOD(void, DestroyRenderObject, (int render_object_id), (override));
 
+    MOCK_METHOD(void, UpdateRenderObject, (int render_object_id, const RenderInfo &render_info), (override));
+    MOCK_METHOD(void, FreeUnused, (), (override));
     MOCK_METHOD(void, UpdateRenderObjectMesh, (int render_object_id, const MeshData &mesh), (override));
 
     MOCK_METHOD(void, SetCameraInfo, (const CameraInfo &camera_info), (override));

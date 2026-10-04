@@ -32,7 +32,7 @@ extern "C" {
 #endif
 
 /* The version of this file. It goes up by one whenever a table grows. */
-#define NEON_EXTENSION_ABI_VERSION 13
+#define NEON_EXTENSION_ABI_VERSION 14
 
 /* Marks the function an extension exports. Everything else of an extension
  * stays hidden, which neon_add_extension sees to. */
@@ -707,6 +707,17 @@ typedef struct NeonExtensionHost
   /* How loud a group is, as set_group_volume set it or as it started.
    * 0 for a group that is not there, and when there is no audio. */
   float (*get_group_volume)(void *context, const char *group);
+
+  /* Since version 14: freeing what nothing shows any more. */
+
+  /* Asks the renderer to free the materials and textures nothing draws
+   * with any more. They stay loaded once nothing shows them, since what
+   * showed them may show them again, and the application frees them when
+   * one scene takes the place of another. An extension that changes its
+   * levels itself, within one scene, calls this when a level is over and
+   * the next one was shown. They are freed when the next frame begins.
+   * Returns 1, or 0 when there is no renderer. */
+  int (*free_unused)(void *context);
 } NeonExtensionHost;
 
 /* What an extension brings. The application hands it over with every field

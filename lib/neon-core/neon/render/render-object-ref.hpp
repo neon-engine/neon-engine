@@ -13,6 +13,11 @@ namespace neon
   {
     int model_id = -1;
     std::vector<int> material_ids;
+
+    /// The materials that were made ready for what the object will show
+    /// later, see RenderInfo::preload_paths. It holds them and draws with
+    /// none of them.
+    std::vector<int> preloaded_material_ids;
   };
 
 } // neon

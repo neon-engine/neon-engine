@@ -330,6 +330,31 @@ namespace
     EXPECT_TRUE(_store.IsAlive(camera));
   }
 
+  TEST_F(EntityWorldTest, AsksTheRendererToFreeWhatNothingShowsOnceASceneTookThePlaceOfAnother)
+  {
+    _world.Initialize();
+    ON_CALL(_scene, Load(_, _)).WillByDefault(Return(true));
+
+    // not while one scene is shown
+    EXPECT_CALL(_pipeline, FreeUnused()).Times(0);
+    _world.Update();
+    ::testing::Mock::VerifyAndClearExpectations(&_pipeline);
+
+    // after the first frame of the next one, so that what both show stays
+    _world.LoadScene("assets://scenes/next.scene.yml");
+    {
+      ::testing::InSequence in_order;
+      EXPECT_CALL(_pipeline, RenderFrame());
+      EXPECT_CALL(_pipeline, FreeUnused());
+    }
+    _world.Update();
+    ::testing::Mock::VerifyAndClearExpectations(&_pipeline);
+
+    // and once
+    EXPECT_CALL(_pipeline, FreeUnused()).Times(0);
+    _world.Update();
+  }
+
   TEST_F(EntityWorldTest, RefusesASceneWithoutAPath)
   {
     _world.Initialize();

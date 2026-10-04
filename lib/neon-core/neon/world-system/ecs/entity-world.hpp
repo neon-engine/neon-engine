@@ -61,6 +61,13 @@ namespace neon
     /// was asked for.
     void ChangeScene();
 
+    /// Draws the frame, and after the first one of a scene that took the
+    /// place of another asks the renderer to free what nothing shows any
+    /// more.
+    void RenderFrame();
+
+    bool _frees_unused_after_frame = false;
+
     /// Asks for the scene of a SceneExit whose Trigger has a body inside.
     void CheckExits();
 

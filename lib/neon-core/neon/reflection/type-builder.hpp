@@ -401,6 +401,14 @@ namespace neon
       return *this;
     }
 
+    /// What is done with an object after a field of it was written from
+    /// outside, see TypeInfo::written.
+    TypeBuilder &Written(const std::function<void(T &object)> &written)
+    {
+      _type.written = [written](void *object) { written(*static_cast<T *>(object)); };
+      return *this;
+    }
+
     [[nodiscard]] TypeInfo Build() const
     {
       if (_type.name.empty())

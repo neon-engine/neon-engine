@@ -110,11 +110,21 @@ namespace neon
         {
           renderable.render_object_id = _render_pipeline->CreateRenderObject(renderable.render_info);
           renderable.mesh_version_drawn = renderable.render_info.mesh_version;
+          renderable.version_drawn = renderable.render_info.version;
         }
 
         // the renderer could not create it, and has said why. It knows no
         // render object by that id, so there is nothing to draw
         if (renderable.render_object_id < 0) { continue; }
+
+        // What the entity looks like was written since it was last drawn:
+        // other textures, another shader, another material. The renderer is
+        // told once, and not asked in every frame whether anything changed.
+        if (renderable.render_info.version != renderable.version_drawn)
+        {
+          _render_pipeline->UpdateRenderObject(renderable.render_object_id, renderable.render_info);
+          renderable.version_drawn = renderable.render_info.version;
+        }
 
         // a mesh that was changed since it was last drawn, by a rope that
         // moved, is handed to the renderer again

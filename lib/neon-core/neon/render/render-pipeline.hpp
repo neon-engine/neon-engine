@@ -34,6 +34,16 @@ namespace neon
       _render_context->DestroyRenderObject(render_object_id);
     }
 
+    virtual void UpdateRenderObject(const int render_object_id, const RenderInfo &render_info)
+    {
+      _render_context->UpdateRenderObject(render_object_id, render_info);
+    }
+
+    virtual void FreeUnused()
+    {
+      _render_context->FreeUnused();
+    }
+
     virtual void UpdateRenderObjectMesh(const int render_object_id, const MeshData &mesh)
     {
       _render_context->UpdateRenderObjectMesh(render_object_id, mesh);

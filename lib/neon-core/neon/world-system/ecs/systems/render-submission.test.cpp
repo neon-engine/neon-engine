@@ -597,6 +597,56 @@ namespace
     _system.Update(_store, 0.016);
   }
 
+  TEST_F(RenderSubmissionTest, TellsTheRendererOnceWhatAnEntityLooksLikeWhenItsVersionWasCountedUp)
+  {
+    Renderable face;
+    face.render_info.model_path = "assets://models/head.glb";
+    face.render_info.texture_paths = {"assets://textures/face-open.png"};
+    const Entity head = Create(Placed(0.0f, 0.0f, 0.0f), face);
+
+    EXPECT_CALL(_pipeline, CreateRenderObject(_)).WillOnce(Return(4));
+    EXPECT_CALL(_pipeline, EnqueueForRendering(4, _)).Times(4);
+
+    int told = 0;
+    std::vector<std::string> told_textures;
+    EXPECT_CALL(_pipeline, UpdateRenderObject(4, _))
+      .WillRepeatedly([&](const int, const neon::RenderInfo &info)
+      {
+        told++;
+        told_textures = info.texture_paths;
+      });
+
+    // drawn as it was made, as long as nothing counts its version up
+    _system.Update(_store, 0.016);
+    _system.Update(_store, 0.016);
+    EXPECT_EQ(told, 0);
+
+    // another texture: told once, before it is drawn, and not again after
+    Renderable *shown = _store.Get<Renderable>(head);
+    shown->render_info.texture_paths = {"assets://textures/face-closed.png"};
+    shown->render_info.version++;
+
+    _system.Update(_store, 0.016);
+    _system.Update(_store, 0.016);
+    EXPECT_EQ(told, 1);
+    EXPECT_THAT(told_textures, ::testing::ElementsAre("assets://textures/face-closed.png"));
+  }
+
+  TEST_F(RenderSubmissionTest, DoesNotTellTheRendererAgainOfWhatWasWrittenBeforeAnEntityWasFirstDrawn)
+  {
+    Renderable crate;
+    crate.render_info.model_path = "assets://models/crate.glb";
+    crate.render_info.version = 5;
+    Create(Placed(0.0f, 0.0f, 0.0f), crate);
+
+    EXPECT_CALL(_pipeline, CreateRenderObject(_)).WillOnce(Return(4));
+    EXPECT_CALL(_pipeline, EnqueueForRendering(4, _)).Times(2);
+    EXPECT_CALL(_pipeline, UpdateRenderObject(_, _)).Times(0);
+
+    _system.Update(_store, 0.016);
+    _system.Update(_store, 0.016);
+  }
+
   TEST_F(RenderSubmissionTest, HandsAMeshThatWasChangedToTheRendererAgain)
   {
     const auto mesh = std::make_shared<neon::MeshData>();

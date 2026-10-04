@@ -78,6 +78,10 @@ namespace
         (world.GetGroupVolume("music") == 0.25f ? "yes" : "no") + ", and no group without a name: " +
         (world.SetGroupVolume("", 1.0f) ? "no" : "yes"));
 
+      // what nothing shows any more is freed when an extension says its
+      // level is over
+      world.Info(std::string("Asked for what nothing shows to be freed: ") + (world.FreeUnused() ? "yes" : "no"));
+
       // numbers for the shaders an extension brings, at one of eight places;
       // a place that there is not is refused
       const bool numbered = world.SetShaderNumbers(2, {0.5f, 0.25f, 1.0f, 8.0f});

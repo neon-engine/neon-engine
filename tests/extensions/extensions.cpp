@@ -251,6 +251,9 @@ namespace
     // the sounds the extensions handed over, by their names
     std::map<std::string, std::vector<std::uint8_t>> _sounds;
 
+    // how often an extension asked for what nothing shows to be freed
+    int _freed = 0;
+
     // how loud the extensions set the groups of sounds, by the name of each
     std::map<std::string, float> _volumes;
     NiceMock<neon::testing::MockWorldSystem> _world{std::make_shared<RecordingLogger>()};
@@ -288,6 +291,7 @@ namespace
         _sounds[name] = std::move(bytes);
         return true;
       });
+      ON_CALL(_render, FreeUnused()).WillByDefault([this] { _freed++; });
       ON_CALL(_audio, SetGroupVolume(_, _)).WillByDefault([this](const std::string &group, const float volume)
       {
         _volumes[group] = volume;
@@ -680,6 +684,13 @@ namespace
     float yaw = 0.0f;
     ASSERT_TRUE(transform->Find("rotation")->GetItems()[1].GetNumber(yaw));
     EXPECT_EQ(yaw, 90.0f);
+  }
+
+  TEST_F(ExtensionsInTheWorldTest, AnExtensionAsksForWhatNothingShowsToBeFreed)
+  {
+    EXPECT_TRUE(LogOf("painter")->Contains(LogLevel::Info, "Asked for what nothing shows to be freed: yes"))
+      << LogOf("painter")->Messages(LogLevel::Info);
+    EXPECT_EQ(_freed, 1);
   }
 
   TEST_F(ExtensionsInTheWorldTest, AnExtensionSetsAndReadsHowLoudAGroupOfSoundsIs)

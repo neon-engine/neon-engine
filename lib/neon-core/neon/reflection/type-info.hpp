@@ -128,6 +128,14 @@ namespace neon
     /// Checked once the fields of an object were read from a document.
     std::vector<TypeRule> rules;
 
+    /// Called with an object after a field of it was written from outside:
+    /// by a script, by an extension, or from a document. It is how a type
+    /// that somebody else keeps a copy of, as the renderer keeps what a
+    /// Renderable looks like, marks that it changed, so that nobody has to
+    /// compare it in every frame. Empty for most types. What writes a
+    /// field in place, through its address, is not noticed.
+    std::function<void(void *object)> written;
+
     /// The field of a name, or nullptr. A field of a group is named with
     /// the group in front and a dot between, such as `material.color`.
     [[nodiscard]] const FieldInfo *Find(const std::string &path) const;

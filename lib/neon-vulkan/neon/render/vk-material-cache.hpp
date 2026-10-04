@@ -1,6 +1,7 @@
 #ifndef VK_MATERIAL_CACHE_HPP
 #define VK_MATERIAL_CACHE_HPP
 
+#include <cstdint>
 #include <cstddef>
 #include <map>
 #include <string>
@@ -18,8 +19,16 @@ namespace neon
   /// Two render objects whose material is the same, the same shader, the
   /// same textures, the same colour and the rest of the material, over the
   /// same model, draw with one material: one descriptor set, one set of
-  /// textures. The first one makes it, the others take a reference, and it
-  /// is freed when the last one releases it.
+  /// textures. The first one makes it, the others take a reference.
+  ///
+  /// A material that nothing holds any more is kept, with its textures,
+  /// until FreeUnused() is asked for: when a scene is over, when a game
+  /// says so, or when there is no room. An entity that shows one texture
+  /// after another, a face that blinks, a button that lights up, goes back
+  /// and forth between materials that are held already: nothing is read
+  /// from a file and nothing is sent to the graphics card for a texture it
+  /// showed before. It is how a game with levels loads: what a level
+  /// showed stays until the level is over.
   ///
   /// The cache keeps the books and the materials; making a material needs
   /// the device, and stays with the render system. A material is known by
@@ -34,6 +43,9 @@ namespace neon
     {
       int id = -1;
       int count = 0;
+
+      /// For one that nothing holds: the frame it was last released in.
+      std::uint64_t unused_since = 0;
     };
 
     DataBuffer<VK_Material> _materials;
@@ -46,6 +58,9 @@ namespace neon
     // already was taken instead
     std::size_t _makes = 0;
     std::size_t _shares = 0;
+
+    // how many of the materials nothing holds
+    int _unused = 0;
 
   public:
     explicit VK_MaterialCache(int capacity) : _materials(capacity) {}
@@ -64,10 +79,39 @@ namespace neon
     /// id, or -1 when there is no room.
     int Keep(const std::string &key, const VK_Material &material);
 
-    /// Gives a material back. When nothing holds it any more it is taken
-    /// out and handed over in `freed`, for the render system to clean up,
-    /// and true is returned.
-    bool Release(int id, VK_Material &freed);
+    /// Gives a material back, in the frame `now`. When nothing holds it any
+    /// more it stays where it is, to be taken again by Find() or freed by
+    /// FreeUnused().
+    void Release(int id, std::uint64_t now);
+
+    /// Takes out every material that nothing has held since the frame
+    /// `before`, each handed to `clean_up`. Returns how many.
+    template<typename CleanUp>
+    int FreeUnused(const std::uint64_t before, CleanUp clean_up)
+    {
+      if (_unused == 0) { return 0; }
+
+      int freed = 0;
+      for (auto shared = _shared.begin(); shared != _shared.end();)
+      {
+        if (shared->second.count > 0 || shared->second.unused_since >= before)
+        {
+          ++shared;
+          continue;
+        }
+
+        const int id = shared->second.id;
+        _keys.erase(id);
+        shared = _shared.erase(shared);
+        clean_up(_materials.Remove(id));
+        _unused--;
+        freed++;
+      }
+      return freed;
+    }
+
+    /// How many materials nothing holds, which are kept for now.
+    [[nodiscard]] int UnusedCount() const { return _unused; }
 
     /// Takes every material out, whatever still held one, each handed to
     /// `clean_up`.
@@ -80,6 +124,7 @@ namespace neon
       }
       _shared.clear();
       _keys.clear();
+      _unused = 0;
     }
 
     [[nodiscard]] bool Contains(const int id) const { return _materials.Contains(id); }

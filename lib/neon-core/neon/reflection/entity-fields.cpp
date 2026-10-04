@@ -87,6 +87,7 @@ namespace neon
     if (!error.empty()) { return false; }
 
     field->set(component, value);
+    if (type.written) { type.written(component); }
     return true;
   }
 } // neon

@@ -167,6 +167,22 @@ namespace neon
     {
       _logger->Error("The world runs with what could be read of the scene {}", path);
     }
+
+    // What the scene before showed and this one does not is freed, once
+    // this one was drawn: what both show is then held by this one and
+    // stays, and is not read again.
+    _frees_unused_after_frame = true;
+  }
+
+  void EntityWorld::RenderFrame()
+  {
+    _render_pipeline->RenderFrame();
+
+    if (_frees_unused_after_frame)
+    {
+      _frees_unused_after_frame = false;
+      _render_pipeline->FreeUnused();
+    }
   }
 
   void EntityWorld::SetPaused(const bool paused)
@@ -192,7 +208,7 @@ namespace neon
       for (const auto &system : _placing) { system->Update(*_store, 0.0); }
       for (const auto &system : _after) { system->Update(*_store, 0.0); }
       for (const auto &system : _added_after_placing) { system->Update(*_store, 0.0); }
-      _render_pipeline->RenderFrame();
+      RenderFrame();
       return;
     }
 
@@ -219,7 +235,7 @@ namespace neon
     for (const auto &system : _added_after_placing) { system->Update(*_store, delta_time); }
 
     CheckExits();
-    _render_pipeline->RenderFrame();
+    RenderFrame();
   }
 
   void EntityWorld::CheckExits()

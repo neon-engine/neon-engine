@@ -1,5 +1,6 @@
 #include "vk-render-system.hpp"
 
+#include <limits>
 #include <algorithm>
 #include <array>
 #include <cstring>
@@ -527,8 +528,10 @@ namespace neon
 
     vkDeviceWaitIdle(device);
 
-    // whatever the scene did not destroy itself: the materials first, since
-    // they give their textures back to the cache
+    // what nothing draws with any more, which is said, and then whatever
+    // the scene did not destroy itself: the materials first, since they
+    // give their textures back to the cache
+    FreeUnusedMaterials(std::numeric_limits<std::uint64_t>::max());
     _materials.RemoveAll([](VK_Material material) { material.CleanUp(); });
     _models.CleanUp();
     _textures.CleanUp();
@@ -767,6 +770,16 @@ namespace neon
     _frame_pipeline_binds = 0;
     _frame_set_binds = 0;
 
+    // The frame before is done, so nothing draws with a material that was
+    // given back before this one.
+    // What was asked to be freed is freed now, with its textures.
+    _frame_number++;
+    if (_frees_unused)
+    {
+      _frees_unused = false;
+      FreeUnusedMaterials(_frame_number);
+    }
+
     vkResetCommandBuffer(_commands, 0);
 
     VkCommandBufferBeginInfo begin{};
@@ -898,6 +911,45 @@ namespace neon
     return *_render_resolution;
   }
 
+  bool VK_RenderSystem::AcquireObjectMaterials(const RenderInfo &render_info, RenderObjectRef &object)
+  {
+    const VK_Model &model = _models[object.model_id];
+
+    // One material for each material of the file that a mesh uses, so that
+    // every mesh is drawn with its own, see docs/models.md. A mesh that
+    // was built, and a file without a mesh, get one that takes nothing
+    // from a file. Each is shared with the render objects that draw with
+    // the same one already.
+    std::vector<int> model_materials = model.GetUsedMaterials();
+    if (model_materials.empty()) { model_materials.push_back(-1); }
+
+    for (const int model_material : model_materials)
+    {
+      const int material_id = AcquireObjectMaterial(render_info, model, model_material, object.material_ids.empty());
+      if (material_id < 0)
+      {
+        for (const int held : object.material_ids) { ReleaseObjectMaterial(held); }
+        object.material_ids.clear();
+        return false;
+      }
+      object.material_ids.push_back(material_id);
+    }
+
+    // What the entity will show in place of its first texture is made
+    // ready now and held with the object, so that the first time it is
+    // shown costs nothing either. One that cannot be made is said, and
+    // left out.
+    for (const std::string &texture : render_info.preload_paths)
+    {
+      RenderInfo with = render_info;
+      with.texture_paths = {texture};
+      with.preload_paths.clear();
+      const int material_id = AcquireObjectMaterial(with, model, model_materials.front(), true);
+      if (material_id >= 0) { object.preloaded_material_ids.push_back(material_id); }
+    }
+    return true;
+  }
+
   int VK_RenderSystem::CreateRenderObject(const RenderInfo &render_info)
   {
     if (render_info.mesh == nullptr && render_info.model_path.empty())
@@ -910,32 +962,12 @@ namespace neon
     // once, and shared by every object that draws it
     const int model_id = _models.Acquire(render_info);
     if (model_id < 0) { return -1; }
-    const VK_Model &model = _models[model_id];
-
-    // One material for each material of the file that a mesh uses, so that
-    // every mesh is drawn with its own, see docs/models.md. A mesh that
-    // was built, and a file without a mesh, get one that takes nothing
-    // from a file. Each is shared with the render objects that draw with
-    // the same one already.
-    std::vector<int> model_materials = model.GetUsedMaterials();
-    if (model_materials.empty()) { model_materials.push_back(-1); }
 
     RenderObjectRef object{.model_id = model_id};
-    const auto give_back = [this, &object, model_id]
+    if (!AcquireObjectMaterials(render_info, object))
     {
-      for (const int held : object.material_ids) { ReleaseObjectMaterial(held); }
       _models.Release(model_id);
-    };
-
-    for (const int model_material : model_materials)
-    {
-      const int material_id = AcquireObjectMaterial(render_info, model, model_material, object.material_ids.empty());
-      if (material_id < 0)
-      {
-        give_back();
-        return -1;
-      }
-      object.material_ids.push_back(material_id);
+      return -1;
     }
 
     const auto render_id = _render_object_buffer.Add(object);
@@ -943,7 +975,8 @@ namespace neon
     {
       const std::size_t most = _settings_config.max_render_objects;
       _logger->Error("There is no room for another render object: rendering.max_render_objects of the settings is {}", most);
-      give_back();
+      ReleaseObjectMaterials(object);
+      _models.Release(model_id);
       return -1;
     }
 
@@ -959,6 +992,37 @@ namespace neon
 
     _objects_created++;
     return render_id;
+  }
+
+  void VK_RenderSystem::UpdateRenderObject(const int render_object_id, const RenderInfo &render_info)
+  {
+    if (!_render_object_buffer.Contains(render_object_id)) { return; }
+
+    const RenderObjectRef before = _render_object_buffer[render_object_id];
+
+    // A mesh that was built stays the one the object has: it is changed
+    // with UpdateRenderObjectMesh(). A file is taken anew, which costs
+    // nothing when it is the file the object has, since it is shared.
+    const bool keeps_model = render_info.mesh != nullptr || render_info.model_path.empty();
+    RenderObjectRef after{.model_id = keeps_model ? before.model_id : _models.Acquire(render_info)};
+    if (after.model_id < 0)
+    {
+      _logger->Error("A render object goes on being drawn as it was: its model {} cannot be read", render_info.model_path);
+      return;
+    }
+
+    // What it is drawn with from now on is taken before what it was drawn
+    // with is given back, so that what both share is never let go of.
+    if (!AcquireObjectMaterials(render_info, after))
+    {
+      if (!keeps_model) { _models.Release(after.model_id); }
+      _logger->Error("A render object goes on being drawn as it was");
+      return;
+    }
+
+    ReleaseObjectMaterials(before);
+    if (!keeps_model) { _models.Release(before.model_id); }
+    _render_object_buffer[render_object_id] = after;
   }
 
   int VK_RenderSystem::AcquireObjectMaterial(
@@ -1067,7 +1131,14 @@ namespace neon
     }
     made.SetPipeline(pipeline);
 
-    const int material_id = _materials.Keep(key, made);
+    int material_id = _materials.Keep(key, made);
+    if (material_id < 0 && _materials.UnusedCount() > 0)
+    {
+      // room is made by what nothing has drawn with since before this
+      // frame, which no draw of this frame can be waiting with
+      FreeUnusedMaterials(_frame_number);
+      material_id = _materials.Keep(key, made);
+    }
     if (material_id < 0)
     {
       const std::size_t most = _settings_config.max_render_objects;
@@ -1083,16 +1154,34 @@ namespace neon
 
   void VK_RenderSystem::ReleaseObjectMaterial(const int material_id)
   {
-    // the material goes when the last render object that drew with it goes
-    VK_Material material;
-    if (!_materials.Release(material_id, material)) { return; }
+    // A material that nothing draws with any more is kept until FreeUnused()
+    // is asked for: what showed it may show it again.
+    _materials.Release(material_id, _frame_number);
+  }
 
-    if (const VkDescriptorSet set = material.DescriptorSet(); set != VK_NULL_HANDLE)
+  void VK_RenderSystem::ReleaseObjectMaterials(const RenderObjectRef &object)
+  {
+    for (const int material_id : object.material_ids) { ReleaseObjectMaterial(material_id); }
+    for (const int material_id : object.preloaded_material_ids) { ReleaseObjectMaterial(material_id); }
+  }
+
+  void VK_RenderSystem::FreeUnusedMaterials(const std::uint64_t before)
+  {
+    const int freed = _materials.FreeUnused(before, [this](VK_Material material)
     {
-      vkFreeDescriptorSets(_device.Device(), material.DescriptorPool(), 1, &set);
-    }
-    material.CleanUp();
-    _logger->Debug("Material {} was freed, nothing draws with it any more", material_id);
+      if (const VkDescriptorSet set = material.DescriptorSet(); set != VK_NULL_HANDLE)
+      {
+        vkFreeDescriptorSets(_device.Device(), material.DescriptorPool(), 1, &set);
+      }
+      material.CleanUp();
+    });
+    if (freed > 0) { _logger->Debug("{} materials were freed, nothing draws with them any more", freed); }
+  }
+
+  void VK_RenderSystem::FreeUnused()
+  {
+    // when the next frame begins, and nothing draws with them for certain
+    _frees_unused = true;
   }
 
   void VK_RenderSystem::ReportCreated()
@@ -1589,7 +1678,7 @@ namespace neon
     vkDeviceWaitIdle(_device.Device());
 
     const RenderObjectRef object = _render_object_buffer.Remove(render_object_id);
-    for (const int material_id : object.material_ids) { ReleaseObjectMaterial(material_id); }
+    ReleaseObjectMaterials(object);
     _models.Release(object.model_id);
   }
 

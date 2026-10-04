@@ -33,8 +33,24 @@ namespace neon
     /// is handed the mesh again. A mesh that keeps as many vertices and
     /// triangles is written over the one before, which costs a copy.
     unsigned int mesh_version = 0;
+
+    /// Counted up whenever anything of this but the mesh was written after
+    /// the entity was first drawn: its textures, its shader, its material,
+    /// its model. The renderer is then told again what the entity looks
+    /// like, see RenderContext::UpdateRenderObject(). The description of
+    /// Renderable counts it for whoever writes a field through it; code
+    /// that writes a member itself counts it itself.
+    unsigned int version = 0;
+
     std::string shader_path;
     std::vector<std::string> texture_paths;
+    /// Textures the entity will show in place of its first one, later: the
+    /// faces of a character, the skins of what a player holds. Each is made
+    /// ready when the entity is first drawn and stays loaded for as long as
+    /// the entity is there, so that showing it for the first time costs
+    /// nothing while the game runs. It changes nothing that is drawn.
+    std::vector<std::string> preload_paths;
+
     /// Whether the textures repeat as the entity grows, see docs/scenes.md.
     /// Off unless a recipe says so: without a value here, a Renderable read
     /// without it took whatever the memory held, in a release build.

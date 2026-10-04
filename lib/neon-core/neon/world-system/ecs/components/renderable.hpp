@@ -18,6 +18,10 @@ namespace neon
     /// The `mesh_version` of the mesh the renderer has. Filled in by the
     /// engine.
     unsigned int mesh_version_drawn = 0;
+
+    /// The `version` of what the renderer was last told the entity looks
+    /// like. Filled in by the engine.
+    unsigned int version_drawn = 0;
   };
 
   /// What the renderer knows the entity as is not described. It belongs to
@@ -25,6 +29,11 @@ namespace neon
   inline void Describe(TypeBuilder<Renderable> &type)
   {
     type.Named("Renderable", "Makes an entity visible");
+
+    // The renderer keeps what an entity looks like from when it was first
+    // drawn. A field that is written afterwards counts the version up, and
+    // the entity is drawn with what it says now.
+    type.Written([](Renderable &renderable) { renderable.render_info.version++; });
 
     type.Field("model", [](Renderable &renderable) -> std::string & { return renderable.render_info.model_path; })
         .Describe("Virtual path of the model. Left out when the entity has a Geometry, which is drawn instead");
@@ -42,6 +51,11 @@ namespace neon
           "textures",
           [](Renderable &renderable) -> std::vector<std::string> & { return renderable.render_info.texture_paths; })
         .Describe("Virtual paths of the textures");
+
+    type.Field(
+          "preload",
+          [](Renderable &renderable) -> std::vector<std::string> & { return renderable.render_info.preload_paths; })
+        .Describe("Virtual paths of textures the entity will show later in place of its first one, made ready ahead");
 
     type.Field("scale_textures", [](Renderable &renderable) -> bool & { return renderable.render_info.scale_textures; })
         .Describe("Whether textures repeat as the entity grows");

@@ -64,6 +64,11 @@ if (CASE STREQUAL "the-effects-of-a-camera-are-run-over-its-picture")
   return()
 endif ()
 
+# The small square was drawn red and told a blue texture in the third frame:
+# an entity is drawn with what its Renderable says now.
+expect_output("The small square is told another texture")
+expect_pixel("the small square, which was told another texture" 177 620 0 0 255)
+
 # the numbers at place 3 are 1, 0.5, 0 in linear light, which a screen
 # writes as 255 188 0
 expect_pixel("the numbers of the game, on the left of the square" 560 360 255 188 0)

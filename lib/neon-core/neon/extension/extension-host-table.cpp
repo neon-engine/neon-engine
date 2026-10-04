@@ -489,6 +489,7 @@ namespace neon
       }
 
       found.field->set(component, value);
+      if (found.type != nullptr && found.type->written) { found.type->written(component); }
       return 1;
     }
 
@@ -1298,6 +1299,19 @@ namespace neon
       return extension.services->audio->GetGroupVolume(group);
     }
 
+    int free_unused(void *context)
+    {
+      const auto &extension = of(context);
+      if (extension.services->render == nullptr)
+      {
+        extension.logger->Error("free_unused was called, and this application has no renderer for its extensions");
+        return 0;
+      }
+
+      extension.services->render->FreeUnused();
+      return 1;
+    }
+
     int set_shader_numbers(
       void *context, const std::int32_t place, const float x, const float y, const float z, const float w)
     {
@@ -1519,6 +1533,8 @@ namespace neon
 
     host.set_group_volume = &set_group_volume;
     host.get_group_volume = &get_group_volume;
+
+    host.free_unused = &free_unused;
 
     // the extension keeps its name for as long as it is loaded
     host.name = extension.name.c_str();

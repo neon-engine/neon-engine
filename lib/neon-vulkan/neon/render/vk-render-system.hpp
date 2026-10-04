@@ -282,6 +282,23 @@ namespace neon
     /// descriptor set when nothing else draws with it.
     void ReleaseObjectMaterial(int material_id);
 
+    /// Gives back every material a render object holds: those it draws
+    /// with, and those that were made ready for it.
+    void ReleaseObjectMaterials(const RenderObjectRef &object);
+
+    /// Takes the materials a render object draws `render_info` with, one
+    /// for each material its model uses, into `object`, which names its
+    /// model. Returns false, and holds none, when one cannot be made.
+    bool AcquireObjectMaterials(const RenderInfo &render_info, RenderObjectRef &object);
+
+    /// Frees the materials nothing has drawn with since the frame `before`.
+    void FreeUnusedMaterials(std::uint64_t before);
+
+    // the frames that were begun, which says in which a material was given
+    // back, and whether FreeUnused() was asked for since the last one
+    std::uint64_t _frame_number = 0;
+    bool _frees_unused = false;
+
     [[nodiscard]] VK_SceneData BuildSceneData(
       const glm::mat4 &view,
       const glm::mat4 &projection,
@@ -338,6 +355,10 @@ namespace neon
       const std::vector<LightSource> &lights) override;
 
     void DestroyRenderObject(int render_object_id) override;
+
+    void UpdateRenderObject(int render_object_id, const RenderInfo &render_info) override;
+
+    void FreeUnused() override;
 
     void UpdateRenderObjectMesh(int render_object_id, const MeshData &mesh) override;
 

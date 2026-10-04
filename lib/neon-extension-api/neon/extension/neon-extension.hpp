@@ -84,7 +84,7 @@ namespace neon::extension
   using UiListening = std::function<void(const UiEvent &event)>;
 
   /// The version of the C file this header needs of the application.
-  inline constexpr std::uint32_t needed_abi_version = 13;
+  inline constexpr std::uint32_t needed_abi_version = 14;
 
   /// The kind of a field from its type, and its value as the numbers a
   /// description carries. A type of the extension's own that lies in memory
@@ -543,6 +543,12 @@ namespace neon::extension
     {
       return _host->get_group_volume(_host->context, group.c_str());
     }
+
+    /// Asks the renderer to free the materials and textures nothing draws
+    /// with any more. The application does so when a scene takes the place
+    /// of another; an extension that changes its levels itself does it
+    /// with this, once the next level was shown.
+    bool FreeUnused() const { return _host->free_unused(_host->context) != 0; }
 
     /// Sets four numbers that every shader reads as `scene.numbers[place]`,
     /// at one of 8 places: what the shaders an extension brings are told of
