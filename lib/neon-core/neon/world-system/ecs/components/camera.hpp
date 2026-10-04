@@ -23,6 +23,14 @@ namespace neon
     float far_plane = 1000.f;
     glm::vec3 up{0.0f, 1.0f, 0.0f};
 
+    /// Whether the view rolls with the entity: what is up for the camera
+    /// then turns with the rotation of its entity, so that leaning the
+    /// entity leans the view. It is what a view from the eyes wants, a head
+    /// that tilts. A camera that looks at something from outside, over a
+    /// shoulder or from above, leaves it off and stays level however what it
+    /// hangs from is turned.
+    bool rolls_with_entity = false;
+
     /// For `target: texture`: what the texture is called, and its size in
     /// pixels. A model shows what the camera sees as the texture
     /// `surface://` and the name, and so does an image of a user
@@ -50,6 +58,9 @@ namespace neon
 
     type.Field("up", &Camera::up)
         .Describe("The direction that is up");
+
+    type.Field("rolls_with_entity", &Camera::rolls_with_entity)
+        .Describe("Whether the view rolls with the rotation of its entity, as a view from the eyes does");
 
     type.Field("texture", &Camera::texture)
         .Describe("For a texture: what it is called, which a model shows as surface:// and the name");

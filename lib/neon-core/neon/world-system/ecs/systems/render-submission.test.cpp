@@ -206,6 +206,71 @@ namespace
     _system.Update(_store, 0.016);
   }
 
+  TEST_F(RenderSubmissionTest, StaysLevelWhenTheEntityRollsUnlessTheCameraRollsWithIt)
+  {
+    // rolled a quarter turn, as what a camera over a shoulder hangs from
+    // may be: the view is as if it were not
+    Transform transform;
+    transform.world_coordinates =
+      rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    Create(transform, Camera{});
+
+    const auto view = lookAt(glm::vec3(0.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    EXPECT_CALL(_pipeline, SetCameraInfo(Field("view", &CameraInfo::view, view)));
+
+    _system.Update(_store, 0.016);
+  }
+
+  TEST_F(RenderSubmissionTest, RollsTheViewWithTheRollOfTheEntity)
+  {
+    // rolled a quarter turn around where it looks: what was up points left
+    Transform transform;
+    transform.world_coordinates =
+      rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    Create(transform, Camera{.rolls_with_entity = true});
+
+    const auto view = lookAt(glm::vec3(0.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(-1.0f, 0.0f, 0.0f));
+    CameraInfo handed_over;
+    EXPECT_CALL(_pipeline, SetCameraInfo(_)).WillOnce(::testing::SaveArg<0>(&handed_over));
+
+    _system.Update(_store, 0.016);
+
+    for (int column = 0; column < 4; column++)
+    {
+      for (int row = 0; row < 4; row++)
+      {
+        EXPECT_NEAR(handed_over.view[column][row], view[column][row], 1e-5f)
+          << "column " << column << ", row " << row;
+      }
+    }
+  }
+
+  TEST_F(RenderSubmissionTest, StaysLevelWhenAnEntityItRollsWithLooksUpOrTurnsAround)
+  {
+    // turned to the left and looking up by 30 degrees: no roll in it
+    Transform transform;
+    transform.world_coordinates =
+      rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f)) *
+      rotate(glm::mat4(1.0f), glm::radians(30.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    Create(transform, Camera{.rolls_with_entity = true});
+
+    const glm::vec3 forward = glm::mat3(transform.world_coordinates) * glm::vec3(0.0f, 0.0f, -1.0f);
+    const auto view = lookAt(glm::vec3(0.0f), forward, glm::vec3(0.0f, 1.0f, 0.0f));
+    CameraInfo handed_over;
+    EXPECT_CALL(_pipeline, SetCameraInfo(_)).WillOnce(::testing::SaveArg<0>(&handed_over));
+
+    _system.Update(_store, 0.016);
+
+    for (int column = 0; column < 4; column++)
+    {
+      for (int row = 0; row < 4; row++)
+      {
+        EXPECT_NEAR(handed_over.view[column][row], view[column][row], 1e-5f)
+          << "column " << column << ", row " << row;
+      }
+    }
+  }
+
   TEST_F(RenderSubmissionTest, HandsOverTheCameraInEveryFrame)
   {
     const Entity camera = Create(Placed(0.0f, 0.0f, 0.0f), Camera{.fov = 45.0f});

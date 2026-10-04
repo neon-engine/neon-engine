@@ -36,7 +36,15 @@ namespace neon
         const auto &camera = cameras[i];
 
         const glm::vec3 position = transform.world_coordinates[3];
-        const auto view = lookAt(position, position + transform.Forward(), camera.up);
+        // A camera that rolls with its entity has what is up turn with it,
+        // so that a roll of the entity rolls the view, as it turns what
+        // hangs from the camera. Turning around or looking up and down
+        // leaves the view level, since up then stays in the plane the camera
+        // looks along. Any other camera is level whatever it hangs from.
+        const glm::vec3 up = camera.rolls_with_entity
+                               ? normalize(glm::mat3(transform.world_coordinates) * camera.up)
+                               : camera.up;
+        const auto view = lookAt(position, position + transform.Forward(), up);
 
         CameraInfo info;
         info.target = camera.target;

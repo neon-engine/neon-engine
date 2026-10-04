@@ -197,6 +197,7 @@ two places of its own, see [physics.md](physics.md#ropes).
 | `fov` | Vertical field of view in degrees | `45` |
 | `near`, `far` | The distances between which things are visible | `0.1`, `1000` |
 | `up` | The direction that is up | `[0, 1, 0]` |
+| `rolls_with_entity` | Whether the view rolls with the rotation of its entity: `up` then turns with the entity, so leaning the entity leans the view. For a view from the eyes. A camera that looks at something from outside leaves it off and stays level whatever it hangs from | `false` |
 
 **Light**
 
