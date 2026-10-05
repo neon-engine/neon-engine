@@ -37,8 +37,8 @@ metres, without the centring and scaling a file gets.
       shape: mesh
 ```
 
-The scene of the runtime that is built this way is
-[blockout.scene.yml](../app/NeonRuntime/assets/scenes/blockout.scene.yml):
+The scene of the tests that is built this way is
+[blockout.scene.yml](../tests/game/assets/scenes/blockout.scene.yml):
 a room seen from within, a platform, a crate, a ramp, and a step, with nothing from a model file.
 
 **Geometry**

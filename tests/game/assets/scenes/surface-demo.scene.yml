@@ -1,0 +1,110 @@
+# The demo scene with user interfaces on three surfaces:
+#
+#   NeonRuntime --scene assets://scenes/surface-demo.scene.yml
+#
+# The window shows what is shown during play. A monitor in the world shows
+# a terminal, which is a user interface of its own on a surface of its own.
+# A second monitor shows what a second camera sees.
+#
+# A model shows a surface by naming it as a texture: `surface://` and the
+# name of the surface.
+
+scene: surface-demo
+version: 1
+
+entities:
+  - name: hud
+    components:
+      Ui:
+        file: assets://ui/hud.ui.yml
+
+  - name: ball
+    components:
+      Transform: Default
+      Geometry:
+        shape: sphere
+        sides: 12
+      Renderable:
+        shader: assets://shaders/basic-lit
+        material:
+          shininess: 32
+          color: [1, 0.5, 0.31]
+
+  # the monitor: a flat square that carries the surface `terminal`, as wide
+  # and as high as the surface is
+  - name: monitor
+    components:
+      Transform:
+        position: [-1.05, 0.45, 0.4]
+        rotation: [0, 30, 0]
+        scale: [1.2, 0.9, 1]
+      Renderable:
+        model: assets://models/quad.obj
+        fit: unit
+        shader: assets://shaders/unlit
+        textures:
+          - surface://terminal
+      UiSurface:
+        ui: assets://ui/terminal.ui.yml
+        name: terminal
+        size: [1024, 768]
+
+  # what the second camera sees, on a monitor of its own
+  - name: security-monitor
+    components:
+      Transform:
+        position: [1.05, 0.45, 0.4]
+        rotation: [0, -30, 0]
+        scale: [0.9, 0.9, 1]
+      Renderable:
+        model: assets://models/quad.obj
+        fit: unit
+        shader: assets://shaders/unlit
+        textures:
+          - surface://security
+
+  - name: security-camera
+    components:
+      Transform:
+        position: [0, 1.5, -2.5]
+        rotation: [-25, 180, 0]
+      Camera:
+        target: texture
+        texture: security
+        size: [512, 512]
+        fov: 50
+
+  - name: floor
+    components:
+      Transform:
+        position: [0, -0.55, 0]
+        scale: [100, 0.1, 100]
+      Geometry:
+        shape: box
+      Renderable:
+        shader: assets://shaders/basic-lit
+        material:
+          shininess: 32
+          color: [0.5, 0.5, 0.5]
+
+  - name: direction
+    components:
+      Transform:
+        position: [1.2, 1, -2]
+      Light:
+        type: direction
+        direction: [-0.2, -1, -0.3]
+        ambient: [0.5, 0.5, 0.5]
+        diffuse: [0.4, 0.4, 0.4]
+        specular: [0.5, 0.5, 0.5]
+
+  - name: player
+    components:
+      Transform:
+        position: [0, 0.3, 3.2]
+      Spectator: Default
+    children:
+      - name: camera
+        components:
+          Transform: Default
+          Camera: Default

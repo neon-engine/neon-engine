@@ -43,9 +43,7 @@ entities:
 ```
 
 The runtime starts with the entry scene of its project, see
-[projects.md](projects.md), which is
-[demo.scene.yml](../app/NeonRuntime/assets/scenes/demo.scene.yml), the
-[museum](#the-museum). Another one is chosen with `--scene`:
+[projects.md](projects.md). Another one is chosen with `--scene`:
 
 ```
 NeonRuntime --scene assets://scenes/other.scene.yml
@@ -290,7 +288,7 @@ frame shows black.
   components:
     Sky:
       type: sphere
-      texture: assets://textures/sky/day-panorama.png
+      texture: assets://textures/sky/museum-panorama.png
 ```
 
 The faces of a box are named after the direction each is seen in: `front`
@@ -308,8 +306,7 @@ positive x, its upper edge straight up.
 
 The images are PNG or JPEG, colours as a screen shows them. The sky is
 shown as it is: no light of the scene falls on it, and it lights nothing
-itself, so a `Light` is set to match it by hand. `sky-box.scene.yml` and
-`sky-sphere.scene.yml` show the same sky both ways. How it is drawn is in
+itself, so a `Light` is set to match it by hand. The museum has a sky of type sphere. How it is drawn is in
 [vulkan-renderer.md](vulkan-renderer.md#the-sky).
 
 **Spectator**
@@ -405,9 +402,31 @@ are the components of the physics. What they hold is listed in
 | `CharacterBody` | Something that is moved by a velocity, stops at what is in its way, and slides along it | `velocity`, `fall_velocity`, `gravity_scale`, `max_slope`, `step_height`, `mass`, `push_strength`, `layers`, `mask` |
 | `Joint` | Holds the body of its entity to another body, named by its path, or to the world | `type`, `other`, `anchor`, `collide_with_other`, for a rope: `other_anchor`, `length`, and for a hinge and a slider: `axis`, `limits`, `motor_velocity`, `motor_strength`, `spring` |
 
+## Where the scenes are
+
+The assets of the runtime hold one scene,
+[start.scene.yml](../app/NeonRuntime/assets/scenes/start.scene.yml): a box on
+a floor, which is what `NeonRuntime` shows when it is started as it was
+built. Every other scene belongs to a project of its own, which the build
+puts together next to a copy of the runtime:
+
+| Project | Holds | Built and started with |
+|---|---|---|
+| [projects/museum](../projects/museum) | [The museum](#the-museum) | `cmake --build --preset macos-arm64-debug --target museum`, then `bin/debug/darwin-arm64/museum/NeonRuntime` |
+| [projects/bench](../projects/bench) | Scenes that measure the engine | See its [README.md](../projects/bench/README.md) |
+| [tests/game](../tests/game) | Every scene the tests start the runtime with, and what those scenes show | `cmake --build --preset macos-arm64-debug-tests`, then `build/macos-arm64-debug/tests/game/NeonRuntime --scene assets://scenes/physics.scene.yml` |
+
+Where these notes write `NeonRuntime --scene assets://scenes/…` for a scene
+of the tests, it is the runtime of `tests/game` that is meant. What the
+scenes of the tests show is built by the engine as `Geometry`, or is a small
+file that a script of `tools/` writes; nothing in the repository was taken
+from elsewhere but the fonts, see
+[CREDITS.md](../CREDITS.md).
+
 ## The museum
 
-[demo.scene.yml](../app/NeonRuntime/assets/scenes/demo.scene.yml) is a museum
+[demo.scene.yml](../projects/museum/assets/scenes/demo.scene.yml), the scene
+of the project [projects/museum](../projects/museum), is a museum
 of what the engine does, to walk through from the first person: a corridor
 with twelve halls, each with a sign that says what it shows. Nothing in it
 comes from a model file or an image. Every piece is a `Geometry` in a plain
@@ -493,10 +512,10 @@ each level places its own.
 The last scene asked for in a frame is the one taken. A scene asked for
 without a path is refused and said in the log.
 
-The prototype game goes
-[title.scene.yml](../app/NeonRuntime/assets/scenes/title.scene.yml) →
-[prototype.scene.yml](../app/NeonRuntime/assets/scenes/prototype.scene.yml)
-→ [end.scene.yml](../app/NeonRuntime/assets/scenes/end.scene.yml), from
+The prototype game of the tests goes
+[title.scene.yml](../tests/game/assets/scenes/title.scene.yml) →
+[prototype.scene.yml](../tests/game/assets/scenes/prototype.scene.yml)
+→ [end.scene.yml](../tests/game/assets/scenes/end.scene.yml), from
 which the end menu goes back to either.
 
 ## Made to be changed by hand

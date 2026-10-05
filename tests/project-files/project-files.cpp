@@ -295,7 +295,7 @@ namespace
     ASSERT_TRUE(Read()) << ::testing::PrintToString(_errors);
     EXPECT_EQ(_project.name, "neon-runtime");
     EXPECT_EQ(_project.organization, "neon-engine");
-    EXPECT_EQ(_project.entry_scene, "assets://scenes/demo.scene.yml");
+    EXPECT_EQ(_project.entry_scene, "assets://scenes/start.scene.yml");
   }
 
   TEST_F(ProjectFilesTest, TheProjectOfTheRuntimeListsEveryScene)

@@ -41,7 +41,7 @@ endfunction()
 # the model is loaded once and shared by the other 299 either way; its
 # texture is read once, by the first material, whichever case
 expect_output("1 models were loaded and 299 shared")
-expect_output_count("Model assets://external/kenney/prototype-kit/crate.glb was freed" 1)
+expect_output_count("Model assets://models/kit/crate.glb was freed" 1)
 
 if (CASE STREQUAL "crates-with-one-material-share-it")
   # one material, 299 shares, freed once, when the renderer is cleaned up:

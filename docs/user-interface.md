@@ -73,9 +73,9 @@ root:
         background_color: "#4c566a"
 ```
 
-The user interfaces of the runtime are
-[hud.ui.yml](../app/NeonRuntime/assets/ui/hud.ui.yml), what is shown during
-play, and [settings.ui.yml](../app/NeonRuntime/assets/ui/settings.ui.yml)
+Two user interfaces to look at are
+[hud.ui.yml](../tests/game/assets/ui/hud.ui.yml) of the tests, what is shown during
+play, and the runtime's [settings.ui.yml](../app/NeonRuntime/assets/ui/settings.ui.yml)
 with its theme [settings.css](../app/NeonRuntime/assets/ui/settings.css), a
 menu with everything that can be typed and chosen. Each is shown in two
 ways:
@@ -1078,8 +1078,8 @@ The surface is there for as long as the entity is. The entity that carries
 one surface. `assets://models/quad.obj` is a flat square on which an image
 lies once, with its top at the top.
 
-The scene of the runtime is
-[surface-demo.scene.yml](../app/NeonRuntime/assets/scenes/surface-demo.scene.yml):
+The scene of the tests is
+[surface-demo.scene.yml](../tests/game/assets/scenes/surface-demo.scene.yml):
 
 ```
 NeonRuntime --scene assets://scenes/surface-demo.scene.yml
@@ -1762,7 +1762,7 @@ other.
 | The images of the gallery, the flat square | Made for the engine |
 
 **The user interface of a game says that it uses FreeType**, which its
-license asks for. The engine says so in `assets/CREDITS.md`.
+license asks for. The engine says so in `CREDITS.md` at the root of the repository.
 
 `Runtime` has no new argument. It is given a user interface with
 `SetUiSystem`, and runs as before without one.

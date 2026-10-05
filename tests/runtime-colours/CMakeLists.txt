@@ -9,6 +9,7 @@ target_link_libraries(pixel-probe PRIVATE stb)
 add_dependencies(neon-tests pixel-probe)
 
 neon_add_application_test(runtime-colours NeonRuntime run.cmake
+        PROJECT test-game
         TOOLS
         pixel-probe
         CASES

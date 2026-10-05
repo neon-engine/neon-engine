@@ -1,6 +1,7 @@
 # Needs a graphics card with a Vulkan driver. On a machine without one the
 # tests are skipped, they do not fail.
 neon_add_application_test(runtime-headless NeonRuntime run.cmake
+        PROJECT test-game
         CASES
         window-size-and-render-scale
         settings-menu-with-input

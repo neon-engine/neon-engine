@@ -1,0 +1,63 @@
+# The demo scene with a user interface on top of it, which the scene names
+# itself:
+#
+#   NeonRuntime --scene assets://scenes/hud-demo.scene.yml
+#
+# The user interface is a component, and is shown for as long as the entity
+# that carries it is there.
+
+scene: hud-demo
+version: 1
+
+entities:
+  - name: hud
+    components:
+      Ui:
+        file: assets://ui/hud.ui.yml
+
+  - name: ball
+    components:
+      Transform: Default
+      Geometry:
+        shape: sphere
+        sides: 12
+      Renderable:
+        shader: assets://shaders/basic-lit
+        material:
+          shininess: 32
+          color: [1, 0.5, 0.31]
+
+  - name: floor
+    components:
+      Transform:
+        position: [0, -0.55, 0]
+        scale: [100, 0.1, 100]
+      Geometry:
+        shape: box
+      Renderable:
+        shader: assets://shaders/basic-lit
+        material:
+          shininess: 32
+          color: [0.5, 0.5, 0.5]
+
+  - name: direction
+    components:
+      Transform:
+        position: [1.2, 1, -2]
+      Light:
+        type: direction
+        direction: [-0.2, -1, -0.3]
+        ambient: [0.5, 0.5, 0.5]
+        diffuse: [0.4, 0.4, 0.4]
+        specular: [0.5, 0.5, 0.5]
+
+  - name: player
+    components:
+      Transform:
+        position: [0, 0, 2]
+      Spectator: Default
+    children:
+      - name: camera
+        components:
+          Transform: Default
+          Camera: Default

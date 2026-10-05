@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Writes app/NeonRuntime/assets/models/coloured-boxes.glb: a model whose
+"""Writes tests/game/assets/models/coloured-boxes.glb: a model whose
 meshes use different materials, for tests/runtime-materials.
 
 Two boxes, 0.8 on every side, one at x = -1 and one at x = 1, each a mesh
@@ -110,6 +110,6 @@ glb = (
     + struct.pack("<II", len(binary_chunk), 0x004E4942) + binary_chunk
 )
 
-target = Path(__file__).resolve().parent.parent / "app/NeonRuntime/assets/models/coloured-boxes.glb"
+target = Path(__file__).resolve().parent.parent / "tests/game/assets/models/coloured-boxes.glb"
 target.write_bytes(glb)
 print(f"wrote {target} ({len(glb)} bytes)")

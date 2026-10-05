@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Writes app/NeonRuntime/assets/models/coloured-quads.glb: a model whose
+"""Writes tests/game/assets/models/coloured-quads.glb: a model whose
 colour is painted on its vertices, for tests/runtime-vertex-colours.
 
 Three quads, 0.8 wide and 0.8 high, facing +z at x = -1, 0, and 1, one
@@ -86,6 +86,6 @@ glb = (
     + struct.pack("<II", len(binary_chunk), 0x004E4942) + binary_chunk
 )
 
-target = Path(__file__).resolve().parent.parent / "app/NeonRuntime/assets/models/coloured-quads.glb"
+target = Path(__file__).resolve().parent.parent / "tests/game/assets/models/coloured-quads.glb"
 target.write_bytes(glb)
 print(f"wrote {target} ({len(glb)} bytes)")

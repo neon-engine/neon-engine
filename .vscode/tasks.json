@@ -25,7 +25,7 @@
     {
       "id": "scene",
       "type": "promptString",
-      "description": "Scene to start with: empty for the entry scene of the project, a name such as prototype, or a virtual path such as assets://scenes/prototype.scene.yml",
+      "description": "Scene to start with: empty for the entry scene of the project, a name such as start, or a virtual path such as assets://scenes/start.scene.yml",
       "default": ""
     }
   ],

@@ -4,16 +4,13 @@
 # floor is at the bottom of the frame, its walls at the sides, the frame of
 # the doorway in the middle, and the black behind the walls at the top.
 #
-# The frame these pixels were read from had the SHA-256
-# 729da412537aed1dc854f24d93fc81291aaa0a3a85e0021f08eea8bebb05533b, drawn
-# since the direction light casts shadows (#60): the walls and the crate
-# shadow the floor, and none of the pixels below lies in a shadow, so they
-# are the same as they were. With `casts_shadows: false` on the light the
-# frame is byte for byte the one from before,
-# 34931d891c96276e64a019ef5484c80f2b5a549924a630e1643ab810d4c63550, drawn
-# since the kit pieces stand at their own size and on their own origin
-# (#190). The hash itself is not checked, since another graphics card
-# rounds a little differently; the pixels are, within 2 of each channel.
+# The pieces are those of the kit of the tests, models/kit, a few boxes each,
+# which tools/make-test-game-assets.py writes. The pixels were read from the
+# first frame drawn with them that was checked by eye. The direction light
+# casts shadows (#60): the walls and the crate shadow the floor, and none of
+# the pixels below lies in a shadow. A hash of the frame is not checked,
+# since another graphics card rounds a little differently; the pixels are,
+# within 2 of each channel.
 
 include("${CMAKE_CURRENT_LIST_DIR}/../../cmake/scripts/run-application.cmake")
 
@@ -93,16 +90,16 @@ function(expect_pixel WHAT X Y RED GREEN BLUE)
 endfunction()
 
 if (CASE STREQUAL "the-level-is-drawn-from-the-kit-pieces")
-  # The colours are those of Kenney's colormap, lit by the daylight and the
+  # The colours are those of the kit's colormap, lit by the daylight and the
   # lamp: the floor tile and the walls are the grey-blue of the kit, the
   # frame of the doorway its darker grey. Nothing is behind the walls, so
   # the top of the frame is black.
   set(FRAME "shots/frame.png")
   expect_image("${FRAME}")
   expect_pixel("the black behind the walls" 960 100 0 0 0)
-  expect_pixel("the floor of the corridor" 960 1040 141 144 167)
-  expect_pixel("the west wall of the corridor" 300 500 126 131 160)
-  expect_pixel("the frame of the doorway" 750 700 73 77 96)
+  expect_pixel("the floor of the corridor" 960 1040 160 159 176)
+  expect_pixel("the west wall of the corridor" 300 500 112 115 144)
+  expect_pixel("the frame of the doorway" 750 700 58 61 80)
 elseif (CASE STREQUAL "the-player-keeps-its-speed-through-a-jump")
   # The body kept the velocity it took off with (#219): once it has landed
   # it stands nearer the doorway than where W was released, so the frame
@@ -126,10 +123,10 @@ elseif (CASE STREQUAL "the-player-keeps-its-speed-through-a-jump")
   # read at the same frame, since the walker's shadow moves with time.
   set(FRAME "jump/frame-0060.png")
   expect_pixel("the sky above the room after the jump" 960 160 0 0 0)
-  expect_pixel("the north wall of the room after the jump" 700 500 155 154 173)
-  expect_pixel("the target on the north wall after the jump" 960 580 217 84 57)
-  expect_pixel("the blue crate to the right after the jump" 1180 700 41 45 117)
-  expect_pixel("the floor of the room after the jump" 1000 1000 156 157 175)
+  expect_pixel("the north wall of the room after the jump" 700 500 136 133 153)
+  expect_pixel("the target on the north wall after the jump" 960 580 204 69 43)
+  expect_pixel("the walker to the right after the jump" 1180 700 46 87 165)
+  expect_pixel("the floor of the room after the jump" 1000 1000 178 173 184)
 
   # halfway through the jump the eyes are above the walls, and the black
   # behind them has taken the place of the north wall
@@ -145,10 +142,10 @@ elseif (CASE STREQUAL "the-player-walks-into-the-room")
   set(FRAME "shots/frame-0001.png")
   expect_image("${FRAME}")
   expect_pixel("the black above the doorway before the walk" 960 160 0 0 0)
-  expect_pixel("the west post of the doorway before the walk" 750 700 73 77 96)
+  expect_pixel("the west post of the doorway before the walk" 750 700 58 61 80)
 
   # Inside the room: the doorway is behind the player now, the target on the
-  # north wall is ahead, the blue crate to the right. Before the colliders of
+  # north wall is ahead, the walker to the right. Before the colliders of
   # the doorway stood beside it (#190) the posts stopped the walker under the
   # lintel, which is what the old check saw. The target has a body since
   # #231, and the walker passes east of it before it reaches the wall, so
@@ -156,10 +153,10 @@ elseif (CASE STREQUAL "the-player-walks-into-the-room")
   set(FRAME "shots/frame-0060.png")
   expect_image("${FRAME}")
   expect_pixel("the sky above the room after the walk" 960 160 0 0 0)
-  expect_pixel("the north wall of the room after the walk" 700 500 155 154 173)
-  expect_pixel("the target on the north wall after the walk" 960 580 217 84 57)
-  expect_pixel("the blue crate to the right after the walk" 1180 700 41 45 117)
-  expect_pixel("the floor of the room after the walk" 1000 1000 156 157 175)
+  expect_pixel("the north wall of the room after the walk" 700 500 136 133 153)
+  expect_pixel("the target on the north wall after the walk" 960 580 204 69 43)
+  expect_pixel("the walker to the right after the walk" 1180 700 46 87 165)
+  expect_pixel("the floor of the room after the walk" 1000 1000 178 173 184)
 
   file(SHA256 "${DIRECTORY}/shots/frame-0001.png" BEFORE)
   file(SHA256 "${DIRECTORY}/shots/frame-0060.png" AFTER)
@@ -180,18 +177,19 @@ elseif (CASE STREQUAL "the-kit-pieces-are-loaded-once")
   # The level places 17 prefabs of four kinds and draws a few more pieces
   # written out in full. Every model is read once for every path, and
   # every texture once, however many render objects draw them: the walls
-  # share one wall.glb, and every piece of the Prototype Kit shares its
-  # colormap. The numbers are those of prototype.scene.yml.
+  # share one wall.glb, and every piece of the kit shares its
+  # colormap. One piece, what the walker looks like, is a shape the engine builds, and is no
+  # model. The numbers are those of prototype.scene.yml.
   # the 11 shared placements take a shared material too
-  expect_output("Created 21 render objects: 10 models were loaded and 11 shared")
+  expect_output("Created 21 render objects: 9 models were loaded and 11 shared")
   expect_output("10 materials were made and 11 shared")
-  expect_output_count("Created render object [0-9]+ from assets://external/kenney/prototype-kit/wall.glb" 8)
-  expect_output_count("Initializing texture from assets://external/kenney/prototype-kit/Textures/colormap.png" 1)
-  expect_output("Model assets://external/kenney/prototype-kit/wall.glb is shared, 8 render objects draw it now")
+  expect_output_count("Created render object [0-9]+ from assets://models/kit/wall.glb" 8)
+  expect_output_count("Initializing texture from assets://models/kit/colormap.png" 1)
+  expect_output("Model assets://models/kit/wall.glb is shared, 8 render objects draw it now")
 
   # and freed once, when the last render object that drew it was destroyed
-  expect_output_count("Model assets://external/kenney/prototype-kit/wall.glb was freed, nothing draws it any more" 1)
-  expect_output_count("Texture assets://external/kenney/prototype-kit/Textures/colormap.png\\|color was freed" 1)
+  expect_output_count("Model assets://models/kit/wall.glb was freed, nothing draws it any more" 1)
+  expect_output_count("Texture assets://models/kit/colormap.png\\|color was freed" 1)
 else ()
   message(FATAL_ERROR "There is no case '${CASE}'")
 endif ()

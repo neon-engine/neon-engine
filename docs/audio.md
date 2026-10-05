@@ -194,7 +194,7 @@ through two components that `UiAudio` acts on:
 - name: chilled
   components:
     SoundSource:
-      sound: assets://sounds/music/electronic-chilled.wav
+      sound: assets://sounds/music/chilled.wav
       group: music
       looping: true
     UiSoundSwitch:
@@ -216,7 +216,7 @@ A volume is handed to the audio only when it changes. A sound that is not
 chosen when the scene starts is silent from the start, and the one that is
 fades in. One entity for every piece of music, each with its own word, and a
 choice of radio buttons in the menu, fade from one piece to the next. The
-settings demo does this:
+settings demo of the tests does this, with one tone for every piece:
 
 ```
 NeonRuntime --scene assets://scenes/settings-demo.scene.yml

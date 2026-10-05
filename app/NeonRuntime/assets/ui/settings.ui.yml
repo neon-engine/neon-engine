@@ -5,7 +5,7 @@
 #
 #   NeonRuntime --ui assets://ui/settings.ui.yml
 #
-# or by the scene assets://scenes/settings-demo.scene.yml. The look is in
+# or by a scene that names it, as settings-demo.scene.yml of the tests. The look is in
 # settings.css; this file says what there is.
 
 ui: settings

@@ -5,6 +5,7 @@
 # do not fail.
 
 neon_add_application_test(runtime-culling NeonRuntime run.cmake
+        PROJECT test-game
         TOOLS
         pixel-probe
         CASES

@@ -16,7 +16,7 @@ before is removed.
 | Component | Data that an entity carries, such as a `Transform`. It has no behaviour |
 | System | Behaviour. It works on every entity that carries the components it asks for, once per frame or once per step of the world |
 
-What an entity is follows from what it carries. The bear of the demo scene is
+What an entity is follows from what it carries. A box of the start scene is
 an entity with a `Transform` and a `Renderable`. The player is one with a
 `Transform` and a `Spectator`.
 

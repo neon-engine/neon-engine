@@ -1,0 +1,13 @@
+# The project of the museum: the scene that shows the engine, hall by hall.
+# See ../README.md.
+
+version: 1
+name: neon-museum
+organization: neon-engine
+
+scenes:
+  - assets://scenes/demo.scene.yml
+
+entry_scene: assets://scenes/demo.scene.yml
+
+input: assets://input/default.input.yml

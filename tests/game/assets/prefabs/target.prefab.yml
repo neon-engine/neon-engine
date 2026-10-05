@@ -1,0 +1,23 @@
+# The target of the kit of the tests: a plate 0.5 across and 0.5 high
+# from its origin at its foot, 0.124 thick along x with its bull's eye. It stands still and can
+# be hit, by a shot or by the player, so it has a static body and a box
+# collider of the face's size, in the piece's own metres as the walls have
+# theirs; a scene that places another target model writes its model and its
+# collider's size and offset on top. The Transform is carried from the start
+# so that a target spawned in play stands where its parent is, see
+# docs/prefabs.md#spawning-at-run-time.
+version: 1
+prefab: target
+
+entity:
+  components:
+    Transform: Default
+    Renderable:
+      model: assets://models/kit/target.glb
+      shader: assets://shaders/basic-lit
+    RigidBody:
+      kind: static
+    Collider:
+      shape: box
+      size: [0.1, 0.5, 0.5]
+      offset: [0, 0.25, 0]

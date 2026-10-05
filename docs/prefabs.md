@@ -25,7 +25,7 @@ prefab: wall
 entity:
   components:
     Renderable:
-      model: assets://external/kenney/prototype-kit/wall.glb
+      model: assets://models/kit/wall.glb
       shader: assets://shaders/basic-lit
     RigidBody:
       kind: static
@@ -79,12 +79,11 @@ the editor knows which file a change belongs to and a script can tell a
 wall from a wall. The component is not written under `components`;
 `prefab:` is what sets it.
 
-The prototype of the runtime,
-[prototype.scene.yml](../app/NeonRuntime/assets/scenes/prototype.scene.yml),
+The prototype of the tests,
+[prototype.scene.yml](../tests/game/assets/scenes/prototype.scene.yml),
 places the walls, the floors, the columns, and the targets of its level from
-[assets/prefabs](../app/NeonRuntime/assets/prefabs), each with only its
-`Transform` written on top. The image it draws is the one it drew before, to
-the byte.
+[assets/prefabs](../tests/game/assets/prefabs), each with only its
+`Transform` written on top.
 
 ## What differs
 
@@ -244,7 +243,7 @@ entities written out in full with the same model share the same way. See
 
 | Check | Result |
 |---|---|
-| The prototype of the runtime, with its walls, floors, columns, and targets placed from prefabs | The same two frames as before, byte for byte |
+| The prototype of the tests, with its walls, floors, columns, and targets placed from prefabs | The same two frames as before, byte for byte |
 | 43 checks of reading, placing, changing, nesting, taking children away, spawning, saving, and what is reported for a wrong file, in `tests/prefab-files` | Pass |
 | 3 checks that a component is read into the one the entity has, next to the formats | Pass |
 | 8 checks of `EntityWorld::Spawn`, next to the world: it goes through the scene, a prefab spawned twice is read once, the overrides land on top, a missing file spawns nothing and says so, a scene change reads the file again | Pass |

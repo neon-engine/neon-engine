@@ -1,0 +1,36 @@
+# The project of the tests: every scene a test starts the runtime with. See
+# ../CMakeLists.txt. The scene it starts with is one that reads no file.
+
+version: 1
+name: neon-test-game
+organization: neon-engine
+
+scenes:
+  - assets://scenes/blockout.scene.yml
+  - assets://scenes/culling-test.scene.yml
+  - assets://scenes/end.scene.yml
+  - assets://scenes/gamma-test.scene.yml
+  - assets://scenes/hud-demo.scene.yml
+  - assets://scenes/joints.scene.yml
+  - assets://scenes/materials-test.scene.yml
+  - assets://scenes/pbr-test.scene.yml
+  - assets://scenes/physics.scene.yml
+  - assets://scenes/prototype.scene.yml
+  - assets://scenes/scripting-demo.scene.yml
+  - assets://scenes/settings-demo.scene.yml
+  - assets://scenes/shadow-test-unshadowed.scene.yml
+  - assets://scenes/shadow-test.scene.yml
+  - assets://scenes/sharing-distinct.scene.yml
+  - assets://scenes/sharing-same.scene.yml
+  - assets://scenes/sky-test-box.scene.yml
+  - assets://scenes/sky-test-sphere.scene.yml
+  - assets://scenes/sky-test-turned.scene.yml
+  - assets://scenes/spawn-test.scene.yml
+  - assets://scenes/surface-demo.scene.yml
+  - assets://scenes/title.scene.yml
+  - assets://scenes/tonemap-test.scene.yml
+  - assets://scenes/vertex-colours-test.scene.yml
+
+entry_scene: assets://scenes/shadow-test.scene.yml
+
+input: assets://input/default.input.yml

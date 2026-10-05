@@ -1,16 +1,18 @@
 # Third-party licenses
 
-This note lists every third-party library in the repository, the license it
-is under, and whether that license allows the library to be linked statically
-into a program that is distributed.
+This note says, for every third-party library in the repository, whether its
+license allows the library to be linked statically into a program that is
+distributed, and what a game that is handed on has to carry. The list itself,
+with versions and where each license text is, is [CREDITS.md](../CREDITS.md)
+at the root of the repository; the two are kept in step.
 
 It was written by reading the license files in `external/`. It is not legal
 advice. Have it checked before a game is sold.
 
 **In short:** everything NeonRuntime links today may be linked statically,
-into an open or a closed program. The one thing to stay away from is two
-decoders that come with SDL_mixer, mpg123 and game-music-emu. They are under
-the LGPL and are switched off by default.
+into an open or a closed program. Most of it asks that its copyright notice
+and license text go with the program, and FreeType asks to be named in the
+credits.
 
 ## What the licenses ask for
 
@@ -24,7 +26,10 @@ the LGPL and are switched off by default.
 | Apache 2.0 with LLVM exception | Allowed | Nothing for what the compiler puts into a program |
 | Unlicense, public domain | Allowed | Nothing |
 | LGPL 2.1 | **Only with conditions** | Whoever receives the program has to be able to replace the library. With static linking that means handing out the object files of the program, or its source. Linking dynamically avoids it |
-| Creative Commons BY 4.0 | Does not apply, it covers assets | Name the author, link the license, and say what was changed |
+| MIT No Attribution | Allowed | Nothing |
+| "Old MIT", of HarfBuzz | Allowed | Include the copyright notice and the license text |
+| The FreeType License | Allowed | Include the license text, and say in the credits that the program uses FreeType |
+| SIL Open Font License 1.1 | Does not apply, it covers fonts | The copyright notice and the license go with the font, also when it is embedded. A font is not sold by itself. A font that is changed takes another name where one is reserved |
 
 "Include" means that the text ships with the game, in a file next to it or on
 a screen in it.
@@ -34,18 +39,25 @@ a screen in it.
 | Library | Version | License | Static linking | Used for |
 |---|---|---|---|---|
 | [SDL2](https://github.com/libsdl-org/SDL) | 2.30.9 | zlib | Allowed | Window, input, files |
-| [GLM](https://github.com/g-truc/glm) | 0af55cc, after 1.0.1 | MIT, or the Happy Bunny License | Allowed. Header only | Vectors and matrices |
-| [spdlog](https://github.com/gabime/spdlog) | 6fa3601, after 1.15.3 | MIT | Allowed | Logging |
-| [assimp](https://github.com/assimp/assimp) | ddb74c2, after 5.4.2 | BSD 3 clauses | Allowed | Loading models |
+| [GLM](https://github.com/g-truc/glm) | 1.0.1 | MIT, or the Happy Bunny License | Allowed. Header only | Vectors and matrices |
+| [spdlog](https://github.com/gabime/spdlog) | 1.15.3 | MIT | Allowed | Logging |
+| [assimp](https://github.com/assimp/assimp) | 5.4.2 | BSD 3 clauses | Allowed | Loading models |
 | [stb](https://github.com/nothings/stb) | 013ac3b | MIT, or public domain | Allowed. Header only | Reading and writing images |
 | [rapidyaml](https://github.com/biojppm/rapidyaml) | 0.8.0 | MIT | Allowed | Reading YAML |
 | [Vulkan-Headers](https://github.com/KhronosGroup/Vulkan-Headers) | 1.4.357 | Apache 2.0, or MIT | Allowed. Header only | Declarations of Vulkan |
 | [volk](https://github.com/zeux/volk) | 1.4.357 | MIT | Allowed | Finding the Vulkan library when the program starts |
 | [LuaJIT](https://github.com/LuaJIT/LuaJIT) | c6ffc14, v2.1 of 2026-09-08 | MIT | Allowed | The scripts |
+| [Flecs](https://github.com/SanderMertens/flecs) | 4.1.6 | MIT | Allowed | Entities and components |
+| [Jolt Physics](https://github.com/jrouwe/JoltPhysics) | 5.2.0 | MIT | Allowed | Physics |
+| [miniaudio](https://github.com/mackron/miniaudio) | 0.11.25 | Public domain, or MIT No Attribution | Allowed | Sound |
+| [FreeType](https://github.com/freetype/freetype) | 2.14.3 | The FreeType License, or GPL 2 | Allowed, under the FreeType License | Drawing the glyphs of fonts |
+| [HarfBuzz](https://github.com/harfbuzz/harfbuzz) | 14.5.0 | "Old MIT" | Allowed | Shaping text |
+| [LunaSVG](https://github.com/sammycage/lunasvg) | 3.5.0 | MIT | Allowed | Drawing SVG images |
 
-For GLM and stb the MIT license is the one to pick. The Happy Bunny License
-asks for something that cannot be checked, and public domain is not recognized
-the same way everywhere.
+For GLM, stb, and miniaudio the MIT license is the one to pick. The Happy
+Bunny License asks for something that cannot be checked, and public domain is
+not recognized the same way everywhere. FreeType is taken under its own
+license, never under the GPL.
 
 ### What these libraries bring along
 
@@ -70,47 +82,19 @@ A library often holds code of others. This is what ends up in the program.
 | assimp | rapidjson | MIT | Allowed |
 | assimp | stb | MIT, or public domain | Allowed |
 | assimp | Draco | Apache 2.0 | Allowed. Not built, it is switched off |
+| LunaSVG | PlutoVG | MIT | Allowed |
+| LunaSVG | A rasterizer of FreeType, inside PlutoVG | The FreeType License | Allowed |
+| LunaSVG | stb, inside PlutoVG | MIT, or public domain | Allowed |
 
 assimp is temporary, see the [roadmap](roadmap.md). Most of this table leaves
 with it.
 
-## Arriving with open pull requests
-
-| Library | Version | License | Static linking | Used for |
-|---|---|---|---|---|
-| [Flecs](https://github.com/SanderMertens/flecs) | 4.1.6 | MIT | Allowed | Entities and components |
-| [GoogleTest](https://github.com/google/googletest) | 1.18.0 | BSD 3 clauses | Allowed | Tests. It is linked into the test programs only, and is not part of a game |
-
-## In the repository, and not linked yet
+## In the repository, and not part of NeonRuntime
 
 | Library | Version | License | Static linking | Meant for |
 |---|---|---|---|---|
-| [Jolt Physics](https://github.com/jrouwe/JoltPhysics) | 5.2.0 | MIT | Allowed | Physics. Built, and linked by `app/JoltTest` alone |
-| [SDL_mixer](https://github.com/libsdl-org/SDL_mixer) | 2.8.0 | zlib | Allowed, with the decoders it uses by default. See below | Sound and music |
-| [SoLoud](https://github.com/jarikomppa/soloud) | 20200207 | zlib | Allowed | Sound and music |
-| [Steam Audio](https://github.com/ValveSoftware/steam-audio) | 4.6.0 | Apache 2.0 | Allowed. See below | Spatial audio |
-
-### SDL_mixer
-
-SDL_mixer itself is under the zlib license. What decides is which decoders are
-switched on when it is built.
-
-| Decoder | For | License | Default | Static linking |
-|---|---|---|---|---|
-| minimp3 | MP3 | Public domain (CC0) | On | Allowed |
-| dr_flac | FLAC | Public domain, or MIT No Attribution | On | Allowed |
-| stb_vorbis | Ogg Vorbis | MIT, or public domain | On | Allowed |
-| libxmp | MOD and other tracker music | MIT | On | Allowed |
-| Opus, opusfile, Ogg | Opus | BSD 3 clauses | On | Allowed |
-| WavPack | WavPack | BSD 3 clauses | On | Allowed |
-| Timidity | MIDI | One of three, to be chosen: GPL, LGPL, or the Artistic License | On | Allowed, when the Artistic License is chosen |
-| libFLAC | FLAC | BSD 3 clauses | Off | Allowed |
-| Vorbis, Tremor | Ogg Vorbis | BSD 3 clauses | Off | Allowed |
-| **mpg123** | MP3 | **LGPL 2.1** | Off | **Only with conditions** |
-| **game-music-emu** | Music of old consoles | **LGPL 2.1** | Off | **Only with conditions** |
-
-Leave mpg123 and game-music-emu off. minimp3 already plays MP3. If one of them
-is ever wanted, it has to be a shared library that ships next to the game.
+| [GoogleTest](https://github.com/google/googletest) | 1.18.0 | BSD 3 clauses | Allowed | Tests. It is linked into the test programs only, and is not part of a game |
+| [Steam Audio](https://github.com/ValveSoftware/steam-audio) | 4.6.0 | Apache 2.0 | Allowed. See below | Spatial audio. Not built yet |
 
 ### Steam Audio
 
@@ -147,8 +131,8 @@ may be used.
 
 | Asset | License | What has to be done |
 |---|---|---|
-| Textures in `app/NeonRuntime/assets/textures`, by hansonry | Creative Commons BY 4.0 | Name the author and link the license, which [CREDITS.md](../app/NeonRuntime/assets/CREDITS.md) does |
-| Models in `app/NeonRuntime/assets/models` | Not recorded | They are there to have something to draw while the engine is built, and will be removed. They are not meant to be distributed |
+| The fonts in `app/NeonRuntime/assets/fonts`: Inter and Noto Sans Arabic | SIL Open Font License 1.1 | Keep the licence with the fonts, also when they are embedded in the engine. [CREDITS.md](../CREDITS.md) lists them |
+| Everything else: the scenes, and the models, textures, and sounds of `projects/` and `tests/game` | The engine's own | Built by the engine as `Geometry`, or written by a script of `tools/` from numbers. No model, texture, or sound in the repository was taken from elsewhere |
 
 ## What a distributed game needs
 
@@ -160,15 +144,15 @@ may be used.
 4. MoltenVK and its license, on macOS.
 
 Collecting these by hand does not last. Exporting a game should write the
-file, which makes it a task for NeonEditor.
+file, which makes it a task for NeonEditor, and the engine has to carry the
+notices of what is embedded in it, see #435.
 
 ## Open points
 
-- The models in `assets/models` have no recorded source. They are
-  placeholders and will be removed. Until then, a game must not ship them.
-- GLM, spdlog, assimp, and stb are pinned to commits between releases. A
-  release is easier to name in a list of licenses.
-- This list is kept by hand. A check that fails when `external/` holds a
-  library that is not listed here would keep it true.
-- neon-core is under the MIT license, so a game that is built with the engine
-  has to include the notice of the engine too.
+- stb and LuaJIT are pinned to commits, not to releases. A release is easier
+  to name in a list of licenses.
+- This list and [CREDITS.md](../CREDITS.md) are kept by hand. A check that
+  fails when `external/` holds a library that is not listed would keep them
+  true.
+- The license of the engine itself is not decided (#95). Once it is, a game
+  that is built with the engine has to include what that license asks too.

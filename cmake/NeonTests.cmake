@@ -113,12 +113,15 @@ function(neon_add_functional_test NAME)
   )
 endfunction()
 
-# neon_add_application_test(<name> <application> <script.cmake> [TOOLS <target>...] [CASES <case>...])
+# neon_add_application_test(<name> <application> <script.cmake>
+#                           [PROJECT <project>] [TOOLS <target>...] [CASES <case>...])
 #
 # Declares tests that start an application as a user would, and look at what
 # it printed, what it wrote, and the exit code. The script is run by CMake,
 # once for every case, with these variables set:
-#   APPLICATION  the executable
+#   APPLICATION  the executable. With PROJECT, the one of that project, a
+#                target of neon_add_project, where it is put together: the
+#                application then runs that project and reads its assets
 #   DIRECTORY    a folder for what the run writes, empty at the start
 #   CASE         the name of the case
 # and for each of the TOOLS, the executable under its name in capitals with
@@ -130,9 +133,16 @@ endfunction()
 # Nothing is declared when cross-compiling, since the application cannot be
 # started on the machine that built it.
 function(neon_add_application_test NAME APPLICATION SCRIPT)
-  cmake_parse_arguments(PARSE_ARGV 3 TEST "" "" "CASES;TOOLS")
+  cmake_parse_arguments(PARSE_ARGV 3 TEST "" "PROJECT" "CASES;TOOLS")
 
   add_dependencies(neon-tests ${APPLICATION})
+
+  set(APPLICATION_FILE "$<TARGET_FILE:${APPLICATION}>")
+  if (TEST_PROJECT)
+    add_dependencies(neon-tests ${TEST_PROJECT})
+    set(APPLICATION_FILE
+            "$<TARGET_PROPERTY:${TEST_PROJECT},NEON_PROJECT_DIRECTORY>/$<TARGET_FILE_NAME:${APPLICATION}>")
+  endif ()
 
   set(TOOL_DEFINITIONS)
   foreach (TOOL IN LISTS TEST_TOOLS)
@@ -149,7 +159,7 @@ function(neon_add_application_test NAME APPLICATION SCRIPT)
     add_test(
             NAME "${NAME}.${CASE}"
             COMMAND "${CMAKE_COMMAND}"
-            "-DAPPLICATION=$<TARGET_FILE:${APPLICATION}>"
+            "-DAPPLICATION=${APPLICATION_FILE}"
             "-DDIRECTORY=${NEON_TESTS_DIRECTORY}/${NAME}/${CASE}"
             "-DCASE=${CASE}"
             ${TOOL_DEFINITIONS}

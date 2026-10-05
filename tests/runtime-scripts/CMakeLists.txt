@@ -4,6 +4,7 @@
 # On a machine without one the tests are skipped, they do not fail.
 
 neon_add_application_test(runtime-scripts NeonRuntime run.cmake
+        PROJECT test-game
         TOOLS
         pixel-probe
         CASES

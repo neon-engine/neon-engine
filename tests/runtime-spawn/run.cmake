@@ -75,13 +75,13 @@ expect_image("shots/frame.png")
 if (CASE STREQUAL "the-scene-alone-shows-nothing")
   expect_pixel("the black of the empty scene" 960 540 0 0 0)
 elseif (CASE STREQUAL "a-target-spawned-from-its-prefab-is-drawn")
-  # the round target of the kit, seen face on in the colours of Kenney's
+  # the target of the kit, seen face on in the colours of the kit's
   # colormap, lit by the daylight: the red of its bull's eye in the middle,
-  # the grey-blue of its rings around it, and black where nothing is
+  # the grey of its plate around it, and black where nothing is
   expect_output("Spawning assets://prefabs/target.prefab.yml as the command line asked")
-  expect_pixel("the red bull's eye of the spawned target" 960 540 153 61 45)
-  expect_pixel("a ring of the spawned target above it" 960 450 158 158 162)
-  expect_pixel("a ring of the spawned target to its left" 900 540 147 147 155)
+  expect_pixel("the red bull's eye of the spawned target" 960 540 146 50 33)
+  expect_pixel("the plate of the spawned target above it" 960 450 112 112 117)
+  expect_pixel("the plate of the spawned target to its left" 800 540 112 112 117)
   expect_pixel("the black above the spawned target" 960 300 0 0 0)
 else ()
   message(FATAL_ERROR "There is no case '${CASE}'")

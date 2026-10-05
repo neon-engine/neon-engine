@@ -2,6 +2,9 @@
 # application itself. Each is in a folder of its own. Unit tests are not here,
 # they sit next to the file they test.
 
+# the game the tests of the runtime start, before the tests that name it
+add_subdirectory(game)
+
 add_subdirectory(world-with-flecs)
 add_subdirectory(user-interface)
 add_subdirectory(runtime-command-line)

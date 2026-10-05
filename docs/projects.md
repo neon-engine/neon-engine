@@ -23,15 +23,18 @@ name: neon-runtime
 organization: neon-engine
 
 scenes:
-  - assets://scenes/demo.scene.yml
-  - assets://scenes/physics.scene.yml
+  - assets://scenes/title.scene.yml
+  - assets://scenes/level.scene.yml
 
-entry_scene: assets://scenes/demo.scene.yml
+entry_scene: assets://scenes/title.scene.yml
 input: assets://input/default.input.yml
 ```
 
-The project of the runtime is
-[project.yml](../app/NeonRuntime/assets/project.yml).
+The project the runtime runs as it was built is
+[project.yml](../app/NeonRuntime/assets/project.yml), with one scene. A game
+is a project of its own, whose `project.yml` the build lays over that one,
+as the museum's, [project.yml](../projects/museum/assets/project.yml), see
+[scenes.md](scenes.md#where-the-scenes-are).
 
 | Name | Holds | When it is left out |
 |---|---|---|

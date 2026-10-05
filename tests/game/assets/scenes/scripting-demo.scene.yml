@@ -1,0 +1,33 @@
+# A scene for the first script, which tests read pixel by pixel:
+#
+#   NeonRuntime --scene assets://scenes/scripting-demo.scene.yml
+#
+# A green quad faces the camera and a Spinner, the component that
+# scripts/spinner.lua declares, turns it about y at a half turn a
+# second. After a quarter of a second the quad is edge on and the middle of
+# the frame shows the black behind it; after half a second its back faces
+# the camera, which is left out, and the frame stays black until it comes
+# round again. The Spinner is a component like any other: a scene writes
+# its fields, and what it leaves out keeps the script's defaults.
+
+scene: scripting-demo
+version: 1
+
+entities:
+  - name: camera
+    components:
+      Transform:
+        position: [0, 0, 5]
+      Camera: Default
+
+  - name: card
+    components:
+      Transform: Default
+      Renderable:
+        model: assets://models/quad.obj
+        fit: unit
+        shader: assets://shaders/color
+        material:
+          color: [0, 1, 0]
+      Spinner:
+        speed: 180

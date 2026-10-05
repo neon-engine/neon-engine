@@ -3,8 +3,8 @@
 How a Neon project is organised: where files go, how they are named, and why.
 It is to a project what the [style guide](style-guide.md) is to the engine's
 code, and it is what the editor (#82), the exporter (#84), and agents (#85)
-rely on. The project of the runtime,
-[app/NeonRuntime/assets](../app/NeonRuntime/assets), follows it and is the
+rely on. The museum,
+[projects/museum/assets](../projects/museum/assets), follows it and is the
 example.
 
 ## The folders
@@ -61,8 +61,9 @@ through LFS as every other asset does. A file that is remade for the project,
 such as a model prepared ahead of time (#98), leaves `external/` and goes to
 its folder by kind, since it is then the project's own.
 
-The first use is Kenney's kits for the prototype game (#182, #183):
-`external/kenney/<kit>/`.
+The engine's own projects have nothing there: what they show is built by the
+engine or written by a script of `tools/`. A game that takes a kit from an
+author keeps it as `external/<author>/<kit>/`.
 
 ## Names
 
@@ -113,7 +114,8 @@ origin.
 
 A file whose licence does not allow passing it on, such as music licensed to
 one person, is marked so in `CREDITS.md`, with what may be done instead. See
-the runtime's [CREDITS.md](../app/NeonRuntime/assets/CREDITS.md).
+the engine's own [CREDITS.md](../CREDITS.md), which is at the root of the
+repository since it covers the libraries as well.
 
 ## When a project grows
 

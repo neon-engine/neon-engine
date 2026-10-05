@@ -62,7 +62,7 @@ A graphics card with a Vulkan 1.1 driver is needed to run the result.
 
 ### Git LFS
 
-Model files under `app/NeonRuntime/assets/models/` are stored with
+Binary assets, such as models, images, sounds, and fonts, are stored with
 [Git LFS](https://git-lfs.com). The tracking rule lives in
 [.gitattributes](../.gitattributes). Install the LFS hooks once per machine
 before cloning or pulling, otherwise you get small pointer files instead of the
@@ -264,7 +264,7 @@ Display:
   --ui-scale NUMBER         Makes the user interface larger or smaller, for example 1.5
 
 Editor:
-  --scene PATH              Scene to start with in place of the entry scene of the project, for example assets://scenes/demo.scene.yml
+  --scene PATH              Scene to start with in place of the entry scene of the project, for example assets://scenes/start.scene.yml
   --ui PATH                 User interface to show on top, for example assets://ui/hud.ui.yml
   --frames N                Stop after N frames
   --screenshot PATH         Save the last frame as a PNG image, for example output://frame.png. Needs --frames or --screenshot-at
@@ -1012,7 +1012,7 @@ of each target, and defaults to the debug build of macOS.
 | Clean | the preset's `clean` target; nothing when the preset has not been configured yet |
 | Rebuild | Clean, then Build |
 | Full Clean | deletes the preset's build directory and the `bin` output of its build type |
-| Run | builds, then runs the macOS binary of the preset from its own folder without a debugger. It asks for a scene: left empty, the entry scene of the project starts; a name such as `prototype` starts `assets://scenes/prototype.scene.yml`; a virtual path is taken as it is |
+| Run | builds, then runs the macOS binary of the preset from its own folder without a debugger. It asks for a scene: left empty, the entry scene of the project starts; a name such as `start` starts `assets://scenes/start.scene.yml`; a virtual path is taken as it is |
 | Build in Docker (Linux x64 / Windows x64) | configure and build inside the matching image, debug or release as asked |
 
 ### Running and debugging from VS Code

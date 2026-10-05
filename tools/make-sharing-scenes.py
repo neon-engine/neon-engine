@@ -4,7 +4,7 @@ and crates of distinct colours that need more descriptor sets than one pool
 holds. Run from the repository root; the scenes are committed."""
 import random
 
-ROOT = "app/NeonRuntime/assets/scenes"
+ROOT = "tests/game/assets/scenes"
 COUNT = 300
 
 def header(name, what):

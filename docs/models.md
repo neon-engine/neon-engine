@@ -102,7 +102,7 @@ it. `tests/runtime-vertex-colours` reads a painted model pixel by pixel.
 | Its strength (`KHR_materials_emissive_strength` of glTF) | `ModelMaterial::emissive_strength`, multiplied into `material.emissive_strength` | 1 when the file says nothing. Read only when the file lists the extension in `extensionsUsed`, as the standard asks |
 | The emissive texture (`emissiveTexture` of glTF, `map_Ke` of an `.obj`) | `ModelMaterial::emissive_texture`, shown when the `Renderable` names no `emissive_texture` | Kept apart from the textures of the colours, and read as colours, in sRGB |
 | An image kept inside the file (`*0` in assimp, a `bufferView` image of a GLB) | The texture is made from the bytes of the image | Only PNG and JPEG, as glTF allows. Raw pixels in a file are warned about and left out |
-| An image file next to the model (`Textures/colormap.png`) | A virtual path from the folder of the model, `assets://external/kenney/prototype-kit/Textures/colormap.png` | The file has to be where the model says, with the letter case the model uses |
+| An image file next to the model (`colormap.png`) | A virtual path from the folder of the model, `assets://models/kit/colormap.png` | The file has to be where the model says, with the letter case the model uses |
 
 | `doubleSided` of glTF | `ModelMaterial::double_sided` | Taken when the `Renderable` leaves `material.double_sided` at `model`, see [doubleSided](#doublesided) |
 
@@ -142,7 +142,7 @@ colour written in sRGB, although glTF keeps both factors in linear light.
 | `never` | One side, whatever the file says | A closed piece whose exporter marked it double-sided out of habit |
 
 Reading the file is correct by the standard, and costs nothing on a model
-that says nothing. Kenney's kits mark every material double-sided, as their
+that says nothing. Some kits mark every material double-sided, as their
 exporter does, though every piece is closed: honouring it draws the back of
 every triangle of every piece, which the depth test then discards. The
 scene decides whether that matters: `never` on such a piece culls as
@@ -157,7 +157,7 @@ with each of them, by the renderer, inside one render object. The other
 way, splitting such a model into one model per material when the editor
 prepares it (#98), waits for an editor, and a character or a vehicle with
 a material for its skin and one for its clothes is drawn whole until then.
-Kenney's kits are one material per file, so the prototype is not touched.
+The kit of the tests is one material per file, so the prototype is not touched.
 
 The loader keeps, for every mesh in the order the backend gets them, the
 index of the material the mesh uses, and the list of the materials any mesh
@@ -197,16 +197,18 @@ conversion (#98) is for.
 | Tangents, a second set of texture coordinates | Not read | Normal maps come with #59 |
 | `KHR_texture_transform` | assimp reads it; only a transform that is the identity has been seen | |
 
-## The kits
+## The kit
 
-The pieces of the prototype level (#182) come from Kenney's Prototype Kit
-and Blaster Kit, under CC0, in
-[app/NeonRuntime/assets/external/kenney](../app/NeonRuntime/assets/external/kenney).
-Only the pieces a scene uses are in the repository, with the licence of each
-kit and the texture every piece names, `Textures/colormap.png`. A piece is
+The pieces of the prototype level of the tests (#182) are a kit of the
+engine's own, in
+[tests/game/assets/models/kit](../tests/game/assets/models/kit): a wall, a
+floor tile, a column, a crate, and the like, each a GLB of a few boxes that
+[tools/make-test-game-assets.py](../tools/make-test-game-assets.py) writes
+from numbers. They stand in for a kit a game would buy or draw: every piece
+names the same texture next to it, `colormap.png`. A piece is
 Y-up and in metres, with its floor at `y = 0`, and is drawn the right way up
-without any change. Each kit's `colormap.png` is a palette: the texture
-coordinates of a piece point at a patch of one colour, so a piece that is
+without any change. `colormap.png` is a palette: the texture
+coordinates of a piece point at a pixel of one colour, so a piece that is
 stretched by a `Transform` keeps its colours.
 
 ## Open questions

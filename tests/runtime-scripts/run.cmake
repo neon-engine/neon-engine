@@ -1,6 +1,6 @@
 # Draws scripting-demo.scene.yml without a window and reads pixels of what
 # it saved with pixel-probe. The scene is a green quad facing the camera
-# with a Spinner, the component assets/scripts/spinner.lua declares, which
+# with a Spinner, the component scripts/spinner.lua declares, which
 # turns it about y at 180 degrees a second. At a time step of 0.05 s the
 # first frame shows the quad turned by 9 degrees, still green in the middle
 # of the frame; the tenth frame shows it turned by 90, edge on, so the
@@ -26,10 +26,9 @@ expect_no_output("[error]")
 expect_no_output("[warning]")
 expect_no_output("[critical]")
 
-# the scripts were found and what they declare is said
-# the Spinner this scene uses, and the Mover, the Patrol, and the TriggerLamp
-# of the museum
-expect_output("Scripts under assets:// declare 4 components and 4 systems")
+# the scripts were found and what they declare is said: the Spinner this
+# scene uses, the one script of the game of the tests
+expect_output("Scripts under assets:// declare 1 components and 1 systems")
 
 # expect_pixel(<what> <x> <y> <red> <green> <blue>): the colour of a pixel of
 # the image FRAME, each channel within 2 of what is given

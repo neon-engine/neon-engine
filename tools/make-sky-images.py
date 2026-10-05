@@ -1,22 +1,18 @@
 #!/usr/bin/env python3
-"""Writes the images of the skies in app/NeonRuntime/assets/textures/sky.
+"""Writes the images of the skies: the one of the museum, and those of the
+tests.
 
-Two skies, each as the six faces of a cube and as one panorama, so that a
-Sky of type box and one of type sphere can be compared:
+projects/museum/assets/textures/sky/museum-panorama.png
+            A day painted from a formula: blue that pales towards the
+            horizon, ground below it, and a sun where the direction light
+            of the museum, demo.scene.yml, comes from, so that the shadows
+            there fall away from the sun that is seen.
 
-day-*.png   A day painted from a formula: blue that pales towards the
-            horizon, ground below it, and a sun ahead and to the right of
-            a camera that was not turned. For sky-box.scene.yml and
-            sky-sphere.scene.yml, which show the same picture.
-
-museum-panorama.png
-            The same day with the sun where the direction light of the
-            museum, demo.scene.yml, comes from, so that the shadows there
-            fall away from the sun that is seen.
-
-test-*.png  One plain colour for every direction, for tests/runtime-sky,
-            which reads pixels: right red, left green, top blue, bottom
-            brown, front yellow, back purple.
+tests/game/assets/textures/sky/test-*.png
+            One plain colour for every direction, as the six faces of a
+            cube and as one panorama, for tests/runtime-sky, which reads
+            pixels: right red, left green, top blue, bottom brown, front
+            yellow, back purple.
 
 The faces are laid out as docs/scenes.md says a Sky expects them: `front`
 is seen along negative z, `right` along positive x, `top` along positive y,
@@ -33,7 +29,8 @@ import struct
 import zlib
 from pathlib import Path
 
-FOLDER = Path("app/NeonRuntime/assets/textures/sky")
+MUSEUM_FOLDER = Path("projects/museum/assets/textures/sky")
+FOLDER = Path("tests/game/assets/textures/sky")
 
 # the faces in the order of the names, and the direction a place on each is
 # seen in: across and down from -1 to 1, as the image is looked at
@@ -174,15 +171,11 @@ def panorama_direction(across, down):
 
 
 def main():
+    MUSEUM_FOLDER.mkdir(parents=True, exist_ok=True)
     FOLDER.mkdir(parents=True, exist_ok=True)
 
-    write_faces("day", 512, day)
     write_png(
-        FOLDER / "day-panorama.png", 2048, 1024,
-        lambda column, row: day(panorama_direction((column + 0.5) / 2048, (row + 0.5) / 1024)))
-
-    write_png(
-        FOLDER / "museum-panorama.png", 2048, 1024,
+        MUSEUM_FOLDER / "museum-panorama.png", 2048, 1024,
         lambda column, row: day(panorama_direction((column + 0.5) / 2048, (row + 0.5) / 1024), MUSEUM_SUN))
 
     write_faces("test", 16, test)

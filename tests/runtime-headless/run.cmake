@@ -224,7 +224,7 @@ elseif (CASE STREQUAL "screenshot-for-the-user")
   # platform
   file(GLOB_RECURSE SAVED RELATIVE "${DIRECTORY}" "${DIRECTORY}/home/frame.png")
   list(LENGTH SAVED COUNT)
-  if (NOT COUNT EQUAL 1 OR NOT SAVED MATCHES "neon-engine/neon-runtime/shots/frame.png$")
+  if (NOT COUNT EQUAL 1 OR NOT SAVED MATCHES "neon-engine/neon-test-game/shots/frame.png$")
     fail("Expected one image in the folder of the user, below ${DIRECTORY}/home, found '${SAVED}'")
   endif ()
   expect_image("${SAVED}")

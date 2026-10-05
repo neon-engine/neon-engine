@@ -45,14 +45,14 @@ that carries more is refused, which is said in the log.
 ```
 
 The scene
-[physics.scene.yml](../app/NeonRuntime/assets/scenes/physics.scene.yml) shows
+[physics.scene.yml](../tests/game/assets/scenes/physics.scene.yml) shows
 all of them:
 
 ```
 NeonRuntime --scene assets://scenes/physics.scene.yml
 ```
 
-The scene [joints.scene.yml](../app/NeonRuntime/assets/scenes/joints.scene.yml)
+The scene [joints.scene.yml](../tests/game/assets/scenes/joints.scene.yml)
 shows every kind of joint: a door on a hinge, which a spring pulls shut
 again, a pendulum on a point, a sled on a slider, and two crates glued
 together.
@@ -295,8 +295,9 @@ entity with a `Camera`, which the system lifts to the eyes and pitches.
 | While the pause menu is shown | The world does not update its systems, so the player neither turns nor moves, and the user interface takes the input first, see [user-interface.md](user-interface.md#input-and-focus) |
 | The `Spectator` | Stays what it is: a camera that flies, for looking around while developing. `hud-demo.scene.yml` and `surface-demo.scene.yml` keep it |
 
-The runtime walks its museum, the prototype level, and the blockout this
-way:
+The museum, and the prototype level and the blockout of the tests, are
+walked this way, each with the runtime of its project, see
+[scenes.md](scenes.md#where-the-scenes-are):
 
 ```
 NeonRuntime
@@ -1083,7 +1084,5 @@ It was built and run on macOS. **It was not built on Linux and Windows.**
 - Drawing the shapes of the physics, to see what collides. Jolt has a
   renderer for it, which is turned off.
 - Whether the steps per second become an option of the command line.
-- The lighting of the scene of the runtime. The bunny is black, since its
-  model has no normals.
 - Several worlds of physics at once, such as one for each scene that is open
   in an editor. One `Jolt_PhysicsSystem` is one world, and several can exist.

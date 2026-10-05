@@ -1,0 +1,20 @@
+# A floor tile of the kit of the tests: 1 by 1, with its top at its
+# origin. The scene stretches it over a room with the scale of a Transform;
+# the collider is a slab below the top, so that nothing falls through.
+# The Transform is carried from the start so that a tile spawned in play
+# stands where its parent is.
+version: 1
+prefab: floor-tile
+
+entity:
+  components:
+    Transform: Default
+    Renderable:
+      model: assets://models/kit/floor-square.glb
+      shader: assets://shaders/basic-lit
+    RigidBody:
+      kind: static
+    Collider:
+      shape: box
+      size: [1, 0.2, 1]
+      offset: [0, -0.1, 0]

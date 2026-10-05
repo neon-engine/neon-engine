@@ -43,8 +43,8 @@ if (NEON_BUILD_TESTS)
   # the same for images
   set(TEST_IMAGES_HEADER "${CMAKE_CURRENT_BINARY_DIR}/generated/test-images.hpp")
   set(TEST_IMAGE_FILES
-          "${CMAKE_SOURCE_DIR}/app/NeonRuntime/assets/ui/heart.png"
-          "${CMAKE_SOURCE_DIR}/app/NeonRuntime/assets/ui/test-card.jpg"
+          "${CMAKE_SOURCE_DIR}/tests/game/assets/ui/heart.png"
+          "${CMAKE_SOURCE_DIR}/tests/game/assets/ui/test-card.jpg"
   )
   set(TEST_IMAGE_NAMES png_image jpeg_image)
 
@@ -56,7 +56,7 @@ if (NEON_BUILD_TESTS)
   endforeach ()
 
   if (IS_STALE)
-    set(TEST_IMAGES_TEXT "// Written by CMake from the images of the runtime\n")
+    set(TEST_IMAGES_TEXT "// Written by CMake from the images of the game of the tests\n")
     foreach (TEST_IMAGE TEST_IMAGE_NAME IN ZIP_LISTS TEST_IMAGE_FILES TEST_IMAGE_NAMES)
       file(READ "${TEST_IMAGE}" TEST_IMAGE_BYTES HEX)
       string(REGEX REPLACE "([0-9a-f][0-9a-f])" "0x\\1," TEST_IMAGE_BYTES "${TEST_IMAGE_BYTES}")

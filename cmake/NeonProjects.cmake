@@ -114,4 +114,7 @@ function(neon_add_project NAME)
   if (PROJECT_SOURCES)
     add_dependencies(${NAME} ${NAME}-extension)
   endif ()
+
+  # where it is put together, for what starts it, as a test does
+  set_target_properties(${NAME} PROPERTIES NEON_PROJECT_DIRECTORY "${PROJECT_DIRECTORY}")
 endfunction()
