@@ -18,3 +18,6 @@ worktrees/
 # folder, a file named Icon that downloaded sound packs come with
 .DS_Store
 **/sounds/**/Icon*
+
+# the settings of JetBrains IDEs, which are each developer's own
+.idea/
