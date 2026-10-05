@@ -173,29 +173,32 @@ namespace neon
     const VkDevice device = _device->Device();
     const VkDeviceSize size = static_cast<VkDeviceSize>(width) * height * 4;
 
+    // In a batch the pixels go through the buffer its uploads share. On
+    // its own, an upload makes one, which is freed once it was read.
     VkBuffer staging = VK_NULL_HANDLE;
     VkDeviceMemory staging_memory = VK_NULL_HANDLE;
-    if (!_device->CreateBuffer(
-      size,
-      VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-      staging,
-      staging_memory))
-    {
-      return false;
-    }
-
-    const auto release_staging = [&]
-    {
-      vkDestroyBuffer(device, staging, nullptr);
-      vkFreeMemory(device, staging_memory, nullptr);
-    };
-
+    VkDeviceSize staging_offset = 0;
     void *mapped = nullptr;
-    if (vkMapMemory(device, staging_memory, 0, size, 0, &mapped) != VK_SUCCESS)
+    const bool is_shared = _device->TakeBatchStaging(size, staging, staging_offset, mapped);
+
+    if (!is_shared)
     {
-      release_staging();
-      return false;
+      if (!_device->CreateBuffer(
+        size,
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        staging,
+        staging_memory))
+      {
+        return false;
+      }
+
+      if (vkMapMemory(device, staging_memory, 0, size, 0, &mapped) != VK_SUCCESS)
+      {
+        vkDestroyBuffer(device, staging, nullptr);
+        vkFreeMemory(device, staging_memory, nullptr);
+        return false;
+      }
     }
     std::memcpy(mapped, pixels, size);
 
@@ -213,7 +216,7 @@ namespace neon
       }
     }
 
-    vkUnmapMemory(device, staging_memory);
+    if (!is_shared) { vkUnmapMemory(device, staging_memory); }
 
     const VkCommandBuffer commands = _device->BeginCommands();
     constexpr VkImageAspectFlags color = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -223,6 +226,7 @@ namespace neon
       from, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
     VkBufferImageCopy region{};
+    region.bufferOffset = staging_offset;
     region.imageSubresource = {color, 0, 0, 1};
     region.imageExtent = {width, height, 1};
     vkCmdCopyBufferToImage(commands, staging, _image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
@@ -264,8 +268,9 @@ namespace neon
       commands, _image, color, mip_levels - 1, 1,
       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
+    // the buffer is read when the commands run, which in a batch is later
     const bool uploaded = _device->EndCommands(commands);
-    release_staging();
+    if (!is_shared) { _device->ReleaseAfterCommands(staging, staging_memory); }
     return uploaded;
   }
 

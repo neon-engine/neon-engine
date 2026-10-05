@@ -608,6 +608,10 @@ namespace neon
     // the frame before is finished, and nothing draws with what is written
     vkDeviceWaitIdle(_device.Device());
 
+    // All of them in one run of commands: a game that sets dozens of
+    // pictures again in a frame, as one whose lights flicker does ten times
+    // a second, would wait for the graphics card once for each otherwise.
+    _device.BeginBatch();
     for (const std::string &name : _changed_images)
     {
       const auto image = _images.find(name);
@@ -615,6 +619,7 @@ namespace neon
 
       _textures.ReplacePixels(TextureSource::For(TextureSourceKind::Image, name), *image->second);
     }
+    if (!_device.EndBatch()) { _logger->Error("The pictures that were set again could not be written"); }
     _changed_images.clear();
   }
 

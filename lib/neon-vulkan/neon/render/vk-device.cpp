@@ -363,6 +363,7 @@ namespace neon
     if (_device != VK_NULL_HANDLE)
     {
       vkDeviceWaitIdle(_device);
+      ReleaseBatchStaging();
       if (_command_pool != VK_NULL_HANDLE) { vkDestroyCommandPool(_device, _command_pool, nullptr); }
       vkDestroyDevice(_device, nullptr);
     }
@@ -519,6 +520,9 @@ namespace neon
 
   VkCommandBuffer VK_Device::BeginCommands() const
   {
+    // one run of commands for all of a batch
+    if (_batch_commands != VK_NULL_HANDLE) { return _batch_commands; }
+
     VkCommandBufferAllocateInfo allocation{};
     allocation.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     allocation.commandPool = _command_pool;
@@ -540,6 +544,9 @@ namespace neon
   {
     if (commands == VK_NULL_HANDLE) { return false; }
 
+    // run with the rest of the batch, by EndBatch()
+    if (commands == _batch_commands) { return true; }
+
     vkEndCommandBuffer(commands);
 
     VkSubmitInfo submit{};
@@ -553,6 +560,102 @@ namespace neon
 
     vkFreeCommandBuffers(_device, _command_pool, 1, &commands);
     return submitted;
+  }
+
+  void VK_Device::BeginBatch()
+  {
+    if (_batch_commands != VK_NULL_HANDLE) { return; }
+
+    _batch_commands = BeginCommands();
+  }
+
+  bool VK_Device::EndBatch()
+  {
+    const VkCommandBuffer commands = _batch_commands;
+    _batch_commands = VK_NULL_HANDLE;
+
+    // as the commands of no batch are run, now that none is open
+    const bool ran = EndCommands(commands);
+
+    for (const auto &[buffer, memory] : _batch_buffers)
+    {
+      vkDestroyBuffer(_device, buffer, nullptr);
+      vkFreeMemory(_device, memory, nullptr);
+    }
+    _batch_buffers.clear();
+
+    // A batch that asked for more than the shared buffer holds finds it
+    // large enough the next time, with some to spare. Now, when nothing
+    // reads it.
+    if (_batch_staging_wanted > _batch_staging_size)
+    {
+      ReleaseBatchStaging();
+
+      const VkDeviceSize size = _batch_staging_wanted + _batch_staging_wanted / 4;
+      if (CreateBuffer(
+            size,
+            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+            _batch_staging,
+            _batch_staging_memory))
+      {
+        if (vkMapMemory(_device, _batch_staging_memory, 0, size, 0, &_batch_staging_mapped) == VK_SUCCESS)
+        {
+          _batch_staging_size = size;
+        } else
+        {
+          ReleaseBatchStaging();
+        }
+      }
+    }
+    _batch_staging_used = 0;
+    _batch_staging_wanted = 0;
+    return ran;
+  }
+
+  bool VK_Device::TakeBatchStaging(
+    const VkDeviceSize size,
+    VkBuffer &buffer,
+    VkDeviceSize &offset,
+    void *&mapped) const
+  {
+    if (_batch_commands == VK_NULL_HANDLE) { return false; }
+
+    // a part starts at a multiple of four bytes, as a copy to an image asks
+    const VkDeviceSize taken = (size + 3) & ~static_cast<VkDeviceSize>(3);
+    _batch_staging_wanted += taken;
+    if (_batch_staging == VK_NULL_HANDLE || taken > _batch_staging_size - _batch_staging_used) { return false; }
+
+    buffer = _batch_staging;
+    offset = _batch_staging_used;
+    mapped = static_cast<unsigned char *>(_batch_staging_mapped) + offset;
+    _batch_staging_used += taken;
+    return true;
+  }
+
+  void VK_Device::ReleaseBatchStaging() const
+  {
+    if (_batch_staging != VK_NULL_HANDLE)
+    {
+      vkDestroyBuffer(_device, _batch_staging, nullptr);
+      vkFreeMemory(_device, _batch_staging_memory, nullptr);
+    }
+    _batch_staging = VK_NULL_HANDLE;
+    _batch_staging_memory = VK_NULL_HANDLE;
+    _batch_staging_mapped = nullptr;
+    _batch_staging_size = 0;
+  }
+
+  void VK_Device::ReleaseAfterCommands(const VkBuffer buffer, const VkDeviceMemory memory) const
+  {
+    if (_batch_commands != VK_NULL_HANDLE)
+    {
+      _batch_buffers.emplace_back(buffer, memory);
+      return;
+    }
+
+    vkDestroyBuffer(_device, buffer, nullptr);
+    vkFreeMemory(_device, memory, nullptr);
   }
 
   void VK_Device::TransitionImage(

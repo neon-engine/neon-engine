@@ -1,6 +1,7 @@
 #ifndef VK_DEVICE_HPP
 #define VK_DEVICE_HPP
 
+#include <utility>
 #include <memory>
 #include <string>
 #include <vector>
@@ -30,6 +31,26 @@ namespace neon
     uint32_t _queue_family = 0;
     VkQueue _queue = VK_NULL_HANDLE;
     VkCommandPool _command_pool = VK_NULL_HANDLE;
+
+    // The commands of a batch that is open, see BeginBatch(), and the
+    // buffers they read, which are freed once they have run. Written by
+    // functions that are const for whoever only uploads.
+    mutable VkCommandBuffer _batch_commands = VK_NULL_HANDLE;
+    mutable std::vector<std::pair<VkBuffer, VkDeviceMemory>> _batch_buffers;
+
+    // One buffer that the uploads of a batch are copied from, kept from
+    // batch to batch and mapped all the while, so that a batch makes no
+    // buffer of its own. It is as large as the largest batch so far asked
+    // for: what does not fit gets a buffer of its own, and the next batch
+    // finds this one grown.
+    mutable VkBuffer _batch_staging = VK_NULL_HANDLE;
+    mutable VkDeviceMemory _batch_staging_memory = VK_NULL_HANDLE;
+    mutable void *_batch_staging_mapped = nullptr;
+    mutable VkDeviceSize _batch_staging_size = 0;
+    mutable VkDeviceSize _batch_staging_used = 0;
+    mutable VkDeviceSize _batch_staging_wanted = 0;
+
+    void ReleaseBatchStaging() const;
     VkCommandBuffer _frame_commands = VK_NULL_HANDLE;
     RenderCapabilities _capabilities;
     std::shared_ptr<Logger> _logger;
@@ -115,7 +136,29 @@ namespace neon
     [[nodiscard]] VkCommandBuffer BeginCommands() const;
 
     /// Runs the commands started by BeginCommands() and waits for them.
+    /// In a batch they are run with all others of it, by EndBatch().
     bool EndCommands(VkCommandBuffer commands) const;
+
+    /// Gathers everything that is started with BeginCommands() from here
+    /// on, to be run together. Each run of commands is handed to the
+    /// graphics card and waited for on its own otherwise, which costs half
+    /// a millisecond whatever it does: dozens of pictures that are written
+    /// again in one frame would hold that frame up for as many.
+    void BeginBatch();
+
+    /// Runs what was gathered since BeginBatch(), waits for it once, and
+    /// frees the buffers it read. False when it could not be run.
+    bool EndBatch();
+
+    /// A part of the buffer the uploads of a batch share, to copy `size`
+    /// bytes from: the buffer, where the part starts in it, and where to
+    /// write the bytes. False outside a batch and when the part does not
+    /// fit, and the upload makes a buffer of its own then.
+    bool TakeBatchStaging(VkDeviceSize size, VkBuffer &buffer, VkDeviceSize &offset, void *&mapped) const;
+
+    /// Frees a buffer that commands of BeginCommands() read: at once when
+    /// they have run already, and after the batch when one is open.
+    void ReleaseAfterCommands(VkBuffer buffer, VkDeviceMemory memory) const;
 
     /// Moves mip levels of an image from one layout to another.
     static void TransitionImage(
