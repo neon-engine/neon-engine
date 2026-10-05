@@ -254,6 +254,12 @@ namespace
     // the sounds the extensions handed over, by their names
     std::map<std::string, std::vector<std::uint8_t>> _sounds;
 
+    // how the window is shown, as the extensions asked
+    WindowMode _window_mode = WindowMode::Windowed;
+    neon::WindowSize _window_size{.width = 640, .height = 360};
+    bool _vertical_sync = true;
+    int _frame_limit = 0;
+
     // how often an extension asked for what nothing shows to be freed
     int _freed = 0;
 
@@ -295,6 +301,30 @@ namespace
         return true;
       });
       ON_CALL(_render, FreeUnused()).WillByDefault([this] { _freed++; });
+
+      // a window and a renderer that keep what they are asked
+      ON_CALL(_window, SetWindowMode(_)).WillByDefault([this](const WindowMode mode)
+      {
+        _window_mode = mode;
+        return true;
+      });
+      ON_CALL(_window, GetWindowMode()).WillByDefault([this] { return _window_mode; });
+      ON_CALL(_window, SetWindowSize(_, _)).WillByDefault([this](const int width, const int height)
+      {
+        _window_size = {.width = width, .height = height};
+        return true;
+      });
+      ON_CALL(_window, GetDrawableSize()).WillByDefault([this] { return _window_size; });
+      ON_CALL(_window, GetDisplaySizes()).WillByDefault(Return(std::vector<neon::WindowSize>{
+        {.width = 3840, .height = 2160}, {.width = 1920, .height = 1080}}));
+      ON_CALL(_window, SetFrameLimit(_)).WillByDefault([this](const int limit) { _frame_limit = limit; });
+      ON_CALL(_window, GetFrameLimit()).WillByDefault([this] { return _frame_limit; });
+      ON_CALL(_render, SetVerticalSync(_)).WillByDefault([this](const bool enabled)
+      {
+        _vertical_sync = enabled;
+        return true;
+      });
+      ON_CALL(_render, GetVerticalSync()).WillByDefault([this] { return _vertical_sync; });
       ON_CALL(_audio, SetGroupVolume(_, _)).WillByDefault([this](const std::string &group, const float volume)
       {
         _volumes[group] = volume;
@@ -690,6 +720,21 @@ namespace
     float yaw = 0.0f;
     ASSERT_TRUE(transform->Find("rotation")->GetItems()[1].GetNumber(yaw));
     EXPECT_EQ(yaw, 90.0f);
+  }
+
+  TEST_F(ExtensionsInTheWorldTest, AnExtensionChangesHowTheWindowIsShown)
+  {
+    EXPECT_TRUE(LogOf("painter")->Contains(
+      LogLevel::Info,
+      "The window: mode yes, size yes, sizes of the display yes, vertical sync yes, frame limit yes, and what is "
+      "none of them refused: yes")) << LogOf("painter")->Messages(LogLevel::Info);
+
+    // the window and the renderer were told what the extension asked
+    EXPECT_EQ(_window_mode, WindowMode::Borderless);
+    EXPECT_EQ(_window_size.width, 1280);
+    EXPECT_EQ(_window_size.height, 720);
+    EXPECT_FALSE(_vertical_sync);
+    EXPECT_EQ(_frame_limit, 144);
   }
 
   TEST_F(ExtensionsInTheWorldTest, AnExtensionFillsAPoolAndTakesFromIt)

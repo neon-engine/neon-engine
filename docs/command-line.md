@@ -11,7 +11,7 @@ registered by the application that owns it.
 | Set | Owner | Holds |
 |---|---|---|
 | `RuntimeOptions` | The runtime | `--renderer`, `--vulkan-version` |
-| `DisplayOptions` | The runtime | `--window-size`, `--window-mode`, `--ui-scale` |
+| `DisplayOptions` | The runtime | `--window-size`, `--window-mode`, `--vsync`, `--max-fps`, `--ui-scale` |
 | `EditorOptions` | The editor | `--scene`, `--ui`, and everything under the `Editor` heading below |
 
 Until NeonEditor exists, NeonRuntime registers the editor's set too, so that
@@ -39,6 +39,8 @@ The last column is the decision of #143: who owns the option.
 | `--vulkan-version 1.N` | General | The version of Vulkan to ask for, over `rendering.vulkan_version` of the settings (#142) | **Runtime.** A way around a driver that does not work at the highest version, which a player needs before any menu is shown |
 | `--window-size WxH` | Display | The size of the window in points, over `window` of the settings. Shows a window of that size unless `--window-mode` says otherwise | **Runtime.** Usually a menu's choice, but a game that comes up on a display it does not expect is reached this way |
 | `--window-mode MODE` | Display | `windowed`, `borderless`, or `fullscreen`, over `window.mode` of the settings | **Runtime**, for the same reason. The mode wins over the window that `--window-size` shows |
+| `--vsync on\|off` | Display | Whether a frame waits for the screen before it is shown, over `rendering.vsync` of the settings | **Runtime.** A menu's choice as well, and the way to tell whether a problem is the sync |
+| `--max-fps NUMBER` | Display | The most frames a second, from 30 to 300, or 0 for as many as can be drawn, over `rendering.max_fps` of the settings | **Runtime.** A menu's choice as well, and a way to keep a laptop cool or a measurement steady |
 | `--ui-scale NUMBER` | Display | Makes the user interface larger or smaller, over `ui.scale` of the settings | **Runtime.** It helps players who need larger text before a settings menu can be read |
 | `--scene PATH` | Editor | Starts with this scene in place of the entry scene of the project | **Editor.** It loads any content at all, the heart of #143 |
 | `--ui PATH` | Editor | Shows this user interface on top | **Editor**, for the same reason |
@@ -82,7 +84,6 @@ Some of what a runtime does is fixed, or decided elsewhere:
 |---|---|
 | The organization and application names that place `user://` | `project.yml`, see [projects.md](projects.md). Never something a player may change |
 | The log file, `user://logs/neon-engine.log` | Compiled in. See [file-systems.md](file-systems.md#the-log-file) |
-| The present mode, which is what vsync chooses | The renderer chooses by itself, mailbox first. `RenderCapabilities` (#142) will say what a menu can offer |
 | The debug mode with a terminal (#116) | Not there yet. It is for the editor only |
 
 ## Open questions

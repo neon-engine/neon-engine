@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "window-metrics.hpp"
+#include "window-mode.hpp"
 
 namespace neon
 {
@@ -68,6 +69,55 @@ namespace neon
     /// it is resized, and when it is moved to a display of another density.
     /// What depends on either keeps the number it last saw.
     [[nodiscard]] virtual std::uint64_t GetMetricsRevision()
+    {
+      return 0;
+    }
+
+    /// Shows the window another way while the application runs: as a
+    /// window, without borders over the whole display, or as the one thing
+    /// on a display that is switched to the size of the window. The
+    /// renderer follows the size the window has afterwards by itself.
+    /// Returns false, and leaves the window as it is, when it cannot be
+    /// shown that way, which is said.
+    virtual bool SetWindowMode(WindowMode mode)
+    {
+      return false;
+    }
+
+    /// How the window is shown now.
+    [[nodiscard]] virtual WindowMode GetWindowMode()
+    {
+      return WindowMode::Windowed;
+    }
+
+    /// Gives the window another size, in points. A window has that size; a
+    /// display that the window takes over is switched to the size it offers
+    /// that is nearest; a window without borders covers its display, and
+    /// keeps the size for when it is a window again. Returns false for a
+    /// size that is not above zero, and for a window that has no size to
+    /// change.
+    virtual bool SetWindowSize(int width, int height)
+    {
+      return false;
+    }
+
+    /// The sizes the display of the window offers, in points, the largest
+    /// first and each once: what a menu lets a player choose from. Empty
+    /// for a window without a display.
+    [[nodiscard]] virtual std::vector<WindowSize> GetDisplaySizes()
+    {
+      return {};
+    }
+
+    /// Holds the frames to at most that many a second, while the
+    /// application runs: a number from 30 to 300, or 0 for as many as can
+    /// be drawn. A number beyond them is held to the nearest, see
+    /// FrameLimit. It holds with vertical sync on and off, and while the
+    /// world is paused.
+    virtual void SetFrameLimit(int frames_per_second) {}
+
+    /// The limit that holds, or 0 for none.
+    [[nodiscard]] virtual int GetFrameLimit()
     {
       return 0;
     }

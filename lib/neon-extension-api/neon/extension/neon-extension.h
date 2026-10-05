@@ -32,7 +32,7 @@ extern "C" {
 #endif
 
 /* The version of this file. It goes up by one whenever a table grows. */
-#define NEON_EXTENSION_ABI_VERSION 16
+#define NEON_EXTENSION_ABI_VERSION 17
 
 /* Marks the function an extension exports. Everything else of an extension
  * stays hidden, which neon_add_extension sees to. */
@@ -766,6 +766,59 @@ typedef struct NeonExtensionHost
   /* How many instances of a kind a pool holds, and how many of them wait. */
   uint64_t (*pool_count)(void *context, NeonEntity pool, const char *kind);
   uint64_t (*pool_free_count)(void *context, NeonEntity pool, const char *kind);
+
+  /* Since version 17: how the window is shown, while the application
+   * runs. It is what the video settings of a menu an extension brings set.
+   * What a player chose is kept by the game, as it keeps its other
+   * settings: these change what is shown now. */
+
+  /* Shows the window another way: 0 as a window, 1 without borders over
+   * the whole display, 2 as the one thing on a display that is switched to
+   * the size of the window. Returns 1, or 0 when it cannot be shown that
+   * way, which is said, and when there is no window. */
+  int (*set_window_mode)(void *context, int32_t mode);
+
+  /* How the window is shown now: 0, 1, or 2, as set_window_mode takes it. */
+  int32_t (*get_window_mode)(void *context);
+
+  /* Gives the window another size, in points. A window has that size; a
+   * display the window takes over is switched to the size it offers that
+   * is nearest; a window without borders covers its display and keeps the
+   * size for when it is a window again. Returns 1, or 0 for a size that
+   * is not above zero and when there is no window to size. */
+  int (*set_window_size)(void *context, int32_t width, int32_t height);
+
+  /* The size of the window in points. Either pointer may be zero. Returns
+   * 1, or 0 when there is no window. get_view_size gives the pixels that
+   * are drawn to, which are more on a display of high density. */
+  int (*get_window_size)(void *context, int32_t *width, int32_t *height);
+
+  /* Calls `visit` with every size the display of the window offers, in
+   * points, the largest first and each once: what a menu lets a player
+   * choose from. `user` is the caller's own. Returns how many there are,
+   * which is 0 without a display. */
+  uint64_t (*list_display_sizes)(
+    void *context,
+    void (*visit)(void *user, int32_t width, int32_t height),
+    void *user);
+
+  /* Has a frame wait for the screen before it is shown, 1, or not, 0.
+   * With it no frame is torn and no more frames are drawn than the screen
+   * shows. Without it frames are shown as soon as they are done, where the
+   * driver can. Returns 1, or 0 when nothing is shown on a screen. */
+  int (*set_vertical_sync)(void *context, int enabled);
+
+  /* Whether a frame waits for the screen, 1 or 0. */
+  int (*get_vertical_sync)(void *context);
+
+  /* Holds the frames to at most that many a second: a number from 30 to
+   * 300, or 0 for as many as can be drawn. A number beyond them is held
+   * to the nearest. It holds with vertical sync on and off. Returns 1, or
+   * 0 when there is no window. */
+  int (*set_frame_limit)(void *context, int32_t frames_per_second);
+
+  /* The limit that holds, or 0 for none. */
+  int32_t (*get_frame_limit)(void *context);
 } NeonExtensionHost;
 
 /* What an extension brings. The application hands it over with every field

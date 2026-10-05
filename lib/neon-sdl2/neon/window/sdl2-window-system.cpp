@@ -1,5 +1,7 @@
 #include "sdl2-window-system.hpp"
 
+#include <neon/window/frame-limit.hpp>
+#include <algorithm>
 #include <iostream>
 #include <SDL_vulkan.h>
 
@@ -75,6 +77,16 @@ namespace neon
         throw std::runtime_error("Unsupported rendering API configured");
       }
     }
+
+    _frame_limit = FrameLimit::Of(_settings_config.max_fps);
+    if (_frame_limit > 0)
+    {
+      const int limit = _frame_limit;
+      _logger->Info("Frame limit: {} frames a second", limit);
+    }
+    _window_mode = _settings_config.window_mode;
+    _wanted_width = _settings_config.width;
+    _wanted_height = _settings_config.height;
 
     FollowMetrics();
     _metrics_revision = 0;
@@ -160,6 +172,122 @@ namespace neon
       case CursorShape::None: return -1;
       default: return SDL_SYSTEM_CURSOR_ARROW;
     }
+  }
+
+  bool SDL2_WindowSystem::FitDisplayMode() const
+  {
+    const int display = SDL_GetWindowDisplayIndex(_window);
+    SDL_DisplayMode wanted{};
+    wanted.w = _wanted_width;
+    wanted.h = _wanted_height;
+
+    SDL_DisplayMode nearest{};
+    if (display < 0 || SDL_GetClosestDisplayMode(display, &wanted, &nearest) == nullptr) { return false; }
+    return SDL_SetWindowDisplayMode(_window, &nearest) == 0;
+  }
+
+  bool SDL2_WindowSystem::SetWindowMode(const WindowMode mode)
+  {
+    if (_window == nullptr) { return false; }
+
+    bool changed = false;
+    switch (mode)
+    {
+      case WindowMode::Windowed:
+      {
+        changed = SDL_SetWindowFullscreen(_window, 0) == 0;
+        if (changed)
+        {
+          SDL_SetWindowBordered(_window, SDL_TRUE);
+          SDL_SetWindowResizable(_window, SDL_TRUE);
+          SDL_SetWindowSize(_window, _wanted_width, _wanted_height);
+          SDL_SetWindowPosition(_window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+        }
+        break;
+      }
+      case WindowMode::Borderless:
+      {
+        // covers the display at the size the desktop has
+        changed = SDL_SetWindowFullscreen(_window, SDL_WINDOW_FULLSCREEN_DESKTOP) == 0;
+        break;
+      }
+      case WindowMode::Fullscreen:
+      {
+        // the size is set before the display is taken over, and the display
+        // is taken over anew when it is taken over already
+        if (_window_mode == WindowMode::Fullscreen) { SDL_SetWindowFullscreen(_window, 0); }
+        changed = FitDisplayMode() && SDL_SetWindowFullscreen(_window, SDL_WINDOW_FULLSCREEN) == 0;
+        break;
+      }
+    }
+
+    const char *name = mode == WindowMode::Windowed ? "windowed" : mode == WindowMode::Borderless ? "borderless" : "fullscreen";
+    if (!changed)
+    {
+      const std::string error = SDL_GetError();
+      _logger->Error("The window cannot be shown {}: {}", name, error);
+      return false;
+    }
+
+    _window_mode = mode;
+    _logger->Info("Window mode: {}", name);
+
+    // the renderer and the user interface follow the size it has now
+    FollowMetrics();
+    return true;
+  }
+
+  WindowMode SDL2_WindowSystem::GetWindowMode()
+  {
+    return _window_mode;
+  }
+
+  bool SDL2_WindowSystem::SetWindowSize(const int width, const int height)
+  {
+    if (_window == nullptr || width <= 0 || height <= 0) { return false; }
+
+    _wanted_width = width;
+    _wanted_height = height;
+
+    switch (_window_mode)
+    {
+      case WindowMode::Windowed:
+        SDL_SetWindowSize(_window, width, height);
+        SDL_SetWindowPosition(_window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+        break;
+      case WindowMode::Borderless:
+        // it covers its display, and has the size when it is a window again
+        break;
+      case WindowMode::Fullscreen:
+        return SetWindowMode(WindowMode::Fullscreen);
+    }
+
+    _logger->Info("Window size: {}x{} points", width, height);
+    FollowMetrics();
+    return true;
+  }
+
+  std::vector<WindowSize> SDL2_WindowSystem::GetDisplaySizes()
+  {
+    std::vector<WindowSize> sizes;
+    if (_window == nullptr) { return sizes; }
+
+    // the modes of a display come largest first, and one size comes once
+    // for every rate the display shows it at
+    const int display = SDL_GetWindowDisplayIndex(_window);
+    const int count = display < 0 ? 0 : SDL_GetNumDisplayModes(display);
+    for (int index = 0; index < count; index++)
+    {
+      SDL_DisplayMode mode{};
+      if (SDL_GetDisplayMode(display, index, &mode) != 0) { continue; }
+
+      const bool is_known = std::ranges::any_of(sizes, [&mode](const WindowSize &size)
+      {
+        return size.width == mode.w && size.height == mode.h;
+      });
+      if (!is_known) { sizes.push_back({.width = mode.w, .height = mode.h}); }
+    }
+    return sizes;
   }
 
   void SDL2_WindowSystem::FollowMetrics()
@@ -294,8 +422,42 @@ namespace neon
     _should_close = true;
   }
 
+  void SDL2_WindowSystem::SetFrameLimit(const int frames_per_second)
+  {
+    const int limit = FrameLimit::Of(frames_per_second);
+    if (limit == _frame_limit) { return; }
+
+    _frame_limit = limit;
+    if (limit > 0) { _logger->Info("Frame limit: {} frames a second", limit); }
+    else { _logger->Info("Frame limit: none"); }
+  }
+
+  int SDL2_WindowSystem::GetFrameLimit()
+  {
+    return _frame_limit;
+  }
+
   void SDL2_WindowSystem::MeasureFrame()
   {
+    // Under a limit a frame that was done early waits until it is due:
+    // asleep while there is more than a couple of milliseconds left, since
+    // a sleep ends late, and looking at the clock for the last of it. A
+    // frame is due one frame's time after the one before was, not after it
+    // began, so that one that ran late is made up for by the next and the
+    // limit is what a second holds. No more than one frame is made up for.
+    if (_frame_limit > 0 && _settings_config.time_step <= 0.0)
+    {
+      const auto frequency = static_cast<double>(SDL_GetPerformanceFrequency());
+      const auto frame = static_cast<Uint64>(FrameLimit::SecondsOf(_frame_limit) * frequency);
+      const Uint64 now = SDL_GetPerformanceCounter();
+      _frame_due = std::max(_frame_due + frame, now > frame ? now - frame : 0);
+
+      for (Uint64 at = now; at < _frame_due; at = SDL_GetPerformanceCounter())
+      {
+        if (static_cast<double>(_frame_due - at) / frequency > 0.002) { SDL_Delay(1); }
+      }
+    }
+
     const auto current_frame = SDL_GetPerformanceCounter();
     const auto delta_time =
       static_cast<double>(current_frame - _last_frame)*1000 / static_cast<double>(SDL_GetPerformanceFrequency());

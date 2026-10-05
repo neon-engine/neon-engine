@@ -55,6 +55,7 @@ namespace neon
 
     if (_device.Surface() != VK_NULL_HANDLE)
     {
+      _swapchain.SetVerticalSync(_settings_config.vertical_sync);
       if (!_swapchain.Initialize(&_device, {width, height}, _logger))
       {
         throw std::runtime_error("Failed to create the Vulkan swapchain");
@@ -626,6 +627,20 @@ namespace neon
     // of the render target that is drawn to, or else of the frame
     VK_Canvas &canvas = _current_target != No_Render_Target ? _targets[_current_target].canvas : _frame;
     canvas.SetEffects(effects, screen_effects);
+  }
+
+  bool VK_RenderSystem::SetVerticalSync(const bool enabled)
+  {
+    // a run without a window shows nothing on a screen
+    if (!_swapchain.IsReady()) { return false; }
+
+    _swapchain.SetVerticalSync(enabled);
+    return true;
+  }
+
+  bool VK_RenderSystem::GetVerticalSync()
+  {
+    return _swapchain.IsReady() && _swapchain.GetVerticalSync();
   }
 
   void VK_RenderSystem::SetShaderTime(const double seconds, const double delta)

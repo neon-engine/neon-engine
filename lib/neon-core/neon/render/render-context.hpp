@@ -151,6 +151,16 @@ namespace neon
       const std::vector<std::string> &effects,
       const std::vector<std::string> &screen_effects) {}
 
+    /// Has a frame wait for the screen before it is shown, or not, while
+    /// the application runs. With it no frame is torn and no more are drawn
+    /// than the screen shows; without it frames are shown as soon as they
+    /// are done, where the driver can. Returns false for a renderer that
+    /// shows nothing on a screen.
+    virtual bool SetVerticalSync(bool enabled) { return false; }
+
+    /// Whether a frame waits for the screen.
+    [[nodiscard]] virtual bool GetVerticalSync() { return false; }
+
     /// How many places there are for numbers of a game that every shader
     /// reads, see SetShaderNumbers().
     static constexpr int kShader_Number_Places = 8;

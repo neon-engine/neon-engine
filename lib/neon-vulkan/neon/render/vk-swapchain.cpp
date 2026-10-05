@@ -1,5 +1,7 @@
 #include "vk-swapchain.hpp"
 
+#include "vk-present-mode.hpp"
+
 #include <algorithm>
 
 #include "vk-surface-format.hpp"
@@ -55,17 +57,23 @@ namespace neon
       _logger->Warn("The window offers only formats that convert to sRGB, frames are shown too light");
     }
 
-    // Show frames as soon as they are done. Waiting for the screen is the
-    // one mode every driver has, and the fallback.
-    VkPresentModeKHR mode = VK_PRESENT_MODE_FIFO_KHR;
-    for (const VkPresentModeKHR wanted_mode : {VK_PRESENT_MODE_MAILBOX_KHR, VK_PRESENT_MODE_IMMEDIATE_KHR})
+    // with vertical sync a frame waits for the screen, and without it is
+    // shown as soon as it is done, where the driver can, see VK_PresentMode
+    const VkPresentModeKHR mode = VK_PresentMode::Choose(modes, _vertical_sync);
+    if (mode != _present_mode || !_said_present_mode)
     {
-      if (std::ranges::find(modes, wanted_mode) != modes.end())
+      _said_present_mode = true;
+      const char *name = VK_PresentMode::NameOf(mode);
+      if (!_vertical_sync && mode != VK_PRESENT_MODE_IMMEDIATE_KHR)
       {
-        mode = wanted_mode;
-        break;
+        _logger->Warn("Vertical sync stays on: the driver shows no frame before the screen is ready. Presenting with {}", name);
+      } else
+      {
+        const char *sync = _vertical_sync ? "on" : "off";
+        _logger->Info("Presenting with {}, vertical sync {}", name, sync);
       }
     }
+    _present_mode = mode;
 
     // The window usually dictates the size. A minimized one can have none,
     // and keeps the swapchain it has until it is shown again.

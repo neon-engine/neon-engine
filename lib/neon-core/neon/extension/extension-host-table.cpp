@@ -391,6 +391,107 @@ namespace neon
       return store == nullptr || kind == nullptr ? 0 : PoolSystem::GetFreeCount(*store, pool, kind);
     }
 
+    int set_window_mode(void *context, const std::int32_t mode)
+    {
+      const auto &extension = of(context);
+      if (extension.services->window == nullptr)
+      {
+        extension.logger->Error("set_window_mode was called, and this application has no window for its extensions");
+        return 0;
+      }
+      if (mode < 0 || mode > 2)
+      {
+        extension.logger->Error("set_window_mode: {} is no mode. 0 is a window, 1 without borders, 2 the whole display", mode);
+        return 0;
+      }
+      return extension.services->window->SetWindowMode(static_cast<WindowMode>(mode)) ? 1 : 0;
+    }
+
+    std::int32_t get_window_mode(void *context)
+    {
+      const auto &extension = of(context);
+      if (extension.services->window == nullptr) { return 0; }
+      return static_cast<std::int32_t>(extension.services->window->GetWindowMode());
+    }
+
+    int set_window_size(void *context, const std::int32_t width, const std::int32_t height)
+    {
+      const auto &extension = of(context);
+      if (extension.services->window == nullptr)
+      {
+        extension.logger->Error("set_window_size was called, and this application has no window for its extensions");
+        return 0;
+      }
+      if (width <= 0 || height <= 0)
+      {
+        extension.logger->Error("set_window_size: {} by {} is no size, both have to be above zero", width, height);
+        return 0;
+      }
+      return extension.services->window->SetWindowSize(width, height) ? 1 : 0;
+    }
+
+    int get_window_size(void *context, std::int32_t *width, std::int32_t *height)
+    {
+      const auto &extension = of(context);
+      if (extension.services->window == nullptr) { return 0; }
+
+      const WindowSize size = extension.services->window->GetWindowSize();
+      if (width != nullptr) { *width = size.width; }
+      if (height != nullptr) { *height = size.height; }
+      return 1;
+    }
+
+    std::uint64_t list_display_sizes(
+      void *context,
+      void (*visit)(void *user, std::int32_t width, std::int32_t height),
+      void *user)
+    {
+      const auto &extension = of(context);
+      if (extension.services->window == nullptr) { return 0; }
+
+      const std::vector<WindowSize> sizes = extension.services->window->GetDisplaySizes();
+      if (visit != nullptr)
+      {
+        for (const WindowSize &size : sizes) { visit(user, size.width, size.height); }
+      }
+      return sizes.size();
+    }
+
+    int set_vertical_sync(void *context, const int enabled)
+    {
+      const auto &extension = of(context);
+      if (extension.services->render == nullptr)
+      {
+        extension.logger->Error("set_vertical_sync was called, and this application has no renderer for its extensions");
+        return 0;
+      }
+      return extension.services->render->SetVerticalSync(enabled != 0) ? 1 : 0;
+    }
+
+    int get_vertical_sync(void *context)
+    {
+      const auto &extension = of(context);
+      return extension.services->render != nullptr && extension.services->render->GetVerticalSync() ? 1 : 0;
+    }
+
+    int set_frame_limit(void *context, const std::int32_t frames_per_second)
+    {
+      const auto &extension = of(context);
+      if (extension.services->window == nullptr)
+      {
+        extension.logger->Error("set_frame_limit was called, and this application has no window for its extensions");
+        return 0;
+      }
+      extension.services->window->SetFrameLimit(frames_per_second);
+      return 1;
+    }
+
+    std::int32_t get_frame_limit(void *context)
+    {
+      const auto &extension = of(context);
+      return extension.services->window == nullptr ? 0 : extension.services->window->GetFrameLimit();
+    }
+
     NeonQuery create_query(
       void *context,
       const NeonComponent *components,
@@ -1619,6 +1720,16 @@ namespace neon
     host.pool_release = &pool_release;
     host.pool_count = &pool_count;
     host.pool_free_count = &pool_free_count;
+
+    host.set_window_mode = &set_window_mode;
+    host.get_window_mode = &get_window_mode;
+    host.set_window_size = &set_window_size;
+    host.get_window_size = &get_window_size;
+    host.list_display_sizes = &list_display_sizes;
+    host.set_vertical_sync = &set_vertical_sync;
+    host.get_vertical_sync = &get_vertical_sync;
+    host.set_frame_limit = &set_frame_limit;
+    host.get_frame_limit = &get_frame_limit;
 
     // the extension keeps its name for as long as it is loaded
     host.name = extension.name.c_str();

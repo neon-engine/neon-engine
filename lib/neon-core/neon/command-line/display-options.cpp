@@ -1,5 +1,7 @@
 #include "display-options.hpp"
 
+#include <cmath>
+#include <neon/window/frame-limit.hpp>
 #include <charconv>
 #include <string_view>
 
@@ -10,6 +12,8 @@ namespace neon
   {
     const std::string window_size = "window-size";
     const std::string window_mode = "window-mode";
+    const std::string vsync = "vsync";
+    const std::string max_fps = "max-fps";
     const std::string ui_scale = "ui-scale";
 
     const std::string windowed = "windowed";
@@ -67,6 +71,21 @@ namespace neon
     });
 
     command_line.Add({
+      .name = vsync,
+      .value_name = "on|off",
+      .description = "Whether a frame waits for the screen before it is shown, over rendering.vsync of the settings",
+      .group = display
+    });
+
+    command_line.Add({
+      .name = max_fps,
+      .value_name = "NUMBER",
+      .description = "Most frames a second, from 30 to 300, or 0 for as many as can be drawn, over "
+                     "rendering.max_fps of the settings",
+      .group = display
+    });
+
+    command_line.Add({
       .name = ui_scale,
       .value_name = "NUMBER",
       .description = "Makes the user interface larger or smaller, for example 1.5",
@@ -108,6 +127,29 @@ namespace neon
         error = "Option '--" + window_mode + "' needs " + windowed + ", " + borderless + ", or " + fullscreen;
         return false;
       }
+    }
+
+    if (command_line.IsSet(vsync))
+    {
+      const std::string wanted = command_line.GetValue(vsync);
+      if (wanted != "on" && wanted != "off")
+      {
+        error = "Option '--" + vsync + "' needs on or off";
+        return false;
+      }
+      settings.vertical_sync = wanted == "on";
+    }
+
+    if (command_line.IsSet(max_fps))
+    {
+      double most = -1.0;
+      if (!command_line.GetNumber(max_fps, most) || most != std::floor(most) ||
+          (most != 0.0 && (most < FrameLimit::kLeast || most > FrameLimit::kMost)))
+      {
+        error = "Option '--" + max_fps + "' needs 0 for no limit, or a number from 30 to 300";
+        return false;
+      }
+      settings.max_fps = static_cast<int>(most);
     }
 
     if (command_line.IsSet(ui_scale))

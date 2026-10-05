@@ -38,6 +38,8 @@ namespace neon
   ///       vulkan_version: "1.3"
   ///       tonemapper: aces
   ///       exposure: 1
+  ///       vsync: true
+  ///       max_fps: 0
   ///
   ///     audio:
   ///       groups:

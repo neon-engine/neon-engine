@@ -312,6 +312,46 @@ namespace
     EXPECT_EQ(_settings.tonemapper, Tonemapper::None);
   }
 
+  TEST_F(SettingsFilesTest, ReadsWhetherAFrameWaitsForTheScreen)
+  {
+    EXPECT_TRUE(SettingsConfig{}.vertical_sync) << "it does, unless a file says otherwise";
+
+    WriteOfTheProject("version: 1\nrendering:\n  vsync: false\n");
+    ASSERT_TRUE(ReadOfTheProject()) << ::testing::PrintToString(_errors);
+    EXPECT_FALSE(_settings.vertical_sync);
+
+    WriteOfTheProject("version: 1\nrendering:\n  vsync: true\n");
+    ASSERT_TRUE(ReadOfTheProject()) << ::testing::PrintToString(_errors);
+    EXPECT_TRUE(_settings.vertical_sync);
+  }
+
+  TEST_F(SettingsFilesTest, ReadsTheMostFramesASecond)
+  {
+    EXPECT_EQ(SettingsConfig{}.max_fps, 0) << "there is no limit, unless a file says otherwise";
+
+    WriteOfTheProject("version: 1\nrendering:\n  max_fps: 120\n");
+    ASSERT_TRUE(ReadOfTheProject()) << ::testing::PrintToString(_errors);
+    EXPECT_EQ(_settings.max_fps, 120);
+
+    WriteOfTheProject("version: 1\nrendering:\n  max_fps: 0\n");
+    ASSERT_TRUE(ReadOfTheProject()) << ::testing::PrintToString(_errors);
+    EXPECT_EQ(_settings.max_fps, 0);
+  }
+
+  TEST_F(SettingsFilesTest, RefusesFramesASecondThatAreNoLimit)
+  {
+    for (const char *wrong: {"29", "301", "-60"})
+    {
+      _errors.clear();
+      WriteOfTheProject(std::string("version: 1\nrendering:\n  max_fps: ") + wrong + "\n");
+
+      EXPECT_FALSE(ReadOfTheProject()) << wrong;
+      ASSERT_EQ(_errors.size(), 1u) << ::testing::PrintToString(_errors);
+      EXPECT_THAT(_errors.front(), HasSubstr("'max_fps'"));
+      EXPECT_THAT(_errors.front(), HasSubstr("from 30 to 300"));
+    }
+  }
+
   TEST_F(SettingsFilesTest, RefusesATonemapperItDoesNotKnow)
   {
     WriteOfTheProject("version: 1\nrendering:\n  tonemapper: reinhard\n");

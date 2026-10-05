@@ -128,6 +128,33 @@ namespace
     EXPECT_EQ(_settings.window_mode, WindowMode::Borderless);
   }
 
+  TEST_F(DisplayOptionsTest, TakesTheMostFramesASecond)
+  {
+    ASSERT_TRUE(Apply({"--max-fps", "144"}));
+    EXPECT_EQ(_settings.max_fps, 144);
+
+    ASSERT_TRUE(Apply({"--max-fps=0"}));
+    EXPECT_EQ(_settings.max_fps, 0) << "0 is no limit";
+
+    for (const char *wrong: {"29", "301", "-1", "60.5", "fast"})
+    {
+      EXPECT_FALSE(Apply({"--max-fps", wrong})) << wrong;
+      EXPECT_EQ(_error, "Option '--max-fps' needs 0 for no limit, or a number from 30 to 300") << wrong;
+    }
+  }
+
+  TEST_F(DisplayOptionsTest, TakesWhetherAFrameWaitsForTheScreen)
+  {
+    ASSERT_TRUE(Apply({"--vsync", "off"}));
+    EXPECT_FALSE(_settings.vertical_sync);
+
+    ASSERT_TRUE(Apply({"--vsync=on"}));
+    EXPECT_TRUE(_settings.vertical_sync);
+
+    EXPECT_FALSE(Apply({"--vsync", "sometimes"}));
+    EXPECT_EQ(_error, "Option '--vsync' needs on or off");
+  }
+
   TEST_F(DisplayOptionsTest, TheModeWinsOverTheWindowASizeShows)
   {
     ASSERT_TRUE(Apply({"--window-size", "1920x1080", "--window-mode", "fullscreen"}));

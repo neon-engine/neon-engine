@@ -1,5 +1,7 @@
 #include "headless-window-system.hpp"
 
+#include "frame-limit.hpp"
+
 #include <algorithm>
 #include <cmath>
 
@@ -74,5 +76,27 @@ namespace neon
   {
     // there is no window to draw to, the renderer keeps its frames to itself
     return false;
+  }
+
+  bool Headless_WindowSystem::SetWindowMode(const WindowMode mode)
+  {
+    _window_mode = mode;
+    _has_window_mode = true;
+    return true;
+  }
+
+  WindowMode Headless_WindowSystem::GetWindowMode()
+  {
+    return _has_window_mode ? _window_mode : _settings_config.window_mode;
+  }
+
+  void Headless_WindowSystem::SetFrameLimit(const int frames_per_second)
+  {
+    _frame_limit = FrameLimit::Of(frames_per_second);
+  }
+
+  int Headless_WindowSystem::GetFrameLimit()
+  {
+    return _frame_limit < 0 ? FrameLimit::Of(_settings_config.max_fps) : _frame_limit;
   }
 } // neon

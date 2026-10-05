@@ -35,6 +35,12 @@ namespace neon
     // said since that it no longer fits. Either makes it again.
     WindowSize _window_size{};
     bool _stale = false;
+
+    // whether a frame waits for the screen, the mode that was taken for it,
+    // and whether that was said
+    bool _vertical_sync = true;
+    VkPresentModeKHR _present_mode = VK_PRESENT_MODE_FIFO_KHR;
+    bool _said_present_mode = false;
     bool _warned_about_format = false;
 
     bool Create(VkExtent2D wanted);
@@ -59,6 +65,18 @@ namespace neon
     /// Has the swapchain made again before the next frame, as when what
     /// has its size could not be made.
     void MakeAgain() { _stale = true; }
+
+    /// Has a frame wait for the screen, or not. The swapchain is made again
+    /// before the next frame when that changes. Call it before Initialize()
+    /// for what holds from the start.
+    void SetVerticalSync(const bool enabled)
+    {
+      if (enabled == _vertical_sync) { return; }
+      _vertical_sync = enabled;
+      _stale = true;
+    }
+
+    [[nodiscard]] bool GetVerticalSync() const { return _vertical_sync; }
 
     /// Takes the image the next frame is shown in. Returns false when the
     /// window has none to give, in which case the frame is not shown.

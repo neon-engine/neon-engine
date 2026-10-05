@@ -9,6 +9,7 @@
 #include "neon/audio/sound-group-setting.hpp"
 #include "neon/render/api-version.hpp"
 #include "neon/render/tonemapper.hpp"
+#include "neon/window/window-mode.hpp"
 
 enum class RenderingApi
 {
@@ -24,20 +25,6 @@ enum class AudioOutput
   /// pace the application advances and not the pace of a clock. For runs
   /// without a sound card that still want to know what would be heard.
   None
-};
-
-enum class WindowMode
-{
-  /// A regular window with a title bar and borders, sized by width and height.
-  Windowed = 0,
-
-  /// A window without decorations that covers the whole display at the
-  /// desktop's resolution. width and height are ignored. Switching to other
-  /// applications stays instant because the display mode never changes.
-  Borderless,
-
-  /// Exclusive fullscreen. The display is switched to width by height.
-  Fullscreen
 };
 
 /// Everything the runtime is told at start-up: what is compiled in as a
@@ -126,6 +113,18 @@ struct SettingsConfig
   /// system starts with them, and a settings menu changes the volumes.
   std::vector<neon::SoundGroupSetting> sound_groups = neon::built_in_sound_groups();
   WindowMode window_mode = WindowMode::Windowed;
+
+  /// Whether a frame waits for the screen before it is shown: with it, no
+  /// frame is torn and no more frames are drawn than the screen shows.
+  /// Without it frames are shown as soon as they are done, where the
+  /// driver can. Changed while the application runs with
+  /// RenderContext::SetVerticalSync().
+  bool vertical_sync = true;
+
+  /// The most frames a second: a number from 30 to 300, or 0 for as many
+  /// as can be drawn, see FrameLimit. Changed while the application runs
+  /// with WindowContext::SetFrameLimit().
+  int max_fps = 0;
 
   /// Virtual path of the log file. The log file is opened once the file
   /// system has started, see FileSystem::PlaceLogFile. What is logged before

@@ -30,6 +30,22 @@ namespace neon
     std::array<SDL_Cursor *, 16> _cursors{};
     CursorShape _cursor_shape = CursorShape::Default;
 
+    // how the window is shown now, and the size it has as a window, in
+    // points, which it goes back to when it is a window again
+    WindowMode _window_mode = WindowMode::Windowed;
+    int _wanted_width = 0;
+    int _wanted_height = 0;
+
+    // the most frames a second, or 0 for as many as can be drawn
+    int _frame_limit = 0;
+
+    // when the next frame is due under the limit, on the performance counter
+    std::uint64_t _frame_due = 0;
+
+    /// Switches the display the window takes over to the size it offers
+    /// that is nearest to the one that is wanted.
+    bool FitDisplayMode() const;
+
     void LoadVulkanLibrary() const;
 
     void FollowMetrics();
@@ -57,6 +73,18 @@ namespace neon
     double GetDeltaTime() override;
 
     void CenterCursor() override;
+
+    void SetFrameLimit(int frames_per_second) override;
+
+    [[nodiscard]] int GetFrameLimit() override;
+
+    bool SetWindowMode(WindowMode mode) override;
+
+    [[nodiscard]] WindowMode GetWindowMode() override;
+
+    bool SetWindowSize(int width, int height) override;
+
+    [[nodiscard]] std::vector<WindowSize> GetDisplaySizes() override;
 
     void SetWindowFocus(bool focus) override;
 

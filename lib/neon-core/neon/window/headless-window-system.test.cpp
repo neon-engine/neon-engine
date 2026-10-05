@@ -21,6 +21,21 @@ namespace
     SettingsConfig _settings{.width = 640, .height = 360};
   };
 
+  TEST_F(HeadlessWindowSystemTest, KeepsTheModeItIsAskedForAndHasNoSizeToChange)
+  {
+    _settings.window_mode = WindowMode::Borderless;
+    Headless_WindowSystem window_system(_settings, _logger);
+    EXPECT_EQ(window_system.GetWindowMode(), WindowMode::Borderless) << "the one of the settings, until it is asked";
+
+    EXPECT_TRUE(window_system.SetWindowMode(WindowMode::Fullscreen));
+    EXPECT_EQ(window_system.GetWindowMode(), WindowMode::Fullscreen);
+
+    // there is no window to size, and no display to offer sizes
+    EXPECT_FALSE(window_system.SetWindowSize(800, 600));
+    EXPECT_THAT(window_system.GetDisplaySizes(), IsEmpty());
+    EXPECT_EQ(window_system.GetWindowSize().width, 640);
+  }
+
   TEST_F(HeadlessWindowSystemTest, RunsFromTheStart)
   {
     const Headless_WindowSystem window_system(_settings, _logger);
@@ -161,6 +176,23 @@ namespace
     EXPECT_TRUE(window_system.IsRunning());
     EXPECT_EQ(_logger->Count(LogLevel::Error), 0u);
     EXPECT_EQ(_logger->Count(LogLevel::Warn), 0u);
+  }
+
+  TEST_F(HeadlessWindowSystemTest, KeepsTheFrameLimitItIsAskedFor)
+  {
+    _settings.max_fps = 60;
+    Headless_WindowSystem window_system(_settings, _logger);
+    window_system.Initialize();
+    EXPECT_EQ(window_system.GetFrameLimit(), 60) << "the one of the settings, as it starts";
+
+    window_system.SetFrameLimit(144);
+    EXPECT_EQ(window_system.GetFrameLimit(), 144);
+
+    window_system.SetFrameLimit(1000);
+    EXPECT_EQ(window_system.GetFrameLimit(), 300) << "held to the most there is";
+
+    window_system.SetFrameLimit(0);
+    EXPECT_EQ(window_system.GetFrameLimit(), 0) << "no limit";
   }
 
   TEST_F(HeadlessWindowSystemTest, CleanUpLeavesItAsItIs)

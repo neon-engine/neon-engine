@@ -50,6 +50,8 @@ rendering:
   max_render_objects: 16384
   tonemapper: none
   exposure: 1
+  vsync: true
+  max_fps: 0
 
 audio:
   groups:
@@ -84,6 +86,8 @@ The settings of the runtime are
 | `rendering.shadow_distance` | How far from the camera the shadow of the direction light reaches, in metres, along its view, see [vulkan-renderer.md](vulkan-renderer.md#shadows). What is further is lit. Farther is coarser in the far cascades. Above zero | 120 |
 | `rendering.shadow_cascades` | How many cascades the shadow map has, 1 to 4: slices of what the camera sees, the nearest drawn the finest. More is finer near the camera at the same distance, and the casters drawn once more each | 4 |
 | `rendering.tonemapper` | The curve the resolve step maps light brighter than white through: `none` cuts it off flat, `aces` and `agx` roll it off, see [vulkan-renderer.md](vulkan-renderer.md#tonemapping) | `none` |
+| `rendering.vsync` | Whether a frame waits for the screen before it is shown. With it no frame is torn and no more frames are drawn than the screen shows; without it frames are shown as soon as they are done, where the driver can. See [vulkan-renderer.md](vulkan-renderer.md#vertical-sync-and-the-window) | `true` |
+| `rendering.max_fps` | The most frames a second: a whole number from 30 to 300, or 0 for as many as can be drawn. It holds with `vsync` on and off, whichever of the two allows fewer. See [vulkan-renderer.md](vulkan-renderer.md#vertical-sync-and-the-window) | 0 |
 | `rendering.exposure` | How bright the scene is taken to be: the light of the scene is multiplied by it before the curve. A number above zero; 2 doubles the light, 0.5 halves it | 1 |
 | `audio.groups` | The [groups of sounds](audio.md#groups) the project has besides those of the engine: a list of names, or of maps with a `name` and the `volume` the group starts at. A name that is there already is an error. A group of the project is held still while the game is paused, as the effects are | None. The groups of the engine are `music`, `effects`, `voices`, and `ambience` |
 | `audio.volumes` | The volume of a group by its name, 0 for silence and 1 for the loudness of its sounds, not below 0. A name that is not a group of the engine or of the project, declared above or in a file read before, is an error | 1 for every group |
@@ -107,7 +111,7 @@ by a file a menu wrote.
 | The name and organization of the project, the scenes, the entry scene | `project.yml`, see [projects.md](projects.md) | They say what the project is. A player may not change them |
 | The actions of the game and what is bound to them | The input map, see [input.md](input.md) | A project's recipe. What a player rebinds will be a layer of its own, `user://input.yml`. Whether a sensor is on is a setting, `input.gyro` |
 | `--headless-renderer`, `--frames`, `--screenshot`, `--output-dir`, `--time-step`, `--input` | The command line only, in the editor's set | They are for a run, not for a game |
-| The present mode, the renderer | Nothing yet | Open in [command-line.md](command-line.md#open-questions) |
+| How the window is shown while the game runs: its mode, its size, vertical sync | `WindowContext::SetWindowMode`, `SetWindowSize`, `RenderContext::SetVerticalSync`, and the same for an extension | A menu changes them at once, and the game keeps what the player chose, as it keeps its other settings. See [vulkan-renderer.md](vulkan-renderer.md#vertical-sync-and-the-window) |
 
 ## How it is built
 

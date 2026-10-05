@@ -84,7 +84,7 @@ namespace neon::extension
   using UiListening = std::function<void(const UiEvent &event)>;
 
   /// The version of the C file this header needs of the application.
-  inline constexpr std::uint32_t needed_abi_version = 16;
+  inline constexpr std::uint32_t needed_abi_version = 17;
 
   /// The kind of a field from its type, and its value as the numbers a
   /// description carries. A type of the extension's own that lies in memory
@@ -474,6 +474,65 @@ namespace neon::extension
     {
       return static_cast<std::size_t>(_host->pool_free_count(_host->context, pool, kind.c_str()));
     }
+
+    /// Shows the window another way while the game runs: 0 as a window, 1
+    /// without borders over the whole display, 2 as the one thing on a
+    /// display that is switched to the size of the window. It is what the
+    /// video settings of a game's own menu set.
+    bool SetWindowMode(const int mode) const { return _host->set_window_mode(_host->context, mode) != 0; }
+
+    [[nodiscard]] int GetWindowMode() const { return _host->get_window_mode(_host->context); }
+
+    /// Gives the window another size, in points.
+    bool SetWindowSize(const int width, const int height) const
+    {
+      return _host->set_window_size(_host->context, width, height) != 0;
+    }
+
+    /// The size of the window in points. False, and both left alone, when
+    /// there is no window.
+    bool GetWindowSize(int &width, int &height) const
+    {
+      std::int32_t wide = 0;
+      std::int32_t high = 0;
+      if (_host->get_window_size(_host->context, &wide, &high) == 0) { return false; }
+
+      width = wide;
+      height = high;
+      return true;
+    }
+
+    /// The sizes the display of the window offers, in points, the largest
+    /// first, each as width and height.
+    [[nodiscard]] std::vector<std::pair<int, int>> ListDisplaySizes() const
+    {
+      std::vector<std::pair<int, int>> sizes;
+      _host->list_display_sizes(
+        _host->context,
+        [](void *user, const std::int32_t width, const std::int32_t height)
+        {
+          static_cast<std::vector<std::pair<int, int>> *>(user)->emplace_back(width, height);
+        },
+        &sizes);
+      return sizes;
+    }
+
+    /// Has a frame wait for the screen before it is shown, or not.
+    bool SetVerticalSync(const bool enabled) const
+    {
+      return _host->set_vertical_sync(_host->context, enabled ? 1 : 0) != 0;
+    }
+
+    [[nodiscard]] bool GetVerticalSync() const { return _host->get_vertical_sync(_host->context) != 0; }
+
+    /// Holds the frames to at most that many a second, from 30 to 300, or
+    /// 0 for as many as can be drawn.
+    bool SetFrameLimit(const int frames_per_second) const
+    {
+      return _host->set_frame_limit(_host->context, frames_per_second) != 0;
+    }
+
+    [[nodiscard]] int GetFrameLimit() const { return _host->get_frame_limit(_host->context); }
 
     /// The component registered under a name, by anyone, or 0.
     [[nodiscard]] NeonComponent FindComponent(const std::string &name) const

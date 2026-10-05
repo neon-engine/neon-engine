@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <format>
 
+#include <neon/window/frame-limit.hpp>
 #include <neon/data/data-reader.hpp>
 
 namespace neon
@@ -126,6 +127,23 @@ namespace neon
         settings.tonemapper = static_cast<Tonemapper>(curve);
       }
       read_amount(reader, "exposure", settings.exposure);
+
+      // whether a frame waits for the screen, see docs/vulkan-renderer.md
+      reader.Read("vsync", settings.vertical_sync);
+
+      // the most frames a second, 0 for as many as can be drawn
+      if (int most = 0; reader.Read("max_fps", most))
+      {
+        if (most != 0 && (most < FrameLimit::kLeast || most > FrameLimit::kMost))
+        {
+          reader.Report(*reader.ReadValue("max_fps"), std::format(
+                          "'max_fps' of {} is {}, where 0 for no limit or a number from {} to {} was expected",
+                          reader.GetWhere(), most, static_cast<int>(FrameLimit::kLeast), static_cast<int>(FrameLimit::kMost)));
+        } else
+        {
+          settings.max_fps = most;
+        }
+      }
       reader.Finish();
     }
 

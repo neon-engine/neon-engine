@@ -368,6 +368,10 @@ namespace neon
       const std::vector<std::string> &effects,
       const std::vector<std::string> &screen_effects) override;
 
+    bool SetVerticalSync(bool enabled) override;
+
+    [[nodiscard]] bool GetVerticalSync() override;
+
     void SetShaderTime(double seconds, double delta) override;
 
     bool SetShaderNumbers(int place, const glm::vec4 &numbers) override;

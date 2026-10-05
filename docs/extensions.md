@@ -155,6 +155,7 @@ something of its own and is told to clean up.
 | 14 | `free_unused` | |
 | 15 | `set_component_enabled`, `is_component_enabled` | |
 | 16 | `pool_add`, `pool_acquire`, `pool_release`, `pool_count`, `pool_free_count` | |
+| 17 | `set_window_mode`, `get_window_mode`, `set_window_size`, `get_window_size`, `list_display_sizes`, `set_vertical_sync`, `get_vertical_sync`, `set_frame_limit`, `get_frame_limit` | |
 
 ## Components
 
@@ -430,6 +431,20 @@ world.GetViewSize(width, height);            // pixels of what the window's came
 world.RemoveUi(face);                        // `face` names nothing from here on
 ```
 
+How the window is shown, for the video settings of a menu an extension
+brings. Each takes effect at once, and the game keeps what the player chose
+with its other settings:
+
+```cpp
+world.SetWindowMode(2);                      // 0 a window, 1 without borders, 2 the whole display
+world.SetWindowSize(1920, 1080);             // in points
+for (const auto &[width, height] : world.ListDisplaySizes()) { /* what the display offers, largest first */ }
+world.SetVerticalSync(false);                // frames as fast as they are done
+world.SetFrameLimit(144);                    // at most 144 a second, from 30 to 300; 0 for no limit
+```
+
+See [vulkan-renderer.md](vulkan-renderer.md#vertical-sync-and-the-window).
+
 How loud a [group of sounds](audio.md#groups) is, which a menu of settings
 an extension brings sets with a slider:
 
@@ -526,7 +541,7 @@ NEON_EXTENSION(Game)
 |---|---|
 | `Extension` | The class of the extension: `Initialize`, `RegisterComponents`, `Start`, `CleanUp`, and `AddSystem<S>(name, arguments…)` |
 | `System` | `Start`, `OnPhysicsEvent`, `Update`, `FixedUpdate`, `Interpolate` |
-| `World` | What the application offers: the log, `RegisterComponent<T>`, entities, `Set<T>`, `Get<T>`, `Has<T>`, `Remove<T>`, `CreateQuery<Ts…>`, `FindField` with `GetNumber`, `GetVector3`, `GetText` and their `Set…`, `IsActionDown`, `WasActionPressed`, `ActionAxis2`, `ReadFile`, `Spawn`, `SpawnAt`, `LoadScene`, `CastRay`, `SetUiNumber`, `SetUiText`, `ShowUi`, `CloseUi`, `FindUi`, `CreateUi`, `RemoveUi`, `SetUiField`, `SetUiStyle`, `SetUiVisible`, `ListenToUi`, `UnlistenToUi`, `GetViewSize`, `SetEnabled`, `IsEnabled`, `AddToPool`, `AcquireFromPool`, `ReleaseToPool`, `CountInPool`, `CountFreeInPool`, `FreeUnused`, `SetGroupVolume`, `GetGroupVolume`, `AddComponent`, `SetTexts`, `SetImage`, `SetMesh`, `SetMeshLightmap`, and `CreateBlockQuery` with `PlaceField<T>` for a field of the engine in place |
+| `World` | What the application offers: the log, `RegisterComponent<T>`, entities, `Set<T>`, `Get<T>`, `Has<T>`, `Remove<T>`, `CreateQuery<Ts…>`, `FindField` with `GetNumber`, `GetVector3`, `GetText` and their `Set…`, `IsActionDown`, `WasActionPressed`, `ActionAxis2`, `ReadFile`, `Spawn`, `SpawnAt`, `LoadScene`, `CastRay`, `SetUiNumber`, `SetUiText`, `ShowUi`, `CloseUi`, `FindUi`, `CreateUi`, `RemoveUi`, `SetUiField`, `SetUiStyle`, `SetUiVisible`, `ListenToUi`, `UnlistenToUi`, `GetViewSize`, `SetEnabled`, `IsEnabled`, `AddToPool`, `AcquireFromPool`, `ReleaseToPool`, `CountInPool`, `CountFreeInPool`, `SetWindowMode`, `GetWindowMode`, `SetWindowSize`, `GetWindowSize`, `ListDisplaySizes`, `SetVerticalSync`, `GetVerticalSync`, `FreeUnused`, `SetGroupVolume`, `GetGroupVolume`, `AddComponent`, `SetTexts`, `SetImage`, `SetMesh`, `SetMeshLightmap`, and `CreateBlockQuery` with `PlaceField<T>` for a field of the engine in place |
 | `Query<Ts…>` | `Each([](Entity, Ts &…) { … })` |
 | `Field(name, &T::member, description)` | A field from the member itself: its kind from its type, its offset from where it lies, and its default from what `T{}` holds, so a default is written once, in the struct |
 | `NEON_EXTENSION(Class)` | The function the application starts the extension by |

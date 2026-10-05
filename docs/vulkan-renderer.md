@@ -558,6 +558,60 @@ Not there yet: an effect cannot read the depth of the scene, has no
 pictures of its own to draw into (a blur in several steps), and is told
 nothing beyond the time and the numbers of the game.
 
+## Vertical sync and the window
+
+How frames reach the screen is one setting, `rendering.vsync`, `--vsync` on
+the command line, and one function while the application runs:
+
+| Vertical sync | Present mode | What it means |
+|---|---|---|
+| On, as it starts | FIFO | A frame for every refresh of the screen: nothing is torn, and no more frames are drawn than the screen shows |
+| Off | Immediate, where the driver offers it | A frame is shown as soon as it is done, however many a second that is, and may be torn |
+| Off, and the driver has no immediate | FIFO | It stays on, and the log says so |
+
+The mode that was taken is said in the log, `Presenting with fifo, vertical
+sync on`, next to `Present modes:`, which lists what the driver offers.
+Mailbox and FIFO relaxed are not taken (#356): the two above are what every
+platform of the engine has. `VK_PresentMode` chooses, apart from the
+graphics card, so that it is tested.
+
+Apart from the sync there is a limit, `rendering.max_fps`, `--max-fps` on
+the command line: the most frames a second, a number from 30 to 300, or 0
+for as many as can be drawn, which is how it starts. The two hold together,
+and whichever allows fewer frames is what is seen: a limit of 120 on a
+screen of 60 with the sync on shows 60. The window keeps it, not the
+renderer: a frame that was done early waits out the rest of its time
+before the next is measured, asleep for most of it and looking at the clock
+for the last two milliseconds, since a sleep ends late. `FrameLimit` holds
+the numbers, apart from a window, so that they are tested. A run with a
+fixed time step (`--time-step`) and one without a window are not held
+back.
+
+Four things change how the window is shown while the application runs. A
+menu of video settings calls them, the one of the runtime or one a game
+brings:
+
+| What | In C++ | For an extension |
+|---|---|---|
+| Vertical sync | `RenderContext::SetVerticalSync(bool)`, `GetVerticalSync()` | `set_vertical_sync`, `get_vertical_sync` |
+| The most frames a second, 30 to 300, or 0 for no limit | `WindowContext::SetFrameLimit(int)`, `GetFrameLimit()` | `set_frame_limit`, `get_frame_limit` |
+| The mode of the window: windowed, borderless, fullscreen | `WindowContext::SetWindowMode(WindowMode)`, `GetWindowMode()` | `set_window_mode`, `get_window_mode` |
+| The size of the window, in points | `WindowContext::SetWindowSize(width, height)`, `GetWindowSize()` | `set_window_size`, `get_window_size` |
+| The sizes the display offers | `WindowContext::GetDisplaySizes()` | `list_display_sizes` |
+
+| Decision | Why |
+|---|---|
+| The swapchain is made again before the next frame | A present mode belongs to a swapchain. The one before is handed over as `oldSwapchain`, and the frame is drawn at the size the window has by then, as it is when a window is resized by hand |
+| The renderer is not told of a new size | It asks the window for its size in every frame, and follows: the frame images, the projection, and the user interface with it. A mode or a size that changes is one more way a window gets another size |
+| A size is in points | It is what a window is counted in. On a display of high density the frame has more pixels than that, see `get_view_size` |
+| Fullscreen takes the size the display offers that is nearest | A display shows only the sizes it has. `GetDisplaySizes()` lists them for a menu to choose from |
+| Borderless keeps the size it is told | It covers its display whatever the size, and is that size when it is a window again |
+| A limit beyond 30 to 300 is held to the nearest, where a setting that says so is refused | A slider of a menu is not to be able to go wrong; a file that says 500 is a mistake its writer is to be told of |
+| Nothing is written to a settings file | These change what is shown now. What a player chose is kept by whoever offers the choice: a game's own menu keeps it with its other settings |
+
+Not there yet: the settings menu of the runtime shows a V-Sync toggle that
+nothing reads (#356).
+
 ## Tonemapping
 
 The scene image holds light, which has no top: a surface that gives off

@@ -111,6 +111,22 @@ namespace
         (first == sparks[0] && second == sparks[1] ? "yes" : "no") + ", none when all were out: " +
         (ran_out ? "yes" : "no") + ", took one back: " + (given_back ? "yes" : "no"));
 
+      // How the window is shown, as the video settings of a menu set it:
+      // the mode, the size, the sizes the display offers, and whether a
+      // frame waits for the screen. What is no mode and no size is refused.
+      int wide = 0;
+      int high = 0;
+      const bool moded = world.SetWindowMode(1) && world.GetWindowMode() == 1;
+      const bool sized = world.SetWindowSize(1280, 720) && world.GetWindowSize(wide, high) && wide == 1280 && high == 720;
+      const auto offered = world.ListDisplaySizes();
+      const bool listed = offered.size() == 2 && offered[0] == std::pair(3840, 2160) && offered[1] == std::pair(1920, 1080);
+      const bool synced = world.SetVerticalSync(false) && !world.GetVerticalSync();
+      const bool limited = world.SetFrameLimit(144) && world.GetFrameLimit() == 144;
+      const bool refused_video = !world.SetWindowMode(7) && !world.SetWindowSize(0, 720);
+      world.Info(std::string("The window: mode ") + (moded ? "yes" : "no") + ", size " + (sized ? "yes" : "no") +
+        ", sizes of the display " + (listed ? "yes" : "no") + ", vertical sync " + (synced ? "yes" : "no") + ", frame limit " + (limited ? "yes" : "no") +
+        ", and what is none of them refused: " + (refused_video ? "yes" : "no"));
+
       // numbers for the shaders an extension brings, at one of eight places;
       // a place that there is not is refused
       const bool numbered = world.SetShaderNumbers(2, {0.5f, 0.25f, 1.0f, 8.0f});

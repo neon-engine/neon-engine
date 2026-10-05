@@ -22,6 +22,13 @@ namespace neon
     bool _should_close = false;
     CursorShape _cursor_shape = CursorShape::Default;
 
+    // how the window would be shown, which nothing shows
+    WindowMode _window_mode = WindowMode::Windowed;
+    bool _has_window_mode = false;
+
+    // the limit that was asked for, which holds nothing back here
+    int _frame_limit = -1;
+
   protected:
     void ConfigureWindowForRenderer() override;
 
@@ -55,6 +62,20 @@ namespace neon
 
     /// The size of the settings.
     WindowSize GetWindowSize() override;
+
+    /// Keeps the mode that was asked for. There is no window to show
+    /// another way, so this is for tests and for tools.
+    bool SetWindowMode(WindowMode mode) override;
+
+    /// The mode that was asked for last, and the one of the settings until
+    /// then.
+    [[nodiscard]] WindowMode GetWindowMode() override;
+
+    /// Keeps the limit that was asked for. A run without a window is not
+    /// held back: it draws what it is told to as fast as it can.
+    void SetFrameLimit(int frames_per_second) override;
+
+    [[nodiscard]] int GetFrameLimit() override;
 
     /// The shape that was asked for last. There is no cursor to show, so
     /// this is for tests and for tools.

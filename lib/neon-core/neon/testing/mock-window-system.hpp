@@ -28,6 +28,12 @@ namespace neon::testing
     MOCK_METHOD(std::vector<std::string>, GetVulkanInstanceExtensions, (), (override));
 
     MOCK_METHOD(bool, CreateVulkanSurface, (void *instance, void *surface), (override));
+    MOCK_METHOD(void, SetFrameLimit, (int frames_per_second), (override));
+    MOCK_METHOD(int, GetFrameLimit, (), (override));
+    MOCK_METHOD(bool, SetWindowMode, (WindowMode mode), (override));
+    MOCK_METHOD(WindowMode, GetWindowMode, (), (override));
+    MOCK_METHOD(bool, SetWindowSize, (int width, int height), (override));
+    MOCK_METHOD(std::vector<WindowSize>, GetDisplaySizes, (), (override));
   };
 
   class MockWindowSystem : public WindowSystem
