@@ -744,6 +744,22 @@ namespace neon
       return input != nullptr && input->WasActionPressed(action) ? 1 : 0;
     }
 
+    std::int32_t get_input_device(void *context)
+    {
+      const auto &extension = of(context);
+      InputContext *input = extension.services->input;
+      if (input == nullptr || input->GetDevice() != InputDevice::Gamepad) { return NEON_DEVICE_KEYBOARD_AND_MOUSE; }
+
+      switch (input->GetGamepadKind())
+      {
+        case GamepadKind::Xbox: return NEON_DEVICE_XBOX;
+        case GamepadKind::PlayStation4: return NEON_DEVICE_PLAYSTATION_4;
+        case GamepadKind::PlayStation5: return NEON_DEVICE_PLAYSTATION_5;
+        case GamepadKind::Switch: return NEON_DEVICE_SWITCH;
+        default: return NEON_DEVICE_GAMEPAD;
+      }
+    }
+
     float action_axis(void *context, const char *action)
     {
       auto *input = input_for(of(context), "action_axis", action);
@@ -1730,6 +1746,7 @@ namespace neon
     host.get_vertical_sync = &get_vertical_sync;
     host.set_frame_limit = &set_frame_limit;
     host.get_frame_limit = &get_frame_limit;
+    host.get_input_device = &get_input_device;
 
     // the extension keeps its name for as long as it is loaded
     host.name = extension.name.c_str();

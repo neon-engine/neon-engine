@@ -127,6 +127,9 @@ namespace
         ", sizes of the display " + (listed ? "yes" : "no") + ", vertical sync " + (synced ? "yes" : "no") + ", frame limit " + (limited ? "yes" : "no") +
         ", and what is none of them refused: " + (refused_video ? "yes" : "no"));
 
+      // what the player uses, for the buttons a game shows
+      world.Info("The device in use: " + std::to_string(world.GetInputDevice()));
+
       // numbers for the shaders an extension brings, at one of eight places;
       // a place that there is not is refused
       const bool numbered = world.SetShaderNumbers(2, {0.5f, 0.25f, 1.0f, 8.0f});

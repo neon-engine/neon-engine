@@ -96,7 +96,34 @@ backend. Only `neon-sdl2` knows what SDL calls them.
 | Triggers, as analog | `left`, `right`, under `trigger` |
 | Motion sensors | `gyro`, `accelerometer`, under `sensor` |
 
-### Chords
+### The device in use
+
+The engine keeps what the player used last, `InputState::GetDevice()`:
+keyboard and mouse, or a gamepad. A user interface shows the hints and the
+cursor that suit it, and a game the buttons.
+
+| What happens | What is in use from then on |
+|---|---|
+| A button of a gamepad is pressed, or a stick leaves its rest | The gamepad |
+| A key is pressed | Keyboard and mouse |
+| The mouse is moved or clicked | Keyboard and mouse, unless `input.mouse_switches_device` of the settings is `false` |
+
+`input.mouse_switches_device: false` is for a game that is played with a
+gamepad whose stick, trackpad, or gyro is bound to the mouse outside the
+game, as Steam Input can: the hints of the gamepad stay, and only a key
+takes them back (#426).
+
+A gamepad says which family it is of, `InputState::GetGamepadKind()`, as far
+as SDL knows: `xbox`, `playstation4`, `playstation5`, `switch`, or `other`. A
+controller of another maker often says it is the one it stands in for. An
+extension asks for both at once with `get_input_device`, and an input script
+sets them with `device gamepad playstation5`.
+
+Not there yet: the pictures of the buttons are the game's to bring and to
+show; the user interface has no element that shows the button an action is
+bound to.
+
+## Chords
 
 A binding that is a list of names is a **chord**: its keys, or its buttons,
 have to be held together, and the chord is down while every one of them is.

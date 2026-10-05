@@ -534,6 +534,10 @@ namespace neon::extension
 
     [[nodiscard]] int GetFrameLimit() const { return _host->get_frame_limit(_host->context); }
 
+    /// What the player used last, one of the `NEON_DEVICE_` values: the
+    /// keyboard and the mouse, or a gamepad and which family it is of.
+    [[nodiscard]] int GetInputDevice() const { return _host->get_input_device(_host->context); }
+
     /// The component registered under a name, by anyone, or 0.
     [[nodiscard]] NeonComponent FindComponent(const std::string &name) const
     {

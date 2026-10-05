@@ -366,11 +366,17 @@ namespace neon
       {
         step.kind = Kind::Device;
 
+        // a gamepad may say which family it is of, for the buttons shown
         if (words.size() == 1 && words[0] == "keyboard") { step.device = InputDevice::KeyboardAndMouse; }
         else if (words.size() == 1 && words[0] == "gamepad") { step.device = InputDevice::Gamepad; }
-        else
+        else if (words.size() == 2 && words[0] == "gamepad" && FindGamepadKind(words[1], step.gamepad_kind))
         {
-          report(std::format("'device' is followed by '{}', where keyboard or gamepad was expected", rest));
+          step.device = InputDevice::Gamepad;
+        } else
+        {
+          report(std::format(
+            "'device' is followed by '{}', where keyboard, gamepad, or gamepad with one of xbox, playstation4, "
+            "playstation5, switch, other was expected", rest));
           continue;
         }
       } else
@@ -504,6 +510,7 @@ namespace neon
           break;
         case Kind::Device:
           _device = step.device;
+          _gamepad_kind = step.gamepad_kind;
           break;
         case Kind::Look:
           if (is_now)
@@ -517,6 +524,7 @@ namespace neon
 
     _applied = frame;
     state.SetDevice(_device);
+    state.SetGamepadKind(_gamepad_kind);
 
     if (_up_at != 0 && frame >= _up_at)
     {

@@ -287,6 +287,8 @@ namespace
       _store.Register<neon::Transform>("Transform");
       _formats.Add(neon::ComponentFormat::Of<neon::Transform>());
 
+      ON_CALL(_input, GetDevice()).WillByDefault(Return(neon::InputDevice::Gamepad));
+      ON_CALL(_input, GetGamepadKind()).WillByDefault(Return(neon::GamepadKind::PlayStation5));
       _host.SetInput(&_input);
       _host.SetWorld(&_world);
       _host.SetPhysics(&_physics);
@@ -720,6 +722,13 @@ namespace
     float yaw = 0.0f;
     ASSERT_TRUE(transform->Find("rotation")->GetItems()[1].GetNumber(yaw));
     EXPECT_EQ(yaw, 90.0f);
+  }
+
+  TEST_F(ExtensionsInTheWorldTest, AnExtensionIsToldWhichDeviceThePlayerUses)
+  {
+    // the fixture starts its extensions with a gamepad of the PlayStation 5
+    EXPECT_TRUE(LogOf("painter")->Contains(LogLevel::Info, "The device in use: 4"))
+      << LogOf("painter")->Messages(LogLevel::Info);
   }
 
   TEST_F(ExtensionsInTheWorldTest, AnExtensionChangesHowTheWindowIsShown)

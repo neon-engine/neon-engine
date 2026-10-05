@@ -240,6 +240,15 @@ namespace
     EXPECT_EQ(_settings.gyro_enabled, false);
   }
 
+  TEST_F(SettingsFilesTest, ReadsWhetherTheMouseTakesTheHintsBackFromAGamepad)
+  {
+    EXPECT_TRUE(SettingsConfig{}.mouse_switches_device) << "it does, unless a file says otherwise";
+
+    WriteOfTheProject("version: 1\ninput:\n  mouse_switches_device: false\n");
+    ASSERT_TRUE(ReadOfTheProject()) << ::testing::PrintToString(_errors);
+    EXPECT_FALSE(_settings.mouse_switches_device);
+  }
+
   TEST_F(SettingsFilesTest, RefusesAMissingVersion)
   {
     WriteOfTheProject("window:\n  width: 1920\n");

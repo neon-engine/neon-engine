@@ -156,6 +156,7 @@ something of its own and is told to clean up.
 | 15 | `set_component_enabled`, `is_component_enabled` | |
 | 16 | `pool_add`, `pool_acquire`, `pool_release`, `pool_count`, `pool_free_count` | |
 | 17 | `set_window_mode`, `get_window_mode`, `set_window_size`, `get_window_size`, `list_display_sizes`, `set_vertical_sync`, `get_vertical_sync`, `set_frame_limit`, `get_frame_limit` | |
+| 18 | `get_input_device` | |
 
 ## Components
 
@@ -443,6 +444,13 @@ for (const auto &[width, height] : world.ListDisplaySizes()) { /* what the displ
 world.SetVerticalSync(false);                // frames as fast as they are done
 world.SetFrameLimit(144);                    // at most 144 a second, from 30 to 300; 0 for no limit
 ```
+
+**The device in use.** `world.GetInputDevice()` says what the player used
+last, for the buttons a game shows: `NEON_DEVICE_KEYBOARD_AND_MOUSE`, or a
+gamepad and which family it is of, `NEON_DEVICE_XBOX`,
+`NEON_DEVICE_PLAYSTATION_4`, `NEON_DEVICE_PLAYSTATION_5`,
+`NEON_DEVICE_SWITCH`, and `NEON_DEVICE_GAMEPAD` for one of no family that is
+known. See [input.md](input.md#the-device-in-use).
 
 See [vulkan-renderer.md](vulkan-renderer.md#vertical-sync-and-the-window).
 

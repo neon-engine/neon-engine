@@ -39,6 +39,12 @@ namespace neon
     /// default.
     virtual const InputMap &GetInputMap() = 0;
 
+    /// What the player used last, keyboard and mouse or a gamepad, and
+    /// which family of controller the gamepad is. A game shows the buttons
+    /// of that. See InputState::GetDevice().
+    [[nodiscard]] virtual InputDevice GetDevice() { return GetInputState().GetDevice(); }
+    [[nodiscard]] virtual GamepadKind GetGamepadKind() { return GetInputState().GetGamepadKind(); }
+
     /// Whether an action of the map is down in this frame. False for a name
     /// the map does not have, and for an action outside the current state.
     virtual bool IsActionDown(const std::string &name) = 0;

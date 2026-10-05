@@ -139,6 +139,24 @@ namespace neon
 
     /// The button of the engine for a button of SDL, which names them by
     /// the letters of one maker.
+    /// Which family a controller is of, by what SDL takes it for.
+    GamepadKind KindOf(const SDL_GameControllerType type)
+    {
+      switch (type)
+      {
+        case SDL_CONTROLLER_TYPE_XBOX360:
+        case SDL_CONTROLLER_TYPE_XBOXONE: return GamepadKind::Xbox;
+        case SDL_CONTROLLER_TYPE_PS3:
+        case SDL_CONTROLLER_TYPE_PS4: return GamepadKind::PlayStation4;
+        case SDL_CONTROLLER_TYPE_PS5: return GamepadKind::PlayStation5;
+        case SDL_CONTROLLER_TYPE_NINTENDO_SWITCH_PRO:
+        case SDL_CONTROLLER_TYPE_NINTENDO_SWITCH_JOYCON_LEFT:
+        case SDL_CONTROLLER_TYPE_NINTENDO_SWITCH_JOYCON_RIGHT:
+        case SDL_CONTROLLER_TYPE_NINTENDO_SWITCH_JOYCON_PAIR: return GamepadKind::Switch;
+        default: return GamepadKind::Other;
+      }
+    }
+
     bool ButtonOf(const SDL_GameControllerButton button, ControllerButton &named)
     {
       switch (button)
@@ -275,7 +293,12 @@ namespace neon
       {
         if (event.motion.which == SDL_TOUCH_MOUSEID) { break; }
 
-        if (event.motion.xrel != 0 || event.motion.yrel != 0) { _device = InputDevice::KeyboardAndMouse; }
+        // the mouse takes the hints back from a gamepad unless the
+        // settings say that only a key does
+        if ((event.motion.xrel != 0 || event.motion.yrel != 0) && _settings_config.mouse_switches_device)
+        {
+          _device = InputDevice::KeyboardAndMouse;
+        }
         _pointer_inside = true;
         _pointer_x = event.motion.x;
         _pointer_y = event.motion.y;
@@ -295,7 +318,7 @@ namespace neon
       {
         if (event.button.which == SDL_TOUCH_MOUSEID) { break; }
 
-        _device = InputDevice::KeyboardAndMouse;
+        if (_settings_config.mouse_switches_device) { _device = InputDevice::KeyboardAndMouse; }
         _pointer_inside = true;
         _pointer_x = event.button.x;
         _pointer_y = event.button.y;
@@ -399,7 +422,10 @@ namespace neon
           {
             const char *name = SDL_GameControllerName(static_cast<SDL_GameController *>(_controller));
             const auto controller_name = std::string(name != nullptr ? name : "without a name");
-            _logger->Info("Using the controller {}", controller_name);
+            // which family it is of, for the buttons a game shows
+            _gamepad_kind = KindOf(SDL_GameControllerGetType(static_cast<SDL_GameController *>(_controller)));
+            const std::string kind_name(NameOf(_gamepad_kind));
+            _logger->Info("Using the controller {}, taken as {}", controller_name, kind_name);
 
             // the sensors that are on are asked of this controller now
             _sensor_missing_said.reset();
@@ -438,6 +464,7 @@ namespace neon
     while (SDL_PollEvent(&event)) { HandleEvent(event); }
 
     _input_state.SetDevice(_device);
+    _input_state.SetGamepadKind(_gamepad_kind);
     ReadKeyboard();
     ReadPointer();
     ReadController();

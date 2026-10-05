@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+#include "gamepad-kind.hpp"
 #include "controller-button.hpp"
 #include "key.hpp"
 #include "mouse-button.hpp"
@@ -115,6 +116,7 @@ namespace neon
 
     // kept from frame to frame, as where the pointer is
     InputDevice _device = InputDevice::KeyboardAndMouse;
+    GamepadKind _gamepad_kind = GamepadKind::Other;
 
     // the devices as they are, for an input map to bind: the keys by where
     // they are, the buttons, and the left stick
@@ -313,6 +315,18 @@ namespace neon
     [[nodiscard]] InputDevice GetDevice() const
     {
       return _device;
+    }
+
+    /// Which family of controller the gamepad is, for the buttons a user
+    /// interface shows while the gamepad is what the player uses.
+    void SetGamepadKind(const GamepadKind kind)
+    {
+      _gamepad_kind = kind;
+    }
+
+    [[nodiscard]] GamepadKind GetGamepadKind() const
+    {
+      return _gamepad_kind;
     }
 
     /// A key that is held down, by where it is on the keyboard. What an

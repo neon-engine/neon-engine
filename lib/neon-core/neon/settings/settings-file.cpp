@@ -82,6 +82,9 @@ namespace neon
     {
       // the player's switch for a sensor, which the map decides without
       if (bool gyro = false; reader.Read("gyro", gyro)) { settings.gyro_enabled = gyro; }
+
+      // whether the mouse, like a key, takes the hints back from a gamepad
+      reader.Read("mouse_switches_device", settings.mouse_switches_device);
       reader.Finish();
     }
 

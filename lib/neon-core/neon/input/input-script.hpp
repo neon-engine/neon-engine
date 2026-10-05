@@ -40,7 +40,7 @@ namespace neon
   /// | `hold-button NAME [FRAMES]` | Holds a button of a controller down by its name, such as `south`, for the input map to read |
   /// | `stick X Y [FRAMES]` | Pushes the right stick, from -1 to 1, to the right and down |
   /// | `left-stick X Y [FRAMES]` | Pushes the left stick, in the same way |
-  /// | `device keyboard` or `device gamepad` | What the player uses from now on, which a user interface shows hints for |
+  /// | `device keyboard` or `device gamepad` | What the player uses from now on, which a user interface shows hints for. `device gamepad playstation5` says which family the gamepad is of, one of `xbox`, `playstation4`, `playstation5`, `switch`, `other` |
   /// | `look X Y` | Moves the mouse by so much in one frame while the view is turned with it, to the right and down |
   class InputScript
   {
@@ -81,6 +81,7 @@ namespace neon
       std::string action_name;
       std::size_t frames = 1;
       InputDevice device = InputDevice::KeyboardAndMouse;
+      GamepadKind gamepad_kind = GamepadKind::Other;
 
       /// For a hold of a button of a controller.
       ControllerButton button = ControllerButton::South;
@@ -115,6 +116,7 @@ namespace neon
     std::size_t _left_stick_until = 0;
     TextComposition _composition;
     InputDevice _device = InputDevice::KeyboardAndMouse;
+    GamepadKind _gamepad_kind = GamepadKind::Other;
 
   public:
     /// Reads a script. `name` is what it is called in messages. Returns

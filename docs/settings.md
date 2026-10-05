@@ -43,6 +43,7 @@ world:
 
 input:
   gyro: false
+  mouse_switches_device: true
 
 rendering:
   vulkan_version: "1.3"
@@ -79,6 +80,7 @@ The settings of the runtime are
 | `world.steps_per_second` | Steps the world takes in a second. Above zero | 60 |
 | `world.most_steps_per_frame` | The most steps one frame takes. A whole number above zero | 8 |
 | `input.gyro` | The player's switch for the gyro of a controller, over what the input map says, see [input.md](input.md#sensors) | Left to the map, which has it off unless an action says `enabled: true` |
+| `input.mouse_switches_device` | Whether moving or clicking the mouse makes keyboard and mouse what the player uses, as a key does, so that the hints of a gamepad go. A game played with a gamepad whose stick or gyro is bound to the mouse outside the game, as Steam Input can, sets it to `false`: the hints of the gamepad stay until a key is pressed. See [input.md](input.md#the-device-in-use) | `true` |
 | `scripting.jit` | Whether LuaJIT compiles the scripts to machine code as they run; `false` runs them in its interpreter, for comparing the two, see [scripting.md](scripting.md#which-lua) | `true` |
 | `rendering.vulkan_version` | The version of Vulkan to ask for, in quotes, since `1.10` as a number is `1.1` | `"1.3"` |
 | `rendering.max_light_sources` | How many lights a frame may hold. A whole number above zero | 1024 |

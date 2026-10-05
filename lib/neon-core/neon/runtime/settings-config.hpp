@@ -179,6 +179,13 @@ struct SettingsConfig
   /// unless an action says `enabled: true`. See docs/input.md.
   std::optional<bool> gyro_enabled;
 
+  /// Whether moving or clicking the mouse makes keyboard and mouse what
+  /// the player uses, as a key does. A game that is played with a gamepad
+  /// whose stick or gyro is bound to the mouse outside the game, as Steam
+  /// Input can, turns this off: the hints of the gamepad stay then, until a
+  /// key is pressed. See docs/input.md.
+  bool mouse_switches_device = true;
+
   /// Whether LuaJIT compiles the scripts to machine code as they run. Off
   /// runs them in its interpreter, for comparing the two. See
   /// docs/scripting.md.

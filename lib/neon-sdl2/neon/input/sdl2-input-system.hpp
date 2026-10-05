@@ -62,6 +62,7 @@ namespace neon
 
     // what the player touched last, told by the events
     InputDevice _device = InputDevice::KeyboardAndMouse;
+    GamepadKind _gamepad_kind = GamepadKind::Other;
 
     void ReadKeyboard();
 

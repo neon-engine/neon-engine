@@ -303,6 +303,24 @@ namespace
         "frames after them or nothing"});
   }
 
+  TEST_F(InputScriptTest, SaysWhichFamilyTheGamepadIsOf)
+  {
+    Read("2: device gamepad playstation5\n4: device gamepad switch\n6: device gamepad\n8: device keyboard");
+
+    EXPECT_EQ(Frame(1).GetGamepadKind(), neon::GamepadKind::Other);
+    EXPECT_EQ(Frame(2).GetDevice(), neon::InputDevice::Gamepad);
+    EXPECT_EQ(Frame(2).GetGamepadKind(), neon::GamepadKind::PlayStation5);
+    EXPECT_EQ(Frame(5).GetGamepadKind(), neon::GamepadKind::Switch);
+    EXPECT_EQ(Frame(6).GetGamepadKind(), neon::GamepadKind::Other) << "one that does not say";
+    EXPECT_EQ(Frame(8).GetDevice(), neon::InputDevice::KeyboardAndMouse);
+
+    EXPECT_EQ(
+      ProblemsOf("1: device gamepad dreamcast"),
+      std::vector<std::string>{
+        "script:1: 'device' is followed by 'gamepad dreamcast', where keyboard, gamepad, or gamepad with one of "
+        "xbox, playstation4, playstation5, switch, other was expected"});
+  }
+
   TEST_F(InputScriptTest, SaysWhichDeviceIsUsedFromAFrameOn)
   {
     Read("2: device gamepad\n4: device keyboard");
@@ -331,7 +349,9 @@ namespace
   {
     EXPECT_EQ(
       ProblemsOf("1: device wheel"),
-      std::vector<std::string>{"script:1: 'device' is followed by 'wheel', where keyboard or gamepad was expected"});
+      std::vector<std::string>{
+        "script:1: 'device' is followed by 'wheel', where keyboard, gamepad, or gamepad with one of xbox, "
+        "playstation4, playstation5, switch, other was expected"});
   }
 
   TEST_F(InputScriptTest, TakesALineWithoutAFrameForTheFrameBefore)

@@ -14,6 +14,8 @@ namespace neon::testing
   public:
     MOCK_METHOD(const InputState &, GetInputState, (), (override));
     MOCK_METHOD(const InputMap &, GetInputMap, (), (override));
+    MOCK_METHOD(InputDevice, GetDevice, (), (override));
+    MOCK_METHOD(GamepadKind, GetGamepadKind, (), (override));
     MOCK_METHOD(bool, IsActionDown, (const std::string &name), (override));
     MOCK_METHOD(bool, WasActionPressed, (const std::string &name), (override));
     MOCK_METHOD(glm::vec2, ActionAxis2, (const std::string &name), (override));

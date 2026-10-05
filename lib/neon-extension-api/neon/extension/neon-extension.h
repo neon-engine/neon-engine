@@ -32,7 +32,15 @@ extern "C" {
 #endif
 
 /* The version of this file. It goes up by one whenever a table grows. */
-#define NEON_EXTENSION_ABI_VERSION 17
+#define NEON_EXTENSION_ABI_VERSION 18
+
+/* What get_input_device answers. */
+#define NEON_DEVICE_KEYBOARD_AND_MOUSE 0
+#define NEON_DEVICE_GAMEPAD 1 /* a gamepad of no family that is known */
+#define NEON_DEVICE_XBOX 2
+#define NEON_DEVICE_PLAYSTATION_4 3
+#define NEON_DEVICE_PLAYSTATION_5 4
+#define NEON_DEVICE_SWITCH 5
 
 /* Marks the function an extension exports. Everything else of an extension
  * stays hidden, which neon_add_extension sees to. */
@@ -819,6 +827,15 @@ typedef struct NeonExtensionHost
 
   /* The limit that holds, or 0 for none. */
   int32_t (*get_frame_limit)(void *context);
+
+  /* --- Since version 18 --- */
+
+  /* What the player used last, for the buttons a game shows: one of the
+   * NEON_DEVICE_ values. A button or a stick of a gamepad makes it the
+   * gamepad; a key makes it the keyboard and the mouse, and so does the
+   * mouse unless the setting input.mouse_switches_device is false. A
+   * gamepad says which family of controller it is as far as it knows. */
+  int32_t (*get_input_device)(void *context);
 } NeonExtensionHost;
 
 /* What an extension brings. The application hands it over with every field
