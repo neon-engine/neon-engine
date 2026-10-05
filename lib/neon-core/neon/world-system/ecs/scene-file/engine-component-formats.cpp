@@ -1,4 +1,5 @@
 #include "component-format.hpp"
+#include "pool-manager-format.hpp"
 
 #include <neon/common/transform.hpp>
 #include <neon/world-system/ecs/components/camera.hpp>
@@ -32,6 +33,9 @@ namespace neon
     Add(ComponentFormat::Of<SoundSource>());
     Add(ComponentFormat::Of<SoundListener>());
     Add(ComponentFormat::Of<Persistent>());
+
+    // a pool is written by what it is to hold, see pool-manager-format.hpp
+    Add(PoolManagerFormat());
     Add(ComponentFormat::Of<SceneExit>());
 
     // described as well, and told apart by needing the physics

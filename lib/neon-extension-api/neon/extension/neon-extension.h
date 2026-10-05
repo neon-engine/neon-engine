@@ -32,7 +32,7 @@ extern "C" {
 #endif
 
 /* The version of this file. It goes up by one whenever a table grows. */
-#define NEON_EXTENSION_ABI_VERSION 15
+#define NEON_EXTENSION_ABI_VERSION 16
 
 /* Marks the function an extension exports. Everything else of an extension
  * stays hidden, which neon_add_extension sees to. */
@@ -732,6 +732,40 @@ typedef struct NeonExtensionHost
 
   /* Whether the entity has the component and it is turned on, 1 or 0. */
   int (*is_component_enabled)(void *context, NeonEntity entity, NeonComponent component);
+
+  /* Since version 16: pools. A pool is an entity with the component
+   * `PoolManager`: it holds a fixed number of instances of one or more kinds,
+   * made ahead and turned off, and hands them out and takes them back, so
+   * that what comes and goes often is never made or destroyed while the
+   * game runs. A kind is named as a file is: the path of the prefab its
+   * instances were spawned from, or `instance://` and a name for instances an
+   * extension made itself. See docs/pools.md. */
+
+  /* Hands a pool instances that are there already, under a kind such as
+   * `instance://nail`. They are turned off and wait. Returns how many it took:
+   * one that is gone, or belongs to a pool already, is left out. 0 as well
+   * when `pool` has no `PoolManager`, or the kind has no name. */
+  uint64_t (*pool_add)(
+    void *context,
+    NeonEntity pool,
+    const char *kind,
+    const NeonEntity *instances,
+    uint64_t count);
+
+  /* Hands out an instance of a kind, turned on: the one that has waited
+   * longest. Returns 0 when the pool holds no such kind, and when all of
+   * the kind are out, which the application says once in its log. A pool
+   * never makes more than it holds. */
+  NeonEntity (*pool_acquire)(void *context, NeonEntity pool, const char *kind);
+
+  /* Takes an instance back: it is turned off and waits at the end of the
+   * queue of its kind. Returns 1, or 0 for an entity that belongs to no
+   * pool or waits already. */
+  int (*pool_release)(void *context, NeonEntity instance);
+
+  /* How many instances of a kind a pool holds, and how many of them wait. */
+  uint64_t (*pool_count)(void *context, NeonEntity pool, const char *kind);
+  uint64_t (*pool_free_count)(void *context, NeonEntity pool, const char *kind);
 } NeonExtensionHost;
 
 /* What an extension brings. The application hands it over with every field

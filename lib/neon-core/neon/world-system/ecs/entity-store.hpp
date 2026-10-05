@@ -70,6 +70,11 @@ namespace neon
     /// The name of the entity itself, without those of its parents.
     virtual std::string GetName(Entity entity) = 0;
 
+    /// Gives an entity another name. A name is an address: two entities
+    /// below one parent cannot share it, and whoever names several of one
+    /// thing numbers them.
+    virtual void SetName(Entity entity, const std::string &name) = 0;
+
     /// Moves an entity under another. No_Entity moves it to the top.
     virtual void SetParent(Entity entity, Entity parent) = 0;
 

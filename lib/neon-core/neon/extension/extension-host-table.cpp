@@ -7,6 +7,7 @@
 #include <string_view>
 #include <vector>
 
+#include <neon/world-system/ecs/systems/pool-system.hpp>
 #include <neon/filesystem/file-system.hpp>
 #include <neon/reflection/field-numbers.hpp>
 #include <neon/reflection/field-text.hpp>
@@ -338,6 +339,56 @@ namespace neon
       auto *store = store_for(extension, "is_component_enabled");
       if (store == nullptr || !usable(extension, *store, "is_component_enabled", entity, component)) { return 0; }
       return store->IsEnabled(entity, component) ? 1 : 0;
+    }
+
+    std::uint64_t pool_add(
+      void *context,
+      const NeonEntity pool,
+      const char *kind,
+      const NeonEntity *instances,
+      const std::uint64_t count)
+    {
+      auto &extension = of(context);
+      auto *store = store_for(extension, "pool_add");
+      if (store == nullptr || kind == nullptr || (instances == nullptr && count > 0)) { return 0; }
+
+      const std::size_t before = PoolSystem::GetCount(*store, pool, kind);
+      const std::vector<Entity> given(instances, instances + count);
+      if (!PoolSystem::Add(*store, pool, kind, given, extension.logger.get()))
+      {
+        extension.logger->Error("pool_add: the entity is no pool, or the kind has no name");
+        return 0;
+      }
+      return PoolSystem::GetCount(*store, pool, kind) - before;
+    }
+
+    NeonEntity pool_acquire(void *context, const NeonEntity pool, const char *kind)
+    {
+      auto &extension = of(context);
+      auto *store = store_for(extension, "pool_acquire");
+      if (store == nullptr || kind == nullptr) { return 0; }
+      return PoolSystem::Acquire(*store, pool, kind);
+    }
+
+    int pool_release(void *context, const NeonEntity instance)
+    {
+      auto &extension = of(context);
+      auto *store = store_for(extension, "pool_release");
+      return store != nullptr && PoolSystem::Release(*store, instance) ? 1 : 0;
+    }
+
+    std::uint64_t pool_count(void *context, const NeonEntity pool, const char *kind)
+    {
+      auto &extension = of(context);
+      auto *store = store_for(extension, "pool_count");
+      return store == nullptr || kind == nullptr ? 0 : PoolSystem::GetCount(*store, pool, kind);
+    }
+
+    std::uint64_t pool_free_count(void *context, const NeonEntity pool, const char *kind)
+    {
+      auto &extension = of(context);
+      auto *store = store_for(extension, "pool_free_count");
+      return store == nullptr || kind == nullptr ? 0 : PoolSystem::GetFreeCount(*store, pool, kind);
     }
 
     NeonQuery create_query(
@@ -1562,6 +1613,12 @@ namespace neon
 
     host.set_component_enabled = &set_component_enabled;
     host.is_component_enabled = &is_component_enabled;
+
+    host.pool_add = &pool_add;
+    host.pool_acquire = &pool_acquire;
+    host.pool_release = &pool_release;
+    host.pool_count = &pool_count;
+    host.pool_free_count = &pool_free_count;
 
     // the extension keeps its name for as long as it is loaded
     host.name = extension.name.c_str();

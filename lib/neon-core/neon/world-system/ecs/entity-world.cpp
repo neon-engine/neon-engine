@@ -11,6 +11,7 @@
 #include "components/sky.hpp"
 #include "components/trigger.hpp"
 #include "components/spectator.hpp"
+#include "systems/pool-system.hpp"
 #include "systems/render-submission.hpp"
 #include "systems/spectator-movement.hpp"
 #include "systems/transform-propagation.hpp"
@@ -30,6 +31,8 @@ namespace neon
     _scene = scene;
 
     _before.push_back(std::make_unique<SpectatorMovement>(input_context));
+    // the pools are filled before anything asks them for an instance
+    _before.push_back(std::make_unique<PoolSystem>(this, logger));
     _placing.push_back(std::make_unique<TransformPropagation>());
     _after.push_back(std::make_unique<RenderSubmission>(render_pipeline));
   }

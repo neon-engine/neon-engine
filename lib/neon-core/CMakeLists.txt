@@ -371,12 +371,16 @@ add_library(${TARGET} STATIC
         neon/world-system/ecs/systems/player-movement.cpp
         neon/world-system/ecs/systems/player-movement.hpp
         neon/world-system/ecs/components/ui-view.hpp
+        neon/world-system/ecs/scene-file/pool-manager-format.cpp
+        neon/world-system/ecs/scene-file/pool-manager-format.hpp
         neon/world-system/ecs/scene-file/ui-view-format.cpp
         neon/world-system/ecs/scene-file/ui-view-format.hpp
         neon/world-system/ecs/systems/ui-view-loading.cpp
         neon/world-system/ecs/systems/ui-view-loading.hpp
         neon/world-system/ecs/systems/render-submission.cpp
         neon/world-system/ecs/systems/render-submission.hpp
+        neon/world-system/ecs/systems/pool-system.cpp
+        neon/world-system/ecs/systems/pool-system.hpp
         neon/world-system/ecs/systems/spectator-movement.cpp
         neon/world-system/ecs/systems/spectator-movement.hpp
         neon/world-system/ecs/systems/transform-propagation.cpp
@@ -546,6 +550,7 @@ neon_add_unit_test(${TARGET} neon/command-line/display-options.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/physics-simulation.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/render-submission.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/player-movement.test.cpp)
+  neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/pool-system.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/spectator-movement.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/transform-propagation.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/ui-view-loading.test.cpp)

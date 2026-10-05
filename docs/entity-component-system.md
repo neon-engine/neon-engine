@@ -194,7 +194,7 @@ store.DestroyEntity(nail);   // gone, with its children, its render object, and 
 
 It is right for what is gone for good, a level that is left, an enemy that
 will not be seen again. For what is used over and over it is better to turn
-it off and keep it.
+it off and keep it, which is what a pool does: see [pools.md](pools.md).
 
 What each component of the engine does when it is turned off:
 

@@ -15,6 +15,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <neon/world-system/ecs/components/pool-manager.hpp>
 #include <neon/common/transform.hpp>
 #include <neon/data/ryml-document-format.hpp>
 #include <neon/testing/memory-file-system.hpp>
@@ -209,6 +210,52 @@ namespace
     const auto *camera = static_cast<const Camera *>(store.GetComponentData(nail, store.IdOf<Camera>()));
     ASSERT_NE(camera, nullptr);
     EXPECT_EQ(camera->fov, 70.0f);
+  }
+
+  TEST_F(SceneFilesTest, APoolIsWrittenByWhatItIsToHold)
+  {
+    _world.store.Register<neon::PoolManager>("PoolManager");
+    Write(
+      "entities:\n"
+      "  - name: projectiles\n"
+      "    components:\n"
+      "      PoolManager:\n"
+      "        _entries:\n"
+      "          - source: assets://prefabs/nail.prefab.yml\n"
+      "            count: 64\n"
+      "          - source: instance://lamp\n"
+      "            count: 1\n");
+    ASSERT_TRUE(_scene.Populate(_world.store)) << _logger->Messages(LogLevel::Error);
+
+    const auto *pool = _world.store.Get<neon::PoolManager>(_world.store.FindEntity("projectiles"));
+    ASSERT_NE(pool, nullptr);
+    ASSERT_EQ(pool->entries.size(), 2u);
+    EXPECT_EQ(pool->entries[0].source, "assets://prefabs/nail.prefab.yml");
+    EXPECT_EQ(pool->entries[0].count, 64);
+    EXPECT_EQ(pool->entries[1].source, "instance://lamp");
+    EXPECT_FALSE(pool->is_filled);
+  }
+
+  TEST_F(SceneFilesTest, SaysWhatIsWrongWithWhatAPoolIsToHold)
+  {
+    _world.store.Register<neon::PoolManager>("PoolManager");
+    Write(
+      "entities:\n"
+      "  - name: projectiles\n"
+      "    components:\n"
+      "      PoolManager:\n"
+      "        _entries:\n"
+      "          - source: assets://prefabs/nail.prefab.yml\n"
+      "          - count: 3\n"
+      "          - source: assets://prefabs/rocket.prefab.yml\n"
+      "            count: 8\n");
+    EXPECT_FALSE(_scene.Populate(_world.store));
+
+    const auto *pool = _world.store.Get<neon::PoolManager>(_world.store.FindEntity("projectiles"));
+    ASSERT_NE(pool, nullptr);
+    ASSERT_EQ(pool->entries.size(), 1u) << "what is right is kept";
+    EXPECT_EQ(pool->entries[0].count, 8);
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 3u) << _logger->Messages(LogLevel::Error);
   }
 
   TEST_F(SceneFilesTest, WritesThatAComponentIsTurnedOffAndNothingForOneThatIsOn)

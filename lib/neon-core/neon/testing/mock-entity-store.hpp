@@ -45,6 +45,7 @@ namespace neon::testing
 
     MOCK_METHOD(void *, GetComponent, (Entity entity, ComponentId component), (override));
 
+    MOCK_METHOD(void, SetName, (Entity entity, const std::string &name), (override));
     MOCK_METHOD(bool, HasComponent, (Entity entity, ComponentId component), (override));
     MOCK_METHOD(void, SetEnabled, (Entity entity, ComponentId component, bool enabled), (override));
     MOCK_METHOD(bool, IsEnabled, (Entity entity, ComponentId component), (override));

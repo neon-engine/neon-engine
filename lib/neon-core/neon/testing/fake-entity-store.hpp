@@ -248,6 +248,11 @@ namespace neon::testing
       return it == _entities.end() ? std::string{} : it->second.name;
     }
 
+    void SetName(const Entity entity, const std::string &name) override
+    {
+      if (const auto it = _entities.find(entity); it != _entities.end()) { it->second.name = name; }
+    }
+
     void SetParent(const Entity entity, const Entity parent) override
     {
       if (const auto it = _entities.find(entity); it != _entities.end()) { it->second.parent = parent; }

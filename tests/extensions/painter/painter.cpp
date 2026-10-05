@@ -94,6 +94,23 @@ namespace
         (written ? "yes" : "no") + ", turned it on: " + (turned_on ? "yes" : "no") +
         ", and none that is not there: " + (refused_off ? "yes" : "no"));
 
+      // A pool that is handed instances made in code: it hands them out in
+      // the order they wait, hands out none when all are out, and takes
+      // them back.
+      const Entity pool = world.CreateEntity("sparks");
+      const bool pooled = world.AddComponent(pool, "PoolManager");
+      std::vector<Entity> sparks;
+      for (int i = 0; i < 2; i++) { sparks.push_back(world.CreateEntity("spark " + std::to_string(i), pool)); }
+      const bool taken = world.AddToPool(pool, "instance://spark", sparks) == 2;
+      const Entity first = world.AcquireFromPool(pool, "instance://spark");
+      const Entity second = world.AcquireFromPool(pool, "instance://spark");
+      const bool ran_out = world.AcquireFromPool(pool, "instance://spark") == 0 && world.CountFreeInPool(pool, "instance://spark") == 0;
+      const bool given_back = world.ReleaseToPool(first) && !world.ReleaseToPool(first)
+                              && world.CountFreeInPool(pool, "instance://spark") == 1 && world.CountInPool(pool, "instance://spark") == 2;
+      world.Info(std::string("A pool: ") + (pooled && taken ? "yes" : "no") + ", handed out in turn: " +
+        (first == sparks[0] && second == sparks[1] ? "yes" : "no") + ", none when all were out: " +
+        (ran_out ? "yes" : "no") + ", took one back: " + (given_back ? "yes" : "no"));
+
       // numbers for the shaders an extension brings, at one of eight places;
       // a place that there is not is refused
       const bool numbered = world.SetShaderNumbers(2, {0.5f, 0.25f, 1.0f, 8.0f});

@@ -22,6 +22,9 @@
 #include <neon/world-system/ecs/components/renderable.hpp>
 #include <neon/world-system/ecs/systems/extension-running.hpp>
 #include <neon/world-system/flecs-entity-store.hpp>
+#include <neon/world-system/ecs/components/pool-manager.hpp>
+#include <neon/world-system/ecs/components/pool-instance.hpp>
+#include <neon/world-system/ecs/scene-file/pool-manager-format.hpp>
 #include <neon/common/transform.hpp>
 #include <neon/testing/mock-input-context.hpp>
 #include <neon/testing/mock-input-system.hpp>
@@ -315,7 +318,10 @@ namespace
 
       // what draws an entity, which an extension gives a mesh and textures
       _store.Register<neon::Renderable>("Renderable");
+      _store.Register<neon::PoolManager>("PoolManager");
+      _store.Register<neon::PoolInstance>("PoolInstance");
       _formats.Add(neon::ComponentFormat::Of<neon::Renderable>());
+      _formats.Add(neon::PoolManagerFormat());
 
       _running.Register(_store);
       _running.Initialize(_store);
@@ -684,6 +690,13 @@ namespace
     float yaw = 0.0f;
     ASSERT_TRUE(transform->Find("rotation")->GetItems()[1].GetNumber(yaw));
     EXPECT_EQ(yaw, 90.0f);
+  }
+
+  TEST_F(ExtensionsInTheWorldTest, AnExtensionFillsAPoolAndTakesFromIt)
+  {
+    EXPECT_TRUE(LogOf("painter")->Contains(
+      LogLevel::Info, "A pool: yes, handed out in turn: yes, none when all were out: yes, took one back: yes"))
+      << LogOf("painter")->Messages(LogLevel::Info) << LogOf("painter")->Messages(LogLevel::Error);
   }
 
   TEST_F(ExtensionsInTheWorldTest, AnExtensionTurnsAComponentOffAndOn)

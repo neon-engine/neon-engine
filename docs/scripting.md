@@ -191,6 +191,7 @@ says when the entity lost the component.
 | `entity:has_component("Door")`, `entity:get_component("Door")` | The same, said in full, named as `EntityStore` names them |
 | `entity:remove_component("Door")` | Takes a component away. It takes effect when the hook's query is done |
 | `entity:set_enabled("Renderable", false)`, `entity:is_enabled("Renderable")` | Turns a component off, and on again with `true`: it keeps what it holds and is not there while it is off, so an entity is hidden without being destroyed. See [entity-component-system.md](entity-component-system.md#turning-a-component-off) |
+| `pool:pool_acquire(kind)`, `instance:pool_release()`, `pool:pool_free_count(kind)`, `pool:pool_kinds()` | Takes an instance from a pool, an entity with a `PoolManager`, or `nil` when all are out; gives one back; and what a pool holds. See [pools.md](pools.md) |
 | `entity:get_parent()`, `entity:get_children()` | What is above and below |
 | `entity:is_alive()`, `entity:destroy()` | Whether it is still there, and the end of it with its children |
 

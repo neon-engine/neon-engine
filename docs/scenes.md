@@ -114,6 +114,16 @@ C++ turn it on, see
       shader: assets://shaders/pbr
 ```
 
+**PoolManager**
+
+Holds instances that are made ahead and handed out, so that what comes and
+goes often is never made or destroyed while the game runs: see
+[pools.md](pools.md).
+
+| Name | Holds | Default |
+|---|---|---|
+| `_entries` | A list of what the pool holds, each with a `source`, a prefab as `assets://prefabs/nail.prefab.yml` or an entity that is there as `instance://lamp`, and a `count` | None |
+
 **Transform**
 
 | Name | Holds | Default |

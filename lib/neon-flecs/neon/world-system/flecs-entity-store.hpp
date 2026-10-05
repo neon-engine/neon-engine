@@ -84,6 +84,8 @@ namespace neon
 
     std::string GetName(Entity entity) override;
 
+    void SetName(Entity entity, const std::string &name) override;
+
     void SetParent(Entity entity, Entity parent) override;
 
     Entity GetParent(Entity entity) override;

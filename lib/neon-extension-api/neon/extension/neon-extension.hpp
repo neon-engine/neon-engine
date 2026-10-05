@@ -84,7 +84,7 @@ namespace neon::extension
   using UiListening = std::function<void(const UiEvent &event)>;
 
   /// The version of the C file this header needs of the application.
-  inline constexpr std::uint32_t needed_abi_version = 15;
+  inline constexpr std::uint32_t needed_abi_version = 16;
 
   /// The kind of a field from its type, and its value as the numbers a
   /// description carries. A type of the extension's own that lies in memory
@@ -444,6 +444,35 @@ namespace neon::extension
     [[nodiscard]] bool IsEnabled(const Entity entity, const NeonComponent component) const
     {
       return _host->is_component_enabled(_host->context, entity, component) != 0;
+    }
+
+    /// Hands a pool, an entity with a `PoolManager`, instances that are there
+    /// already, under a kind such as `instance://nail`. Returns how many it
+    /// took. See docs/pools.md.
+    std::size_t AddToPool(const Entity pool, const std::string &kind, const std::vector<Entity> &instances) const
+    {
+      return static_cast<std::size_t>(
+        _host->pool_add(_host->context, pool, kind.c_str(), instances.data(), instances.size()));
+    }
+
+    /// An instance of a kind from a pool, turned on, or 0 when all are out.
+    [[nodiscard]] Entity AcquireFromPool(const Entity pool, const std::string &kind) const
+    {
+      return _host->pool_acquire(_host->context, pool, kind.c_str());
+    }
+
+    /// Gives an instance back to its pool, where it waits, turned off.
+    bool ReleaseToPool(const Entity instance) const { return _host->pool_release(_host->context, instance) != 0; }
+
+    /// How many instances of a kind a pool holds, and how many wait.
+    [[nodiscard]] std::size_t CountInPool(const Entity pool, const std::string &kind) const
+    {
+      return static_cast<std::size_t>(_host->pool_count(_host->context, pool, kind.c_str()));
+    }
+
+    [[nodiscard]] std::size_t CountFreeInPool(const Entity pool, const std::string &kind) const
+    {
+      return static_cast<std::size_t>(_host->pool_free_count(_host->context, pool, kind.c_str()));
     }
 
     /// The component registered under a name, by anyone, or 0.

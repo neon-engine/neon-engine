@@ -1,5 +1,6 @@
 #include "lua-entity-handle.hpp"
 
+#include <neon/world-system/ecs/systems/pool-system.hpp>
 #include <string>
 
 #include "lua-api.hpp"
@@ -115,6 +116,42 @@ namespace neon
       return 1;
     }
 
+    int entity_pool_acquire(lua_State *lua)
+    {
+      const Entity pool = check_entity(lua, 1).entity;
+      const char *kind = luaL_checkstring(lua, 2);
+      const Entity instance = PoolSystem::Acquire(store_of(lua), pool, kind);
+      if (instance == No_Entity) { lua_pushnil(lua); }
+      else { push_entity(lua, instance); }
+      return 1;
+    }
+
+    int entity_pool_release(lua_State *lua)
+    {
+      lua_pushboolean(lua, PoolSystem::Release(store_of(lua), check_entity(lua, 1).entity) ? 1 : 0);
+      return 1;
+    }
+
+    int entity_pool_free_count(lua_State *lua)
+    {
+      const Entity pool = check_entity(lua, 1).entity;
+      const char *kind = luaL_checkstring(lua, 2);
+      lua_pushinteger(lua, static_cast<lua_Integer>(PoolSystem::GetFreeCount(store_of(lua), pool, kind)));
+      return 1;
+    }
+
+    int entity_pool_kinds(lua_State *lua)
+    {
+      const std::vector<std::string> kinds = PoolSystem::GetKinds(store_of(lua), check_entity(lua, 1).entity);
+      lua_createtable(lua, static_cast<int>(kinds.size()), 0);
+      for (std::size_t i = 0; i < kinds.size(); i++)
+      {
+        lua_pushstring(lua, kinds[i].c_str());
+        lua_rawseti(lua, -2, static_cast<lua_Integer>(i + 1));
+      }
+      return 1;
+    }
+
     int entity_parent(lua_State *lua)
     {
       const Entity parent = store_of(lua).GetParent(check_entity(lua, 1).entity);
@@ -224,6 +261,10 @@ namespace neon
       {"remove_component", entity_remove},
       {"set_enabled", entity_set_enabled},
       {"is_enabled", entity_is_enabled},
+      {"pool_acquire", entity_pool_acquire},
+      {"pool_release", entity_pool_release},
+      {"pool_free_count", entity_pool_free_count},
+      {"pool_kinds", entity_pool_kinds},
       {"get_parent", entity_parent},
       {"get_children", entity_children},
       {"is_alive", entity_alive},

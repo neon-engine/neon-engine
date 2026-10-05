@@ -254,6 +254,12 @@ namespace neon
     return name == nullptr ? std::string{} : std::string{name};
   }
 
+  void Flecs_EntityStore::SetName(const Entity entity, const std::string &name)
+  {
+    if (!IsAlive(entity)) { return; }
+    ecs_set_name(_world, entity, name.empty() ? nullptr : name.c_str());
+  }
+
   void Flecs_EntityStore::SetParent(const Entity entity, const Entity parent)
   {
     if (!IsAlive(entity)) { return; }
