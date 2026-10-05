@@ -187,6 +187,62 @@ namespace
     EXPECT_EQ(_scene.GetPath(), "assets://scenes/test.scene.yml");
   }
 
+  TEST_F(SceneFilesTest, AComponentIsWrittenAsTurnedOffAndKeepsWhatWasWrittenForIt)
+  {
+    Write(
+      "entities:\n"
+      "  - name: nail\n"
+      "    components:\n"
+      "      Transform:\n"
+      "        position: [1, 2, 3]\n"
+      "      Camera:\n"
+      "        enabled: false\n"
+      "        fov: 70\n");
+    ASSERT_TRUE(_scene.Populate(_world.store)) << _logger->Messages(LogLevel::Error);
+
+    auto &store = _world.store;
+    const auto nail = store.FindEntity("nail");
+    EXPECT_TRUE(store.IsEnabled<neon::Transform>(nail));
+    EXPECT_FALSE(store.IsEnabled<Camera>(nail));
+    EXPECT_FALSE(store.Has<Camera>(nail));
+
+    const auto *camera = static_cast<const Camera *>(store.GetComponentData(nail, store.IdOf<Camera>()));
+    ASSERT_NE(camera, nullptr);
+    EXPECT_EQ(camera->fov, 70.0f);
+  }
+
+  TEST_F(SceneFilesTest, WritesThatAComponentIsTurnedOffAndNothingForOneThatIsOn)
+  {
+    auto &store = _world.store;
+    const auto nail = store.CreateEntity("nail");
+    store.Set(nail, Transform{});
+    store.Set(nail, Spectator{});
+    Camera camera;
+    camera.fov = 70.0f;
+    store.Set(nail, camera);
+    store.SetEnabled<Camera>(nail, false);
+    store.SetEnabled<Spectator>(nail, false);
+
+    ASSERT_TRUE(_scene.Save(store, "saved", "user://saved.scene.yml"));
+
+    // What is off says so, with what it holds, and one that keeps all of
+    // its defaults says that alone. What is on is written as it always was.
+    EXPECT_EQ(
+      ReadFile("user://saved.scene.yml"),
+      "scene: saved\n"
+      "version: 1\n"
+      "\n"
+      "entities:\n"
+      "  - name: nail\n"
+      "    components:\n"
+      "      Transform: Default\n"
+      "      Camera:\n"
+      "        fov: 70\n"
+      "        enabled: false\n"
+      "      Spectator:\n"
+      "        enabled: false\n");
+  }
+
   TEST_F(SceneFilesTest, LoadsAnotherFileAndIsThatSceneFromThenOn)
   {
     Write("entities:\n  - name: first\n");

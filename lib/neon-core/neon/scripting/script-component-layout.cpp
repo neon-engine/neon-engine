@@ -468,7 +468,7 @@ namespace neon
       const auto id = store.FindComponent(shape->name);
       if (id != No_Component)
       {
-        if (const void *existing = store.GetComponent(entity, id)) { Copy(*shape, buffer.data(), existing); }
+        if (const void *existing = store.GetComponentData(entity, id)) { Copy(*shape, buffer.data(), existing); }
       }
 
       ReadFields(*type, reader, buffer.data());
@@ -482,7 +482,7 @@ namespace neon
       const auto id = store.FindComponent(shape->name);
       if (id == No_Component) { return false; }
 
-      const void *existing = store.GetComponent(entity, id);
+      const void *existing = store.GetComponentData(entity, id);
       if (existing == nullptr) { return false; }
 
       Buffer standard = buffer_for(shape->size);

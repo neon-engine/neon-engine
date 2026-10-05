@@ -82,6 +82,18 @@ namespace
       // level is over
       world.Info(std::string("Asked for what nothing shows to be freed: ") + (world.FreeUnused() ? "yes" : "no"));
 
+      // A component is turned off and on: off, it is not there for who
+      // asks, and what it holds can still be written. One the entity does
+      // not have is refused.
+      const NeonComponent transform = world.FindComponent("Transform");
+      const bool turned_off = world.SetEnabled(painted, transform, false) && !world.IsEnabled(painted, transform);
+      const bool written = world.SetVector3(painted, world.FindField("Transform", "scale"), {2.0f, 2.0f, 2.0f});
+      const bool turned_on = world.SetEnabled(painted, transform, true) && world.IsEnabled(painted, transform);
+      const bool refused_off = !world.SetEnabled(painted, world.FindComponent("Camera"), false);
+      world.Info(std::string("Turned a component off: ") + (turned_off ? "yes" : "no") + ", wrote it while it was off: " +
+        (written ? "yes" : "no") + ", turned it on: " + (turned_on ? "yes" : "no") +
+        ", and none that is not there: " + (refused_off ? "yes" : "no"));
+
       // numbers for the shaders an extension brings, at one of eight places;
       // a place that there is not is refused
       const bool numbered = world.SetShaderNumbers(2, {0.5f, 0.25f, 1.0f, 8.0f});

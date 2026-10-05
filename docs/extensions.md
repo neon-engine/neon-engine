@@ -153,6 +153,7 @@ something of its own and is told to clean up.
 | 12 | `ui_show`, `ui_close`, `ui_find`, `ui_create`, `ui_remove`, `ui_set_field`, `ui_set_style`, `ui_set_visible`, `ui_listen`, `ui_unlisten`, `get_view_size` | |
 | 13 | `set_group_volume`, `get_group_volume` | |
 | 14 | `free_unused` | |
+| 15 | `set_component_enabled`, `is_component_enabled` | |
 
 ## Components
 
@@ -524,7 +525,7 @@ NEON_EXTENSION(Game)
 |---|---|
 | `Extension` | The class of the extension: `Initialize`, `RegisterComponents`, `Start`, `CleanUp`, and `AddSystem<S>(name, arguments…)` |
 | `System` | `Start`, `OnPhysicsEvent`, `Update`, `FixedUpdate`, `Interpolate` |
-| `World` | What the application offers: the log, `RegisterComponent<T>`, entities, `Set<T>`, `Get<T>`, `Has<T>`, `Remove<T>`, `CreateQuery<Ts…>`, `FindField` with `GetNumber`, `GetVector3`, `GetText` and their `Set…`, `IsActionDown`, `WasActionPressed`, `ActionAxis2`, `ReadFile`, `Spawn`, `SpawnAt`, `LoadScene`, `CastRay`, `SetUiNumber`, `SetUiText`, `ShowUi`, `CloseUi`, `FindUi`, `CreateUi`, `RemoveUi`, `SetUiField`, `SetUiStyle`, `SetUiVisible`, `ListenToUi`, `UnlistenToUi`, `GetViewSize`, `FreeUnused`, `SetGroupVolume`, `GetGroupVolume`, `AddComponent`, `SetTexts`, `SetImage`, `SetMesh`, `SetMeshLightmap`, and `CreateBlockQuery` with `PlaceField<T>` for a field of the engine in place |
+| `World` | What the application offers: the log, `RegisterComponent<T>`, entities, `Set<T>`, `Get<T>`, `Has<T>`, `Remove<T>`, `CreateQuery<Ts…>`, `FindField` with `GetNumber`, `GetVector3`, `GetText` and their `Set…`, `IsActionDown`, `WasActionPressed`, `ActionAxis2`, `ReadFile`, `Spawn`, `SpawnAt`, `LoadScene`, `CastRay`, `SetUiNumber`, `SetUiText`, `ShowUi`, `CloseUi`, `FindUi`, `CreateUi`, `RemoveUi`, `SetUiField`, `SetUiStyle`, `SetUiVisible`, `ListenToUi`, `UnlistenToUi`, `GetViewSize`, `SetEnabled`, `IsEnabled`, `FreeUnused`, `SetGroupVolume`, `GetGroupVolume`, `AddComponent`, `SetTexts`, `SetImage`, `SetMesh`, `SetMeshLightmap`, and `CreateBlockQuery` with `PlaceField<T>` for a field of the engine in place |
 | `Query<Ts…>` | `Each([](Entity, Ts &…) { … })` |
 | `Field(name, &T::member, description)` | A field from the member itself: its kind from its type, its offset from where it lies, and its default from what `T{}` holds, so a default is written once, in the struct |
 | `NEON_EXTENSION(Class)` | The function the application starts the extension by |

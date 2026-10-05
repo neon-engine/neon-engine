@@ -336,6 +336,26 @@ namespace
     _store.Remove<SoundSource>(entity);
   }
 
+  TEST_F(AudioPlaybackTest, ASourceThatIsTurnedOffIsStoppedAndKeptAndPlaysFromTheStartWhenItIsTurnedOn)
+  {
+    auto playing = Source();
+    playing.playing = true;
+    const Entity entity = CreateSource(playing);
+    _system.Update(_store, 0.016);
+
+    // stopped, and neither let go of nor made again
+    EXPECT_CALL(_audio, Stop(sound_id)).Times(1);
+    EXPECT_CALL(_audio, DestroySound(_)).Times(0);
+    EXPECT_CALL(_audio, CreateSound(_)).Times(0);
+    _store.SetEnabled<SoundSource>(entity, false);
+    _system.Update(_store, 0.016);
+
+    EXPECT_CALL(_audio, Play(sound_id)).Times(1);
+    _store.SetEnabled<SoundSource>(entity, true);
+    _system.Update(_store, 0.016);
+    ::testing::Mock::VerifyAndClearExpectations(&_audio);
+  }
+
   TEST_F(AudioPlaybackTest, ReleasesTheSoundOfAnEntityThatIsDestroyed)
   {
     const Entity entity = CreateSource(Source());

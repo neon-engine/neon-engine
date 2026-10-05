@@ -84,7 +84,7 @@ namespace neon::extension
   using UiListening = std::function<void(const UiEvent &event)>;
 
   /// The version of the C file this header needs of the application.
-  inline constexpr std::uint32_t needed_abi_version = 14;
+  inline constexpr std::uint32_t needed_abi_version = 15;
 
   /// The kind of a field from its type, and its value as the numbers a
   /// description carries. A type of the extension's own that lies in memory
@@ -429,6 +429,21 @@ namespace neon::extension
     void Remove(const Entity entity) const
     {
       _host->remove_component(_host->context, entity, ComponentOf<T>::id);
+    }
+
+    /// Turns a component of an entity off, or on again, by its id as
+    /// FindComponent() gives it: `world.SetEnabled(nail,
+    /// world.FindComponent("Renderable"), false)` hides an entity and keeps
+    /// everything about it. Returns false when it has no such component.
+    bool SetEnabled(const Entity entity, const NeonComponent component, const bool enabled) const
+    {
+      return _host->set_component_enabled(_host->context, entity, component, enabled ? 1 : 0) != 0;
+    }
+
+    /// Whether the entity has the component and it is turned on.
+    [[nodiscard]] bool IsEnabled(const Entity entity, const NeonComponent component) const
+    {
+      return _host->is_component_enabled(_host->context, entity, component) != 0;
     }
 
     /// The component registered under a name, by anyone, or 0.

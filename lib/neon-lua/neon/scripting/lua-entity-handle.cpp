@@ -93,6 +93,28 @@ namespace neon
       return 0;
     }
 
+    int entity_set_enabled(lua_State *lua)
+    {
+      const Entity entity = check_entity(lua, 1).entity;
+      const char *name = luaL_checkstring(lua, 2);
+      luaL_checktype(lua, 3, LUA_TBOOLEAN);
+      EntityStore &store = store_of(lua);
+      const ComponentId id = store.FindComponent(name);
+      if (id == No_Component) { return luaL_error(lua, "There is no component called '%s'", name); }
+      store.SetEnabled(entity, id, lua_toboolean(lua, 3) != 0);
+      return 0;
+    }
+
+    int entity_is_enabled(lua_State *lua)
+    {
+      const Entity entity = check_entity(lua, 1).entity;
+      const char *name = luaL_checkstring(lua, 2);
+      EntityStore &store = store_of(lua);
+      const ComponentId id = store.FindComponent(name);
+      lua_pushboolean(lua, id != No_Component && store.IsEnabled(entity, id) ? 1 : 0);
+      return 1;
+    }
+
     int entity_parent(lua_State *lua)
     {
       const Entity parent = store_of(lua).GetParent(check_entity(lua, 1).entity);
@@ -200,6 +222,8 @@ namespace neon
       {"has_component", entity_has},
       {"get_component", entity_get},
       {"remove_component", entity_remove},
+      {"set_enabled", entity_set_enabled},
+      {"is_enabled", entity_is_enabled},
       {"get_parent", entity_parent},
       {"get_children", entity_children},
       {"is_alive", entity_alive},

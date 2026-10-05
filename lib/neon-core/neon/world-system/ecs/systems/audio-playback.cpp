@@ -39,14 +39,28 @@ namespace neon
 
     // the audio system holds a sound for every source, which is released
     // when the entity stops being one
-    store.Register<SoundSource>("SoundSource", [this](Entity, SoundSource &source)
+    const auto let_go = [this](Entity, SoundSource &source)
     {
       if (source.sound_id < 0) { return; }
 
       _audio_context->DestroySound(source.sound_id);
       source.sound_id = -1;
       source.was_playing = false;
-    });
+    };
+
+    // A source that is turned off is silent: its sound is stopped, and
+    // kept. Turned on, it plays it from the start when it says `playing`,
+    // so that what a pool hands out sounds as a new one.
+    store.Register<SoundSource>(
+      "SoundSource",
+      let_go,
+      [this](Entity, SoundSource &source, const bool enabled)
+      {
+        if (enabled || source.sound_id < 0) { return; }
+
+        _audio_context->Stop(source.sound_id);
+        source.was_playing = false;
+      });
   }
 
   void AudioPlayback::Initialize(EntityStore &store)

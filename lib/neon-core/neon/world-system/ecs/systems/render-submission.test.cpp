@@ -647,6 +647,27 @@ namespace
     _system.Update(_store, 0.016);
   }
 
+  TEST_F(RenderSubmissionTest, AnEntityWhoseRenderableIsTurnedOffIsNotDrawnAndKeepsItsRenderObject)
+  {
+    Renderable shown;
+    shown.render_info.model_path = "assets://models/nail.glb";
+    const Entity nail = Create(Placed(0.0f, 0.0f, 0.0f), shown);
+
+    // made once, and drawn in the first frame and in the last
+    EXPECT_CALL(_pipeline, CreateRenderObject(_)).WillOnce(Return(4));
+    EXPECT_CALL(_pipeline, EnqueueForRendering(4, _)).Times(2);
+    EXPECT_CALL(_pipeline, DestroyRenderObject(_)).Times(0);
+
+    _system.Update(_store, 0.016);
+
+    _store.SetEnabled<Renderable>(nail, false);
+    _system.Update(_store, 0.016);
+    _system.Update(_store, 0.016);
+
+    _store.SetEnabled<Renderable>(nail, true);
+    _system.Update(_store, 0.016);
+  }
+
   TEST_F(RenderSubmissionTest, HandsAMeshThatWasChangedToTheRendererAgain)
   {
     const auto mesh = std::make_shared<neon::MeshData>();

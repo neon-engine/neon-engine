@@ -43,6 +43,14 @@ namespace neon
     /// Destroys a body. One that is not known is ignored.
     virtual void DestroyBody(BodyId body) = 0;
 
+    /// Takes a body out of what is simulated, or puts it back. Out of it,
+    /// the body stays what it is, with its shapes, and nothing touches it,
+    /// moves it, or finds it with a ray. It is what a body whose component
+    /// is turned off does, which costs far less than destroying it and
+    /// creating another. Nothing happens for a body that is not there, and
+    /// for one that is where it is asked to be already.
+    virtual void SetBodyInWorld(BodyId body, bool in_world) = 0;
+
     /// Gives a body other shapes while it lives. What the body is, its
     /// mass included, stays. Returns false and says why in `error` when the
     /// shapes cannot be made, or when the body is not known or belongs to
@@ -90,6 +98,11 @@ namespace neon
 
     virtual void DestroyCharacter(CharacterId character) = 0;
 
+    /// Takes a character out of what is simulated, or puts it back, as
+    /// SetBodyInWorld() does a body: out of it, the character is kept as
+    /// it is, and nothing touches it or finds it.
+    virtual void SetCharacterInWorld(CharacterId character, bool in_world) = 0;
+
     [[nodiscard]] virtual std::size_t GetCharacterCount() = 0;
 
     /// Puts a character somewhere at once.
@@ -111,6 +124,10 @@ namespace neon
 
     /// Takes a joint apart. One that is not known is ignored.
     virtual void DestroyJoint(JointId joint) = 0;
+
+    /// Lets a joint go on holding, or stop: one that is off is kept as it
+    /// is and holds nothing, and what it held wakes up.
+    virtual void SetJointEnabled(JointId joint, bool enabled) = 0;
 
     /// Whether a joint still holds. It stops holding when it is destroyed,
     /// and when one of its bodies is.

@@ -32,7 +32,7 @@ extern "C" {
 #endif
 
 /* The version of this file. It goes up by one whenever a table grows. */
-#define NEON_EXTENSION_ABI_VERSION 14
+#define NEON_EXTENSION_ABI_VERSION 15
 
 /* Marks the function an extension exports. Everything else of an extension
  * stays hidden, which neon_add_extension sees to. */
@@ -718,6 +718,20 @@ typedef struct NeonExtensionHost
    * the next one was shown. They are freed when the next frame begins.
    * Returns 1, or 0 when there is no renderer. */
   int (*free_unused)(void *context);
+
+  /* Since version 15: components that are turned off and on. */
+
+  /* Turns a component of an entity off, or on again. One that is off keeps
+   * what it holds and is not there for whoever asks: no query hands it
+   * over, has_component says 0, and get_component gives nothing. Its
+   * fields can still be read and set. An entity is hidden by turning its
+   * `Renderable` off, and walked through by turning its `Collider` or its
+   * `RigidBody` off. `enabled` is 1 or 0. Returns 1, or 0 when the entity
+   * has no such component. */
+  int (*set_component_enabled)(void *context, NeonEntity entity, NeonComponent component, int enabled);
+
+  /* Whether the entity has the component and it is turned on, 1 or 0. */
+  int (*is_component_enabled)(void *context, NeonEntity entity, NeonComponent component);
 } NeonExtensionHost;
 
 /* What an extension brings. The application hands it over with every field

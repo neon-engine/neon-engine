@@ -95,6 +95,14 @@ namespace neon
       /// What was handed to the physics last, in the world.
       Pose pushed;
 
+      /// Whether its component was turned on again since the last step: it
+      /// is then put where its entity is, see HandOver().
+      bool rejoined = false;
+
+      /// Whether it is a body that was taken out of the physics because its
+      /// colliders are all turned off, and waits for one of them.
+      bool waits_for_collider = false;
+
       /// A kinematic body that was moved keeps the velocity it was moved
       /// with until it is told otherwise.
       bool was_moved = false;
@@ -188,6 +196,11 @@ namespace neon
 
     /// Makes the joints whose bodies are both there.
     void CreateJoints(EntityStore &store);
+
+    /// Whether a body has colliders, on its entity or below it, and all of
+    /// them are turned off: it is then not in the physics, and waits for
+    /// one to be turned on.
+    [[nodiscard]] static bool WaitsForCollider(EntityStore &store, Entity entity);
 
     void FindLooseColliders(EntityStore &store);
 

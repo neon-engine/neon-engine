@@ -104,36 +104,114 @@ namespace neon
   {
     // what the physics holds for a component is released when the component
     // leaves its entity, which includes the entity being destroyed
-    store.Register<RigidBody>("RigidBody", [this](const Entity entity, RigidBody &body)
-    {
-      Release(entity);
-      body.body = No_Body;
-    });
-
-    store.Register<Trigger>("Trigger", [this](const Entity entity, Trigger &trigger)
-    {
-      Release(entity);
-      trigger.body = No_Body;
-    });
-
-    store.Register<CharacterBody>("CharacterBody", [this](const Entity entity, CharacterBody &character)
-    {
-      Release(entity);
-      character.character = No_Character;
-    });
-
-    store.Register<Joint>("Joint", [this](const Entity entity, Joint &joint)
-    {
-      if (const auto it = _joints.find(entity); it != _joints.end())
+    // A body that is turned off is taken out of what is simulated and kept,
+    // with its shapes: nothing touches it and it does not move. Turned on,
+    // it is put back where its entity is by then, see HandOver(). One that
+    // was never created is created when it is first on, as any other.
+    store.Register<RigidBody>(
+      "RigidBody",
+      [this](const Entity entity, RigidBody &body)
       {
-        _physics->DestroyJoint(it->second);
-        _joints.erase(it);
-      }
-      joint.joint = No_Joint;
-    });
+        Release(entity);
+        body.body = No_Body;
+      },
+      [this, &store](const Entity entity, RigidBody &body, const bool enabled)
+      {
+        const auto it = _records.find(entity);
+        if (it == _records.end() || it->second.body == No_Body)
+        {
+          body.failed = false;
+          return;
+        }
 
-    store.Register<Collider>("Collider", [this](const Entity entity, Collider &)
+        _physics->SetBodyInWorld(it->second.body, enabled);
+        if (!enabled) { return; }
+
+        it->second.rejoined = true;
+
+        // a collider of it that was turned off meanwhile is no shape of it
+        const auto collider = store.IdOf<Collider>();
+        for (const auto &read : it->second.colliders)
+        {
+          if (!store.IsEnabled(read.entity, collider))
+          {
+            _reshape.insert(entity);
+            break;
+          }
+        }
+      });
+
+    // A trigger and a character that are turned off are taken out of what
+    // is simulated and kept, as a body is, and a joint that is turned off
+    // stops holding and is kept. Turned on, each is what it was, where its
+    // entity is by then. Nothing is destroyed, and nothing is made anew.
+    store.Register<Trigger>(
+      "Trigger",
+      [this](const Entity entity, Trigger &trigger)
+      {
+        Release(entity);
+        trigger.body = No_Body;
+      },
+      [this](const Entity entity, Trigger &trigger, const bool enabled)
+      {
+        const auto it = _records.find(entity);
+        if (it == _records.end() || it->second.body == No_Body)
+        {
+          trigger.failed = false;
+          return;
+        }
+
+        _physics->SetBodyInWorld(it->second.body, enabled);
+        if (enabled) { it->second.rejoined = true; }
+      });
+
+    store.Register<CharacterBody>(
+      "CharacterBody",
+      [this](const Entity entity, CharacterBody &character)
+      {
+        Release(entity);
+        character.character = No_Character;
+      },
+      [this](const Entity entity, CharacterBody &character, const bool enabled)
+      {
+        const auto it = _records.find(entity);
+        if (it == _records.end() || it->second.character == No_Character)
+        {
+          character.failed = false;
+          return;
+        }
+
+        _physics->SetCharacterInWorld(it->second.character, enabled);
+        if (enabled) { it->second.rejoined = true; }
+      });
+
+    store.Register<Joint>(
+      "Joint",
+      [this](const Entity entity, Joint &joint)
+      {
+        if (const auto it = _joints.find(entity); it != _joints.end())
+        {
+          _physics->DestroyJoint(it->second);
+          _joints.erase(it);
+        }
+        joint.joint = No_Joint;
+      },
+      [this](const Entity entity, Joint &joint, const bool enabled)
+      {
+        if (const auto it = _joints.find(entity); it != _joints.end()) { _physics->SetJointEnabled(it->second, enabled); }
+        else { joint.failed = false; }
+      });
+
+    const auto let_go = [this, &store](const Entity entity, const bool is_removed)
     {
+      // A collider that is turned off while its body is off too changes
+      // nothing: the body is out of what is simulated, and keeps its shapes
+      // for when both are on again, as what waits in a pool is.
+      if (const auto it = _claimed.find(entity); it != _claimed.end() && !is_removed && !IsOwner(store, it->second))
+      {
+        return;
+      }
+
       // the body it was part of has one shape less
       if (const auto it = _claimed.find(entity); it != _claimed.end())
       {
@@ -141,7 +219,17 @@ namespace neon
         _claimed.erase(it);
       }
       _loose.erase(entity);
-    });
+    };
+
+    // A collider that is turned off is no shape of its body, as one that is
+    // removed is none. Turned on, it is found by FindLooseColliders().
+    store.Register<Collider>(
+      "Collider",
+      [let_go](const Entity entity, Collider &) { let_go(entity, true); },
+      [let_go](const Entity entity, Collider &, const bool enabled)
+      {
+        if (!enabled) { let_go(entity, false); }
+      });
 
     // parents come first, so that a body below another finds its parent
     // where this step put it
@@ -468,6 +556,9 @@ namespace neon
         const auto entity = block.entities[i];
         if (body.failed || Knows(entity, body.body, No_Character)) { continue; }
 
+        // a body whose colliders are all turned off waits for one of them
+        if (WaitsForCollider(store, entity)) { continue; }
+
         // what could not be created is not tried again, since it would
         // fail, and say so, in every step
         body.body = No_Body;
@@ -788,6 +879,9 @@ namespace neon
   {
     for (const auto &[entity, record] : _records)
     {
+      // one that is turned off keeps its shapes as they are until it is on
+      if (!IsOwner(store, entity)) { continue; }
+
       for (const auto &read : record.colliders)
       {
         const auto *collider = store.Get<Collider>(read.entity);
@@ -806,6 +900,21 @@ namespace neon
     {
       const auto it = _records.find(entity);
       if (it == _records.end()) { continue; }
+
+      // one that is turned off is looked at when it is turned on
+      if (!IsOwner(store, entity)) { continue; }
+
+      // A body whose colliders are all off has no shape to be in the
+      // physics with: it is taken out and kept, until one is on again.
+      if (it->second.kind == RecordKind::Body && WaitsForCollider(store, entity))
+      {
+        if (!it->second.waits_for_collider)
+        {
+          it->second.waits_for_collider = true;
+          _physics->SetBodyInWorld(it->second.body, false);
+        }
+        continue;
+      }
 
       auto &record = it->second;
       const auto what = NameOf(record.kind);
@@ -829,6 +938,9 @@ namespace neon
         continue;
       }
 
+      // one that waited for a collider has one again, and is put back
+      const bool comes_back = record.waits_for_collider && collected && !shapes.empty();
+
       if (!collected || shapes.empty() || !_physics->SetShape(record.body, shapes, error))
       {
         if (shapes.empty() && collected) { error = "it has no Collider, on itself or on an entity below it"; }
@@ -836,9 +948,40 @@ namespace neon
         _logger->Error(
           "The shape of the {} of entity '{}' cannot be changed, and stays what it was: {}",
           what, path, error);
+        continue;
+      }
+
+      if (comes_back)
+      {
+        record.waits_for_collider = false;
+        record.rejoined = true;
+        _physics->SetBodyInWorld(record.body, true);
       }
     }
     _reshape.clear();
+  }
+
+  bool PhysicsSimulation::WaitsForCollider(EntityStore &store, const Entity entity)
+  {
+    bool has_one_turned_off = false;
+    const auto id = store.IdOf<Collider>();
+
+    // its own collider and those below it, as far as the next body
+    std::vector<Entity> open{entity};
+    while (!open.empty())
+    {
+      const Entity at = open.back();
+      open.pop_back();
+
+      if (store.IsEnabled(at, id)) { return false; }
+      if (store.GetComponentData(at, id) != nullptr) { has_one_turned_off = true; }
+
+      for (const Entity child : store.GetChildren(at))
+      {
+        if (!IsOwner(store, child)) { open.push_back(child); }
+      }
+    }
+    return has_one_turned_off;
   }
 
   void PhysicsSimulation::HandOver(EntityStore &store, const double fixed_delta_time)
@@ -857,6 +1000,30 @@ namespace neon
         if (!Knows(block.entities[i], body.body, No_Character)) { continue; }
 
         auto &record = _records.find(block.entities[i])->second;
+
+        // A body that was turned on again is put where its entity is, with
+        // the velocity its component says, and nothing is drawn on the way:
+        // what a pool hands out starts where it was put.
+        if (record.rejoined)
+        {
+          record.rejoined = false;
+
+          const auto pose = WorldPoseOf(store, block.entities[i], transform);
+          _physics->SetBodyPlace(record.body, pose.position, pose.rotation);
+          record.previous = pose;
+          record.current = pose;
+          record.pushed = pose;
+          record.written_position = transform.position;
+          record.written_rotation = transform.rotation;
+
+          if (record.body_kind == BodyKind::Dynamic)
+          {
+            _physics->SetLinearVelocity(record.body, body.linear_velocity);
+            _physics->SetAngularVelocity(record.body, radians(body.angular_velocity));
+            record.written_linear_velocity = body.linear_velocity;
+            record.written_angular_velocity = body.angular_velocity;
+          }
+        }
 
         if (record.body_kind == BodyKind::Dynamic)
         {
@@ -935,9 +1102,11 @@ namespace neon
 
         auto &record = _records.find(block.entities[i])->second;
 
+        // one that was turned on again is put where its entity is
         const auto pose = WorldPoseOf(store, block.entities[i], transforms[i]);
-        if (pose == record.pushed) { continue; }
+        if (pose == record.pushed && !record.rejoined) { continue; }
 
+        record.rejoined = false;
         _physics->SetBodyPlace(record.body, pose.position, pose.rotation);
         record.pushed = pose;
         record.current = pose;
@@ -963,8 +1132,12 @@ namespace neon
 
         auto &record = _records.find(entity)->second;
 
-        if (transform.position != record.written_position)
+        // a game wrote the Transform, or the character was turned on again:
+        // either puts it where its entity is
+        if (transform.position != record.written_position || record.rejoined)
         {
+          record.rejoined = false;
+
           const auto pose = WorldPoseOf(store, entity, transform);
           _physics->SetCharacterPosition(record.character, pose.position);
 

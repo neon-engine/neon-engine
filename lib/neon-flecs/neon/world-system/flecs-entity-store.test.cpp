@@ -196,6 +196,106 @@ namespace
 
   // components
 
+  // turning a component off and on
+
+  TEST_F(FlecsEntityStoreTest, AComponentThatIsTurnedOffIsNotThereForWhoAsksAndKeepsWhatItHolds)
+  {
+    const Entity nail = _store.CreateEntity("nail");
+    _store.Set(nail, Position{1.0f, 2.0f});
+    _store.Set(nail, Velocity{3.0f, 4.0f});
+    const auto both = _store.Query<Position, Velocity>();
+    const auto positions = _store.Query<Position>();
+
+    EXPECT_TRUE(_store.IsEnabled<Velocity>(nail));
+    _store.SetEnabled<Velocity>(nail, false);
+
+    EXPECT_FALSE(_store.IsEnabled<Velocity>(nail));
+    EXPECT_FALSE(_store.Has<Velocity>(nail));
+    EXPECT_EQ(_store.Get<Velocity>(nail), nullptr);
+    EXPECT_TRUE(Visit(both).empty());
+    EXPECT_THAT(Visit(positions), ::testing::ElementsAre(nail)) << "the other component is as it was";
+
+    // what it holds is kept, and can be reached
+    const auto *kept = static_cast<const Velocity *>(_store.GetComponentData(nail, _store.IdOf<Velocity>()));
+    ASSERT_NE(kept, nullptr);
+    EXPECT_EQ(kept->x, 3.0f);
+
+    _store.SetEnabled<Velocity>(nail, true);
+
+    EXPECT_TRUE(_store.Has<Velocity>(nail));
+    ASSERT_NE(_store.Get<Velocity>(nail), nullptr);
+    EXPECT_EQ(_store.Get<Velocity>(nail)->y, 4.0f);
+    EXPECT_THAT(Visit(both), ::testing::ElementsAre(nail));
+  }
+
+  TEST_F(FlecsEntityStoreTest, AQueryPassesOverOnlyTheEntitiesWhoseComponentIsOff)
+  {
+    std::vector<Entity> nails;
+    for (int i = 0; i < 6; i++)
+    {
+      nails.push_back(_store.CreateEntity("nail " + std::to_string(i)));
+      _store.Set(nails.back(), Position{static_cast<float>(i), 0.0f});
+    }
+    const auto query = _store.Query<Position>();
+
+    _store.SetEnabled<Position>(nails[1], false);
+    _store.SetEnabled<Position>(nails[4], false);
+
+    // and each of the others is handed over with what it holds
+    std::vector<float> seen;
+    _store.Each(query, [&](const EntityBlock &block)
+    {
+      const auto *positions = block.Column<Position>(0);
+      for (std::size_t i = 0; i < block.count; i++)
+      {
+        EXPECT_EQ(positions[i].x, static_cast<float>(IndexOf(nails, block.entities[i])));
+        seen.push_back(positions[i].x);
+      }
+    });
+    EXPECT_THAT(seen, ::testing::UnorderedElementsAre(0.0f, 2.0f, 3.0f, 5.0f));
+  }
+
+  TEST_F(FlecsEntityStoreTest, TellsAComponentThatItWasTurnedOffAndOnAndOnlyWhenThatChanged)
+  {
+    struct Body
+    {
+      int id = 0;
+    };
+
+    std::vector<std::pair<Entity, bool>> told;
+    _store.Register<Body>("Body", {}, [&](const Entity entity, Body &body, const bool enabled)
+    {
+      EXPECT_EQ(body.id, 7);
+      told.emplace_back(entity, enabled);
+    });
+    const Entity crate = _store.CreateEntity("crate");
+    _store.Set(crate, Body{7});
+
+    _store.SetEnabled<Body>(crate, true);
+    EXPECT_TRUE(told.empty()) << "it was on already";
+
+    _store.SetEnabled<Body>(crate, false);
+    _store.SetEnabled<Body>(crate, false);
+    _store.SetEnabled<Body>(crate, true);
+
+    EXPECT_THAT(told, ::testing::ElementsAre(std::pair(crate, false), std::pair(crate, true)));
+  }
+
+  TEST_F(FlecsEntityStoreTest, TurningOffWhatAnEntityDoesNotHaveDoesNothing)
+  {
+    const Entity bare = _store.CreateEntity("bare");
+
+    _store.SetEnabled<Position>(bare, false);
+    _store.SetEnabled<Position>(123456, false);
+
+    EXPECT_FALSE(_store.IsEnabled<Position>(bare));
+    EXPECT_EQ(_store.GetComponentData(bare, _store.IdOf<Position>()), nullptr);
+
+    // and one it is given afterwards is on
+    _store.Set(bare, Position{});
+    EXPECT_TRUE(_store.IsEnabled<Position>(bare));
+  }
+
   TEST_F(FlecsEntityStoreTest, RegistersAComponentUnderAnIdOfItsOwn)
   {
     const ComponentId position = _store.FindComponent("Position");
@@ -1257,6 +1357,48 @@ namespace
     _store.Remove<Health>(player);
 
     EXPECT_THAT(_removals, ElementsAre(Removal{player, 50}));
+  }
+
+  TEST_F(FlecsEntityStoreRemovalTest, IsToldOfAComponentThatIsTurnedOffWhenItsEntityIsDestroyed)
+  {
+    const Entity player = _store.CreateEntity("player");
+    _store.Set(player, Health{50});
+    _store.SetEnabled<Health>(player, false);
+    EXPECT_THAT(_removals, IsEmpty()) << "turning it off removes nothing";
+
+    // what it holds outside the store is let go of, on or off
+    _store.DestroyEntity(player);
+
+    EXPECT_THAT(_removals, ElementsAre(Removal{player, 50}));
+  }
+
+  TEST_F(FlecsEntityStoreRemovalTest, IsToldOfAComponentThatIsTurnedOffWhenItIsRemoved)
+  {
+    const Entity player = _store.CreateEntity("player");
+    _store.Set(player, Health{50});
+    _store.SetEnabled<Health>(player, false);
+
+    _store.Remove<Health>(player);
+
+    EXPECT_THAT(_removals, ElementsAre(Removal{player, 50}));
+    EXPECT_EQ(_store.GetComponentData(player, _store.IdOf<Health>()), nullptr);
+
+    // and one that is given again is on
+    _store.Set(player, Health{10});
+    EXPECT_TRUE(_store.IsEnabled<Health>(player));
+  }
+
+  TEST_F(FlecsEntityStoreRemovalTest, IsToldOfEveryComponentThatIsTurnedOffWhenTheStoreIsCleanedUp)
+  {
+    const Entity player = _store.CreateEntity("player");
+    const Entity enemy = _store.CreateEntity("enemy");
+    _store.Set(player, Health{50});
+    _store.Set(enemy, Health{20});
+    _store.SetEnabled<Health>(player, false);
+
+    _store.CleanUp();
+
+    EXPECT_THAT(_removals, ::testing::UnorderedElementsAre(Removal{player, 50}, Removal{enemy, 20}));
   }
 
   TEST_F(FlecsEntityStoreRemovalTest, IsToldTheValueTheComponentHadLast)

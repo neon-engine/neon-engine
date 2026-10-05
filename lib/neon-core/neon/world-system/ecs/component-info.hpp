@@ -44,6 +44,14 @@ namespace neon
     /// release what the component refers to outside the store.
     std::function<void(Entity entity, void *component)> on_remove;
 
+    /// Called when a component of an entity is turned off or on, see
+    /// EntityStore::SetEnabled(). A component that keeps something outside
+    /// the store, a body of the physics, lets go of it when it is turned
+    /// off, as it does when it is removed, and takes it again when it is
+    /// turned on. A component that only holds what systems read needs
+    /// none: it is passed over while it is off.
+    std::function<void(Entity entity, void *component, bool enabled)> on_toggle;
+
     /// Fills everything in from a C++ type.
     template<typename T>
     static ComponentInfo Of(const std::string &name)

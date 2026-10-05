@@ -829,6 +829,67 @@ namespace
     _world.CleanUp();
   }
 
+  TEST_F(EntityWorldTest, ReleasesTheRenderObjectOfAnEntityWhoseRenderableIsTurnedOffWhenItIsDestroyed)
+  {
+    PopulateWith([](EntityStore &store)
+    {
+      const Entity entity = store.CreateEntity("cube");
+      store.Set(entity, Transform{});
+      store.Set(entity, Renderable{});
+    });
+    _world.Initialize();
+    EXPECT_CALL(_pipeline, CreateRenderObject(_)).WillOnce(Return(4));
+    _world.Update();
+
+    // turned off, it keeps its render object
+    EXPECT_CALL(_pipeline, DestroyRenderObject(_)).Times(0);
+    _store.SetEnabled<Renderable>(_store.FindEntity("cube"), false);
+    _world.Update();
+    ::testing::Mock::VerifyAndClearExpectations(&_pipeline);
+
+    // and it goes with the entity all the same
+    EXPECT_CALL(_pipeline, DestroyRenderObject(4)).Times(1);
+    _store.DestroyEntity(_store.FindEntity("cube"));
+    ::testing::Mock::VerifyAndClearExpectations(&_pipeline);
+
+    EXPECT_CALL(_pipeline, DestroyRenderObject(_)).Times(0);
+    _world.CleanUp();
+  }
+
+  TEST_F(EntityWorldTest, ReleasesTheRenderObjectsOfWhatIsTurnedOffWhenTheSceneChangesAndWhenTheWorldIsCleanedUp)
+  {
+    PopulateWith([](EntityStore &store)
+    {
+      for (const char *name : {"cube", "sphere"})
+      {
+        const Entity entity = store.CreateEntity(name);
+        store.Set(entity, Transform{});
+        store.Set(entity, Renderable{});
+      }
+      store.Set(store.FindEntity("sphere"), Persistent{});
+    });
+    _world.Initialize();
+    ON_CALL(_scene, Load(_, _)).WillByDefault(Return(true));
+    EXPECT_CALL(_pipeline, CreateRenderObject(_)).WillOnce(Return(4)).WillOnce(Return(5));
+    _world.Update();
+    const int of_cube = _store.Get<Renderable>(_store.FindEntity("cube"))->render_object_id;
+    const int of_sphere = _store.Get<Renderable>(_store.FindEntity("sphere"))->render_object_id;
+
+    _store.SetEnabled<Renderable>(_store.FindEntity("cube"), false);
+    _store.SetEnabled<Renderable>(_store.FindEntity("sphere"), false);
+
+    // the scene goes: what does not stay is let go of, though it is off
+    EXPECT_CALL(_pipeline, DestroyRenderObject(of_cube)).Times(1);
+    EXPECT_CALL(_pipeline, DestroyRenderObject(of_sphere)).Times(0);
+    _world.LoadScene("assets://scenes/next.scene.yml");
+    _world.Update();
+    ::testing::Mock::VerifyAndClearExpectations(&_pipeline);
+
+    // and what stayed is let go of when the world is cleaned up
+    EXPECT_CALL(_pipeline, DestroyRenderObject(of_sphere)).Times(1);
+    _world.CleanUp();
+  }
+
   TEST_F(EntityWorldTest, ReleasesTheRenderObjectOfAnEntityThatIsDestroyed)
   {
     PopulateWith([](EntityStore &store)

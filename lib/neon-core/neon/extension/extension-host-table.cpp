@@ -317,6 +317,29 @@ namespace neon
       store->RemoveComponent(entity, component);
     }
 
+    int set_component_enabled(
+      void *context,
+      const NeonEntity entity,
+      const NeonComponent component,
+      const int enabled)
+    {
+      auto &extension = of(context);
+      auto *store = store_for(extension, "set_component_enabled");
+      if (store == nullptr || !usable(extension, *store, "set_component_enabled", entity, component)) { return 0; }
+      if (store->GetComponentData(entity, component) == nullptr) { return 0; }
+
+      store->SetEnabled(entity, component, enabled != 0);
+      return 1;
+    }
+
+    int is_component_enabled(void *context, const NeonEntity entity, const NeonComponent component)
+    {
+      auto &extension = of(context);
+      auto *store = store_for(extension, "is_component_enabled");
+      if (store == nullptr || !usable(extension, *store, "is_component_enabled", entity, component)) { return 0; }
+      return store->IsEnabled(entity, component) ? 1 : 0;
+    }
+
     NeonQuery create_query(
       void *context,
       const NeonComponent *components,
@@ -454,7 +477,8 @@ namespace neon
       }
 
       found = &extension.fields[field - 1];
-      component = store->GetComponent(entity, found->component);
+      // its fields are read and written while it is turned off as well
+      component = store->GetComponentData(entity, found->component);
       return true;
     }
 
@@ -1367,7 +1391,7 @@ namespace neon
       }
 
       const ComponentId id = store->FindComponent("Renderable");
-      auto *renderable = id == No_Component ? nullptr : static_cast<Renderable *>(store->GetComponent(entity, id));
+      auto *renderable = id == No_Component ? nullptr : static_cast<Renderable *>(store->GetComponentData(entity, id));
       if (renderable == nullptr)
       {
         extension.logger->Error("set_mesh: the entity has no Renderable to draw the mesh with");
@@ -1420,7 +1444,7 @@ namespace neon
       }
 
       const ComponentId id = store->FindComponent("Renderable");
-      auto *renderable = id == No_Component ? nullptr : static_cast<Renderable *>(store->GetComponent(entity, id));
+      auto *renderable = id == No_Component ? nullptr : static_cast<Renderable *>(store->GetComponentData(entity, id));
       if (renderable == nullptr || renderable->render_info.mesh == nullptr)
       {
         extension.logger->Error("set_mesh_lightmap: the entity has no mesh; one is set with set_mesh first");
@@ -1535,6 +1559,9 @@ namespace neon
     host.get_group_volume = &get_group_volume;
 
     host.free_unused = &free_unused;
+
+    host.set_component_enabled = &set_component_enabled;
+    host.is_component_enabled = &is_component_enabled;
 
     // the extension keeps its name for as long as it is loaded
     host.name = extension.name.c_str();

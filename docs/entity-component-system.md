@@ -162,6 +162,60 @@ It is added to the world before the world is initialized:
 world.AddSystem(std::make_unique<Regeneration>());
 ```
 
+### Turning a component off
+
+A component of an entity is turned off and on without being removed:
+
+```cpp
+store.SetEnabled<neon::Renderable>(nail, false);   // not drawn, and everything about it is kept
+store.SetEnabled<neon::Collider>(nail, false);     // walked through
+store.SetEnabled<neon::Renderable>(nail, true);    // as it was
+```
+
+| While it is off | |
+|---|---|
+| Queries | Pass the entity over, as they pass over one that has no such component |
+| `Has<T>()`, `Get<T>()` | `false`, and `nullptr`: it is not there for whoever asks |
+| `IsEnabled<T>()` | `false`. It is `true` only for a component the entity has and that is on |
+| What it holds | Kept. `GetComponentData()` reaches it, and so do a script, an extension, and a document, which read and write its fields as before |
+| What it keeps outside the store | Handled by the component, with `on_toggle`, see the table below |
+
+It is data of the component, and not of the entity: an entity is hidden and
+still collides, or collides and is not seen, by which of its components is
+on. For something that comes and goes often, a projectile, a spark, turning
+its components off and on again costs next to nothing, where destroying it
+and making another gives the renderer and the physics work each time.
+
+Destroying an entity while a game runs is still what it was:
+
+```cpp
+store.DestroyEntity(nail);   // gone, with its children, its render object, and its body
+```
+
+It is right for what is gone for good, a level that is left, an enemy that
+will not be seen again. For what is used over and over it is better to turn
+it off and keep it.
+
+What each component of the engine does when it is turned off:
+
+| Component | Off | On again |
+|---|---|---|
+| `Renderable` | Not drawn. It keeps its render object | Drawn |
+| `RigidBody` | Its body is taken out of what the physics simulates, and kept with its shapes: nothing touches it, moves it, or finds it with a ray | Put back where its entity is by then, with the velocity its component says |
+| `Collider` | No shape of its body, which is given its other shapes anew. A body whose colliders are all off is taken out of the physics and kept, and put back when one is on. While its body is off as well nothing is done, so what waits in a pool keeps its shapes | A shape of its body again |
+| `Trigger`, `CharacterBody` | Taken out of what is simulated and kept, as a body is | Put back where its entity is by then |
+| `Joint` | Holds nothing, and is kept | Holds again |
+| `SoundSource` | Silent: its sound is stopped, and kept | Plays from the start when it says `playing` |
+| `Ui`, `UiSurface` | Hidden, and kept as it is | Shown again, with nothing read anew |
+| `Script` | Its hooks are not called. It is not told that it was turned off: a script that is off does nothing, and that includes hearing about it | Its hooks are called again |
+| `Camera`, `Light`, `Sky`, `Geometry`, `SoundListener`, `Player`, `Spectator`, and the rest | Passed over by the systems that read them: a camera draws nothing, a light lights nothing | Read again |
+
+Nothing is destroyed when a component is turned off, and nothing is made
+anew when it is turned on: what the component keeps in another system is
+kept there, out of use. A scene the engine writes says `enabled: false` for
+a component that is off, with everything it holds, and nothing for one that
+is on.
+
 ## How the interface is shaped
 
 An entity component system is harder to put behind an interface than a window

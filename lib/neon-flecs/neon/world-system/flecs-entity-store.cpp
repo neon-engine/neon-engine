@@ -193,6 +193,9 @@ namespace neon
       throw std::runtime_error("Flecs did not accept component '" + info.name + "'");
     }
 
+    // every component can be turned off and on for an entity, see SetEnabled()
+    ecs_add_id(_world, component->id, EcsCanToggle);
+
     _components_by_id[component->id] = component.get();
     _components_by_name[info.name] = component.get();
 
@@ -312,18 +315,52 @@ namespace neon
 
   void *Flecs_EntityStore::GetComponent(const Entity entity, const ComponentId component)
   {
-    if (!IsAlive(entity)) { return nullptr; }
+    // one that is turned off is not there for whoever asks
+    if (!IsEnabled(entity, component)) { return nullptr; }
     return ecs_get_mut_id(_world, entity, component);
   }
 
   bool Flecs_EntityStore::HasComponent(const Entity entity, const ComponentId component)
   {
-    return IsAlive(entity) && ecs_has_id(_world, entity, component);
+    return IsEnabled(entity, component);
+  }
+
+  void *Flecs_EntityStore::GetComponentData(const Entity entity, const ComponentId component)
+  {
+    if (!IsAlive(entity) || !ecs_has_id(_world, entity, component)) { return nullptr; }
+    return ecs_get_mut_id(_world, entity, component);
+  }
+
+  bool Flecs_EntityStore::IsEnabled(const Entity entity, const ComponentId component)
+  {
+    return IsAlive(entity) && ecs_has_id(_world, entity, component) && ecs_is_enabled_id(_world, entity, component);
+  }
+
+  void Flecs_EntityStore::SetEnabled(const Entity entity, const ComponentId component, const bool enabled)
+  {
+    if (!IsAlive(entity) || !ecs_has_id(_world, entity, component)) { return; }
+    if (ecs_is_enabled_id(_world, entity, component) == enabled) { return; }
+
+    ecs_enable_id(_world, entity, component, enabled);
+
+    // what the component keeps outside the store is let go of, or taken again
+    const auto *known = FindComponentById(component);
+    if (known != nullptr && known->info.on_toggle)
+    {
+      known->info.on_toggle(entity, ecs_get_mut_id(_world, entity, component), enabled);
+    }
   }
 
   void Flecs_EntityStore::RemoveComponent(const Entity entity, const ComponentId component)
   {
     if (!IsAlive(entity)) { return; }
+
+    // One that is turned off is turned on first, so that nothing of it is
+    // left behind: a component the entity is given later is on.
+    if (ecs_has_id(_world, entity, component) && !ecs_is_enabled_id(_world, entity, component))
+    {
+      ecs_enable_id(_world, entity, component, true);
+    }
     ecs_remove_id(_world, entity, component);
   }
 

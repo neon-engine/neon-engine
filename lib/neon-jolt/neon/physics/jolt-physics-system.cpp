@@ -1471,6 +1471,28 @@ namespace neon
     _state->ForgetUnusedShapes();
   }
 
+  void Jolt_PhysicsSystem::SetBodyInWorld(const BodyId body, const bool in_world)
+  {
+    if (_state == nullptr) { return; }
+
+    const auto it = _state->bodies.find(body);
+    if (it == _state->bodies.end() || it->second.of_character) { return; }
+
+    auto &interface = _state->physics.GetBodyInterface();
+    const JPH::BodyID jolt = it->second.jolt;
+    if (interface.IsAdded(jolt) == in_world) { return; }
+
+    if (!in_world)
+    {
+      interface.RemoveBody(jolt);
+      return;
+    }
+
+    // a body that moves is awake when it comes back
+    const bool is_static = interface.GetMotionType(jolt) == JPH::EMotionType::Static;
+    interface.AddBody(jolt, is_static ? JPH::EActivation::DontActivate : JPH::EActivation::Activate);
+  }
+
   bool Jolt_PhysicsSystem::SetShape(const BodyId body, const std::vector<ShapeInfo> &shapes, std::string &error)
   {
     if (_state == nullptr)
@@ -1796,6 +1818,25 @@ namespace neon
 
     // the character takes its body with it
     _state->characters.erase(it);
+  }
+
+  void Jolt_PhysicsSystem::SetCharacterInWorld(const CharacterId character, const bool in_world)
+  {
+    if (_state == nullptr) { return; }
+
+    const auto it = _state->characters.find(character);
+    if (it == _state->characters.end()) { return; }
+
+    // What others touch and find of a character is the body it carries
+    // inside. The character itself moves only when it is told to.
+    const JPH::BodyID inner = it->second.character.GetInnerBodyID();
+    if (inner.IsInvalid()) { return; }
+
+    auto &interface = _state->physics.GetBodyInterface();
+    if (interface.IsAdded(inner) == in_world) { return; }
+
+    if (in_world) { interface.AddBody(inner, JPH::EActivation::Activate); }
+    else { interface.RemoveBody(inner); }
   }
 
   std::size_t Jolt_PhysicsSystem::GetCharacterCount()
@@ -2220,6 +2261,28 @@ namespace neon
 
     _state->RemoveJoint(it->second);
     _state->joints.erase(it);
+  }
+
+  void Jolt_PhysicsSystem::SetJointEnabled(const JointId joint, const bool enabled)
+  {
+    if (_state == nullptr) { return; }
+
+    const auto it = _state->joints.find(joint);
+    if (it == _state->joints.end() || it->second.constraint->GetEnabled() == enabled) { return; }
+
+    it->second.constraint->SetEnabled(enabled);
+
+    // what it held, or holds again, has to be looked at anew
+    auto &interface = _state->physics.GetBodyInterface();
+    for (const auto body : {it->second.body, it->second.other})
+    {
+      const auto found = _state->bodies.find(body);
+      if (found != _state->bodies.end() && interface.IsAdded(found->second.jolt)
+          && interface.GetMotionType(found->second.jolt) == JPH::EMotionType::Dynamic)
+      {
+        interface.ActivateBody(found->second.jolt);
+      }
+    }
   }
 
   bool Jolt_PhysicsSystem::HasJoint(const JointId joint)

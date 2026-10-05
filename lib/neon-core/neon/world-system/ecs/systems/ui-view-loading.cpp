@@ -13,13 +13,24 @@ namespace neon
 
   void UiViewLoading::Register(EntityStore &store)
   {
-    store.Register<UiView>(kComponent_Name, [this](Entity, UiView &view)
+    const auto let_go = [this](Entity, UiView &view)
     {
       if (view.document < 0) { return; }
 
       _ui_context->Unload(view.document);
       view.document = -1;
-    });
+    };
+
+    // a user interface that is turned off is hidden, and kept as it is:
+    // nothing is read again when it is turned on
+    store.Register<UiView>(
+      kComponent_Name,
+      let_go,
+      [this](Entity, UiView &view, const bool enabled)
+      {
+        if (view.document < 0) { return; }
+        _ui_context->SetVisible(_ui_context->GetRoot(view.document), enabled);
+      });
   }
 
   void UiViewLoading::Initialize(EntityStore &store)

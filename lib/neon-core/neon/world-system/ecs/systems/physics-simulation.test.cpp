@@ -826,6 +826,184 @@ namespace
       "to give it another shape")) << _logger->Messages(LogLevel::Error);
   }
 
+  // turned off and on
+
+  TEST_F(PhysicsSimulationTest, ABodyThatIsTurnedOffIsTakenOutOfWhatIsSimulatedAndKept)
+  {
+    RigidBody moving;
+    moving.kind = BodyKind::Dynamic;
+    const Entity nail = Create("nail", At(0.0f, 1.0f, 0.0f), moving);
+    Step();
+    ASSERT_EQ(_physics.GetBodyCount(), 1u);
+    const auto body = BodyOf(nail).body;
+
+    _store.SetEnabled<RigidBody>(nail, false);
+    Step(2);
+
+    // the same body, with its shapes: nothing was destroyed
+    EXPECT_EQ(_physics.GetBodyCount(), 1u);
+    EXPECT_TRUE(_physics.destroyed.empty());
+    EXPECT_FALSE(_physics.bodies.at(body).in_world);
+
+    // moved and given a speed while it waits, as a pool does with what it
+    // hands out
+    auto *held = static_cast<RigidBody *>(_store.GetComponentData(nail, _store.IdOf<RigidBody>()));
+    held->linear_velocity = {0.0f, 0.0f, -30.0f};
+    _store.Get<Transform>(nail)->position = {5.0f, 2.0f, 0.0f};
+    _store.SetEnabled<RigidBody>(nail, true);
+    Step();
+
+    EXPECT_EQ(_physics.created.size(), 1u) << "and none was created";
+    EXPECT_EQ(BodyOf(nail).body, body);
+    EXPECT_TRUE(_physics.bodies.at(body).in_world);
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 0u) << _logger->Messages(LogLevel::Error);
+  }
+
+  TEST_F(PhysicsSimulationTest, WhatIsTurnedOffIsDestroyedInThePhysicsWhenItsEntityIsDestroyed)
+  {
+    const Entity nail = Create("nail", At(0.0f, 1.0f, 0.0f), RigidBody{});
+    const Entity gate = _store.CreateEntity("gate");
+    _store.Set(gate, At(4.0f, 1.0f, 0.0f));
+    _store.Set(gate, Trigger{});
+    _store.Set(gate, Collider{});
+    const Entity player = _store.CreateEntity("player");
+    _store.Set(player, At(8.0f, 1.0f, 0.0f));
+    _store.Set(player, CharacterBody{});
+    _store.Set(player, Collider{.shape = ShapeKind::Capsule});
+    Step();
+    ASSERT_EQ(_physics.GetBodyCount(), 2u);
+    ASSERT_EQ(_physics.GetCharacterCount(), 1u);
+
+    // kept while they are off
+    _store.SetEnabled<RigidBody>(nail, false);
+    _store.SetEnabled<Collider>(nail, false);
+    _store.SetEnabled<Trigger>(gate, false);
+    _store.SetEnabled<CharacterBody>(player, false);
+    Step();
+    EXPECT_EQ(_physics.GetBodyCount(), 2u);
+    EXPECT_EQ(_physics.GetCharacterCount(), 1u);
+
+    // and gone with their entities, as a scene that is left takes them
+    _store.DestroyEntity(nail);
+    _store.DestroyEntity(gate);
+    _store.DestroyEntity(player);
+
+    EXPECT_EQ(_physics.GetBodyCount(), 0u);
+    EXPECT_EQ(_physics.GetCharacterCount(), 0u);
+    Step();
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 0u) << _logger->Messages(LogLevel::Error);
+  }
+
+  TEST_F(PhysicsSimulationTest, WhatWaitsWithItsBodyAndItsColliderOffKeepsItsShapes)
+  {
+    const Entity nail = Create("nail", At(0.0f, 1.0f, 0.0f), RigidBody{});
+    Step();
+
+    // as a pool turns them off, and on again
+    _store.SetEnabled<RigidBody>(nail, false);
+    _store.SetEnabled<Collider>(nail, false);
+    Step(3);
+    _store.SetEnabled<Collider>(nail, true);
+    _store.SetEnabled<RigidBody>(nail, true);
+    Step(2);
+
+    EXPECT_TRUE(_physics.reshaped.empty());
+    EXPECT_TRUE(_physics.destroyed.empty());
+    EXPECT_EQ(_physics.created.size(), 1u);
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 0u) << _logger->Messages(LogLevel::Error);
+    EXPECT_EQ(_logger->Count(LogLevel::Warn), 0u) << _logger->Messages(LogLevel::Warn);
+  }
+
+  TEST_F(PhysicsSimulationTest, ATriggerThatIsTurnedOffIsTakenOutOfWhatIsSimulatedAndKept)
+  {
+    const Entity gate = _store.CreateEntity("gate");
+    _store.Set(gate, At(0.0f, 1.0f, 0.0f));
+    _store.Set(gate, Trigger{});
+    _store.Set(gate, Collider{});
+    Step();
+    ASSERT_EQ(_physics.GetBodyCount(), 1u);
+    const auto body = _store.Get<Trigger>(gate)->body;
+
+    _store.SetEnabled<Trigger>(gate, false);
+    Step();
+    EXPECT_FALSE(_physics.bodies.at(body).in_world);
+
+    _store.Get<Transform>(gate)->position = {3.0f, 1.0f, 0.0f};
+    _store.SetEnabled<Trigger>(gate, true);
+    Step();
+
+    EXPECT_TRUE(_physics.bodies.at(body).in_world);
+    EXPECT_EQ(_physics.bodies.at(body).state.position, glm::vec3(3.0f, 1.0f, 0.0f));
+    EXPECT_TRUE(_physics.destroyed.empty());
+    EXPECT_EQ(_physics.created.size(), 1u);
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 0u) << _logger->Messages(LogLevel::Error);
+  }
+
+  TEST_F(PhysicsSimulationTest, ACharacterThatIsTurnedOffIsTakenOutOfWhatIsSimulatedAndKept)
+  {
+    const Entity player = _store.CreateEntity("player");
+    _store.Set(player, At(0.0f, 1.0f, 0.0f));
+    _store.Set(player, CharacterBody{});
+    _store.Set(player, Collider{.shape = ShapeKind::Capsule});
+    Step();
+    ASSERT_EQ(_physics.GetCharacterCount(), 1u);
+    const auto character = _store.Get<CharacterBody>(player)->character;
+
+    _store.SetEnabled<CharacterBody>(player, false);
+    Step();
+    EXPECT_FALSE(_physics.characters.at(character).in_world);
+
+    _store.SetEnabled<CharacterBody>(player, true);
+    Step();
+
+    EXPECT_TRUE(_physics.characters.at(character).in_world);
+    EXPECT_EQ(_physics.GetCharacterCount(), 1u);
+    EXPECT_TRUE(_physics.destroyed_characters.empty());
+  }
+
+  TEST_F(PhysicsSimulationTest, ABodyWhoseOnlyColliderIsTurnedOffIsTakenOutAndKeptWithoutAWord)
+  {
+    const Entity ghost = Create("ghost", At(0.0f, 1.0f, 0.0f), RigidBody{});
+    Step();
+    ASSERT_EQ(_physics.GetBodyCount(), 1u);
+    const auto body = BodyOf(ghost).body;
+
+    _store.SetEnabled<Collider>(ghost, false);
+    Step(3);
+    EXPECT_EQ(_physics.GetBodyCount(), 1u) << "it is kept";
+    EXPECT_FALSE(_physics.bodies.at(body).in_world);
+
+    _store.SetEnabled<Collider>(ghost, true);
+    Step(2);
+
+    EXPECT_TRUE(_physics.bodies.at(body).in_world);
+    EXPECT_EQ(BodyOf(ghost).body, body);
+    EXPECT_TRUE(_physics.destroyed.empty());
+    EXPECT_EQ(_physics.created.size(), 1u);
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 0u) << _logger->Messages(LogLevel::Error);
+    EXPECT_EQ(_logger->Count(LogLevel::Warn), 0u) << _logger->Messages(LogLevel::Warn);
+  }
+
+  TEST_F(PhysicsSimulationTest, ABodyKeepsItsOtherShapesWhenOneOfItsCollidersIsTurnedOff)
+  {
+    const Entity table = Create("table", At(0.0f, 1.0f, 0.0f), RigidBody{});
+    const Entity leg = _store.CreateEntity("leg", table);
+    _store.Set(leg, Transform{});
+    _store.Set(leg, Collider{});
+    Step();
+
+    _store.SetEnabled<Collider>(leg, false);
+    Step();
+    ASSERT_EQ(_physics.reshaped.size(), 1u);
+    EXPECT_EQ(_physics.reshaped[0].shapes.size(), 1u);
+
+    _store.SetEnabled<Collider>(leg, true);
+    Step();
+    ASSERT_EQ(_physics.reshaped.size(), 2u);
+    EXPECT_EQ(_physics.reshaped[1].shapes.size(), 2u);
+    EXPECT_EQ(_physics.GetBodyCount(), 1u);
+  }
+
   TEST_F(PhysicsSimulationTest, StopsWatchingTheCollidersOfABodyThatIsReleased)
   {
     const Entity crate = Create("crate", At(0.0f, 1.0f, 0.0f), RigidBody{});

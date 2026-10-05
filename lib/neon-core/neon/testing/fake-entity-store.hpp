@@ -1,6 +1,7 @@
 #ifndef FAKE_ENTITY_STORE_HPP
 #define FAKE_ENTITY_STORE_HPP
 
+#include <set>
 #include <algorithm>
 #include <cstddef>
 #include <map>
@@ -39,6 +40,9 @@ namespace neon::testing
     // created in
     std::map<Entity, Record> _entities;
     std::map<ComponentId, ComponentInfo> _components;
+
+    // the components that are turned off, by their entity
+    std::set<std::pair<Entity, ComponentId>> _disabled;
     std::vector<QueryInfo> _queries;
 
     Entity _next_entity = 1000;
@@ -285,11 +289,41 @@ namespace neon::testing
 
     void *GetComponent(const Entity entity, const ComponentId component) override
     {
+      // one that is turned off is not there for whoever asks
+      if (_disabled.contains({entity, component})) { return nullptr; }
+      return GetComponentData(entity, component);
+    }
+
+    void *GetComponentData(const Entity entity, const ComponentId component) override
+    {
       const auto it = _entities.find(entity);
       if (it == _entities.end()) { return nullptr; }
 
       const auto found = it->second.components.find(component);
       return found == it->second.components.end() ? nullptr : found->second;
+    }
+
+    // the ones by type, of EntityStore, next to the ones by id below
+    using EntityStore::IsEnabled;
+    using EntityStore::SetEnabled;
+
+    bool IsEnabled(const Entity entity, const ComponentId component) override
+    {
+      return GetComponent(entity, component) != nullptr;
+    }
+
+    void SetEnabled(const Entity entity, const ComponentId component, const bool enabled) override
+    {
+      void *data = GetComponentData(entity, component);
+      if (data == nullptr || enabled != _disabled.contains({entity, component})) { return; }
+
+      if (enabled) { _disabled.erase({entity, component}); }
+      else { _disabled.insert({entity, component}); }
+
+      if (const auto known = _components.find(component); known != _components.end() && known->second.on_toggle)
+      {
+        known->second.on_toggle(entity, data, enabled);
+      }
     }
 
     bool HasComponent(const Entity entity, const ComponentId component) override
@@ -299,6 +333,7 @@ namespace neon::testing
 
     void RemoveComponent(const Entity entity, const ComponentId component) override
     {
+      _disabled.erase({entity, component});
       if (const auto it = _entities.find(entity); it != _entities.end()) { Release(entity, it->second, component); }
     }
 
@@ -328,9 +363,11 @@ namespace neon::testing
       std::vector<Entity> matches;
       for (const auto &[entity, record] : _entities)
       {
-        const bool carries_all = std::ranges::all_of(info.components, [&record](const ComponentId component)
+        // one that is turned off is passed over, as it is not there
+        const Entity owner = entity;
+        const bool carries_all = std::ranges::all_of(info.components, [&](const ComponentId component)
         {
-          return record.components.contains(component);
+          return record.components.contains(component) && !_disabled.contains({owner, component});
         });
         if (carries_all) { matches.push_back(entity); }
       }

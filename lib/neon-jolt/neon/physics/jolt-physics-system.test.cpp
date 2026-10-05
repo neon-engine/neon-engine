@@ -1411,6 +1411,33 @@ namespace
     EXPECT_NEAR(hit.normal.z, 1.0f, 1e-3f);
   }
 
+  TEST_F(JoltPhysicsSystemTest, ABodyThatIsTakenOutOfTheWorldIsKeptAndNothingFindsItUntilItIsPutBack)
+  {
+    const auto crate = CreateBody(crate_entity, BodyKind::Static, Box({2.0f, 2.0f, 2.0f}), {0.0f, 0.0f, -10.0f});
+    const Ray ray{.origin = {0.0f, 0.0f, 0.0f}, .direction = {0.0f, 0.0f, -5.0f}, .distance = 100.0f};
+    RayHit hit;
+    ASSERT_TRUE(_physics.CastRay(ray, QueryFilter{}, hit));
+
+    _physics.SetBodyInWorld(crate, false);
+    _physics.SetBodyInWorld(crate, false);
+
+    EXPECT_FALSE(_physics.CastRay(ray, QueryFilter{}, hit));
+    EXPECT_TRUE(_physics.HasBody(crate)) << "it is kept, with its shapes";
+    EXPECT_EQ(_physics.GetBodyCount(), 1u);
+
+    // moved while it is out, and found where it was put when it is back
+    _physics.SetBodyPlace(crate, {0.0f, 0.0f, -20.0f}, glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
+    _physics.SetBodyInWorld(crate, true);
+    _physics.SetBodyInWorld(crate, true);
+
+    ASSERT_TRUE(_physics.CastRay(ray, QueryFilter{}, hit));
+    EXPECT_EQ(hit.body, crate);
+    EXPECT_NEAR(hit.distance, 19.0f, 1e-3f);
+
+    // and one that is not there is left alone
+    _physics.SetBodyInWorld(12345, false);
+  }
+
   TEST_F(JoltPhysicsSystemTest, MissesWhatARayDoesNotPointAt)
   {
     CreateBody(crate_entity, BodyKind::Static, Box({2.0f, 2.0f, 2.0f}), {0.0f, 0.0f, -10.0f});
@@ -1886,6 +1913,54 @@ namespace
     EXPECT_NEAR(length(second.position - first.position), 1.0f, 0.02f);
     EXPECT_NEAR(std::abs(dot(first.rotation, second.rotation)), 1.0f, 1e-3f);
     EXPECT_LT(std::abs(first.rotation.w), 0.999f);
+  }
+
+  TEST_F(JoltPhysicsSystemTest, AJointThatIsTurnedOffHoldsNothingAndIsKeptAndHoldsAgain)
+  {
+    const auto crate = CreateBody(crate_entity, BodyKind::Dynamic, Box({1.0f, 1.0f, 1.0f}), {0.0f, 5.0f, 0.0f});
+    const auto joint = Join(JointInfo{.kind = JointKind::Fixed, .body = crate, .anchor = {0.0f, 5.0f, 0.0f}});
+    Run(60);
+    EXPECT_NEAR(StateOf(crate).position.y, 5.0f, 0.02f);
+
+    _physics.SetJointEnabled(joint, false);
+    _physics.SetJointEnabled(joint, false);
+    Run(30);
+
+    // it falls, and the joint is still there
+    const float fallen = StateOf(crate).position.y;
+    EXPECT_LT(fallen, 4.9f);
+    EXPECT_TRUE(_physics.HasJoint(joint));
+    EXPECT_EQ(_physics.GetJointCount(), 1u);
+
+    // on again, it pulls the body back to where it holds it
+    _physics.SetJointEnabled(joint, true);
+    Run(120);
+    EXPECT_GT(StateOf(crate).position.y, fallen);
+
+    // and one that is not there is left alone
+    _physics.SetJointEnabled(12345, false);
+  }
+
+  TEST_F(JoltPhysicsSystemTest, ACharacterThatIsTakenOutOfTheWorldIsKeptAndNothingFindsItUntilItIsPutBack)
+  {
+    CreateFloor();
+    const auto player = CreateCharacter({0.0f, 1.0f, 0.0f});
+    const Ray ray{.origin = {5.0f, 1.0f, 0.0f}, .direction = {-1.0f, 0.0f, 0.0f}, .distance = 100.0f};
+    RayHit hit;
+    const bool found_before = _physics.CastRay(ray, QueryFilter{}, hit);
+    ASSERT_TRUE(found_before) << "a ray finds the body a character carries";
+
+    _physics.SetCharacterInWorld(player, false);
+    _physics.SetCharacterInWorld(player, false);
+
+    EXPECT_FALSE(_physics.CastRay(ray, QueryFilter{}, hit));
+    EXPECT_EQ(_physics.GetCharacterCount(), 1u) << "it is kept";
+
+    _physics.SetCharacterInWorld(player, true);
+    EXPECT_EQ(_physics.CastRay(ray, QueryFilter{}, hit), found_before);
+
+    // and one that is not there is left alone
+    _physics.SetCharacterInWorld(12345, false);
   }
 
   TEST_F(JoltPhysicsSystemTest, HoldsABodyUpAgainstGravityWithAJointToTheWorld)

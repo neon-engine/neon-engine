@@ -1,6 +1,7 @@
 #ifndef FAKE_PHYSICS_CONTEXT_HPP
 #define FAKE_PHYSICS_CONTEXT_HPP
 
+#include <set>
 #include <iterator>
 #include <map>
 #include <string>
@@ -31,12 +32,18 @@ namespace neon::testing
       glm::quat target_rotation{1.0f, 0.0f, 0.0f, 0.0f};
 
       glm::vec3 force{0.0f};
+
+      /// Whether it is among what is simulated.
+      bool in_world = true;
     };
 
     struct Character
     {
       CharacterInfo info;
       CharacterState state;
+
+      /// Whether it is among what is simulated.
+      bool in_world = true;
     };
 
     struct Reshape
@@ -67,6 +74,9 @@ namespace neon::testing
     std::map<BodyId, Body> bodies;
     std::map<CharacterId, Character> characters;
     std::map<JointId, JointInfo> joints;
+
+    /// The joints that were told to stop holding.
+    std::set<JointId> joints_off;
 
     /// What a joint reads as. A joint that is not here reads as zeros.
     std::map<JointId, JointState> joint_states;
@@ -116,6 +126,11 @@ namespace neon::testing
       return true;
     }
 
+    void SetBodyInWorld(const BodyId body, const bool in_world) override
+    {
+      if (const auto it = bodies.find(body); it != bodies.end()) { it->second.in_world = in_world; }
+    }
+
     void DestroyBody(const BodyId body) override
     {
       if (bodies.erase(body) > 0) { destroyed.push_back(body); }
@@ -139,6 +154,13 @@ namespace neon::testing
       joints[joint] = info;
       created_joints.push_back(info);
       return true;
+    }
+
+    void SetJointEnabled(const JointId joint, const bool enabled) override
+    {
+      if (!joints.contains(joint)) { return; }
+      if (enabled) { joints_off.erase(joint); }
+      else { joints_off.insert(joint); }
     }
 
     void DestroyJoint(const JointId joint) override
@@ -270,6 +292,11 @@ namespace neon::testing
       record.state.position = info.position;
       characters[character] = record;
       return true;
+    }
+
+    void SetCharacterInWorld(const CharacterId character, const bool in_world) override
+    {
+      if (const auto it = characters.find(character); it != characters.end()) { it->second.in_world = in_world; }
     }
 
     void DestroyCharacter(const CharacterId character) override

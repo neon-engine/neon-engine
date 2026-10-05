@@ -13,6 +13,9 @@ namespace neon
     /// What a component is written as when it keeps all of its defaults.
     const std::string all_defaults = "Default";
 
+    // what any component takes besides its own values: whether it is turned on
+    const std::string enabled_key = "enabled";
+
     const DataValue no_values;
 
     /// What the Prefab component is registered under.
@@ -496,6 +499,14 @@ namespace neon
       components.GetErrors());
 
     format->read(component_reader, store, entity);
+
+    // `enabled: false` turns the component off: it keeps what was written
+    // for it, and is not there until it is turned on, see
+    // EntityStore::SetEnabled(). Any component takes it.
+    if (bool enabled = true; component_reader.Read(enabled_key, enabled))
+    {
+      if (const auto id = store.FindComponent(name); id != No_Component) { store.SetEnabled(entity, id, enabled); }
+    }
     component_reader.Finish();
   }
 
@@ -579,6 +590,15 @@ namespace neon
 
       if (DataValue component; format.write(store, entity, component))
       {
+        // A component that is turned off says so. One that is on says
+        // nothing of it, which is what it is unless it is written.
+        const bool is_off = !store.IsEnabled(entity, store.FindComponent(format.name));
+        if (is_off)
+        {
+          if (!component.IsMap()) { component = DataValue::Map(); }
+          component.Set(enabled_key, DataValue::Bool(false));
+        }
+
         if (component.IsMap() && component.GetEntries().empty()) { component = DataValue::Text(all_defaults); }
         components.Set(format.name, component);
       }

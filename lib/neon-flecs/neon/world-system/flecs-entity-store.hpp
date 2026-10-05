@@ -96,6 +96,16 @@ namespace neon
 
     bool HasComponent(Entity entity, ComponentId component) override;
 
+    // the ones by type, of EntityStore, next to the ones by id below
+    using EntityStore::IsEnabled;
+    using EntityStore::SetEnabled;
+
+    void SetEnabled(Entity entity, ComponentId component, bool enabled) override;
+
+    bool IsEnabled(Entity entity, ComponentId component) override;
+
+    void *GetComponentData(Entity entity, ComponentId component) override;
+
     void RemoveComponent(Entity entity, ComponentId component) override;
 
     QueryId CreateQuery(const QueryInfo &info) override;

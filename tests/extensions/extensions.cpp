@@ -686,6 +686,19 @@ namespace
     EXPECT_EQ(yaw, 90.0f);
   }
 
+  TEST_F(ExtensionsInTheWorldTest, AnExtensionTurnsAComponentOffAndOn)
+  {
+    EXPECT_TRUE(LogOf("painter")->Contains(
+      LogLevel::Info,
+      "Turned a component off: yes, wrote it while it was off: yes, turned it on: yes, and none that is not there: yes"))
+      << LogOf("painter")->Messages(LogLevel::Info);
+
+    // what was written while it was off is what it holds now
+    const neon::Entity painted = _store.FindEntity("painted");
+    ASSERT_NE(_store.Get<neon::Transform>(painted), nullptr);
+    EXPECT_EQ(_store.Get<neon::Transform>(painted)->scale, glm::vec3(2.0f));
+  }
+
   TEST_F(ExtensionsInTheWorldTest, AnExtensionAsksForWhatNothingShowsToBeFreed)
   {
     EXPECT_TRUE(LogOf("painter")->Contains(LogLevel::Info, "Asked for what nothing shows to be freed: yes"))

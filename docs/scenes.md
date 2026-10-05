@@ -95,6 +95,25 @@ takes `{}` as well, but `Default` is the spelling of the recipes, since it
 reads as a sentence. On an entity placed from a prefab, what is left out
 keeps what the prefab says instead.
 
+Any component takes `enabled`, besides its own values. `enabled: false`
+turns the component off: it keeps everything that is written for it, and is
+not there until it is turned on. An entity whose `Renderable` is off is not
+drawn, one whose `Collider` is off is walked through, and one whose
+`RigidBody` is off is not in the physics. It is how a recipe writes what
+waits to be used, as the instances of a pool do. A script, an extension, and
+C++ turn it on, see
+[entity-component-system.md](entity-component-system.md#turning-a-component-off).
+
+```yaml
+- name: nail
+  components:
+    Transform: Default
+    Renderable:
+      enabled: false
+      model: assets://models/nail.glb
+      shader: assets://shaders/pbr
+```
+
 **Transform**
 
 | Name | Holds | Default |

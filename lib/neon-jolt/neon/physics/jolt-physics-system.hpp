@@ -42,6 +42,8 @@ namespace neon
 
     void DestroyBody(BodyId body) override;
 
+    void SetBodyInWorld(BodyId body, bool in_world) override;
+
     bool SetShape(BodyId body, const std::vector<ShapeInfo> &shapes, std::string &error) override;
 
     [[nodiscard]] bool HasBody(BodyId body) override;
@@ -78,6 +80,8 @@ namespace neon
 
     void DestroyCharacter(CharacterId character) override;
 
+    void SetCharacterInWorld(CharacterId character, bool in_world) override;
+
     [[nodiscard]] std::size_t GetCharacterCount() override;
 
     void SetCharacterPosition(CharacterId character, const glm::vec3 &position) override;
@@ -91,6 +95,8 @@ namespace neon
     bool CreateJoint(const JointInfo &info, JointId &joint, std::string &error) override;
 
     void DestroyJoint(JointId joint) override;
+
+    void SetJointEnabled(JointId joint, bool enabled) override;
 
     [[nodiscard]] bool HasJoint(JointId joint) override;
 

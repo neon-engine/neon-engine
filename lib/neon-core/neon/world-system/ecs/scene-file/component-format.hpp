@@ -44,7 +44,7 @@ namespace neon
       const auto id = store.FindComponent(name);
       if (id == No_Component) { return T{}; }
 
-      const auto *existing = static_cast<const T *>(store.GetComponent(entity, id));
+      const auto *existing = static_cast<const T *>(store.GetComponentData(entity, id));
       return existing == nullptr ? T{} : *existing;
     }
 
@@ -68,7 +68,8 @@ namespace neon
 
       format.write = [type](EntityStore &store, const Entity entity, DataValue &value)
       {
-        const T *component = store.Get<T>(entity);
+        // one that is turned off is written as well, with what it holds
+        const T *component = static_cast<const T *>(store.GetComponentData(entity, store.IdOf<T>()));
         if (component == nullptr) { return false; }
 
         const T standard{};
@@ -102,7 +103,8 @@ namespace neon
 
       format.write = [write](EntityStore &store, const Entity entity, DataValue &value)
       {
-        const T *component = store.Get<T>(entity);
+        // one that is turned off is written as well, with what it holds
+        const T *component = static_cast<const T *>(store.GetComponentData(entity, store.IdOf<T>()));
         if (component == nullptr) { return false; }
 
         value = DataValue::Map();

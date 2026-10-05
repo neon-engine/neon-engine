@@ -14,14 +14,25 @@ namespace neon
 
   void UiSurfaceLoading::Register(EntityStore &store)
   {
-    store.Register<UiSurfaceView>(kComponent_Name, [this](Entity, UiSurfaceView &view)
+    const auto let_go = [this](Entity, UiSurfaceView &view)
     {
       // what is shown on the surface goes with it
       if (view.surface >= 0) { _ui_context->DestroySurface(view.surface); }
 
       view.surface = -1;
       view.document = -1;
-    });
+    };
+
+    // a surface that is turned off shows nothing, and is kept with what
+    // was read onto it: nothing is made again when it is turned on
+    store.Register<UiSurfaceView>(
+      kComponent_Name,
+      let_go,
+      [this](Entity, UiSurfaceView &view, const bool enabled)
+      {
+        if (view.document < 0) { return; }
+        _ui_context->SetVisible(_ui_context->GetRoot(view.document), enabled);
+      });
   }
 
   void UiSurfaceLoading::Initialize(EntityStore &store)

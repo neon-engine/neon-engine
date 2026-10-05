@@ -91,6 +91,24 @@ namespace neon
 
     virtual void RemoveComponent(Entity entity, ComponentId component) = 0;
 
+    /// Turns a component of an entity off, or on again. One that is off
+    /// keeps what it holds and is not there for whoever asks: no query
+    /// hands it over, GetComponent() gives nullptr, and HasComponent()
+    /// false. So an entity is hidden by turning its Renderable off, and
+    /// walked through by turning its Collider off, and is what it was when
+    /// they are turned on again. It is what a pool does with what waits in
+    /// it. Nothing happens for an entity that has no such component, and
+    /// for one that is as asked already.
+    virtual void SetEnabled(Entity entity, ComponentId component, bool enabled) = 0;
+
+    /// Whether the entity has the component and it is turned on.
+    virtual bool IsEnabled(Entity entity, ComponentId component) = 0;
+
+    /// The component of the entity whether it is turned on or off, or
+    /// nullptr when it has none: for reading and writing what a component
+    /// holds while it is off, as a document and a script do.
+    virtual void *GetComponentData(Entity entity, ComponentId component) = 0;
+
     /// Prepares a query. Create it once and keep the id.
     virtual QueryId CreateQuery(const QueryInfo &info) = 0;
 
@@ -106,9 +124,17 @@ namespace neon
     template<typename T>
     ComponentId Register(
       const std::string &name,
-      const std::function<void(Entity, T &)> &on_remove = {})
+      const std::function<void(Entity, T &)> &on_remove = {},
+      const std::function<void(Entity, T &, bool)> &on_toggle = {})
     {
       auto info = ComponentInfo::Of<T>(name);
+      if (on_toggle)
+      {
+        info.on_toggle = [on_toggle](const Entity entity, void *component, const bool enabled)
+        {
+          on_toggle(entity, *static_cast<T *>(component), enabled);
+        };
+      }
       if (on_remove)
       {
         info.on_remove = [on_remove](const Entity entity, void *component)
@@ -156,6 +182,18 @@ namespace neon
     void Remove(const Entity entity)
     {
       RemoveComponent(entity, IdOf<T>());
+    }
+
+    template<typename T>
+    void SetEnabled(const Entity entity, const bool enabled)
+    {
+      SetEnabled(entity, IdOf<T>(), enabled);
+    }
+
+    template<typename T>
+    [[nodiscard]] bool IsEnabled(const Entity entity)
+    {
+      return IsEnabled(entity, IdOf<T>());
     }
 
     /// Prepares a query for entities that carry all of the given types.

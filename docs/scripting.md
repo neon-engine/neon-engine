@@ -190,6 +190,7 @@ says when the entity lost the component.
 | `entity.Transform`, `entity.Door` | The component by its name, or `nil` when the entity has none. A name no component has is an error |
 | `entity:has_component("Door")`, `entity:get_component("Door")` | The same, said in full, named as `EntityStore` names them |
 | `entity:remove_component("Door")` | Takes a component away. It takes effect when the hook's query is done |
+| `entity:set_enabled("Renderable", false)`, `entity:is_enabled("Renderable")` | Turns a component off, and on again with `true`: it keeps what it holds and is not there while it is off, so an entity is hidden without being destroyed. See [entity-component-system.md](entity-component-system.md#turning-a-component-off) |
 | `entity:get_parent()`, `entity:get_children()` | What is above and below |
 | `entity:is_alive()`, `entity:destroy()` | Whether it is still there, and the end of it with its children |
 

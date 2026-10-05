@@ -24,7 +24,8 @@ namespace neon
         return false;
       }
 
-      component = store.GetComponent(entity, id);
+      // its fields are read and written while it is turned off as well
+      component = store.GetComponentData(entity, id);
       if (component == nullptr)
       {
         error = std::format("The entity does not carry a {}", type.name);
