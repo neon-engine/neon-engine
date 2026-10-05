@@ -299,6 +299,33 @@ namespace
     _system.Update(_store, 0.016);
   }
 
+  TEST_F(AudioPlaybackTest, ASourceThatWasMovedWhileSilentHasNoSpeedWhenItPlaysAgain)
+  {
+    auto source = Source();
+    source.sound.spatial = true;
+    const Entity entity = CreateSource(source, PlacedAt({0.0f, 0.0f, 0.0f}));
+    _system.Update(_store, 0.5);
+    _system.Update(_store, 0.5);
+
+    // it ends, is put somewhere else, and is told to play again, as a
+    // source that is used again for another sound is
+    _store.Get<SoundSource>(entity)->playing = false;
+    _system.Update(_store, 0.5);
+
+    *_store.Get<Transform>(entity) = PlacedAt({40.0f, 0.0f, 0.0f});
+    _store.Get<SoundSource>(entity)->playing = true;
+
+    EXPECT_CALL(_audio, SetPosition(sound_id, glm::vec3(40.0f, 0.0f, 0.0f), glm::vec3(0.0f)));
+    EXPECT_CALL(_audio, Play(sound_id)).Times(1);
+    _system.Update(_store, 0.5);
+    ::testing::Mock::VerifyAndClearExpectations(&_audio);
+
+    // from there on it has the speed it moves at
+    *_store.Get<Transform>(entity) = PlacedAt({41.0f, 0.0f, 0.0f});
+    EXPECT_CALL(_audio, SetPosition(sound_id, glm::vec3(41.0f, 0.0f, 0.0f), glm::vec3(2.0f, 0.0f, 0.0f)));
+    _system.Update(_store, 0.5);
+  }
+
   TEST_F(AudioPlaybackTest, GivesASourceThatMovedTheSpeedItMovedAt)
   {
     auto source = Source();

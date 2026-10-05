@@ -148,6 +148,12 @@ namespace neon
 
         if (transform != nullptr)
         {
+          // A source has a speed only while it is heard. One that is silent
+          // may be put anywhere, as a source that is used again for another
+          // sound is, and that jump is no movement: counted as one, it would
+          // bend the pitch of what plays next for a frame.
+          if (!source.playing || !source.was_playing) { source.has_last_position = false; }
+
           const glm::vec3 position = transform->world_coordinates[3];
           _audio_context->SetPosition(
             id,
