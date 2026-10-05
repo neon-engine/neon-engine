@@ -52,6 +52,7 @@
 *.ico binary
 icon.svg text
 icon.png binary
+docs/logo/** binary
 
 # Textures for the graphics card, and light of a high range
 *.ktx binary
