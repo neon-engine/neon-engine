@@ -56,8 +56,9 @@ author, and the licence, see [credits](#credits-and-licences). Everything
 else about them, which kit, which pieces of it, follows the needs of the
 project.
 
-Only what the game uses is committed, not the whole kit, and binaries go
-through LFS as every other asset does. A file that is remade for the project,
+Only what the game uses is committed, not the whole kit. Binary files are
+committed to Git as they are, marked `binary` in `.gitattributes`, as every
+other asset is. A file that is remade for the project,
 such as a model prepared ahead of time (#98), leaves `external/` and goes to
 its folder by kind, since it is then the project's own.
 
@@ -100,7 +101,7 @@ again.
 | In version control | Not in version control |
 |---|---|
 | Everything written by hand, and every asset the game needs | What the build makes: `shaders/*.spv`, the build folder |
-| Binary assets through Git LFS, by kind: images, models, sounds, fonts (see [.gitattributes](../.gitattributes)) | `.DS_Store`, `Icon\r`, and the other files a desktop leaves behind (see [.gitignore](../.gitignore)) |
+| Binary assets as they are, marked `binary` by kind: images, models, sounds, fonts (see [.gitattributes](../.gitattributes)) | `.DS_Store`, `Icon\r`, and the other files a desktop leaves behind (see [.gitignore](../.gitignore)) |
 | The licence of each third-party pack, next to it, and only the pieces of a kit under `external/` that the game uses | What a licence forbids to pass on, once the project is shared beyond who holds the licence |
 
 ## Credits and licences

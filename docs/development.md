@@ -64,29 +64,6 @@ A graphics card with a Vulkan 1.1 driver is needed to run the result.
 
 ## First-time setup
 
-### Git LFS
-
-Binary assets, such as models, images, sounds, and fonts, are stored with
-[Git LFS](https://git-lfs.com). The tracking rule lives in
-[.gitattributes](../.gitattributes). Install the LFS hooks once per machine
-before cloning or pulling, otherwise you get small pointer files instead of the
-real models and the demo scene logs errors for every missing `.obj`:
-
-```bash
-brew install git-lfs   # macOS; use your package manager elsewhere
-git lfs install
-```
-
-On an existing checkout that was cloned before LFS was set up, fetch the real
-files with:
-
-```bash
-git lfs pull
-```
-
-Any new file dropped into the models folder is picked up by LFS automatically.
-`git lfs ls-files` lists what is currently tracked.
-
 ### Submodules
 
 The engine's dependencies are git submodules. Fetch the ones the build uses:
