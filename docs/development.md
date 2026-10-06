@@ -42,7 +42,11 @@ one that built it.
 cmake --preset macos-arm64-release
 cmake --build --preset macos-arm64-release
 ./bin/release/darwin-arm64/NeonRuntime/NeonRuntime
+./bin/release/darwin-arm64/museum/NeonRuntime
 ```
+
+A build preset builds NeonRuntime and the projects next to it, the bench and
+the museum, each put together under `bin/<build>/<platform>/<name>/`.
 
 | Option | What it does | Default |
 |---|---|---|
@@ -679,7 +683,7 @@ ctest --preset macos-arm64-debug
 
 Tests are never part of the default build, and never part of a library or an
 application. `cmake --build --preset macos-arm64-debug` builds NeonRuntime and
-nothing else, as before.
+the projects of `projects/`, the bench and the museum, and no test.
 
 ### Where tests are stored
 

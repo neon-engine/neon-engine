@@ -412,7 +412,7 @@ puts together next to a copy of the runtime:
 
 | Project | Holds | Built and started with |
 |---|---|---|
-| [projects/museum](../projects/museum) | [The museum](#the-museum) | `cmake --build --preset macos-arm64-debug --target museum`, then `bin/debug/darwin-arm64/museum/NeonRuntime` |
+| [projects/museum](../projects/museum) | [The museum](#the-museum) | `cmake --build --preset macos-arm64-debug`, then `bin/debug/darwin-arm64/museum/NeonRuntime` |
 | [projects/bench](../projects/bench) | Scenes that measure the engine | See its [README.md](../projects/bench/README.md) |
 | [tests/game](../tests/game) | Every scene the tests start the runtime with, and what those scenes show | `cmake --build --preset macos-arm64-debug-tests`, then `build/macos-arm64-debug/tests/game/NeonRuntime --scene assets://scenes/physics.scene.yml` |
 

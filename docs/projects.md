@@ -160,12 +160,15 @@ build/bench/bench/NeonRuntime
 
 **Built by the engine**, for a project in `projects/` of the engine: the
 folders there are found by the engine's build, so that a new one needs no
-edit outside its folder. The target is built on request alone and puts the
-game together under `bin/<build>/<platform>/<name>/`, with the runtime the
-engine builds.
+edit outside its folder. The target puts the game together under
+`bin/<build>/<platform>/<name>/`, with the runtime the engine builds. It is
+not part of the default target: the build presets name each project, so
+`cmake --build --preset <preset>` builds them with the runtime, and a build
+without a preset builds the engine alone. A new project is added to the
+`targets` of the build presets in `CMakePresets.json`.
 
 ```sh
-cmake --build build/macos-arm64-debug --target bench
+cmake --build --preset macos-arm64-debug
 bin/debug/darwin-arm64/bench/NeonRuntime
 ```
 

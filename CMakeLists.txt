@@ -182,7 +182,10 @@ endforeach ()
 
 # Projects with code of their own, each a folder of projects/ with a
 # CMakeLists.txt that calls neon_add_project. They are found here, so that a
-# new one needs no edit of this file, and built on request alone.
+# new one needs no edit of this file. They are not part of the default
+# target: the build presets name them, so that `cmake --build --preset ...`
+# builds them with the runtime, and a build without a preset builds the
+# engine alone.
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/NeonProjects.cmake")
 file(GLOB NEON_PROJECT_LISTS CONFIGURE_DEPENDS "${CMAKE_CURRENT_LIST_DIR}/projects/*/CMakeLists.txt")
 foreach (PROJECT_LIST IN LISTS NEON_PROJECT_LISTS)

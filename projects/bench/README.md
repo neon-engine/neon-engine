@@ -27,11 +27,12 @@ build, or the folder `-DNEON_RUNTIME_DIRECTORY=<folder>` names. A number
 should come from a release build of the runtime, and of the bench:
 `-DCMAKE_BUILD_TYPE=Release`.
 
-Or by the engine's build, on request, next to the applications:
+Or by the engine's build, next to the applications: every build preset builds
+it with NeonRuntime and the museum.
 
 ```sh
 cmake --preset macos-arm64-debug
-cmake --build build/macos-arm64-debug --target bench
+cmake --build --preset macos-arm64-debug
 bin/debug/darwin-arm64/bench/NeonRuntime
 ```
 

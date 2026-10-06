@@ -58,8 +58,9 @@ set(NEON_RUNTIME_DIRECTORY "${NEON_RUNTIME_DIRECTORY}" CACHE PATH
 #
 # By the engine's build, for a project in projects/ of the engine: the
 # runtime is the one the engine builds, the game is put together under bin/
-# next to the applications, and the target is built on request alone,
-# `cmake --build <build> --target <name>`.
+# next to the applications, and the target is not part of the default
+# build: the build presets name it, so `cmake --build --preset <preset>`
+# builds it, and so does `cmake --build <build> --target <name>`.
 function(neon_add_project NAME)
   cmake_parse_arguments(PARSE_ARGV 1 PROJECT "" "DIRECTORY" "SOURCES")
   set(PROJECT_DIRECTORY_GIVEN "${PROJECT_DIRECTORY}")

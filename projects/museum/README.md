@@ -12,10 +12,11 @@ piece is a `Geometry` in a plain colour.
 
 ## Building it
 
-By the engine's build, on request, next to the applications:
+By the engine's build, next to the applications: every build preset builds
+it with NeonRuntime and the bench.
 
 ```sh
-cmake --build --preset macos-arm64-debug --target museum
+cmake --build --preset macos-arm64-debug
 bin/debug/darwin-arm64/museum/NeonRuntime
 ```
 
