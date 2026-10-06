@@ -19,7 +19,9 @@ namespace neon
   /// It is pointed at from its front, and within `reach` of the camera.
   /// The nearest screen the ray hits gets the pointer, with the button of
   /// the pointer or accept as its press, and the flag `pointing` tells the
-  /// files on the window whether anything is pointed at.
+  /// files on the window whether anything is pointed at. The screen is
+  /// also told who points at it, `pointed_by` of its UiSurface: the nearest
+  /// entity from the camera up that carries a Player, or the camera's own.
   ///
   /// An application adds it after UiSurfaceLoading, with the input as the
   /// game sees it:
@@ -31,6 +33,9 @@ namespace neon
     InputContext *_input_context;
     QueryId _cameras = 0;
     QueryId _surfaces = 0;
+
+    // the component that says who a camera belongs to, when there is one
+    ComponentId _player = No_Component;
 
     // the surface that had the pointer in the frame before
     int _pointed = No_Ui_Surface;

@@ -23,6 +23,8 @@ namespace neon::testing
 
     MOCK_METHOD(void, DispatchPhysicsEvents, (EntityStore &store, const std::vector<PhysicsEvent> &events), (override));
 
+    MOCK_METHOD(void, DispatchUiCalls, (EntityStore &store, const std::vector<ScriptUiCall> &calls), (override));
+
     MOCK_METHOD(std::size_t, GetComponentCount, (), (const, override));
 
     MOCK_METHOD(std::size_t, GetSystemCount, (), (const, override));

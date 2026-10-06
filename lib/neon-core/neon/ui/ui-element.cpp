@@ -113,6 +113,11 @@ namespace neon
     return none;
   }
 
+  const UiCall *UiElement::CallsWhenClicked() const
+  {
+    return nullptr;
+  }
+
   bool UiElement::WantsFocus() const
   {
     return false;

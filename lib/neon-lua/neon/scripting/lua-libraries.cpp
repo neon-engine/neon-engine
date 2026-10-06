@@ -216,6 +216,78 @@ namespace neon
       {nullptr, nullptr}
     };
 
+    UiContext *ui_of(lua_State *lua)
+    {
+      return host_of(lua).ui;
+    }
+
+    int ui_set_text(lua_State *lua)
+    {
+      UiContext *ui = ui_of(lua);
+      const char *name = luaL_checkstring(lua, 1);
+      const char *text = luaL_checkstring(lua, 2);
+      if (ui != nullptr) { ui->SetText(name, text); }
+      return 0;
+    }
+
+    int ui_set_number(lua_State *lua)
+    {
+      UiContext *ui = ui_of(lua);
+      const char *name = luaL_checkstring(lua, 1);
+      const lua_Number number = luaL_checknumber(lua, 2);
+      if (ui != nullptr) { ui->SetNumber(name, number); }
+      return 0;
+    }
+
+    int ui_set_flag(lua_State *lua)
+    {
+      UiContext *ui = ui_of(lua);
+      const char *name = luaL_checkstring(lua, 1);
+      luaL_checktype(lua, 2, LUA_TBOOLEAN);
+      if (ui != nullptr) { ui->SetFlag(name, lua_toboolean(lua, 2) != 0); }
+      return 0;
+    }
+
+    int ui_set_text_of(lua_State *lua)
+    {
+      UiContext *ui = ui_of(lua);
+      const char *interface = luaL_checkstring(lua, 1);
+      const char *name = luaL_checkstring(lua, 2);
+      const char *text = luaL_checkstring(lua, 3);
+      if (ui != nullptr) { ui->SetTextOf(interface, name, text); }
+      return 0;
+    }
+
+    int ui_set_number_of(lua_State *lua)
+    {
+      UiContext *ui = ui_of(lua);
+      const char *interface = luaL_checkstring(lua, 1);
+      const char *name = luaL_checkstring(lua, 2);
+      const lua_Number number = luaL_checknumber(lua, 3);
+      if (ui != nullptr) { ui->SetNumberOf(interface, name, number); }
+      return 0;
+    }
+
+    int ui_set_flag_of(lua_State *lua)
+    {
+      UiContext *ui = ui_of(lua);
+      const char *interface = luaL_checkstring(lua, 1);
+      const char *name = luaL_checkstring(lua, 2);
+      luaL_checktype(lua, 3, LUA_TBOOLEAN);
+      if (ui != nullptr) { ui->SetFlagOf(interface, name, lua_toboolean(lua, 3) != 0); }
+      return 0;
+    }
+
+    constexpr luaL_Reg ui_functions[] = {
+      {"set_text", ui_set_text},
+      {"set_number", ui_set_number},
+      {"set_flag", ui_set_flag},
+      {"set_text_of", ui_set_text_of},
+      {"set_number_of", ui_set_number_of},
+      {"set_flag_of", ui_set_flag_of},
+      {nullptr, nullptr}
+    };
+
     /// Every argument as text, with a space between, as print does.
     std::string line_of(lua_State *lua)
     {
@@ -310,6 +382,12 @@ namespace neon
   {
     luaL_newlib(lua, input_functions);
     lua_setglobal(lua, "input");
+  }
+
+  void open_ui_library(lua_State *lua)
+  {
+    luaL_newlib(lua, ui_functions);
+    lua_setglobal(lua, "ui");
   }
 
   void open_log_library(lua_State *lua)

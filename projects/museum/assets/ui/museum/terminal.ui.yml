@@ -1,7 +1,9 @@
 # The terminal of hall 10 of the museum, demo.scene.yml: a user interface
 # as any other, laid out and drawn on a surface of its own, which a quad in
 # the world shows. Its buttons are pointed at from where the player looks,
-# and pressed with the pointer or accept.
+# and pressed with the mouse or accept. Each names the function it calls
+# with `on_click`: one of the Terminal of scripts/terminal.lua, which the
+# entity that shows this file carries, and which sets the values below.
 
 ui: museum-terminal
 version: 1
@@ -11,7 +13,12 @@ reference_size: [1024, 768]
 
 values:
   door: locked
+  # what the first button says, which is what it does next
+  unlock: Unlock
   power: 0.4
+  # how often the lamp of the alarm blinks, which the Alarm button hands
+  # to what it calls
+  blinks_per_second: 2
 
 root:
   type: panel
@@ -63,7 +70,9 @@ root:
       children:
         - type: button
           name: unlock
-          text: Unlock
+          text: "{unlock}"
+          # with what happened, which says who clicked
+          on_click: unlock($event)
           font_size: 40
           padding: "16 40"
           border_radius: 12
@@ -78,6 +87,8 @@ root:
         - type: button
           name: alarm
           text: Alarm
+          # a value from above, handed over as what it holds
+          on_click: alarm(blinks_per_second)
           font_size: 40
           padding: "16 40"
           border_radius: 12

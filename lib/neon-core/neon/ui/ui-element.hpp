@@ -17,6 +17,7 @@
 #include <neon/reflection/field-value.hpp>
 
 #include "css/css-selector.hpp"
+#include "ui-call.hpp"
 #include "ui-element-host.hpp"
 #include "ui-painter.hpp"
 #include "ui-resources.hpp"
@@ -303,6 +304,10 @@ namespace neon
     /// The scene choosing it asks the game to change to, as a button that
     /// says `action: scene` with a `scene` path does. Empty asks for none.
     [[nodiscard]] virtual const std::string &AsksForScene() const;
+
+    /// The function of the game choosing it calls, as a button that says
+    /// `on_click: unlock` does. nullptr calls none.
+    [[nodiscard]] virtual const UiCall *CallsWhenClicked() const;
 
     /// Whether it has the focus when its file is loaded.
     [[nodiscard]] virtual bool WantsFocus() const;

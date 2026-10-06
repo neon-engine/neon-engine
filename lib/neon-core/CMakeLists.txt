@@ -168,6 +168,7 @@ add_library(${TARGET} STATIC
         neon/scripting/script-component-layout.cpp
         neon/scripting/script-component-layout.hpp
         neon/scripting/script-context.hpp
+        neon/scripting/script-ui-call.hpp
         neon/scripting/script-field.hpp
         neon/scripting/script-system.hpp
 
@@ -191,6 +192,9 @@ add_library(${TARGET} STATIC
         neon/ui/css-values.hpp
         neon/ui/ui-style.cpp
         neon/ui/ui-style.hpp
+        neon/ui/ui-call-argument.hpp
+        neon/ui/ui-call.cpp
+        neon/ui/ui-call.hpp
         neon/ui/ui-values.cpp
         neon/ui/ui-values.hpp
         neon/ui/ui-resources.cpp
@@ -473,6 +477,7 @@ if (NEON_BUILD_TESTS)
   # Unit tests. Each one sits next to the file it tests.
   neon_add_unit_test(${TARGET} neon/ui/ui-cascade.test.cpp)
 neon_add_unit_test(${TARGET} neon/ui/ui-text-measure.test.cpp)
+neon_add_unit_test(${TARGET} neon/ui/ui-call.test.cpp)
 neon_add_unit_test(${TARGET} neon/scripting/script-component-layout.test.cpp)
 neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/script-running.test.cpp)
 neon_add_unit_test(${TARGET} neon/command-line/display-options.test.cpp)

@@ -9,6 +9,8 @@
 #include <neon/world-system/ecs/entity-store.hpp>
 #include <neon/world-system/ecs/scene-file/component-format.hpp>
 
+#include "script-ui-call.hpp"
+
 namespace neon
 {
   /// What the rest of the engine sees of the scripts of a game.
@@ -46,6 +48,14 @@ namespace neon
     /// Hands the systems what the physics reported in a frame: a body
     /// entering or leaving a trigger, two bodies touching or parting.
     virtual void DispatchPhysicsEvents(EntityStore &store, const std::vector<PhysicsEvent> &events) = 0;
+
+    /// Calls the functions the user interface asked for in a frame, each
+    /// on the systems of the entity that shows the user interface: an
+    /// element that says `on_click: unlock` calls `unlock` of every system
+    /// that runs over the entity and has a function of that name, with
+    /// the entity as what it is called on, `self` in Lua, and what the file
+    /// wrote as arguments.
+    virtual void DispatchUiCalls(EntityStore &store, const std::vector<ScriptUiCall> &calls) = 0;
 
     /// How many components the scripts declared.
     [[nodiscard]] virtual std::size_t GetComponentCount() const = 0;

@@ -45,6 +45,12 @@ namespace neon
       return true;
     }
 
+    if (name == "on_click")
+    {
+      value = _on_click.AsText();
+      return true;
+    }
+
     return false;
   }
 
@@ -106,6 +112,29 @@ namespace neon
       return TakeText(value, what, _scene, error);
     }
 
+    if (name == "on_click")
+    {
+      std::string text;
+      if (!TakeText(value, what, text, error)) { return false; }
+
+      // an empty text takes the call away
+      if (text.empty())
+      {
+        _on_click = {};
+        return true;
+      }
+
+      UiCall call;
+      if (std::string problem; !UiCall::Parse(text, call, problem))
+      {
+        error = std::format("{} is '{}', which is no call of a function: {}", what, text, problem);
+        return false;
+      }
+
+      _on_click = call;
+      return true;
+    }
+
     return UiElement::SetField(name, value, error);
   }
 
@@ -116,7 +145,8 @@ namespace neon
       {"enabled", FieldKind::Boolean, "Whether it can be chosen", {}},
       {"autofocus", FieldKind::Boolean, "Whether it has the focus when its file is shown", {}},
       {"action", FieldKind::Choice, "What choosing it does besides reporting a click: close closes its file, scene asks the game for the scene it names", {"none", "close", "scene"}},
-      {"scene", FieldKind::String, "Virtual path of the scene that action: scene asks for", {}}
+      {"scene", FieldKind::String, "Virtual path of the scene that action: scene asks for", {}},
+      {"on_click", FieldKind::String, "The function of the game that choosing it calls, with what it is handed: unlock, or open('safe', door, $event)", {}}
     };
   }
 
@@ -174,6 +204,26 @@ namespace neon
     }
     if (!(has_action && action == 2)) { _scene.clear(); }
 
+    if (const auto *value = reader.ReadValue("on_click"); value != nullptr)
+    {
+      std::string on_click;
+      std::string problem;
+      if (!value->GetText(on_click))
+      {
+        reader.Report(*value, std::format(
+                        "'on_click' of {} is {}, where the call of a function was expected, such as unlock or open('safe')",
+                        reader.GetWhere(),
+                        DataValue::Describe(value->GetKind())));
+      } else if (!UiCall::Parse(on_click, _on_click, problem))
+      {
+        reader.Report(*value, std::format(
+                        "'on_click' of {} is '{}', which is no call of a function: {}",
+                        reader.GetWhere(),
+                        on_click,
+                        problem));
+      }
+    }
+
     if (const auto *value = reader.ReadValue("enabled"); value != nullptr && !UiFlag::Read(*value, _enabled))
     {
       std::string text;
@@ -192,6 +242,11 @@ namespace neon
   const std::string &UiButton::AsksForScene() const
   {
     return _scene;
+  }
+
+  const UiCall *UiButton::CallsWhenClicked() const
+  {
+    return _on_click.IsEmpty() ? nullptr : &_on_click;
   }
 
   bool UiButton::TakesChildren() const

@@ -139,9 +139,9 @@ one. The components have to exist once every file is read, from the engine
 or from a script; a name nothing declares is reported with what the scripts
 do declare.
 
-A system is its hooks, and nothing else. A key that is not a hook, and a
-hook with the wrong number of parameters, are refused with the list of
-hooks:
+A system is its hooks and its [handlers](#what-the-user-interface-calls),
+and nothing else. A key that is not a hook, and a hook with the wrong number
+of parameters, are refused with the list of hooks:
 
 | Hook | Called | With |
 |---|---|---|
@@ -177,6 +177,77 @@ A hook that fails is reported once, with the system, the hook, the entity,
 and Lua's message with a traceback, and is switched off until the scripts
 are loaded again. The game goes on; the runtime's exit code says that
 something went wrong, as for every error.
+
+## What the user interface calls
+
+A button of a [user interface](user-interface.md) names the function it
+calls when it is chosen, as a template of a web page does, and writes what
+the function is handed:
+
+```yaml
+values:
+  blinks_per_second: 2
+
+root:
+  type: panel
+  children:
+    - type: button
+      text: Unlock
+      on_click: unlock
+
+    - type: button
+      text: Alarm
+      on_click: alarm(blinks_per_second)
+
+    - type: button
+      text: Paint it red
+      on_click: paint('red', $event)
+```
+
+The function is a handler of a system, `handlers` being a table every
+system has. In a handler `self` is the entity that shows the user
+interface, and the parameters are exactly what the file wrote, in that
+order:
+
+```lua
+local TerminalSystem = System:extend(Terminal)
+
+-- on_click: unlock
+function TerminalSystem.handlers:unlock()
+  local terminal = self.Terminal
+  terminal._unlocked = not terminal._unlocked
+  ui.set_text_of(terminal.ui, "door", terminal._unlocked and "unlocked" or "locked")
+end
+
+-- on_click: alarm(blinks_per_second)
+function TerminalSystem.handlers:alarm(blinks_per_second)
+  self.Terminal._blinks_per_second = blinks_per_second
+end
+
+-- on_click: paint('red', $event)
+function TerminalSystem.handlers:paint(color, event)
+  local lamp = world.find_entity(self.Terminal.lamp)
+  local player = event.instigator -- who clicked, or nil
+end
+```
+
+| | |
+|---|---|
+| Who is called | The entity that shows the user interface, with a `Ui` or a `UiSurface`: every system that runs over that entity and has a handler of the name. Two terminals in a scene each get their own clicks |
+| `self` | The entity that shows the user interface. Its components are reached through it, `self.Terminal`, and so is what a system keeps for itself on one, `self.Terminal._unlocked`. Any other entity is found by its name, `world.find_entity("vault/door")`. The system's class is reached by its name, `TerminalSystem`. A hook still has the class as `self` and the entity as its first parameter, which #442 brings in line |
+| The parameters | The arguments, as many as the file wrote and in its order |
+| A number, `'a text'` or `"a text"`, `true`, `false` | As written |
+| A name, as `blinks_per_second` | A value of the user interface, which says what a number is for where a `2` would not, as what it holds when the button is chosen: that of the file before the one every user interface shares. `nil` when there is none |
+| `$event` | A table: `kind` (`"click"`), `element` (the `name` of the button), `interface` (what the file writes as `ui`), `surface`, and `instigator`, the entity the click comes from: for a screen in the world the player who pointed at it, which is the nearest entity from the window's camera up that carries a `Player`, or the camera's own entity. `nil` for a click on the window, which no entity made |
+| Any other entity | Its name as a text, `on_click: open('vault/door')`, and `world.find_entity(name)` in the handler |
+| When | Before `update` of the same frame, where the world is the handler's to change |
+| A handler that fails | Reported with the button that called it, and called again at the next click |
+| Nothing to call | A warning: no handler of that name over the entity, or no entity shows the user interface, which is so for a file the runtime loaded itself, the pause menu or `--ui` |
+
+A click is not asked for in every frame. `ui` only sets values, see
+[below](#what-a-script-reaches-of-the-engine). Only a button has `on_click`,
+and a click is the only event so far; listening from code, and the elements
+themselves, are #436.
 
 ## Entities and components in a script
 
@@ -246,6 +317,8 @@ and a method of an entity is the store's function on it,
 | | `world.load_scene(path)` | Asks for another scene, read at the start of the next frame, see [scenes.md](scenes.md#changing-the-scene). `scene.load_scene` is the same |
 | `input` | `input.is_action_down(action)`, `input.was_action_pressed(action)` | The actions of the [input map](input.md) |
 | | `input.action_axis2(action)`, `input.action_axis2(action)`, `input.action_axis3(action)` | A trigger, a stick as two numbers, a sensor as three |
+| `ui` | `ui.set_text(name, text)`, `ui.set_number(name, number)`, `ui.set_flag(name, flag)` | Sets a value that files refer to as `{name}` |
+| | `ui.set_text_of(interface, name, text)`, `ui.set_number_of`, `ui.set_flag_of` | The same for one user interface, where it wins over the shared value |
 | `log` | `log.debug(...)`, `log.info(...)`, `log.warn(...)`, `log.error(...)` | The engine's log, with a space between the values. `print` is `log.info` |
 | `math` | `math.move_toward(from, to, by)`, `math.clamp(value, low, high)` | On top of Lua's `math` |
 | | `vec3(x, y, z)`, `vec3(n)`, `vec3()`, `color(r, g, b, a)` | Values |

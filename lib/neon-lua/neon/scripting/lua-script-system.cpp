@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <format>
 
 #include "lua-api.hpp"
 #include "lua-classes.hpp"
@@ -113,6 +114,11 @@ namespace neon
     _host.input = input;
   }
 
+  void Lua_ScriptSystem::SetUi(UiContext *ui)
+  {
+    _host.ui = ui;
+  }
+
   void Lua_ScriptSystem::SetWorld(WorldSystem *world)
   {
     _host.world = world;
@@ -139,6 +145,7 @@ namespace neon
     open_classes(_lua);
     open_world_library(_lua);
     open_input_library(_lua);
+    open_ui_library(_lua);
     open_log_library(_lua);
     open_scene_library(_lua);
     open_math_extras(_lua);
@@ -702,6 +709,130 @@ namespace neon
           }
           CallHook(system, hook, entity, extra_of(hook));
         }
+      }
+    }
+
+    _host.store = nullptr;
+  }
+
+  void Lua_ScriptSystem::DispatchUiCalls(EntityStore &store, const std::vector<ScriptUiCall> &calls)
+  {
+    if (_lua == nullptr || !_started) { return; }
+    _host.store = &store;
+
+    for (const ScriptUiCall &asked : calls)
+    {
+      const UiEvent &event = asked.event;
+      const UiCall &call = event.call;
+      if (call.IsEmpty()) { continue; }
+
+      const std::string where = event.element.empty()
+                                  ? std::format("An element of the user interface {}", event.document)
+                                  : std::format("'{}' of the user interface {}", event.element, event.document);
+
+      if (asked.entity == No_Entity || !store.IsAlive(asked.entity))
+      {
+        _host.logger->Warn(
+          "{} calls {}, and no entity shows that user interface with a Ui or a UiSurface, so there is no system to call it on",
+          where,
+          call.function);
+        continue;
+      }
+
+      bool was_called = false;
+      for (DeclaredSystem &system : _systems)
+      {
+        if (system.components.empty()) { continue; }
+
+        const bool carries = std::ranges::all_of(
+          system.components,
+          [&](const ComponentId id) { return store.HasComponent(asked.entity, id); });
+        if (!carries) { continue; }
+
+        // a function among the handlers of the system's class, by its name
+        lua_rawgeti(_lua, LUA_REGISTRYINDEX, system.declaration.ref);
+        lua_pushstring(_lua, "handlers");
+        lua_rawget(_lua, -2);
+        if (!lua_istable(_lua, -1))
+        {
+          lua_pop(_lua, 2);
+          continue;
+        }
+
+        lua_pushlstring(_lua, call.function.data(), call.function.size());
+        lua_rawget(_lua, -2);
+        lua_remove(_lua, -2);
+        if (!lua_isfunction(_lua, -1))
+        {
+          lua_pop(_lua, 2);
+          continue;
+        }
+
+        // the function, then self, which is the entity that shows the
+        // user interface, and what the file wrote and nothing more: a
+        // handler reaches the components through itself, and the system's
+        // class by its name
+        lua_remove(_lua, -2);
+        FillHandles(system, asked.entity, {});
+        lua_rawgeti(_lua, LUA_REGISTRYINDEX, system.entity_ref);
+
+        for (const UiCallArgument &argument : call.arguments)
+        {
+          switch (argument.kind)
+          {
+            case UiCallArgument::Kind::Number: lua_pushnumber(_lua, argument.number);
+              break;
+            case UiCallArgument::Kind::Text: lua_pushlstring(_lua, argument.text.data(), argument.text.size());
+              break;
+            case UiCallArgument::Kind::Flag: lua_pushboolean(_lua, argument.flag ? 1 : 0);
+              break;
+            case UiCallArgument::Kind::Event:
+              lua_createtable(_lua, 0, 5);
+              lua_pushstring(_lua, "click");
+              lua_setfield(_lua, -2, "kind");
+              lua_pushlstring(_lua, event.element.data(), event.element.size());
+              lua_setfield(_lua, -2, "element");
+              lua_pushlstring(_lua, event.document.data(), event.document.size());
+              lua_setfield(_lua, -2, "interface");
+              lua_pushlstring(_lua, event.surface.data(), event.surface.size());
+              lua_setfield(_lua, -2, "surface");
+              if (asked.instigator != No_Entity && store.IsAlive(asked.instigator))
+              {
+                push_entity(_lua, asked.instigator);
+                lua_setfield(_lua, -2, "instigator");
+              }
+              break;
+            default: lua_pushnil(_lua);
+              break;
+          }
+        }
+
+        was_called = true;
+        const int arguments = 1 + static_cast<int>(call.arguments.size());
+        if (lua_pcall(_lua, arguments, 0, 0) != LUA_OK)
+        {
+          const char *text = lua_tostring(_lua, -1);
+          const std::string message = text != nullptr ? text : "no message";
+          const std::string name = store.GetName(asked.entity);
+          _host.logger->Error(
+            "{} of {} failed for {}, called by {}: {}",
+            call.function,
+            system.declaration.name,
+            name,
+            where,
+            message);
+          lua_pop(_lua, 1);
+        }
+      }
+
+      if (!was_called)
+      {
+        const std::string name = store.GetName(asked.entity);
+        _host.logger->Warn(
+          "{} calls {}, and no system over the entity {} has a handler of that name",
+          where,
+          call.function,
+          name);
       }
     }
 

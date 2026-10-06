@@ -277,4 +277,74 @@ namespace
     Frame();
     EXPECT_TRUE(_ui->GetEvents().empty());
   }
+
+  // a function the element names
+
+  TEST_F(UiEventTest, AButtonNamesTheFunctionItsClickCallsWithWhatItIsHanded)
+  {
+    ASSERT_GE(Show(
+      "ui: terminal\n"
+      "values:\n"
+      "  door: locked\n"
+      "  power: 0.4\n"
+      "  armed: true\n"
+      "root:\n"
+      "  type: panel\n"
+      "  align_items: flex-start\n"
+      "  children:\n"
+      "    - type: button\n"
+      "      name: unlock\n"
+      "      on_click: open('safe', 2, door, power, armed, gone, $event)\n"
+      "      width: 100\n"
+      "      height: 50\n"
+      "    - type: button\n"
+      "      on_click: alarm\n"
+      "      width: 100\n"
+      "      height: 50\n"), 0) << _logger->Messages(LogLevel::Error);
+
+    _ui->SetTextOf("terminal", "door", "unlocked");
+    ClickAt(50, 25);
+
+    ASSERT_EQ(_ui->GetEvents().size(), 1u);
+    const UiEvent &event = _ui->GetEvents().front();
+    EXPECT_EQ(event.element, "unlock");
+    EXPECT_GE(event.document_id, 0);
+    EXPECT_EQ(event.call.function, "open");
+
+    using Kind = neon::UiCallArgument::Kind;
+    const auto &arguments = event.call.arguments;
+    ASSERT_EQ(arguments.size(), 7u);
+    EXPECT_EQ(arguments[0].kind, Kind::Text);
+    EXPECT_EQ(arguments[0].text, "safe");
+    EXPECT_EQ(arguments[1].kind, Kind::Number);
+    EXPECT_DOUBLE_EQ(arguments[1].number, 2.0);
+
+    // a value is what it holds when the button is chosen
+    EXPECT_EQ(arguments[2].kind, Kind::Text);
+    EXPECT_EQ(arguments[2].text, "unlocked");
+    EXPECT_EQ(arguments[3].kind, Kind::Number);
+    EXPECT_DOUBLE_EQ(arguments[3].number, 0.4);
+    EXPECT_EQ(arguments[4].kind, Kind::Flag);
+    EXPECT_TRUE(arguments[4].flag);
+    EXPECT_EQ(arguments[5].kind, Kind::Nothing);
+    EXPECT_EQ(arguments[6].kind, Kind::Event);
+
+    // a button without a name is told of when it calls something
+    Release();
+    Frame();
+    ClickAt(150, 25);
+    ASSERT_EQ(_ui->GetEvents().size(), 1u);
+    EXPECT_EQ(_ui->GetEvents().front().element, "");
+    EXPECT_EQ(_ui->GetEvents().front().call.function, "alarm");
+    EXPECT_TRUE(_ui->GetEvents().front().call.arguments.empty());
+  }
+
+  TEST_F(UiEventTest, AClickThatCallsNothingHasNoCall)
+  {
+    ShowMenu();
+    ClickAt(50, 25);
+
+    ASSERT_EQ(_ui->GetEvents().size(), 1u);
+    EXPECT_TRUE(_ui->GetEvents().front().call.IsEmpty());
+  }
 }

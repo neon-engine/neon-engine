@@ -444,7 +444,7 @@ places.
 | 07 Joints | A hinge with a spring, a pendulum on a rope that hangs slack when the ball is lifted, a slider, a motor, a fixed joint with its bar, and a cable that hangs between two pegs | [physics.md](physics.md#joints), [curves.md](curves.md) |
 | 08 Character | Steps, slopes, a lift, and a second character that a script walks | [physics.md](physics.md#the-player) |
 | 09 Scripts | The `Spinner`, the `Mover`, and the `TriggerLamp` of `assets/scripts` | [scripting.md](scripting.md) |
-| 10 Surfaces | A terminal that is pointed at and pressed, and what a second camera sees | [user-interface.md](user-interface.md#surfaces) |
+| 10 Surfaces | A terminal that is pointed at and pressed, whose buttons call handlers of the `Terminal` of `assets/scripts` with `on_click`: Unlock slides the door of a safe, Alarm has a lamp blink. And what a second camera sees | [user-interface.md](user-interface.md#surfaces) |
 | 11 Sound | A spatial `SoundSource` that circles the listener | [audio.md](audio.md) |
 | 12 Prefabs and scenes | One prefab placed five times with what differs, and a `SceneExit` | [prefabs.md](prefabs.md), [below](#changing-the-scene) |
 

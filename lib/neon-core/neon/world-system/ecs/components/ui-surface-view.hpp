@@ -3,6 +3,8 @@
 
 #include <string>
 
+#include <neon/world-system/ecs/entity.hpp>
+
 namespace neon
 {
   /// Shows a user interface on a surface of its own for as long as the
@@ -40,6 +42,12 @@ namespace neon
     /// are shown. -1 before that.
     int surface = -1;
     int document = -1;
+
+    /// Who pointed at it last: the player whose camera did, or the camera's
+    /// own entity when no Player is above it. It is who a click on the
+    /// surface comes from, the instigator a script is told. No_Entity
+    /// until it is pointed at. Not written by a scene.
+    Entity pointed_by = No_Entity;
 
     /// Whether showing it was tried, so that a surface that cannot be made
     /// is not tried again in every frame.

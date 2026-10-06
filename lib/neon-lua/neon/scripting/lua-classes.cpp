@@ -92,6 +92,10 @@ namespace neon
         lua_rawseti(lua, -2, i - 1);
       }
       lua_setfield(lua, -2, "__components");
+
+      // where the functions go that the user interface calls by name
+      lua_newtable(lua);
+      lua_setfield(lua, -2, "handlers");
       luaL_setmetatable(lua, system_class);
       return 1;
     }
@@ -333,10 +337,38 @@ namespace neon
         continue;
       }
 
+      // the functions the user interface calls, each by a name
+      if (key == "handlers")
+      {
+        if (!lua_istable(lua, -1))
+        {
+          problem = "'handlers' of " + declaration.name + " is " + luaL_typename(lua, -1) + ", not a table of functions";
+          lua_settop(lua, top);
+          return false;
+        }
+
+        lua_pushnil(lua);
+        while (lua_next(lua, -2) != 0)
+        {
+          if (lua_type(lua, -2) != LUA_TSTRING || !lua_isfunction(lua, -1))
+          {
+            problem = "'handlers' of " + declaration.name + " holds something that is not a function with a name";
+            lua_settop(lua, top);
+            return false;
+          }
+          lua_pop(lua, 1);
+        }
+
+        lua_pop(lua, 1);
+        continue;
+      }
+
       const auto found = std::ranges::find(lua_hook_names, key);
       if (found == lua_hook_names.end())
       {
-        problem = declaration.name + " defines '" + key + "', which is not a hook of System. The hooks are " + hooks;
+        problem = declaration.name + " defines '" + key + "', which is not a hook of System. The hooks are " + hooks +
+          ". A function the user interface calls goes in its handlers, as function " + declaration.name + ".handlers:" + key +
+          "(...)";
         lua_settop(lua, top);
         return false;
       }

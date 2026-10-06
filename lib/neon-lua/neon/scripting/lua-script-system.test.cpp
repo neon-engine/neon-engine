@@ -12,6 +12,7 @@
 #include <neon/reflection/type-builder.hpp>
 #include <neon/testing/fake-entity-store.hpp>
 #include <neon/testing/memory-file-system.hpp>
+#include <neon/testing/mock-ui-system.hpp>
 #include <neon/testing/recording-logger.hpp>
 #include <neon/world-system/ecs/scene-file/component-format.hpp>
 
@@ -59,6 +60,42 @@ namespace
     type.Field("tint", &Gauge::tint);
     type.Field("cell", &Gauge::cell);
     type.Field("steps", &Gauge::steps);
+  }
+
+  /// A user interface that keeps what was set for one user interface.
+  class TerminalUi final : public ::testing::NiceMock<neon::testing::MockUiContext>
+  {
+  public:
+    std::vector<std::string> set;
+
+    void SetTextOf(const std::string &interface, const std::string &name, const std::string &text) override
+    {
+      set.push_back(interface + "." + name + " = " + text);
+    }
+
+    void SetNumberOf(const std::string &interface, const std::string &name, const double number) override
+    {
+      set.push_back(interface + "." + name + " = " + std::to_string(static_cast<int>(number * 100)) + "%");
+    }
+
+    void SetFlagOf(const std::string &interface, const std::string &name, const bool flag) override
+    {
+      set.push_back(interface + "." + name + " = " + (flag ? "on" : "off"));
+    }
+  };
+
+  /// What the user interface asks of the scripts when an element of the
+  /// terminal that says `on_click: <call>` is chosen.
+  neon::ScriptUiCall Asked(const Entity entity, const std::string &call, const std::string &element = "unlock")
+  {
+    neon::ScriptUiCall asked;
+    asked.entity = entity;
+    asked.event.element = element;
+    asked.event.document = "terminal";
+    asked.event.surface = "screen";
+    std::string problem;
+    EXPECT_TRUE(neon::UiCall::Parse(call, asked.event.call, problem)) << problem;
+    return asked;
   }
 
   /// Scripts in a file system in memory, under `assets://scripts`, run
@@ -770,5 +807,261 @@ namespace
 
     EXPECT_EQ(_logger->Count(LogLevel::Error), 0u) << Errors();
     EXPECT_EQ(std::get<float>(Field(a, "Reader", "grew")), grew_at_start);
+  }
+
+  // the user interface
+
+  TEST_F(LuaScriptSystemTest, AnElementCallsAFunctionOfTheSystemOfTheEntityThatShowsIt)
+  {
+    AddScript("panel.lua", R"(
+      local Panel = Component:extend { presses = 0 }
+      local PanelSystem = System:extend("Panel", "Transform")
+      function PanelSystem.handlers:unlock()
+        self.Panel.presses = self.Panel.presses + 1
+        self.Transform.position.y = 2
+        self.Panel._seen = (self.Panel._seen or 0) + 1
+        if self.Panel._seen == 3 then self.Transform.position.x = 3 end
+      end
+      return Panel, PanelSystem
+    )");
+    ASSERT_TRUE(Load());
+
+    const Entity a = Place("a");
+    const Entity b = Place("b");
+    Give(a, "Panel");
+    Give(b, "Panel");
+
+    _lua.DispatchUiCalls(_store, {Asked(a, "unlock")});
+    _lua.DispatchUiCalls(_store, {Asked(a, "unlock()"), Asked(a, "unlock")});
+
+    // the entity that shows the user interface, and no other
+    EXPECT_EQ(std::get<float>(Field(a, "Panel", "presses")), 3.0f);
+    EXPECT_EQ(std::get<float>(Field(b, "Panel", "presses")), 0.0f);
+    EXPECT_FLOAT_EQ(TransformOf(a).position.y, 2.0f);
+    EXPECT_FLOAT_EQ(TransformOf(b).position.y, 0.0f);
+
+    // what a handler keeps for itself on a component is kept between calls
+    EXPECT_FLOAT_EQ(TransformOf(a).position.x, 3.0f);
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 0u) << Errors();
+    EXPECT_EQ(_logger->Count(LogLevel::Warn), 0u) << _logger->Messages(LogLevel::Warn);
+  }
+
+  TEST_F(LuaScriptSystemTest, AFunctionAnElementCallsIsHandedWhatTheFileWrote)
+  {
+    AddScript("panel.lua", R"(
+      local Panel = Component:extend { said = "", sum = 0, flag = false, missing = false }
+      local PanelSystem = System:extend "Panel"
+      function PanelSystem.handlers:open(what, by, flag, nothing, event, beyond)
+        local panel = self.Panel
+        panel.said = what .. " " .. event.kind .. " " .. event.element .. " " .. event.interface .. " " .. event.surface
+        panel.sum = by
+        panel.flag = flag
+        panel.missing = nothing == nil and beyond == nil
+      end
+      return Panel, PanelSystem
+    )");
+    ASSERT_TRUE(Load());
+
+    const Entity a = Place("a");
+    Give(a, "Panel");
+
+    // a value that was named and is not there is nothing
+    neon::ScriptUiCall asked = Asked(a, "open('safe', 2.5, true, gone, $event)", "open");
+    asked.event.call.arguments[3].kind = neon::UiCallArgument::Kind::Nothing;
+    _lua.DispatchUiCalls(_store, {asked});
+
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 0u) << Errors();
+    EXPECT_EQ(std::get<std::string>(Field(a, "Panel", "said")), "safe click open terminal screen");
+    EXPECT_EQ(std::get<float>(Field(a, "Panel", "sum")), 2.5f);
+    EXPECT_TRUE(std::get<bool>(Field(a, "Panel", "flag")));
+    EXPECT_TRUE(std::get<bool>(Field(a, "Panel", "missing")));
+  }
+
+  TEST_F(LuaScriptSystemTest, TheEventSaysWhoTheClickComesFrom)
+  {
+    AddScript("panel.lua", R"(
+      local Panel = Component:extend { by = "", anyone = true }
+      local PanelSystem = System:extend "Panel"
+      function PanelSystem.handlers:unlock(event)
+        self.Panel.anyone = event.instigator ~= nil
+        if event.instigator then
+          self.Panel.by = event.instigator.name
+          event.instigator.Transform.position.y = 5
+        end
+      end
+      return Panel, PanelSystem
+    )");
+    ASSERT_TRUE(Load());
+
+    const Entity a = Place("a");
+    const Entity player = Place("player");
+    Give(a, "Panel");
+
+    neon::ScriptUiCall asked = Asked(a, "unlock($event)");
+    asked.instigator = player;
+    _lua.DispatchUiCalls(_store, {asked});
+
+    EXPECT_EQ(std::get<std::string>(Field(a, "Panel", "by")), "player");
+    EXPECT_FLOAT_EQ(TransformOf(player).position.y, 5.0f);
+
+    // a click on the window comes from no entity
+    _lua.DispatchUiCalls(_store, {Asked(a, "unlock($event)")});
+    EXPECT_FALSE(std::get<bool>(Field(a, "Panel", "anyone")));
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 0u) << Errors();
+  }
+
+  TEST_F(LuaScriptSystemTest, EverySystemOverTheEntityThatHasTheFunctionIsCalled)
+  {
+    AddScript("panel.lua", R"(
+      local Panel = Component:extend { presses = 0 }
+      local PanelSystem = System:extend "Panel"
+      function PanelSystem.handlers:unlock() self.Panel.presses = self.Panel.presses + 1 end
+      local Lifting = System:extend "Transform"
+      function Lifting.handlers:unlock() self.Transform.position.y = self.Transform.position.y + 1 end
+      local Deaf = System:extend "Transform"
+      function Deaf.handlers:lock() self.Transform.position.x = 9 end
+      return Panel, PanelSystem, Lifting, Deaf
+    )");
+    ASSERT_TRUE(Load());
+
+    const Entity a = Place("a");
+    Give(a, "Panel");
+
+    _lua.DispatchUiCalls(_store, {Asked(a, "unlock")});
+
+    EXPECT_EQ(std::get<float>(Field(a, "Panel", "presses")), 1.0f);
+    EXPECT_FLOAT_EQ(TransformOf(a).position.y, 1.0f);
+    EXPECT_FLOAT_EQ(TransformOf(a).position.x, 0.0f);
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 0u) << Errors();
+  }
+
+  TEST_F(LuaScriptSystemTest, SaysSoWhenNothingCanBeCalled)
+  {
+    AddScript("panel.lua", R"(
+      local Panel = Component:extend { presses = 0 }
+      local PanelSystem = System:extend "Panel"
+      function PanelSystem:update(entity, panel, dt) panel.presses = panel.presses + 1 end
+      return Panel, PanelSystem
+    )");
+    ASSERT_TRUE(Load());
+
+    const Entity a = Place("a");
+    Give(a, "Panel");
+
+    // no handler of that name, and neither a hook nor what a system
+    // inherits is one
+    _lua.DispatchUiCalls(_store, {Asked(a, "unlock"), Asked(a, "extend"), Asked(a, "update(1)")});
+    EXPECT_TRUE(_logger->Contains(
+      LogLevel::Warn,
+      "'unlock' of the user interface terminal calls unlock, and no system over the entity a has a handler of that name"))
+      << _logger->Messages(LogLevel::Warn);
+    EXPECT_EQ(_logger->Count(LogLevel::Warn), 3u);
+    EXPECT_EQ(std::get<float>(Field(a, "Panel", "presses")), 0.0f);
+
+    // a user interface that no entity shows
+    _lua.DispatchUiCalls(_store, {Asked(neon::No_Entity, "unlock")});
+    EXPECT_TRUE(_logger->Contains(LogLevel::Warn, "no entity shows that user interface"));
+
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 0u) << Errors();
+  }
+
+  TEST_F(LuaScriptSystemTest, AFunctionAnElementCallsThatFailsIsReportedAndCalledAgainTheNextTime)
+  {
+    AddScript("panel.lua", R"(
+      local Panel = Component:extend { presses = 0 }
+      local PanelSystem = System:extend "Panel"
+      function PanelSystem.handlers:unlock(fail)
+        if fail then error("the bolt is stuck") end
+        self.Panel.presses = self.Panel.presses + 1
+      end
+      return Panel, PanelSystem
+    )");
+    ASSERT_TRUE(Load());
+
+    const Entity a = Place("a");
+    Give(a, "Panel");
+
+    _lua.DispatchUiCalls(_store, {Asked(a, "unlock(true)")});
+    EXPECT_THAT(Errors(), HasSubstr("unlock of PanelSystem failed for a, called by 'unlock' of the user interface terminal"));
+    EXPECT_THAT(Errors(), HasSubstr("the bolt is stuck"));
+
+    _lua.DispatchUiCalls(_store, {Asked(a, "unlock(false)")});
+    EXPECT_EQ(std::get<float>(Field(a, "Panel", "presses")), 1.0f);
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 1u) << Errors();
+  }
+
+  TEST_F(LuaScriptSystemTest, AFunctionOfASystemThatIsNoHookIsRefusedAndPointedAtTheHandlers)
+  {
+    AddScript("panel.lua", R"(
+      local Panel = Component:extend { presses = 0 }
+      local PanelSystem = System:extend "Panel"
+      function PanelSystem:unlock(entity, panel) end
+      return Panel, PanelSystem
+    )");
+    AddScript("wrong.lua", R"(
+      local Wrong = Component:extend { presses = 0 }
+      local WrongSystem = System:extend "Wrong"
+      WrongSystem.handlers.unlock = 3
+      return Wrong, WrongSystem
+    )");
+    Load();
+
+    EXPECT_THAT(Errors(), HasSubstr("function PanelSystem.handlers:unlock(...)"));
+    EXPECT_THAT(Errors(), HasSubstr("'handlers' of WrongSystem holds something that is not a function with a name"));
+  }
+
+  TEST_F(LuaScriptSystemTest, SetsTheValuesOfTheUserInterface)
+  {
+    AddScript("panel.lua", R"(
+      local Panel = Component:extend { presses = 0 }
+      local PanelSystem = System:extend "Panel"
+      function PanelSystem.handlers:unlock()
+        ui.set_text_of("terminal", "door", "unlocked")
+        ui.set_number_of("terminal", "power", 0.75)
+        ui.set_flag_of("terminal", "open", true)
+        ui.set_text("title", "Started")
+        ui.set_number("score", 3)
+        ui.set_flag("playing", true)
+      end
+      return Panel, PanelSystem
+    )");
+    ASSERT_TRUE(Load());
+
+    const Entity a = Place("a");
+    Give(a, "Panel");
+
+    // without a user interface what is set is dropped
+    _lua.DispatchUiCalls(_store, {Asked(a, "unlock")});
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 0u) << Errors();
+
+    TerminalUi ui;
+    _lua.SetUi(&ui);
+    EXPECT_CALL(ui, SetText("title", "Started"));
+    EXPECT_CALL(ui, SetNumber("score", 3.0));
+    EXPECT_CALL(ui, SetFlag("playing", true));
+    _lua.DispatchUiCalls(_store, {Asked(a, "unlock")});
+
+    EXPECT_THAT(
+      ui.set,
+      ::testing::ElementsAre("terminal.door = unlocked", "terminal.power = 75%", "terminal.open = on"));
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 0u) << Errors();
+  }
+
+  TEST_F(LuaScriptSystemTest, RefusesAValueOfTheUserInterfaceOfTheWrongKind)
+  {
+    AddScript("panel.lua", R"(
+      local Panel = Component:extend { presses = 0 }
+      local PanelSystem = System:extend "Panel"
+      function PanelSystem:update(entity, panel, dt)
+        ui.set_flag("playing", 1)
+      end
+      return Panel, PanelSystem
+    )");
+    ASSERT_TRUE(Load());
+
+    Give(Place("a"), "Panel");
+    _lua.Update(_store, 0.1);
+
+    EXPECT_THAT(Errors(), HasSubstr("boolean expected"));
   }
 }

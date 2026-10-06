@@ -144,6 +144,9 @@ namespace neon
     /// What `input` reads. May be left out for a run without input.
     void SetInput(InputContext *input);
 
+    /// What `ui` sets. May be left out for a run without a user interface.
+    void SetUi(UiContext *ui);
+
     /// Whether LuaJIT compiles the scripts as they run; off runs them in
     /// its interpreter. On by default.
     /// Takes effect at once, on a state that is ready or on the next one.
@@ -165,6 +168,8 @@ namespace neon
     void FixedUpdate(EntityStore &store, double fixed_delta_time) override;
 
     void DispatchPhysicsEvents(EntityStore &store, const std::vector<PhysicsEvent> &events) override;
+
+    void DispatchUiCalls(EntityStore &store, const std::vector<ScriptUiCall> &calls) override;
 
     [[nodiscard]] std::size_t GetComponentCount() const override;
 

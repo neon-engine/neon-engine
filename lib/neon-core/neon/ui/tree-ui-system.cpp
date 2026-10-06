@@ -800,7 +800,9 @@ namespace neon
     const UiDocument *document = DocumentOf(&element);
     if (element.ClosesItsFile() && document != nullptr) { _documents_to_close.push_back(document->id); }
 
-    if (element.GetName().empty()) { return; }
+    // a click is told of an element that has a name to be asked for by, or
+    // that names a function to call
+    if (element.GetName().empty() && element.CallsWhenClicked() == nullptr) { return; }
     const Surface *surface = document != nullptr ? FindSurface(document->surface) : nullptr;
 
     UiEvent clicked;
@@ -808,7 +810,45 @@ namespace neon
     clicked.scene = element.AsksForScene();
     clicked.element = element.GetName();
     clicked.document = document != nullptr ? document->name : "";
+    clicked.document_id = document != nullptr ? document->id : -1;
     clicked.surface = surface != nullptr ? surface->name : "";
+
+    if (const UiCall *call = element.CallsWhenClicked(); call != nullptr)
+    {
+      clicked.call = *call;
+
+      // a value is handed over as what it holds now: that of the file
+      // before the one every user interface shares
+      const UiValues &values = document != nullptr ? ValuesOf(document->name) : _values;
+      for (UiCallArgument &argument : clicked.call.arguments)
+      {
+        if (argument.kind != UiCallArgument::Kind::Value) { continue; }
+
+        const UiValue *value = values.Find(argument.text);
+        if (value == nullptr)
+        {
+          argument.kind = UiCallArgument::Kind::Nothing;
+          continue;
+        }
+
+        switch (value->kind)
+        {
+          case UiValue::Kind::Number:
+            argument.kind = UiCallArgument::Kind::Number;
+            argument.number = value->number;
+            break;
+          case UiValue::Kind::Text:
+            argument.kind = UiCallArgument::Kind::Text;
+            argument.text = value->text;
+            break;
+          case UiValue::Kind::Flag:
+            argument.kind = UiCallArgument::Kind::Flag;
+            argument.flag = value->flag;
+            break;
+        }
+      }
+    }
+
     _events.push_back(clicked);
   }
 

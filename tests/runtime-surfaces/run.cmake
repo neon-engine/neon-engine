@@ -30,8 +30,10 @@ elseif (CASE STREQUAL "small-text")
   run_headless(--frames 2 --output-dir shots --screenshot output://frame.png --ui assets://ui/text-sizes.ui.yml)
 elseif (CASE STREQUAL "pointing-at-a-screen")
   # the player walks up to the terminal, looks at its Unlock button, and
-  # presses it
-  set(SCRIPT "1: hold-key w 15\n2: look -290 35\n40: hold pointer-primary 3")
+  # presses it with the left button of the mouse. There is no pointer, as
+  # there is none while the cursor is hidden, so the action of the pointer
+  # is never set (#429)
+  set(SCRIPT "1: hold-key w 15\n2: look -290 35\n40: down\n43: up")
   run_headless(--output-dir shots --screenshot output://frame.png --screenshot-at 2,30,41
           --scene assets://scenes/surface-demo.scene.yml --input "${SCRIPT}")
 else ()

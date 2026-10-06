@@ -8,6 +8,7 @@
 #include <neon/filesystem/file-system-context.hpp>
 #include <neon/input/input-context.hpp>
 #include <neon/logging/logger.hpp>
+#include <neon/ui/ui-context.hpp>
 #include <neon/world-system/ecs/entity-store.hpp>
 #include <neon/world-system/ecs/scene-file/component-format.hpp>
 #include <neon/world-system/world-system.hpp>
@@ -22,13 +23,14 @@ namespace neon
   ///
   /// `store` is set while the scripts are loaded and while a hook runs, and
   /// null between frames, since the store is what the world hands over.
-  /// `input` and `world` may be null for a run without them: a script that
-  /// asks is then told so.
+  /// `input`, `ui`, and `world` may be null for a run without them: a
+  /// script that asks is then told so.
   struct LuaHost
   {
     EntityStore *store = nullptr;
     FileSystemContext *file_system = nullptr;
     InputContext *input = nullptr;
+    UiContext *ui = nullptr;
     WorldSystem *world = nullptr;
     const ComponentFormats *formats = nullptr;
     std::shared_ptr<Logger> logger;

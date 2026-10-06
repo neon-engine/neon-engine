@@ -19,6 +19,7 @@ namespace
   using neon::Action;
   using neon::Camera;
   using neon::Entity;
+  using neon::MouseButton;
   using neon::RenderTarget;
   using neon::Transform;
   using neon::UiSurfacePointing;
@@ -212,6 +213,77 @@ namespace
 
     _input.state.SetAction(Action::Ui_Accept);
     Frame();
+  }
+
+  TEST_F(UiSurfacePointingTest, PressesWithTheLeftButtonOfTheMouseWhileThereIsNoPointer)
+  {
+    CreateCamera({0.0f, 0.0f, 2.0f});
+    CreateScreen(3, {0.0f, 0.0f, 0.0f});
+    EXPECT_CALL(_ui, SetFlag("pointing", true));
+
+    {
+      InSequence in_order;
+      EXPECT_CALL(_ui, SetPointerUv(3, _, _, true));
+      EXPECT_CALL(_ui, SetPointerUv(3, _, _, false));
+    }
+
+    // a hidden cursor: the button is held, and the action of the pointer
+    // is not set
+    _input.state.SetMouseButtonDown(MouseButton::Left);
+    Frame();
+
+    // the other buttons press nothing
+    _input.state.Reset();
+    _input.state.SetMouseButtonDown(MouseButton::Right);
+    Frame();
+  }
+
+  // who points
+
+  /// Stands for the Player of the engine, which the system finds by name.
+  struct PlayerMark
+  {
+    int number = 0;
+  };
+
+  TEST_F(UiSurfacePointingTest, TellsTheScreenThatThePlayerAboveTheCameraPointsAtIt)
+  {
+    _store.Register<PlayerMark>("Player");
+    UiSurfacePointing system{&_ui, &_input};
+    system.Initialize(_store);
+
+    // a group, the player in it, a head, and the camera on the head
+    const Entity group = _store.CreateEntity("group");
+    const Entity player = _store.CreateEntity("player", group);
+    _store.Set(player, PlayerMark{});
+    const Entity head = _store.CreateEntity("head", player);
+    const Entity camera = CreateCamera({0.0f, 0.0f, 2.0f});
+    _store.SetParent(camera, head);
+
+    const Entity screen = CreateScreen(3, {0.0f, 0.0f, 0.0f});
+    const Entity other = CreateScreen(4, {5.0f, 0.0f, 0.0f});
+    EXPECT_EQ(_store.Get<UiSurfaceView>(screen)->pointed_by, neon::No_Entity);
+
+    EXPECT_CALL(_ui, SetPointerUv(3, _, _, false));
+    EXPECT_CALL(_ui, SetFlag("pointing", true));
+    system.Update(_store, 0.016);
+
+    EXPECT_EQ(_store.Get<UiSurfaceView>(screen)->pointed_by, player);
+    EXPECT_EQ(_store.Get<UiSurfaceView>(other)->pointed_by, neon::No_Entity);
+  }
+
+  TEST_F(UiSurfacePointingTest, TellsTheScreenThatTheCameraPointsAtItWhenNoPlayerIsAboveIt)
+  {
+    const Entity rig = _store.CreateEntity("rig");
+    const Entity camera = CreateCamera({0.0f, 0.0f, 2.0f});
+    _store.SetParent(camera, rig);
+    const Entity screen = CreateScreen(3, {0.0f, 0.0f, 0.0f});
+
+    EXPECT_CALL(_ui, SetPointerUv(3, _, _, false));
+    EXPECT_CALL(_ui, SetFlag("pointing", true));
+    Frame();
+
+    EXPECT_EQ(_store.Get<UiSurfaceView>(screen)->pointed_by, camera);
   }
 
   TEST_F(UiSurfacePointingTest, TakesThePointerAwayWhenTheCameraLooksElsewhere)

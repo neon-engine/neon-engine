@@ -1066,6 +1066,10 @@ namespace
       "'text' of button 'start' cannot be read: a '{' is never closed. Write '{{' for the bracket itself"
     },
     WrongProperty{
+      "on_click: \"unlock(\"",
+      "'on_click' of button 'start' is 'unlock(', which is no call of a function: the ( is not closed with )"
+    },
+    WrongProperty{
       "action: jump",
       "'action' of button 'start' is 'jump', where one of these was expected: none, close, scene"
     },

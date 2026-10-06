@@ -78,6 +78,7 @@ function Component:extend(name, fields) end
 ---A system: its hooks, over every entity that carries the components it
 ---named. `self` is the class.
 ---@class System
+---@field handlers table<string, fun(self: Entity, ...: any)> The functions a button of the user interface calls by name with `on_click`. `self` is the entity that shows the user interface, and the parameters are what the file wrote as arguments
 System = {}
 
 ---Declares a system over the components named, as text or as the class in
@@ -406,6 +407,43 @@ function input.action_axis2(action) end
 ---@param action string
 ---@return number, number, number
 function input.action_axis3(action) end
+
+---The values of the user interface, named as `UiContext` names them. A
+---user interface is named by what its file writes as `ui`. A click is not
+---asked for here: a button names the function of a system that it calls,
+---`on_click: unlock` or `on_click: open('safe', door, $event)`.
+---@class uilib
+ui = {}
+
+---Sets a value that files refer to as `{name}`.
+---@param name string
+---@param text string
+function ui.set_text(name, text) end
+
+---@param name string
+---@param number number
+function ui.set_number(name, number) end
+
+---@param name string
+---@param flag boolean
+function ui.set_flag(name, flag) end
+
+---Sets a value for one user interface, where it wins over the value every
+---user interface shares.
+---@param interface string
+---@param name string
+---@param text string
+function ui.set_text_of(interface, name, text) end
+
+---@param interface string
+---@param name string
+---@param number number
+function ui.set_number_of(interface, name, number) end
+
+---@param interface string
+---@param name string
+---@param flag boolean
+function ui.set_flag_of(interface, name, flag) end
 
 ---@class scenelib
 scene = {}

@@ -152,7 +152,7 @@ whole: `border: "2px solid #4c566a"`.
 | `panel` | A box, with a background and a border if it has them | `div` | Nothing | Yes |
 | `label` | A text | `span` | `text` | No |
 | `image` | An image from a file | `img` | `src`, which has to be written | No |
-| `button` | What a player chooses. It reports a click. With `action: close` it also closes its file, as the Back button of a menu. With `action: scene` and the `scene` to change to it asks the game for that scene and closes its file, as the Start button of a title screen, see [scenes.md](scenes.md#changing-the-scene) | `button` | `text`, `enabled`, `autofocus`, `action`, `scene` | Yes, in place of `text` |
+| `button` | What a player chooses. It reports a click. With `action: close` it also closes its file, as the Back button of a menu. With `action: scene` and the `scene` to change to it asks the game for that scene and closes its file, as the Start button of a title screen, see [scenes.md](scenes.md#changing-the-scene). With `on_click: unlock` or `on_click: open('safe', door, $event)` it calls a function of the scripts by its name, see [scripting.md](scripting.md#what-the-user-interface-calls) | `button` | `text`, `enabled`, `autofocus`, `action`, `scene`, `on_click` | Yes, in place of `text` |
 | `bar` | How much of something there is | `progress` | `value`, `max` | No |
 | `input` | A text of one line that is typed into. See [typing](#typing) | `input` | `value`, `kind`, `placeholder`, `max_length`, `read_only`, `pattern`, `enabled`, `autofocus` | No |
 | `textarea` | A text of several lines that is typed into | `textarea` | The same but `kind`, and `rows` | No |
@@ -1161,12 +1161,16 @@ which is where the dot in the middle of the HUD is. A screen is the square
 of 1 by 1 of its entity, facing +Z as `quad.obj` does, so the ray meets it
 by the entity's transform alone and needs no collider. The nearest screen
 the ray hits from its front, within the `reach` of its `UiSurface`, gets
-the pointer: `SetPointerUv` with the button of the pointer or accept as the
-press. A screen with a `reach` of 0 is pointed at from anywhere.
+the pointer: `SetPointerUv` with the button of the pointer, the left button
+of the mouse, or accept as the press. The left button is read on its own
+since there is no pointer, and so no `Pointer_Primary`, while the cursor is
+hidden, which it is while the player looks around. A screen with a `reach`
+of 0 is pointed at from anywhere.
 
 | | |
 |---|---|
 | `reach` of `UiSurface` | How near the camera has to be, in units of the world. 3 unless the scene says otherwise |
+| `pointed_by` of `UiSurface` | Set by the system on the screen: who points at it, the nearest entity from the camera up that carries a `Player`, or the camera's own. It stays when the player looks away, and is who a click on the screen comes from: `event.instigator` of a [handler](scripting.md#what-the-user-interface-calls) |
 | The flag `pointing` | Set by the system on the window's values while a screen is pointed at. The HUD turns its dot into a ring with `hidden: "{!pointing}"` |
 | The keys and the controller | Stay with the window. A controller presses with accept, which is the press of the pointer on the screen, so nothing on the screen needs the focus |
 
@@ -1492,7 +1496,11 @@ if (ui.WasClicked("start")) { StartGame(); }
 for (const neon::UiEvent &event : ui.GetEvents()) { /* event.element, event.document, event.scene */ }
 ```
 
-A click of a button with `action: scene` carries the scene in `event.scene`,
+A click of a button with `on_click` carries the function and what it is
+handed in `event.call`, a `UiCall`, with the values that were named already
+looked up; `ScriptRunning` hands those to the scripts with the entity that
+shows the file, and code in C++ reads them from `GetEvents()` as it reads
+any click. A click of a button with `action: scene` carries the scene in `event.scene`,
 which the runtime hands to the world; it is empty for every other click.
 
 | Rule | Reason |
@@ -1562,7 +1570,11 @@ ui.StartAnimation(sword, "shake", "0.5s linear");
 | The display | `SetUserScale`, `SetReducedMotion`, `SetTimeScale` |
 | Describing | `GetElementTypeNames`, `DescribeElement(type, TypeInfo &)`, which gives every field of a kind with what it holds and what it is for, and the style as a group, through the reflection of the engine. It is what an inspector and a binding for scripts are made from |
 
-What a binding for Lua might read as, from the same functions:
+A script in Lua has the first of it: a button names the handler of a system
+it calls with `on_click`, with arguments, and `ui.set_text` and the rest set
+values, see [scripting.md](scripting.md#what-the-user-interface-calls).
+Elements, their styles, and listeners from code are not bound yet (#436).
+What the rest of a binding for Lua might read as, from the same functions:
 
 ```lua
 local sword = ui.find("sword")

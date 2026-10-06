@@ -42,7 +42,7 @@ namespace
     EXPECT_EQ(button.name, "button");
     EXPECT_EQ(button.description, "What a player chooses with the pointer, the keys, or a controller");
     EXPECT_THAT(NamesOf(button.fields), ElementsAre(
-      "name", "class", "title", "tab_index", "hidden", "text", "enabled", "autofocus", "action", "scene", "style"));
+      "name", "class", "title", "tab_index", "hidden", "text", "enabled", "autofocus", "action", "scene", "on_click", "style"));
 
     const neon::FieldInfo *action = button.Find("action");
     ASSERT_NE(action, nullptr);

@@ -8,6 +8,7 @@
 #include <neon/logging/logger.hpp>
 #include <neon/physics/physics-context.hpp>
 #include <neon/scripting/script-context.hpp>
+#include <neon/ui/ui-context.hpp>
 #include <neon/world-system/ecs/entity-system.hpp>
 
 namespace neon
@@ -20,7 +21,9 @@ namespace neon
   ///
   /// What the physics reported in the frame reaches the scripts before
   /// their `update`, so that a hook of a trigger or a touch sees the frame
-  /// it happened in.
+  /// it happened in. So does what the user interface asked for: a click on
+  /// an element that names a function with `on_click` calls it on the
+  /// systems of the entity whose `Ui` or `UiSurface` shows the file.
   class ScriptRunning final : public EntitySystem
   {
     ScriptContext *_scripts;
@@ -32,6 +35,17 @@ namespace neon
     // the assets of the extensions
     std::vector<std::string> _more_folders;
     std::shared_ptr<Logger> _logger;
+
+    // where the clicks come from, and the entities that show a file
+    UiContext *_ui = nullptr;
+    QueryId _views = 0;
+    QueryId _surfaces = 0;
+    std::vector<ScriptUiCall> _calls;
+
+    /// The entity that shows the file the user interface knows by that
+    /// number, or No_Entity, and in `instigator` who pointed at it, for a
+    /// file on a surface in the world.
+    [[nodiscard]] Entity FindShowing(EntityStore &store, int document, Entity &instigator) const;
 
   public:
     /// `physics` may be nullptr, for a world without physics: the hooks of
@@ -49,6 +63,11 @@ namespace neon
     /// without a word. For what brings scripts besides the project, such as
     /// an extension. Call it before the world is initialized.
     void AddFolder(const std::string &folder);
+
+    /// The user interface whose elements call functions of the scripts.
+    /// Without one nothing is called. Call it before the world is
+    /// initialized.
+    void SetUi(UiContext *ui);
 
     void Register(EntityStore &store) override;
 

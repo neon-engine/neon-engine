@@ -3098,8 +3098,10 @@ entities:
   # 10 Surfaces
   # A user interface is laid out and drawn on a surface. The window is one;
   # every sign of the museum is one; so is this terminal, whose buttons take
-  # the pointer from where the player looks, within its reach. A camera draws
-  # into a texture as well, which the second screen shows. See
+  # the pointer from where the player looks, within its reach, and call
+  # functions of terminal.lua by name: Unlock slides the door of the safe
+  # next to it, and Alarm has the lamp above it blink. A camera draws into a texture
+  # as well, which the second screen shows. See
   # docs/user-interface.md#surfaces.
   # --------------------------------------------------------------------------
 
@@ -3139,6 +3141,11 @@ entities:
         ui: assets://ui/museum/terminal.ui.yml
         name: museum-terminal
         size: [1024, 768]
+      # what its buttons call, see scripts/terminal.lua
+      Terminal:
+        ui: museum-terminal
+        door: surfaces-safe-door
+        lamp: surfaces-alarm-lamp
 
   - name: surfaces-terminal-back
     components:
@@ -3152,6 +3159,71 @@ entities:
         material:
           color: [0.12, 0.13, 0.15]
           roughness: 0.6
+
+  # dark until Alarm is clicked, and then it blinks
+  - name: surfaces-alarm-lamp
+    components:
+      Transform:
+        position: [7.2, 2.5, -37.6]
+      Geometry:
+        shape: sphere
+        size: [0.22, 0.22, 0.22]
+        sides: 16
+        smooth: true
+      Renderable:
+        shader: assets://shaders/color
+        material:
+          color: [0.75, 0.1, 0.08]
+      Light:
+        type: point
+        diffuse: [0, 0, 0]
+        constant: 1
+        linear: 0.14
+        quadratic: 0.07
+
+  # the safe between the two screens: a block on the wall, what it keeps,
+  # and the door in front of that, which Unlock slides up
+  - name: surfaces-safe
+    components:
+      Transform:
+        position: [7.6, 1.6, -35.9]
+      Geometry:
+        shape: box
+        size: [0.5, 1.1, 1.1]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.12, 0.13, 0.15]
+          roughness: 0.6
+
+  - name: surfaces-safe-gold
+    components:
+      Transform:
+        position: [7.33, 1.6, -35.9]
+      Geometry:
+        shape: box
+        size: [0.04, 0.6, 0.6]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.1, 0.08, 0.02]
+          roughness: 0.4
+          emissive: [1, 0.55, 0.08]
+          emissive_strength: 1
+
+  - name: surfaces-safe-door
+    components:
+      Transform:
+        position: [7.29, 1.6, -35.9]
+      Geometry:
+        shape: box
+        size: [0.04, 0.9, 0.9]
+      Renderable:
+        shader: assets://shaders/pbr
+        material:
+          color: [0.62, 0.65, 0.7]
+          metallic: 0.2
+          roughness: 0.4
 
   - name: surfaces-stand
     components:

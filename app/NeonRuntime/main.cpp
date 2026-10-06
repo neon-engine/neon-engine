@@ -433,6 +433,7 @@ int main(const int argc, char *argv[])
   script_system.SetJit(settings_config.script_jit);
   script_system.Initialize();
   script_system.SetInput(ui_system.GetGameInput());
+  script_system.SetUi(&ui_system);
   script_system.SetWorld(&world);
   auto script_running = std::make_unique<neon::ScriptRunning>(
     &script_system,
@@ -440,6 +441,8 @@ int main(const int argc, char *argv[])
     &scene.GetComponentFormats(),
     "assets://",
     logging_system.CreateLogger("ScriptRunning"));
+  // an element of the user interface calls a function of the scripts
+  script_running->SetUi(&ui_system);
   // an extension brings scripts as it brings everything else of its own,
   // under its assets
   for (const auto &folder : extension_host.GetAssetFolders()) { script_running->AddFolder(folder); }

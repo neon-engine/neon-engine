@@ -8,11 +8,23 @@
 #include <neon/testing/fake-entity-store.hpp>
 #include <neon/testing/fake-physics-context.hpp>
 #include <neon/testing/mock-script-context.hpp>
+#include <neon/testing/mock-ui-system.hpp>
 #include <neon/testing/recording-logger.hpp>
+#include <neon/world-system/ecs/components/ui-surface-view.hpp>
+#include <neon/world-system/ecs/components/ui-view.hpp>
 
 namespace
 {
   using neon::ComponentFormats;
+  using neon::Entity;
+  using neon::ScriptUiCall;
+  using neon::UiEvent;
+  using neon::UiSurfaceView;
+  using neon::UiView;
+  using neon::testing::MockUiContext;
+  using ::testing::NiceMock;
+  using ::testing::ReturnRef;
+  using ::testing::SaveArg;
   using neon::PhysicsEvent;
   using neon::ScriptRunning;
   using neon::testing::FakeEntityStore;
@@ -93,6 +105,83 @@ namespace
     EXPECT_CALL(_scripts, Update(_, 0.25));
     system.Update(_store, 0.25);
   }
+
+  TEST_F(ScriptRunningTest, HandsOverWhatTheUserInterfaceCallsWithTheEntityThatShowsIt)
+  {
+    _store.Register<UiView>("Ui");
+    _store.Register<UiSurfaceView>("UiSurface");
+
+    const Entity hud = _store.CreateEntity("hud");
+    _store.Set(hud, UiView{.file = "assets://ui/hud.ui.yml", .document = 3});
+    const Entity terminal = _store.CreateEntity("terminal");
+    const Entity player = _store.CreateEntity("player");
+    const Entity gone = _store.CreateEntity("gone");
+    _store.Set(terminal, UiSurfaceView{.name = "terminal", .surface = 1, .document = 5, .pointed_by = player});
+    const Entity sign = _store.CreateEntity("sign");
+    _store.Set(sign, UiSurfaceView{.name = "sign", .surface = 2, .document = 6, .pointed_by = gone});
+    _store.DestroyEntity(gone);
+
+    NiceMock<MockUiContext> ui;
+    std::vector<UiEvent> events(5);
+    events[4].element = "read";
+    events[4].document_id = 6;
+    events[4].call.function = "read";
+    events[0].element = "resume";
+    events[1].element = "unlock";
+    events[1].document_id = 5;
+    events[1].call.function = "unlock";
+    events[2].element = "map";
+    events[2].document_id = 3;
+    events[2].call.function = "open_map";
+    events[3].element = "quit";
+    events[3].document_id = 9;
+    events[3].call.function = "quit";
+    EXPECT_CALL(ui, GetEvents()).WillRepeatedly(ReturnRef(events));
+
+    ScriptRunning system(&_scripts, nullptr, &_formats, "assets://scripts", _logger);
+    system.SetUi(&ui);
+    EXPECT_CALL(_scripts, Start(_));
+    system.Initialize(_store);
+
+    // a click that calls nothing is left out; a file no entity shows is
+    // handed over without one
+    std::vector<ScriptUiCall> calls;
+    InSequence in_order;
+    EXPECT_CALL(_scripts, DispatchUiCalls(_, SizeIs(4))).WillOnce(SaveArg<1>(&calls));
+    EXPECT_CALL(_scripts, Update(_, 0.25));
+    system.Update(_store, 0.25);
+
+    ASSERT_EQ(calls.size(), 4u);
+    EXPECT_EQ(calls[0].entity, terminal);
+    EXPECT_EQ(calls[0].event.call.function, "unlock");
+    EXPECT_EQ(calls[1].entity, hud);
+    EXPECT_EQ(calls[1].event.call.function, "open_map");
+    EXPECT_EQ(calls[2].entity, neon::No_Entity);
+
+    // a click on a surface in the world comes from who pointed at it; one
+    // on the window from no entity, and so does one from who is gone
+    EXPECT_EQ(calls[0].instigator, player);
+    EXPECT_EQ(calls[1].instigator, neon::No_Entity);
+    EXPECT_EQ(calls[2].instigator, neon::No_Entity);
+    EXPECT_EQ(calls[3].entity, sign);
+    EXPECT_EQ(calls[3].instigator, neon::No_Entity);
+
+    // and nothing is handed over in a frame without a call
+    events.resize(1);
+    EXPECT_CALL(_scripts, DispatchUiCalls(_, _)).Times(0);
+    EXPECT_CALL(_scripts, Update(_, 0.25));
+    system.Update(_store, 0.25);
+  }
+
+  TEST_F(ScriptRunningTest, WithoutAUserInterfaceNothingIsCalled)
+  {
+    ScriptRunning system(&_scripts, nullptr, &_formats, "assets://scripts", _logger);
+
+    EXPECT_CALL(_scripts, DispatchUiCalls(_, _)).Times(0);
+    EXPECT_CALL(_scripts, Update(_, 0.25));
+    system.Update(_store, 0.25);
+  }
+
   TEST_F(ScriptRunningTest, ReadsTheScriptsOfMoreFoldersAfterTheFirstAndLeavesOutThoseThatAreNotThere)
   {
     ScriptRunning system(&_scripts, &_physics, &_formats, "assets://", _logger);

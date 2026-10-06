@@ -10,6 +10,7 @@
 #include <neon/reflection/field-value.hpp>
 #include <neon/reflection/type-info.hpp>
 
+#include "ui-call.hpp"
 #include "ui-handle.hpp"
 
 namespace neon
@@ -33,6 +34,10 @@ namespace neon
     /// What the file the element is from calls itself.
     std::string document;
 
+    /// What the user interface knows that file as while it is shown: what
+    /// Load() and LoadOnto() returned. -1 for an element of no file.
+    int document_id = -1;
+
     /// The name of the surface the file is shown on: `window`, or what a
     /// surface in the world was called.
     std::string surface;
@@ -40,6 +45,12 @@ namespace neon
     /// The scene the element asks the game to change to, with
     /// `action: scene`. Empty for a click that asks for none.
     std::string scene;
+
+    /// The function the element names with `on_click`, with what it is
+    /// handed. A value of the user interface that was named is what it
+    /// held when the element was chosen, or nothing when there was none.
+    /// Empty for a click that calls nothing.
+    UiCall call;
   };
 
   /// The surface every application has: what the frame is drawn to, which

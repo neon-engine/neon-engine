@@ -33,6 +33,9 @@ namespace neon
     // the scene `action: scene` asks for, from the `scene` field
     std::string _scene;
 
+    // the function `on_click` names, with what it is handed
+    UiCall _on_click;
+
   public:
     /// It says when what it shows changed.
     [[nodiscard]] bool TellsWhenItChanged() const override;
@@ -60,6 +63,8 @@ namespace neon
     [[nodiscard]] bool ClosesItsFile() const override;
 
     [[nodiscard]] const std::string &AsksForScene() const override;
+
+    [[nodiscard]] const UiCall *CallsWhenClicked() const override;
 
     [[nodiscard]] bool WantsFocus() const override;
 
