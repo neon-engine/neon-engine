@@ -136,6 +136,7 @@ add_library(${TARGET} STATIC
 
         # common
         neon/common/data-buffer.hpp
+        neon/common/shared-ids.hpp
         neon/common/util.hpp
 
         # audio
@@ -293,6 +294,7 @@ add_library(${TARGET} STATIC
         neon/render/camera-info.hpp
         neon/render/render-target.hpp
         neon/render/render-info.hpp
+        neon/render/model-key.hpp
         neon/render/render-object-ref.hpp
         neon/render/texture-source.hpp
         neon/render/texture-source-kind.hpp
@@ -505,6 +507,7 @@ neon_add_unit_test(${TARGET} neon/command-line/display-options.test.cpp)
   neon_add_unit_test(${TARGET} neon/common/color-space.test.cpp)
   neon_add_unit_test(${TARGET} neon/common/data-buffer.test.cpp)
   neon_add_unit_test(${TARGET} neon/common/rotation.test.cpp)
+  neon_add_unit_test(${TARGET} neon/common/shared-ids.test.cpp)
   neon_add_unit_test(${TARGET} neon/common/transform.test.cpp)
   neon_add_unit_test(${TARGET} neon/common/util.test.cpp)
   neon_add_unit_test(${TARGET} neon/data/data-reader.test.cpp)
@@ -522,6 +525,7 @@ neon_add_unit_test(${TARGET} neon/command-line/display-options.test.cpp)
   neon_add_unit_test(${TARGET} neon/physics/model-geometry.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/forward-render-pipeline.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/model.test.cpp)
+  neon_add_unit_test(${TARGET} neon/render/model-key.test.cpp)
   neon_add_unit_test(${TARGET} neon/curves/bezier-path.test.cpp)
   neon_add_unit_test(${TARGET} neon/curves/cubic-bezier.test.cpp)
   neon_add_unit_test(${TARGET} neon/curves/hanging-curve.test.cpp)

@@ -1217,7 +1217,7 @@ namespace neon
     // material, so a shared material says it all, and a material that is
     // made names the textures it loads or shares at the level of debugging.
     _logger->Info(
-      "Created {} render objects: {} models were loaded and {} shared with objects that had them already; "
+      "Created {} render objects: {} models were loaded or built and {} shared with objects that had them already; "
       "{} materials were made and {} shared",
       _objects_created, model_loads, model_shares, material_makes, material_shares);
     _material_makes_reported = _materials.Makes();

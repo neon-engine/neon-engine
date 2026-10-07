@@ -28,6 +28,13 @@ namespace neon
     /// the physics may hold the same mesh.
     std::shared_ptr<const MeshData> mesh;
 
+    /// What `mesh` was built from, by its values, such as those of a
+    /// Geometry: render objects whose meshes have the same key share one
+    /// model, as those that name the same model file do, see ModelKey. Empty
+    /// for a mesh that is the entity's own, such as a rope's, which may
+    /// change and is never shared. A mesh with a key never changes.
+    std::string mesh_key;
+
     /// Counted up by whoever changes `mesh` after it was first drawn, a
     /// rope that moves or a tool that edits a level, so that the renderer
     /// is handed the mesh again. A mesh that keeps as many vertices and

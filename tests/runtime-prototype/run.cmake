@@ -179,9 +179,10 @@ elseif (CASE STREQUAL "the-kit-pieces-are-loaded-once")
   # every texture once, however many render objects draw them: the walls
   # share one wall.glb, and every piece of the kit shares its
   # colormap. One piece, what the walker looks like, is a shape the engine builds, and is no
-  # model. The numbers are those of prototype.scene.yml.
+  # model file: its mesh is built once, and counts as a model that was
+  # built. The numbers are those of prototype.scene.yml.
   # the 11 shared placements take a shared material too
-  expect_output("Created 21 render objects: 9 models were loaded and 11 shared")
+  expect_output("Created 21 render objects: 10 models were loaded or built and 11 shared")
   expect_output("10 materials were made and 11 shared")
   expect_output_count("Created render object [0-9]+ from assets://models/kit/wall.glb" 8)
   expect_output_count("Initializing texture from assets://models/kit/colormap.png" 1)

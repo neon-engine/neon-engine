@@ -1,5 +1,7 @@
 #include "vk-model-cache.hpp"
 
+#include <string>
+
 namespace neon
 {
   void VK_ModelCache::Initialize(
@@ -14,38 +16,27 @@ namespace neon
 
   int VK_ModelCache::Acquire(const RenderInfo &render_info)
   {
-    // a mesh that was built is drawn as it is, and is nobody else's
-    if (render_info.mesh != nullptr)
+    // a model that is held already is shared, whether it is a file or a
+    // mesh that was built from the same values
+    const std::optional<ModelKey> key = ModelKey::Of(render_info);
+    if (key.has_value())
     {
-      VK_Model model(render_info.mesh, _device, _logger);
-      if (!model.Initialize())
+      if (const int id = _shared.Take(*key); id >= 0)
       {
-        _logger->Error("Could not initialize model the mesh that was built");
-        return -1;
+        const int count = _shared.CountOf(id);
+        _logger->Debug("Model {} is shared, {} render objects draw it now", key->source, count);
+        return id;
       }
-
-      const int id = _models.Add(model);
-      if (id < 0)
-      {
-        _logger->Error("There is no room for another model");
-        model.CleanUp();
-      }
-      return id;
     }
 
-    const Key key{render_info.model_path, render_info.fit};
-    if (const auto it = _shared.find(key); it != _shared.end())
-    {
-      it->second.count++;
-      _shares++;
-      _logger->Debug("Model {} is shared, {} render objects draw it now", render_info.model_path, it->second.count);
-      return it->second.id;
-    }
-
-    VK_Model model(render_info.model_path, render_info.fit, _file_system_context, _device, _logger);
+    const bool is_built = render_info.mesh != nullptr;
+    VK_Model model = is_built
+                       ? VK_Model(render_info.mesh, _device, _logger)
+                       : VK_Model(render_info.model_path, render_info.fit, _file_system_context, _device, _logger);
     if (!model.Initialize())
     {
-      _logger->Error("Could not initialize model {}", render_info.model_path);
+      if (is_built) { _logger->Error("Could not initialize model the mesh that was built"); }
+      else { _logger->Error("Could not initialize model {}", render_info.model_path); }
       return -1;
     }
 
@@ -57,9 +48,11 @@ namespace neon
       return -1;
     }
 
-    _loads++;
-    _shared[key] = Shared{.id = id, .count = 1};
-    _keys[id] = key;
+    if (key.has_value())
+    {
+      _loads++;
+      _shared.Add(*key, id);
+    }
     return id;
   }
 
@@ -67,21 +60,27 @@ namespace neon
   {
     if (!_models.Contains(id)) { return; }
 
-    const auto key = _keys.find(id);
-    if (key == _keys.end())
+    // a mesh that was built without a key is its render object's alone
+    const ModelKey *key = _shared.KeyOf(id);
+    const std::string source = key != nullptr ? key->source : "the mesh that was built";
+    if (!_shared.Release(id)) { return; }
+
+    _logger->Debug("Model {} was freed, nothing draws it any more", source);
+    Free(id);
+  }
+
+  void VK_ModelCache::UpdateMesh(const int id, const MeshData &mesh)
+  {
+    if (!_models.Contains(id)) { return; }
+
+    // what others draw as well stays as it is
+    if (_shared.Contains(id))
     {
-      // a mesh that was built, which its render object alone drew
-      Free(id);
+      _logger->Error("Model {} is shared by its key, and its mesh is not changed", id);
       return;
     }
 
-    auto &shared = _shared[key->second];
-    if (--shared.count > 0) { return; }
-
-    _logger->Debug("Model {} was freed, nothing draws it any more", key->second.first);
-    _shared.erase(key->second);
-    _keys.erase(key);
-    Free(id);
+    _models[id].UpdateMesh(mesh);
   }
 
   void VK_ModelCache::Free(const int id)
@@ -95,7 +94,6 @@ namespace neon
     {
       if (_models.Contains(id)) { Free(id); }
     }
-    _shared.clear();
-    _keys.clear();
+    _shared.Clear();
   }
 } // neon

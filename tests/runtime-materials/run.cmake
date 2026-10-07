@@ -36,7 +36,7 @@ expect_image("shots/frame.png")
 
 # three render objects of one model, each with a material for every
 # material of the file
-expect_output("Created 3 render objects: 1 models were loaded and 2 shared")
+expect_output("Created 3 render objects: 1 models were loaded or built and 2 shared")
 expect_output("6 materials were made and 0 shared")
 
 # expect_pixel(<what> <x> <y> <red> <green> <blue>): the colour of a pixel,

@@ -2,13 +2,12 @@
 #define VK_MODEL_CACHE_HPP
 
 #include <cstddef>
-#include <map>
 #include <memory>
-#include <string>
-#include <utility>
 #include <neon/common/data-buffer.hpp>
+#include <neon/common/shared-ids.hpp>
 #include <neon/filesystem/file-system-context.hpp>
 #include <neon/logging/logger.hpp>
+#include <neon/render/model-key.hpp>
 #include <neon/render/render-info.hpp>
 
 #include "vk-device.hpp"
@@ -18,41 +17,30 @@ namespace neon
 {
   /// The models the render objects draw, held once each.
   ///
-  /// A model from a file is held once for every path and fit, however many
-  /// render objects draw it: the first one loads it, the others take a
-  /// reference, and it is freed when the last one releases it. A mesh that
-  /// was built at run time belongs to its render object alone, and is
-  /// neither looked up nor shared.
+  /// A model is held once for every ModelKey, however many render objects
+  /// draw it: a file by its path and fit, whatever its format, and a mesh
+  /// that was built by its key, the values it was built from. The first
+  /// render object loads or uploads it, the others take a reference, and it
+  /// is freed when the last one releases it. A mesh that was built without
+  /// a key belongs to its render object alone, and is neither looked up nor
+  /// shared.
   ///
   /// A model is known by an id that stays the same while it is held, which
   /// a render object keeps as its model id.
   // ReSharper disable once CppInconsistentNaming
   class VK_ModelCache
   {
-    /// What is known about a model from a file: where it is held, and how
-    /// many render objects hold it.
-    struct Shared
-    {
-      int id = -1;
-      int count = 0;
-    };
-
-    using Key = std::pair<std::string, ModelFit>;
-
     DataBuffer<VK_Model> _models;
-    std::map<Key, Shared> _shared;
 
-    // the key of every shared model by its id, for releasing
-    std::map<int, Key> _keys;
+    // which models are shared, by their keys
+    SharedIds<ModelKey> _shared;
 
     FileSystemContext *_file_system_context = nullptr;
     VK_Device *_device = nullptr;
     std::shared_ptr<Logger> _logger;
 
-    // how many models were read from a file, and how many times one that
-    // was read already was taken instead
+    // how many shared models were read from a file or uploaded from a mesh
     std::size_t _loads = 0;
-    std::size_t _shares = 0;
 
     /// Frees a model and forgets its id.
     void Free(int id);
@@ -77,21 +65,20 @@ namespace neon
 
     [[nodiscard]] const VK_Model &operator[](const int id) const { return _models[id]; }
 
-    /// Draws the model at `id`, which was made from a mesh, with `mesh`
-    /// from now on.
-    void UpdateMesh(const int id, const MeshData &mesh)
-    {
-      if (_models.Contains(id)) { _models[id].UpdateMesh(mesh); }
-    }
+    /// Draws the model at `id`, which was made from a mesh of its render
+    /// object's own, with `mesh` from now on. A shared model is never
+    /// changed, which is logged.
+    void UpdateMesh(int id, const MeshData &mesh);
 
     /// How many models are held.
     [[nodiscard]] int Size() const { return _models.Size(); }
 
-    /// How many models were read from a file since the cache was made.
+    /// How many shared models were read from a file or uploaded from a mesh
+    /// since the cache was made.
     [[nodiscard]] std::size_t Loads() const { return _loads; }
 
-    /// How many times a render object took a model that was read already.
-    [[nodiscard]] std::size_t Shares() const { return _shares; }
+    /// How many times a render object took a model that was held already.
+    [[nodiscard]] std::size_t Shares() const { return _shared.Shares(); }
   };
 } // neon
 
