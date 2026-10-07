@@ -7,9 +7,8 @@ entity:
   components:
     Transform:
       scale: 0.5
+    Geometry: Default
     Renderable:
-      model: assets://models/cube.obj
-      fit: unit
       shader: engine://shaders/basic-lit
       material:
         shininess: 16

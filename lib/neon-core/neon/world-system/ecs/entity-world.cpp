@@ -11,6 +11,7 @@
 #include "components/sky.hpp"
 #include "components/trigger.hpp"
 #include "components/spectator.hpp"
+#include "systems/geometry-building.hpp"
 #include "systems/pool-system.hpp"
 #include "systems/render-submission.hpp"
 #include "systems/spectator-movement.hpp"
@@ -34,6 +35,9 @@ namespace neon
     // the pools are filled before anything asks them for an instance
     _before.push_back(std::make_unique<PoolSystem>(this, logger));
     _placing.push_back(std::make_unique<TransformPropagation>());
+    // shapes are built right before they are handed over, so that an entity
+    // a system of the game spawned is drawn in the frame it appeared in
+    _after.push_back(std::make_unique<GeometryBuilding>(logger));
     _after.push_back(std::make_unique<RenderSubmission>(render_pipeline));
   }
 

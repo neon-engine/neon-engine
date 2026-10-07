@@ -23,9 +23,9 @@ namespace neon
   /// a scene places. The mesh goes with its key, see KeyOf(), so that the
   /// renderer draws them all as one model.
   ///
-  /// An application adds it to the world; it registers the component:
-  ///
-  ///     world.AddSystem(std::make_unique<neon::GeometryBuilding>(logger));
+  /// The world runs it itself, right before it hands what is visible to
+  /// the renderer, so that an entity spawned by a system of the game in a
+  /// frame is built and drawn in that frame. It registers the component.
   class GeometryBuilding final : public EntitySystem
   {
     std::shared_ptr<Logger> _logger;

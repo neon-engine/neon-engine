@@ -36,7 +36,6 @@
 #include <neon/world-system/ecs/scene-file/scene-file.hpp>
 #include <neon/world-system/ecs/systems/audio-playback.hpp>
 #include <neon/world-system/ecs/systems/extension-running.hpp>
-#include <neon/world-system/ecs/systems/geometry-building.hpp>
 #include <neon/world-system/ecs/systems/rope-drawing.hpp>
 #include <neon/world-system/ecs/systems/physics-simulation.hpp>
 #include <neon/world-system/ecs/systems/player-movement.hpp>
@@ -419,8 +418,6 @@ int main(const int argc, char *argv[])
   // frame, before anything was placed
   world.AddSystemAfterPlacing(
     std::make_unique<neon::AudioPlayback>(&audio_system, logging_system.CreateLogger("AudioPlayback")));
-  // shapes built from recipes, drawn in place of models and collided with
-  world.AddSystem(std::make_unique<neon::GeometryBuilding>(logging_system.CreateLogger("GeometryBuilding")));
   world.AddSystem(std::make_unique<neon::UiViewLoading>(&ui_system, logging_system.CreateLogger("UiViewLoading")));
   world.AddSystem(std::make_unique<neon::UiClock>(&ui_system));
   world.AddSystem(std::make_unique<neon::UiAudio>(&ui_system, &audio_system));

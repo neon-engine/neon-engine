@@ -20,6 +20,7 @@
 #include <neon/testing/recording-logger.hpp>
 
 #include "components/camera.hpp"
+#include "components/geometry.hpp"
 #include "components/light.hpp"
 #include "components/prefab.hpp"
 #include "components/renderable.hpp"
@@ -39,6 +40,7 @@ namespace
   using neon::EntityStore;
   using neon::EntitySystem;
   using neon::EntityWorld;
+  using neon::Geometry;
   using neon::Light;
   using neon::No_Entity;
   using neon::Persistent;
@@ -168,7 +170,7 @@ namespace
   {
     _world.Initialize();
 
-    for (const char *name : {"Transform", "Camera", "Light", "Spectator", "Player", "Renderable", "Persistent", "SceneExit"})
+    for (const char *name : {"Transform", "Camera", "Light", "Spectator", "Player", "Renderable", "Persistent", "SceneExit", "Geometry"})
     {
       EXPECT_NE(_store.FindComponent(name), No_Component) << name;
     }
@@ -718,6 +720,30 @@ namespace
     _world.Update();
 
     EXPECT_EQ(glm::vec3(drawn.world_coordinates[3]), glm::vec3(1.0f, 2.0f, 3.0f));
+  }
+
+  TEST_F(EntityWorldTest, DrawsTheGeometryOfAnEntityASystemOfTheGameSpawnedInTheSameFrame)
+  {
+    _world.AddSystem(std::make_unique<RecordingSystem>("game", &_calls, [](EntityStore &store, double)
+    {
+      if (store.FindEntity("crate") != No_Entity) { return; }
+
+      const Entity crate = store.CreateEntity("crate");
+      store.Set(crate, Transform{});
+      store.Set(crate, Geometry{});
+      store.Set(crate, Renderable{});
+    }));
+    _world.Initialize();
+
+    neon::RenderInfo created;
+    EXPECT_CALL(_pipeline, CreateRenderObject(_)).WillOnce(::testing::DoAll(::testing::SaveArg<0>(&created), Return(3)));
+    EXPECT_CALL(_pipeline, EnqueueForRendering(3, _));
+
+    _world.Update();
+
+    ASSERT_NE(created.mesh, nullptr);
+    EXPECT_FALSE(created.mesh->IsEmpty());
+    EXPECT_FALSE(created.mesh_key.empty());
   }
 
   TEST_F(EntityWorldTest, RendersTheFrameAfterEverythingWasHandedOver)

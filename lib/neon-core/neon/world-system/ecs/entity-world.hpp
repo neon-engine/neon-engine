@@ -25,7 +25,9 @@ namespace neon
   ///   4. placing every entity in the world
   ///   5. Interpolate of every system, which places what is drawn between
   ///      the last two steps
-  ///   6. handing the camera, the lights, and what is visible to the renderer
+  ///   6. building the meshes of entities with a Geometry that have none
+  ///      yet, then handing the camera, the lights, and what is visible to
+  ///      the renderer
   ///   7. the systems that were added with AddSystemAfterPlacing, in the
   ///      order they were added
   ///

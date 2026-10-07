@@ -76,7 +76,7 @@ A frame runs them in this order.
 | 3 | Systems a game added | In the order they were added. `ScriptRunning` is one of them: it runs the systems the scripts declare, see [scripting.md](scripting.md) |
 | 4 | `TransformPropagation` | Places every entity in the world, parents before children |
 | 5 | `Interpolate` of every system | Places what is drawn between the last two steps |
-| 6 | `RenderSubmission` | Hands the camera, the lights, and what is visible to the render pipeline |
+| 6 | `GeometryBuilding`, then `RenderSubmission` | Builds the mesh of every entity whose `Geometry` has none yet, see [geometry.md](geometry.md), so that what a system spawned is drawn in the same frame; then hands the camera, the lights, and what is visible to the render pipeline |
 
 A system that a game adds sees the input of the frame, and what it moves is
 drawn where it was moved to.

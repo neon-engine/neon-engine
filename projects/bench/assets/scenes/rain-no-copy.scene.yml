@@ -25,9 +25,8 @@ entities:
       Transform:
         position: [0, -0.5, 0]
         scale: [120, 1, 120]
+      Geometry: Default
       Renderable:
-        model: assets://models/cube.obj
-        fit: unit
         shader: engine://shaders/basic-lit
         material:
           shininess: 8
