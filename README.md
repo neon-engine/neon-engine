@@ -56,13 +56,28 @@ What the engine does today, and what is planned. Each part has a note under
 - [x] Shapes built from numbers: boxes, prisms, spheres, tubes along a curve ([geometry.md](./docs/geometry.md))
 - [x] Rendering without a window, for tests and screenshots
 - [x] Vertical sync, a frame limit, and window modes that change while the game runs
-- [ ] Shadows from point and spot lights, and soft shadows
-- [ ] Bloom, antialiasing, and upscalers
+- [ ] Shadows from point and spot lights, soft shadows, and contact shadows
+- [ ] Clustered forward lighting, for thousands of lights, and area lights
+- [ ] Ambient occlusion and screen-space reflections
+- [ ] Particles and visual effects, simulated on the graphics card
+- [ ] Decals
+- [ ] Bloom, antialiasing (TAA, MSAA, and FXAA), and upscalers
+- [ ] Quality settings for weak and strong computers: texture resolution from 1x down to 1/8x, anisotropic filtering, and the quality of shadows, lighting, and effects
 - [ ] Frustum and occlusion culling, instancing, and indirect draws
 - [ ] Skinned meshes and skeletal animation
-- [ ] Global illumination and baked lighting from the editor
+- [ ] Global illumination, voxel-based first and other kinds where they fit, and baked lighting from the editor
+- [ ] Hybrid rendering: hardware ray tracing alongside the rasterizer, for shadows, reflections, and light, with a fallback where there is none
+- [ ] Sky lights: ambient light and reflections taken from the sky
+- [ ] Volumetric fog and volumetric clouds, with shafts of light
 - [ ] A programmable rendering pipeline and compute shaders
 - [ ] Metal, WebGPU, and DirectX 12 renderers
+
+### Procedural generation
+
+- [ ] Terrain, with a level of detail that follows the camera and collision
+- [ ] Foliage scattered by rules, drawn instanced, and moved by wind
+- [ ] Textures from noise and patterns
+- [ ] Clouds shaped by noise and weather
 
 ### The world
 
