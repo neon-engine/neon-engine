@@ -200,7 +200,7 @@ namespace
     EXPECT_EQ(_renderer.current_target, No_Render_Target) << "and what follows is drawn into the frame again";
   }
 
-  TEST_F(UiSurfaceTest, DrawsEverySurfaceInEveryFrame)
+  TEST_F(UiSurfaceTest, DrawsASurfaceOnceWhileNothingChanges)
   {
     ShowTerminal();
     ShowHud();
@@ -209,12 +209,83 @@ namespace
     Frame();
     Frame();
 
-    EXPECT_EQ(_renderer.TargetOf("terminal")->begun, 3u);
-
-    // the two do not share a call: each is drawn to what it is shown on
-    EXPECT_EQ(_renderer.batches.size(), 1u);
+    // its image keeps what was drawn into it
+    EXPECT_EQ(_renderer.TargetOf("terminal")->begun, 1u);
     EXPECT_EQ(_renderer.TargetOf("terminal")->batches.size(), 1u);
-    EXPECT_EQ(_ui->GetDrawCalls(), 2u);
+    EXPECT_EQ(_ui->GetStatistics().surface_paints, 1u);
+  }
+
+  TEST_F(UiSurfaceTest, TheWindowIsHandedWhatWasKeptWithoutWhatIsOnASurface)
+  {
+    ShowTerminal();
+    ShowHud();
+    Frame();
+    const auto window = RecordingRenderer2D::QuadsOf(_renderer.batches);
+
+    Frame();
+
+    // the two do not share a call: each is drawn to what it is shown on,
+    // and the window alone is drawn again from what was kept
+    EXPECT_EQ(_renderer.batches.size(), 1u);
+    EXPECT_EQ(RecordingRenderer2D::QuadsOf(_renderer.batches).size(), window.size());
+    EXPECT_EQ(_ui->GetDrawCalls(), 1u);
+    EXPECT_EQ(_ui->GetStatistics().replays, 1u);
+  }
+
+  TEST_F(UiSurfaceTest, DrawsASurfaceAgainWhenWhatItShowsChanges)
+  {
+    ShowTerminal();
+    Frame();
+    Frame();
+
+    _ui->SetTextOf("terminal", "door", "open");
+    Frame();
+    Frame();
+
+    EXPECT_EQ(_renderer.TargetOf("terminal")->begun, 2u);
+  }
+
+  TEST_F(UiSurfaceTest, DrawsEverySurfaceAgainWhenAnythingChanges)
+  {
+    // a change anywhere draws every surface again, which costs a little
+    // where only one of them changed, and never misses one
+    ShowTerminal();
+    ShowHud();
+    Frame();
+
+    _ui->SetNumberOf("hud", "health", 50);
+    Frame();
+
+    EXPECT_EQ(_renderer.TargetOf("terminal")->begun, 2u);
+  }
+
+  TEST_F(UiSurfaceTest, ASurfaceThatCouldNotBeDrawnIntoIsDrawnIntoInTheNextFrame)
+  {
+    ShowTerminal();
+    _renderer.refuses_drawing_into_targets = true;
+    Frame();
+    EXPECT_EQ(_renderer.TargetOf("terminal")->begun, 0u);
+
+    _renderer.refuses_drawing_into_targets = false;
+    Frame();
+
+    EXPECT_EQ(_renderer.TargetOf("terminal")->begun, 1u);
+    EXPECT_FALSE(_renderer.TargetOf("terminal")->batches.empty());
+  }
+
+  TEST_F(UiSurfaceTest, ASurfaceMadeWhileNothingChangesIsDrawnInto)
+  {
+    ShowTerminal();
+    Frame();
+    Frame();
+
+    const int second = _ui->CreateSurface("monitor", 200, 100);
+    ASSERT_NE(second, No_Ui_Surface);
+    ASSERT_GE(_ui->LoadOnto(second, "assets://ui/terminal.ui.yml"), 0) << _logger->Messages(LogLevel::Error);
+    Frame();
+    Frame();
+
+    EXPECT_EQ(_renderer.TargetOf("monitor")->begun, 1u);
   }
 
   TEST_F(UiSurfaceTest, ASurfaceWithoutAUserInterfaceIsNotDrawnTo)

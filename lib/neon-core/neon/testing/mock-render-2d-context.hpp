@@ -269,6 +269,9 @@ namespace neon::testing
     std::vector<std::string> broken_shaders;
     std::vector<std::string> refused_targets;
 
+    /// Makes BeginRenderTarget() fail, as of a frame that is not drawn.
+    bool refuses_drawing_into_targets = false;
+
     /// The shaders that were asked for, in the order they were asked for.
     /// A material is known by its place in here.
     std::vector<std::string> materials;
@@ -367,7 +370,10 @@ namespace neon::testing
     bool BeginRenderTarget(const int target, const Color &clear) override
     {
       const auto found = targets.find(target);
-      if (found == targets.end() || current_target != No_Render_Target) { return false; }
+      if (refuses_drawing_into_targets || found == targets.end() || current_target != No_Render_Target)
+      {
+        return false;
+      }
 
       found->second.begun++;
       found->second.clear = clear;

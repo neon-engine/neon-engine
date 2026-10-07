@@ -213,7 +213,7 @@ left:
 | A keyboard on the screen (#158) | For typing with a controller: moved over with the D-pad and stick, made from a `*.ui.yml` file, and the platform's own keyboard where there is one |
 | WebP, colour emoji, variable fonts, fonts as several distances (#76) | Each needs a library, or a font to try it with |
 | `filter`, `backdrop_filter`, opacity of a group (#76) | Built from render targets, which are there |
-| Surfaces that are drawn when something changed | Every surface is drawn in every frame |
+| Surfaces that are drawn when something changed | Done (#431): drawn when anything in the user interface changed; only those whose own user interface changed, later |
 | A ray that finds where the player points on a screen in the world (#73) | Done. The ray meets the square of the entity, and needs no collider |
 
 This is separate from the interface of the editor, which uses Dear ImGui.

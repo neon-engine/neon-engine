@@ -71,6 +71,11 @@ namespace neon
     /// the frame before was handed to the renderer again.
     std::size_t paints = 0;
     std::size_t replays = 0;
+
+    /// How often a surface in the world was drawn into its image. An image
+    /// keeps what was drawn into it, so a surface is drawn again only when
+    /// something changed.
+    std::size_t surface_paints = 0;
   };
 
   /// What an application decides about its user interface.
@@ -485,6 +490,10 @@ namespace neon
       float scale = 1.0f;
 
       int target = No_Render_Target;
+
+      // whether its image has to be drawn though nothing changed: it is
+      // new, or it could not be drawn into when something did
+      bool needs_paint = true;
 
       // where the player points, as the game says. The window is told by
       // the input

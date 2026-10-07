@@ -991,30 +991,17 @@ namespace neon
     const auto [width, height] = _renderer->GetRenderResolution();
     if (width != _painted_width || height != _painted_height) { _needs_paint = true; }
 
-    // A surface in the world is drawn into its image in every frame. What
-    // was drawn the frame before is kept for the window alone.
-    const bool has_surfaces = std::ranges::any_of(_documents, [](const auto &document)
-    {
-      return document->surface != Ui_Window_Surface;
-    });
-
     // What was drawn the frame before is what is drawn now, when nothing
-    // changed. The renderer is handed it again, and nothing is built.
-    if (!_needs_paint && _always_painting == 0 && !has_surfaces)
-    {
-      _statistics.replays++;
-      _draw_calls = _draw_cache.Replay();
-      return;
-    }
-
-    _painted_width = width;
-    _painted_height = height;
+    // changed: an image of a surface in the world keeps what was drawn
+    // into it, and the window is handed what was kept again, so that
+    // nothing is built. A surface is drawn into again only when something
+    // changed, which also spares the renderer making the smaller copies
+    // of its image again (#431).
+    const bool changed = _needs_paint || _always_painting > 0;
     _needs_paint = false;
-    _statistics.paints++;
 
     _draw_calls = 0;
     _quads = 0;
-    _draw_cache.Begin();
 
     // The surfaces in the world first, each into its image, so that they
     // are finished when the frame is, which shows them.
@@ -1022,7 +1009,8 @@ namespace neon
     {
       if (_surfaces[i] == nullptr) { continue; }
 
-      const Surface &surface = *_surfaces[i];
+      Surface &surface = *_surfaces[i];
+      if (!changed && !surface.needs_paint) { continue; }
 
       const bool is_shown = std::ranges::any_of(_documents, [&surface](const auto &document)
       {
@@ -1031,22 +1019,44 @@ namespace neon
       if (!is_shown) { continue; }
 
       // see-through where nothing is drawn, so that what shows the
-      // surface decides what is behind it
-      if (!_renderer->BeginRenderTarget(surface.target, {0.0f, 0.0f, 0.0f, 0.0f})) { continue; }
+      // surface decides what is behind it. What cannot be drawn into now
+      // is drawn into in the next frame
+      if (!_renderer->BeginRenderTarget(surface.target, {0.0f, 0.0f, 0.0f, 0.0f}))
+      {
+        surface.needs_paint = true;
+        continue;
+      }
 
       Paint(surface);
       _renderer->EndRenderTarget();
+      surface.needs_paint = false;
+      _statistics.surface_paints++;
     }
 
-    Paint(*_surfaces[Ui_Window_Surface]);
-    _draw_cache.End();
+    if (changed)
+    {
+      _painted_width = width;
+      _painted_height = height;
+      _statistics.paints++;
+
+      // what the window is drawn with is kept alone, since what is drawn
+      // into a surface stays in its image
+      _draw_cache.Begin();
+      Paint(*_surfaces[Ui_Window_Surface]);
+      _draw_cache.End();
+    } else
+    {
+      _statistics.replays++;
+      _draw_calls += _draw_cache.Replay();
+    }
 
     // an image of shapes that is asked for at a new size is drawn once it
     // has been asked for in a few frames in a row, which takes frames
     if (_resources.IsSettling()) { _needs_paint = true; }
 
-    // said when it changes, and not in every frame
-    if (_draw_calls != _reported_draw_calls)
+    // said when it changes, and not in every frame; a frame that hands
+    // the window what was kept says nothing new
+    if (changed && _draw_calls != _reported_draw_calls)
     {
       _reported_draw_calls = _draw_calls;
       _logger->Debug("The user interface is drawn with {} draw calls and {} rectangles", _draw_calls, _quads);

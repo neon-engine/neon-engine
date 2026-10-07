@@ -1191,7 +1191,7 @@ monitor, look at Unlock, press.
 | A target that is made after the model that shows it | The model shows plain white until the frame after the target was made |
 | A target that is destroyed | Is released once the frame that may show it is finished. Models that show it show plain white from then on |
 | Without a window | The same |
-| Every surface is drawn in every frame | Whether something changed or not. See [left for later](#left-for-later) |
+| A surface is drawn when something changed | Its image keeps what was drawn into it, so a frame in which nothing in the user interface changed draws into no surface, and the renderer makes no smaller copies. A change anywhere draws every surface again; one that is new, or could not be drawn into, is drawn in the next frame whatever changed. See [left for later](#left-for-later) |
 
 ## Scrolling
 
@@ -1918,7 +1918,7 @@ anything changed; drawing only what changed is left for later.
 | Shaping | `UiTextMeasure` is the seam. Kerning, ligatures, and right to left are the work of a shaper behind it |
 | Localisation | Text by key, and fonts for other scripts |
 | Rich text | Several styles in one text |
-| Surfaces that are drawn when something changed | Every surface is drawn in every frame. What decides whether a user interface has changed is the work of another branch |
+| Surfaces that are drawn when what is on them changed | A surface is drawn when anything in the user interface changed (#431). Drawing only the surfaces whose own user interfaces changed needs every change to say which document it belongs to |
 | A ray that finds where the player points on a screen in the world | Done, without the physics: the ray meets the square of the entity. See [pointing](#pointing-at-a-screen-in-the-world) |
 | Atlases of TexturePacker and Aseprite | See [atlases](#atlases) |
 | `filter` and `backdrop_filter` | Both need what is behind an element, or the element itself, as an image of its own. Render targets are what they would be built from |
