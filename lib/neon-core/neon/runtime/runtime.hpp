@@ -1,11 +1,15 @@
 #ifndef RUNTIME_HPP
 #define RUNTIME_HPP
 
+#include <memory>
+
 #include "settings-config.hpp"
 #include "neon/audio/audio-context.hpp"
 #include "neon/input/input-system.hpp"
 #include "neon/logging/logging-system.hpp"
 #include "neon/random/entropy-context.hpp"
+#include "neon/runtime/graphics-menu.hpp"
+#include "neon/settings/player-settings.hpp"
 #include "neon/world-system/world-system.hpp"
 #include "neon/render/render-pipeline.hpp"
 #include "neon/render/render-system.hpp"
@@ -37,6 +41,11 @@ namespace neon
 
     // the settings menu while the pause menu has it shown in its place
     int _settings_document = -1;
+
+    // what the player chose is kept there, and the graphics of the settings
+    // menu, made when it is first shown
+    PlayerSettings *_player_settings = nullptr;
+    std::unique_ptr<GraphicsMenu> _graphics_menu;
 
     /// Shows the pause menu when pause is pressed, takes it away when
     /// resume is chosen, closes the window on quit, opens the settings menu
@@ -88,6 +97,11 @@ namespace neon
     /// game are held while a menu holds the world still. Without it the
     /// sounds play on.
     void SetAudio(AudioContext *audio_context);
+
+    /// Gives the runtime where what the player chose in the settings menu is
+    /// kept. Without it the graphics of the menu still change while the game
+    /// runs, and nothing is kept for the next start.
+    void SetPlayerSettings(PlayerSettings *player_settings);
 
     virtual void Run();
 

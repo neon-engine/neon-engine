@@ -85,6 +85,11 @@ namespace neon
 
     void CleanUp();
 
+    /// Maps every scene image through `tonemapper` at `exposure` from the
+    /// next resolve on. The frames do not overlap, so nothing reads the
+    /// settings while they are written. Returns false before Initialize().
+    bool SetTonemapping(Tonemapper tonemapper, float exposure) const;
+
     /// What the resolve reads a scene image through. VK_NULL_HANDLE when
     /// there is no room for another.
     [[nodiscard]] VkDescriptorSet Keep(VkImageView scene_view) const;

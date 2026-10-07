@@ -21,6 +21,7 @@
 #include <neon/project/project-file.hpp>
 #include <neon/random/os-entropy.hpp>
 #include <neon/scripting/lua-script-system.hpp>
+#include <neon/settings/player-settings.hpp>
 #include <neon/settings/settings-file.hpp>
 #include <neon/layout/flex-layout-engine.hpp>
 #include <neon/render/forward-render-pipeline.hpp>
@@ -499,6 +500,10 @@ int main(const int argc, char *argv[])
   app.SetEntropy(&entropy);
   // the sounds that pause with the game are held while a menu is shown
   app.SetAudio(&audio_system);
+
+  // what the player chooses in the settings menu is kept for the next start
+  neon::PlayerSettings player_settings(&file_system, &yaml, logging_system.CreateLogger("PlayerSettings"));
+  app.SetPlayerSettings(&player_settings);
 
   // a script that starts the runtime learns from the exit code whether the
   // run did what it was asked to

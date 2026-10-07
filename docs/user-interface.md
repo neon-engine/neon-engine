@@ -1461,6 +1461,27 @@ there to use it, and its buttons Back and Apply close it with
 shows the cursor while it is shown, and the game has the mouse back once it
 is closed, so a menu that takes the mouse writes `modal: true`.
 
+#### The graphics of the settings menu
+
+Every graphics setting the engine has is a value of the user interface,
+named as the setting is, which a row of the settings menu follows (#356):
+`window_mode`, `vsync`, `max_fps`, `anisotropy`, `texture_scale`,
+`target_scale`, `target_mipmaps`, `shadow_cascades`, `shadow_distance`,
+`tonemapper`, and `exposure`. The runtime, through `GraphicsMenu`, does the
+rest; a project that brings a settings menu of its own gets the same by
+naming its elements' values so.
+
+| When | What happens |
+|---|---|
+| The menu is shown | The values are set to the graphics as they are, so the menu shows what holds |
+| A value changes | It takes effect at once, through the renderer and the window. One that cannot be taken is logged once, and nothing is kept of it |
+| Apply | What changed since the menu was shown is written to `user://settings.yml`, on top of what the file held, and is read at the next start |
+| Back, or cancel | What changed is put back as it was |
+
+The size of the textures and of what a camera draws into holds for what is
+read and made from then on, which is the scene loaded next. Without a window
+there is no screen to wait for, so V-Sync shows off.
+
 ### Which device the player uses
 
 The user interface sets two values on the window from what the player

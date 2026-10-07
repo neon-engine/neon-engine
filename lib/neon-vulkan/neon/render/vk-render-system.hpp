@@ -400,6 +400,18 @@ namespace neon
 
     [[nodiscard]] int GetTargetMipmaps() override;
 
+    bool SetTonemapping(Tonemapper tonemapper, double exposure) override;
+
+    [[nodiscard]] Tonemapper GetTonemapper() override;
+
+    [[nodiscard]] double GetExposure() override;
+
+    bool SetShadows(double distance, int cascades) override;
+
+    [[nodiscard]] double GetShadowDistance() override;
+
+    [[nodiscard]] int GetShadowCascades() override;
+
     void SetShaderTime(double seconds, double delta) override;
 
     bool SetShaderNumbers(int place, const glm::vec4 &numbers) override;

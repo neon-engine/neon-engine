@@ -12,7 +12,7 @@ before. A layer only changes what it writes down.
 |---|---|---|
 | 1 | The defaults in `SettingsConfig` | The engine |
 | 2 | `assets://settings.yml` | The author of the project. It ships with the game |
-| 3 | `user://settings.yml` | The player, through a settings menu. Not written by anything yet |
+| 3 | `user://settings.yml` | The player, through a settings menu: the graphics of the runtime's menu are written there with Apply, see `PlayerSettings` |
 | 4 | The command line | Whoever starts the runtime, see [command-line.md](command-line.md) |
 
 The command line is applied twice: once before the file system comes up,
@@ -125,6 +125,8 @@ by a file a menu wrote.
 |---|---|---|
 | `SettingsConfig` | neon-core, `neon/runtime/settings-config.hpp` | Every setting, with its default |
 | `SettingsFile` | neon-core, `neon/settings/settings-file.hpp` | Reads one file on top of a `SettingsConfig` through the file system and a `DocumentFormat`, checks it, and collects every problem |
+| `PlayerSettings` | neon-core, `neon/settings/player-settings.hpp` | Writes what a settings menu changed to `user://settings.yml`, keeping what the file held already |
+| `GraphicsMenu` | neon-core, `neon/runtime/graphics-menu.hpp` | The graphics of the runtime's settings menu: shows them, changes them, and keeps or puts them back |
 | `RuntimeOptions`, `DisplayOptions` | neon-core, `neon/command-line/` | The command line, layer 4 |
 | `main.cpp` | NeonRuntime | Reads the layers in order |
 
@@ -133,10 +135,10 @@ runtime read as it is in the repository.
 
 ## Open questions
 
-- **A settings menu that writes layer 3** (#125 follow-up): the menu of
-  `settings.ui.yml` changes volumes today and keeps nothing. Writing
-  `user://settings.yml` needs `DocumentFormat::Write` on the values that
-  changed. The volumes of the sound groups are settings now, `audio.volumes`,
+- **The volumes in layer 3** (#125 follow-up): the menu of `settings.ui.yml`
+  writes the graphics to `user://settings.yml` with Apply (#356), through
+  `PlayerSettings`, but not the volumes yet, which it changes and keeps
+  nothing of. The volumes of the sound groups are settings, `audio.volumes`,
   and the menu's sliders start at the values of its file, not at them.
 - **The renderer as a setting**: `--window-size`, `--window-mode`,
   `--ui-scale`, and `--vulkan-version` have a place here now, and the

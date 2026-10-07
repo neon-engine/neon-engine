@@ -15,6 +15,7 @@
 #include "render-target-options.hpp"
 #include "sky-info.hpp"
 #include "texture-source.hpp"
+#include "tonemapper.hpp"
 
 
 namespace neon
@@ -210,6 +211,27 @@ namespace neon
     virtual bool SetTargetMipmaps(int mipmaps) { return false; }
 
     [[nodiscard]] virtual int GetTargetMipmaps() { return 0; }
+
+    /// The curve light brighter than white is mapped through, and how
+    /// bright the scene is taken to be before it, while the application
+    /// runs, from the next frame on. Returns false for an exposure that is
+    /// not above 0, or a renderer that cannot change them.
+    virtual bool SetTonemapping(Tonemapper tonemapper, double exposure) { return false; }
+
+    [[nodiscard]] virtual Tonemapper GetTonemapper() { return Tonemapper::None; }
+
+    [[nodiscard]] virtual double GetExposure() { return 1.0; }
+
+    /// How far the shadow of the direction light reaches, in meters, and
+    /// how many cascades its map has, 1 to 4, while the application runs,
+    /// from the next frame on. Returns false for a distance that is not
+    /// above 0 or a number of cascades out of range, or a renderer that
+    /// cannot change them.
+    virtual bool SetShadows(double distance, int cascades) { return false; }
+
+    [[nodiscard]] virtual double GetShadowDistance() { return 0.0; }
+
+    [[nodiscard]] virtual int GetShadowCascades() { return 0; }
 
     /// How many places there are for numbers of a game that every shader
     /// reads, see SetShaderNumbers().

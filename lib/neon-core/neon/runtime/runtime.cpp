@@ -45,6 +45,11 @@ namespace neon
     _audio_context = audio_context;
   }
 
+  void Runtime::SetPlayerSettings(PlayerSettings *player_settings)
+  {
+    _player_settings = player_settings;
+  }
+
   void Runtime::Initialize() const
   {
     // order here matters
@@ -96,9 +101,15 @@ namespace neon
     // and then the pause menu is back, as it was before settings was chosen
     if (_settings_document >= 0 && !_ui_system->IsShown(_settings_document))
     {
+      // what the player changed is kept with Apply, and put back otherwise
+      if (_graphics_menu != nullptr) { _graphics_menu->Close(_ui_system->WasClicked("apply")); }
+
       _settings_document = -1;
       ShowPauseMenu();
     }
+
+    // what the player changes in the menu takes effect at once
+    if (_settings_document >= 0 && _graphics_menu != nullptr) { _graphics_menu->Update(); }
 
     // the menu closes itself as well: on cancel, as its file says
     const bool was_shown = _pause_document >= 0 || _settings_document >= 0;
@@ -125,6 +136,15 @@ namespace neon
         {
           _logger->Error("The settings menu {} cannot be shown", _settings_config.settings_menu);
           ShowPauseMenu();
+        } else
+        {
+          // the menu shows the graphics as they are
+          if (_graphics_menu == nullptr)
+          {
+            _graphics_menu = std::make_unique<GraphicsMenu>(
+              _ui_system, _render_system, _window_system, _player_settings, _logger);
+          }
+          _graphics_menu->Open();
         }
       }
     }

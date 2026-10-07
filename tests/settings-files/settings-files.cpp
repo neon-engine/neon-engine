@@ -13,6 +13,7 @@
 #include <gtest/gtest.h>
 
 #include <neon/data/ryml-document-format.hpp>
+#include <neon/settings/player-settings.hpp>
 #include <neon/settings/settings-file.hpp>
 #include <neon/testing/memory-file-system.hpp>
 #include <neon/testing/recording-logger.hpp>
@@ -26,6 +27,8 @@ namespace
   using neon::Tonemapper;
   using neon::testing::LogLevel;
   using neon::testing::MemoryFileSystem;
+  using neon::DataValue;
+  using neon::PlayerSettings;
   using neon::testing::RecordingLogger;
   using ::testing::HasSubstr;
   using ::testing::IsEmpty;
@@ -435,6 +438,70 @@ namespace
     EXPECT_FALSE(ReadOfTheProject());
     ASSERT_EQ(_errors.size(), 1u) << ::testing::PrintToString(_errors);
     EXPECT_THAT(_errors.front(), HasSubstr("'target_mipmaps'"));
+  }
+
+  // what a settings menu keeps for the player
+
+  TEST_F(SettingsFilesTest, KeepsWhatThePlayerChoseForTheNextStart)
+  {
+    PlayerSettings player(&_files, &_yaml, _logger);
+    player.Set("rendering", "vsync", DataValue::Bool(false));
+    player.Set("rendering", "anisotropy", DataValue::Number(4));
+    player.Set("window", "mode", DataValue::Text("windowed"));
+    ASSERT_TRUE(player.Write()) << _logger->Messages(LogLevel::Error);
+
+    ASSERT_TRUE(ReadOfThePlayer()) << ::testing::PrintToString(_errors);
+    EXPECT_TRUE(_found);
+    EXPECT_FALSE(_settings.vertical_sync);
+    EXPECT_EQ(_settings.anisotropy, 4);
+    EXPECT_EQ(_settings.window_mode, WindowMode::Windowed);
+  }
+
+  TEST_F(SettingsFilesTest, KeepsWhatThePlayersFileHeldAlready)
+  {
+    WriteOfThePlayer("version: 1\naudio:\n  volumes:\n    music: 0.25\nrendering:\n  exposure: 2\n");
+
+    PlayerSettings player(&_files, &_yaml, _logger);
+    player.Set("rendering", "vsync", DataValue::Bool(false));
+    ASSERT_TRUE(player.Write());
+
+    ASSERT_TRUE(ReadOfThePlayer()) << ::testing::PrintToString(_errors);
+    EXPECT_FALSE(_settings.vertical_sync);
+    EXPECT_DOUBLE_EQ(_settings.exposure, 2.0);
+    EXPECT_FLOAT_EQ(VolumeOf("music"), 0.25f);
+  }
+
+  TEST_F(SettingsFilesTest, AChoiceThatIsMadeAgainReplacesTheOneBefore)
+  {
+    PlayerSettings player(&_files, &_yaml, _logger);
+    player.Set("rendering", "anisotropy", DataValue::Number(4));
+    player.Set("rendering", "anisotropy", DataValue::Number(16));
+    ASSERT_TRUE(player.Write());
+
+    ASSERT_TRUE(ReadOfThePlayer()) << ::testing::PrintToString(_errors);
+    EXPECT_EQ(_settings.anisotropy, 16);
+  }
+
+  TEST_F(SettingsFilesTest, WritesNothingWhenNothingWasChosen)
+  {
+    PlayerSettings player(&_files, &_yaml, _logger);
+
+    EXPECT_FALSE(player.HasChanges());
+    EXPECT_TRUE(player.Write());
+    EXPECT_FALSE(_files.Exists(std::string(SettingsFile::of_the_player)));
+  }
+
+  TEST_F(SettingsFilesTest, WritesTheFileOfThePlayerAnewWhenItCannotBeRead)
+  {
+    WriteOfThePlayer("rendering: [not, a, map\n");
+
+    PlayerSettings player(&_files, &_yaml, _logger);
+    player.Set("rendering", "vsync", DataValue::Bool(false));
+    ASSERT_TRUE(player.Write());
+
+    ASSERT_TRUE(ReadOfThePlayer()) << ::testing::PrintToString(_errors);
+    EXPECT_FALSE(_settings.vertical_sync);
+    EXPECT_TRUE(_logger->Contains(LogLevel::Warn, "cannot be read, and are written anew"));
   }
 
   TEST_F(SettingsFilesTest, RefusesATonemapperItDoesNotKnow)

@@ -39,7 +39,7 @@ if (CASE STREQUAL "window-size-and-render-scale")
   run_headless(--frames 2 --output-dir shots --screenshot output://frame.png --window-size 640x360 --render-scale 2
           --ui assets://ui/hud.ui.yml)
 elseif (CASE STREQUAL "settings-menu-with-input")
-  # a name is typed, and the dropdown of the quality is opened. The steps
+  # a name is typed, and the dropdown of the window mode is opened. The steps
   # are on lines of their own, since a semicolon is a list to CMake
   set(SCRIPT "20: pointer 1000 321\n21: click\n23: text Lovelace\n30: pointer 1000 439\n31: click")
   run_headless(--output-dir shots --screenshot output://frame.png --screenshot-at 20,40

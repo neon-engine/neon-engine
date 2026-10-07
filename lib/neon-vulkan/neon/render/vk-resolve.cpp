@@ -24,25 +24,19 @@ namespace neon
     _shader = VK_Shader(kShader_Path, file_system_context, _device, _logger);
     if (!_shader.Initialize()) { return false; }
 
-    // the settings of the run, written once and read by every resolve
-    const Data data{
-      .tonemapper = static_cast<float>(tonemapper),
-      .exposure = exposure,
-    };
-    void *mapped = nullptr;
+    // the settings of the run, read by every resolve, and written again
+    // when a menu changes them
     if (!_device->CreateBuffer(
           sizeof(Data),
           VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
           VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
           _data_buffer,
           _data_memory) ||
-        vkMapMemory(vk_device, _data_memory, 0, sizeof(Data), 0, &mapped) != VK_SUCCESS)
+        !SetTonemapping(tonemapper, exposure))
     {
       _logger->Critical("Could not hand the settings of the resolve step to the graphics card");
       return false;
     }
-    std::memcpy(mapped, &data, sizeof(Data));
-    vkUnmapMemory(vk_device, _data_memory);
 
     VkDescriptorSetLayoutCreateInfo layout{};
     layout.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -151,6 +145,21 @@ namespace neon
       _logger->Critical("Could not create the pipeline of the resolve step");
       return false;
     }
+    return true;
+  }
+
+  bool VK_Resolve::SetTonemapping(const Tonemapper tonemapper, const float exposure) const
+  {
+    if (_device == nullptr || _data_memory == VK_NULL_HANDLE) { return false; }
+
+    const Data data{
+      .tonemapper = static_cast<float>(tonemapper),
+      .exposure = exposure,
+    };
+    void *mapped = nullptr;
+    if (vkMapMemory(_device->Device(), _data_memory, 0, sizeof(Data), 0, &mapped) != VK_SUCCESS) { return false; }
+    std::memcpy(mapped, &data, sizeof(Data));
+    vkUnmapMemory(_device->Device(), _data_memory);
     return true;
   }
 

@@ -25,13 +25,23 @@ styles:
 
 values:
   player_name: Ada
-  fullscreen: false
   vsync: true
   volume: 80
   music: 60
   ambience: 50
   track: chilled
-  quality: high
+  # the graphics, as the engine starts them; the runtime sets them to what
+  # holds when it shows the menu
+  window_mode: windowed
+  max_fps: "0"
+  anisotropy: "8"
+  texture_scale: "1"
+  target_scale: "1"
+  target_mipmaps: "0"
+  shadow_cascades: "4"
+  shadow_distance: 120
+  tonemapper: none
+  exposure: 1
   difficulty: normal
   notes: ""
 
@@ -70,21 +80,208 @@ root:
                 - type: panel
                   class: choices
                   children:
-                    - {type: checkbox, name: fullscreen, text: Full screen, checked: "{fullscreen}"}
                     - {type: toggle, name: vsync, text: V-Sync, checked: "{vsync}"}
+
+            # The graphics, each a setting of the engine: the runtime shows them
+            # as they are when the menu opens, changes them as they are chosen,
+            # keeps them in user://settings.yml with Apply, and puts them back
+            # with Back, see GraphicsMenu. The size of the textures and of the
+            # camera pictures holds for the scene that is loaded next
+            - type: panel
+              class: row
+              children:
+                - type: label
+                  class: row-label
+                  text: Window
+                - type: select
+                  name: window_mode
+                  value: "{window_mode}"
+                  options:
+                    - value: "windowed"
+                      text: Windowed
+                    - value: "borderless"
+                      text: Borderless
+                    - value: "fullscreen"
+                      text: Full screen
 
             - type: panel
               class: row
               children:
-                - {type: label, class: row-label, text: Quality}
+                - type: label
+                  class: row-label
+                  text: Frame limit
                 - type: select
-                  name: quality
-                  value: "{quality}"
+                  name: max_fps
+                  value: "{max_fps}"
                   options:
-                    - {value: low, text: Low}
-                    - {value: medium, text: Medium}
-                    - {value: high, text: High}
-                    - {value: ultra, text: Ultra}
+                    - value: "0"
+                      text: None
+                    - value: "30"
+                      text: 30
+                    - value: "60"
+                      text: 60
+                    - value: "120"
+                      text: 120
+                    - value: "144"
+                      text: 144
+                    - value: "240"
+                      text: 240
+
+            # anisotropic filtering: samples a texture is read with from the side
+            - type: panel
+              class: row
+              children:
+                - type: label
+                  class: row-label
+                  text: Texture filtering
+                - type: select
+                  name: anisotropy
+                  value: "{anisotropy}"
+                  options:
+                    - value: "1"
+                      text: Off
+                    - value: "2"
+                      text: 2x
+                    - value: "4"
+                      text: 4x
+                    - value: "8"
+                      text: 8x
+                    - value: "16"
+                      text: 16x
+
+            - type: panel
+              class: row
+              children:
+                - type: label
+                  class: row-label
+                  text: Texture size
+                - type: select
+                  name: texture_scale
+                  value: "{texture_scale}"
+                  options:
+                    - value: "1"
+                      text: Full
+                    - value: "0.5"
+                      text: Half
+                    - value: "0.25"
+                      text: Quarter
+                    - value: "0.125"
+                      text: Eighth
+
+            # what a camera draws into a texture: its size, and its smaller copies
+            - type: panel
+              class: row
+              children:
+                - type: label
+                  class: row-label
+                  text: Camera pictures
+                - type: select
+                  name: target_scale
+                  value: "{target_scale}"
+                  options:
+                    - value: "1"
+                      text: Full
+                    - value: "0.5"
+                      text: Half
+                    - value: "0.25"
+                      text: Quarter
+
+            - type: panel
+              class: row
+              children:
+                - type: label
+                  class: row-label
+                  text: Camera detail
+                - type: select
+                  name: target_mipmaps
+                  value: "{target_mipmaps}"
+                  options:
+                    - value: "0"
+                      text: All
+                    - value: "8"
+                      text: 8 levels
+                    - value: "4"
+                      text: 4 levels
+                    - value: "2"
+                      text: 2 levels
+                    - value: "1"
+                      text: None
+
+            # the cascades of the shadow map, and how far its shadows reach
+            - type: panel
+              class: row
+              children:
+                - type: label
+                  class: row-label
+                  text: Shadows
+                - type: select
+                  name: shadow_cascades
+                  value: "{shadow_cascades}"
+                  options:
+                    - value: "1"
+                      text: Low
+                    - value: "2"
+                      text: Medium
+                    - value: "3"
+                      text: High
+                    - value: "4"
+                      text: Ultra
+
+            - type: panel
+              class: row
+              children:
+                - type: label
+                  class: row-label
+                  text: Shadow distance
+                - type: panel
+                  class: with-value
+                  children:
+                    - type: slider
+                      name: shadow_distance
+                      min: 20
+                      max: 300
+                      step: 10
+                      value: "{shadow_distance}"
+                    - type: label
+                      class: value
+                      text: "{shadow_distance} m"
+
+            # the curve light brighter than white goes through, and the brightness
+            - type: panel
+              class: row
+              children:
+                - type: label
+                  class: row-label
+                  text: Tone mapping
+                - type: select
+                  name: tonemapper
+                  value: "{tonemapper}"
+                  options:
+                    - value: "none"
+                      text: None
+                    - value: "aces"
+                      text: ACES
+                    - value: "agx"
+                      text: AgX
+
+            - type: panel
+              class: row
+              children:
+                - type: label
+                  class: row-label
+                  text: Exposure
+                - type: panel
+                  class: with-value
+                  children:
+                    - type: slider
+                      name: exposure
+                      min: 0.25
+                      max: 4
+                      step: 0.25
+                      value: "{exposure}"
+                    - type: label
+                      class: value
+                      text: "{exposure}"
 
             - type: panel
               class: row

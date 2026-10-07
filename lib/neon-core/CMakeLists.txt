@@ -67,6 +67,8 @@ add_library(${TARGET} STATIC
         # runtime
         neon/runtime/runtime.cpp
         neon/runtime/runtime.hpp
+        neon/runtime/graphics-menu.cpp
+        neon/runtime/graphics-menu.hpp
         neon/runtime/settings-config.hpp
         neon/runtime/frame-capture.cpp
         neon/runtime/frame-capture.hpp
@@ -121,6 +123,8 @@ add_library(${TARGET} STATIC
         neon/project/project-file.hpp
 
         # settings
+        neon/settings/player-settings.cpp
+        neon/settings/player-settings.hpp
         neon/settings/settings-file.cpp
         neon/settings/settings-file.hpp
 
@@ -547,6 +551,7 @@ neon_add_unit_test(${TARGET} neon/command-line/display-options.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/texture-source.test.cpp)
   neon_add_unit_test(${TARGET} neon/runtime/frame-capture.test.cpp)
   neon_add_unit_test(${TARGET} neon/runtime/runtime.test.cpp)
+  neon_add_unit_test(${TARGET} neon/runtime/graphics-menu.test.cpp)
   neon_add_unit_test(${TARGET} neon/text/font-atlas.test.cpp)
   neon_add_unit_test(${TARGET} neon/text/text-layout.test.cpp)
   neon_add_unit_test(${TARGET} neon/text/utf8.test.cpp)

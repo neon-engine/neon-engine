@@ -1870,6 +1870,46 @@ namespace neon
     return _target_mipmaps;
   }
 
+  bool VK_RenderSystem::SetTonemapping(const Tonemapper tonemapper, const double exposure)
+  {
+    if (!(exposure > 0.0) || !_resolve.SetTonemapping(tonemapper, static_cast<float>(exposure))) { return false; }
+
+    _settings_config.tonemapper = tonemapper;
+    _settings_config.exposure = exposure;
+    return true;
+  }
+
+  Tonemapper VK_RenderSystem::GetTonemapper()
+  {
+    return _settings_config.tonemapper;
+  }
+
+  double VK_RenderSystem::GetExposure()
+  {
+    return _settings_config.exposure;
+  }
+
+  bool VK_RenderSystem::SetShadows(const double distance, const int cascades)
+  {
+    // the map has a layer for each of the most cascades there are, so
+    // fewer or more are only a number the next scene is fitted with
+    if (!(distance > 0.0) || cascades < 1 || cascades > static_cast<int>(kMax_Shadow_Cascades)) { return false; }
+
+    _settings_config.shadow_distance = distance;
+    _settings_config.shadow_cascades = static_cast<std::size_t>(cascades);
+    return true;
+  }
+
+  double VK_RenderSystem::GetShadowDistance()
+  {
+    return _settings_config.shadow_distance;
+  }
+
+  int VK_RenderSystem::GetShadowCascades()
+  {
+    return static_cast<int>(_settings_config.shadow_cascades);
+  }
+
   int VK_RenderSystem::CreateRenderTarget(
     const std::string &name,
     const int asked_width,

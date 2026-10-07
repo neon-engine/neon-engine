@@ -633,8 +633,10 @@ brings:
 | A limit beyond 30 to 300 is held to the nearest, where a setting that says so is refused | A slider of a menu is not to be able to go wrong; a file that says 500 is a mistake its writer is to be told of |
 | Nothing is written to a settings file | These change what is shown now. What a player chose is kept by whoever offers the choice: a game's own menu keeps it with its other settings |
 
-Not there yet: the settings menu of the runtime shows a V-Sync toggle that
-nothing reads (#356).
+The settings menu of the runtime changes all of these while the game runs,
+along with the other graphics, and keeps what the player chose with Apply,
+see [user-interface.md](user-interface.md#the-graphics-of-the-settings-menu)
+(#356).
 
 ## Tonemapping
 

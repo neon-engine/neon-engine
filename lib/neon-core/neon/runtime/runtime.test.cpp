@@ -677,6 +677,12 @@ namespace
       EXPECT_CALL(_ui_system, Draw()).Times(AnyNumber());
       EXPECT_CALL(_ui_system, WasClicked(_)).WillRepeatedly(Return(false));
       EXPECT_CALL(_ui_system, GetEvents()).WillRepeatedly(ReturnRef(_events));
+
+      // the graphics the settings menu shows
+      EXPECT_CALL(_ui_system, SetText(_, _)).Times(AnyNumber());
+      EXPECT_CALL(_ui_system, SetFlag(_, _)).Times(AnyNumber());
+      EXPECT_CALL(_ui_system, SetNumber(_, _)).Times(AnyNumber());
+
       EXPECT_CALL(_render_system, PrepareFrame()).Times(AnyNumber());
       EXPECT_CALL(_render_system, FinishFrame()).Times(AnyNumber());
       EXPECT_CALL(_world_system, Update()).Times(AnyNumber());
@@ -764,6 +770,28 @@ namespace
     }
     EXPECT_CALL(_ui_system, IsShown(8)).WillRepeatedly(Return(true));
     EXPECT_CALL(_world_system, SetPaused(true)).Times(3);
+
+    runtime->Run();
+    ExpectCleanUp();
+  }
+
+  TEST_F(PauseMenuTest, TheSettingsMenuShowsTheGraphicsAsTheyAre)
+  {
+    const auto runtime = CreateWithMenu(3);
+    _press = [this](const int frame) { if (frame == 1) { PressPause(); } };
+
+    EXPECT_CALL(_ui_system, Load(menu)).WillOnce(Return(7));
+    EXPECT_CALL(_ui_system, IsShown(7)).WillRepeatedly(Return(true));
+    EXPECT_CALL(_ui_system, WasClicked("settings")).WillOnce(Return(true));
+    EXPECT_CALL(_ui_system, Unload(7));
+    EXPECT_CALL(_ui_system, Load(settings)).WillOnce(Return(8));
+    EXPECT_CALL(_ui_system, IsShown(8)).WillRepeatedly(Return(true));
+    EXPECT_CALL(_world_system, SetPaused(true)).Times(3);
+
+    // once, as the menu is shown
+    EXPECT_CALL(_ui_system, SetFlag("vsync", _));
+    EXPECT_CALL(_ui_system, SetText("anisotropy", _));
+    EXPECT_CALL(_ui_system, SetText("window_mode", _));
 
     runtime->Run();
     ExpectCleanUp();
