@@ -71,8 +71,8 @@ in [docs/third-party-licenses.md](docs/third-party-licenses.md#not-in-the-reposi
 
 ## Made for the engine
 
-Everything else. No model, texture, sound, or image in the repository was
-taken from elsewhere: what a scene shows is built by the engine as
+Everything else, under the license of the engine, [MIT](LICENSE). No model,
+texture, sound, or image in the repository was taken from elsewhere: what a scene shows is built by the engine as
 `Geometry`, or is one of these files, each written by a program from
 numbers.
 

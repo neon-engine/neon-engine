@@ -154,5 +154,3 @@ notices of what is embedded in it, see #435.
 - This list and [CREDITS.md](../CREDITS.md) are kept by hand. A check that
   fails when `external/` holds a library that is not listed would keep them
   true.
-- The license of the engine itself is not decided (#95). Once it is, a game
-  that is built with the engine has to include what that license asks too.

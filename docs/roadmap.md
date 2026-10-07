@@ -420,4 +420,3 @@ Wanted, and not for 1.0.
 | Whether WebGPU also serves the desktop (#88) | If it does on macOS, the Metal renderer has less to justify it |
 | Which technique for global illumination (#90) | What the target hardware is, and whether the web has to be able to run it |
 | How agents reach the editor (#91) | What the editor turns out to be |
-| The license of the engine (#95) | MIT was removed; what replaces it is not decided |

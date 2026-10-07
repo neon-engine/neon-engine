@@ -156,6 +156,22 @@ Where the engine is heading is described in the [roadmap](./docs/roadmap.md).
 ## Style guide
 
 How the code is written is described in the [style guide](./docs/style-guide.md).
+
+## License
+
+Neon Engine is released under the [MIT license](./LICENSE). A game made with it
+may be sold, modified, and distributed, provided the copyright notice and the
+license text are included. A credit noting that the game was made with Neon
+Engine is appreciated, though not required.
+
+## Supporting the project
+
+Neon Engine is free to use: anyone may build it from source at no cost.
+Prebuilt, tested builds are also offered for purchase, and buying them is the
+most direct way to fund the engine's continued development. If you build Neon
+Engine yourself and find it valuable, please consider supporting the project
+through a donation or the purchase of a build.
+
 ## Licenses of third parties
 
 The libraries the engine uses, and what their licenses ask for, are listed in
