@@ -49,6 +49,7 @@ namespace
       int width = 0;
       int height = 0;
       int begun = 0;
+      neon::RenderTargetOptions options;
     };
 
     /// A sky that was drawn: how many objects had been drawn by then,
@@ -111,8 +112,19 @@ namespace
         if (each == name) { return -1; }
       }
 
-      targets[created] = {name, width, height, 0};
+      targets[created] = {name, width, height, 0, {}};
       return created;
+    }
+
+    int CreateRenderTarget(
+      const std::string &name,
+      const int width,
+      const int height,
+      const neon::RenderTargetOptions &options) override
+    {
+      const int target = CreateRenderTarget(name, width, height);
+      if (target >= 0) { targets[target].options = options; }
+      return target;
     }
 
     void DestroyRenderTarget(const int target) override
@@ -194,6 +206,25 @@ namespace
       _pipeline.RenderFrame();
     }
   };
+
+  TEST_F(ForwardRenderPipelineCamerasTest, ATextureOfACameraIsMadeAtTheScaleOfTheGameWithTheLevelsItAsksFor)
+  {
+    CameraInfo monitor = Into("monitor", 5);
+    monitor.mipmaps = 3;
+    Frame({Window(1), monitor}, {7});
+
+    ASSERT_EQ(_renderer.targets.size(), 1u);
+    const auto &target = _renderer.targets.begin()->second;
+    EXPECT_TRUE(target.options.scales);
+    EXPECT_EQ(target.options.mipmaps, 3);
+  }
+
+  TEST_F(ForwardRenderPipelineCamerasTest, ATextureOfACameraHasEveryLevelUnlessItAsksForFewer)
+  {
+    Frame({Window(1), Into("mirror", 5)}, {7});
+
+    EXPECT_EQ(_renderer.targets.begin()->second.options.mipmaps, 0);
+  }
 
   TEST_F(ForwardRenderPipelineCamerasTest, WithoutSuchACameraNothingIsDrawnIntoATexture)
   {

@@ -1097,10 +1097,17 @@ NeonRuntime --scene assets://scenes/surface-demo.scene.yml
       target: texture
       texture: security
       size: [512, 512]
+      mipmaps: 4
 ```
 
 A camera whose `target` is `texture` draws what it sees into a render target
-of that name. It stands next to the camera of the window and does not take
+of that name. `mipmaps` is the most levels of smaller copies the texture
+has, which are made again in every frame the camera draws (#431): 1 for
+none, 0, the default, for as many as its size allows. A picture that is
+only seen from close by, such as that of a monitor, needs few. The game
+lowers both with `rendering.target_scale`, the size the texture is made at,
+and `rendering.target_mipmaps`, see [settings.md](settings.md), for the
+targets made from then on. It stands next to the camera of the window and does not take
 its place. A mirror, a monitor, and a map are models or images that show
 `surface://security`.
 

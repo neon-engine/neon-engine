@@ -42,6 +42,9 @@ namespace neon
   ///       max_fps: 0
   ///       anisotropy: 8
   ///       texture_scale: 1
+
+  ///       target_scale: 1
+  ///       target_mipmaps: 0
   ///
   ///     audio:
   ///       groups:

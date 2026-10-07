@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <neon/render/anisotropy.hpp>
+#include <neon/render/target-quality.hpp>
 #include <neon/render/texture-scale.hpp>
 #include <neon/window/frame-limit.hpp>
 #include <charconv>
@@ -18,6 +19,8 @@ namespace neon
     const std::string max_fps = "max-fps";
     const std::string anisotropy = "anisotropy";
     const std::string texture_scale = "texture-scale";
+    const std::string target_scale = "target-scale";
+    const std::string target_mipmaps = "target-mipmaps";
     const std::string ui_scale = "ui-scale";
 
     const std::string windowed = "windowed";
@@ -102,6 +105,22 @@ namespace neon
       .value_name = "NUMBER",
       .description = "Size textures read from files are kept at: 1, 0.5, 0.25, or 0.125 of their size, over "
                      "rendering.texture_scale of the settings",
+      .group = display
+    });
+
+    command_line.Add({
+      .name = target_scale,
+      .value_name = "NUMBER",
+      .description = "Size what a camera draws into is made at: 1, 0.5, or 0.25 of what it asks for, over "
+                     "rendering.target_scale of the settings",
+      .group = display
+    });
+
+    command_line.Add({
+      .name = target_mipmaps,
+      .value_name = "NUMBER",
+      .description = "Most levels of smaller copies a render target has: 0 for as many as its size allows, 1 for "
+                     "none, up to 16, over rendering.target_mipmaps of the settings",
       .group = display
     });
 
@@ -193,6 +212,29 @@ namespace neon
         return false;
       }
       settings.texture_scale = scale;
+    }
+
+    if (command_line.IsSet(target_scale))
+    {
+      double scale = 0.0;
+      if (!command_line.GetNumber(target_scale, scale) || !TargetQuality::IsScale(scale))
+      {
+        error = "Option '--" + target_scale + "' needs 1, 0.5, or 0.25";
+        return false;
+      }
+      settings.target_scale = scale;
+    }
+
+    if (command_line.IsSet(target_mipmaps))
+    {
+      double mipmaps = -1.0;
+      if (!command_line.GetNumber(target_mipmaps, mipmaps) || mipmaps != std::floor(mipmaps) ||
+          !TargetQuality::IsMipmaps(static_cast<int>(mipmaps)))
+      {
+        error = "Option '--" + target_mipmaps + "' needs 0 for as many as the size allows, or 1 to 16";
+        return false;
+      }
+      settings.target_mipmaps = static_cast<int>(mipmaps);
     }
 
     if (command_line.IsSet(ui_scale))

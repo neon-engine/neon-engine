@@ -43,7 +43,13 @@ namespace neon
 
     int target = _render_context->FindRenderTarget(camera.texture);
 
-    if (target < 0) { target = _render_context->CreateRenderTarget(camera.texture, camera.width, camera.height); }
+    // what a camera draws into is made at the scale the game sets, with
+    // the levels the camera asks for
+    if (target < 0)
+    {
+      const RenderTargetOptions options{.mipmaps = camera.mipmaps, .scales = true};
+      target = _render_context->CreateRenderTarget(camera.texture, camera.width, camera.height, options);
+    }
 
     if (target < 0)
     {

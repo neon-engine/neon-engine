@@ -63,6 +63,7 @@ namespace neon
         info.texture = camera.texture;
         info.width = camera.texture_width;
         info.height = camera.texture_height;
+        info.mipmaps = camera.mipmaps;
 
         _render_pipeline->SetCameraInfo(info);
       }

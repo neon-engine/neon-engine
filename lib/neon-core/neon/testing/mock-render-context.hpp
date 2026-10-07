@@ -38,6 +38,10 @@ namespace neon::testing
     MOCK_METHOD(int, GetAnisotropy, (), (override));
     MOCK_METHOD(bool, SetTextureScale, (double scale), (override));
     MOCK_METHOD(double, GetTextureScale, (), (override));
+    MOCK_METHOD(bool, SetTargetScale, (double scale), (override));
+    MOCK_METHOD(double, GetTargetScale, (), (override));
+    MOCK_METHOD(bool, SetTargetMipmaps, (int mipmaps), (override));
+    MOCK_METHOD(int, GetTargetMipmaps, (), (override));
     MOCK_METHOD(void, UpdateRenderObjectMesh, (int render_object_id, const MeshData &mesh), (override));
 
     MOCK_METHOD(bool, SetImage, (const std::string &name, const ImagePixels &pixels), (override));

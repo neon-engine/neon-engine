@@ -58,12 +58,19 @@ namespace neon
 
     /// Creates the image for a render pass that writes it, of the format
     /// given, which holds sRGB colours as bytes. The image is black and
-    /// see-through until it is drawn to.
+    /// see-through until it is drawn to. It has as many levels of smaller
+    /// copies as its size allows, but no more than `most_levels` when that
+    /// is above 0.
     bool Initialize(
       uint32_t width,
       uint32_t height,
       VkRenderPass render_pass,
-      VkFormat color_format);
+      VkFormat color_format,
+      int most_levels = 0);
+
+    /// How many levels of smaller copies the image has, the image itself
+    /// among them.
+    [[nodiscard]] uint32_t MipLevels() const { return _mip_levels; }
 
     void CleanUp();
 

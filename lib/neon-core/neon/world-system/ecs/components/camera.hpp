@@ -48,6 +48,13 @@ namespace neon
     std::string texture;
     int texture_width = 512;
     int texture_height = 512;
+
+    /// For a texture: the most levels of smaller copies it has, which are
+    /// made again in every frame the camera draws: 1 for none, 0 for as
+    /// many as its size allows. A picture that is only seen from close by,
+    /// such as that of a monitor, needs few. The setting
+    /// rendering.target_mipmaps lowers it, never raises it.
+    int mipmaps = 0;
   };
 
   inline void Describe(TypeBuilder<Camera> &type)
@@ -96,6 +103,11 @@ namespace neon
         .Count(2)
         .AtLeast(1)
         .Describe("For a texture: its width and height in pixels");
+
+    type.Field("mipmaps", &Camera::mipmaps)
+        .AtLeast(0)
+        .AtMost(16)
+        .Describe("For a texture: the most levels of smaller copies it has, 1 for none, 0 for as many as its size allows");
   }
 } // neon
 

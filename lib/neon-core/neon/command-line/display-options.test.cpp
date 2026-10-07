@@ -177,6 +177,37 @@ namespace
     }
   }
 
+  TEST_F(DisplayOptionsTest, TakesTheScaleWhatACameraDrawsIntoIsMadeAt)
+  {
+    EXPECT_DOUBLE_EQ(_settings.target_scale, 1.0) << "unless something says otherwise";
+
+    ASSERT_TRUE(Apply({"--target-scale", "0.5"}));
+    EXPECT_DOUBLE_EQ(_settings.target_scale, 0.5);
+
+    for (const char *wrong: {"0", "2", "0.125", "half"})
+    {
+      EXPECT_FALSE(Apply({"--target-scale", wrong})) << wrong;
+      EXPECT_EQ(_error, "Option '--target-scale' needs 1, 0.5, or 0.25") << wrong;
+    }
+  }
+
+  TEST_F(DisplayOptionsTest, TakesTheMostLevelsARenderTargetHas)
+  {
+    EXPECT_EQ(_settings.target_mipmaps, 0) << "as many as the size allows, unless something says otherwise";
+
+    ASSERT_TRUE(Apply({"--target-mipmaps", "4"}));
+    EXPECT_EQ(_settings.target_mipmaps, 4);
+
+    ASSERT_TRUE(Apply({"--target-mipmaps=1"}));
+    EXPECT_EQ(_settings.target_mipmaps, 1) << "1 is none";
+
+    for (const char *wrong: {"-1", "17", "2.5", "few"})
+    {
+      EXPECT_FALSE(Apply({"--target-mipmaps", wrong})) << wrong;
+      EXPECT_EQ(_error, "Option '--target-mipmaps' needs 0 for as many as the size allows, or 1 to 16") << wrong;
+    }
+  }
+
   TEST_F(DisplayOptionsTest, TakesWhetherAFrameWaitsForTheScreen)
   {
     ASSERT_TRUE(Apply({"--vsync", "off"}));

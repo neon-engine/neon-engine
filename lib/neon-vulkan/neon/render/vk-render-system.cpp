@@ -9,6 +9,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <neon/render/anisotropy.hpp>
 #include <neon/render/texture-scale.hpp>
+#include <neon/render/target-quality.hpp>
 #include <neon/render/texture-source.hpp>
 
 #include "vk-culling.hpp"
@@ -76,6 +77,8 @@ namespace neon
     {
       _logger->Info("Textures read from files are kept at {} of their size", _settings_config.texture_scale);
     }
+    _target_scale = _settings_config.target_scale;
+    _target_mipmaps = _settings_config.target_mipmaps;
     _render_resolution.emplace(static_cast<int>(_extent.width), static_cast<int>(_extent.height));
 
     VkCommandBufferAllocateInfo allocation{};
@@ -1836,6 +1839,43 @@ namespace neon
 
   int VK_RenderSystem::CreateRenderTarget(const std::string &name, const int width, const int height)
   {
+    return CreateRenderTarget(name, width, height, RenderTargetOptions{});
+  }
+
+  bool VK_RenderSystem::SetTargetScale(const double scale)
+  {
+    if (!TargetQuality::IsScale(scale)) { return false; }
+
+    _target_scale = scale;
+    _logger->Info("What a camera draws into is made at {} of its size from now on", scale);
+    return true;
+  }
+
+  double VK_RenderSystem::GetTargetScale()
+  {
+    return _target_scale;
+  }
+
+  bool VK_RenderSystem::SetTargetMipmaps(const int mipmaps)
+  {
+    if (!TargetQuality::IsMipmaps(mipmaps)) { return false; }
+
+    _target_mipmaps = mipmaps;
+    _logger->Info("Render targets made from now on have at most {} levels of smaller copies", mipmaps);
+    return true;
+  }
+
+  int VK_RenderSystem::GetTargetMipmaps()
+  {
+    return _target_mipmaps;
+  }
+
+  int VK_RenderSystem::CreateRenderTarget(
+    const std::string &name,
+    const int asked_width,
+    const int asked_height,
+    const RenderTargetOptions &options)
+  {
     // what is wrong is said once for a name, and not in every frame
     const auto refuse = [this, &name](const std::string &reason)
     {
@@ -1849,6 +1889,10 @@ namespace neon
 
     constexpr int limit = VK_RenderTarget::kMax_Size;
 
+    // what a camera draws into is made at the scale the game sets
+    const int width = options.scales ? TargetQuality::SizeAt(asked_width, _target_scale) : asked_width;
+    const int height = options.scales ? TargetQuality::SizeAt(asked_height, _target_scale) : asked_height;
+
     if (name.empty()) { return refuse("it has no name"); }
     if (width <= 0 || height <= 0 || width > limit || height > limit)
     {
@@ -1861,8 +1905,11 @@ namespace neon
     Target kept;
     kept.target = VK_RenderTarget(name, &_device, _logger);
 
+    const int most_levels = TargetQuality::LevelsOf(
+      static_cast<int>(VK_RenderTarget::LevelsFor(static_cast<uint32_t>(width), static_cast<uint32_t>(height))),
+      options.mipmaps, _target_mipmaps);
     if (!kept.target.Initialize(
-      static_cast<uint32_t>(width), static_cast<uint32_t>(height), _frame_pass, color_format))
+      static_cast<uint32_t>(width), static_cast<uint32_t>(height), _frame_pass, color_format, most_levels))
     {
       return refuse("its images could not be made");
     }
@@ -1877,7 +1924,8 @@ namespace neon
       return refuse("there is no room for another render target");
     }
 
-    _logger->Info("Created the render target '{}' of {} by {}", name, width, height);
+    const uint32_t levels = kept.target.MipLevels();
+    _logger->Info("Created the render target '{}' of {} by {}, with {} levels", name, width, height, levels);
 
     // models that were waiting for it show it from the next frame on
     _surfaces_changed = true;

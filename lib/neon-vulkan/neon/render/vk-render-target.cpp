@@ -41,7 +41,8 @@ namespace neon
     const uint32_t width,
     const uint32_t height,
     const VkRenderPass render_pass,
-    const VkFormat color_format)
+    const VkFormat color_format,
+    const int most_levels)
   {
     if (_device == nullptr || _device->Device() == VK_NULL_HANDLE || render_pass == VK_NULL_HANDLE)
     {
@@ -64,6 +65,7 @@ namespace neon
 
     _extent = {width, height};
     _mip_levels = can_scale ? LevelsFor(width, height) : 1;
+    if (most_levels > 0) { _mip_levels = std::min(_mip_levels, static_cast<uint32_t>(most_levels)); }
 
     constexpr VkImageAspectFlags color = VK_IMAGE_ASPECT_COLOR_BIT;
 

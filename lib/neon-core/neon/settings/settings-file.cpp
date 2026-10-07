@@ -160,6 +160,31 @@ namespace neon
         }
       }
 
+      // the quality of render targets
+      if (double scale = 0.0; reader.Read("target_scale", scale))
+      {
+        if (!TargetQuality::IsScale(scale))
+        {
+          reader.Report(*reader.ReadValue("target_scale"), std::format(
+                          "'target_scale' of {} is {}, where 1, 0.5, or 0.25 was expected", reader.GetWhere(), scale));
+        } else
+        {
+          settings.target_scale = scale;
+        }
+      }
+      if (int mipmaps = 0; reader.Read("target_mipmaps", mipmaps))
+      {
+        if (!TargetQuality::IsMipmaps(mipmaps))
+        {
+          reader.Report(*reader.ReadValue("target_mipmaps"), std::format(
+                          "'target_mipmaps' of {} is {}, where 0 for as many as the size allows, or 1 to 16 was expected",
+                          reader.GetWhere(), mipmaps));
+        } else
+        {
+          settings.target_mipmaps = mipmaps;
+        }
+      }
+
       // the most frames a second, 0 for as many as can be drawn
       if (int most = 0; reader.Read("max_fps", most))
       {

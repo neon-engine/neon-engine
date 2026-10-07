@@ -11,7 +11,7 @@ registered by the application that owns it.
 | Set | Owner | Holds |
 |---|---|---|
 | `RuntimeOptions` | The runtime | `--renderer`, `--vulkan-version` |
-| `DisplayOptions` | The runtime | `--window-size`, `--window-mode`, `--vsync`, `--max-fps`, `--anisotropy`, `--texture-scale`, `--ui-scale` |
+| `DisplayOptions` | The runtime | `--window-size`, `--window-mode`, `--vsync`, `--max-fps`, `--anisotropy`, `--texture-scale`, `--target-scale`, `--target-mipmaps`, `--ui-scale` |
 | `EditorOptions` | The editor | `--scene`, `--ui`, and everything under the `Editor` heading below |
 
 Until NeonEditor exists, NeonRuntime registers the editor's set too, so that
@@ -42,6 +42,8 @@ The last column is the decision of #143: who owns the option.
 | `--vsync on\|off` | Display | Whether a frame waits for the screen before it is shown, over `rendering.vsync` of the settings | **Runtime.** A menu's choice as well, and the way to tell whether a problem is the sync |
 | `--anisotropy NUMBER` | Display | Samples a texture is read with where it is seen from the side: 1 for none, 2, 4, 8, or 16, over `rendering.anisotropy` of the settings | **Runtime.** A menu's choice as well, and a way to see what anisotropic filtering costs |
 | `--texture-scale NUMBER` | Display | The size textures read from files are kept at: 1, 0.5, 0.25, or 0.125 of their size, over `rendering.texture_scale` of the settings | **Runtime.** A menu's choice as well, and a way to see how a game looks on a computer with little memory for textures |
+| `--target-scale NUMBER` | Display | The size what a camera draws into is made at: 1, 0.5, or 0.25 of what it asks for, over `rendering.target_scale` of the settings | **Runtime.** A menu's choice as well |
+| `--target-mipmaps NUMBER` | Display | The most levels of smaller copies a render target has: 0 for as many as its size allows, 1 for none, up to 16, over `rendering.target_mipmaps` of the settings | **Runtime.** A menu's choice as well, and a way to see what the smaller copies of a camera's picture cost (#431) |
 | `--max-fps NUMBER` | Display | The most frames a second, from 30 to 300, or 0 for as many as can be drawn, over `rendering.max_fps` of the settings | **Runtime.** A menu's choice as well, and a way to keep a laptop cool or a measurement steady |
 | `--ui-scale NUMBER` | Display | Makes the user interface larger or smaller, over `ui.scale` of the settings | **Runtime.** It helps players who need larger text before a settings menu can be read |
 | `--scene PATH` | Editor | Starts with this scene in place of the entry scene of the project | **Editor.** It loads any content at all, the heart of #143 |

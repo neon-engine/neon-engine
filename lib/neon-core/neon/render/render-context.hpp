@@ -12,6 +12,7 @@
 #include "light-source.hpp"
 #include "render-info.hpp"
 #include "render-object-ref.hpp"
+#include "render-target-options.hpp"
 #include "sky-info.hpp"
 #include "texture-source.hpp"
 
@@ -107,6 +108,19 @@ namespace neon
       return -1;
     }
 
+    /// As CreateRenderTarget(), with the levels of smaller copies it has
+    /// and whether it is made at the scale the game sets, see
+    /// RenderTargetOptions. A renderer that leaves this as it is makes the
+    /// target as asked.
+    virtual int CreateRenderTarget(
+      const std::string &name,
+      const int width,
+      const int height,
+      const RenderTargetOptions &options)
+    {
+      return CreateRenderTarget(name, width, height);
+    }
+
     virtual void DestroyRenderTarget(const int target) {}
 
     /// The target of a name, or -1.
@@ -182,6 +196,20 @@ namespace neon
 
     /// The size textures read from files are kept at.
     [[nodiscard]] virtual double GetTextureScale() { return 1.0; }
+
+    /// The quality of render targets, while the application runs: the
+    /// scale a camera's target is made at, one of TargetQuality::kScales,
+    /// and the most levels of smaller copies a target has, 0 for as many as
+    /// its size allows. Both hold for the targets made from then on, so a
+    /// scene that is loaded next has its targets at them. Return false for
+    /// a value that is none of them, or a renderer that cannot change it.
+    virtual bool SetTargetScale(double scale) { return false; }
+
+    [[nodiscard]] virtual double GetTargetScale() { return 1.0; }
+
+    virtual bool SetTargetMipmaps(int mipmaps) { return false; }
+
+    [[nodiscard]] virtual int GetTargetMipmaps() { return 0; }
 
     /// How many places there are for numbers of a game that every shader
     /// reads, see SetShaderNumbers().

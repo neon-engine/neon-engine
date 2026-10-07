@@ -238,6 +238,8 @@ two places of its own, see [physics.md](physics.md#ropes).
 | `up` | The direction that is up | `[0, 1, 0]` |
 | `effects` | A list of shaders that are run over the whole picture the camera drew, one after the other, on the light of its scene before the tonemapper: a view that waves under water, a vignette. Each is the virtual path of a fragment shader a game brings, without an extension, see [vulkan-renderer.md](vulkan-renderer.md#the-effects-of-a-camera) | none |
 | `screen_effects` | As `effects`, but run on the colours a screen is given, after the tonemapper and before the user interface is drawn: the rows of an old monitor, the palette of an old game | none |
+| `texture`, `size` | For `target: texture`: what the texture is called, and its width and height in pixels, see [user-interface.md](user-interface.md#what-a-camera-sees) | none, `[512, 512]` |
+| `mipmaps` | For `target: texture`: the most levels of smaller copies it has, 1 for none, 0 for as many as its size allows | `0` |
 | `rolls_with_entity` | Whether the view rolls with the rotation of its entity: `up` then turns with the entity, so leaning the entity leans the view. For a view from the eyes. A camera that looks at something from outside leaves it off and stays level whatever it hangs from | `false` |
 
 **Light**

@@ -10,6 +10,7 @@
 #include "neon/render/anisotropy.hpp"
 #include "neon/render/api-version.hpp"
 #include "neon/render/texture-scale.hpp"
+#include "neon/render/target-quality.hpp"
 #include "neon/render/tonemapper.hpp"
 #include "neon/window/window-mode.hpp"
 
@@ -134,6 +135,18 @@ struct SettingsConfig
   /// runs with RenderContext::SetTextureScale(), for the textures read
   /// from then on.
   double texture_scale = 1.0;
+
+  /// The scale what a camera draws into is made at: 1, 0.5, or 0.25 of the
+  /// size its camera asks for, see TargetQuality. Images of the user
+  /// interface keep their size. Changed while the application runs with
+  /// RenderContext::SetTargetScale(), for the targets made from then on.
+  double target_scale = 1.0;
+
+  /// The most levels of smaller copies a render target has, which are
+  /// made again in every frame it is drawn into: 0 for as many as its size
+  /// allows, 1 for none, up to 16. Lowers what a camera asks for, never
+  /// raises it. Changed with RenderContext::SetTargetMipmaps().
+  int target_mipmaps = 0;
 
   /// The most frames a second: a number from 30 to 300, or 0 for as many
   /// as can be drawn, see FrameLimit. Changed while the application runs

@@ -249,6 +249,8 @@ Display:
   --max-fps NUMBER          Most frames a second, from 30 to 300, or 0 for as many as can be drawn, over rendering.max_fps of the settings
   --anisotropy NUMBER       Samples a texture is read with where it is seen from the side: 1 for none, 2, 4, 8, or 16, over rendering.anisotropy of the settings
   --texture-scale NUMBER    Size textures read from files are kept at: 1, 0.5, 0.25, or 0.125 of their size, over rendering.texture_scale of the settings
+  --target-scale NUMBER     Size what a camera draws into is made at: 1, 0.5, or 0.25 of what it asks for, over rendering.target_scale of the settings
+  --target-mipmaps NUMBER   Most levels of smaller copies a render target has: 0 for as many as its size allows, 1 for none, up to 16, over rendering.target_mipmaps of the settings
   --ui-scale NUMBER         Makes the user interface larger or smaller, for example 1.5
 
 Editor:
@@ -372,7 +374,7 @@ the runtime's sets plus its own, and the runtime only its own.
 | `CommandLineContext` | [neon-core](../lib/neon-core/neon/command-line/command-line-context.hpp) | The read side, for code that wants to know what was asked for |
 | `CommandLineOptions` | [neon-core](../lib/neon-core/neon/command-line/command-line-options.hpp) | Interface of a set of options: what they are, and what they do to the settings |
 | `RuntimeOptions` | [neon-core](../lib/neon-core/neon/command-line/runtime-options.hpp) | Owned by the runtime: `--renderer`, `--vulkan-version` |
-| `DisplayOptions` | [neon-core](../lib/neon-core/neon/command-line/display-options.hpp) | Owned by the runtime, the window and the size of what is shown: `--window-size`, `--window-mode`, `--vsync`, `--max-fps`, `--anisotropy`, `--texture-scale`, `--ui-scale` |
+| `DisplayOptions` | [neon-core](../lib/neon-core/neon/command-line/display-options.hpp) | Owned by the runtime, the window and the size of what is shown: `--window-size`, `--window-mode`, `--vsync`, `--max-fps`, `--anisotropy`, `--texture-scale`, `--target-scale`, `--target-mipmaps`, `--ui-scale` |
 | `EditorOptions` | [neon-core](../lib/neon-core/neon/command-line/editor-options.hpp) | Owned by the editor: another scene, no window, screenshots, input from a script |
 
 An application puts them together in `main.cpp`:

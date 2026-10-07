@@ -411,6 +411,32 @@ namespace
     }
   }
 
+  TEST_F(SettingsFilesTest, ReadsTheQualityOfRenderTargets)
+  {
+    EXPECT_DOUBLE_EQ(SettingsConfig{}.target_scale, 1.0);
+    EXPECT_EQ(SettingsConfig{}.target_mipmaps, 0);
+
+    WriteOfTheProject("version: 1\nrendering:\n  target_scale: 0.25\n  target_mipmaps: 3\n");
+    ASSERT_TRUE(ReadOfTheProject()) << ::testing::PrintToString(_errors);
+    EXPECT_DOUBLE_EQ(_settings.target_scale, 0.25);
+    EXPECT_EQ(_settings.target_mipmaps, 3);
+  }
+
+  TEST_F(SettingsFilesTest, RefusesAQualityOfRenderTargetsThatIsNoneOfThem)
+  {
+    _errors.clear();
+    WriteOfTheProject("version: 1\nrendering:\n  target_scale: 0.125\n");
+    EXPECT_FALSE(ReadOfTheProject());
+    ASSERT_EQ(_errors.size(), 1u) << ::testing::PrintToString(_errors);
+    EXPECT_THAT(_errors.front(), HasSubstr("'target_scale'"));
+
+    _errors.clear();
+    WriteOfTheProject("version: 1\nrendering:\n  target_mipmaps: 20\n");
+    EXPECT_FALSE(ReadOfTheProject());
+    ASSERT_EQ(_errors.size(), 1u) << ::testing::PrintToString(_errors);
+    EXPECT_THAT(_errors.front(), HasSubstr("'target_mipmaps'"));
+  }
+
   TEST_F(SettingsFilesTest, RefusesATonemapperItDoesNotKnow)
   {
     WriteOfTheProject("version: 1\nrendering:\n  tonemapper: reinhard\n");

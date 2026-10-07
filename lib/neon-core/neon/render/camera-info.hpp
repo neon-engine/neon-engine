@@ -25,6 +25,10 @@ namespace neon
     int width{512};
     int height{512};
 
+    /// The most levels of smaller copies the texture has: 1 for none, 0 for
+    /// as many as its size allows. See RenderTargetOptions.
+    int mipmaps{0};
+
     /// The effects that are run over what the camera drew, as the paths of
     /// their shaders: on the light of the scene, before the tonemapper, and
     /// on the colours a screen is given, after it. See

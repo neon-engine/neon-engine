@@ -219,6 +219,10 @@ namespace neon
     // when nothing was asked
     int _anisotropy_asked = 0;
 
+    // the quality of the targets made from now on, see TargetQuality
+    double _target_scale = 1.0;
+    int _target_mipmaps = 0;
+
     // names that were refused, each said once
     std::vector<std::string> _refused_targets;
 
@@ -388,6 +392,14 @@ namespace neon
 
     [[nodiscard]] double GetTextureScale() override;
 
+    bool SetTargetScale(double scale) override;
+
+    [[nodiscard]] double GetTargetScale() override;
+
+    bool SetTargetMipmaps(int mipmaps) override;
+
+    [[nodiscard]] int GetTargetMipmaps() override;
+
     void SetShaderTime(double seconds, double delta) override;
 
     bool SetShaderNumbers(int place, const glm::vec4 &numbers) override;
@@ -426,6 +438,12 @@ namespace neon
     // models of a scene alike.
 
     int CreateRenderTarget(const std::string &name, int width, int height) override;
+
+    int CreateRenderTarget(
+      const std::string &name,
+      int width,
+      int height,
+      const RenderTargetOptions &options) override;
 
     void DestroyRenderTarget(int target) override;
 
