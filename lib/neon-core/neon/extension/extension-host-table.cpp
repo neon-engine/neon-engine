@@ -4,7 +4,9 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include <neon/world-system/ecs/systems/pool-system.hpp>
@@ -892,6 +894,40 @@ namespace neon
       return 1;
     }
 
+    int list_folders(void *context, const char *folder, void (*visit)(void *user, const char *name), void *user)
+    {
+      const auto &extension = of(context);
+      if (folder == nullptr || visit == nullptr) { return 0; }
+
+      // the file system lists the files below a folder, so a folder is seen
+      // by the files under it, each once, in the order of the paths
+      std::vector<std::string> paths;
+      if (!extension.services->file_system->ListFiles(folder, paths)) { return 0; }
+
+      std::string prefix = folder;
+      while (prefix.ends_with('/') && !prefix.ends_with("://")) { prefix.pop_back(); }
+      if (!prefix.ends_with('/')) { prefix += '/'; }
+
+      std::vector<std::string> names;
+      for (const auto &path : paths)
+      {
+        if (!path.starts_with(prefix)) { continue; }
+
+        const std::string relative = path.substr(prefix.size());
+        const std::size_t slash = relative.find('/');
+        if (slash == std::string::npos) { continue; }
+
+        std::string name = relative.substr(0, slash);
+        if (std::ranges::find(names, name) == names.end()) { names.push_back(std::move(name)); }
+      }
+
+      // the files of a folder come before the folders below it, so the
+      // names are put in order once they are all known
+      std::ranges::sort(names);
+      for (const auto &name : names) { visit(user, name.c_str()); }
+      return 1;
+    }
+
     // The window is told to close, which is what the quit of the pause
     // menu does: the application leaves its loop once the frame is done.
     void request_quit(void *context)
@@ -1242,6 +1278,12 @@ namespace neon
     {
       auto *ui = ui_with(of(context), "ui_set_visible", element);
       return ui != nullptr && ui->SetVisible(UiHandle{element}, visible != 0) ? 1 : 0;
+    }
+
+    int ui_focus(void *context, const NeonUiElement element)
+    {
+      auto *ui = ui_with(of(context), "ui_focus", element);
+      return ui != nullptr && ui->FocusElement(UiHandle{element}) ? 1 : 0;
     }
 
     NeonUiListener ui_listen(
@@ -1707,6 +1749,8 @@ namespace neon
 
     host.write_file = &write_file;
     host.list_files = &list_files;
+    host.list_folders = &list_folders;
+    host.ui_focus = &ui_focus;
     host.request_quit = &request_quit;
 
     host.set_shader_numbers = &set_shader_numbers;

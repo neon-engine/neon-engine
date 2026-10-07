@@ -720,6 +720,15 @@ namespace neon::extension
       return _host->ui_set_visible(_host->context, element, visible ? 1 : 0) != 0;
     }
 
+    /// Moves the focus to an element, such as the first of the buttons a
+    /// menu was given after it was shown, so that a controller can choose
+    /// from the start. Returns false when it cannot have the focus, or the
+    /// application is older than version 19.
+    bool FocusUi(const UiElement element) const
+    {
+      return _host->abi_version >= 19 && _host->ui_focus(_host->context, element) != 0;
+    }
+
     /// Calls `listener` whenever something of that name, such as `click`,
     /// happens to the element or, for an event that goes up, to one inside
     /// of it. Returns what UnlistenToUi takes it away with, or 0. The
@@ -914,6 +923,22 @@ namespace neon::extension
     {
       std::vector<std::string> names;
       _host->list_files(
+        _host->context,
+        folder.c_str(),
+        [](void *user, const char *name) { static_cast<std::vector<std::string> *>(user)->emplace_back(name); },
+        &names);
+      return names;
+    }
+
+    /// The names of the folders directly in a folder, in their order, such
+    /// as the copies of a game's data in `assets://basedirs`. Nothing when
+    /// there is no such folder, or the application is older than version
+    /// 19. A folder that holds no file, not even below it, is not seen.
+    [[nodiscard]] std::vector<std::string> ListFolders(const std::string &folder) const
+    {
+      std::vector<std::string> names;
+      if (_host->abi_version < 19) { return names; }
+      _host->list_folders(
         _host->context,
         folder.c_str(),
         [](void *user, const char *name) { static_cast<std::vector<std::string> *>(user)->emplace_back(name); },

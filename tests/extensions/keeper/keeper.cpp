@@ -28,10 +28,17 @@ namespace
       const bool saved = world.WriteFile("user://saves/slot-2.sav", bytes_of("ogres: 1"))
                          && world.WriteFile("user://saves/slot-1.sav", bytes_of("a longer game that is replaced"))
                          && world.WriteFile("user://saves/slot-1.sav", bytes_of("shamblers: 2"))
-                         && world.WriteFile("user://saves/old/slot-0.sav", {});
+                         && world.WriteFile("user://saves/old/slot-0.sav", {})
+                         && world.WriteFile("user://saves/archive/2026/slot-3.sav", {});
 
       std::string names;
       for (const auto &name : world.ListFiles("user://saves")) { names += (names.empty() ? "" : ", ") + name; }
+
+      // the folders, and one that holds only a folder among them
+      std::string folders;
+      for (const auto &name : world.ListFolders("user://saves/")) { folders += (folders.empty() ? "" : ", ") + name; }
+      world.Info("The folders of the saves are " + folders + ", and a folder that is not there holds "
+                 + std::to_string(world.ListFolders("user://nothing").size()) + " folders");
 
       std::vector<std::uint8_t> first;
       const bool read = world.ReadFile("user://saves/slot-1.sav", first);

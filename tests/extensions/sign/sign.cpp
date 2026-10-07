@@ -51,6 +51,10 @@ namespace
         "height: 40\n",
         world.FindUi("board"));
 
+      // the button was made after the file was shown, so it has the focus
+      // only when it is given it
+      world.Info(std::string("Focused the button it made: ") + yes_or_no(world.FocusUi(_button)));
+
       const bool written = world.SetUiField(_sign, "text", "Closed");
       const bool styled = world.SetUiStyle(_sign, "color", "#ff8000") && world.SetUiStyle(_sign, "margin-left", "12px");
       const bool found = _sign != 0 && world.FindUi("sign") == _sign && world.FindUi("nothing") == 0;
@@ -97,6 +101,8 @@ namespace
                            && !world.SetUiField(bar, "value", "much")
                            && !world.SetUiStyle(_sign, "colour", "red")
                            && !world.SetUiVisible(4000000, false)
+                           && !world.FocusUi(4000000)
+                           && !world.FocusUi(_sign)
                            && !world.RemoveUi(4000000)
                            && !world.CloseUi("assets://ui/never.ui.yml")
                            && !world.ShowUi("assets://ui/never.ui.yml")

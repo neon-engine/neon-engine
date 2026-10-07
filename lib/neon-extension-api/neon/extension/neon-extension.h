@@ -32,7 +32,7 @@ extern "C" {
 #endif
 
 /* The version of this file. It goes up by one whenever a table grows. */
-#define NEON_EXTENSION_ABI_VERSION 18
+#define NEON_EXTENSION_ABI_VERSION 19
 
 /* What get_input_device answers. */
 #define NEON_DEVICE_KEYBOARD_AND_MOUSE 0
@@ -836,6 +836,24 @@ typedef struct NeonExtensionHost
    * mouse unless the setting input.mouse_switches_device is false. A
    * gamepad says which family of controller it is as far as it knows. */
   int32_t (*get_input_device)(void *context);
+
+  /* --- Since version 19: folders, and the focus of the user interface --- */
+
+  /* Calls `visit` with the name of every folder directly in a folder, such
+   * as `assets://basedirs`, in the order of the names: `librequake`,
+   * without the folder in front, as list_files does for files. A folder
+   * that holds no file, not even below it, is not seen. The name is gone
+   * when `visit` returns, which copies what it keeps. `user` is the
+   * caller's own. Returns 1, or 0 when there is no such folder, and
+   * `visit` is then not called. */
+  int (*list_folders)(void *context, const char *folder, void (*visit)(void *user, const char *name), void *user);
+
+  /* Moves the focus of the user interface to an element, as a direction
+   * or a click would: what accept then presses. For a menu whose buttons
+   * the extension made after the file was shown, which the focus a file
+   * takes when it is shown does not reach. Returns 1, or 0 when the
+   * element is gone or takes no focus. */
+  int (*ui_focus)(void *context, NeonUiElement element);
 } NeonExtensionHost;
 
 /* What an extension brings. The application hands it over with every field

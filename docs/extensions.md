@@ -157,6 +157,7 @@ something of its own and is told to clean up.
 | 16 | `pool_add`, `pool_acquire`, `pool_release`, `pool_count`, `pool_free_count` | |
 | 17 | `set_window_mode`, `get_window_mode`, `set_window_size`, `get_window_size`, `list_display_sizes`, `set_vertical_sync`, `get_vertical_sync`, `set_frame_limit`, `get_frame_limit` | |
 | 18 | `get_input_device` | |
+| 19 | `list_folders`, `ui_focus` | |
 
 ## Components
 
@@ -227,7 +228,7 @@ What an extension reaches besides the store. Like the store, they are for
 |---|---|---|
 | The fields of any component | `find_field`, `get_field`, `set_field`, `get_field_text`, `set_field_text` | By the names a recipe writes them with: `find_field(host->context, "Transform", "position")`, once, in `start`. It works for a component of the engine, of a script, and of another extension alike, through the same description the scene file and Lua use |
 | Input | `is_action_down`, `was_action_pressed`, `action_axis`, `action_axis2`, `action_axis3` | The actions of the input map, less what the user interface used, see [input.md](input.md) |
-| Files | `file_exists`, `read_file`, `write_file`, `list_files` | Virtual paths, under every rule of [file-systems.md](file-systems.md). An extension's own files are `extensions://<name>/…`. What it writes goes under `user://`, see [what an extension keeps](#what-an-extension-keeps) |
+| Files | `file_exists`, `read_file`, `write_file`, `list_files`, `list_folders` | Virtual paths, under every rule of [file-systems.md](file-systems.md). An extension's own files are `extensions://<name>/…`. What it writes goes under `user://`, see [what an extension keeps](#what-an-extension-keeps) |
 | The world | `spawn`, `spawn_at`, `load_scene` | A prefab under a parent or at the top, see [prefabs.md](prefabs.md), with `spawn_at` at a position and a rotation written on top of its `Transform`; another scene when the frame is done |
 | The user interface | `set_ui_number`, `set_ui_text`, and the `ui_…` functions | The values its files show as `{name}`, see [user-interface.md](user-interface.md); and its files and elements themselves, see [what an extension shows on the screen](#what-an-extension-shows-on-the-screen) |
 | The view | `get_view_size` | The size in pixels of what the camera of the window draws to |
@@ -396,6 +397,7 @@ world.RequestQuit();   // the frame is finished, then everything is cleaned up
 | A path that is empty, is under another scheme, or has `..` in it is refused, with the reason in the log of the extension | The file system would refuse most of them too, in a log of its own. Who wrote the path reads why in the log that carries the name of the extension |
 | `write_file` writes a whole file and replaces one that is there; folders on the way are created | It is `WriteBytes` of the file system, which a screenshot and a scene that is saved go through. A file may hold nothing |
 | `list_files` gives the names of the files directly in a folder, in the order of their names, to a function of the extension | As `read_file` hands over its bytes: nothing is allocated on one side and freed on the other. Folders, and what is in them, are left out, so a folder of saved games lists the saved games. Any folder that can be read can be listed |
+| `list_folders` gives the names of the folders directly in a folder, in the order of their names, as `list_files` does for files | So that an extension finds what a player put next to the game in folders of its own, such as the copies of a game's data under `assets://basedirs/`. A folder is seen by the files below it, so one that holds none is not |
 | A folder that is not there lists as nothing, without an error | `user://saves` is not there before the first game was saved |
 | `request_quit` tells the window to close, as the button `quit` of the pause menu does | The application leaves its loop once the frame is done and cleans up as it always does. An extension that ends the process itself skips that: the log is cut short, and what the audio and the renderer hold is never let go of |
 

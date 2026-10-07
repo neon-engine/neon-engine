@@ -892,6 +892,15 @@ namespace
       << LogOf("keeper")->Messages(LogLevel::Info);
   }
 
+  TEST_F(ExtensionsInTheWorldTest, ListsTheFoldersDirectlyInAFolderInTheOrderOfTheirNames)
+  {
+    // a folder that holds only a folder is seen, and the folder below it
+    // is not
+    EXPECT_TRUE(LogOf("keeper")->Contains(
+      LogLevel::Info, "The folders of the saves are archive, old, and a folder that is not there holds 0 folders"))
+      << LogOf("keeper")->Messages(LogLevel::Info);
+  }
+
   TEST_F(ExtensionsInTheWorldTest, RefusesToWriteAFileThatIsNotThePlayers)
   {
     EXPECT_TRUE(LogOf("keeper")->Contains(LogLevel::Info, "What is not the player's was refused: yes"))
@@ -998,6 +1007,16 @@ namespace
     bool SetVisible(const neon::UiHandle element, const bool visible) override
     {
       return _shown->SetVisible(element, visible);
+    }
+
+    bool FocusElement(const neon::UiHandle element) override
+    {
+      return _shown->FocusElement(element);
+    }
+
+    [[nodiscard]] neon::UiHandle GetFocusedElement() const override
+    {
+      return _shown->GetFocusedElement();
     }
 
     neon::UiHandle Create(const std::string &description, const neon::UiHandle parent, const int index) override
@@ -1182,6 +1201,9 @@ namespace
     EXPECT_EQ(_tree->GetComputed(_tree->FindByName("sign"), "margin-left"), "12px");
 
     // a number and a flag are read from the text, as the field holds them
+    EXPECT_TRUE(LogOf("sign")->Contains(LogLevel::Info, "Focused the button it made: yes"))
+      << LogOf("sign")->Messages(LogLevel::Info) << LogOf("sign")->Messages(LogLevel::Error);
+    EXPECT_EQ(_tree->GetFocused(), "knock");
     EXPECT_TRUE(LogOf("sign")->Contains(LogLevel::Info, "A number from text: yes, a flag from text: yes"))
       << LogOf("sign")->Messages(LogLevel::Error);
     EXPECT_EQ(FieldOf<float>("filled", "value"), 75.0f);
@@ -1286,6 +1308,7 @@ namespace
     ExpectErrorOf("sign", "ui_set_field: 'value' of a bar");
     ExpectErrorOf("sign", "ui_set_style: 'colour' was not set to 'red'");
     ExpectErrorOf("sign", "ui_set_visible was called with an element that is not there");
+    ExpectErrorOf("sign", "ui_focus was called with an element that is not there");
     ExpectErrorOf("sign", "ui_remove was called with an element that is not there");
     ExpectErrorOf("sign", "ui_close: the extension shows no file 'assets://ui/never.ui.yml'");
     ExpectErrorOf("sign", "ui_show: the user interface did not take 'assets://ui/never.ui.yml', and said why");
