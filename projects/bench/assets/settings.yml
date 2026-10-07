@@ -5,10 +5,47 @@
 
 version: 1
 
+# the size of the window in points, and windowed, borderless, or
+# fullscreen
 window:
   width: 1920
   height: 1080
   mode: borderless
+
+# The graphics, every one the engine has so far, at the engine's defaults,
+# so that each is changed here. A player's settings go on top, and so does
+# the command line: --vsync, --max-fps, --anisotropy, --texture-scale,
+# --target-scale, and --target-mipmaps. See docs/settings.md.
+rendering:
+  # whether a frame waits for the screen: no tearing, and no more frames
+  # than the screen shows
+  vsync: true
+
+  # the most frames a second, 30 to 300, or 0 for as many as can be drawn
+  max_fps: 0
+
+  # how far the shadow of the sun reaches, in meters, and how many slices
+  # of what the camera sees its shadow map has, 1 to 4
+  shadow_distance: 120
+  shadow_cascades: 4
+
+  # the curve light brighter than white goes through, none, aces, or agx,
+  # and how bright the scene is taken to be before it
+  tonemapper: none
+  exposure: 1
+
+  # samples a texture is read with where it is seen from the side: 1 for
+  # none, 2, 4, 8, or 16
+  anisotropy: 8
+
+  # the size textures read from files are kept at: 1, 0.5, 0.25, or 0.125
+  texture_scale: 1
+
+  # the size what a camera draws into is made at, 1, 0.5, or 0.25, and the
+  # most levels of smaller copies a render target has: 0 for as many as
+  # its size allows, 1 for none, up to 16
+  target_scale: 1
+  target_mipmaps: 0
 
 ui:
   pause_menu: engine://ui/pause.ui.yml
