@@ -161,16 +161,21 @@ namespace neon
         return ControllerButtonOf(name, button);
       }, NamesOf<ControllerButton>(kControllerButton_Size));
 
-      // `mouse` is a button for a button and `motion` for an axis of two
+      // `mouse` is a button or a way of the wheel for a button, and
+      // `motion` for an axis of two
       if (std::string mouse; reader.Read("mouse", mouse))
       {
         MouseButton button;
+        MouseWheel wheel;
         if (mouse == "motion" && is_axis2)
         {
           action.mouse_motion = true;
         } else if (mouse != "motion" && action.IsButton() && MouseButtonOf(mouse, button))
         {
           action.mouse_button = button;
+        } else if (action.IsButton() && MouseWheelOf(mouse, wheel))
+        {
+          action.mouse_wheel = wheel;
         } else if (is_axis || is_axis3)
         {
           reader.Report(*reader.ReadValue("mouse"), std::format(
@@ -179,8 +184,9 @@ namespace neon
         {
           reader.Report(*reader.ReadValue("mouse"), is_axis2
                           ? std::format("'mouse' is '{}', where motion was expected for an axis2", mouse)
-                          : std::format("'mouse' is '{}', where a button was expected. Known are: {}", mouse,
-                                        NamesOf<MouseButton>(kMouseButton_Size)));
+                          : std::format("'mouse' is '{}', where a button was expected. Known are: {}, {}", mouse,
+                                        NamesOf<MouseButton>(kMouseButton_Size),
+                                        NamesOf<MouseWheel>(kMouseWheel_Size)));
         }
       }
 

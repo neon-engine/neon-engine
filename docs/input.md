@@ -52,7 +52,7 @@ An action has:
 | `type` | `button`: down or not. `axis`: one number, from -1 to 1, or 0 to 1 from a trigger. `axis2`: two numbers, x to the right and y forward. `axis3`: three numbers from a motion sensor, about x, y, and z | All. Required |
 | `keys` | Keys, by the names below, each one key or a chord of keys held together, `[left-shift, w]`. A button is down while any of them is. An axis takes exactly two: positive, negative. An axis2 exactly four: up, down, left, right | All |
 | `buttons` | Buttons of a controller, in the same way | All |
-| `mouse` | A button of the mouse for a button: `left`, `right`, `middle`. `motion` for an axis2: the mouse moves it, in pixels | A button, an axis2 |
+| `mouse` | A button of the mouse for a button: `left`, `right`, `middle`. Or a way the wheel turns, for a button: `wheel-up`, `wheel-down`, down for a frame in which the wheel turned that way, so that every notch is a press. `motion` for an axis2: the mouse moves it, in pixels | A button, an axis2 |
 | `stick` | `left` or `right`: the stick moves the axis2, from -1 to 1 | An axis2 |
 | `trigger` | `left` or `right`: how far the analog trigger is pulled, from 0 to 1. The thresholded form is the button `left-trigger` or `right-trigger` | An axis |
 | `sensor` | `gyro` or `accelerometer`: a motion sensor of the controller, the one source of an axis3 | An axis3. Required there |
@@ -89,6 +89,7 @@ backend. Only `neon-sdl2` knows what SDL calls them.
 | Function keys | `f1` to `f12` |
 | Modifiers | `left-shift`, `right-shift`, `left-control`, `right-control`, `left-alt`, `right-alt` |
 | Buttons of the mouse | `left`, `right`, `middle` |
+| The wheel of the mouse | `wheel-up` (away from the user), `wheel-down`, under `mouse` |
 | The face buttons of a controller | `south`, `east`, `west`, `north`, by where they are: `south` is the lower one, A on one controller and B on another |
 | The other buttons | `left-shoulder`, `right-shoulder`, `left-trigger`, `right-trigger` (pulled past the half), `left-stick`, `right-stick` (pressed), `start`, `back`, `guide` |
 | The pad | `dpad-up`, `dpad-down`, `dpad-left`, `dpad-right` |

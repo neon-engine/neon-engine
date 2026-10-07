@@ -9,6 +9,7 @@
 #include "controller-button.hpp"
 #include "key.hpp"
 #include "mouse-button.hpp"
+#include "mouse-wheel.hpp"
 #include "stick.hpp"
 #include "controller-trigger.hpp"
 #include "sensor.hpp"
@@ -56,6 +57,10 @@ namespace neon
 
     /// A button of the mouse, for a button.
     std::optional<MouseButton> mouse_button;
+
+    /// A way the wheel of the mouse turns, for a button: down for a frame
+    /// in which the wheel turned that way.
+    std::optional<MouseWheel> mouse_wheel;
 
     /// Whether the motion of the mouse moves the axis of two.
     bool mouse_motion = false;

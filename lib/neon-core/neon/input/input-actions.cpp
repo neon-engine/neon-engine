@@ -172,7 +172,13 @@ namespace neon
         return true;
       }
 
-      return action.mouse_button.has_value() && input.IsMouseButtonDown(*action.mouse_button);
+      if (action.mouse_button.has_value() && input.IsMouseButtonDown(*action.mouse_button)) { return true; }
+
+      // the wheel counts down the page, so up the page is below zero
+      if (!action.mouse_wheel.has_value()) { return false; }
+
+      const double turned = input.GetWheel().y;
+      return *action.mouse_wheel == MouseWheel::Up ? turned < 0.0 : turned > 0.0;
     }
   }
 

@@ -26,6 +26,7 @@ namespace
   using neon::InputMapFile;
   using neon::Key;
   using neon::MouseButton;
+  using neon::MouseWheel;
   using neon::RYML_DocumentFormat;
   using neon::Sensor;
   using neon::Stick;
@@ -349,14 +350,30 @@ namespace
   {
     Write(With("{ type: button, mouse: fourth }"));
 
-    ExpectRefused(":3: 'mouse' is 'fourth', where a button was expected. Known are: left, right, middle");
+    ExpectRefused(":3: 'mouse' is 'fourth', where a button was expected. Known are: left, right, middle, wheel-up, wheel-down");
+  }
+
+  TEST_F(InputMapsTest, ReadsAWayOfTheWheelForAButton)
+  {
+    Write(With("{ type: button, mouse: wheel-up }"));
+
+    ASSERT_TRUE(Read()) << ::testing::PrintToString(_errors);
+    EXPECT_EQ(_map.FindAction("a")->mouse_wheel, MouseWheel::Up);
+    EXPECT_EQ(_map.FindAction("a")->mouse_button, std::nullopt);
+  }
+
+  TEST_F(InputMapsTest, RefusesAWayOfTheWheelForAnAxis)
+  {
+    Write(With("{ type: axis2, mouse: wheel-down }"));
+
+    ExpectRefused(":3: 'mouse' is 'wheel-down', where motion was expected for an axis2");
   }
 
   TEST_F(InputMapsTest, RefusesTheMotionOfTheMouseForAButton)
   {
     Write(With("{ type: button, mouse: motion }"));
 
-    ExpectRefused(":3: 'mouse' is 'motion', where a button was expected. Known are: left, right, middle");
+    ExpectRefused(":3: 'mouse' is 'motion', where a button was expected. Known are: left, right, middle, wheel-up, wheel-down");
   }
 
   TEST_F(InputMapsTest, RefusesAButtonOfTheMouseForAnAxis)

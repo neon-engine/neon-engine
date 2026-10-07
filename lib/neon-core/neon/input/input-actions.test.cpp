@@ -19,6 +19,7 @@ namespace
   using neon::InputState;
   using neon::Key;
   using neon::MouseButton;
+  using neon::MouseWheel;
   using neon::Sensor;
   using neon::Stick;
   using neon::ControllerTrigger;
@@ -41,6 +42,8 @@ namespace
     map.Add({.name = "look", .type = InputActionType::Axis2, .mouse_motion = true, .stick = Stick::Right, .dead_zone = 0.0f});
     map.Add({.name = "jump", .keys = {Key::Space}, .buttons = {ControllerButton::South}});
     map.Add({.name = "honk", .keys = {Key::H}, .mouse_button = MouseButton::Right});
+    map.Add({.name = "gear-up", .mouse_wheel = MouseWheel::Up});
+    map.Add({.name = "gear-down", .mouse_wheel = MouseWheel::Down});
     map.Add({.name = "pause", .keys = {Key::Escape}, .buttons = {ControllerButton::Start}});
     map.Add({
       .name = "sprint-jump",
@@ -85,7 +88,10 @@ namespace
       .name = "walking",
       .actions = {"move", "look", "jump", "pause", "dpad", "turn", "aim", "tilt", "sprint-jump", "lean", "crawl", "walk", "swim"}
     });
-    map.Add(InputMapState{.name = "driving", .actions = {"move", "honk", "pause", "throttle", "gear", "brake", "gas"}});
+    map.Add(InputMapState{
+      .name = "driving",
+      .actions = {"move", "honk", "pause", "throttle", "gear", "brake", "gas", "gear-up", "gear-down"}
+    });
     return map;
   }
 
@@ -188,6 +194,31 @@ namespace
     _input.SetMouseButtonDown(MouseButton::Left);
     Frame("driving");
     EXPECT_FALSE(_actions.IsDown("honk"));
+  }
+
+  TEST_F(InputActionsTest, HoldsAButtonForAFrameInWhichTheWheelTurnedItsWay)
+  {
+    // the wheel counts down the page: a notch up is -1
+    _input.AddWheel(0.0, -1.0, false);
+    Frame("driving");
+    EXPECT_TRUE(_actions.WasPressed("gear-up"));
+    EXPECT_FALSE(_actions.IsDown("gear-down"));
+
+    // a frame without a turn lets it go, so the next notch is a press again
+    Frame("driving");
+    EXPECT_FALSE(_actions.IsDown("gear-up"));
+
+    // a trackpad turns it by less than a notch, which counts as well
+    _input.AddWheel(0.0, 0.25, true);
+    Frame("driving");
+    EXPECT_TRUE(_actions.WasPressed("gear-down"));
+    EXPECT_FALSE(_actions.IsDown("gear-up"));
+
+    // to the side is neither
+    _input.AddWheel(1.0, 0.0, false);
+    Frame("driving");
+    EXPECT_FALSE(_actions.IsDown("gear-up"));
+    EXPECT_FALSE(_actions.IsDown("gear-down"));
   }
 
   TEST_F(InputActionsTest, SaysWhenAButtonWentDownAndNotWhileItIsHeld)
