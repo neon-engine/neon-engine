@@ -8,6 +8,7 @@
 #include <stdexcept>
 #include <glm/gtc/matrix_transform.hpp>
 #include <neon/render/anisotropy.hpp>
+#include <neon/render/texture-scale.hpp>
 #include <neon/render/texture-source.hpp>
 
 #include "vk-culling.hpp"
@@ -70,6 +71,11 @@ namespace neon
 
     _models.Initialize(_file_system_context, &_device, _logger);
     _textures.Initialize(_file_system_context, &_device, _logger);
+    _textures.SetScale(_settings_config.texture_scale);
+    if (_settings_config.texture_scale != 1.0)
+    {
+      _logger->Info("Textures read from files are kept at {} of their size", _settings_config.texture_scale);
+    }
     _render_resolution.emplace(static_cast<int>(_extent.width), static_cast<int>(_extent.height));
 
     VkCommandBufferAllocateInfo allocation{};
@@ -662,6 +668,20 @@ namespace neon
   int VK_RenderSystem::GetAnisotropy()
   {
     return _samplers.GetAnisotropy();
+  }
+
+  bool VK_RenderSystem::SetTextureScale(const double scale)
+  {
+    if (!TextureScale::IsScale(scale)) { return false; }
+
+    _textures.SetScale(scale);
+    _logger->Info("Textures read from files from now on are kept at {} of their size", scale);
+    return true;
+  }
+
+  double VK_RenderSystem::GetTextureScale()
+  {
+    return _textures.GetScale();
   }
 
   void VK_RenderSystem::SettleSamplers()

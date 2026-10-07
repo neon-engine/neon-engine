@@ -160,6 +160,23 @@ namespace
     }
   }
 
+  TEST_F(DisplayOptionsTest, TakesTheSizeTexturesAreKeptAt)
+  {
+    EXPECT_DOUBLE_EQ(_settings.texture_scale, 1.0) << "unless something says otherwise";
+
+    ASSERT_TRUE(Apply({"--texture-scale", "0.25"}));
+    EXPECT_DOUBLE_EQ(_settings.texture_scale, 0.25);
+
+    ASSERT_TRUE(Apply({"--texture-scale=1"}));
+    EXPECT_DOUBLE_EQ(_settings.texture_scale, 1.0);
+
+    for (const char *wrong: {"0", "2", "0.3", "0.0625", "small"})
+    {
+      EXPECT_FALSE(Apply({"--texture-scale", wrong})) << wrong;
+      EXPECT_EQ(_error, "Option '--texture-scale' needs 1, 0.5, 0.25, or 0.125") << wrong;
+    }
+  }
+
   TEST_F(DisplayOptionsTest, TakesWhetherAFrameWaitsForTheScreen)
   {
     ASSERT_TRUE(Apply({"--vsync", "off"}));

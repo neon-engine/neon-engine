@@ -127,9 +127,12 @@ namespace neon
 
     if (_texture_cache != nullptr)
     {
-      // an image a model carries is known by the model as well
-      key = VK_TextureCache::KeyOf(path, file != nullptr ? _model_path : "", options);
-      return _texture_cache->Acquire(key, path, file, options, texture);
+      // read at the size the game asks for; an image a model carries is
+      // known by the model as well
+      VK_TextureOptions scaled = options;
+      scaled.scale = _texture_cache->GetScale();
+      key = VK_TextureCache::KeyOf(path, file != nullptr ? _model_path : "", scaled);
+      return _texture_cache->Acquire(key, path, file, scaled, texture);
     }
 
     return file != nullptr ? texture.InitializeWithFile(*file, options) : texture.Initialize(options);

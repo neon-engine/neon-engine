@@ -5,6 +5,9 @@
 #include <cstring>
 #include <vector>
 
+#include <neon/image/image-halving.hpp>
+#include <neon/render/texture-scale.hpp>
+
 // kept private to this file, so that another library can carry its own copy
 #define STB_IMAGE_STATIC
 #define STB_IMAGE_IMPLEMENTATION
@@ -92,6 +95,24 @@ namespace neon
     {
       _logger->Error("Failed to load texture {}", _texture_path);
       return false;
+    }
+
+    // the largest levels a smaller scale leaves out are made here, each
+    // from the one above, and the rest by the graphics card as always
+    const int halvings = TextureScale::HalvingsOf(width, height, options.scale);
+    if (halvings > 0)
+    {
+      ImagePixels image{.width = width, .height = height};
+      image.pixels.assign(pixels, pixels + static_cast<std::size_t>(width) * height * 4);
+      stbi_image_free(pixels);
+
+      for (int i = 0; i < halvings; i++) { image = HalveImage(image, options.is_color); }
+      _logger->Debug(
+        "Texture {} is kept at {}x{}, {} of its {}x{}", _texture_path, image.width, image.height, options.scale, width,
+        height);
+
+      return Upload(
+        image.pixels.data(), static_cast<uint32_t>(image.width), static_cast<uint32_t>(image.height), options);
     }
 
     const bool uploaded = Upload(pixels, static_cast<uint32_t>(width), static_cast<uint32_t>(height), options);

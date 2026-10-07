@@ -38,6 +38,12 @@ namespace neon
     /// each part of a surface is, is read as it is. So is an image of a
     /// user interface, which is drawn in sRGB as CSS draws it.
     bool is_color = true;
+
+    /// The size an image read from a file is kept at, one of
+    /// TextureScale::kScales: below 1 its largest levels are left out
+    /// before it is uploaded, never below TextureScale::kFloor. An image
+    /// made from pixels is kept at its size.
+    double scale = 1.0;
   };
 
   // ReSharper disable once CppInconsistentNaming

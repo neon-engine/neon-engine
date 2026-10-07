@@ -173,6 +173,16 @@ namespace neon
     /// allows it: 1 for none.
     [[nodiscard]] virtual int GetAnisotropy() { return 1; }
 
+    /// The size textures read from files are kept at, while the application
+    /// runs: one of TextureScale::kScales. Textures read from then on are
+    /// read at it; those that are held stay as they are, so a scene that
+    /// is loaded next has its textures at the new size. Returns false for a
+    /// scale that is none of them, or a renderer that cannot change it.
+    virtual bool SetTextureScale(double scale) { return false; }
+
+    /// The size textures read from files are kept at.
+    [[nodiscard]] virtual double GetTextureScale() { return 1.0; }
+
     /// How many places there are for numbers of a game that every shader
     /// reads, see SetShaderNumbers().
     static constexpr int kShader_Number_Places = 8;

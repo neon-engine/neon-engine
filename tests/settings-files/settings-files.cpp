@@ -388,6 +388,29 @@ namespace
     }
   }
 
+  TEST_F(SettingsFilesTest, ReadsTheSizeTexturesAreKeptAt)
+  {
+    EXPECT_DOUBLE_EQ(SettingsConfig{}.texture_scale, 1.0) << "unless a file says otherwise";
+
+    WriteOfTheProject("version: 1\nrendering:\n  texture_scale: 0.5\n");
+    ASSERT_TRUE(ReadOfTheProject()) << ::testing::PrintToString(_errors);
+    EXPECT_DOUBLE_EQ(_settings.texture_scale, 0.5);
+  }
+
+  TEST_F(SettingsFilesTest, RefusesATextureScaleThatIsNoneOfThem)
+  {
+    for (const char *wrong: {"0", "2", "0.3"})
+    {
+      _errors.clear();
+      WriteOfTheProject(std::string("version: 1\nrendering:\n  texture_scale: ") + wrong + "\n");
+
+      EXPECT_FALSE(ReadOfTheProject()) << wrong;
+      ASSERT_EQ(_errors.size(), 1u) << ::testing::PrintToString(_errors);
+      EXPECT_THAT(_errors.front(), HasSubstr("'texture_scale'"));
+      EXPECT_THAT(_errors.front(), HasSubstr("1, 0.5, 0.25, or 0.125"));
+    }
+  }
+
   TEST_F(SettingsFilesTest, RefusesATonemapperItDoesNotKnow)
   {
     WriteOfTheProject("version: 1\nrendering:\n  tonemapper: reinhard\n");

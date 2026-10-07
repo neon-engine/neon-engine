@@ -226,6 +226,20 @@ samplers are made again, and the descriptor sets that hold them, those of
 the materials and of the textures of the user interface, are written again.
 The other four are not touched.
 
+The size a texture read from a file is kept at is a quality a game sets
+(#464): `rendering.texture_scale` of the settings, `--texture-scale` on the
+command line, and `RenderContext::SetTextureScale()` while the game runs: 1,
+0.5, 0.25, or 0.125. Each halving is a level of the smaller copies the
+texture has anyway: the image is decoded, halved on the processor that many
+times (colours averaged as light, as the graphics card averages them, see
+`HalveImage()`), and uploaded, and the graphics card makes the rest of its
+smaller copies as always. No side is halved below 32 pixels, so a small
+texture keeps its detail. The texture cache keeps a texture under its scale
+as well, so a change holds for the textures read from then on, and a scene
+that is loaded next reads its textures at the new size; what is held stays
+as it is until nothing reads it. Images of the user interface, fonts,
+render targets, and images made while the game runs are not scaled.
+
 Light data is held in a uniform buffer, not in individual uniforms. That
 removes the limit on uniforms per shader, which is what had held the OpenGL
 backend to 16 lights of each kind.

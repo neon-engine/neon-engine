@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <neon/render/anisotropy.hpp>
+#include <neon/render/texture-scale.hpp>
 #include <neon/window/frame-limit.hpp>
 #include <charconv>
 #include <string_view>
@@ -16,6 +17,7 @@ namespace neon
     const std::string vsync = "vsync";
     const std::string max_fps = "max-fps";
     const std::string anisotropy = "anisotropy";
+    const std::string texture_scale = "texture-scale";
     const std::string ui_scale = "ui-scale";
 
     const std::string windowed = "windowed";
@@ -96,6 +98,14 @@ namespace neon
     });
 
     command_line.Add({
+      .name = texture_scale,
+      .value_name = "NUMBER",
+      .description = "Size textures read from files are kept at: 1, 0.5, 0.25, or 0.125 of their size, over "
+                     "rendering.texture_scale of the settings",
+      .group = display
+    });
+
+    command_line.Add({
       .name = ui_scale,
       .value_name = "NUMBER",
       .description = "Makes the user interface larger or smaller, for example 1.5",
@@ -172,6 +182,17 @@ namespace neon
         return false;
       }
       settings.anisotropy = static_cast<int>(level);
+    }
+
+    if (command_line.IsSet(texture_scale))
+    {
+      double scale = 0.0;
+      if (!command_line.GetNumber(texture_scale, scale) || !TextureScale::IsScale(scale))
+      {
+        error = "Option '--" + texture_scale + "' needs 1, 0.5, 0.25, or 0.125";
+        return false;
+      }
+      settings.texture_scale = scale;
     }
 
     if (command_line.IsSet(ui_scale))

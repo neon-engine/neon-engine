@@ -9,6 +9,7 @@
 #include "neon/audio/sound-group-setting.hpp"
 #include "neon/render/anisotropy.hpp"
 #include "neon/render/api-version.hpp"
+#include "neon/render/texture-scale.hpp"
 #include "neon/render/tonemapper.hpp"
 #include "neon/window/window-mode.hpp"
 
@@ -127,6 +128,12 @@ struct SettingsConfig
   /// the graphics card allows. Changed while the application runs with
   /// RenderContext::SetAnisotropy().
   int anisotropy = neon::Anisotropy::kDefault;
+
+  /// The size textures read from files are kept at: 1, 0.5, 0.25, or
+  /// 0.125 of their size, see TextureScale. Changed while the application
+  /// runs with RenderContext::SetTextureScale(), for the textures read
+  /// from then on.
+  double texture_scale = 1.0;
 
   /// The most frames a second: a number from 30 to 300, or 0 for as many
   /// as can be drawn, see FrameLimit. Changed while the application runs

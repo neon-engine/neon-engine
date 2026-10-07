@@ -384,6 +384,10 @@ namespace neon
 
     [[nodiscard]] int GetAnisotropy() override;
 
+    bool SetTextureScale(double scale) override;
+
+    [[nodiscard]] double GetTextureScale() override;
+
     void SetShaderTime(double seconds, double delta) override;
 
     bool SetShaderNumbers(int place, const glm::vec4 &numbers) override;

@@ -1,5 +1,7 @@
 #include "vk-texture-cache.hpp"
 
+#include <format>
+
 namespace neon
 {
   void VK_TextureCache::Initialize(
@@ -24,6 +26,9 @@ namespace neon
     if (!options.mip_levels) { key += "|flat"; }
     if (!options.repeat) { key += "|clamp"; }
     if (options.premultiply_alpha) { key += "|premultiplied"; }
+
+    // the same image at another size is another texture
+    if (options.scale != 1.0) { key += std::format("|scale {}", options.scale); }
     return key;
   }
 

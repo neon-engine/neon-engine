@@ -41,6 +41,7 @@ namespace neon
   ///       vsync: true
   ///       max_fps: 0
   ///       anisotropy: 8
+  ///       texture_scale: 1
   ///
   ///     audio:
   ///       groups:

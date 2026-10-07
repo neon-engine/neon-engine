@@ -306,6 +306,7 @@ add_library(${TARGET} STATIC
         neon/render/render-system.hpp
         neon/render/anisotropy.hpp
         neon/render/api-version.hpp
+        neon/render/texture-scale.hpp
         neon/render/tonemapper.hpp
         neon/render/render-capabilities.hpp
         neon/render/render-context.hpp
@@ -409,6 +410,8 @@ add_library(${TARGET} STATIC
         # images
         neon/image/image-pixels.cpp
         neon/image/image-pixels.hpp
+        neon/image/image-halving.cpp
+        neon/image/image-halving.hpp
         neon/image/image-decoder.hpp
         neon/image/vector-image-rasterizer.hpp
         neon/ui/ui-box-paint.cpp
@@ -569,6 +572,8 @@ neon_add_unit_test(${TARGET} neon/command-line/display-options.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/ui-view-loading.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/ui-surface-pointing.test.cpp)
   neon_add_unit_test(${TARGET} neon/image/image-pixels.test.cpp)
+  neon_add_unit_test(${TARGET} neon/image/image-halving.test.cpp)
+  neon_add_unit_test(${TARGET} neon/render/texture-scale.test.cpp)
   neon_add_unit_test(${TARGET} neon/text/glyph-atlas.test.cpp)
   neon_add_unit_test(${TARGET} neon/text/shaped-text.test.cpp)
   neon_add_unit_test(${TARGET} neon/text/text-case.test.cpp)

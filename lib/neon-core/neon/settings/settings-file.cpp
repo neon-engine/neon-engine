@@ -147,6 +147,19 @@ namespace neon
         }
       }
 
+      // the size textures read from files are kept at
+      if (double scale = 0.0; reader.Read("texture_scale", scale))
+      {
+        if (!TextureScale::IsScale(scale))
+        {
+          reader.Report(*reader.ReadValue("texture_scale"), std::format(
+                          "'texture_scale' of {} is {}, where 1, 0.5, 0.25, or 0.125 was expected", reader.GetWhere(), scale));
+        } else
+        {
+          settings.texture_scale = scale;
+        }
+      }
+
       // the most frames a second, 0 for as many as can be drawn
       if (int most = 0; reader.Read("max_fps", most))
       {

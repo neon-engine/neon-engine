@@ -98,6 +98,7 @@ if (NEON_BUILD_TESTS)
   # call to Vulkan, and what happens when a file cannot be used.
   neon_add_unit_test(${TARGET} neon/render/vk-material.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/vk-material-cache.test.cpp)
+  neon_add_unit_test(${TARGET} neon/render/vk-texture-cache.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/vk-mesh.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/vk-model.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/vk-renderer-2d.test.cpp)

@@ -49,7 +49,18 @@ namespace neon
     std::size_t _loads = 0;
     std::size_t _shares = 0;
 
+    // the size images read from files are kept at, see TextureScale
+    double _scale = 1.0;
+
   public:
+    /// The size the images read from files are kept at from now on, one
+    /// of TextureScale::kScales. What is held already stays as it is, and
+    /// is let go of when nothing reads it any more: a scene that is loaded
+    /// next reads its textures at the new scale.
+    void SetScale(double scale) { _scale = scale; }
+
+    [[nodiscard]] double GetScale() const { return _scale; }
+
     void Initialize(FileSystemContext *file_system_context, VK_Device *device, const std::shared_ptr<Logger> &logger);
 
     /// The key a texture is held under. `model_path` is the model that
