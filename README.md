@@ -167,10 +167,10 @@ Engine is appreciated, though not required.
 ## Supporting the project
 
 Neon Engine is free to use: anyone may build it from source at no cost.
-Prebuilt, tested builds are also offered for purchase, and buying them is the
+Prebuilt, tested builds are planned to be offered for purchase, and will be the
 most direct way to fund the engine's continued development. If you build Neon
 Engine yourself and find it valuable, please consider supporting the project
-through a donation or the purchase of a build.
+through sponsorship, or by purchasing a build once they are available.
 
 ## Licenses of third parties
 
