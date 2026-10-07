@@ -163,6 +163,17 @@ namespace neon
     _world_system->LoadScene(*scene);
   }
 
+  void Runtime::StopWithoutAScene()
+  {
+    if (!_world_system->HasNoScene()) { return; }
+
+    // The world would show nothing for as long as the window is open. The
+    // run ends as a closed window ends it, everything cleaned up, and fails.
+    _logger->Error("There is no scene to run, so the application stops. The scene and why it cannot be read are above");
+    _failed = true;
+    _window_system->SignalToClose();
+  }
+
   void Runtime::Run()
   {
     Initialize();
@@ -180,6 +191,9 @@ namespace neon
 
     const FrameCapture frame_capture(_settings_config, _render_system);
     std::size_t frames_rendered = 0;
+
+    // a scene that cannot be read stops the run before a frame of nothing
+    StopWithoutAScene();
 
     while (_window_system->IsRunning())
     {

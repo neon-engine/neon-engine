@@ -66,7 +66,19 @@ namespace neon
     // a spawn does not read its file again, and forgotten by the next load
     PrefabFiles _prefabs;
 
+    // whether the last read found no document: no file, or no YAML
+    bool _could_not_be_read = false;
+
+    // the document ReadAhead() read, and its path, until Load() places it
+    std::string _read_ahead_path;
+    DataValue _read_ahead;
+
     bool Read(EntityStore &store);
+
+    /// Reads the file at `path` into a document. Returns false when there
+    /// is none: a file that is not there or cannot be opened is said in the
+    /// log, and a text that is no document is added to `errors`.
+    bool ReadDocument(const std::string &path, DataValue &document, std::vector<std::string> &errors) const;
 
     /// Logs every problem of a read, with its line, and a last line that
     /// counts them: `<what> has N problems, <goes_on>`.
@@ -187,10 +199,20 @@ namespace neon
     /// component is registered with the store.
     bool Populate(EntityStore &store) override;
 
+    /// Reads the file of another scene and keeps its document for Load(),
+    /// so that the file is read once. Says why when it cannot be read at
+    /// all.
+    bool ReadAhead(const std::string &path) override;
+
     /// Reads another scene file in place of the one the world started with,
-    /// into a store the world has emptied. The path becomes the file's path,
-    /// so that Save() and messages name the scene that is shown.
+    /// into a store the world has emptied, or places what ReadAhead() read
+    /// of it. The path becomes the file's path, so that Save() and messages
+    /// name the scene that is shown.
     bool Load(EntityStore &store, const std::string &path) override;
+
+    /// Whether the last read found no file there, could not open it, or
+    /// found no document in it.
+    [[nodiscard]] bool CouldNotBeRead() const override;
 
     /// Places a prefab below `parent` while the game plays, through the
     /// same reading a scene file goes through, so that a spawned entity is

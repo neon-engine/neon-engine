@@ -101,11 +101,14 @@ namespace neon
     for (const auto &system : _added_after_placing) { system->Initialize(*_store); }
     _exits = _store->Query<SceneExit>();
 
-    // a scene with problems is said in the log, and the world runs with
-    // what could be read: a game is not ended by a file
+    // A scene with problems is said in the log, and the world runs with
+    // what could be read: a game is not ended by a mistake in a file. A
+    // scene that cannot be read at all leaves nothing to run, which the
+    // application is told.
     if (!_scene->Populate(*_store))
     {
-      _logger->Error("The world runs with what could be read of its scene");
+      _has_no_scene = _scene->CouldNotBeRead();
+      if (!_has_no_scene) { _logger->Error("The world runs with what could be read of its scene"); }
     }
     _initialized = true;
 
@@ -158,6 +161,15 @@ namespace neon
     _scene_to_load.clear();
     _logger->Info("Changing the scene to {}", path);
 
+    // The scene is read before anything is destroyed. One that cannot be
+    // read at all leaves the game where it is, with the reason in the log:
+    // a game that runs is not ended by a file.
+    if (!_scene->ReadAhead(path))
+    {
+      _logger->Error("The scene {} cannot be read, the game stays in the scene it is in", path);
+      return;
+    }
+
     // what stays is what carries a Persistent, with everything below it;
     // the rest goes, which releases what the systems hold for it
     for (const Entity entity : _store->GetChildren(No_Entity))
@@ -196,6 +208,11 @@ namespace neon
   bool EntityWorld::IsPaused() const
   {
     return _paused;
+  }
+
+  bool EntityWorld::HasNoScene() const
+  {
+    return _has_no_scene;
   }
 
   void EntityWorld::Update()

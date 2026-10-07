@@ -70,6 +70,10 @@ elseif (CASE STREQUAL "user-interface-of-a-scene")
           --scene assets://scenes/hud-demo.scene.yml)
 elseif (CASE STREQUAL "user-interface-that-is-missing")
   run_headless(--frames 2 --output-dir shots --screenshot output://frame.png --ui assets://ui/missing.ui.yml)
+elseif (CASE STREQUAL "scene-that-is-missing")
+  # many frames are asked for, and none is drawn
+  run_headless(--frames 300 --output-dir shots --screenshot output://frame.png
+          --scene assets://scenes/missing.scene.yml)
 elseif (CASE STREQUAL "pause-menu")
   # pause is pressed, the menu is closed with cancel, and pressed again
   set(SCRIPT "5: hold pause\n20: hold ui-cancel\n30: hold pause")
@@ -258,6 +262,13 @@ elseif (CASE STREQUAL "user-interface-that-is-missing")
   expect_output("assets://ui/missing.ui.yml: the file cannot be read")
   expect_output("The user interface assets://ui/missing.ui.yml cannot be used, nothing is shown from the start")
   expect_image("shots/frame.png")
+elseif (CASE STREQUAL "scene-that-is-missing")
+  # the run stops at once rather than show nothing, says why, and fails
+  expect_exit_code(1)
+  expect_output("The scene assets://scenes/missing.scene.yml cannot be read: there is no such file")
+  expect_output("There is no scene to run, so the application stops")
+  expect_no_output("Rendered 300 frames")
+  expect_no_file("shots/frame.png")
 elseif (CASE STREQUAL "vulkan-version")
   # what is asked for is the most that is used, and the log says what was
   expect_exit_code(0)

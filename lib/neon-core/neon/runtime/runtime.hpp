@@ -48,6 +48,12 @@ namespace neon
     /// Loads the pause menu, and says when it cannot be shown.
     void ShowPauseMenu();
 
+    /// Closes the window before the first frame when the world has no scene
+    /// it could read, so that the run ends and fails rather than show
+    /// nothing for ever. A scene the game changes to and cannot read leaves
+    /// the game where it is, so this is the only time it is asked.
+    void StopWithoutAScene();
+
     /// Hands the scene a button asked for, with `action: scene`, to the
     /// world. The last one asked for in a frame is the one taken.
     void UpdateSceneChange();
@@ -92,8 +98,9 @@ namespace neon
     /// Whether something the run was asked to do did not happen: a
     /// screenshot that could not be written, a scene or a user interface
     /// with a problem, anything that was logged as an error. The run goes on
-    /// all the same, as a game does; an application turns this into its exit
-    /// code, so that a script learns of it.
+    /// all the same, as a game does, unless the scene it starts with cannot
+    /// be read at all; an application turns this into its exit code, so that a script
+    /// learns of it.
     [[nodiscard]] bool HasFailed() const;
   };
 } // neon

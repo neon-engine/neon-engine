@@ -310,6 +310,59 @@ namespace
       << _logger->Messages(LogLevel::Error);
   }
 
+  TEST_F(SceneFilesTest, ReadsAheadAFileThatIsThere)
+  {
+    _files.AddNativeFile("/assets/scenes/other.scene.yml", "entities:\n  - name: other\n");
+
+    EXPECT_TRUE(_scene.ReadAhead("assets://scenes/other.scene.yml"));
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 0u) << _logger->Messages(LogLevel::Error);
+  }
+
+  TEST_F(SceneFilesTest, CannotReadAheadAFileThatIsMissingAndSaysWhy)
+  {
+    EXPECT_FALSE(_scene.ReadAhead("assets://scenes/missing.scene.yml"));
+    EXPECT_TRUE(_logger->Contains(
+      LogLevel::Error,
+      "The scene assets://scenes/missing.scene.yml cannot be read: there is no such file, or it cannot be opened"))
+      << _logger->Messages(LogLevel::Error);
+  }
+
+  TEST_F(SceneFilesTest, CannotReadAheadAFileThatHoldsNoDocumentAndSaysWhy)
+  {
+    _files.AddNativeFile("/assets/scenes/broken.scene.yml", "entities: [unclosed\n");
+
+    EXPECT_FALSE(_scene.ReadAhead("assets://scenes/broken.scene.yml"));
+    EXPECT_TRUE(_logger->Contains(
+      LogLevel::Error, "The scene assets://scenes/broken.scene.yml has 1 problem, the game stays where it is"))
+      << _logger->Messages(LogLevel::Error);
+  }
+
+  TEST_F(SceneFilesTest, LoadsWhatWasReadAheadWithoutReadingTheFileAgain)
+  {
+    _files.AddNativeFile("/assets/scenes/other.scene.yml", "entities:\n  - name: other\n");
+    ASSERT_TRUE(_scene.ReadAhead("assets://scenes/other.scene.yml"));
+    // the file changes after it was read ahead; what was read is placed
+    _files.AddNativeFile("/assets/scenes/other.scene.yml", "entities:\n  - name: changed\n");
+
+    EXPECT_TRUE(_scene.Load(_world.store, "assets://scenes/other.scene.yml"));
+
+    EXPECT_NE(_world.store.FindEntity("other"), No_Entity);
+    EXPECT_EQ(_world.store.FindEntity("changed"), No_Entity);
+  }
+
+  TEST_F(SceneFilesTest, ReadsTheFileAgainWhenWhatWasReadAheadWasPlacedOnce)
+  {
+    _files.AddNativeFile("/assets/scenes/other.scene.yml", "entities:\n  - name: other\n");
+    ASSERT_TRUE(_scene.ReadAhead("assets://scenes/other.scene.yml"));
+    ASSERT_TRUE(_scene.Load(_world.store, "assets://scenes/other.scene.yml"));
+    _world.store.DestroyEntity(_world.store.FindEntity("other"));
+    _files.AddNativeFile("/assets/scenes/other.scene.yml", "entities:\n  - name: changed\n");
+
+    EXPECT_TRUE(_scene.Load(_world.store, "assets://scenes/other.scene.yml"));
+
+    EXPECT_NE(_world.store.FindEntity("changed"), No_Entity);
+  }
+
   TEST_F(SceneFilesTest, AnEmptyFileIsAnEmptyScene)
   {
     Write("");
@@ -350,12 +403,30 @@ namespace
     EXPECT_EQ(_world.store.Get<Health>(_world.store.FindEntity("hero"))->points, 40);
   }
 
-  TEST_F(SceneFilesTest, AFileThatDoesNotExistIsReportedAndTheWorldStartsEmpty)
+  TEST_F(SceneFilesTest, AFileThatDoesNotExistIsReportedAndCouldNotBeRead)
   {
     EXPECT_FALSE(_scene.Populate(_world.store));
+    EXPECT_TRUE(_scene.CouldNotBeRead());
     EXPECT_TRUE(_logger->Contains(
-      LogLevel::Error, "The scene assets://scenes/test.scene.yml cannot be read, the world starts empty"))
+      LogLevel::Error,
+      "The scene assets://scenes/test.scene.yml cannot be read: there is no such file, or it cannot be opened"))
       << _logger->Messages(LogLevel::Error);
+  }
+
+  TEST_F(SceneFilesTest, AFileThatHoldsNoDocumentCouldNotBeRead)
+  {
+    Write("entities: [unclosed\n");
+
+    EXPECT_FALSE(_scene.Populate(_world.store));
+    EXPECT_TRUE(_scene.CouldNotBeRead());
+  }
+
+  TEST_F(SceneFilesTest, AFileWithAProblemWasReadAllTheSame)
+  {
+    Write("scene: test\nentities:\n  - name: hero\n    components:\n      NoSuchComponent: Default\n");
+
+    EXPECT_FALSE(_scene.Populate(_world.store));
+    EXPECT_FALSE(_scene.CouldNotBeRead());
   }
 
   TEST_F(SceneFilesTest, AFileWithAProblemGivesWhatCouldBeReadAndSaysSo)

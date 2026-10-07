@@ -495,13 +495,17 @@ manager (#118). Three things ask for a change:
 What happens, in this order, at the start of the next frame of the world,
 so that a change never falls in the middle of one:
 
-1. Every entity at the top that has no `Persistent` is destroyed, with
+1. The file of the new scene is read. A file that is not there, cannot be
+   opened, or holds no document changes nothing: the log says which scene
+   and why, and the game stays in the scene it is in, as if it had not
+   been asked.
+2. Every entity at the top that has no `Persistent` is destroyed, with
    everything below it. What a system held for those entities is released
    as it is when an entity goes away in play: the renderer's objects, the
    bodies of the physics, the sounds, the user interface a `Ui` showed.
-2. The file of the new scene is read into the store, as the first scene
-   was. A file with problems is said in the log, and the world runs with
-   what could be read of it.
+3. What was read of the new scene is placed in the store, as the first
+   scene was. A file with problems is said in the log, and the world runs
+   with what could be read of it.
 
 An entity with `Persistent` stays where it is, with its children: the
 player, a score, a sound that goes on. The new scene is read next to it, so
@@ -519,6 +523,13 @@ The prototype game of the tests goes
 which the end menu goes back to either.
 
 ## Made to be changed by hand
+
+A first scene that cannot be read at all, the entry scene of the project or
+the one `--scene` names, stops the application before its first frame with
+an exit code of 1, and the log says which scene and why. Once the game
+runs, nothing stops it: a scene it changes to and cannot read leaves it
+where it is, and a scene with problems in what it holds runs with what
+could be read. Both are in the log.
 
 The rules every recipe shares, that a name that is not known is an error,
 that every problem is reported with its line, that what is left out keeps its

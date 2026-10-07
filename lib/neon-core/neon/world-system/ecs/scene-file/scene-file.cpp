@@ -94,6 +94,26 @@ namespace neon
     return Read(store);
   }
 
+  bool SceneFile::ReadAhead(const std::string &path)
+  {
+    _read_ahead_path.clear();
+
+    std::vector<std::string> errors;
+    if (!ReadDocument(path, _read_ahead, errors))
+    {
+      if (!errors.empty()) { ReportProblems(errors, std::format("The scene {}", path), "the game stays where it is"); }
+      return false;
+    }
+
+    _read_ahead_path = path;
+    return true;
+  }
+
+  bool SceneFile::CouldNotBeRead() const
+  {
+    return _could_not_be_read;
+  }
+
   const std::string &SceneFile::GetPath() const
   {
     return _path;
@@ -106,25 +126,28 @@ namespace neon
     // the prefabs of the scene before are forgotten, so that a file that
     // changed is read anew
     _prefabs.Clear();
+    _could_not_be_read = false;
 
-    std::string text;
-    if (!_file_system->ReadText(_path, text))
+    std::vector<std::string> errors;
+    DataValue document;
+
+    // what was read ahead of this path is not read again
+    if (_read_ahead_path == _path)
     {
-      _logger->Error("The scene {} cannot be read, the world starts empty", _path);
-      return false;
+      document = std::move(_read_ahead);
+      _read_ahead = DataValue();
+      _read_ahead_path.clear();
+    } else if (!ReadDocument(_path, document, errors))
+    {
+      _could_not_be_read = true;
+      if (errors.empty()) { return false; }
     }
 
     // the loader is what knows where an entity came from, so the component
     // that says so is its own
     store.Register<Prefab>(prefab_component);
 
-    std::vector<std::string> errors;
-    DataValue document;
-
-    if (std::string error; !_format->Read(_path, text, document, error))
-    {
-      errors.push_back(error);
-    } else
+    if (!_could_not_be_read)
     {
       const DataReader reader(document, _path, "the scene", errors);
 
@@ -158,6 +181,26 @@ namespace neon
 
     ReportProblems(errors, std::format("The scene {}", _path), "the world holds what could be read");
     return false;
+  }
+
+  bool SceneFile::ReadDocument(
+    const std::string &path,
+    DataValue &document,
+    std::vector<std::string> &errors) const
+  {
+    std::string text;
+    if (!_file_system->ReadText(path, text))
+    {
+      _logger->Error("The scene {} cannot be read: there is no such file, or it cannot be opened", path);
+      return false;
+    }
+
+    if (std::string error; !_format->Read(path, text, document, error))
+    {
+      errors.push_back(error);
+      return false;
+    }
+    return true;
   }
 
   void SceneFile::ReportProblems(

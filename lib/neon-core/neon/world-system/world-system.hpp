@@ -50,6 +50,14 @@ namespace neon
       return false;
     }
 
+    /// Whether the scene the world started with could not be read at all,
+    /// its file missing or no document, so that there is nothing to run. The
+    /// log says which scene and why. A world without scenes always has one.
+    [[nodiscard]] virtual bool HasNoScene() const
+    {
+      return false;
+    }
+
     /// Asks for the scene at that virtual path to take the place of what is
     /// there, which happens at the next Update(). A world that cannot
     /// change scene ignores it.

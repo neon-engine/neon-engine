@@ -191,6 +191,27 @@ namespace
       << _logger->Messages(neon::testing::LogLevel::Error);
   }
 
+  TEST_F(EntityWorldTest, HasASceneWhenItsSceneHasProblems)
+  {
+    EXPECT_CALL(_scene, Populate(_)).WillOnce(::testing::Return(false));
+
+    _world.Initialize();
+
+    EXPECT_FALSE(_world.HasNoScene());
+  }
+
+  TEST_F(EntityWorldTest, HasNoSceneWhenItsSceneCannotBeReadAtAll)
+  {
+    EXPECT_CALL(_scene, Populate(_)).WillOnce(::testing::Return(false));
+    _scene.could_not_be_read = true;
+
+    _world.Initialize();
+
+    EXPECT_TRUE(_world.HasNoScene());
+    EXPECT_FALSE(_logger->Contains(neon::testing::LogLevel::Error, "The world runs with what could be read"))
+      << "the scene said why, and the world does not run";
+  }
+
   TEST_F(EntityWorldTest, PopulatesTheSceneOnceWithTheStore)
   {
     EXPECT_CALL(_scene, Populate(Ref(_store))).Times(1);
@@ -386,6 +407,26 @@ namespace
     _world.Update();
 
     EXPECT_TRUE(_logger->Contains(LogLevel::Error, "The world runs with what could be read of the scene assets://scenes/next.scene.yml"));
+  }
+
+  TEST_F(EntityWorldTest, StaysWhereItIsWhenTheNextSceneCannotBeReadAtAll)
+  {
+    Entity level = 0;
+    PopulateWith([&](EntityStore &store) { level = store.CreateEntity("level"); });
+    _world.Initialize();
+    _scene.can_read_ahead = false;
+    EXPECT_CALL(_scene, Load(_, _)).Times(0);
+    EXPECT_CALL(_pipeline, FreeUnused()).Times(0);
+
+    _world.LoadScene("assets://scenes/missing.scene.yml");
+    _world.Update();
+
+    EXPECT_TRUE(_store.IsAlive(level)) << "nothing is destroyed for a scene that cannot be read";
+    EXPECT_FALSE(_world.IsChangingScene());
+    EXPECT_FALSE(_world.HasNoScene()) << "the game goes on in the scene it is in";
+    EXPECT_TRUE(_logger->Contains(
+      LogLevel::Error,
+      "The scene assets://scenes/missing.scene.yml cannot be read, the game stays in the scene it is in"));
   }
 
   TEST_F(EntityWorldTest, AsksForTheSceneOfAnExitWhoseTriggerHasABodyInside)

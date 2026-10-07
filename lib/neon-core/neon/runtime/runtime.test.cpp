@@ -449,6 +449,23 @@ namespace
     ExpectCleanUp();
   }
 
+  TEST_F(RuntimeTest, StopsBeforeTheFirstFrameAndFailsWhenTheWorldHasNoScene)
+  {
+    const auto runtime = Create({});
+    _world_system.has_no_scene = true;
+
+    ExpectInitialize();
+    LetTheWindowRunUntilItIsClosed();
+    ExpectFrames(0);
+
+    runtime->Run();
+
+    EXPECT_TRUE(_closed);
+    EXPECT_TRUE(runtime->HasFailed());
+    EXPECT_TRUE(_logger->Contains(LogLevel::Error, "There is no scene to run, so the application stops"));
+    ExpectCleanUp();
+  }
+
   TEST_F(RuntimeTest, StopsAfterTheFramesItWasGiven)
   {
     const auto runtime = Create({.max_frames = 5});

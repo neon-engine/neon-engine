@@ -32,6 +32,15 @@ namespace neon::testing
     MOCK_METHOD(Entity, Spawn, (const std::string &path, Entity parent, const DataValue &overrides), (override));
 
     MOCK_METHOD(void, CleanUp, (), (override));
+
+    /// What HasNoScene() answers. It is no mocked call, so that a strict
+    /// mock need not expect it in every frame.
+    bool has_no_scene = false;
+
+    [[nodiscard]] bool HasNoScene() const override
+    {
+      return has_no_scene;
+    }
   };
 } // neon::testing
 

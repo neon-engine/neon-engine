@@ -48,6 +48,9 @@ namespace neon
     bool _initialized = false;
     bool _paused = false;
 
+    // the scene the world started with could not be read at all
+    bool _has_no_scene = false;
+
     // the scene asked for, taken at the start of the next frame, so that a
     // change never happens in the middle of one
     std::string _scene_to_load;
@@ -57,8 +60,9 @@ namespace neon
 
     void RegisterComponents() const;
 
-    /// Destroys every entity that does not stay, then reads the scene that
-    /// was asked for.
+    /// Reads the scene that was asked for, then destroys every entity that
+    /// does not stay and places the scene. A scene that cannot be read at
+    /// all changes nothing.
     void ChangeScene();
 
     /// Draws the frame, and after the first one of a scene that took the
@@ -100,9 +104,11 @@ namespace neon
     [[nodiscard]] FixedClock &GetFixedClock();
 
     /// Asks for another scene, by its virtual path. It is read at the start
-    /// of the next frame: every entity of the world is destroyed first,
-    /// except those with a Persistent component, which stay with their
-    /// children, and then the scene fills the store. The systems stay as
+    /// of the next frame, and when it can be read, every entity of the
+    /// world is destroyed, except those with a Persistent component, which
+    /// stay with their children, and then the scene fills the store. When
+    /// it cannot be read at all, the log says why and the world stays as it
+    /// is. The systems stay as
     /// they are, so what they hold for a destroyed entity is released
     /// through the store, as when an entity goes away in play.
     void LoadScene(const std::string &file_path) override;
@@ -125,6 +131,11 @@ namespace neon
     void SetPaused(bool paused) override;
 
     [[nodiscard]] bool IsPaused() const override;
+
+    /// Whether the scene the world started with could not be read at all. A
+    /// scene it is asked to change to and cannot read leaves it where it
+    /// is.
+    [[nodiscard]] bool HasNoScene() const override;
 
     void CleanUp() override;
   };

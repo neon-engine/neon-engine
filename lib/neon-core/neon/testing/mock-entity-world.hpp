@@ -24,6 +24,23 @@ namespace neon::testing
     MOCK_METHOD(
       Entity, Spawn, (EntityStore &store, const std::string &path, Entity parent, const DataValue &overrides),
       (override));
+
+    /// What CouldNotBeRead() answers. It is no mocked call, so that a test
+    /// sets it once.
+    bool could_not_be_read = false;
+
+    [[nodiscard]] bool CouldNotBeRead() const override
+    {
+      return could_not_be_read;
+    }
+
+    /// What ReadAhead() answers, for every path, in the same way.
+    bool can_read_ahead = true;
+
+    bool ReadAhead(const std::string &path) override
+    {
+      return can_read_ahead;
+    }
   };
 } // neon::testing
 
