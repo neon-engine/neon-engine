@@ -151,17 +151,20 @@ namespace
     EXPECT_TRUE(_logger->Contains(LogLevel::Info, "Started 11 of 14 extensions")) << _logger->Messages(LogLevel::Info);
   }
 
-  TEST_F(ExtensionsTest, NamesTheAssetsOfTheExtensionsThatAreThereToBeUsed)
+  TEST_F(ExtensionsTest, NamesTheScriptFoldersOfTheExtensionsThatAreThereToBeUsed)
   {
-    const auto folders = _host.GetAssetFolders();
+    const auto folders = _host.GetScriptFolders();
     ASSERT_FALSE(folders.empty());
-    EXPECT_EQ(folders[1], "extensions://hello/assets/");
-    EXPECT_THAT(folders, ::testing::Not(::testing::Contains("extensions://refuses/assets/")));
+    EXPECT_EQ(folders[1], "extensions://hello/scripts/");
+    EXPECT_THAT(folders, ::testing::Not(::testing::Contains("extensions://refuses/scripts/")));
+  }
 
-    // the build copies what an extension brings next to its library
+  TEST_F(ExtensionsTest, FindsTheFoldersAnExtensionBringsNextToItsLibrary)
+  {
+    // the build copies the folders it is given next to the library
     std::string greeting;
-    EXPECT_TRUE(_file_system.ReadText("extensions://hello/assets/greeting.txt", greeting));
-    EXPECT_EQ(greeting, "Hello from the assets of an extension\n");
+    EXPECT_TRUE(_file_system.ReadText("extensions://hello/data/greeting.txt", greeting));
+    EXPECT_EQ(greeting, "Hello from a folder an extension brings\n");
   }
 
   TEST_F(ExtensionsTest, LetsAnExtensionLogUnderItsNameAtTheLevelItChooses)
@@ -806,7 +809,7 @@ namespace
 
     const auto *renderable = _store.Get<neon::Renderable>(painted);
     ASSERT_NE(renderable, nullptr);
-    EXPECT_EQ(renderable->render_info.shader_path, "assets://shaders/unlit");
+    EXPECT_EQ(renderable->render_info.shader_path, "engine://shaders/unlit");
     EXPECT_THAT(renderable->render_info.texture_paths, ElementsAre("image://painter/checker"));
 
     ASSERT_NE(renderable->render_info.mesh, nullptr);
@@ -1427,8 +1430,8 @@ namespace
 
     EXPECT_EQ(_logger->Count(LogLevel::Error), 0u) << _logger->Messages(LogLevel::Error);
     EXPECT_TRUE(_logger->Contains(LogLevel::Info, "The extension 'palette' brings no library"));
-    // what brings no library still brings its assets
-    EXPECT_THAT(_host.GetAssetFolders(), ElementsAre("extensions://palette/assets/"));
+    // what brings no library may still bring scripts
+    EXPECT_THAT(_host.GetScriptFolders(), ElementsAre("extensions://palette/scripts/"));
   }
 
   TEST_F(ExtensionRecipesTest, LeavesOutAFolderWithoutARecipe)

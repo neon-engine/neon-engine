@@ -1,6 +1,6 @@
 // The file of a project, as an application reads it: ProjectFile with the
 // document format for YAML. Files are kept in memory, except for the project
-// of the runtime, which is read as it is in the repository.
+// of the sandbox, which is read as it is in the repository.
 
 #include <filesystem>
 #include <fstream>
@@ -73,9 +73,9 @@ namespace
       EXPECT_THAT(_errors.front(), HasSubstr(text));
     }
 
-    static std::string FileOfTheRuntime(const std::string &name)
+    static std::string FileOfTheSandbox(const std::string &name)
     {
-      const std::filesystem::path path = std::filesystem::path(NEON_RUNTIME_ASSETS) / name;
+      const std::filesystem::path path = std::filesystem::path(NEON_SANDBOX_ASSETS) / name;
       const std::ifstream file(path);
       EXPECT_TRUE(file.good()) << path;
 
@@ -286,24 +286,24 @@ namespace
     EXPECT_FALSE(ProjectFile::IsPlainName("maker/game"));
   }
 
-  // the project of the runtime
+  // the project of the sandbox
 
-  TEST_F(ProjectFilesTest, ReadsTheProjectOfTheRuntime)
+  TEST_F(ProjectFilesTest, ReadsTheProjectOfTheSandbox)
   {
-    Write(FileOfTheRuntime("project.yml"));
+    Write(FileOfTheSandbox("project.yml"));
 
     ASSERT_TRUE(Read()) << ::testing::PrintToString(_errors);
-    EXPECT_EQ(_project.name, "neon-runtime");
+    EXPECT_EQ(_project.name, "neon-sandbox");
     EXPECT_EQ(_project.organization, "neon-engine");
     EXPECT_EQ(_project.entry_scene, "assets://scenes/start.scene.yml");
   }
 
-  TEST_F(ProjectFilesTest, TheProjectOfTheRuntimeListsEveryScene)
+  TEST_F(ProjectFilesTest, TheProjectOfTheSandboxListsEveryScene)
   {
-    Write(FileOfTheRuntime("project.yml"));
+    Write(FileOfTheSandbox("project.yml"));
     ASSERT_TRUE(Read()) << ::testing::PrintToString(_errors);
 
-    const std::filesystem::path scenes = std::filesystem::path(NEON_RUNTIME_ASSETS) / "scenes";
+    const std::filesystem::path scenes = std::filesystem::path(NEON_SANDBOX_ASSETS) / "scenes";
     std::vector<std::string> on_disk;
     for (const auto &entry : std::filesystem::directory_iterator(scenes))
     {

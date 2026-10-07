@@ -36,7 +36,7 @@ namespace
     // never initialized, so it stands for no graphics card
     VK_Device _device;
 
-    VK_Shader _shader{"assets://shaders/basic-lit", &_file_system, &_device, _logger};
+    VK_Shader _shader{"engine://shaders/basic-lit", &_file_system, &_device, _logger};
   };
 
   TEST_F(VkShaderTest, ReadsNothingWhenItIsCreated)
@@ -47,14 +47,14 @@ namespace
 
   TEST_F(VkShaderTest, ReadsTheVertexShaderFromThePathWithItsExtensionAdded)
   {
-    EXPECT_CALL(_file_system, ReadBytes("assets://shaders/basic-lit.vert.spv", _)).WillOnce(Return(false));
+    EXPECT_CALL(_file_system, ReadBytes("engine://shaders/basic-lit.vert.spv", _)).WillOnce(Return(false));
 
     EXPECT_FALSE(_shader.Initialize());
 
     EXPECT_TRUE(
       _logger->Contains(
         LogLevel::Error,
-        "Could not read shader assets://shaders/basic-lit.vert.spv, was it compiled by the build?"))
+        "Could not read shader engine://shaders/basic-lit.vert.spv, was it compiled by the build?"))
       << _logger->Messages(LogLevel::Error);
     EXPECT_EQ(_shader.Vertex(), VK_NULL_HANDLE);
     EXPECT_EQ(_shader.Fragment(), VK_NULL_HANDLE);
@@ -63,20 +63,20 @@ namespace
   TEST_F(VkShaderTest, DoesNotReadTheFragmentShaderWhenTheVertexShaderFailed)
   {
     // the file system is strict, a second read would fail the test
-    EXPECT_CALL(_file_system, ReadBytes("assets://shaders/basic-lit.vert.spv", _)).WillOnce(Return(false));
+    EXPECT_CALL(_file_system, ReadBytes("engine://shaders/basic-lit.vert.spv", _)).WillOnce(Return(false));
 
     EXPECT_FALSE(_shader.Initialize());
   }
 
   TEST_F(VkShaderTest, RefusesAShaderThatIsEmpty)
   {
-    EXPECT_CALL(_file_system, ReadBytes("assets://shaders/basic-lit.vert.spv", _))
+    EXPECT_CALL(_file_system, ReadBytes("engine://shaders/basic-lit.vert.spv", _))
       .WillOnce(DoAll(SetArgReferee<1>(std::vector<unsigned char>{}), Return(true)));
 
     EXPECT_FALSE(_shader.Initialize());
 
     EXPECT_TRUE(
-      _logger->Contains(LogLevel::Error, "Shader assets://shaders/basic-lit.vert.spv is not valid SPIR-V"))
+      _logger->Contains(LogLevel::Error, "Shader engine://shaders/basic-lit.vert.spv is not valid SPIR-V"))
       << _logger->Messages(LogLevel::Error);
   }
 
@@ -84,14 +84,14 @@ namespace
   {
     for (const std::size_t size : {1u, 2u, 3u, 5u, 6u, 7u, 1023u})
     {
-      EXPECT_CALL(_file_system, ReadBytes("assets://shaders/basic-lit.vert.spv", _))
+      EXPECT_CALL(_file_system, ReadBytes("engine://shaders/basic-lit.vert.spv", _))
         .WillOnce(DoAll(SetArgReferee<1>(std::vector<unsigned char>(size, 0x07)), Return(true)));
       _logger->Clear();
 
       EXPECT_FALSE(_shader.Initialize()) << size;
 
       EXPECT_TRUE(
-        _logger->Contains(LogLevel::Error, "Shader assets://shaders/basic-lit.vert.spv is not valid SPIR-V"))
+        _logger->Contains(LogLevel::Error, "Shader engine://shaders/basic-lit.vert.spv is not valid SPIR-V"))
         << size;
     }
   }

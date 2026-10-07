@@ -3,7 +3,7 @@
 # Every *.vert and *.frag file in SOURCE_SHADERS_DIR becomes
 # <OUTPUT_SHADERS_DIR>/<file name>.spv, so basic-lit.vert turns into
 # basic-lit.vert.spv. A material names a shader without an extension, such as
-# assets://shaders/basic-lit, and the Vulkan backend adds .vert.spv and
+# engine://shaders/basic-lit, and the Vulkan backend adds .vert.spv and
 # .frag.spv to it.
 #
 # FOLDERS names folders inside SOURCE_SHADERS_DIR that are compiled as well,
@@ -76,10 +76,12 @@ function(setup_compile_shaders TARGET_NAME SOURCE_SHADERS_DIR OUTPUT_SHADERS_DIR
     add_custom_target(${TARGET_NAME}_compile_shaders ALL DEPENDS ${SHADER_OUTPUTS})
     add_dependencies(${TARGET_NAME} ${TARGET_NAME}_compile_shaders)
 
-    # The copy of the assets removes empty folders the source lacks, and the
+    # A copy of a folder removes empty folders the source lacks, and the
     # shaders' folder is one until a shader is written into it: so the
-    # shaders are compiled after the copy, never beside it.
-    if (TARGET ${TARGET_NAME}_copy_assets)
-        add_dependencies(${TARGET_NAME}_compile_shaders ${TARGET_NAME}_copy_assets)
-    endif ()
+    # shaders are compiled after every copy, never beside it.
+    foreach (COPY_TARGET IN ITEMS ${TARGET_NAME}_copy_assets ${TARGET_NAME}_copy_engine)
+        if (TARGET ${COPY_TARGET})
+            add_dependencies(${TARGET_NAME}_compile_shaders ${COPY_TARGET})
+        endif ()
+    endforeach ()
 endfunction()

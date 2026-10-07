@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include <neon/data/document-format.hpp>
@@ -47,6 +48,10 @@ namespace neon
     /// The version of the layout of the file that is read, and the highest
     /// that is understood.
     static constexpr int version = 1;
+
+    /// The map the engine brings, which a project that names none is
+    /// played with.
+    static constexpr std::string_view default_path = "engine://input/default.input.yml";
 
     InputMapFile(FileSystemContext *file_system, DocumentFormat *format, const std::shared_ptr<Logger> &logger);
 

@@ -235,20 +235,20 @@ namespace
   TEST_F(ForwardRenderPipelineCamerasTest, TellsTheRendererTheEffectsOfEachCameraForWhatItDrawsInto)
   {
     CameraInfo window = Window(1);
-    window.effects = {"assets://shaders/effects/vignette"};
+    window.effects = {"engine://shaders/effects/vignette"};
     CameraInfo mirror = Into("mirror", 5);
-    mirror.effects = {"assets://shaders/a", "assets://shaders/b"};
-    mirror.screen_effects = {"assets://shaders/effects/scan-lines"};
+    mirror.effects = {"engine://shaders/a", "engine://shaders/b"};
+    mirror.screen_effects = {"engine://shaders/effects/scan-lines"};
 
     Frame({window, mirror}, {7});
 
     // the texture first, while it is drawn into, and then the window
     ASSERT_EQ(_renderer.effects.size(), 2u);
     EXPECT_EQ(_renderer.effects[0].target, _renderer.targets.begin()->first);
-    EXPECT_THAT(_renderer.effects[0].effects, ::testing::ElementsAre("assets://shaders/a", "assets://shaders/b"));
-    EXPECT_THAT(_renderer.effects[0].screen_effects, ::testing::ElementsAre("assets://shaders/effects/scan-lines"));
+    EXPECT_THAT(_renderer.effects[0].effects, ::testing::ElementsAre("engine://shaders/a", "engine://shaders/b"));
+    EXPECT_THAT(_renderer.effects[0].screen_effects, ::testing::ElementsAre("engine://shaders/effects/scan-lines"));
     EXPECT_EQ(_renderer.effects[1].target, -1);
-    EXPECT_THAT(_renderer.effects[1].effects, ::testing::ElementsAre("assets://shaders/effects/vignette"));
+    EXPECT_THAT(_renderer.effects[1].effects, ::testing::ElementsAre("engine://shaders/effects/vignette"));
     EXPECT_TRUE(_renderer.effects[1].screen_effects.empty());
   }
 

@@ -55,7 +55,7 @@ namespace
 
   TEST(VkCullingTest, GivesEveryWayOfDrawingAShaderAPipelineOfItsOwn)
   {
-    const std::string shader = "assets://shaders/basic-lit";
+    const std::string shader = "engine://shaders/basic-lit";
 
     const std::vector keys{
       VK_Culling::PipelineKey(shader, AlphaMode::Opaque, false, false),

@@ -325,12 +325,12 @@ namespace neon
     _present.clear();
   }
 
-  std::vector<std::string> ExtensionHost::GetAssetFolders() const
+  std::vector<std::string> ExtensionHost::GetScriptFolders() const
   {
     std::vector<std::string> folders;
     for (const auto &name : _present)
     {
-      folders.push_back(std::string(FileSystem::extensions_scheme) + name + "/assets/");
+      folders.push_back(std::string(FileSystem::extensions_scheme) + name + "/scripts/");
     }
     return folders;
   }

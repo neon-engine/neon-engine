@@ -185,17 +185,17 @@ namespace
   TEST_F(ScriptRunningTest, ReadsTheScriptsOfMoreFoldersAfterTheFirstAndLeavesOutThoseThatAreNotThere)
   {
     ScriptRunning system(&_scripts, &_physics, &_formats, "assets://", _logger);
-    system.AddFolder("extensions://bench/assets/");
-    system.AddFolder("extensions://quake/assets/");
+    system.AddFolder("extensions://bench/scripts/");
+    system.AddFolder("extensions://quake/scripts/");
 
     ::testing::InSequence in_order;
     EXPECT_CALL(_scripts, LoadScripts("assets://", _, _)).WillOnce(Return(false));
-    EXPECT_CALL(_scripts, LoadScripts("extensions://bench/assets/", _, _)).WillOnce(Return(true));
-    EXPECT_CALL(_scripts, LoadScripts("extensions://quake/assets/", _, _)).WillOnce(Return(false));
+    EXPECT_CALL(_scripts, LoadScripts("extensions://bench/scripts/", _, _)).WillOnce(Return(true));
+    EXPECT_CALL(_scripts, LoadScripts("extensions://quake/scripts/", _, _)).WillOnce(Return(false));
 
     system.Register(_store);
 
-    EXPECT_TRUE(_logger->Contains(LogLevel::Info, "With the scripts under extensions://bench/assets/, "));
+    EXPECT_TRUE(_logger->Contains(LogLevel::Info, "With the scripts under extensions://bench/scripts/, "));
     EXPECT_FALSE(_logger->Contains(LogLevel::Info, "extensions://quake"));
   }
 

@@ -188,8 +188,8 @@ namespace
   TEST_F(RenderSubmissionTest, HandsOverTheEffectsOfACameraInTheirOrder)
   {
     Camera camera;
-    camera.effects = {"assets://shaders/effects/vignette", "extensions://game/assets/shaders/waves"};
-    camera.screen_effects = {"assets://shaders/effects/scan-lines"};
+    camera.effects = {"engine://shaders/effects/vignette", "extensions://game/shaders/waves"};
+    camera.screen_effects = {"engine://shaders/effects/scan-lines"};
     Create(Placed(0.0f, 0.0f, 0.0f, 0.0f), camera);
 
     CameraInfo handed_over;
@@ -490,7 +490,7 @@ namespace
   {
     Renderable renderable;
     renderable.render_info.model_path = "assets://models/cube.obj";
-    renderable.render_info.shader_path = "assets://shaders/basic-lit";
+    renderable.render_info.shader_path = "engine://shaders/basic-lit";
     renderable.render_info.texture_paths = {"assets://textures/wood.png", "assets://textures/gold.png"};
     renderable.render_info.scale_textures = true;
     renderable.render_info.material_info.shininess = 32.0f;
@@ -505,7 +505,7 @@ namespace
     _system.Update(_store, 0.016);
 
     EXPECT_EQ(handed_over.model_path, "assets://models/cube.obj");
-    EXPECT_EQ(handed_over.shader_path, "assets://shaders/basic-lit");
+    EXPECT_EQ(handed_over.shader_path, "engine://shaders/basic-lit");
     EXPECT_THAT(
       handed_over.texture_paths,
       ::testing::ElementsAre("assets://textures/wood.png", "assets://textures/gold.png"));

@@ -608,7 +608,7 @@ typedef struct NeonExtensionHost
 
   /* Sets four numbers every shader reads, as `scene.numbers[place]`, at one
    * of 8 places, 0 to 7. They are for the shaders an extension brings and
-   * names in a material as `extensions://<name>/assets/shaders/<shader>`:
+   * names in a material as `extensions://<name>/shaders/<shader>`:
    * how thick its fog is, a colour, whatever they are written to read. The
    * shaders of the engine read none of them. The numbers stay until they
    * are set again; two extensions that bring shaders agree on their places
@@ -626,7 +626,7 @@ typedef struct NeonExtensionHost
    * docs/user-interface.md for the files, the elements, and their fields. */
 
   /* Shows the user interface of a file at a virtual path, such as
-   * `extensions://quake/assets/ui/hud.ui.yml`, on top of what is shown
+   * `assets://ui/hud.ui.yml`, on top of what is shown
    * already. A file the extension shows already stays as it is. Returns 1,
    * or 0 when the file cannot be used, and every problem of it is logged. */
   int (*ui_show)(void *context, const char *path);

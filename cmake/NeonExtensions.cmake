@@ -34,13 +34,14 @@ endif ()
 set(NEON_PLATFORM "${NEON_PLATFORM_SYSTEM}-${NEON_PLATFORM_PROCESSOR}")
 message("platform of extensions: ${NEON_PLATFORM}")
 
-# neon_add_extension(<name> SOURCES <file>... [RECIPE <extension.yml>] [ASSETS <folder>] [DIRECTORY <folder>] [EXCLUDE_FROM_ALL])
+# neon_add_extension(<name> SOURCES <file>... [RECIPE <extension.yml>] [FOLDERS <folder>...] [DIRECTORY <folder>] [EXCLUDE_FROM_ALL])
 #
 # Builds a native extension and puts it where an application finds it:
 #
 #   <folder>/<name>/extension.yml
 #   <folder>/<name>/<name>-<platform>.dylib, .so, or .dll
-#   <folder>/<name>/assets/    what the extension brings besides its code
+#   <folder>/<name>/<folder>/  each of FOLDERS, what the extension needs to
+#                              run besides its code
 #
 # The target is called <name>-extension. It is built against the header of
 # neon-extension-api alone and links nothing of the engine, and whatever it
@@ -49,15 +50,17 @@ message("platform of extensions: ${NEON_PLATFORM}")
 # RECIPE is the recipe of the extension, which is copied next to the
 # library. Without it, it is extension.yml next to the CMakeLists.txt.
 #
-# ASSETS is the folder of what the extension brings besides its code: scenes,
-# prefabs, scripts, user interfaces, anything it reads, reached as
-# extensions://<name>/assets/. Without it, it is the folder `assets` next to
-# the recipe, when there is one.
+# FOLDERS are folders next to the recipe, or absolute, that the extension
+# needs to run: `scripts` for the scripts it runs, data it reads. Each is
+# copied under its own name, reached as extensions://<name>/<folder>/.
+# Nothing else is copied: the scenes, prefabs, and user interfaces of a game
+# are the project's, in assets://. Shaders an extension compiles are put in
+# extensions://<name>/shaders/ by the build that compiles them.
 #
 # DIRECTORY is the folder `extensions` of an application. Without it, it is
 # that of NeonRuntime, NEON_EXTENSIONS_DIRECTORY.
 function(neon_add_extension NAME)
-  cmake_parse_arguments(PARSE_ARGV 1 EXTENSION "EXCLUDE_FROM_ALL" "RECIPE;ASSETS;DIRECTORY" "SOURCES")
+  cmake_parse_arguments(PARSE_ARGV 1 EXTENSION "EXCLUDE_FROM_ALL" "RECIPE;DIRECTORY" "SOURCES;FOLDERS")
 
   if (NOT EXTENSION_RECIPE)
     set(EXTENSION_RECIPE "${CMAKE_CURRENT_SOURCE_DIR}/extension.yml")
@@ -66,12 +69,7 @@ function(neon_add_extension NAME)
     set(EXTENSION_DIRECTORY "${NEON_EXTENSIONS_DIRECTORY}")
   endif ()
 
-  if (NOT EXTENSION_ASSETS)
-    get_filename_component(RECIPE_FOLDER "${EXTENSION_RECIPE}" DIRECTORY)
-    if (IS_DIRECTORY "${RECIPE_FOLDER}/assets")
-      set(EXTENSION_ASSETS "${RECIPE_FOLDER}/assets")
-    endif ()
-  endif ()
+  get_filename_component(RECIPE_FOLDER "${EXTENSION_RECIPE}" DIRECTORY)
 
   set(EXTENSION_TARGET "${NAME}-extension")
   set(EXTENSION_FOLDER "${EXTENSION_DIRECTORY}/${NAME}")
@@ -127,16 +125,29 @@ function(neon_add_extension NAME)
           COMMENT "Copying the recipe of the extension ${NAME}"
   )
 
-  # The assets are copied whenever the extension is built, not only when its
-  # library is linked again, so that a scene that was edited is the scene
+  # The folders are copied whenever the extension is built, not only when its
+  # library is linked again, so that a script that was edited is the script
   # that runs. What the source no longer has stays in the copy until the
   # folder is removed.
-  if (EXTENSION_ASSETS)
-    add_custom_target(${EXTENSION_TARGET}-assets
-            COMMENT "Copying the assets of the extension ${NAME}"
-            COMMAND "${CMAKE_COMMAND}" -E copy_directory "${EXTENSION_ASSETS}" "${EXTENSION_FOLDER}/assets"
+  if (EXTENSION_FOLDERS)
+    set(COPY_COMMANDS)
+    foreach (FOLDER IN LISTS EXTENSION_FOLDERS)
+      if (NOT IS_ABSOLUTE "${FOLDER}")
+        set(FOLDER "${RECIPE_FOLDER}/${FOLDER}")
+      endif ()
+      if (NOT IS_DIRECTORY "${FOLDER}")
+        message(FATAL_ERROR "The extension ${NAME} names the folder ${FOLDER}, which is not there")
+      endif ()
+      get_filename_component(FOLDER_NAME "${FOLDER}" NAME)
+      list(APPEND COPY_COMMANDS
+              COMMAND "${CMAKE_COMMAND}" -E copy_directory "${FOLDER}" "${EXTENSION_FOLDER}/${FOLDER_NAME}")
+    endforeach ()
+
+    add_custom_target(${EXTENSION_TARGET}-folders
+            COMMENT "Copying the folders of the extension ${NAME}"
+            ${COPY_COMMANDS}
             VERBATIM
     )
-    add_dependencies(${EXTENSION_TARGET} ${EXTENSION_TARGET}-assets)
+    add_dependencies(${EXTENSION_TARGET} ${EXTENSION_TARGET}-folders)
   endif ()
 endfunction()

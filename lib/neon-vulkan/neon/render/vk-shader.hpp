@@ -9,7 +9,7 @@
 namespace neon
 {
   /// The two compiled halves of a shader. A shader is named without an
-  /// extension, such as `assets://shaders/basic-lit`, and read from the files
+  /// extension, such as `engine://shaders/basic-lit`, and read from the files
   /// with `.vert.spv` and `.frag.spv` added, which the build produces.
   // ReSharper disable once CppInconsistentNaming
   class VK_Shader

@@ -1,0 +1,19 @@
+# The sandbox: the project the engine is tried out with, one scene that says
+# that it runs. NeonRuntime ships no game of its own; a game is a project, as
+# this one is, put together next to a copy of the runtime.
+#
+# `name` and `organization` place user://, the folder the project writes to,
+# so they are plain names that work as folder names on every platform. The
+# scenes are listed so that the editor and the exporter know what belongs to
+# the project. It names no `input`, so the game is played with the engine's
+# own map, engine://input/default.input.yml, see docs/input.md. What the file
+# holds is described in docs/projects.md.
+
+version: 1
+name: neon-sandbox
+organization: neon-engine
+
+scenes:
+  - assets://scenes/start.scene.yml
+
+entry_scene: assets://scenes/start.scene.yml

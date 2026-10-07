@@ -152,7 +152,7 @@ namespace
         "      scale: [1, 2.5, 1]\n"
         "    Renderable:\n"
         "      model: assets://models/wall.obj\n"
-        "      shader: assets://shaders/basic-lit\n"
+        "      shader: engine://shaders/basic-lit\n"
         "      textures:\n"
         "        - assets://textures/brick.png\n"
         "        - assets://textures/moss.png\n"

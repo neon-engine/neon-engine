@@ -16,7 +16,7 @@ entities:
       Renderable:
         model: assets://models/bear.obj
         fit: unit
-        shader: assets://shaders/basic-lit
+        shader: engine://shaders/basic-lit
         textures:
           - assets://textures/concrete.png
         material:
@@ -31,7 +31,7 @@ entities:
       Renderable:
         model: assets://models/sphere.obj
         fit: unit
-        shader: assets://shaders/basic-lit
+        shader: engine://shaders/basic-lit
         textures:
           - assets://textures/fire.png
         material:
@@ -55,7 +55,7 @@ entities:
       Renderable:
         model: assets://models/cube.obj
         fit: unit
-        shader: assets://shaders/basic-lit
+        shader: engine://shaders/basic-lit
         textures:
           - assets://textures/concrete.png
         scale_textures: true

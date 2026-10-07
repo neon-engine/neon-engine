@@ -17,7 +17,7 @@ neon_add_application_test(runtime-headless NeonRuntime run.cmake
         scene-that-is-missing
         pause-menu
         title-screen-starts-the-level
-        input-map-of-the-project
+        input-map-of-the-engine-by-default
         hold-of-an-action-the-map-does-not-have
         vulkan-version
         capabilities

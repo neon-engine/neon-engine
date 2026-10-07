@@ -171,7 +171,7 @@ namespace neon
 
     /// The shader, which the build compiles from `flat.vert` and
     /// `flat.frag`.
-    static constexpr const char *kShader_Path = "assets://shaders/flat";
+    static constexpr const char *kShader_Path = "engine://shaders/flat";
 
     /// The bindings of the first set of the shader, which have to match
     /// ui-shader.glsl: the texture, and the sampler it is read through,

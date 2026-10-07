@@ -17,7 +17,7 @@ entity:
           shape: box
           size: [0.8, 0.5, 0.8]
         Renderable:
-          shader: assets://shaders/pbr
+          shader: engine://shaders/pbr
           material:
             color: [0.3, 0.33, 0.5]
             roughness: 0.7
@@ -35,7 +35,7 @@ entity:
           shape: box
           size: [0.55, 0.4, 0.55]
         Renderable:
-          shader: assets://shaders/pbr
+          shader: engine://shaders/pbr
           material:
             color: [0.45, 0.5, 0.75]
             roughness: 0.6
@@ -50,7 +50,7 @@ entity:
           sides: 24
           smooth: true
         Renderable:
-          shader: assets://shaders/pbr
+          shader: engine://shaders/pbr
           material:
             color: [0.6, 0.65, 1]
             roughness: 0.4

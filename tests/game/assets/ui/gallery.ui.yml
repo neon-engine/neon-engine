@@ -14,11 +14,11 @@ reference_size: [1920, 1080]
 fonts:
   # the same font kept as distances, which a shader draws at every size
   - family: title
-    src: assets://fonts/inter/Inter-Bold.ttf
+    src: engine://fonts/inter/Inter-Bold.ttf
     weight: 700
     rendering: sdf
   - family: arabic
-    src: assets://fonts/noto/NotoSansArabic-Regular.ttf
+    src: engine://fonts/noto/NotoSansArabic-Regular.ttf
 
 values:
   charge: 0.65
@@ -300,7 +300,7 @@ root:
           height: 64
           border_radius: 12
           background: "linear-gradient(#5e81ac, #3b4f6e)"
-          shader: assets://shaders/ui/shine
+          shader: engine://shaders/ui/shine
           shader_values: { speed: 0.5, width: 0.18, lean: 0.35, tint: "#ffffff70" }
 
         - type: panel
@@ -310,14 +310,14 @@ root:
           background: "linear-gradient(90deg, #a3be8c, #ebcb8b)"
           justify_content: center
           align_items: center
-          shader: assets://shaders/ui/dissolve
+          shader: engine://shaders/ui/dissolve
           shader_values: { amount: 0.45, grain: 7, edge: "#ff8000" }
 
         - type: image
           src: assets://ui/shield.svg
           width: 64
           height: 64
-          shader: assets://shaders/ui/cooldown
+          shader: engine://shaders/ui/cooldown
           shader_values: { progress: "{charge}", shade: "#000000c0" }
 
         - type: panel
@@ -325,5 +325,5 @@ root:
           height: 64
           border_radius: 50%
           background_color: "#bf616a"
-          shader: assets://shaders/ui/cooldown
+          shader: engine://shaders/ui/cooldown
           shader_values: { progress: 0.3, shade: "#000000c0" }

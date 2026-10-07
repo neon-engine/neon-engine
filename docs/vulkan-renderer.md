@@ -142,9 +142,9 @@ Vulkan consumes SPIR-V, not GLSL text.
 
 | Decision | Detail |
 |---|---|
-| Sources kept apart from the assets | They live in `app/<app>/shaders/vulkan`, written in GLSL 450. Another renderer would get a folder of its own |
+| Sources kept with what they ship as | They live in `app/NeonRuntime/engine/shaders`, written in GLSL 450, where what they are compiled to ships, `engine://shaders/`. Another renderer would get a folder of its own |
 | Compiled at build time | glslang turns each source into a `.spv` file placed in the app's assets folder |
-| Named without an extension | A material names `assets://shaders/basic-lit` and the renderer adds `.vert.spv` and `.frag.spv` |
+| Named without an extension | A material names `engine://shaders/basic-lit` and the renderer adds `.vert.spv` and `.frag.spv` |
 
 Scene recipes therefore do not change with the renderer.
 How the same sources reach Metal, DirectX 12, and WebGPU, and the tools that
@@ -506,9 +506,9 @@ lists, see [scenes.md](scenes.md):
 ```yaml
 Camera:
   effects:
-    - extensions://quake/assets/shaders/under-water
+    - extensions://quake/shaders/under-water
   screen_effects:
-    - assets://shaders/effects/scan-lines
+    - engine://shaders/effects/scan-lines
 ```
 
 | List | Run | The picture holds | For |
@@ -550,7 +550,7 @@ void main()
 | The alpha of the picture is multiplied into its colours | As everywhere after the scene, see [colour spaces](#colour-spaces). An effect hands on what it does not change |
 
 An effect that cannot be read is said once and left out; the others are run.
-The engine ships two, in `assets://shaders/effects`: `vignette`, for
+The engine ships two, in `engine://shaders/effects`: `vignette`, for
 `effects`, and `scan-lines`, for `screen_effects`. The monitor of hall 10 of
 the museum shows both.
 

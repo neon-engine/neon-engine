@@ -29,9 +29,12 @@ function(neon_add_test_extension NAME SOURCE)
   add_dependencies(extensions.test ${NAME}-extension)
 endfunction()
 
+# hello brings a folder of its own besides its library, which is copied
+# next to it
 neon_add_extension(hello
         SOURCES hello/hello.c
         RECIPE "${CMAKE_CURRENT_SOURCE_DIR}/hello/extension.yml"
+        FOLDERS data
         DIRECTORY "${TEST_EXTENSIONS}"
         EXCLUDE_FROM_ALL
 )

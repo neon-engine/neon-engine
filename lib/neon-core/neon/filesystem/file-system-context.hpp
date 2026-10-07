@@ -10,7 +10,11 @@ namespace neon
   ///
   /// Files are named by virtual paths such as `assets://models/cube.obj`.
   /// The scheme says where a file lives:
-  ///   - `assets://` is what ships with the application. It is read-only.
+  ///   - `assets://` is the game: the project the application runs, with
+  ///     its scenes, its user interface, and the rest. It is read-only.
+  ///   - `engine://` is what the runtime itself ships with, whatever the
+  ///     game: its compiled shaders, and the fonts text falls back to. It is
+  ///     read-only.
   ///   - `user://` is a folder of the current user, for saves, settings, and
   ///     anything else the application writes.
   ///   - `output://` is a folder chosen by whoever started the application,
@@ -19,7 +23,8 @@ namespace neon
   ///     path in it is rejected.
   ///   - `extensions://` is what extends the application: one folder for
   ///     each extension, with its recipe, its library, and what else it
-  ///     brings. It is read-only, and it need not be there.
+  ///     needs to run, such as its shaders. A game's scenes are in
+  ///     `assets://`. It is read-only, and it need not be there.
   ///
   /// A virtual path is written the same way on every platform, so content
   /// that refers to files, such as a scene file, works everywhere unchanged.

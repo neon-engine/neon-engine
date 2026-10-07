@@ -8,7 +8,7 @@
 namespace neon
 {
   // The data handed to the shaders. The layout has to match
-  // app/<app>/shaders/vulkan/scene-data.glsl field for field. Every field is
+  // app/NeonRuntime/engine/shaders/scene-data.glsl field for field. Every field is
   // a vec4 or a mat4, so the layout rules of the shading language add no
   // padding and the structures can be copied as they are.
 

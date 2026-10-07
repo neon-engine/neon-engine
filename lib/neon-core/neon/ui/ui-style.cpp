@@ -1226,7 +1226,7 @@ namespace neon
       {
         reader.Report(*value, std::format(
                         "'shader' of {} is '{}', where a virtual path without an extension such as "
-                        "assets://shaders/ui/shine, or none, was expected",
+                        "engine://shaders/ui/shine, or none, was expected",
                         reader.GetWhere(), style.shader));
         style.shader.clear();
       }

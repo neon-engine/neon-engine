@@ -24,17 +24,16 @@ Every folder in it is an extension:
 
 ```
 NeonRuntime
-assets/
+engine/
+assets/                     the game: its scenes, prefabs, scripts, ui
 extensions/
   quake/
     extension.yml
     quake-macos-arm64.dylib
     quake-linux-x86_64.so
     quake-windows-x86_64.dll
-    assets/
-      scenes/e1m1.scene.yml
-      prefabs/ scripts/ ui/
-      palette.lmp
+    shaders/                what the extension needs to run
+      liquid.vert.spv liquid.frag.spv
 ```
 
 | Decision | Reason |
@@ -42,8 +41,9 @@ extensions/
 | Nothing lists the extensions; every folder that is there is one | As with the scripts of a project: what is there is used. A development run and a shipped game find them the same way |
 | A game without the folder has no extensions, which is not an error | Most games have none |
 | One folder for each extension, not loose libraries next to the executable | An extension brings more than a library: its recipe, and whatever else is its own |
-| What an extension brings besides its code is in `assets/` of its folder, laid out as the assets of a project are | `extensions://quake/assets/scenes/e1m1.scene.yml` is written wherever a path is: in `project.yml`, in a scene, in `--scene`, in code. Two extensions cannot collide, and removing the folder removes everything of it |
-| The scripts under an extension's `assets/` are read after the project's | An extension brings Lua as it brings scenes: a component in Lua next to its twin in C++, or an extension that is Lua alone and has no library |
+| An extension's folder holds what the extension needs to run besides its code, such as its shaders, `extensions://quake/shaders/liquid` | Two extensions cannot collide, and removing the folder removes everything of it |
+| A game's scenes, prefabs, user interfaces, and scripts are in `assets://`, the project's, even where they use what an extension brings | `extensions://` holds code and what code needs; `assets://` is the game. A scene that names a component of an extension is the game's, as `assets://scenes/e1m1.scene.yml` |
+| The scripts under an extension's `scripts/` are read after the project's | An extension that needs Lua to run brings it in its own folder: a component in Lua next to its twin in C++, or an extension that is Lua alone and has no library |
 | The libraries of every platform lie in one folder, each named for its platform | The folder is the same on every platform, and the exporter (#84) takes the libraries of the target |
 | The scheme is read-only | As `assets://` |
 
@@ -260,7 +260,7 @@ const std::string picture = world.SetImage("wall", 64, 64, pixels);   // image:/
 const Entity wall = world.CreateEntity("wall");
 world.AddComponent(wall, "Transform");
 world.AddComponent(wall, "Renderable");
-world.SetText(wall, world.FindField("Renderable", "shader"), "assets://shaders/basic-lit");
+world.SetText(wall, world.FindField("Renderable", "shader"), "engine://shaders/basic-lit");
 world.SetTexts(wall, world.FindField("Renderable", "textures"), {picture});
 world.SetMesh(wall, corners, indices);
 ```
@@ -282,16 +282,16 @@ its own. A material names one as it names any other, by a path without an
 ending, and the renderer reads the two compiled files next to it:
 
 ```cpp
-world.SetText(wall, world.FindField("Renderable", "shader"), "extensions://quake/assets/shaders/liquid");
-// reads extensions://quake/assets/shaders/liquid.vert.spv and liquid.frag.spv
+world.SetText(wall, world.FindField("Renderable", "shader"), "extensions://quake/shaders/liquid");
+// reads extensions://quake/shaders/liquid.vert.spv and liquid.frag.spv
 ```
 
 The extension compiles them when it is built, with `glslang`, the compiler
 the engine compiles its own with, and with the folder of the engine's
-shaders to include from (`app/NeonRuntime/shaders/vulkan`):
+shaders to include from (`app/NeonRuntime/engine/shaders`):
 
 ```sh
-glslang -V -I<engine>/app/NeonRuntime/shaders/vulkan liquid.frag -o <game>/extensions/quake/assets/shaders/liquid.frag.spv
+glslang -V -I<engine>/app/NeonRuntime/engine/shaders liquid.frag -o <game>/extensions/quake/shaders/liquid.frag.spv
 ```
 
 A shader that is run over the whole picture of a camera, an effect, is
@@ -411,7 +411,7 @@ of `UiContext` a game needs, see
 [from code and scripts](user-interface.md#from-code-and-scripts).
 
 ```cpp
-world.ShowUi("extensions://quake/assets/ui/hud.ui.yml");
+world.ShowUi("assets://ui/hud.ui.yml");
 
 const UiElement face = world.CreateUi(
   "type: label\n"
@@ -425,7 +425,7 @@ world.SetUiVisible(face, false);
 
 const UiListener listening = world.ListenToUi(world.FindUi("new-game"), "click", [&world](const UiEvent &event)
 {
-  world.CloseUi("extensions://quake/assets/ui/menu.ui.yml");
+  world.CloseUi("assets://ui/menu.ui.yml");
 });
 
 int width = 0;
@@ -565,8 +565,9 @@ exception must not leave a function the application calls.
 
 A project with code of its own has its assets and its extension side by
 side, see [projects.md](projects.md#a-project-with-code-in-c). The bench,
-[projects/bench](../projects/bench/README.md), is the first: five components,
-five systems, and the same work in Lua next to it, all inside its extension.
+[projects/bench](../projects/bench/README.md), is the first: five components
+and five systems in its extension, and the same work in Lua next to them in
+its assets.
 
 ## Building an extension
 
@@ -594,7 +595,7 @@ builds one and puts it where the application finds it.
 | The target | `quake-extension` |
 | The library | `extensions/quake/quake-<platform>.dylib`, `.so`, or `.dll`, in the folder `DIRECTORY` names, or next to the NeonRuntime the engine builds |
 | The recipe | `extension.yml` next to the `CMakeLists.txt`, or what `RECIPE` names, copied next to the library |
-| The assets | The folder `assets` next to the recipe, or what `ASSETS` names, copied to `extensions/quake/assets/` whenever the extension is built |
+| What else it needs to run | The folders `FOLDERS` names, next to the recipe or absolute, each copied under its own name, as `extensions/quake/scripts/`, whenever the extension is built. Nothing else is copied: a game's assets are the project's |
 | What is exported | Only what is marked `NEON_EXTENSION_EXPORT`; everything else is hidden |
 
 | Decision | Reason |

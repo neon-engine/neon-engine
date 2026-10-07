@@ -1,4 +1,5 @@
-# Needs no graphics card: the command line is read before anything starts.
+# Needs no graphics card: the command line is read before anything starts,
+# and the runtime is started as it was built, with no project.
 neon_add_application_test(runtime-command-line NeonRuntime run.cmake
         CASES
         help
@@ -15,4 +16,5 @@ neon_add_application_test(runtime-command-line NeonRuntime run.cmake
         screenshot-without-output-dir
         time-step-not-a-number
         vulkan-version-not-a-version
+        no-project
 )

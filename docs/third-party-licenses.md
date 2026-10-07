@@ -131,7 +131,7 @@ may be used.
 
 | Asset | License | What has to be done |
 |---|---|---|
-| The fonts in `app/NeonRuntime/assets/fonts`: Inter and Noto Sans Arabic | SIL Open Font License 1.1 | Keep the licence with the fonts, also when they are embedded in the engine. [CREDITS.md](../CREDITS.md) lists them |
+| The fonts in `app/NeonRuntime/engine/fonts`: Inter and Noto Sans Arabic | SIL Open Font License 1.1 | Keep the licence with the fonts, also when they are embedded in the engine. [CREDITS.md](../CREDITS.md) lists them |
 | Everything else: the scenes, and the models, textures, and sounds of `projects/` and `tests/game` | The engine's own | Built by the engine as `Geometry`, or written by a script of `tools/` from numbers. No model, texture, or sound in the repository was taken from elsewhere |
 
 ## What a distributed game needs

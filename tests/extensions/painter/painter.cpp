@@ -29,7 +29,7 @@ namespace
       const bool added = world.AddComponent(painted, "Transform") && world.AddComponent(painted, "Renderable");
 
       world.SetVector3(painted, world.FindField("Transform", "position"), {0.0f, 0.0f, -3.0f});
-      world.SetText(painted, world.FindField("Renderable", "shader"), "assets://shaders/unlit");
+      world.SetText(painted, world.FindField("Renderable", "shader"), "engine://shaders/unlit");
       const bool textured = world.SetTexts(painted, world.FindField("Renderable", "textures"), {picture});
 
       // a square of two metres that faces along z, towards a camera at the

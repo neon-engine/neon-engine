@@ -33,7 +33,7 @@ namespace neon
 
     /// The effects that are run over the whole picture the camera drew,
     /// one after the other: fragment shaders a game brings, named as a
-    /// shader is, such as `extensions://quake/assets/shaders/under-water`.
+    /// shader is, such as `extensions://quake/shaders/under-water`.
     /// These are run on the light of the scene, before the tonemapper.
     std::vector<std::string> effects;
 

@@ -1,6 +1,6 @@
 // The settings files, as an application reads them: SettingsFile with the
 // document format for YAML, in layers on top of each other. Files are kept
-// in memory, except for the settings of the runtime, which are read as they
+// in memory, except for the settings of the sandbox, which are read as they
 // are in the repository.
 
 #include <fstream>
@@ -131,10 +131,10 @@ namespace
       return -1.0f;
     }
 
-    static std::string FileOfTheRuntime()
+    static std::string FileOfTheSandbox()
     {
-      const std::ifstream file(NEON_RUNTIME_SETTINGS);
-      EXPECT_TRUE(file.good()) << NEON_RUNTIME_SETTINGS;
+      const std::ifstream file(NEON_SANDBOX_SETTINGS);
+      EXPECT_TRUE(file.good()) << NEON_SANDBOX_SETTINGS;
 
       std::stringstream text;
       text << file.rdbuf();
@@ -509,17 +509,17 @@ namespace
     EXPECT_EQ(_errors.size(), 3u) << ::testing::PrintToString(_errors);
   }
 
-  // the settings of the runtime
+  // the settings of the sandbox
 
-  TEST_F(SettingsFilesTest, ReadsTheSettingsOfTheRuntime)
+  TEST_F(SettingsFilesTest, ReadsTheSettingsOfTheSandbox)
   {
-    WriteOfTheProject(FileOfTheRuntime());
+    WriteOfTheProject(FileOfTheSandbox());
 
     ASSERT_TRUE(ReadOfTheProject()) << ::testing::PrintToString(_errors);
     EXPECT_EQ(_settings.width, 1920);
     EXPECT_EQ(_settings.height, 1080);
     EXPECT_EQ(_settings.window_mode, WindowMode::Borderless);
-    EXPECT_EQ(_settings.pause_menu, "assets://ui/pause.ui.yml");
-    EXPECT_EQ(_settings.settings_menu, "assets://ui/settings.ui.yml");
+    EXPECT_EQ(_settings.pause_menu, "engine://ui/pause.ui.yml");
+    EXPECT_EQ(_settings.settings_menu, "engine://ui/settings.ui.yml");
   }
 } // namespace

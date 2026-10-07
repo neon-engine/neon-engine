@@ -1,0 +1,16 @@
+# The camera of tinted.scene.yml with effects: two that are run on the light
+# of its scene, and two on the colours a screen is given.
+scene: effects
+version: 1
+
+entities:
+  - name: camera
+    components:
+      Transform: Default
+      Camera:
+        effects:
+          - extensions://tinted/shaders/mirrored
+          - extensions://tinted/shaders/halved
+        screen_effects:
+          - extensions://tinted/shaders/swapped
+          - extensions://tinted/shaders/told

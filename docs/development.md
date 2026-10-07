@@ -41,12 +41,15 @@ one that built it.
 ```sh
 cmake --preset macos-arm64-release
 cmake --build --preset macos-arm64-release
-./bin/release/darwin-arm64/NeonRuntime/NeonRuntime
+./bin/release/darwin-arm64/sandbox/NeonRuntime
 ./bin/release/darwin-arm64/museum/NeonRuntime
 ```
 
-A build preset builds NeonRuntime and the projects next to it, the bench and
-the museum, each put together under `bin/<build>/<platform>/<name>/`.
+A build preset builds NeonRuntime and the projects next to it, the sandbox,
+the bench, and the museum, each put together under
+`bin/<build>/<platform>/<name>/`. NeonRuntime ships no game of its own, so
+`bin/<build>/<platform>/NeonRuntime/NeonRuntime` started by itself says so
+and stops; the sandbox is the project to try the engine with.
 
 | Option | What it does | Default |
 |---|---|---|
@@ -106,7 +109,7 @@ cmake --build --preset macos-arm64-debug
 Run:
 
 ```bash
-./bin/debug/darwin-arm64/NeonRuntime/NeonRuntime
+./bin/debug/darwin-arm64/sandbox/NeonRuntime
 ```
 
 Every platform has a release preset beside its debug one,
@@ -142,7 +145,7 @@ docker run --rm --platform linux/amd64 -v "$PWD":/src -w /src neon-engine/linux-
 ```
 
 The executable is written to `bin/debug/linux-x86_64/NeonRuntime/NeonRuntime`
-on the host. It links libc++ statically, so it runs on any x64 Linux with a
+on the host, and put together with the sandbox in `bin/debug/linux-x86_64/sandbox/`. It links libc++ statically, so it runs on any x64 Linux with a
 glibc at least as new as Ubuntu 24.04's.
 
 On an Apple Silicon Mac the `--platform linux/amd64` flag runs the image under
@@ -180,7 +183,8 @@ docker run --rm --platform linux/amd64 -v "$PWD":/src -w /src neon-engine/window
 
 The executable is written to `bin/debug/windows-x86_64/NeonRuntime/NeonRuntime.exe`
 on the host. The runtime is linked statically, so no llvm-mingw DLLs need to
-ship alongside it. Copy the `NeonRuntime` folder to a Windows machine to run it.
+ship alongside it. Copy the folder of a project, such as
+`bin/debug/windows-x86_64/sandbox`, to a Windows machine to run it.
 
 As with Linux, dropping `--platform linux/amd64` on an Apple Silicon Mac uses a
 native arm64 image. The output is still a Windows x64 executable either way.
@@ -204,13 +208,13 @@ neon-core and sees no Vulkan type, so another renderer can be added next to it.
 
 | | |
 |---|---|
-| Sources | `app/<app>/shaders/vulkan/*.vert` and `*.frag`, written in GLSL 450 |
+| Sources | `app/NeonRuntime/engine/shaders/*.vert` and `*.frag`, written in GLSL 450 |
 | Shared declarations | `scene-data.glsl` in the same folder, pulled in with `#include` |
 | Compiled by | The build, with glslang |
-| Compiled to | `assets/shaders/<name>.vert.spv` and `<name>.frag.spv` next to the binary |
+| Compiled to | `engine/shaders/<name>.vert.spv` and `<name>.frag.spv` next to the binary |
 
 A material names its shader without an extension, such as
-`assets://shaders/basic-lit`, and the renderer adds `.vert.spv` and
+`engine://shaders/basic-lit`, and the renderer adds `.vert.spv` and
 `.frag.spv`. Scene recipes therefore never mention a shader format.
 
 | Shader | Draws |
@@ -433,7 +437,7 @@ several, such as one option needing another, belong in `Apply()`.
 
 The window mode is chosen through `SettingsConfig::window_mode`, defined in
 [settings-config.hpp](../lib/neon-core/neon/runtime/settings-config.hpp).
-It defaults to `Windowed`. NeonRuntime's [settings.yml](../app/NeonRuntime/assets/settings.yml)
+It defaults to `Windowed`. The sandbox's [settings.yml](../projects/sandbox/assets/settings.yml)
 sets `borderless` as `window.mode`, see [settings.md](settings.md).
 
 | Mode | Behaviour | `width` and `height` |
@@ -990,10 +994,12 @@ of each target, and defaults to the debug build of macOS.
 | Configure | `cmake --preset <preset>` |
 | Build | `cmake --build --preset <preset>` (default build task, Cmd+Shift+B). A preset that has not been configured yet is configured first, so a preset can be picked and built without running Configure |
 | Build `<preset>` | the same as Build for one fixed preset, without asking; the launch configurations run these |
+| Build NeonRuntime | the runtime of the preset alone, with its `engine/` folder, and no project |
+| Package project | asks for a project, `sandbox`, `museum`, or `bench`, and puts it together under `bin/<build>/<platform>/<project>/`, building NeonRuntime first |
 | Clean | the preset's `clean` target; nothing when the preset has not been configured yet |
 | Rebuild | Clean, then Build |
 | Full Clean | deletes the preset's build directory and the `bin` output of its build type |
-| Run | builds, then runs the macOS binary of the preset from its own folder without a debugger. It asks for a scene: left empty, the entry scene of the project starts; a name such as `start` starts `assets://scenes/start.scene.yml`; a virtual path is taken as it is |
+| Run project | asks for a macOS preset and a project, builds NeonRuntime, puts the project together, and runs it from its own folder without a debugger. It asks for a scene: left empty, the entry scene of the project starts; a name such as `start` starts `assets://scenes/start.scene.yml`; a virtual path is taken as it is |
 | Build in Docker (Linux x64 / Windows x64) | configure and build inside the matching image, debug or release as asked |
 
 ### Running and debugging from VS Code
@@ -1001,10 +1007,14 @@ of each target, and defaults to the debug build of macOS.
 [.vscode/launch.json](../.vscode/launch.json) has two launch configurations per
 platform binary, debug and release: macOS arm64, Linux x86_64, Linux aarch64,
 and Windows x86_64. Pick the one matching the machine VS Code is running on.
-Each builds its own preset first without asking for one, through the
-`Build <preset>` task of that preset, so the binary that starts is always the
-one that was just built. It starts from its own folder so the relative asset
-paths resolve.
+Each asks which project to debug, `sandbox`, `museum`, or `bench`, and builds
+its own preset first without asking for one, through the `Build <preset>`
+task of that preset, which builds NeonRuntime and puts every project
+together, so the binary that starts is always the one that was just built. It
+starts from the project's folder, where its `assets/` and `engine/` are.
+
+A project added under `projects/` is added to the lists of projects in
+`tasks.json` and `launch.json`, as it is to the build presets.
 
 They all use the
 [CodeLLDB](https://marketplace.visualstudio.com/items?itemName=vadimcn.vscode-lldb)

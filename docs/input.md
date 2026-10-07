@@ -36,8 +36,13 @@ states:
   menu:    [pause]
 ```
 
-The map of the runtime is
-[default.input.yml](../app/NeonRuntime/assets/input/default.input.yml).
+The engine brings a map of its own,
+[engine://input/default.input.yml](../app/NeonRuntime/engine/input/default.input.yml),
+so that a new game can be played at once: walking and looking with the keys,
+the mouse, or a controller, jumping, running, and pausing. A project that
+names no `input` in its `project.yml` is played with it, as the sandbox, the
+museum, and the bench are. A game with actions of its own names a map of its
+own, which takes its place entirely.
 
 | Name | Holds | When it is left out |
 |---|---|---|

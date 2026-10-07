@@ -25,8 +25,8 @@ namespace neon
   ///
   ///     ui:
   ///       scale: 1
-  ///       pause_menu: assets://ui/pause.ui.yml
-  ///       settings_menu: assets://ui/settings.ui.yml
+  ///       pause_menu: engine://ui/pause.ui.yml
+  ///       settings_menu: engine://ui/settings.ui.yml
   ///
   ///     world:
   ///       steps_per_second: 60

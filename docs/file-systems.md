@@ -14,7 +14,8 @@ Resource paths carry a scheme prefix, in the style of Godot.
 
 | Scheme | Points at | Status |
 |---|---|---|
-| `assets://` | `<directory of executable>/assets` | Implemented |
+| `assets://` | `<directory of executable>/assets`, the game: the project the runtime runs | Implemented, read-only |
+| `engine://` | `<directory of executable>/engine`, what the runtime ships with whatever the game: its compiled shaders, such as `engine://shaders/pbr`, the fonts text falls back to, such as `engine://fonts/noto/NotoSansArabic-Regular.ttf`, a pause and a settings menu a game may name, `engine://ui/pause.ui.yml`, and the input map a project that names none is played with, `engine://input/default.input.yml` | Implemented, read-only |
 | `user://` | A folder of the current user, for saves, settings, and anything else the app writes | Implemented, read and write |
 | `output://` | A folder chosen with `--output-dir` when the app is started, for what a run hands back, such as screenshots | Implemented, read and write. Rejected when no folder was chosen |
 | `extensions://` | `<directory of executable>/extensions`, one folder for each extension, see [extensions.md](extensions.md) | Implemented, read-only. The folder need not be there |
@@ -29,7 +30,7 @@ memory, and only where a texture, an image, or a sound is named.
 | `image://` | Pixels that were handed to the renderer under a name, by an extension or an importer, see [extensions.md](extensions.md#what-an-extension-draws) | `TextureSource`, neon-core |
 | `sound://` | The bytes of a sound file that were handed to the audio under a name, by an extension, see [extensions.md](extensions.md#what-an-extension-plays) | `SoundMemory`, neon-core |
 
-All seven are built in. Maps a developer defines are #380.
+All eight are built in. Maps a developer defines are #380.
 
 What may be written:
 
@@ -37,7 +38,7 @@ What may be written:
 |---|---|
 | The engine | `user://`, such as the log, and `output://`, such as a screenshot |
 | An extension, through `write_file` | `user://` alone: the saved games and the settings of a game. Everything else is refused with the reason in the log of the extension, see [extensions.md](extensions.md#what-an-extension-keeps) |
-| Nobody | `assets://` and `extensions://`, which are read-only |
+| Nobody | `assets://`, `engine://`, and `extensions://`, which are read-only |
 
 File access sits behind an interface, following the same split as windowing
 and rendering.
@@ -115,11 +116,11 @@ working directory, so it landed wherever the application happened to be
 started from, and a run from an IDE, a shell, or a script each left a
 `logs` folder in a different place.
 
-| Platform | Log file of `NeonRuntime` |
+| Platform | Log file of the sandbox |
 |---|---|
-| macOS | `~/Library/Application Support/neon-engine/neon-runtime/logs/neon-engine.log` |
-| Linux | `~/.local/share/neon-engine/neon-runtime/logs/neon-engine.log` |
-| Windows | `%APPDATA%\neon-engine\neon-runtime\logs\neon-engine.log` |
+| macOS | `~/Library/Application Support/neon-engine/neon-sandbox/logs/neon-engine.log` |
+| Linux | `~/.local/share/neon-engine/neon-sandbox/logs/neon-engine.log` |
+| Windows | `%APPDATA%\neon-engine\neon-sandbox\logs\neon-engine.log` |
 
 The folder follows the `organization` and `name` of the project, see
 [projects.md](projects.md), as everything else in `user://` does. The log says where

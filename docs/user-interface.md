@@ -75,15 +75,15 @@ root:
 
 Two user interfaces to look at are
 [hud.ui.yml](../tests/game/assets/ui/hud.ui.yml) of the tests, what is shown during
-play, and the runtime's [settings.ui.yml](../app/NeonRuntime/assets/ui/settings.ui.yml)
-with its theme [settings.css](../app/NeonRuntime/assets/ui/settings.css), a
+play, and the engine's own [settings.ui.yml](../app/NeonRuntime/engine/ui/settings.ui.yml)
+with its theme [settings.css](../app/NeonRuntime/engine/ui/settings.css), a
 menu with everything that can be typed and chosen. Each is shown in two
 ways:
 
 ```
 NeonRuntime --ui assets://ui/hud.ui.yml
 NeonRuntime --scene assets://scenes/hud-demo.scene.yml
-NeonRuntime --ui assets://ui/settings.ui.yml
+NeonRuntime --ui engine://ui/settings.ui.yml
 NeonRuntime --scene assets://scenes/settings-demo.scene.yml
 ```
 
@@ -784,14 +784,14 @@ uneven. It was decided by looking at both.
 ```yaml
 fonts:
   - family: title
-    src: assets://fonts/inter/Inter-Bold.ttf
+    src: engine://fonts/inter/Inter-Bold.ttf
     weight: 700
     rendering: sdf
   - family: body
     src: assets://fonts/body-italic.ttf
     style: italic
   - family: arabic
-    src: assets://fonts/noto/NotoSansArabic-Regular.ttf
+    src: engine://fonts/noto/NotoSansArabic-Regular.ttf
 ```
 
 | Name | Holds | When it is left out |
@@ -964,14 +964,14 @@ An element names a shader of its own and what the shader is given:
 ```yaml
 - type: button
   text: Resume
-  shader: assets://shaders/ui/shine
+  shader: engine://shaders/ui/shine
   shader_values: { speed: 0.4, width: 0.15, lean: 0.4, tint: "#ffffff50" }
 ```
 
 A shader is the half that colours pixels. Where the corners of an element
 go is the work of the shader of the engine. It is written in GLSL, in the
-folder `shaders/vulkan/ui` of the application, and compiled by the build
-into `assets://shaders/ui/<name>.frag.spv`.
+folder `engine/shaders/ui` of the runtime, and compiled by the build
+into `engine://shaders/ui/<name>.frag.spv`.
 
 ```glsl
 #version 450
@@ -1016,9 +1016,9 @@ void main()
 
 | Comes with the runtime | Does | Values |
 |---|---|---|
-| `assets://shaders/ui/shine` | A band of light that moves over the element | `speed`, `width`, `lean`, `tint` |
-| `assets://shaders/ui/dissolve` | The element falls apart into grains | `amount`, `grain`, `edge` |
-| `assets://shaders/ui/cooldown` | A shade that is wiped off clockwise | `progress`, `shade` |
+| `engine://shaders/ui/shine` | A band of light that moves over the element | `speed`, `width`, `lean`, `tint` |
+| `engine://shaders/ui/dissolve` | The element falls apart into grains | `amount`, `grain`, `edge` |
+| `engine://shaders/ui/cooldown` | A shade that is wiped off clockwise | `progress`, `shade` |
 
 Every element with a shader is a draw call of its own.
 
@@ -1057,7 +1057,7 @@ of its `textures`, an `image` of a user interface as its `src`.
       scale: [1.2, 0.9, 1]
     Renderable:
       model: assets://models/quad.obj
-      shader: assets://shaders/unlit
+      shader: engine://shaders/unlit
       textures:
         - surface://terminal
     UiSurface:
@@ -1427,7 +1427,15 @@ told when it changes.
 
 ### The pause menu
 
-`NeonRuntime` names a file in its settings, `assets://ui/pause.ui.yml`, and
+The engine brings a pause menu and a settings menu of its own,
+`engine://ui/pause.ui.yml` and `engine://ui/settings.ui.yml`, so that a game
+has working menus without making any. A project that wants them names them
+in its settings as `ui.pause_menu` and `ui.settings_menu`, as the sandbox,
+the museum, and the bench do; a game with a look of its own names files of
+its own there instead, and one that names none has no pause menu, as
+neon-quake, which opens its own on escape.
+
+The project names a file in its settings, `engine://ui/pause.ui.yml`, and
 the runtime shows it when the action `pause` of the input map is pressed —
 escape, or start on a controller, in the default map — and the user
 interface did not use the press. The file is modal with `cancel: close`, so escape or the
@@ -1439,7 +1447,7 @@ still held does not open it again. Shift and escape close the window
 whatever the game does, for when the game has stopped listening.
 
 Its button `settings` shows the settings menu in its place,
-`assets://ui/settings.ui.yml`, which `NeonRuntime` names in its settings as
+`engine://ui/settings.ui.yml`, which the project names in its settings as
 well. The world stays still while it is shown. It is modal, so the cursor is
 there to use it, and its buttons Back and Apply close it with
 `action: close`, as cancel does. Then the pause menu is back. A modal file
@@ -1770,7 +1778,7 @@ other.
 
 | Asset | Licence |
 |---|---|
-| Noto Sans Arabic, Regular | SIL Open Font License 1.1, in `assets/fonts/noto/LICENSE.txt`. The whole font as it is published |
+| Noto Sans Arabic, Regular | SIL Open Font License 1.1, in `engine/fonts/noto/LICENSE.txt`. The whole font as it is published |
 | The images of the gallery, the flat square | Made for the engine |
 
 **The user interface of a game says that it uses FreeType**, which its

@@ -64,6 +64,12 @@ elseif (CASE STREQUAL "vulkan-version-not-a-version")
   expect_refused(
           "Option '--vulkan-version' needs a version of Vulkan 1, such as 1.3"
           --headless-renderer --frames 3 --vulkan-version 2.0)
+elseif (CASE STREQUAL "no-project")
+  # the runtime as it was built ships no game, and says what to start instead
+  run(--headless-renderer --frames 1)
+  expect_exit_code(1)
+  expect_output("assets://project.yml: there is no project here, the file cannot be read")
+  expect_output("NeonRuntime runs the project that is put together next to it, and has none of its own")
 else ()
   message(FATAL_ERROR "There is no case '${CASE}'")
 endif ()

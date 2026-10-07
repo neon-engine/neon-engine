@@ -25,7 +25,7 @@ entities:
       Geometry:
         shape: box
       Renderable:
-        shader: assets://shaders/basic-lit
+        shader: engine://shaders/basic-lit
         material:
           shininess: 32
           color: [0.5, 0.5, 0.5]
@@ -49,7 +49,7 @@ entities:
           Geometry:
             shape: box
           Renderable:
-            shader: assets://shaders/basic-lit
+            shader: engine://shaders/basic-lit
             material:
               color: [0.2, 0.2, 0.2]
           RigidBody:
@@ -65,7 +65,7 @@ entities:
       Geometry:
         shape: box
       Renderable:
-        shader: assets://shaders/basic-lit
+        shader: engine://shaders/basic-lit
         material:
           color: [0.6, 0.4, 0.2]
       RigidBody:
@@ -91,7 +91,7 @@ entities:
         shape: sphere
         sides: 12
       Renderable:
-        shader: assets://shaders/basic-lit
+        shader: engine://shaders/basic-lit
         material:
           color: [0.9, 0.3, 0.1]
       RigidBody:
@@ -109,7 +109,7 @@ entities:
       Geometry:
         shape: box
       Renderable:
-        shader: assets://shaders/basic-lit
+        shader: engine://shaders/basic-lit
         material:
           color: [0.2, 0.2, 0.2]
       RigidBody:
@@ -126,7 +126,7 @@ entities:
         shape: sphere
         sides: 12
       Renderable:
-        shader: assets://shaders/basic-lit
+        shader: engine://shaders/basic-lit
         material:
           color: [0.9, 0.7, 0.2]
       RigidBody:
@@ -147,7 +147,7 @@ entities:
       Geometry:
         shape: box
       Renderable:
-        shader: assets://shaders/basic-lit
+        shader: engine://shaders/basic-lit
         material:
           color: [0.2, 0.2, 0.2]
 
@@ -159,7 +159,7 @@ entities:
       Geometry:
         shape: box
       Renderable:
-        shader: assets://shaders/basic-lit
+        shader: engine://shaders/basic-lit
         material:
           color: [0.7, 0.5, 0.3]
       RigidBody:
@@ -183,7 +183,7 @@ entities:
       Geometry:
         shape: box
       Renderable:
-        shader: assets://shaders/basic-lit
+        shader: engine://shaders/basic-lit
         material:
           color: [0.7, 0.3, 0.2]
       RigidBody:
@@ -201,7 +201,7 @@ entities:
           Geometry:
             shape: box
           Renderable:
-            shader: assets://shaders/basic-lit
+            shader: engine://shaders/basic-lit
             material:
               color: [0.7, 0.5, 0.3]
           RigidBody: Default
@@ -215,7 +215,7 @@ entities:
           Geometry:
             shape: box
           Renderable:
-            shader: assets://shaders/basic-lit
+            shader: engine://shaders/basic-lit
             material:
               color: [0.7, 0.5, 0.3]
           RigidBody: Default

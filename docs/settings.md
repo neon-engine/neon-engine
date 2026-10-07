@@ -34,8 +34,8 @@ window:
 ui:
   scale: 1
   start: assets://ui/hud.ui.yml
-  pause_menu: assets://ui/pause.ui.yml
-  settings_menu: assets://ui/settings.ui.yml
+  pause_menu: engine://ui/pause.ui.yml
+  settings_menu: engine://ui/settings.ui.yml
 
 world:
   steps_per_second: 60
@@ -64,8 +64,8 @@ audio:
     ambience: 0.5
 ```
 
-The settings of the runtime are
-[settings.yml](../app/NeonRuntime/assets/settings.yml).
+Every project brings its own. Those of the sandbox are
+[settings.yml](../projects/sandbox/assets/settings.yml).
 
 | Name | Holds | Default |
 |---|---|---|

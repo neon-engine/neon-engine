@@ -1,6 +1,19 @@
+# setup_copy_assets(<target> <source folder> <output folder> [PART <name>] [EXCLUDE <regex>])
+#
+# Copies a folder next to the target whenever it is built, as the folder
+# `assets` of a game or `engine` of the runtime. The copy is the target
+# <target>_copy_<name>, `assets` unless PART names another, so that one target
+# can have several folders copied. Files whose path matches EXCLUDE are left
+# out, as the sources of shaders, which are compiled in place of a copy.
 function(setup_copy_assets TARGET_NAME SOURCE_ASSETS_DIR OUTPUT_ASSETS_DIR)
-    add_custom_target(${TARGET_NAME}_copy_assets ALL
-            COMMENT "Syncing assets for ${TARGET_NAME}"
+    cmake_parse_arguments(PARSE_ARGV 3 COPY "" "PART;EXCLUDE" "")
+    if (NOT COPY_PART)
+        set(COPY_PART assets)
+    endif ()
+    set(COPY_TARGET ${TARGET_NAME}_copy_${COPY_PART})
+
+    add_custom_target(${COPY_TARGET} ALL
+            COMMENT "Syncing ${COPY_PART} for ${TARGET_NAME}"
     )
 
     # The copy below only adds and replaces, so this first removes what the
@@ -8,7 +21,7 @@ function(setup_copy_assets TARGET_NAME SOURCE_ASSETS_DIR OUTPUT_ASSETS_DIR)
     # destination mirrors the source. Removing only that keeps an incremental
     # build fast, see RemoveOrphans.cmake (#177).
     add_custom_command(
-            TARGET ${TARGET_NAME}_copy_assets
+            TARGET ${COPY_TARGET}
             PRE_BUILD
             COMMAND ${CMAKE_COMMAND}
             "-DSOURCE_ASSETS_DIR=${SOURCE_ASSETS_DIR}"
@@ -24,6 +37,9 @@ function(setup_copy_assets TARGET_NAME SOURCE_ASSETS_DIR OUTPUT_ASSETS_DIR)
             "${SOURCE_ASSETS_DIR}/*"
     )
     list(FILTER SOURCE_FILES EXCLUDE REGEX "\\.gitignore$")
+    if (COPY_EXCLUDE)
+        list(FILTER SOURCE_FILES EXCLUDE REGEX "${COPY_EXCLUDE}")
+    endif ()
     # what macOS leaves in folders, which no game reads: Finder's settings,
     # and the icon of a folder, whose name ends in a carriage return that
     # breaks the commands of the build
@@ -35,7 +51,7 @@ function(setup_copy_assets TARGET_NAME SOURCE_ASSETS_DIR OUTPUT_ASSETS_DIR)
         set(DEST_FILE "${OUTPUT_ASSETS_DIR}/${REL_PATH}")
 
         add_custom_command(
-                TARGET ${TARGET_NAME}_copy_assets
+                TARGET ${COPY_TARGET}
                 POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E make_directory
                 "${OUTPUT_ASSETS_DIR}/${REL_DIR}"
@@ -53,5 +69,5 @@ function(setup_copy_assets TARGET_NAME SOURCE_ASSETS_DIR OUTPUT_ASSETS_DIR)
         )
     endforeach ()
 
-    add_dependencies(${TARGET_NAME} ${TARGET_NAME}_copy_assets)
+    add_dependencies(${TARGET_NAME} ${COPY_TARGET})
 endfunction()

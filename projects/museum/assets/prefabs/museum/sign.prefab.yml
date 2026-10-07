@@ -20,7 +20,7 @@ entity:
           shape: box
           size: [2.08, 1.08, 0.06]
         Renderable:
-          shader: assets://shaders/pbr
+          shader: engine://shaders/pbr
           material:
             color: [0.12, 0.13, 0.15]
             roughness: 0.6
@@ -40,4 +40,4 @@ entity:
         Geometry:
           shape: quad
         Renderable:
-          shader: assets://shaders/unlit
+          shader: engine://shaders/unlit

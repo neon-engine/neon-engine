@@ -19,7 +19,7 @@ reads after the project.
 
 ```yaml
 version: 1
-name: neon-runtime
+name: neon-sandbox
 organization: neon-engine
 
 scenes:
@@ -27,14 +27,15 @@ scenes:
   - assets://scenes/level.scene.yml
 
 entry_scene: assets://scenes/title.scene.yml
-input: assets://input/default.input.yml
+input: assets://input/game.input.yml
 ```
 
-The project the runtime runs as it was built is
-[project.yml](../app/NeonRuntime/assets/project.yml), with one scene. A game
-is a project of its own, whose `project.yml` the build lays over that one,
-as the museum's, [project.yml](../projects/museum/assets/project.yml), see
-[scenes.md](scenes.md#where-the-scenes-are).
+NeonRuntime ships no project: it is a runtime and knows no game. Every game
+is a project of its own, put together next to a copy of the runtime, as the
+sandbox's [project.yml](../projects/sandbox/assets/project.yml), with one
+scene, and the museum's, [project.yml](../projects/museum/assets/project.yml),
+see [scenes.md](scenes.md#where-the-scenes-are). Started without one, the
+runtime says so and stops.
 
 | Name | Holds | When it is left out |
 |---|---|---|
@@ -43,7 +44,7 @@ as the museum's, [project.yml](../projects/museum/assets/project.yml), see
 | `organization` | Who makes it, in the same plain form | `neon-engine`: a project without one is one of the engine's own |
 | `scenes` | The scenes of the project, as virtual paths. At least one | An error |
 | `entry_scene` | The scene the project starts with. One of `scenes` | The first of `scenes` |
-| `input` | The input map the game is played with, as a virtual path, see [input.md](input.md) | The engine's default map |
+| `input` | The input map the game is played with, as a virtual path, see [input.md](input.md) | The map the engine brings, `engine://input/default.input.yml` |
 
 A name that is not known is an error, as in every recipe, so that a name
 that was misspelled does not go unnoticed. Every problem is reported with its
@@ -121,7 +122,7 @@ of follows from that:
 | A game is | Then it has |
 |---|---|
 | A project alone | `assets/` with its `project.yml`, scenes, and scripts in Lua. Nothing is compiled |
-| An extension alone | `extensions/<name>/` with its library and its `assets/`, put next to a runtime that runs some project. A loader for another engine's files, a tool, something several projects use |
+| An extension alone | `extensions/<name>/` with its library and what it needs to run, put next to a runtime that runs some project. A loader for another engine's files, a tool, something several projects use |
 | A project and an extension | Both, side by side. The bench is one |
 
 ```
@@ -130,21 +131,21 @@ bench/
   README.md
   assets/
     project.yml              the project: its name, its scenes, the scene it starts with
+    scenes/ prefabs/ …       the game: its scenes, prefabs, scripts, user interfaces
   extensions/
     bench/                   laid out as it lies next to the runtime
       extension.yml
       bench.cpp …            its code
-      assets/                its scenes, prefabs, scripts, user interfaces
 ```
 
 | Decision | Reason |
 |---|---|
 | The code is an extension, a library next to the runtime | The runtime is not built again for a game. Whoever writes the game builds the game's own files and nothing else, see [extensions.md](extensions.md#building-an-extension) |
-| What depends on the extension's components lives in the extension's `assets/` | A scene that holds a `NativeSpawner` is of no use without the library that brings it. The project names it as `extensions://bench/assets/scenes/rain-cpp-heavy-copy.scene.yml` |
+| The game lives in `assets/`, even what uses the extension's components | `extensions://` is for code and what code needs to run; a scene is the game's, so a scene that holds a `NativeSpawner` is `assets://scenes/rain-cpp-heavy-copy.scene.yml` |
 | `extensions/<name>/` in the source is laid out as next to the runtime | One layout to know. The build adds the library to it |
 | `project.yml` is in `assets/` | It is where the runtime reads it. It belongs at the root, next to `assets/` and `extensions/`, which waits for a scheme of its own (#368) |
-| `neon_add_project(<name> SOURCES …)` puts the game together: `NeonRuntime`, `assets/`, `extensions/<name>/` | It is what a shipped game looks like, and it runs from there. Exporting (#84) will make the same folder for another platform |
-| The runtime's assets are copied first, and the project's on top | The runtime reads some of its own whatever the project is: its shaders, its fonts, the pause menu, the input map. Which of the runtime's assets are the engine's and which are the museum's is not separated yet, so the museum's come along |
+| `neon_add_project(<name> SOURCES …)` puts the game together: `NeonRuntime`, `engine/`, `assets/`, `extensions/<name>/` | It is what a shipped game looks like, and it runs from there. Exporting (#84) will make the same folder for another platform |
+| The runtime brings its executable and its folder `engine`, and nothing of a game | The runtime knows no game. Its shaders, fonts, a plain pause and settings menu, and an input map are `engine://`, which a project uses or replaces; everything else a game shows and reads is the project's own |
 
 **Built on its own**, which is how a game is worked on: the folder is a
 build of its own that includes `cmake/NeonSdk.cmake` of the engine. Only the

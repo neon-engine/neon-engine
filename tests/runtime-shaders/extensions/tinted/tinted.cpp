@@ -50,7 +50,7 @@ namespace
       world.AddComponent(square, "Transform");
       world.AddComponent(square, "Renderable");
       world.SetVector3(square, world.FindField("Transform", "position"), {0.0f, 0.0f, -3.0f});
-      world.SetText(square, world.FindField("Renderable", "shader"), "extensions://tinted/assets/shaders/tinted");
+      world.SetText(square, world.FindField("Renderable", "shader"), "extensions://tinted/shaders/tinted");
       world.SetTexts(square, world.FindField("Renderable", "textures"), {white});
 
       // two metres each way, facing the camera, which looks down z
@@ -75,7 +75,7 @@ namespace
       world.AddComponent(flipped, "Transform");
       world.AddComponent(flipped, "Renderable");
       world.SetVector3(flipped, world.FindField("Transform", "position"), {-1.6f, -0.9f, -3.0f});
-      world.SetText(flipped, world.FindField("Renderable", "shader"), "assets://shaders/unlit");
+      world.SetText(flipped, world.FindField("Renderable", "shader"), "engine://shaders/unlit");
       world.SetTexts(flipped, world.FindField("Renderable", "textures"), {red});
       world.SetTexts(flipped, world.FindField("Renderable", "preload"), {blue});
       world.SetMesh(

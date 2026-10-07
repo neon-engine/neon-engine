@@ -62,7 +62,7 @@ namespace neon
     bool CreatePipeline(VkRenderPass pass, VkShaderModule fragment, VkPipeline &pipeline) const;
 
   public:
-    static constexpr const char *kVertex_Path = "assets://shaders/effect.vert.spv";
+    static constexpr const char *kVertex_Path = "engine://shaders/effect.vert.spv";
 
     /// The bindings of the one set of an effect, which have to match
     /// effect.glsl: the picture, the sampler it is read through, bound

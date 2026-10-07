@@ -1,6 +1,6 @@
 // The file of an input map, as an application reads it: InputMapFile with the
 // document format for YAML. Files are kept in memory, except for the map of
-// the runtime, which is read as it is in the repository.
+// the engine, which is read as it is in the repository.
 
 #include <filesystem>
 #include <fstream>
@@ -93,9 +93,9 @@ namespace
       EXPECT_THAT(_errors.front(), HasSubstr(text));
     }
 
-    static std::string FileOfTheRuntime(const std::string &name)
+    static std::string FileOfTheEngine(const std::string &name)
     {
-      const std::filesystem::path file_path = std::filesystem::path(NEON_RUNTIME_ASSETS) / name;
+      const std::filesystem::path file_path = std::filesystem::path(NEON_ENGINE_FOLDER) / name;
       const std::ifstream file(file_path);
       EXPECT_TRUE(file.good()) << file_path;
 
@@ -676,20 +676,20 @@ namespace
                   HasSubstr(":6: the state 'walking' names the action 'fly', which there is not")));
   }
 
-  // the map of the runtime
+  // the map the engine brings
 
-  TEST_F(InputMapsTest, ReadsTheInputMapOfTheRuntime)
+  TEST_F(InputMapsTest, ReadsTheInputMapOfTheEngine)
   {
-    Write(FileOfTheRuntime("input/default.input.yml"));
+    Write(FileOfTheEngine("input/default.input.yml"));
 
     ASSERT_TRUE(Read()) << ::testing::PrintToString(_errors);
     EXPECT_THAT(_errors, IsEmpty());
     EXPECT_EQ(_map.GetFirstState(), "playing");
   }
 
-  TEST_F(InputMapsTest, TheInputMapOfTheRuntimeIsTheDefaultOfTheEngine)
+  TEST_F(InputMapsTest, TheInputMapOfTheEngineIsTheOneBuiltIn)
   {
-    Write(FileOfTheRuntime("input/default.input.yml"));
+    Write(FileOfTheEngine("input/default.input.yml"));
     ASSERT_TRUE(Read()) << ::testing::PrintToString(_errors);
 
     const InputMap built_in = InputMap::Default();

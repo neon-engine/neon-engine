@@ -1,0 +1,47 @@
+# The scene the engine is tried out with: a box on a floor under one light,
+# built by the engine, with nothing read from a file. The games of the engine
+# are projects of their own, see projects/.
+
+scene: start
+version: 1
+
+entities:
+  - name: camera
+    components:
+      Transform:
+        position: [0, 2, 5]
+        rotation: [-15, 0, 0]
+      Camera: Default
+
+  - name: light
+    components:
+      Transform: Default
+      Light:
+        type: direction
+        direction: [-0.5, -1, -0.3]
+        ambient: [0.2, 0.2, 0.2]
+        diffuse: [0.8, 0.8, 0.8]
+        specular: [0, 0, 0]
+
+  - name: floor
+    components:
+      Transform: Default
+      Geometry:
+        shape: plane
+        size: [10, 0, 10]
+      Renderable:
+        shader: engine://shaders/basic-lit
+        material:
+          color: [0.5, 0.5, 0.5]
+
+  - name: box
+    components:
+      Transform:
+        position: [0, 0.5, 0]
+      Geometry:
+        shape: box
+        size: [1, 1, 1]
+      Renderable:
+        shader: engine://shaders/basic-lit
+        material:
+          color: [0.9, 0.5, 0.2]

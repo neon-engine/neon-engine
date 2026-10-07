@@ -77,7 +77,7 @@ namespace
 
   TEST(VkPipelinesTest, NamesTheShaderOfTheShadowPassWithoutAnExtension)
   {
-    EXPECT_STREQ(VK_Pipelines::kShadow_Shader_Path, "assets://shaders/shadow");
+    EXPECT_STREQ(VK_Pipelines::kShadow_Shader_Path, "engine://shaders/shadow");
     EXPECT_GT(VK_Pipelines::kShadow_Slope_Bias, 0.0f);
   }
 

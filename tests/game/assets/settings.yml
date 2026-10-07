@@ -1,0 +1,15 @@
+# The settings the project starts with: what it chooses for itself.
+# What a player changes goes to user://settings.yml, on top of this, and the
+# command line comes last. What is left out keeps the default of the engine.
+# The names and what they take are listed in docs/settings.md.
+
+version: 1
+
+window:
+  width: 1920
+  height: 1080
+  mode: borderless
+
+ui:
+  pause_menu: engine://ui/pause.ui.yml
+  settings_menu: engine://ui/settings.ui.yml

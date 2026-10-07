@@ -104,7 +104,7 @@ namespace neon
     }};
 
     /// The shader of the pass that draws the shadow map.
-    static constexpr const char *kShadow_Shader_Path = "assets://shaders/shadow";
+    static constexpr const char *kShadow_Shader_Path = "engine://shaders/shadow";
 
     /// The bias of the pass that draws the shadow map, along the slope of
     /// a surface: how many texels of depth, as the surface falls away

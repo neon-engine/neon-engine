@@ -133,6 +133,14 @@ int main(const int argc, char *argv[])
     if (std::vector<std::string> errors; !project_file.Read(project, errors))
     {
       for (const auto &error : errors) { std::cerr << error << "\n"; }
+      // The runtime ships no game, so one started as it was built has none.
+      // What to start instead is said once, after the error.
+      if (!file_system.Exists(std::string(neon::ProjectFile::path)))
+      {
+        std::cerr << "NeonRuntime runs the project that is put together next to it, and has none of its own. "
+                     "Start a project instead, such as the sandbox of the engine's build, bin/<build>/<platform>/sandbox, "
+                     "see docs/projects.md\n";
+      }
       file_system.CleanUp();
       return EXIT_FAILURE;
     }
@@ -248,13 +256,25 @@ int main(const int argc, char *argv[])
   }
 
   // The input map of the project: the actions the game reads, and what is
-  // bound to each. Without one the engine's default applies. A mistake in
-  // it stops the runtime, since the game could not be played as meant.
-  if (!project.input.empty())
+  // bound to each. A project that names none is played with the map the
+  // engine brings, and only without that file, which ships with the
+  // runtime, with the one built in. A mistake in a map stops the runtime,
+  // since the game could not be played as meant.
+  std::string input_path = project.input;
+  if (input_path.empty())
+  {
+    input_path = std::string(neon::InputMapFile::default_path);
+    if (!file_system.Exists(input_path))
+    {
+      std::cerr << input_path << " is not next to the runtime, so the input map built into the engine is used\n";
+      input_path.clear();
+    }
+  }
+  if (!input_path.empty())
   {
     const neon::InputMapFile input_map_file(&file_system, &yaml, logging_system.CreateLogger("InputMapFile"));
     neon::InputMap input_map;
-    if (std::vector<std::string> errors; !input_map_file.Read(project.input, input_map, errors))
+    if (std::vector<std::string> errors; !input_map_file.Read(input_path, input_map, errors))
     {
       for (const auto &error : errors) { std::cerr << error << "\n"; }
       file_system.CleanUp();
@@ -346,8 +366,8 @@ int main(const int argc, char *argv[])
     &yaml,
     neon::UiSettings{
       .fonts = {
-        {"sans-serif", 400, "assets://fonts/inter/Inter-Regular.ttf"},
-        {"sans-serif", 700, "assets://fonts/inter/Inter-Bold.ttf"}
+        {"sans-serif", 400, "engine://fonts/inter/Inter-Regular.ttf"},
+        {"sans-serif", 700, "engine://fonts/inter/Inter-Bold.ttf"}
       },
       .start_path = settings_config.ui_path
     },
@@ -443,9 +463,8 @@ int main(const int argc, char *argv[])
     logging_system.CreateLogger("ScriptRunning"));
   // an element of the user interface calls a function of the scripts
   script_running->SetUi(&ui_system);
-  // an extension brings scripts as it brings everything else of its own,
-  // under its assets
-  for (const auto &folder : extension_host.GetAssetFolders()) { script_running->AddFolder(folder); }
+  // an extension that needs scripts to run brings them in its own folder
+  for (const auto &folder : extension_host.GetScriptFolders()) { script_running->AddFolder(folder); }
   world.AddSystem(std::move(script_running));
 
   // the player, driven by what the user interface left of the input. It

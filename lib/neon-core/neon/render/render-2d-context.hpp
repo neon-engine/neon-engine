@@ -304,7 +304,7 @@ namespace neon
 
     /// Makes a shader ready that elements are drawn with. `shader_path` is
     /// a virtual path without an extension, such as
-    /// `assets://shaders/ui/shine`. Returns what the material is known as,
+    /// `engine://shaders/ui/shine`. Returns what the material is known as,
     /// or No_Material when the shader cannot be used, which is said once.
     virtual int CreateMaterial(const std::string &shader_path)
     {

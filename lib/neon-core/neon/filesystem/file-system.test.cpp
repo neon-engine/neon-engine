@@ -68,7 +68,7 @@ namespace
   };
 
   constexpr auto unknown_scheme =
-    "it does not start with a known scheme, which are assets://, user://, output:// or extensions://";
+    "it does not start with a known scheme, which are assets://, engine://, user://, output:// or extensions://";
   constexpr auto backslash = "it contains a backslash, folders are separated by forward slashes on every platform";
   constexpr auto forbidden_character =
     "it contains a character that is not allowed in file names on every platform";
@@ -80,6 +80,7 @@ namespace
   TEST(FileSystem, NamesItsSchemes)
   {
     EXPECT_EQ(FileSystem::assets_scheme, "assets://");
+    EXPECT_EQ(FileSystem::engine_scheme, "engine://");
     EXPECT_EQ(FileSystem::user_scheme, "user://");
     EXPECT_EQ(FileSystem::output_scheme, "output://");
   }
@@ -152,6 +153,32 @@ namespace
     std::string contents;
     EXPECT_TRUE(_file_system.ReadText("extensions://quake/extension.yml", contents));
     EXPECT_EQ(contents, "a recipe");
+  }
+
+  TEST_F(FileSystemTest, ReadsWhatTheRuntimeShipsWith)
+  {
+    _file_system.AddNativeFile("/engine/fonts/inter/Inter-Regular.ttf", "a font");
+
+    std::string contents;
+    EXPECT_TRUE(_file_system.ReadText("engine://fonts/inter/Inter-Regular.ttf", contents));
+    EXPECT_EQ(contents, "a font");
+    EXPECT_FALSE(_file_system.Exists("assets://fonts/inter/Inter-Regular.ttf"));
+  }
+
+  TEST_F(FileSystemTest, RefusesToWriteToTheEngine)
+  {
+    EXPECT_FALSE(_file_system.WriteText("engine://shaders/pbr.frag.spv", "another shader"));
+    ExpectRefused("engine://shaders/pbr.frag.spv", "its scheme is read-only");
+  }
+
+  TEST_F(FileSystemTest, ListsTheEngineWhenGivenTheSchemeAlone)
+  {
+    _file_system.AddNativeFile("/engine/shaders/pbr.frag.spv", "");
+    _file_system.AddNativeFile("/engine/fonts/inter/Inter-Bold.ttf", "");
+
+    std::vector<std::string> paths;
+    EXPECT_TRUE(_file_system.ListFiles("engine://", paths));
+    EXPECT_THAT(paths, ElementsAre("engine://fonts/inter/Inter-Bold.ttf", "engine://shaders/pbr.frag.spv"));
   }
 
   TEST_F(FileSystemTest, RefusesToWriteToExtensions)

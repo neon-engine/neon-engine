@@ -12,7 +12,7 @@ entity:
       shape: box
       size: [0.8, 1, 0.8]
     Renderable:
-      shader: assets://shaders/pbr
+      shader: engine://shaders/pbr
       material:
         color: [0.2, 0.21, 0.24]
         roughness: 0.7

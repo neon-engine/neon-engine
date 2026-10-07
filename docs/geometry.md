@@ -29,7 +29,7 @@ metres, without the centring and scaling a file gets.
       outline: [-4, -4, 4, -4, 4, 4, -4, 4]
       inside: true
     Renderable:
-      shader: assets://shaders/pbr
+      shader: engine://shaders/pbr
       textures: [assets://textures/brick.png]
     RigidBody:
       kind: static

@@ -16,18 +16,18 @@ add_dependencies(neon-tests tinted)
 
 # The shader of the extension is compiled as an extension outside the engine
 # compiles its own: with glslang, against the declarations the shaders of
-# the engine share, into the assets of the extension next to the runtime.
+# the engine share, into the folder of the extension next to the runtime.
 find_program(GLSLANG_EXECUTABLE NAMES glslang glslangValidator)
 set(TINTED_SHADER_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/extensions/tinted/shaders")
-set(TINTED_SHADER_OUTPUT "${GAME_DIRECTORY}/extensions/tinted/assets/shaders")
-file(GLOB ENGINE_SHADER_INCLUDES CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/app/NeonRuntime/shaders/vulkan/*.glsl")
+set(TINTED_SHADER_OUTPUT "${GAME_DIRECTORY}/extensions/tinted/shaders")
+file(GLOB ENGINE_SHADER_INCLUDES CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/app/NeonRuntime/engine/shaders/*.glsl")
 
 set(TINTED_SHADER_OUTPUTS)
 foreach (STAGE IN ITEMS vert frag)
   add_custom_command(
           OUTPUT "${TINTED_SHADER_OUTPUT}/tinted.${STAGE}.spv"
           COMMAND ${CMAKE_COMMAND} -E make_directory "${TINTED_SHADER_OUTPUT}"
-          COMMAND "${GLSLANG_EXECUTABLE}" -V --quiet "-I${CMAKE_SOURCE_DIR}/app/NeonRuntime/shaders/vulkan"
+          COMMAND "${GLSLANG_EXECUTABLE}" -V --quiet "-I${CMAKE_SOURCE_DIR}/app/NeonRuntime/engine/shaders"
           "${TINTED_SHADER_SOURCES}/tinted.${STAGE}" -o "${TINTED_SHADER_OUTPUT}/tinted.${STAGE}.spv"
           DEPENDS "${TINTED_SHADER_SOURCES}/tinted.${STAGE}" ${ENGINE_SHADER_INCLUDES}
           COMMENT "Compiling the shader tinted.${STAGE} of the test"
@@ -42,7 +42,7 @@ foreach (EFFECT IN ITEMS mirrored halved swapped told)
   add_custom_command(
           OUTPUT "${TINTED_SHADER_OUTPUT}/${EFFECT}.frag.spv"
           COMMAND ${CMAKE_COMMAND} -E make_directory "${TINTED_SHADER_OUTPUT}"
-          COMMAND "${GLSLANG_EXECUTABLE}" -V --quiet "-I${CMAKE_SOURCE_DIR}/app/NeonRuntime/shaders/vulkan"
+          COMMAND "${GLSLANG_EXECUTABLE}" -V --quiet "-I${CMAKE_SOURCE_DIR}/app/NeonRuntime/engine/shaders"
           "${TINTED_SHADER_SOURCES}/${EFFECT}.frag" -o "${TINTED_SHADER_OUTPUT}/${EFFECT}.frag.spv"
           DEPENDS "${TINTED_SHADER_SOURCES}/${EFFECT}.frag" ${ENGINE_SHADER_INCLUDES}
           COMMENT "Compiling the effect ${EFFECT}.frag of the test"

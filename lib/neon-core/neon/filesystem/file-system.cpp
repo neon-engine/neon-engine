@@ -125,6 +125,11 @@ namespace neon
       scheme = assets_scheme;
       scheme_directory = _assets_directory;
       writable = false;
+    } else if (path.starts_with(engine_scheme))
+    {
+      scheme = engine_scheme;
+      scheme_directory = _engine_directory;
+      writable = false;
     } else if (path.starts_with(user_scheme))
     {
       if (_user_directory.empty())
@@ -161,8 +166,8 @@ namespace neon
     } else
     {
       const std::string known =
-        std::string(assets_scheme) + ", " + std::string(user_scheme) + ", " + std::string(output_scheme) +
-        " or " + std::string(extensions_scheme);
+        std::string(assets_scheme) + ", " + std::string(engine_scheme) + ", " + std::string(user_scheme) + ", " +
+        std::string(output_scheme) + " or " + std::string(extensions_scheme);
       _logger->Error("Invalid path '{}': it does not start with a known scheme, which are {}", path, known);
       return false;
     }
@@ -316,6 +321,7 @@ namespace neon
     // a scheme alone is the folder behind it, which Locate has no name for
     std::string native_directory;
     if (folder == assets_scheme) { native_directory = _assets_directory; }
+    else if (folder == engine_scheme) { native_directory = _engine_directory; }
     else if (folder == user_scheme) { native_directory = _user_directory; }
     else if (folder == output_scheme) { native_directory = _output_directory; }
     else if (folder == extensions_scheme) { native_directory = _extensions_directory; }

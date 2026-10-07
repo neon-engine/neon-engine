@@ -3,8 +3,8 @@ neon_add_functional_test(project-files
         LIBRARIES neon-core neon-ryml
 )
 
-# the project of the runtime is read by the test as it is in the repository,
+# the project of the sandbox is read by the test as it is in the repository,
 # and its scenes are looked for next to it
 target_compile_definitions(project-files.test PRIVATE
-        NEON_RUNTIME_ASSETS="${CMAKE_SOURCE_DIR}/app/NeonRuntime/assets"
+        NEON_SANDBOX_ASSETS="${CMAKE_SOURCE_DIR}/projects/sandbox/assets"
 )

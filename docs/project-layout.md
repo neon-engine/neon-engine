@@ -25,8 +25,8 @@ and a file is found by its name alone.
 | `models/` | Meshes, `*.obj` today, glTF once models are prepared ahead of time (#98) | |
 | `textures/` | Images that materials show, `*.png` and `*.jpg` | |
 | `sounds/` | Sounds and music, `*.wav`, in folders by their use: `music/`, `ambience/`, and the sounds of things next to the top | [audio.md](audio.md) |
-| `fonts/` | Fonts, `*.ttf`, one folder per family with its licence | |
-| `shaders/` | Compiled shaders, `*.spv`, that materials name without an extension | Made by the build, see below |
+| `fonts/` | Fonts of the game, `*.ttf`, one folder per family with its licence. Text falls back to the runtime's own, `engine://fonts/` | |
+| `shaders/` | Compiled shaders of the game's own, `*.spv`, that materials name without an extension. Those of the engine are `engine://shaders/` | Made by the build, see below |
 | `scripts/` | Game code in Lua, `*.lua`: a component and its system per file, or `*.component.lua` and `*.system.lua`, and modules for `require`. The engine loads every `*.lua` anywhere under the assets, so this folder is where to keep them, not where they have to be | [scripting.md](scripting.md) |
 | `input/` | Input maps, `*.input.yml`, and scripts of input for runs without a window | [input.md](input.md) |
 | `external/` | Assets that came from outside the project, kept as published, one folder per source and kit: `external/<source>/<kit>/` | See [external assets](#external-assets) |
@@ -36,13 +36,15 @@ files. A folder is added when its first file is.
 
 ### Where the compiled shaders come from
 
-`shaders/` is not written by hand. The build compiles the GLSL sources of the
-engine (`app/NeonRuntime/shaders/vulkan/`) to SPIR-V and puts the result next
-to the other assets, so that `assets://shaders/basic-lit` names a shader the
-same way `assets://models/cube.obj` names a model. A project that writes
-shaders of its own will keep the sources in a folder of the project and the
-build puts them in the same place; where that folder is comes with the first
-such shader. What ships is the compiled form only.
+A project's `shaders/` is not written by hand, and most projects have none.
+The engine's own shaders are not part of a project: the build compiles the
+GLSL sources of the engine (`app/NeonRuntime/engine/shaders/`) to SPIR-V and
+puts the result in the folder `engine` next to the runtime, so that
+`engine://shaders/basic-lit` names a shader the same way
+`assets://models/cube.obj` names a model. A project that writes shaders of
+its own will keep the sources in a folder of the project and the build puts
+them in `shaders/`; where that folder is comes with the first such shader.
+What ships is the compiled form only.
 
 ### External assets
 
@@ -91,7 +93,7 @@ care, does not break on Linux, which does.
 
 A file a tool makes is not edited by hand and is not committed when the build
 makes it from something that is. The compiled shaders are such a file; the
-project of the runtime has them only in its build folder. What the editor
+runtime has its own only in its build folder, under `engine/`. What the editor
 makes once from a source that is not kept, such as a model converted from a
 format the runtime does not read, is committed, since it cannot be made
 again.

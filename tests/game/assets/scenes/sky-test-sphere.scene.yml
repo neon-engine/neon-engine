@@ -36,7 +36,7 @@ entities:
       Renderable:
         model: assets://models/quad.obj
         fit: unit
-        shader: assets://shaders/color
+        shader: engine://shaders/color
         material:
           color: [1, 0, 1]
 
@@ -48,7 +48,7 @@ entities:
       Renderable:
         model: assets://models/quad.obj
         fit: unit
-        shader: assets://shaders/color
+        shader: engine://shaders/color
         material:
           color: [1, 0, 0, 0.5]
           alpha_mode: blend

@@ -102,11 +102,11 @@ a source.
 
 | Piece | Location | Role |
 |---|---|---|
-| The sources | `app/NeonRuntime/shaders/vulkan/*.vert`, `*.frag`, `*.glsl`, `ui/*.frag` | GLSL 450, Vulkan's dialect |
-| `cmake/CompileShaders.cmake` | The build | Finds `glslang` or `glslangValidator`, compiles every `.vert` and `.frag` to `assets/shaders/<name>.<stage>.spv`, copies the result next to the binary |
+| The sources | `app/NeonRuntime/engine/shaders/*.vert`, `*.frag`, `*.glsl`, `ui/*.frag` | GLSL 450, Vulkan's dialect |
+| `cmake/CompileShaders.cmake` | The build | Finds `glslang` or `glslangValidator`, compiles every `.vert` and `.frag` to `engine/shaders/<name>.<stage>.spv`, copies the result next to the binary |
 | `VK_Shader` | neon-vulkan | Loads `<name>.vert.spv` and `<name>.frag.spv` through the file system. Every shader is a pair, the depth-only `shadow` of the shadow pass too, whose fragment half does nothing |
 | `resolve.frag` | The sources | The resolve step: the exposure, the tonemappers (the ACES fit of Narkowicz and the minimal AgX of Wrensch), and the sRGB curve, see [vulkan-renderer.md](vulkan-renderer.md#tonemapping) |
-| A material's `shader` | A scene recipe | Names a shader without an extension, `assets://shaders/pbr`; the renderer adds what it needs |
+| A material's `shader` | A scene recipe | Names a shader without an extension, `engine://shaders/pbr`; the renderer adds what it needs |
 
 ## Open questions
 

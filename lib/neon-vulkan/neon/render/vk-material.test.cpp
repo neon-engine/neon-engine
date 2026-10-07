@@ -49,7 +49,7 @@ namespace
       const std::vector<std::string> &texture_paths = {})
     {
       return {
-        "assets://shaders/basic-lit",
+        "engine://shaders/basic-lit",
         texture_paths,
         material_info,
         scale_textures,
@@ -71,7 +71,7 @@ namespace
   {
     const VK_Material material = Create({}, false);
 
-    EXPECT_EQ(material.ShaderPath(), "assets://shaders/basic-lit");
+    EXPECT_EQ(material.ShaderPath(), "engine://shaders/basic-lit");
   }
 
   TEST_F(VkMaterialTest, HasNeitherTexturesNorPipelineUntilItIsGivenThem)

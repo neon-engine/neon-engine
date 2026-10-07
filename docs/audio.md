@@ -222,7 +222,7 @@ settings demo of the tests does this, with one tone for every piece:
 NeonRuntime --scene assets://scenes/settings-demo.scene.yml
 ```
 
-The menu of the runtime, `settings.ui.yml`, has a row for the effects, the
+The settings menu of the engine, `engine://ui/settings.ui.yml`, has a row for the effects, the
 music, and the ambience, each a slider whose value is named after its group.
 A project with a group of its own adds a row like them to its menu, with a
 value named after the group, and an entity with a `UiVolume` for that value

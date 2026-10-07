@@ -127,12 +127,12 @@ namespace neon
     /// and closes its library. Safe to call more than once.
     void CleanUp();
 
-    /// The folders the extensions keep their own assets in,
-    /// `extensions://<name>/assets/`, in the order of their names: of those
+    /// The folders the extensions keep their scripts in,
+    /// `extensions://<name>/scripts/`, in the order of their names: of those
     /// that were started and of those that bring no library, whether the
-    /// folder is there or not. It is where the scripts of an extension are
-    /// looked for.
-    [[nodiscard]] std::vector<std::string> GetAssetFolders() const;
+    /// folder is there or not. An extension brings what it needs to run;
+    /// the scenes and the rest of a game are the project's, `assets://`.
+    [[nodiscard]] std::vector<std::string> GetScriptFolders() const;
 
     /// The names of the extensions that were started, in the order they
     /// were.

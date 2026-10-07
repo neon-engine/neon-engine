@@ -10,7 +10,7 @@ include("${CMAKE_CURRENT_LIST_DIR}/../../cmake/scripts/run-application.cmake")
 # effects.scene.yml.
 set(SCENE)
 if (CASE STREQUAL "the-effects-of-a-camera-are-run-over-its-picture")
-  set(SCENE --scene extensions://tinted/assets/scenes/effects.scene.yml)
+  set(SCENE --scene assets://scenes/effects.scene.yml)
 endif ()
 
 run(--headless-renderer --window-size 1280x720 --render-scale 1 --time-step 0.05 --frames 5

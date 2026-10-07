@@ -36,7 +36,7 @@ entities:
         outline: [-4, -4, 4, -4, 4, 4, -4, 4]
         inside: true
       Renderable:
-        shader: assets://shaders/pbr
+        shader: engine://shaders/pbr
         textures: [assets://textures/brick.png]
         material:
           roughness: 0.8
@@ -56,7 +56,7 @@ entities:
         shape: box
         size: [3, 0.4, 3]
       Renderable:
-        shader: assets://shaders/pbr
+        shader: engine://shaders/pbr
         textures: [assets://textures/concrete.png]
         material:
           roughness: 0.9
@@ -76,7 +76,7 @@ entities:
         shape: box
         size: [3, 0.2, 1]
       Renderable:
-        shader: assets://shaders/pbr
+        shader: engine://shaders/pbr
         textures: [assets://textures/concrete.png]
         material:
           roughness: 0.9
@@ -95,7 +95,7 @@ entities:
         size: [1, 1, 1]
         texels_per_metre: 1
       Renderable:
-        shader: assets://shaders/pbr
+        shader: engine://shaders/pbr
         textures: [assets://textures/wood.png]
         material:
           roughness: 0.6
@@ -113,7 +113,7 @@ entities:
         shape: ramp
         size: [2, 1, 4]
       Renderable:
-        shader: assets://shaders/pbr
+        shader: engine://shaders/pbr
         textures: [assets://textures/concrete.png]
         material:
           color: [0.8, 0.8, 0.9]

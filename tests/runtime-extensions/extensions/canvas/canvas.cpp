@@ -73,7 +73,7 @@ namespace
       world.AddComponent(shown, "Transform");
       world.AddComponent(shown, "Renderable");
       world.SetVector3(shown, world.FindField("Transform", "position"), {-1.65f, 0.0f, -3.0f});
-      world.SetText(shown, world.FindField("Renderable", "shader"), "assets://shaders/unlit");
+      world.SetText(shown, world.FindField("Renderable", "shader"), "engine://shaders/unlit");
       world.SetTexts(shown, world.FindField("Renderable", "textures"), {signal});
 
       const NeonVector3 towards{0.0f, 0.0f, 1.0f};
@@ -110,7 +110,7 @@ namespace
       world.AddComponent(lit, "Transform");
       world.AddComponent(lit, "Renderable");
       world.SetVector3(lit, world.FindField("Transform", "position"), {1.65f, 0.0f, -3.0f});
-      world.SetText(lit, world.FindField("Renderable", "shader"), "assets://shaders/unlit");
+      world.SetText(lit, world.FindField("Renderable", "shader"), "engine://shaders/unlit");
       world.SetTexts(lit, world.FindField("Renderable", "textures"), {white});
       world.SetText(lit, world.FindField("Renderable", "material.lightmap"), light);
 
@@ -147,7 +147,7 @@ namespace
       world.AddComponent(glass, "Transform");
       world.AddComponent(glass, "Renderable");
       world.SetVector3(glass, world.FindField("Transform", "position"), position);
-      world.SetText(glass, world.FindField("Renderable", "shader"), "assets://shaders/unlit");
+      world.SetText(glass, world.FindField("Renderable", "shader"), "engine://shaders/unlit");
       world.SetText(glass, world.FindField("Renderable", "material.alpha_mode"), "blend");
       world.SetTexts(glass, world.FindField("Renderable", "textures"), {picture});
 
@@ -191,7 +191,7 @@ namespace
       world.AddComponent(canvas, "Transform");
       world.AddComponent(canvas, "Renderable");
       world.SetVector3(canvas, world.FindField("Transform", "position"), {0.0f, 0.0f, -3.0f});
-      world.SetText(canvas, world.FindField("Renderable", "shader"), "assets://shaders/unlit");
+      world.SetText(canvas, world.FindField("Renderable", "shader"), "engine://shaders/unlit");
       world.SetTexts(canvas, world.FindField("Renderable", "textures"), {picture});
 
       // two metres each way, facing the camera, which looks down z

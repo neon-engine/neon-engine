@@ -55,8 +55,8 @@ the files as they were published, whole and unchanged.
 
 | Font | From | Licence | Text |
 |---|---|---|---|
-| Inter, Regular and Bold, by The Inter Project Authors | https://github.com/rsms/inter/releases/tag/v4.1 | SIL Open Font License 1.1 | [app/NeonRuntime/assets/fonts/inter/LICENSE.txt](app/NeonRuntime/assets/fonts/inter/LICENSE.txt) |
-| Noto Sans Arabic, Regular, by The Noto Project Authors | https://github.com/notofonts/arabic, the file `fonts/NotoSansArabic/hinted/ttf/NotoSansArabic-Regular.ttf` of https://github.com/notofonts/notofonts.github.io | SIL Open Font License 1.1 | [app/NeonRuntime/assets/fonts/noto/LICENSE.txt](app/NeonRuntime/assets/fonts/noto/LICENSE.txt) |
+| Inter, Regular and Bold, by The Inter Project Authors | https://github.com/rsms/inter/releases/tag/v4.1 | SIL Open Font License 1.1 | [app/NeonRuntime/engine/fonts/inter/LICENSE.txt](app/NeonRuntime/engine/fonts/inter/LICENSE.txt) |
+| Noto Sans Arabic, Regular, by The Noto Project Authors | https://github.com/notofonts/arabic, the file `fonts/NotoSansArabic/hinted/ttf/NotoSansArabic-Regular.ttf` of https://github.com/notofonts/notofonts.github.io | SIL Open Font License 1.1 | [app/NeonRuntime/engine/fonts/noto/LICENSE.txt](app/NeonRuntime/engine/fonts/noto/LICENSE.txt) |
 
 ## Not in the repository, and part of a build that is handed on
 
@@ -76,7 +76,7 @@ taken from elsewhere: what a scene shows is built by the engine as
 `Geometry`, or is one of these files, each written by a program from
 numbers.
 
-- `app/NeonRuntime/assets/ui/panel.png`, the panel of the pause menu
+- `app/NeonRuntime/engine/ui/panel.png`, the panel of the engine's pause menu, and its copy `tests/game/assets/ui/panel.png`
 - In the museum, `projects/museum/assets/`: `textures/sky/museum-panorama.png`, written by
   `tools/make-sky-images.py` from a formula, and `sounds/hum.wav`, made from sine waves
 - In the game of the tests, `tests/game/assets/`:

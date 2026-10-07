@@ -6,15 +6,13 @@ name: neon-bench
 organization: neon-engine
 
 scenes:
-  - extensions://bench/assets/scenes/rain-no-copy.scene.yml
-  - extensions://bench/assets/scenes/rain-cpp-heavy-copy.scene.yml
-  - extensions://bench/assets/scenes/rain-lua-heavy-copy.scene.yml
-  - extensions://bench/assets/scenes/rain-cpp-light-copy.scene.yml
-  - extensions://bench/assets/scenes/rain-lua-light-copy.scene.yml
-  - extensions://bench/assets/scenes/falling-none-2000.scene.yml
-  - extensions://bench/assets/scenes/falling-cpp-no-copy-2000.scene.yml
-  - extensions://bench/assets/scenes/falling-lua-no-copy-2000.scene.yml
+  - assets://scenes/rain-no-copy.scene.yml
+  - assets://scenes/rain-cpp-heavy-copy.scene.yml
+  - assets://scenes/rain-lua-heavy-copy.scene.yml
+  - assets://scenes/rain-cpp-light-copy.scene.yml
+  - assets://scenes/rain-lua-light-copy.scene.yml
+  - assets://scenes/falling-none-2000.scene.yml
+  - assets://scenes/falling-cpp-no-copy-2000.scene.yml
+  - assets://scenes/falling-lua-no-copy-2000.scene.yml
 
-entry_scene: extensions://bench/assets/scenes/rain-cpp-heavy-copy.scene.yml
-
-input: assets://input/default.input.yml
+entry_scene: assets://scenes/rain-cpp-heavy-copy.scene.yml

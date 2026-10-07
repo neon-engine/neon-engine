@@ -913,7 +913,7 @@ entities:
       Renderable:
         model: assets://models/slab.obj
         fit: unit
-        shader: assets://shaders/basic-lit
+        shader: engine://shaders/basic-lit
       RigidBody:
         linear_damping: 0
       Collider:

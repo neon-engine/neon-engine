@@ -25,7 +25,7 @@ entities:
         shape: sphere
         sides: 12
       Renderable:
-        shader: assets://shaders/basic-lit
+        shader: engine://shaders/basic-lit
         material:
           shininess: 32
           color: [1, 0.5, 0.31]
@@ -41,7 +41,7 @@ entities:
       Renderable:
         model: assets://models/quad.obj
         fit: unit
-        shader: assets://shaders/unlit
+        shader: engine://shaders/unlit
         textures:
           - surface://terminal
       UiSurface:
@@ -59,7 +59,7 @@ entities:
       Renderable:
         model: assets://models/quad.obj
         fit: unit
-        shader: assets://shaders/unlit
+        shader: engine://shaders/unlit
         textures:
           - surface://security
 
@@ -82,7 +82,7 @@ entities:
       Geometry:
         shape: box
       Renderable:
-        shader: assets://shaders/basic-lit
+        shader: engine://shaders/basic-lit
         material:
           shininess: 32
           color: [0.5, 0.5, 0.5]

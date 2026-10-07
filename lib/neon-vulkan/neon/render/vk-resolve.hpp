@@ -38,7 +38,7 @@ namespace neon
     VkDescriptorPool _descriptor_pool = VK_NULL_HANDLE;
 
   public:
-    static constexpr const char *kShader_Path = "assets://shaders/resolve";
+    static constexpr const char *kShader_Path = "engine://shaders/resolve";
 
     /// The bindings of the one set of the shader, which have to match
     /// resolve.frag: the scene image, the sampler it is read through,

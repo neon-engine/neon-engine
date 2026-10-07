@@ -23,13 +23,13 @@ namespace bench
     static const std::string &PrefabOf(const std::int32_t behaviour)
     {
       static const std::array<std::string, 7> prefabs = {
-        "extensions://bench/assets/prefabs/crate-none.prefab.yml",
-        "extensions://bench/assets/prefabs/crate-cpp-heavy-copy.prefab.yml",
-        "extensions://bench/assets/prefabs/crate-lua-heavy-copy.prefab.yml",
-        "extensions://bench/assets/prefabs/crate-cpp-light-copy.prefab.yml",
-        "extensions://bench/assets/prefabs/crate-lua-light-copy.prefab.yml",
-        "extensions://bench/assets/prefabs/crate-cpp-no-copy.prefab.yml",
-        "extensions://bench/assets/prefabs/crate-lua-no-copy.prefab.yml",
+        "assets://prefabs/crate-none.prefab.yml",
+        "assets://prefabs/crate-cpp-heavy-copy.prefab.yml",
+        "assets://prefabs/crate-lua-heavy-copy.prefab.yml",
+        "assets://prefabs/crate-cpp-light-copy.prefab.yml",
+        "assets://prefabs/crate-lua-light-copy.prefab.yml",
+        "assets://prefabs/crate-cpp-no-copy.prefab.yml",
+        "assets://prefabs/crate-lua-no-copy.prefab.yml",
       };
       return prefabs[behaviour < 0 || behaviour >= static_cast<std::int32_t>(prefabs.size()) ? 0 : behaviour];
     }

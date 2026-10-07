@@ -25,7 +25,7 @@ if (NEON_BUILD_TESTS)
   # The test draws characters of a real font. The font is compiled into the
   # test, so that the test finds it wherever it is started from, and on a
   # machine it was cross-compiled for.
-  set(TEST_FONT "${CMAKE_SOURCE_DIR}/app/NeonRuntime/assets/fonts/inter/Inter-Regular.ttf")
+  set(TEST_FONT "${CMAKE_SOURCE_DIR}/app/NeonRuntime/engine/fonts/inter/Inter-Regular.ttf")
   set(TEST_FONT_HEADER "${CMAKE_CURRENT_BINARY_DIR}/generated/test-font.hpp")
 
   if (NOT EXISTS "${TEST_FONT_HEADER}" OR "${TEST_FONT}" IS_NEWER_THAN "${TEST_FONT_HEADER}")

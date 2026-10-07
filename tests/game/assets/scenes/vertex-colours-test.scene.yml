@@ -36,7 +36,7 @@ entities:
         position: [0, 1.2, 0]
       Renderable:
         model: assets://models/coloured-quads.glb
-        shader: assets://shaders/unlit
+        shader: engine://shaders/unlit
 
   # the middle row: the colours lit, as the base colour of a matte
   # dielectric, which the scene says since the loader does not read the
@@ -47,7 +47,7 @@ entities:
         position: [0, 0, 0]
       Renderable:
         model: assets://models/coloured-quads.glb
-        shader: assets://shaders/pbr
+        shader: engine://shaders/pbr
         material:
           metallic: 0
           roughness: 1
@@ -61,7 +61,7 @@ entities:
         rotation: [0, 180, 0]
       Renderable:
         model: assets://models/coloured-quads.glb
-        shader: assets://shaders/unlit
+        shader: engine://shaders/unlit
 
   # the right one says never, which overrides the file, and its back is
   # left out: the clear colour shows
@@ -72,6 +72,6 @@ entities:
         rotation: [0, 180, 0]
       Renderable:
         model: assets://models/coloured-quads.glb
-        shader: assets://shaders/unlit
+        shader: engine://shaders/unlit
         material:
           double_sided: never

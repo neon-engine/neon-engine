@@ -32,5 +32,3 @@ scenes:
   - assets://scenes/vertex-colours-test.scene.yml
 
 entry_scene: assets://scenes/shadow-test.scene.yml
-
-input: assets://input/default.input.yml

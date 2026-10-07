@@ -30,6 +30,10 @@ namespace neon
     /// Backends set this in Initialize().
     std::string _assets_directory;
 
+    /// Native folder behind `engine://`, ending with a native separator.
+    /// Backends set this in Initialize().
+    std::string _engine_directory;
+
     /// Native folder behind `user://`, ending with a native separator.
     /// Backends set this in PlaceUserDirectory() and make sure it exists.
     /// Until then every `user://` path is rejected.
@@ -85,6 +89,7 @@ namespace neon
 
   public:
     static constexpr std::string_view assets_scheme = "assets://";
+    static constexpr std::string_view engine_scheme = "engine://";
     static constexpr std::string_view user_scheme = "user://";
     static constexpr std::string_view output_scheme = "output://";
     static constexpr std::string_view extensions_scheme = "extensions://";
@@ -95,7 +100,7 @@ namespace neon
       _logger = logger;
     }
 
-    /// Finds the folders behind `assets://`, `extensions://`, and `output://`. `user://` has
+    /// Finds the folders behind `assets://`, `engine://`, `extensions://`, and `output://`. `user://` has
     /// no folder yet, see PlaceUserDirectory().
     virtual void Initialize() = 0;
 

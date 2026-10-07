@@ -510,7 +510,7 @@ The joint is not seen. A `Rope` component on an entity of its own, with a
     Rope:
       joint: lamp
     Renderable:
-      shader: assets://shaders/pbr
+      shader: engine://shaders/pbr
 ```
 
 `RopeDrawing` finds the two ends where their entities are drawn in the

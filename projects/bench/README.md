@@ -3,11 +3,12 @@
 Scenes that measure the engine: the same work done by a script in Lua, by a
 system in C++, and by nothing. It is a project of its own with code of its
 own, and the first game in C++ on [extensions](../../docs/extensions.md): a
-project with an extension. `assets/project.yml` is the project, and
-`extensions/bench/` is everything else: its code, a library that NeonRuntime
-loads, and under `assets/` its scenes, prefabs, scripts, and counter, which
-the project names as `extensions://bench/assets/…`. Nothing of it is linked
-into the runtime, and nothing of the engine is compiled to build it.
+project with an extension. `assets/` is the game: `project.yml`, and its
+scenes, prefabs, scripts, and counter, named as `assets://…`.
+`extensions/bench/` is its code, a library that NeonRuntime loads, which
+brings the systems in C++ the scenes compare with the scripts. Nothing of it
+is linked into the runtime, and nothing of the engine is compiled to build
+it.
 
 It is run by hand, never by the tests.
 
@@ -41,13 +42,14 @@ Either way the game is put together as:
 | There | Is |
 |---|---|
 | `NeonRuntime` | The runtime, as it was built |
-| `assets/` | The runtime's assets, with this project's `project.yml` on top |
-| `extensions/bench/` | `bench-<platform>.dylib`, `.so`, or `.dll`, its `extension.yml`, and its `assets/` |
+| `engine/` | What the runtime ships with, its shaders and fonts |
+| `assets/` | This project's assets |
+| `extensions/bench/` | `bench-<platform>.dylib`, `.so`, or `.dll`, and its `extension.yml` |
 
 ## What it measures
 
 Every behaviour exists twice with the same work: as a script under
-`extensions/bench/assets/scripts`, and as a system next to it in C++.
+`assets/scripts`, and as a system in C++ in `extensions/bench`.
 
 A scene is named for how its crates arrive, the language, and what each
 crate does: `rain-lua-heavy-copy`.
@@ -77,14 +79,14 @@ For a number, run without a window and time it:
 
 ```sh
 time build/bench/bench/NeonRuntime --headless-renderer --window-size 320x180 \
-  --time-step 0.016667 --frames 300 --scene extensions://bench/assets/scenes/falling-lua-no-copy-2000.scene.yml
+  --time-step 0.016667 --frames 300 --scene assets://scenes/falling-lua-no-copy-2000.scene.yml
 ```
 
 For watching, with the Metal performance HUD on macOS:
 
 ```sh
 MTL_HUD_ENABLED=1 build/bench/bench/NeonRuntime --window-size 1600x900 \
-  --scene extensions://bench/assets/scenes/rain-lua-heavy-copy.scene.yml
+  --scene assets://scenes/rain-lua-heavy-copy.scene.yml
 ```
 
 ## How the code is laid out

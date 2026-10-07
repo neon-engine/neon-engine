@@ -33,7 +33,7 @@ entities:
       Renderable:
         model: assets://models/quad.obj
         fit: unit
-        shader: assets://shaders/color
+        shader: engine://shaders/color
         material:
           color: [0, 0, 0]
 
@@ -45,7 +45,7 @@ entities:
       Renderable:
         model: assets://models/quad.obj
         fit: unit
-        shader: assets://shaders/color
+        shader: engine://shaders/color
         material:
           color: [1, 1, 1]
 
@@ -57,7 +57,7 @@ entities:
       Renderable:
         model: assets://models/quad.obj
         fit: unit
-        shader: assets://shaders/color
+        shader: engine://shaders/color
         material:
           color: [1, 0.0, 0.0, 0.5]
           alpha_mode: blend
@@ -72,7 +72,7 @@ entities:
       Renderable:
         model: assets://models/quad.obj
         fit: unit
-        shader: assets://shaders/color
+        shader: engine://shaders/color
         material:
           color: [1, 0.5, 0, 0.5]
           alpha_mode: blend
@@ -85,7 +85,7 @@ entities:
       Renderable:
         model: assets://models/quad.obj
         fit: unit
-        shader: assets://shaders/color
+        shader: engine://shaders/color
         material:
           color: [0, 0, 1, 0.5]
           alpha_mode: blend
@@ -99,7 +99,7 @@ entities:
       Renderable:
         model: assets://models/quad.obj
         fit: unit
-        shader: assets://shaders/color
+        shader: engine://shaders/color
         material:
           color: [0, 1, 0, 0.25]
           alpha_mode: opaque
@@ -113,7 +113,7 @@ entities:
       Renderable:
         model: assets://models/quad.obj
         fit: unit
-        shader: assets://shaders/unlit
+        shader: engine://shaders/unlit
         textures:
           - assets://textures/gamma-test.png
 
@@ -126,7 +126,7 @@ entities:
       Renderable:
         model: assets://models/quad.obj
         fit: unit
-        shader: assets://shaders/unlit
+        shader: engine://shaders/unlit
         textures:
           - surface://gamma-test
       UiSurface:

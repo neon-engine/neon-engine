@@ -1,68 +1,77 @@
 {
   "version": "0.2.0",
+  "inputs": [
+    {
+      "id": "project",
+      "type": "pickString",
+      "description": "Project to debug, a folder of projects/. A new one is added to this list",
+      "default": "sandbox",
+      "options": ["sandbox", "museum", "bench"]
+    }
+  ],
   "configurations": [
     {
-      "name": "NeonRuntime debug (macOS arm64)",
+      "name": "Project debug (macOS arm64)",
       "type": "lldb",
       "request": "launch",
-      "program": "${workspaceFolder}/bin/debug/darwin-arm64/NeonRuntime/NeonRuntime",
-      "cwd": "${workspaceFolder}/bin/debug/darwin-arm64/NeonRuntime",
+      "program": "${workspaceFolder}/bin/debug/darwin-arm64/${input:project}/NeonRuntime",
+      "cwd": "${workspaceFolder}/bin/debug/darwin-arm64/${input:project}",
       "preLaunchTask": "Build macos-arm64-debug"
     },
     {
-      "name": "NeonRuntime release (macOS arm64)",
+      "name": "Project release (macOS arm64)",
       "type": "lldb",
       "request": "launch",
-      "program": "${workspaceFolder}/bin/release/darwin-arm64/NeonRuntime/NeonRuntime",
-      "cwd": "${workspaceFolder}/bin/release/darwin-arm64/NeonRuntime",
+      "program": "${workspaceFolder}/bin/release/darwin-arm64/${input:project}/NeonRuntime",
+      "cwd": "${workspaceFolder}/bin/release/darwin-arm64/${input:project}",
       "preLaunchTask": "Build macos-arm64-release"
     },
     {
-      "name": "NeonRuntime debug (Linux x86_64)",
+      "name": "Project debug (Linux x86_64)",
       "type": "lldb",
       "request": "launch",
-      "program": "${workspaceFolder}/bin/debug/linux-x86_64/NeonRuntime/NeonRuntime",
-      "cwd": "${workspaceFolder}/bin/debug/linux-x86_64/NeonRuntime",
+      "program": "${workspaceFolder}/bin/debug/linux-x86_64/${input:project}/NeonRuntime",
+      "cwd": "${workspaceFolder}/bin/debug/linux-x86_64/${input:project}",
       "preLaunchTask": "Build linux-x64-debug"
     },
     {
-      "name": "NeonRuntime release (Linux x86_64)",
+      "name": "Project release (Linux x86_64)",
       "type": "lldb",
       "request": "launch",
-      "program": "${workspaceFolder}/bin/release/linux-x86_64/NeonRuntime/NeonRuntime",
-      "cwd": "${workspaceFolder}/bin/release/linux-x86_64/NeonRuntime",
+      "program": "${workspaceFolder}/bin/release/linux-x86_64/${input:project}/NeonRuntime",
+      "cwd": "${workspaceFolder}/bin/release/linux-x86_64/${input:project}",
       "preLaunchTask": "Build linux-x64-release"
     },
     {
-      "name": "NeonRuntime debug (Linux aarch64)",
+      "name": "Project debug (Linux aarch64)",
       "type": "lldb",
       "request": "launch",
-      "program": "${workspaceFolder}/bin/debug/linux-aarch64/NeonRuntime/NeonRuntime",
-      "cwd": "${workspaceFolder}/bin/debug/linux-aarch64/NeonRuntime",
+      "program": "${workspaceFolder}/bin/debug/linux-aarch64/${input:project}/NeonRuntime",
+      "cwd": "${workspaceFolder}/bin/debug/linux-aarch64/${input:project}",
       "preLaunchTask": "Build linux-x64-debug"
     },
     {
-      "name": "NeonRuntime release (Linux aarch64)",
+      "name": "Project release (Linux aarch64)",
       "type": "lldb",
       "request": "launch",
-      "program": "${workspaceFolder}/bin/release/linux-aarch64/NeonRuntime/NeonRuntime",
-      "cwd": "${workspaceFolder}/bin/release/linux-aarch64/NeonRuntime",
+      "program": "${workspaceFolder}/bin/release/linux-aarch64/${input:project}/NeonRuntime",
+      "cwd": "${workspaceFolder}/bin/release/linux-aarch64/${input:project}",
       "preLaunchTask": "Build linux-x64-release"
     },
     {
-      "name": "NeonRuntime debug (Windows x86_64)",
+      "name": "Project debug (Windows x86_64)",
       "type": "lldb",
       "request": "launch",
-      "program": "${workspaceFolder}/bin/debug/windows-x86_64/NeonRuntime/NeonRuntime.exe",
-      "cwd": "${workspaceFolder}/bin/debug/windows-x86_64/NeonRuntime",
+      "program": "${workspaceFolder}/bin/debug/windows-x86_64/${input:project}/NeonRuntime.exe",
+      "cwd": "${workspaceFolder}/bin/debug/windows-x86_64/${input:project}",
       "preLaunchTask": "Build windows-x64-debug"
     },
     {
-      "name": "NeonRuntime release (Windows x86_64)",
+      "name": "Project release (Windows x86_64)",
       "type": "lldb",
       "request": "launch",
-      "program": "${workspaceFolder}/bin/release/windows-x86_64/NeonRuntime/NeonRuntime.exe",
-      "cwd": "${workspaceFolder}/bin/release/windows-x86_64/NeonRuntime",
+      "program": "${workspaceFolder}/bin/release/windows-x86_64/${input:project}/NeonRuntime.exe",
+      "cwd": "${workspaceFolder}/bin/release/windows-x86_64/${input:project}",
       "preLaunchTask": "Build windows-x64-release"
     }
   ]

@@ -23,7 +23,7 @@ entities:
         rotation: [0, 30, 0]
       Renderable:
         model: assets://models/kit/column.glb
-        shader: assets://shaders/basic-lit
+        shader: engine://shaders/basic-lit
 
   - name: floor
     components:
@@ -32,7 +32,7 @@ entities:
         scale: [6, 1, 6]
       Renderable:
         model: assets://models/kit/floor-square.glb
-        shader: assets://shaders/basic-lit
+        shader: engine://shaders/basic-lit
 
   - name: daylight
     components:

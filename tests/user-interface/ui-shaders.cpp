@@ -16,7 +16,7 @@ namespace
   class UiShaderTest : public UiTest
   {
   protected:
-    static constexpr const char *kShine = "assets://shaders/ui/shine";
+    static constexpr const char *kShine = "engine://shaders/ui/shine";
 
     /// A box of 200 by 100 at 100, 100 with the properties that are given.
     void ShowBox(const std::string &properties, const std::string &children = "")
@@ -69,7 +69,7 @@ namespace
 
   TEST_F(UiShaderTest, DrawsAnElementWithTheShaderItNames)
   {
-    ShowBox("shader: assets://shaders/ui/shine\n");
+    ShowBox("shader: engine://shaders/ui/shine\n");
 
     EXPECT_EQ(_renderer.materials, (std::vector<std::string>{kShine}));
 
@@ -86,7 +86,7 @@ namespace
   TEST_F(UiShaderTest, TheBoxAShaderIsToldGrowsWithTheFrame)
   {
     _renderer.SetResolution(3840, 2160);
-    ShowBox("shader: assets://shaders/ui/shine\n");
+    ShowBox("shader: engine://shaders/ui/shine\n");
 
     EXPECT_FLOAT_EQ(_renderer.batches.at(0).material_box[0], 200);
     EXPECT_FLOAT_EQ(_renderer.batches.at(0).material_box[2], 400);
@@ -95,7 +95,7 @@ namespace
   TEST_F(UiShaderTest, HandsTheValuesOfTheFileToTheShader)
   {
     ShowBox(
-      "shader: assets://shaders/ui/shine\n"
+      "shader: engine://shaders/ui/shine\n"
       "shader_values:\n"
       "  speed: 0.5\n"
       "  tint: \"#ff800080\"\n"
@@ -135,7 +135,7 @@ namespace
   {
     _ui->SetNumber("charge", 0.25);
 
-    ShowBox("shader: assets://shaders/ui/cooldown\nshader_values: { progress: \"{charge}\" }\n");
+    ShowBox("shader: engine://shaders/ui/cooldown\nshader_values: { progress: \"{charge}\" }\n");
 
     const MaterialValue2D *progress = ValueOf(_renderer.batches.at(0), "progress");
     ASSERT_NE(progress, nullptr);
@@ -155,7 +155,7 @@ namespace
 
   TEST_F(UiShaderTest, AValueOfTheGameThatIsNotSetCountsAsZero)
   {
-    ShowBox("shader: assets://shaders/ui/cooldown\nshader_values: { progress: \"{nothing}\" }\n");
+    ShowBox("shader: engine://shaders/ui/cooldown\nshader_values: { progress: \"{nothing}\" }\n");
 
     EXPECT_FLOAT_EQ(ValueOf(_renderer.batches.at(0), "progress")->numbers[0], 0.0f);
     EXPECT_TRUE(Errors().empty());
@@ -163,7 +163,7 @@ namespace
 
   TEST_F(UiShaderTest, TellsAShaderTheTime)
   {
-    ShowBox("shader: assets://shaders/ui/shine\n");
+    ShowBox("shader: engine://shaders/ui/shine\n");
     EXPECT_FLOAT_EQ(_renderer.batches.at(0).time, 0.0f);
 
     _ui->AdvanceTime(0.5);
@@ -183,7 +183,7 @@ namespace
     ASSERT_GE(ShowUnderRoot(
       "- type: button\n"
       "  text: Go\n"
-      "  shader: assets://shaders/ui/shine\n"), 0);
+      "  shader: engine://shaders/ui/shine\n"), 0);
     Frame();
 
     // the box of the button and its text, in one call
@@ -195,7 +195,7 @@ namespace
   TEST_F(UiShaderTest, WhatIsInsideAnElementIsDrawnWithoutItsShader)
   {
     ShowBox(
-      "shader: assets://shaders/ui/shine\n",
+      "shader: engine://shaders/ui/shine\n",
       "- type: panel\n  width: 20\n  height: 20\n  background_color: \"#00ff00\"\n");
 
     ASSERT_EQ(_renderer.batches.size(), 2u);
@@ -208,7 +208,7 @@ namespace
   {
     ASSERT_GE(ShowUnderRoot(
       "- type: panel\n  width: 20\n  height: 20\n  background_color: \"#ff0000\"\n"
-      "  shader: assets://shaders/ui/shine\n"
+      "  shader: engine://shaders/ui/shine\n"
       "- type: panel\n  width: 20\n  height: 20\n  background_color: \"#00ff00\"\n"
       "- type: panel\n  width: 20\n  height: 20\n  background_color: \"#0000ff\"\n"), 0);
     Frame();
@@ -223,17 +223,17 @@ namespace
   {
     ASSERT_GE(ShowUnderRoot(
       "- type: panel\n  width: 20\n  height: 20\n  background_color: \"#ff0000\"\n"
-      "  shader: assets://shaders/ui/shine\n"
+      "  shader: engine://shaders/ui/shine\n"
       "- type: panel\n  width: 20\n  height: 20\n  background_color: \"#00ff00\"\n"
-      "  shader: assets://shaders/ui/shine\n"
+      "  shader: engine://shaders/ui/shine\n"
       "- type: panel\n  width: 20\n  height: 20\n  background_color: \"#0000ff\"\n"
-      "  shader: assets://shaders/ui/dissolve\n"), 0);
+      "  shader: engine://shaders/ui/dissolve\n"), 0);
 
     Frame();
     Frame();
     Frame();
 
-    EXPECT_EQ(_renderer.materials, (std::vector<std::string>{kShine, "assets://shaders/ui/dissolve"}));
+    EXPECT_EQ(_renderer.materials, (std::vector<std::string>{kShine, "engine://shaders/ui/dissolve"}));
 
     // every element is a call of its own, since each has a box of its own
     ASSERT_EQ(_renderer.batches.size(), 3u);
@@ -244,14 +244,14 @@ namespace
 
   TEST_F(UiShaderTest, SaysOnceThatAShaderCannotBeUsedAndDrawsTheElementWithoutIt)
   {
-    _renderer.broken_shaders.push_back("assets://shaders/ui/broken");
+    _renderer.broken_shaders.push_back("engine://shaders/ui/broken");
 
     ASSERT_GE(ShowUnderRoot(
       "- type: panel\n  name: first\n  width: 20\n  height: 20\n  background_color: \"#ff0000\"\n"
-      "  shader: assets://shaders/ui/broken\n"
+      "  shader: engine://shaders/ui/broken\n"
       "  shader_values: { speed: 1 }\n"
       "- type: panel\n  name: second\n  width: 20\n  height: 20\n  background_color: \"#00ff00\"\n"
-      "  shader: assets://shaders/ui/broken\n"), 0);
+      "  shader: engine://shaders/ui/broken\n"), 0);
 
     Frame();
     Frame();
@@ -261,7 +261,7 @@ namespace
     EXPECT_EQ(Errors().size(), 1u) << _logger->Messages(LogLevel::Error);
     EXPECT_TRUE(_logger->Contains(
       LogLevel::Error,
-      "The shader assets://shaders/ui/broken of panel 'first' cannot be used, what asks for it is drawn "
+      "The shader engine://shaders/ui/broken of panel 'first' cannot be used, what asks for it is drawn "
       "without it"));
 
     EXPECT_EQ(_renderer.materials.size(), 1u) << "and it is not asked for again";
@@ -284,7 +284,7 @@ namespace
       "  width: 100\n"
       "  height: 100\n"
       "  hover:\n"
-      "    shader: assets://shaders/ui/shine\n"
+      "    shader: engine://shaders/ui/shine\n"
       "    shader_values: { speed: 2 }\n"), 0);
     Frame();
 
@@ -309,13 +309,13 @@ namespace
 
   TEST_F(UiShaderTest, ReleasesItsShadersWhenItIsCleanedUp)
   {
-    _renderer.broken_shaders.push_back("assets://shaders/ui/broken");
+    _renderer.broken_shaders.push_back("engine://shaders/ui/broken");
 
     ASSERT_GE(ShowUnderRoot(
       "- type: panel\n  width: 20\n  height: 20\n  background_color: \"#ff0000\"\n"
-      "  shader: assets://shaders/ui/shine\n"
+      "  shader: engine://shaders/ui/shine\n"
       "- type: panel\n  width: 20\n  height: 20\n  background_color: \"#ff0000\"\n"
-      "  shader: assets://shaders/ui/broken\n"), 0);
+      "  shader: engine://shaders/ui/broken\n"), 0);
     Frame();
 
     _ui->CleanUp();
@@ -327,7 +327,7 @@ namespace
   {
     EXPECT_THAT(ProblemsOf("shader: shine\n"), ElementsAre(
                   "assets://ui/test.ui.yml:9: 'shader' of panel 'box' is 'shine', where a virtual path "
-                  "without an extension such as assets://shaders/ui/shine, or none, was expected"));
+                  "without an extension such as engine://shaders/ui/shine, or none, was expected"));
 
     EXPECT_THAT(ProblemsOf("shader: [a]\n"), ElementsAre(
                   "assets://ui/test.ui.yml:9: 'shader' of panel 'box' is a list, where a virtual path such as "

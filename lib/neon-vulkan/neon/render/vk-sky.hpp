@@ -75,8 +75,8 @@ namespace neon
     void Free(Held &held) const;
 
   public:
-    static constexpr const char *kBox_Shader_Path = "assets://shaders/sky-box";
-    static constexpr const char *kSphere_Shader_Path = "assets://shaders/sky-sphere";
+    static constexpr const char *kBox_Shader_Path = "engine://shaders/sky-box";
+    static constexpr const char *kSphere_Shader_Path = "engine://shaders/sky-sphere";
 
     /// The bindings of the one set of both shaders, which have to match
     /// sky-box.frag and sky-sphere.frag: the images of the sky, a cube for

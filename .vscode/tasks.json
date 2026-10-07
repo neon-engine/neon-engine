@@ -16,6 +16,20 @@
       ]
     },
     {
+      "id": "runPreset",
+      "type": "pickString",
+      "description": "CMake preset to run on this Mac",
+      "default": "macos-arm64-debug",
+      "options": ["macos-arm64-debug", "macos-arm64-release"]
+    },
+    {
+      "id": "project",
+      "type": "pickString",
+      "description": "Project, a folder of projects/. A new one is added to this list",
+      "default": "sandbox",
+      "options": ["sandbox", "museum", "bench"]
+    },
+    {
       "id": "buildType",
       "type": "pickString",
       "description": "Debug or release",
@@ -46,6 +60,20 @@
       "type": "shell",
       "command": "{ [ -f 'build/${input:preset}/CMakeCache.txt' ] || cmake --preset ${input:preset}; } && cmake --build --preset ${input:preset}",
       "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": ["$gcc"]
+    },
+    {
+      "label": "Build NeonRuntime",
+      "detail": "Builds the runtime of the chosen preset alone, with its engine folder of shaders and fonts, and no project",
+      "type": "shell",
+      "command": "{ [ -f 'build/${input:preset}/CMakeCache.txt' ] || cmake --preset ${input:preset}; } && cmake --build --preset ${input:preset} --target NeonRuntime",
+      "problemMatcher": ["$gcc"]
+    },
+    {
+      "label": "Package project",
+      "detail": "Puts the chosen project together under bin/<build>/<platform>/<project>/, building NeonRuntime of the preset first",
+      "type": "shell",
+      "command": "{ [ -f 'build/${input:preset}/CMakeCache.txt' ] || cmake --preset ${input:preset}; } && cmake --build --preset ${input:preset} --target NeonRuntime ${input:project}",
       "problemMatcher": ["$gcc"]
     },
     {
@@ -105,12 +133,11 @@
       "problemMatcher": []
     },
     {
-      "label": "Run",
-      "detail": "Runs the macOS build of the chosen preset without a debugger, from the binary's folder so asset paths resolve, with the scene that was asked for or the entry scene of the project",
+      "label": "Run project",
+      "detail": "Builds NeonRuntime of the chosen macOS preset, puts the chosen project together, and runs it without a debugger from its folder, with the scene that was asked for or the entry scene of the project",
       "type": "shell",
-      "command": "case '${input:preset}' in *-release) TYPE=release ;; *) TYPE=debug ;; esac; SCENE='${input:scene}'; case \"$SCENE\" in '') ;; *://*) ;; *) SCENE=\"assets://scenes/$SCENE.scene.yml\" ;; esac; cd \"${workspaceFolder}/bin/$TYPE/darwin-arm64/NeonRuntime\" && ./NeonRuntime ${SCENE:+--scene \"$SCENE\"}",
-      "dependsOn": ["Build"],
-      "problemMatcher": []
+      "command": "P='${input:runPreset}'; case \"$P\" in *-release) TYPE=release ;; *) TYPE=debug ;; esac; { [ -f \"build/$P/CMakeCache.txt\" ] || cmake --preset \"$P\"; } && cmake --build --preset \"$P\" --target NeonRuntime '${input:project}' && SCENE='${input:scene}'; case \"$SCENE\" in '') ;; *://*) ;; *) SCENE=\"assets://scenes/$SCENE.scene.yml\" ;; esac; cd \"${workspaceFolder}/bin/$TYPE/darwin-arm64/${input:project}\" && if [ -n \"$SCENE\" ]; then ./NeonRuntime --scene \"$SCENE\"; else ./NeonRuntime; fi",
+      "problemMatcher": ["$gcc"]
     },
     {
       "label": "Full Clean",

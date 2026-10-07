@@ -171,7 +171,7 @@ namespace
   TEST_F(EngineComponentFormatsTest, AListThatIsWrittenReplacesTheOneTheEntityHasWhole)
   {
     Renderable renderable;
-    renderable.render_info.shader_path = "assets://shaders/basic-lit";
+    renderable.render_info.shader_path = "engine://shaders/basic-lit";
     renderable.render_info.texture_paths = {"assets://textures/a.png", "assets://textures/b.png"};
     _store.Set(_entity, renderable);
 
@@ -332,7 +332,7 @@ namespace
 
     auto map = DataValue::Map();
     map.Set("model", DataValue::Text("assets://models/cube.obj"));
-    map.Set("shader", DataValue::Text("assets://shaders/basic-lit"));
+    map.Set("shader", DataValue::Text("engine://shaders/basic-lit"));
     map.Set("textures", Texts({"assets://a.png", "assets://b.png"}));
     map.Set("scale_textures", DataValue::Bool(true));
     map.Set("fit", DataValue::Text("unit"));
@@ -345,7 +345,7 @@ namespace
     const auto &info = renderable->render_info;
     EXPECT_EQ(info.model_path, "assets://models/cube.obj");
     EXPECT_EQ(info.fit, ModelFit::Unit);
-    EXPECT_EQ(info.shader_path, "assets://shaders/basic-lit");
+    EXPECT_EQ(info.shader_path, "engine://shaders/basic-lit");
     EXPECT_THAT(info.texture_paths, ElementsAre("assets://a.png", "assets://b.png"));
     EXPECT_TRUE(info.scale_textures);
     EXPECT_EQ(info.material_info.shininess, 32.0f);
@@ -418,7 +418,7 @@ namespace
   {
     auto map = DataValue::Map();
     map.Set("model", DataValue::Text("assets://external/kit/wall.glb"));
-    map.Set("shader", DataValue::Text("assets://shaders/basic-lit"));
+    map.Set("shader", DataValue::Text("engine://shaders/basic-lit"));
 
     Read("Renderable", map);
 
@@ -430,7 +430,7 @@ namespace
   {
     auto map = DataValue::Map();
     map.Set("model", DataValue::Text("assets://models/cube.obj"));
-    map.Set("shader", DataValue::Text("assets://shaders/basic-lit"));
+    map.Set("shader", DataValue::Text("engine://shaders/basic-lit"));
     map.Set("fit", DataValue::Text("box"));
 
     Read("Renderable", map);
@@ -443,7 +443,7 @@ namespace
   TEST_F(EngineComponentFormatsTest, ARenderableWithoutAModelIsAcceptedSinceAGeometryMayDrawIt)
   {
     auto map = DataValue::Map();
-    map.Set("shader", DataValue::Text("assets://shaders/basic-lit"));
+    map.Set("shader", DataValue::Text("engine://shaders/basic-lit"));
 
     Read("Renderable", map);
 
@@ -601,7 +601,7 @@ namespace
   {
     Renderable renderable;
     renderable.render_info.model_path = "assets://models/cube.obj";
-    renderable.render_info.shader_path = "assets://shaders/basic-lit";
+    renderable.render_info.shader_path = "engine://shaders/basic-lit";
     renderable.render_info.texture_paths = {"assets://a.png"};
     renderable.render_info.material_info.shininess = 32.0f;
     renderable.render_object_id = 7;

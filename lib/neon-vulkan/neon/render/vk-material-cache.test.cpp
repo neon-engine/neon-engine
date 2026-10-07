@@ -13,7 +13,7 @@ namespace
   RenderInfo Crate()
   {
     RenderInfo info;
-    info.shader_path = "assets://shaders/pbr";
+    info.shader_path = "engine://shaders/pbr";
     info.model_path = "assets://models/crate.glb";
     info.texture_paths = {"assets://textures/wood.png"};
     return info;
@@ -121,7 +121,7 @@ namespace
     EXPECT_EQ(VK_MaterialCache::KeyOf(Crate(), MaterialInfo{}), same);
 
     RenderInfo other_shader = Crate();
-    other_shader.shader_path = "assets://shaders/unlit";
+    other_shader.shader_path = "engine://shaders/unlit";
     EXPECT_NE(VK_MaterialCache::KeyOf(other_shader, MaterialInfo{}), same);
 
     RenderInfo other_texture = Crate();

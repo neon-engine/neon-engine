@@ -26,7 +26,7 @@ entities:
       Renderable:
         model: assets://models/quad.obj
         fit: unit
-        shader: assets://shaders/color
+        shader: engine://shaders/color
         material:
           color: [0, 1, 0]
       Spinner:

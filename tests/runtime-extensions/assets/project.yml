@@ -1,11 +1,11 @@
-# The project the test of extensions runs: everything of it is in its
-# extension, see ../extensions/canvas.
+# The project the test of extensions runs: a scene of what its extension
+# makes, see ../extensions/canvas.
 
 version: 1
 name: runtime-extensions
 organization: neon-engine
 
 scenes:
-  - extensions://canvas/assets/scenes/canvas.scene.yml
+  - assets://scenes/canvas.scene.yml
 
-entry_scene: extensions://canvas/assets/scenes/canvas.scene.yml
+entry_scene: assets://scenes/canvas.scene.yml

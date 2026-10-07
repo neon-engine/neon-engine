@@ -77,8 +77,8 @@ if (NEON_BUILD_TESTS)
   # on a machine it was cross-compiled for.
   set(TEST_FONTS_HEADER "${CMAKE_CURRENT_BINARY_DIR}/generated/test-fonts.hpp")
   set(TEST_FONT_FILES
-          "${CMAKE_SOURCE_DIR}/app/NeonRuntime/assets/fonts/inter/Inter-Regular.ttf"
-          "${CMAKE_SOURCE_DIR}/app/NeonRuntime/assets/fonts/noto/NotoSansArabic-Regular.ttf"
+          "${CMAKE_SOURCE_DIR}/app/NeonRuntime/engine/fonts/inter/Inter-Regular.ttf"
+          "${CMAKE_SOURCE_DIR}/app/NeonRuntime/engine/fonts/noto/NotoSansArabic-Regular.ttf"
   )
   set(TEST_FONT_NAMES inter_regular noto_sans_arabic)
 

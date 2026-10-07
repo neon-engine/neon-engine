@@ -26,7 +26,7 @@ entity:
   components:
     Renderable:
       model: assets://models/kit/wall.glb
-      shader: assets://shaders/basic-lit
+      shader: engine://shaders/basic-lit
     RigidBody:
       kind: static
     Collider:

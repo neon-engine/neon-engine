@@ -110,7 +110,7 @@ namespace
     VK_Material Material(const std::vector<std::string> &textures)
     {
       VK_Material material(
-        "assets://shaders/basic-lit", textures, neon::MaterialInfo{}, false, &_file_system, &_device, _logger);
+        "engine://shaders/basic-lit", textures, neon::MaterialInfo{}, false, &_file_system, &_device, _logger);
 
       material.SetSurfaceLookup([this](const std::string &name, VK_Texture &texture)
       {
