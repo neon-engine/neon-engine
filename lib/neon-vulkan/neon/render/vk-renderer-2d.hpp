@@ -199,6 +199,11 @@ namespace neon
 
     void CleanUp();
 
+    /// Writes the samplers into the sets of the textures that read from
+    /// the side again, once they were made again, see
+    /// VK_Samplers::SetAnisotropy(). Nothing may draw with them meanwhile.
+    void WriteSamplersAgain();
+
     /// The frame was given another size, as when the window was resized.
     void Resize(VkExtent2D extent);
 

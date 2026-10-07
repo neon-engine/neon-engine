@@ -34,6 +34,8 @@ namespace neon::testing
     MOCK_METHOD(void, FreeUnused, (), (override));
     MOCK_METHOD(bool, SetVerticalSync, (bool enabled), (override));
     MOCK_METHOD(bool, GetVerticalSync, (), (override));
+    MOCK_METHOD(bool, SetAnisotropy, (int level), (override));
+    MOCK_METHOD(int, GetAnisotropy, (), (override));
     MOCK_METHOD(void, UpdateRenderObjectMesh, (int render_object_id, const MeshData &mesh), (override));
 
     MOCK_METHOD(bool, SetImage, (const std::string &name, const ImagePixels &pixels), (override));

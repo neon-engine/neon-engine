@@ -622,6 +622,19 @@ namespace neon
     return kept.pixelated_set;
   }
 
+  void VK_Renderer2D::WriteSamplersAgain()
+  {
+    for (int id = 0; id < _textures.Capacity(); id++)
+    {
+      if (!_textures.Contains(id)) { continue; }
+
+      const Texture &kept = _textures[id];
+      if (kept.descriptor_set == VK_NULL_HANDLE || !VK_Samplers::ReadsFromTheSide(kept.texture.Sampling())) { continue; }
+
+      WriteSet(kept.descriptor_set, kept.texture.View(), kept.texture.Sampling());
+    }
+  }
+
   void VK_Renderer2D::WriteSet(const VkDescriptorSet set, const VkImageView view, const VK_Sampling sampling) const
   {
     const VkDescriptorImageInfo image{VK_NULL_HANDLE, view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};

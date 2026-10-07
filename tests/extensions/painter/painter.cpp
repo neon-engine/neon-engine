@@ -122,10 +122,11 @@ namespace
       const bool listed = offered.size() == 2 && offered[0] == std::pair(3840, 2160) && offered[1] == std::pair(1920, 1080);
       const bool synced = world.SetVerticalSync(false) && !world.GetVerticalSync();
       const bool limited = world.SetFrameLimit(144) && world.GetFrameLimit() == 144;
-      const bool refused_video = !world.SetWindowMode(7) && !world.SetWindowSize(0, 720);
+      const bool filtered = world.SetAnisotropy(4) && world.GetAnisotropy() == 4;
+      const bool refused_video = !world.SetWindowMode(7) && !world.SetWindowSize(0, 720) && !world.SetAnisotropy(3);
       world.Info(std::string("The window: mode ") + (moded ? "yes" : "no") + ", size " + (sized ? "yes" : "no") +
         ", sizes of the display " + (listed ? "yes" : "no") + ", vertical sync " + (synced ? "yes" : "no") + ", frame limit " + (limited ? "yes" : "no") +
-        ", and what is none of them refused: " + (refused_video ? "yes" : "no"));
+        ", anisotropy " + (filtered ? "yes" : "no") + ", and what is none of them refused: " + (refused_video ? "yes" : "no"));
 
       // what the player uses, for the buttons a game shows
       world.Info("The device in use: " + std::to_string(world.GetInputDevice()));

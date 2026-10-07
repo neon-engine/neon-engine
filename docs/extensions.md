@@ -158,6 +158,7 @@ something of its own and is told to clean up.
 | 17 | `set_window_mode`, `get_window_mode`, `set_window_size`, `get_window_size`, `list_display_sizes`, `set_vertical_sync`, `get_vertical_sync`, `set_frame_limit`, `get_frame_limit` | |
 | 18 | `get_input_device` | |
 | 19 | `list_folders`, `ui_focus` | |
+| 20 | `set_anisotropy`, `get_anisotropy` | |
 
 ## Components
 
@@ -445,6 +446,7 @@ world.SetWindowSize(1920, 1080);             // in points
 for (const auto &[width, height] : world.ListDisplaySizes()) { /* what the display offers, largest first */ }
 world.SetVerticalSync(false);                // frames as fast as they are done
 world.SetFrameLimit(144);                    // at most 144 a second, from 30 to 300; 0 for no limit
+world.SetAnisotropy(4);                      // textures read with 4 samples from the side, from the next frame on; 1 for none, up to 16
 ```
 
 **The device in use.** `world.GetInputDevice()` says what the player used

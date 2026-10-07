@@ -304,6 +304,7 @@ add_library(${TARGET} STATIC
         neon/render/forward-render-pipeline.cpp
         neon/render/forward-render-pipeline.hpp
         neon/render/render-system.hpp
+        neon/render/anisotropy.hpp
         neon/render/api-version.hpp
         neon/render/tonemapper.hpp
         neon/render/render-capabilities.hpp
@@ -535,6 +536,7 @@ neon_add_unit_test(${TARGET} neon/command-line/display-options.test.cpp)
   neon_add_unit_test(${TARGET} neon/geometry/tube.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/rope-drawing.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/geometry-building.test.cpp)
+  neon_add_unit_test(${TARGET} neon/render/anisotropy.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/api-version.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/texture-source.test.cpp)
   neon_add_unit_test(${TARGET} neon/runtime/frame-capture.test.cpp)

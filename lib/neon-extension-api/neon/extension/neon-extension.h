@@ -32,7 +32,7 @@ extern "C" {
 #endif
 
 /* The version of this file. It goes up by one whenever a table grows. */
-#define NEON_EXTENSION_ABI_VERSION 19
+#define NEON_EXTENSION_ABI_VERSION 20
 
 /* What get_input_device answers. */
 #define NEON_DEVICE_KEYBOARD_AND_MOUSE 0
@@ -854,6 +854,19 @@ typedef struct NeonExtensionHost
    * takes when it is shown does not reach. Returns 1, or 0 when the
    * element is gone or takes no focus. */
   int (*ui_focus)(void *context, NeonUiElement element);
+
+  /* --- Since version 20: the quality of textures --- */
+
+  /* Has textures read with `level` samples where their surface is seen
+   * from the side: 1 for none, 2, 4, 8, or 16. Held to what the graphics
+   * card allows, which is logged. It holds from the next frame on.
+   * Returns 1, or 0 for a level that is none of them or without a
+   * renderer. */
+  int (*set_anisotropy)(void *context, int32_t level);
+
+  /* The samples a texture is read with from the side, as the graphics
+   * card allows: 1 for none. */
+  int32_t (*get_anisotropy)(void *context);
 } NeonExtensionHost;
 
 /* What an extension brings. The application hands it over with every field

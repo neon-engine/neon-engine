@@ -215,6 +215,10 @@ namespace neon
     std::vector<Target> _targets_to_release;
     bool _surfaces_changed = false;
 
+    // the anisotropy that was asked for, made from the next frame on; 0
+    // when nothing was asked
+    int _anisotropy_asked = 0;
+
     // names that were refused, each said once
     std::vector<std::string> _refused_targets;
 
@@ -238,6 +242,10 @@ namespace neon
 
     /// Does what waited for the frame to be finished.
     void SettleRenderTargets();
+
+    /// Makes the samplers that read from the side again with the
+    /// anisotropy that was asked for, and tells every set that holds them.
+    void SettleSamplers();
 
     /// Writes the pixels of every image that was set again into the
     /// textures that were made of it, once the frame before is finished.
@@ -371,6 +379,10 @@ namespace neon
     bool SetVerticalSync(bool enabled) override;
 
     [[nodiscard]] bool GetVerticalSync() override;
+
+    bool SetAnisotropy(int level) override;
+
+    [[nodiscard]] int GetAnisotropy() override;
 
     void SetShaderTime(double seconds, double delta) override;
 

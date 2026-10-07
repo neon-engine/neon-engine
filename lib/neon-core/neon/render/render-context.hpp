@@ -161,6 +161,18 @@ namespace neon
     /// Whether a frame waits for the screen.
     [[nodiscard]] virtual bool GetVerticalSync() { return false; }
 
+    /// How many samples a texture is read with where its surface is seen
+    /// from the side, while the application runs: one of
+    /// Anisotropy::kLevels, 1 for none. Held to what the graphics card
+    /// allows, which is logged. It holds from the next frame on. Returns
+    /// false for a level that is not one of them, or a renderer that
+    /// cannot change it.
+    virtual bool SetAnisotropy(int level) { return false; }
+
+    /// What a texture is read with from the side, as the graphics card
+    /// allows it: 1 for none.
+    [[nodiscard]] virtual int GetAnisotropy() { return 1; }
+
     /// How many places there are for numbers of a game that every shader
     /// reads, see SetShaderNumbers().
     static constexpr int kShader_Number_Places = 8;

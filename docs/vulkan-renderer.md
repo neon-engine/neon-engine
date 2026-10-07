@@ -209,12 +209,22 @@ ways, which is every sampler the renderer ever made:
 
 | Way | Filter | Smaller copies | Past the edge | From the side | Read that way |
 |---|---|---|---|---|---|
-| `AnisotropicRepeat` | Linear | Blended | Starts again | Up to 8 samples, when the graphics card can | The textures of a model |
-| `AnisotropicClamp` | Linear | Blended | The edge is drawn on | Up to 8 samples | A render target, shown by a model or a user interface; an image of a user interface read from a file or from memory |
+| `AnisotropicRepeat` | Linear | Blended | Starts again | `rendering.anisotropy` samples, 8 unless set, when the graphics card can | The textures of a model |
+| `AnisotropicClamp` | Linear | Blended | The edge is drawn on | `rendering.anisotropy` samples | A render target, shown by a model or a user interface; an image of a user interface read from a file or from memory |
 | `LinearRepeat` | Linear | Blended | Starts again | No | An image of a user interface made with its smaller copies, that repeats |
 | `LinearClamp` | Linear | Blended | The edge is drawn on | No | An image of a user interface made with its smaller copies |
 | `NearestClamp` | Nearest | The image alone | The edge is drawn on | No | `image_rendering: pixelated`, and the scene image in the resolve, which reads whole pixels |
 | `ShadowCompare` | Linear, compared | The image alone | A border of white: lit | No | The shadow map, see [Shadows](#shadows). A depth is compared with the four texels around it and the answers are blended |
+
+How many samples the two that read from the side take is a quality a game
+sets (#463): `rendering.anisotropy` of the settings, `--anisotropy` on the
+command line, and `RenderContext::SetAnisotropy()` (an extension's
+`world.SetAnisotropy()`) while the game runs: 1 for none, 2, 4, 8, or 16,
+held to what the graphics card allows, which the log says. A change is made
+at the start of the next frame: the frame before is waited for, the two
+samplers are made again, and the descriptor sets that hold them, those of
+the materials and of the textures of the user interface, are written again.
+The other four are not touched.
 
 Light data is held in a uniform buffer, not in individual uniforms. That
 removes the limit on uniforms per shader, which is what had held the OpenGL

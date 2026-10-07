@@ -1,6 +1,7 @@
 #include "display-options.hpp"
 
 #include <cmath>
+#include <neon/render/anisotropy.hpp>
 #include <neon/window/frame-limit.hpp>
 #include <charconv>
 #include <string_view>
@@ -14,6 +15,7 @@ namespace neon
     const std::string window_mode = "window-mode";
     const std::string vsync = "vsync";
     const std::string max_fps = "max-fps";
+    const std::string anisotropy = "anisotropy";
     const std::string ui_scale = "ui-scale";
 
     const std::string windowed = "windowed";
@@ -86,6 +88,14 @@ namespace neon
     });
 
     command_line.Add({
+      .name = anisotropy,
+      .value_name = "NUMBER",
+      .description = "Samples a texture is read with where it is seen from the side: 1 for none, 2, 4, 8, or 16, "
+                     "over rendering.anisotropy of the settings",
+      .group = display
+    });
+
+    command_line.Add({
       .name = ui_scale,
       .value_name = "NUMBER",
       .description = "Makes the user interface larger or smaller, for example 1.5",
@@ -150,6 +160,18 @@ namespace neon
         return false;
       }
       settings.max_fps = static_cast<int>(most);
+    }
+
+    if (command_line.IsSet(anisotropy))
+    {
+      double level = 0.0;
+      if (!command_line.GetNumber(anisotropy, level) || level != std::floor(level) ||
+          !Anisotropy::IsLevel(static_cast<int>(level)))
+      {
+        error = "Option '--" + anisotropy + "' needs 1 for none, 2, 4, 8, or 16";
+        return false;
+      }
+      settings.anisotropy = static_cast<int>(level);
     }
 
     if (command_line.IsSet(ui_scale))

@@ -16,6 +16,7 @@
 #include <neon/extension/sdl2-library-loader.hpp>
 #include <neon/filesystem/sdl2-file-system.hpp>
 #include <neon/layout/flex-layout-engine.hpp>
+#include <neon/render/anisotropy.hpp>
 #include <neon/testing/fake-font-rasterizer.hpp>
 #include <neon/testing/fake-physics-context.hpp>
 #include <neon/testing/memory-file-system.hpp>
@@ -261,6 +262,7 @@ namespace
     WindowMode _window_mode = WindowMode::Windowed;
     neon::WindowSize _window_size{.width = 640, .height = 360};
     bool _vertical_sync = true;
+    int _anisotropy = 8;
     int _frame_limit = 0;
 
     // how often an extension asked for what nothing shows to be freed
@@ -330,6 +332,13 @@ namespace
         return true;
       });
       ON_CALL(_render, GetVerticalSync()).WillByDefault([this] { return _vertical_sync; });
+      ON_CALL(_render, SetAnisotropy(_)).WillByDefault([this](const int level)
+      {
+        if (!neon::Anisotropy::IsLevel(level)) { return false; }
+        _anisotropy = level;
+        return true;
+      });
+      ON_CALL(_render, GetAnisotropy()).WillByDefault([this] { return _anisotropy; });
       ON_CALL(_audio, SetGroupVolume(_, _)).WillByDefault([this](const std::string &group, const float volume)
       {
         _volumes[group] = volume;
@@ -738,8 +747,8 @@ namespace
   {
     EXPECT_TRUE(LogOf("painter")->Contains(
       LogLevel::Info,
-      "The window: mode yes, size yes, sizes of the display yes, vertical sync yes, frame limit yes, and what is "
-      "none of them refused: yes")) << LogOf("painter")->Messages(LogLevel::Info);
+      "The window: mode yes, size yes, sizes of the display yes, vertical sync yes, frame limit yes, anisotropy yes, "
+      "and what is none of them refused: yes")) << LogOf("painter")->Messages(LogLevel::Info);
 
     // the window and the renderer were told what the extension asked
     EXPECT_EQ(_window_mode, WindowMode::Borderless);
@@ -747,6 +756,7 @@ namespace
     EXPECT_EQ(_window_size.height, 720);
     EXPECT_FALSE(_vertical_sync);
     EXPECT_EQ(_frame_limit, 144);
+    EXPECT_EQ(_anisotropy, 4);
   }
 
   TEST_F(ExtensionsInTheWorldTest, AnExtensionFillsAPoolAndTakesFromIt)

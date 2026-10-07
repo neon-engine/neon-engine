@@ -361,6 +361,33 @@ namespace
     }
   }
 
+  TEST_F(SettingsFilesTest, ReadsTheSamplesATextureIsReadWithFromTheSide)
+  {
+    EXPECT_EQ(SettingsConfig{}.anisotropy, 8) << "unless a file says otherwise";
+
+    WriteOfTheProject("version: 1\nrendering:\n  anisotropy: 16\n");
+    ASSERT_TRUE(ReadOfTheProject()) << ::testing::PrintToString(_errors);
+    EXPECT_EQ(_settings.anisotropy, 16);
+
+    WriteOfTheProject("version: 1\nrendering:\n  anisotropy: 1\n");
+    ASSERT_TRUE(ReadOfTheProject()) << ::testing::PrintToString(_errors);
+    EXPECT_EQ(_settings.anisotropy, 1);
+  }
+
+  TEST_F(SettingsFilesTest, RefusesASampleCountThatIsNoLevel)
+  {
+    for (const char *wrong: {"0", "3", "32"})
+    {
+      _errors.clear();
+      WriteOfTheProject(std::string("version: 1\nrendering:\n  anisotropy: ") + wrong + "\n");
+
+      EXPECT_FALSE(ReadOfTheProject()) << wrong;
+      ASSERT_EQ(_errors.size(), 1u) << ::testing::PrintToString(_errors);
+      EXPECT_THAT(_errors.front(), HasSubstr("'anisotropy'"));
+      EXPECT_THAT(_errors.front(), HasSubstr("1, 2, 4, 8, or 16"));
+    }
+  }
+
   TEST_F(SettingsFilesTest, RefusesATonemapperItDoesNotKnow)
   {
     WriteOfTheProject("version: 1\nrendering:\n  tonemapper: reinhard\n");

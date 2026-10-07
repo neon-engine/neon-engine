@@ -40,6 +40,7 @@ namespace neon
   ///       exposure: 1
   ///       vsync: true
   ///       max_fps: 0
+  ///       anisotropy: 8
   ///
   ///     audio:
   ///       groups:

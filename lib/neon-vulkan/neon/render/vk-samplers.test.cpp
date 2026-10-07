@@ -29,7 +29,7 @@ namespace
 
   TEST(VkSamplersTest, ReadsTheTextureOfAModelSmoothlyFromTheSideAndAgainPastItsEdge)
   {
-    const VkSamplerCreateInfo description = VK_Samplers::DescriptionOf(VK_Sampling::AnisotropicRepeat, 16.0f);
+    const VkSamplerCreateInfo description = VK_Samplers::DescriptionOf(VK_Sampling::AnisotropicRepeat, 8.0f);
 
     EXPECT_EQ(description.magFilter, VK_FILTER_LINEAR);
     EXPECT_EQ(description.minFilter, VK_FILTER_LINEAR);
@@ -49,15 +49,44 @@ namespace
     EXPECT_EQ(description.addressModeU, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
     EXPECT_EQ(description.addressModeV, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
     EXPECT_EQ(description.anisotropyEnable, VK_TRUE);
-    EXPECT_FLOAT_EQ(description.maxAnisotropy, 8.0f);
+    EXPECT_FLOAT_EQ(description.maxAnisotropy, 16.0f);
   }
 
   TEST(VkSamplersTest, TakesNoMoreSamplesFromTheSideThanTheGraphicsCardAllows)
   {
-    const VkSamplerCreateInfo description = VK_Samplers::DescriptionOf(VK_Sampling::AnisotropicRepeat, 4.0f);
+    EXPECT_FLOAT_EQ(VK_Samplers::LevelOf(16, 4.0f), 4.0f);
+    EXPECT_FLOAT_EQ(VK_Samplers::LevelOf(8, 16.0f), 8.0f);
+    EXPECT_FLOAT_EQ(VK_Samplers::LevelOf(16, 16.0f), 16.0f);
+  }
 
-    EXPECT_EQ(description.anisotropyEnable, VK_TRUE);
-    EXPECT_FLOAT_EQ(description.maxAnisotropy, 4.0f);
+  TEST(VkSamplersTest, ALevelOfOneReadsStraightOn)
+  {
+    EXPECT_FLOAT_EQ(VK_Samplers::LevelOf(1, 16.0f), 0.0f);
+
+    const VkSamplerCreateInfo description = VK_Samplers::DescriptionOf(VK_Sampling::AnisotropicRepeat, 0.0f);
+    EXPECT_EQ(description.anisotropyEnable, VK_FALSE);
+  }
+
+  TEST(VkSamplersTest, NoLevelReadsFromTheSideOnAGraphicsCardThatCannot)
+  {
+    EXPECT_FLOAT_EQ(VK_Samplers::LevelOf(16, 0.0f), 0.0f);
+  }
+
+  TEST(VkSamplersTest, OnlyTheSamplersThatReadFromTheSideAreMadeAgainForAnotherLevel)
+  {
+    EXPECT_TRUE(VK_Samplers::ReadsFromTheSide(VK_Sampling::AnisotropicRepeat));
+    EXPECT_TRUE(VK_Samplers::ReadsFromTheSide(VK_Sampling::AnisotropicClamp));
+    EXPECT_FALSE(VK_Samplers::ReadsFromTheSide(VK_Sampling::LinearClamp));
+    EXPECT_FALSE(VK_Samplers::ReadsFromTheSide(VK_Sampling::LinearRepeat));
+    EXPECT_FALSE(VK_Samplers::ReadsFromTheSide(VK_Sampling::NearestClamp));
+    EXPECT_FALSE(VK_Samplers::ReadsFromTheSide(VK_Sampling::ShadowCompare));
+  }
+
+  TEST(VkSamplersTest, ReadsStraightOnUntilItIsInitialized)
+  {
+    const VK_Samplers samplers;
+
+    EXPECT_EQ(samplers.GetAnisotropy(), 1);
   }
 
   TEST(VkSamplersTest, ReadsStraightOnWhenTheGraphicsCardCannotReadFromTheSide)

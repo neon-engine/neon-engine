@@ -7,6 +7,7 @@
 #include <format>
 #include <stdexcept>
 #include <glm/gtc/matrix_transform.hpp>
+#include <neon/render/anisotropy.hpp>
 #include <neon/render/texture-source.hpp>
 
 #include "vk-culling.hpp"
@@ -88,7 +89,7 @@ namespace neon
       throw std::runtime_error("Failed to set up the Vulkan frame");
     }
 
-    if (!_samplers.Initialize(&_device, _logger) ||
+    if (!_samplers.Initialize(&_device, _settings_config.anisotropy, _logger) ||
         !CreateRenderPasses() ||
         !_shadow_map.Initialize(&_device, _logger) ||
         !_resolve.Initialize(
@@ -648,6 +649,40 @@ namespace neon
     return _swapchain.IsReady() && _swapchain.GetVerticalSync();
   }
 
+  bool VK_RenderSystem::SetAnisotropy(const int level)
+  {
+    if (!Anisotropy::IsLevel(level) || _device.Device() == VK_NULL_HANDLE) { return false; }
+
+    // made at the start of the next frame, when nothing reads through the
+    // samplers of this one
+    _anisotropy_asked = level;
+    return true;
+  }
+
+  int VK_RenderSystem::GetAnisotropy()
+  {
+    return _samplers.GetAnisotropy();
+  }
+
+  void VK_RenderSystem::SettleSamplers()
+  {
+    if (_anisotropy_asked == 0) { return; }
+
+    const int level = _anisotropy_asked;
+    _anisotropy_asked = 0;
+
+    // the frame before is finished, and nothing reads through them
+    vkDeviceWaitIdle(_device.Device());
+    if (!_samplers.SetAnisotropy(level)) { return; }
+
+    for (int id = 0; id < _materials.Capacity(); id++)
+    {
+      if (!_materials.Contains(id) || _materials[id].DescriptorSet() == VK_NULL_HANDLE) { continue; }
+      WriteDescriptorSet(_materials[id], _materials[id].DescriptorSet());
+    }
+    _renderer_2d.WriteSamplersAgain();
+  }
+
   void VK_RenderSystem::SetShaderTime(const double seconds, const double delta)
   {
     _shader_time = {static_cast<float>(seconds), static_cast<float>(delta), 0.0f, 0.0f};
@@ -755,6 +790,7 @@ namespace neon
   void VK_RenderSystem::PrepareFrame()
   {
     SettleRenderTargets();
+    SettleSamplers();
     SettleImages();
 
     // a window that changed its size, or has no area to draw to

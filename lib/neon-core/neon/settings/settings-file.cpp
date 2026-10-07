@@ -134,6 +134,19 @@ namespace neon
       // whether a frame waits for the screen, see docs/vulkan-renderer.md
       reader.Read("vsync", settings.vertical_sync);
 
+      // how many samples a texture is read with from the side
+      if (int level = 0; reader.Read("anisotropy", level))
+      {
+        if (!Anisotropy::IsLevel(level))
+        {
+          reader.Report(*reader.ReadValue("anisotropy"), std::format(
+                          "'anisotropy' of {} is {}, where 1, 2, 4, 8, or 16 was expected", reader.GetWhere(), level));
+        } else
+        {
+          settings.anisotropy = level;
+        }
+      }
+
       // the most frames a second, 0 for as many as can be drawn
       if (int most = 0; reader.Read("max_fps", most))
       {

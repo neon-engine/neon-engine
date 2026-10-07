@@ -143,6 +143,23 @@ namespace
     }
   }
 
+  TEST_F(DisplayOptionsTest, TakesTheSamplesATextureIsReadWithFromTheSide)
+  {
+    EXPECT_EQ(_settings.anisotropy, 8) << "unless something says otherwise";
+
+    ASSERT_TRUE(Apply({"--anisotropy", "16"}));
+    EXPECT_EQ(_settings.anisotropy, 16);
+
+    ASSERT_TRUE(Apply({"--anisotropy=1"}));
+    EXPECT_EQ(_settings.anisotropy, 1) << "1 is none";
+
+    for (const char *wrong: {"0", "3", "32", "2.5", "sharp"})
+    {
+      EXPECT_FALSE(Apply({"--anisotropy", wrong})) << wrong;
+      EXPECT_EQ(_error, "Option '--anisotropy' needs 1 for none, 2, 4, 8, or 16") << wrong;
+    }
+  }
+
   TEST_F(DisplayOptionsTest, TakesWhetherAFrameWaitsForTheScreen)
   {
     ASSERT_TRUE(Apply({"--vsync", "off"}));

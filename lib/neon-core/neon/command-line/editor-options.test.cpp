@@ -85,6 +85,8 @@ namespace
       "the settings\n"
       "  --max-fps NUMBER          Most frames a second, from 30 to 300, or 0 for as many as can be drawn, over "
       "rendering.max_fps of the settings\n"
+      "  --anisotropy NUMBER       Samples a texture is read with where it is seen from the side: 1 for none, 2, 4, 8, "
+      "or 16, over rendering.anisotropy of the settings\n"
       "  --ui-scale NUMBER         Makes the user interface larger or smaller, for example 1.5\n"
       "\n"
       "Editor:\n"

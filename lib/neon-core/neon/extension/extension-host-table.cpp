@@ -476,6 +476,23 @@ namespace neon
       return extension.services->render != nullptr && extension.services->render->GetVerticalSync() ? 1 : 0;
     }
 
+    int set_anisotropy(void *context, const std::int32_t level)
+    {
+      const auto &extension = of(context);
+      if (extension.services->render == nullptr)
+      {
+        extension.logger->Error("set_anisotropy was called, and this application has no renderer for its extensions");
+        return 0;
+      }
+      return extension.services->render->SetAnisotropy(level) ? 1 : 0;
+    }
+
+    std::int32_t get_anisotropy(void *context)
+    {
+      const auto &extension = of(context);
+      return extension.services->render != nullptr ? extension.services->render->GetAnisotropy() : 1;
+    }
+
     int set_frame_limit(void *context, const std::int32_t frames_per_second)
     {
       const auto &extension = of(context);
@@ -1791,6 +1808,8 @@ namespace neon
     host.set_frame_limit = &set_frame_limit;
     host.get_frame_limit = &get_frame_limit;
     host.get_input_device = &get_input_device;
+    host.set_anisotropy = &set_anisotropy;
+    host.get_anisotropy = &get_anisotropy;
 
     // the extension keeps its name for as long as it is loaded
     host.name = extension.name.c_str();

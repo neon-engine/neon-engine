@@ -525,6 +525,20 @@ namespace neon::extension
 
     [[nodiscard]] bool GetVerticalSync() const { return _host->get_vertical_sync(_host->context) != 0; }
 
+    /// Has textures read with that many samples where their surface is
+    /// seen from the side: 1 for none, 2, 4, 8, or 16. Held to what the
+    /// graphics card allows.
+    bool SetAnisotropy(const int level) const
+    {
+      return _host->abi_version >= 20 && _host->set_anisotropy(_host->context, level) != 0;
+    }
+
+    /// The samples a texture is read with from the side: 1 for none.
+    [[nodiscard]] int GetAnisotropy() const
+    {
+      return _host->abi_version >= 20 ? _host->get_anisotropy(_host->context) : 1;
+    }
+
     /// Holds the frames to at most that many a second, from 30 to 300, or
     /// 0 for as many as can be drawn.
     bool SetFrameLimit(const int frames_per_second) const

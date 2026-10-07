@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "neon/audio/sound-group-setting.hpp"
+#include "neon/render/anisotropy.hpp"
 #include "neon/render/api-version.hpp"
 #include "neon/render/tonemapper.hpp"
 #include "neon/window/window-mode.hpp"
@@ -120,6 +121,12 @@ struct SettingsConfig
   /// driver can. Changed while the application runs with
   /// RenderContext::SetVerticalSync().
   bool vertical_sync = true;
+
+  /// How many samples a texture is read with where its surface is seen
+  /// from the side: 1 (none), 2, 4, 8, or 16, see Anisotropy. Held to what
+  /// the graphics card allows. Changed while the application runs with
+  /// RenderContext::SetAnisotropy().
+  int anisotropy = neon::Anisotropy::kDefault;
 
   /// The most frames a second: a number from 30 to 300, or 0 for as many
   /// as can be drawn, see FrameLimit. Changed while the application runs
