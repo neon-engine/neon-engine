@@ -6,6 +6,8 @@
 
 ## Description
 
+> **Note:** Neon Engine is a working title, and the name is subject to change.
+
 Neon Engine is a modular, high-performance game engine written in C++.
 It leverages the power of existing open source libraries while maintaining a clean,
 extensible architecture.
@@ -28,6 +30,59 @@ an MCP server built in as an option. A chat inside the editor is not planned as 
 engine; it may come later as a plugin, should one be needed.
 
 Special thanks to [Akusha](https://vgen.co/Akusha/portfolio) for the logo for the project
+
+## Quick start
+
+The fastest way to see the engine is the museum: one scene, walked through
+in the first person, with a hall for each part of the engine. These steps are
+for macOS on Apple silicon. Linux and Windows are built in Docker images, as
+[development.md](./docs/development.md) describes.
+
+1. Install the toolchain with [Homebrew](https://brew.sh):
+
+   ```sh
+   brew install llvm@20 cmake ninja glslang molten-vk vulkan-loader
+   ```
+
+2. Clone the repository and fetch the libraries the build uses:
+
+   ```sh
+   git clone ssh://git@git.traparwave.net:3022/neon-engine/neon-engine.git
+   cd neon-engine
+   git submodule update --init --recursive \
+     external/glm external/sdl2 external/assimp external/jolt-physics \
+     external/spdlog external/rapidyaml external/stb external/googletest \
+     external/freetype external/harfbuzz external/lunasvg external/luajit \
+     external/vulkan-headers external/volk external/flecs external/miniaudio
+   ```
+
+3. Configure and build. The build preset builds NeonRuntime, the museum, and
+   the bench:
+
+   ```sh
+   cmake --preset macos-arm64-debug
+   cmake --build --preset macos-arm64-debug
+   ```
+
+4. Run the museum:
+
+   ```sh
+   ./bin/debug/darwin-arm64/museum/NeonRuntime
+   ```
+
+| Action | Keyboard and mouse | Gamepad |
+|---|---|---|
+| Move | W, A, S, D | Left stick |
+| Look | Mouse | Right stick |
+| Jump | Space | South button |
+| Run | Left Shift | Left stick press |
+| Press a screen in the world | Left mouse button, aiming with the dot in the middle | |
+| Pause | Escape | Start |
+
+The halls and what each one shows are listed in
+[scenes.md](./docs/scenes.md#the-museum). For a faster build, use
+`macos-arm64-release` in place of `macos-arm64-debug`, and run
+`./bin/release/darwin-arm64/museum/NeonRuntime`.
 
 ## Features
 
