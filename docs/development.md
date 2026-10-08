@@ -1,5 +1,9 @@
 # Development
 
+How the engine is built, on every platform, and how it is tested. For the
+shortest path from a clone to a running game, see the
+[quick start](quick-start.md).
+
 ## Toolchain
 
 Every platform builds with the same compiler and C++ runtime so behavior is
