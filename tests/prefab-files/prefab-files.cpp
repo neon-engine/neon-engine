@@ -287,7 +287,7 @@ namespace
 
     const auto &material = _world.store.Get<Renderable>(Find("wall"))->render_info.material_info;
     EXPECT_EQ(material.shininess, 32.0f);
-    EXPECT_EQ(material.color.r, 0.5f) << "the prefab's colour is kept";
+    EXPECT_EQ(material.color.r, 0.5f) << "the prefab's color is kept";
   }
 
   TEST_F(PrefabFilesTest, KeepsThePrefabsListWhenTheSceneNamesNone)
@@ -410,7 +410,7 @@ namespace
 
     const auto *light = _world.store.Get<Light>(Find("lamp/bulb"));
     EXPECT_EQ(light->source.light_type, neon::LightType::Point) << "the prefab's type is kept";
-    EXPECT_EQ(light->source.diffuse.g, 0.5f) << "the scene's colour is read";
+    EXPECT_EQ(light->source.diffuse.g, 0.5f) << "the scene's color is read";
     EXPECT_EQ(_world.store.Get<Transform>(Find("lamp/bulb"))->position.y, 2.0f);
   }
 

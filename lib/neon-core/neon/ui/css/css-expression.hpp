@@ -5,7 +5,7 @@
 #include <string>
 
 // What a value of CSS is worked out from before it is read as a length, a
-// colour, or a word: custom properties, the units that refer to something,
+// color, or a word: custom properties, the units that refer to something,
 // and calc(). See https://www.w3.org/TR/css-variables-1/ and
 // https://www.w3.org/TR/css-values-4/.
 
@@ -73,7 +73,7 @@ namespace neon
   /// the element it is for is known.
   [[nodiscard]] bool HasCssVariables(const std::string &value);
 
-  /// Writes the colours a value names as `rgba()`: the names of CSS such as
+  /// Writes the colors a value names as `rgba()`: the names of CSS such as
   /// `rebeccapurple`, and `hsl()`. Everything else is left as it is.
   [[nodiscard]] std::string ResolveCssColors(const std::string &value);
 

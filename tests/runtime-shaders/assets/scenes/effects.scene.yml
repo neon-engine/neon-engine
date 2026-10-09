@@ -1,5 +1,5 @@
 # The camera of tinted.scene.yml with effects: two that are run on the light
-# of its scene, and two on the colours a screen is given.
+# of its scene, and two on the colors a screen is given.
 scene: effects
 version: 1
 

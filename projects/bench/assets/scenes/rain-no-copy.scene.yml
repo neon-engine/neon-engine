@@ -1,4 +1,4 @@
-# Crates dropped for ever onto a lit floor, sixty a second, with no behaviour.
+# Crates dropped for ever onto a lit floor, sixty a second, with no behavior.
 scene: rain-no-copy
 version: 1
 
@@ -44,5 +44,5 @@ entities:
   - name: spawner
     components:
       NativeSpawner:
-        behaviour: 0
+        behavior: 0
         per_second: 60

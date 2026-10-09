@@ -69,7 +69,7 @@ namespace
     ExpectRoundTrip(FieldKind::Quaternion, glm::quat(4.0f, 1.0f, 2.0f, 3.0f), 4);
   }
 
-  TEST(FieldNumbersTest, WritesAColourAsRedGreenBlueAlpha)
+  TEST(FieldNumbersTest, WritesAColorAsRedGreenBlueAlpha)
   {
     std::array<double, neon::Max_Field_Numbers> numbers{};
     EXPECT_EQ(ToNumbers(FieldValue(neon::Color{0.1f, 0.2f, 0.3f, 0.4f}), numbers.data()), 4u);

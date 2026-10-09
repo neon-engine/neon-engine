@@ -123,7 +123,7 @@ namespace
     }
 
     /// The rectangle of the box as it was drawn, in pixels: the first
-    /// that is not see-through, since the root has no colour.
+    /// that is not see-through, since the root has no color.
     [[nodiscard]] neon::testing::RecordedQuad DrawnBox() const
     {
       for (const auto &quad : _renderer.Quads())
@@ -252,7 +252,7 @@ namespace
     Frame();
     EXPECT_FLOAT_EQ(DrawnBox().Width(), 200.0f);
 
-    // the text is rasterised at the new size, and the old size is let go
+    // the text is rasterized at the new size, and the old size is let go
     // of, so that moving back and forth does not pile up atlases
     EXPECT_EQ(_ui->GetFontCount(), fonts_before);
 

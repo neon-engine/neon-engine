@@ -135,7 +135,7 @@ namespace neon
     page.width = _page_size;
     page.height = _page_size;
 
-    // white everywhere, so that the colour next to a glyph is the colour
+    // white everywhere, so that the color next to a glyph is the color
     // of the glyph when the image is scaled
     page.pixels.assign(static_cast<std::size_t>(_page_size) * _page_size * 4, 255);
     for (std::size_t i = 3; i < page.pixels.size(); i += 4) { page.pixels[i] = 0; }
@@ -222,7 +222,7 @@ namespace neon
       bitmap.left -= margin;
       bitmap.top += margin;
 
-      // a shadow has the colour it is given
+      // a shadow has the color it is given
       bitmap.colors.clear();
     }
 

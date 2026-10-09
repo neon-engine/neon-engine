@@ -114,7 +114,7 @@ does not change. A settings menu reads it to offer only what works.
 | `device_api_version` | The version the graphics card offers, with its patch |
 | `device_name` | The name of the graphics card |
 | `max_texture_size` | The widest and highest texture, in pixels |
-| `max_samples` | The most samples of anti-aliasing that colour and depth both have. 1 is none |
+| `max_samples` | The most samples of anti-aliasing that color and depth both have. 1 is none |
 | `max_anisotropy` | The most anisotropic filtering, or 0 when the graphics card has none |
 | `present_modes` | The choices of vertical sync: `Immediate`, `Mailbox`, `Fifo`, `FifoRelaxed`, in that order. Empty without a window |
 | `has_scene_format` | Whether the scene image of `R16G16B16A16_SFLOAT` can be drawn into, blended, and read |
@@ -166,7 +166,7 @@ declare.
 |---|---|---|---|---|
 | Models: `pbr`, `basic-lit`, `unlit`, `color` | 0 | 0 | Uniform buffer, dynamic | `SceneData`: the camera and the lights, `scene-data.glsl` |
 | | 0 | 1 | Storage buffer | `ObjectBuffer`: every object of the frame, `ObjectData` each, read by `gl_InstanceIndex`, `scene-data.glsl` |
-| | 0 | 2 | Sampled image | The first texture: the colours of the surface |
+| | 0 | 2 | Sampled image | The first texture: the colors of the surface |
 | | 0 | 3 | Sampled image | The second texture: the metallic-roughness map, or the specular map |
 | | 0 | 4 | Sampled image | The third texture: what the surface gives off, see [emissive surfaces](#emissive-surfaces) |
 | | 0 | 5 | Sampler | What the first texture is read through |
@@ -231,7 +231,7 @@ The size a texture read from a file is kept at is a quality a game sets
 command line, and `RenderContext::SetTextureScale()` while the game runs: 1,
 0.5, 0.25, or 0.125. Each halving is a level of the smaller copies the
 texture has anyway: the image is decoded, halved on the processor that many
-times (colours averaged as light, as the graphics card averages them, see
+times (colors averaged as light, as the graphics card averages them, see
 `HalveImage()`), and uploaded, and the graphics card makes the rest of its
 smaller copies as always. No side is halved below 32 pixels, so a small
 texture keeps its detail. The texture cache keeps a texture under its scale
@@ -248,16 +248,16 @@ backend to 16 lights of each kind.
 
 | Shader | Lights | What it draws |
 |---|---|---|
-| `pbr` | Yes | Physically based, with the metallic-roughness model of glTF (#59): Lambert for the scattered light and Cook-Torrance for the reflected, with GGX, Smith-GGX as Schlick approximates it, and Schlick's Fresnel. The material's `color`, the colour of the vertex, and the texture multiplied are the base colour, `metallic` and `roughness` say what the surface is, and the second texture is a glTF metallic-roughness map (green roughness, blue metallic). The shader for every surface of a game |
-| `basic-lit` | Yes | Blinn-Phong with `shininess`, the shader before `pbr`. The colour of the vertex tints the diffuse colour. Kept for the scenes that use it; nothing new should |
-| `unlit` | No | The texture, times the colour of the vertex, as it is |
-| `color` | No | The colour as it is |
+| `pbr` | Yes | Physically based, with the metallic-roughness model of glTF (#59): Lambert for the scattered light and Cook-Torrance for the reflected, with GGX, Smith-GGX as Schlick approximates it, and Schlick's Fresnel. The material's `color`, the color of the vertex, and the texture multiplied are the base color, `metallic` and `roughness` say what the surface is, and the second texture is a glTF metallic-roughness map (green roughness, blue metallic). The shader for every surface of a game |
+| `basic-lit` | Yes | Blinn-Phong with `shininess`, the shader before `pbr`. The color of the vertex tints the diffuse color. Kept for the scenes that use it; nothing new should |
+| `unlit` | No | The texture, times the color of the vertex, as it is |
+| `color` | No | The color as it is |
 | `flat` | No | For what is drawn in two dimensions |
 | `sky-box`, `sky-sphere` | No | The sky of a scene, see [The sky](#the-sky). Drawn by the renderer for a `Sky`, not named by a material |
 
-How `pbr` reads a light: `diffuse` is the light's radiance — the colour a
+How `pbr` reads a light: `diffuse` is the light's radiance - the color a
 white, matte, non-metal surface facing it shows; `ambient` lights the diffuse
-colour evenly from every side; `specular` is not read, since a surface's
+color evenly from every side; `specular` is not read, since a surface's
 highlight follows from its roughness and its metalness, not from the light.
 A roughness below 0.045 is raised to it, so that a mirror does not become a
 spike no pixel hits. The defaults, `metallic: 0` and `roughness: 0.5`,
@@ -266,7 +266,7 @@ differ from glTF's 1 and 1 on purpose: without an environment to reflect
 
 `tests/runtime-pbr` checks the shader against numbers worked out by hand:
 flat planes face the camera and one white light shines from it, so that every
-angle in the shading is known — a white matte dielectric shows 0.963 of the
+angle in the shading is known - a white matte dielectric shows 0.963 of the
 light (sRGB 250), a white matte metal 0.080 (sRGB 80), a red matte dielectric
 red with the 4 percent it reflects in white (250, 11, 11).
 
@@ -289,7 +289,7 @@ still, and costs one read of a texture when it is drawn.
 | Piece | Is |
 |---|---|
 | `Vertex::lightmap_coords` | A second set of coordinates, from 0 to 1, apart from those of the textures: a lightmap lies over a surface once, where a texture repeats. Attribute 4 of every model |
-| `material.lightmap` | The texture, a path of the file system or `image://<name>`. Read as colours, in sRGB, without smaller copies, which would blend the light of one surface of an atlas into its neighbour's, and without repeating |
+| `material.lightmap` | The texture, a path of the file system or `image://<name>`. Read as colors, in sRGB, without smaller copies, which would blend the light of one surface of an atlas into its neighbor's, and without repeating |
 | `material.lightmap_strength` | What it is multiplied by, in linear light, so that baked light can be brighter than eight bits hold |
 | `ObjectData::lightmap` | The strength, and whether a lightmap is bound; a material without one binds plain white and the shaders leave it out |
 | `lightmap.glsl` | `has_lightmap` and `baked_light`, included by the shaders that read it |
@@ -297,7 +297,7 @@ still, and costs one read of a texture when it is drawn.
 | Shader | Does with it |
 |---|---|
 | `unlit` | Multiplies it into what it shows: baked light is the one light it knows. It is how a level whose light is all baked is drawn |
-| `basic-lit`, `pbr` | Add it to the light of the lights, on the diffuse colour, as ambient light is |
+| `basic-lit`, `pbr` | Add it to the light of the lights, on the diffuse color, as ambient light is |
 | `color` | Nothing |
 
 The bindings come after those of the shadow map, so that none a shader named
@@ -309,12 +309,12 @@ engine makes a lightmap; both belong to #240.
 ### Emissive surfaces
 
 A material can give off light of its own (#129): `material.emissive`, a
-colour written in sRGB as `color` is, `material.emissive_strength`, what
+color written in sRGB as `color` is, `material.emissive_strength`, what
 it is multiplied by in linear light, and `material.emissive_texture`, a
-texture or a render target the colour multiplies. See
+texture or a render target the color multiplies. See
 [scenes.md](scenes.md#renderable) for the fields and
 [models.md](models.md#what-of-a-material-is-read) for what a glTF file
-contributes. `VK_Material` hands the colour, with the strength multiplied
+contributes. `VK_Material` hands the color, with the strength multiplied
 in, to the shaders as `ObjectData.emissive`, with its `w` saying whether a
 texture is bound; the texture is the third of the material's bindings, and
 plain white when there is none.
@@ -353,10 +353,10 @@ A library of its own, `neon-vulkan`.
 | `VK_RenderSystem` | Implements `RenderSystem` and `Render2DContext`. Owns the device, the render passes, the frame images, the buffers of shader data, and the frame loop, and hands the work to the types below |
 | `VK_Device` | The instance, the graphics card, the logical device and its queue, and the helpers for buffers and images |
 | `VK_Swapchain` | The images of a window, made again when the window changes, and the copy of a finished frame into them |
-| `VK_Canvas` | Where the frame, or a render target, is drawn: its stages, its clear colour, its scene image, and the see-through models kept for the end of its scene. The frame and every render target own one |
+| `VK_Canvas` | Where the frame, or a render target, is drawn: its stages, its clear color, its scene image, and the see-through models kept for the end of its scene. The frame and every render target own one |
 | `VK_Pipelines` | The pipelines of materials, one per variant of shader, covering, and culling, and the layout they share |
 | `VK_Capture` | Reads a finished frame back and writes it as a PNG |
-| `VK_Model`, `VK_Mesh` | Vertex and index buffers. `VK_Model` derives from the core `Model`, which does the loading through assimp for every renderer. One vertex layout for every model, `Vertex` of neon-core field for field: position, normal, texture coordinates, and a colour, bound by `VK_Pipelines` |
+| `VK_Model`, `VK_Mesh` | Vertex and index buffers. `VK_Model` derives from the core `Model`, which does the loading through assimp for every renderer. One vertex layout for every model, `Vertex` of neon-core field for field: position, normal, texture coordinates, and a color, bound by `VK_Pipelines` |
 | `VK_Texture` | Image and view, and which way it is read |
 | `VK_ModelCache`, `VK_TextureCache` | What the render objects draw, held once each: a model for every path and fit, a texture for every image, counted and freed when the last object that drew it goes. See [what is shared](#what-is-shared) |
 | `VK_Samplers` | The five samplers every texture is read through, one for each way of reading, made once and shared |
@@ -365,7 +365,7 @@ A library of its own, `neon-vulkan`.
 | `VK_SceneImage` | The image of linear light a scene is lit in, with its depth |
 | `VK_ShadowMap` | The depth of the scene as the direction light sees it, with the pass that draws it |
 | `VK_Sky` | The sky of a scene: its two pipelines, the images of the skies that are drawn, and how a pixel becomes the direction it is seen in |
-| `VK_Resolve` | The resolve step, which turns a scene image into the colours of the image that is shown |
+| `VK_Resolve` | The resolve step, which turns a scene image into the colors of the image that is shown |
 | `VK_RenderTarget` | An image that is drawn to like the frame, and read as a texture |
 | `VK_Renderer2D` | What is drawn in two dimensions, on top of the resolved scene |
 | `VK_SwapchainSizing`, `VK_FrameStages`, `VK_DrawOrder`, `VK_Culling`, `VK_ShadowFit` | The decisions of the renderer, kept apart from the graphics card so that they are tested |
@@ -376,7 +376,7 @@ A render object is one entity that is drawn. It draws with a material for
 each material of its model that a mesh uses (#193): one for a model with one
 material, and for a mesh a `Geometry` built. Each is a draw of its own, the
 meshes that use the material with the pipeline, the descriptor set, and an
-entry of object data of that material, so that the colour factor of every
+entry of object data of that material, so that the color factor of every
 material of the file reaches the shader; draws alike are batched as every
 draw is, see [The order of a frame](#the-order-of-a-frame), a see-through
 material is kept for the end of the scene, and the shadow pass draws the
@@ -391,8 +391,8 @@ descriptor set, one set of textures.
 | What | Held once for every | By | Freed |
 |---|---|---|---|
 | A model from a file: its vertex and index buffers | Path and `fit` | `VK_ModelCache` | When the last render object that drew it is destroyed, and at clean-up |
-| A texture: an image file, or an image a model carries | Image path and how it is kept (colours or numbers, smaller copies, repeating), and the model's path for an image it carries, since two models may each call theirs `*0` | `VK_TextureCache` | When the last material that read it is cleaned up, and at clean-up |
-| A material: the shader, the textures, the colour and the rest of `MaterialInfo`, over a model | Everything it is made from, as `VK_MaterialCache::KeyOf` writes it | `VK_MaterialCache` | When nothing draws with it any more and what is unused is freed, see below, and at clean-up |
+| A texture: an image file, or an image a model carries | Image path and how it is kept (colors or numbers, smaller copies, repeating), and the model's path for an image it carries, since two models may each call theirs `*0` | `VK_TextureCache` | When the last material that read it is cleaned up, and at clean-up |
+| A material: the shader, the textures, the color and the rest of `MaterialInfo`, over a model | Everything it is made from, as `VK_MaterialCache::KeyOf` writes it | `VK_MaterialCache` | When nothing draws with it any more and what is unused is freed, see below, and at clean-up |
 | A mesh a `Geometry` built | Nothing: it belongs to its entity | The model cache, uncounted | With its render object |
 | A render target a material shows | The target | The target | With the target |
 
@@ -442,7 +442,7 @@ sets ran dry in a scene that spawned crates without end, and every crate
 past it failed with "Could not allocate a descriptor set". The frame
 summary says how many materials were made and how many shared, and
 tests/runtime-sharing reads it: three hundred crates of one material make
-one, three hundred of distinct colours make three hundred and two pools.
+one, three hundred of distinct colors make three hundred and two pools.
 
 So the 17 walls, floors, columns, and targets the prototype level places
 from four prefabs read four GLB files and one colormap, not seventeen of
@@ -473,7 +473,7 @@ what a screenshot shows is what a window would show.
 | Render targets | Each target, in the order they are drawn | Each goes through the stages below on its own: a camera that draws into a texture lights a scene in a scene image of the target, a user interface on a surface draws on top. A target that shows only a user interface has no scene image |
 | Scene | The scene image, `R16G16B16A16_SFLOAT`, and its depth | Opaque models in the order that costs the least, see below, then the sky wherever none of them is, see [The sky](#the-sky), then see-through ones from the farthest to the nearest, tested against depth but not writing it. The back of every triangle is left out unless the material is double-sided. Lighting and blending are in linear light. An opaque model replaces what is behind it and leaves the alpha of the scene image at 1, whatever its shader wrote |
 | Effects on the light | Two pictures as the scene image, in turn | The `effects` of the camera, each a triangle that covers the picture: the first reads the scene image, and each one after it what the one before wrote. Left out, with the pictures, for a camera that names none. See [the effects of a camera](#the-effects-of-a-camera) |
-| Resolve | The image that is shown, `R8G8B8A8_UNORM` | A triangle that covers it reads the scene image pixel by pixel, multiplies the exposure in, maps it through the tonemapper, and writes it in sRGB. The one place where light becomes the colours of a screen, see [tonemapping](#tonemapping) |
+| Resolve | The image that is shown, `R8G8B8A8_UNORM` | A triangle that covers it reads the scene image pixel by pixel, multiplies the exposure in, maps it through the tonemapper, and writes it in sRGB. The one place where light becomes the colors of a screen, see [tonemapping](#tonemapping) |
 | Effects on the screen | Two pictures as the image that is shown, in turn, and then that image | The `screen_effects` of the camera. The resolve then writes into the first of the pictures, and the last effect writes into the image that is shown, where the resolve would. Left out for a camera that names none |
 | On top | The same image | What is drawn in two dimensions: user interfaces, blended in sRGB as CSS blends them |
 | Copy | The window, or a file | Byte for byte. The bytes are sRGB already |
@@ -537,8 +537,8 @@ Camera:
 
 | List | Run | The picture holds | For |
 |---|---|---|---|
-| `effects` | After the scene is drawn, before the resolve | Linear light, with room above white, as half floats | What changes the light: a view that waves, a vignette, a colour laid over everything |
-| `screen_effects` | After the resolve, before what is drawn on top | The colours a screen is given, sRGB encoded, as bytes | What is about the picture that is shown: the rows of a monitor, a palette, a pattern of dots |
+| `effects` | After the scene is drawn, before the resolve | Linear light, with room above white, as half floats | What changes the light: a view that waves, a vignette, a color laid over everything |
+| `screen_effects` | After the resolve, before what is drawn on top | The colors a screen is given, sRGB encoded, as bytes | What is about the picture that is shown: the rows of a monitor, a palette, a pattern of dots |
 
 An effect is a fragment shader alone, named as a shader is and read from
 the file with `.frag.spv` added. The engine brings the vertex half,
@@ -571,7 +571,7 @@ void main()
 | An effect is no material | It is bound to a layout of its own, three bindings, and never to an object. A shader of a material is drawn into the scene as before and does not know that an effect follows |
 | The user interface is drawn after both | A menu is not waved with the water behind it |
 | A camera without effects costs nothing | The pictures the effects are run between are made when a camera first names one. Each effect is one pass over the picture |
-| The alpha of the picture is multiplied into its colours | As everywhere after the scene, see [colour spaces](#colour-spaces). An effect hands on what it does not change |
+| The alpha of the picture is multiplied into its colors | As everywhere after the scene, see [color spaces](#color-spaces). An effect hands on what it does not change |
 
 An effect that cannot be read is said once and left out; the others are run.
 The engine ships two, in `engine://shaders/effects`: `vignette`, for
@@ -660,8 +660,8 @@ above white to show.
 | Curve | What it is | What it does with white |
 |---|---|---|
 | `none` | A clamp | 1.0 stays white; 4.0 is white too, cut off flat |
-| `aces` | The ACES filmic curve, as Krzysztof Narkowicz fits it (2016): one rational function, `x (2.51 x + 0.03) / (x (2.43 x + 0.59) + 0.14)`. Cheap, and close to the reference ACES transform for most of its range; the fit does not carry the hue shifts of the reference, which bends bright colours towards yellow | 1.0 comes out at 0.80 of white, sRGB 232; 4.0 at 0.97, sRGB 252; the light keeps a little contrast all the way up |
-| `agx` | AgX in the minimal form of Benjamin Wrensch (2023), after Troy Sobotka's: a small mix of the three channels into each other, a log encoding over sixteen and a half stops, a sigmoid fitted by a polynomial, the mix undone, and a 2.2 power back to linear light. The mix keeps a bright colour from turning white or yellow | 1.0 comes out at 0.59 of white, sRGB 202; 4.0 at 0.85, sRGB 239; white is reached about four stops above 1. A game that chooses AgX raises its exposure, or its lights, to match |
+| `aces` | The ACES filmic curve, as Krzysztof Narkowicz fits it (2016): one rational function, `x (2.51 x + 0.03) / (x (2.43 x + 0.59) + 0.14)`. Cheap, and close to the reference ACES transform for most of its range; the fit does not carry the hue shifts of the reference, which bends bright colors towards yellow | 1.0 comes out at 0.80 of white, sRGB 232; 4.0 at 0.97, sRGB 252; the light keeps a little contrast all the way up |
+| `agx` | AgX in the minimal form of Benjamin Wrensch (2023), after Troy Sobotka's: a small mix of the three channels into each other, a log encoding over sixteen and a half stops, a sigmoid fitted by a polynomial, the mix undone, and a 2.2 power back to linear light. The mix keeps a bright color from turning white or yellow | 1.0 comes out at 0.59 of white, sRGB 202; 4.0 at 0.85, sRGB 239; white is reached about four stops above 1. A game that chooses AgX raises its exposure, or its lights, to match |
 
 `resolve.frag` holds both fits, named after their authors, and the test
 `tests/runtime-tonemapping` holds the numbers above: planes that give off
@@ -669,7 +669,7 @@ known light are read pixel by pixel under each curve, and under an exposure
 of 2 without one. The numbers are worked out from the fits in the test's
 script.
 
-The curve is applied to the straight colour, with alpha taken out, as the
+The curve is applied to the straight color, with alpha taken out, as the
 clamp was, and the two matrices of AgX are written by columns in the
 shader, as GLSL lays a matrix out. The settings reach the shader in one
 uniform buffer, `ResolveData`, written once at start, and not as a push
@@ -679,7 +679,7 @@ draw, see [shaders.md](shaders.md#what-the-sources-keep-to).
 What is not tonemapped:
 
 - The user interface. It is drawn after the resolve, on the image that is
-  shown, and keeps the colours of its style sheets: a button is the colour
+  shown, and keeps the colors of its style sheets: a button is the color
   CSS says, whatever the scene behind it does.
 - A render target, in a way: a camera that draws into a texture goes
   through the same resolve, so the picture it makes is tonemapped once
@@ -708,8 +708,8 @@ cast nothing yet.
 |---|---|
 | The map | One depth image of 2048 by 2048 in whole floats with four layers, `VK_ShadowMap`, a layer a cascade, drawn once a frame and read by every scene of it as an array. It is left all lit when it is made, so that a frame in which nothing casts reads it and lights everything |
 | The pass | Before the scene, in commands of its own that are submitted first. Every opaque model of the first scene that casts is drawn with the depth-only `shadow` shader through a variant of `VK_Pipelines`, once into each cascade's layer, the cascade named by a push constant, culled as its material is: a plane seen from one side casts from that side alone, and a double-sided material from both. In batches of its own, by model and not by material, so two thousand crates are one draw a cascade whatever their materials are. See-through models cast nothing for now |
-| The fit | `VK_ShadowFit`: cascades, as Godot, Unity, and Unreal fit theirs. What the camera sees up to `rendering.shadow_distance`, 120 metres unless the [settings](settings.md) say otherwise, is cut into `rendering.shadow_cascades` slices along the view, four by default, split halfway between even and logarithmic so that the near slice is thin; each slice gets a box around the sphere that holds its corners, seen along the light without perspective, reaching back towards the light by the distance so that what casts into the slice from above it is in the map. A sphere gives the box one size however the camera turns, and the box moves in whole texels of the map, so that the edge of a shadow stays where it is while the camera moves by less than one and does not shimmer. The shaders pick the cascade by the point's distance along the view and read its layer; past the last one everything is lit |
-| The bias | Two parts. The pipeline of the pass pushes a caster back along the slope of its surface by two texels of depth (`depthBiasSlopeFactor`), which covers the texels the comparison reaches across on a surface that slopes away from the light. The shaders move the compared depth by 0.0002 of the depth of the box, about 1.6 centimetres, which covers a surface that faces the light. With whole floats the constant bias of the pipeline is too fine to be of use, which is why that part is in the shaders |
+| The fit | `VK_ShadowFit`: cascades, as Godot, Unity, and Unreal fit theirs. What the camera sees up to `rendering.shadow_distance`, 120 meters unless the [settings](settings.md) say otherwise, is cut into `rendering.shadow_cascades` slices along the view, four by default, split halfway between even and logarithmic so that the near slice is thin; each slice gets a box around the sphere that holds its corners, seen along the light without perspective, reaching back towards the light by the distance so that what casts into the slice from above it is in the map. A sphere gives the box one size however the camera turns, and the box moves in whole texels of the map, so that the edge of a shadow stays where it is while the camera moves by less than one and does not shimmer. The shaders pick the cascade by the point's distance along the view and read its layer; past the last one everything is lit |
+| The bias | Two parts. The pipeline of the pass pushes a caster back along the slope of its surface by two texels of depth (`depthBiasSlopeFactor`), which covers the texels the comparison reaches across on a surface that slopes away from the light. The shaders move the compared depth by 0.0002 of the depth of the box, about 1.6 centimeters, which covers a surface that faces the light. With whole floats the constant bias of the pipeline is too fine to be of use, which is why that part is in the shaders |
 | The comparison | `shadows.glsl`, bound to every lit shader: the place in the map and the depth of the point, compared through a sampler that compares (`VK_Sampling::ShadowCompare`), which blends the answers of the four texels around the place. Nine such comparisons one texel apart are averaged, which softens the edge of a shadow over about three texels. Past the edge of the map, and further from the light than the box reaches, everything is lit |
 | What it dims | The diffuse and the specular light of the direction light, never its ambient. A point in full shadow shows the ambient light alone |
 
@@ -734,7 +734,7 @@ What is open:
 | Point and spot lights | A spot light needs a map with perspective, a point light six of them in a cube, or a map of two paraboloids. The scene data and the bindings have room, the shaders do not read any yet |
 | Soft shadows | The nine comparisons give a fixed softness of three texels. Percentage-closer soft shadows, which widen with the distance between the caster and the receiver, or a Poisson disc, are later |
 | One map a frame | The map is fitted around the camera of the frame, the one the window shows, and holds what that scene casts. What a camera draws into a texture is left unshadowed: it is drawn before the frame and picks a cascade by its own depth, so it cannot read a map fitted to another camera. Before, the first camera of a frame took the map, which was the camera of a texture, and the window lost its shadows. A map per camera, or per light, is later (#350) |
-| The bias per cascade | One bias serves every cascade, in texels of each, so the far cascades push a caster back further in metres than the near one. A bias scaled to the cascade, and normal offset, are later |
+| The bias per cascade | One bias serves every cascade, in texels of each, so the far cascades push a caster back further in meters than the near one. A bias scaled to the cascade, and normal offset, are later |
 
 ## The sky
 
@@ -749,7 +749,7 @@ that draw into a texture.
 | The direction | `VK_Sky::ValuesOf()`: the view without where the camera stands, times the projection, undone, and turned back by the `rotation` of the sky. The fragment shader takes its place on the screen through that matrix to the direction it is seen in, for every pixel (`sky.glsl`). The camera therefore turns in the sky and never moves through it, whatever `far` is |
 | A box | The six images as the layers of one cube image, `VK_Texture::InitializeWithFaces()`, read by the direction. A cube counts z the other way round than the world does, so `front`, seen along negative z, is the layer of positive z, and `sky-box.frag` reads with z turned round; the faces are then seen from the inside as they were painted, not mirrored. The graphics card blends across the edges of the faces, so no seam shows |
 | A sphere | The panorama as one image. `sky-sphere.frag` turns the direction into a place across, by the angle around what is up, and a place down, by the angle from straight up. The image starts again past its left and right edge, and half a pixel is kept from its top and bottom |
-| The images | sRGB colours read as linear light, as the first texture of a material is, multiplied by `brightness`, and written into the scene image with alpha 1. They are loaded the first time a sky is drawn and held until a frame goes by that does not draw it, so a scene that is left gives its sky back. A sky that cannot be loaded says why once, and the frame shows what it is cleared to |
+| The images | sRGB colors read as linear light, as the first texture of a material is, multiplied by `brightness`, and written into the scene image with alpha 1. They are loaded the first time a sky is drawn and held until a frame goes by that does not draw it, so a scene that is left gives its sky back. A sky that cannot be loaded says why once, and the frame shows what it is cleared to |
 
 `tests/runtime-sky` checks where each face and each part of a panorama is
 seen, a sky that is turned, a model in front of the sky, and a see-through
@@ -764,9 +764,9 @@ What is open:
 | Smaller copies | The images are read at their full size, so a panorama much larger than the screen shimmers as the camera turns. A level picked from the place in the image would draw a seam where a panorama starts again, so it has to be picked from the direction (#347) |
 | Day and night | Blending between painted skies by the time of day is #346, a sky made by a formula with an atmosphere #344, volumetric clouds #345 |
 
-## Colour spaces
+## Color spaces
 
-Colours are written the way a screen shows them, in sRGB: in image files, in
+Colors are written the way a screen shows them, in sRGB: in image files, in
 scene recipes, and in the style sheets of a user interface. Light adds up and
 blends in linear terms, where 0.5 is half the light of 1. In sRGB, 0.5 is
 about a fifth of it. The scene is therefore lit in linear light, and user
@@ -776,16 +776,16 @@ interfaces are drawn in sRGB, which is what CSS blends in.
 |---|---|
 | The first texture of a material | An sRGB format, read as linear light. Its smaller copies are made by the graphics card in linear light |
 | The images of a sky | An sRGB format, read as linear light, without smaller copies |
-| The second texture of a material | Plain bytes. It says how much a surface shines, which is a number and not a colour |
-| The `color` of a material, the colour a camera clears its texture to | Turned into linear light before the shaders see it |
-| The `emissive` of a material, and its texture | As the colour and the first texture: written in sRGB, turned into linear light, and multiplied by `emissive_strength` in linear light, which is how it goes above white |
+| The second texture of a material | Plain bytes. It says how much a surface shines, which is a number and not a color |
+| The `color` of a material, the color a camera clears its texture to | Turned into linear light before the shaders see it |
+| The `emissive` of a material, and its texture | As the color and the first texture: written in sRGB, turned into linear light, and multiplied by `emissive_strength` in linear light, which is how it goes above white |
 | `ambient`, `diffuse`, and `specular` of a light | Amounts of light, handed over as they are. 0.5 is half the light |
-| Images, glyphs, and colours of a user interface | Plain bytes and sRGB numbers, blended as they are, as before and as CSS does |
-| A render target | Holds sRGB colours as bytes. A model reads it through an sRGB view, as linear light. A user interface reads it through a view of plain bytes |
+| Images, glyphs, and colors of a user interface | Plain bytes and sRGB numbers, blended as they are, as before and as CSS does |
+| A render target | Holds sRGB colors as bytes. A model reads it through an sRGB view, as linear light. A user interface reads it through a view of plain bytes |
 | The window | A format of plain bytes. A format that converts to sRGB would convert the frame a second time, and is taken only when there is nothing else, with a warning |
 | A saved frame | Copied byte for byte, and sRGB |
 
-The scene `gamma-test.scene.yml` and the tests `runtime-colours` check this
+The scene `gamma-test.scene.yml` and the tests `runtime-colors` check this
 pixel by pixel: half of red over black is 188, the light of half of red, and
 not 128, while half of black over white in a user interface is 127, as in a
 browser.
@@ -848,7 +848,7 @@ different from how they did.
 | Highlights of the direction light | Set under the name `dirLight.specular`, which the shader does not have. They stay black | Set |
 | Number of lights | 16 point and 16 spot lights, the most that fit Apple's uniform limit | 64 of each, held in a uniform buffer |
 
-Later, lighting moved to linear light (see colour spaces above). A lit
+Later, lighting moved to linear light (see color spaces above). A lit
 surface turned brighter in its middle tones, and light falls off more
 softly, which is what light does. Scenes whose lights were set to look
 right before may want weaker `ambient` and `diffuse` values.
@@ -862,7 +862,7 @@ right before may want weaker `ambient` and `diffuse` values.
 | No validation layers | They need the Vulkan SDK. See open questions |
 | Image decoding lives in the backend | stb_image is compiled into neon-vulkan. It belongs in neon-core, where a second renderer could share it |
 | What a camera draws into a texture is resolved into bytes | Its scene goes through the resolve, with the tonemapper of the run, into the bytes of the target, so light brighter than white, and what is later done with it, stays in the frame. See [tonemapping](#tonemapping) |
-| An opaque material writes alpha 1 over an opaque clear | The pipeline of an opaque material keeps the larger of the alpha the shader wrote and the alpha of the scene image (`VK_BLEND_OP_MAX`), since Vulkan has no blend factor that writes a constant. Over a frame, which is cleared opaque, that is 1 whatever the shader wrote. A texture a camera clears to a see-through colour relies on the shader, and the shaders of the engine write 1 through `object_alpha()` in `scene-data.glsl` for that case |
+| An opaque material writes alpha 1 over an opaque clear | The pipeline of an opaque material keeps the larger of the alpha the shader wrote and the alpha of the scene image (`VK_BLEND_OP_MAX`), since Vulkan has no blend factor that writes a constant. Over a frame, which is cleared opaque, that is 1 whatever the shader wrote. A texture a camera clears to a see-through color relies on the shader, and the shaders of the engine write 1 through `object_alpha()` in `scene-data.glsl` for that case |
 
 ## Order of work
 

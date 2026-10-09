@@ -13,9 +13,9 @@ namespace neon
     glm::vec3 normal;
     glm::vec2 tex_coords;
 
-    /// The colour painted on the vertex, in linear light, as `COLOR_0` of
-    /// glTF. The shaders multiply it into the base colour, so white, the
-    /// default, leaves a model without vertex colours as it is. The alpha
+    /// The color painted on the vertex, in linear light, as `COLOR_0` of
+    /// glTF. The shaders multiply it into the base color, so white, the
+    /// default, leaves a model without vertex colors as it is. The alpha
     /// is 1 for every vertex of a model file, see docs/models.md.
     glm::vec4 color{1.0f};
 

@@ -251,14 +251,14 @@ namespace
   TEST_F(FieldDocumentsTest, ANameInAGroupThatIsNotDescribedIsReported)
   {
     auto tires = DataValue::Map();
-    tires.Set("colour", DataValue::Text("black"));
+    tires.Set("color", DataValue::Text("black"));
     auto map = Plated();
     map.Set("tires", tires);
 
     Read(map);
 
     EXPECT_THAT(_errors, ElementsAre(
-                  "cars.yml: 'colour' is not known to 'tires' of Car of entity 'taxi'. "
+                  "cars.yml: 'color' is not known to 'tires' of Car of entity 'taxi'. "
                   "Known are: pressure, brand"));
   }
 

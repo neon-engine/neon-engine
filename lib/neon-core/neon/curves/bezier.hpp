@@ -29,7 +29,7 @@ namespace neon
   /// `points` control: two are a line, three a quadratic curve, four a
   /// cubic one, and so on. The curve starts at the first point and ends at
   /// the last, and is pulled towards the ones between. `Point` is anything
-  /// that can be added and scaled: a `glm::vec2`, a `glm::vec3`, a colour,
+  /// that can be added and scaled: a `glm::vec2`, a `glm::vec3`, a color,
   /// a float.
   ///
   /// A cubic curve is a CubicBezier, which is faster and can be cut and

@@ -127,7 +127,7 @@ namespace
     EXPECT_TRUE(Holds("(max-resolution: 1dppx)"));
     EXPECT_TRUE(Holds("(min-resolution: 96dpi)"));
 
-    // 96 to the inch are 37.8 to the centimetre
+    // 96 to the inch are 37.8 to the centimeter
     EXPECT_TRUE(Holds("(min-resolution: 37dpcm)"));
     EXPECT_FALSE(Holds("(min-resolution: 38dpcm)"));
   }

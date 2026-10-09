@@ -160,8 +160,8 @@ namespace
 
   TEST_F(UiStyleSheetTest, LooksForAnImportNextToTheSheetThatNamesIt)
   {
-    WriteAsset("themes/parts/colours.css", "label { opacity: 0.25; }");
-    WriteAsset("themes/dark.css", "@import url(parts/colours.css);");
+    WriteAsset("themes/parts/colors.css", "label { opacity: 0.25; }");
+    WriteAsset("themes/dark.css", "@import url(parts/colors.css);");
 
     ASSERT_GE(Show("styles: [assets://themes/dark.css]\nroot:\n  type: label\n  name: title\n"), 0);
     EXPECT_FLOAT_EQ(StyleOf("title").opacity, 0.25f);
@@ -279,7 +279,7 @@ namespace
     EXPECT_EQ(StyleOf("box").background_image, "assets://themes/images/panel.png");
   }
 
-  TEST_F(UiStyleSheetTest, ReadsTheNamesOfColoursAndHslInASheet)
+  TEST_F(UiStyleSheetTest, ReadsTheNamesOfColorsAndHslInASheet)
   {
     ShowWith(
       "#a { background-color: rebeccapurple; color: hsl(120, 100%, 50%); border: 1px solid red; }",
@@ -618,7 +618,7 @@ namespace
 
   TEST_F(UiStyleSheetTest, DoesNotInheritWhatTheEngineGivesAnElementItself)
   {
-    // a button has a colour of its own, as it has in a browser
+    // a button has a color of its own, as it has in a browser
     ShowWith(
       "#menu { color: #ff0000; font-size: 24px; }",
       "- type: panel\n"
@@ -1154,7 +1154,7 @@ namespace
       "assets://ui/theme.css:5: 'width' of the rule 'label' is '12ex', where a number of pixels, a "
       "percentage such as 50%, or auto was expected. The declaration is left out");
     EXPECT_THAT(warnings[5], HasSubstr(
-                  "assets://ui/theme.css:6: 'background-color' of the rule 'label' is 'bright', where a colour"));
+                  "assets://ui/theme.css:6: 'background-color' of the rule 'label' is 'bright', where a color"));
     EXPECT_EQ(
       warnings[6],
       "assets://ui/theme.css:7: 'display' of the rule 'label' is 'block', where one of these was expected: "

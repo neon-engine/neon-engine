@@ -1,7 +1,7 @@
 # Starts the game of the test without a window: the runtime with the
-# extension canvas next to it, which makes a picture of four plain colours
-# and a square to show it on, three metres in front of the camera. The
-# picture is shown as it is, so the colours that come out are those that
+# extension canvas next to it, which makes a picture of four plain colors
+# and a square to show it on, three meters in front of the camera. The
+# picture is shown as it is, so the colors that come out are those that
 # went in.
 
 include("${CMAKE_CURRENT_LIST_DIR}/../../cmake/scripts/run-application.cmake")
@@ -14,7 +14,7 @@ expect_no_output("[error]")
 expect_no_output("[critical]")
 expect_output("The canvas shows image://canvas/quarters")
 
-# expect_pixel(<what> <x> <y> <red> <green> <blue>): the colour of a pixel,
+# expect_pixel(<what> <x> <y> <red> <green> <blue>): the color of a pixel,
 # each channel within 2 of what is given, which leaves room for rounding by
 # the graphics card
 function(expect_pixel WHAT X Y RED GREEN BLUE)
@@ -42,7 +42,7 @@ function(expect_pixel WHAT X Y RED GREEN BLUE)
   endforeach ()
 endfunction()
 
-# the square is in the middle of the frame, a quarter of it each colour
+# the square is in the middle of the frame, a quarter of it each color
 expect_pixel("the top left of the picture" 560 280 255 0 0)
 expect_pixel("the top right of the picture" 720 280 0 255 0)
 expect_pixel("the bottom left of the picture" 560 440 0 0 255)

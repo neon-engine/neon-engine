@@ -1,15 +1,15 @@
-# A scene for checking the colours painted on the vertices of a model, and
+# A scene for checking the colors painted on the vertices of a model, and
 # what the doubleSided of its material does, which tests read pixel by pixel:
 #
-#   NeonRuntime --scene assets://scenes/vertex-colours-test.scene.yml
+#   NeonRuntime --scene assets://scenes/vertex-colors-test.scene.yml
 #
-# The model, coloured-quads.glb, is three quads 0.8 wide at x = -1, 0, and
+# The model, colored-quads.glb, is three quads 0.8 wide at x = -1, 0, and
 # 1, one red, one green, one blue, painted on their vertices, with a material
 # that has no texture and is marked doubleSided. One white light shines from
 # the camera, as in pbr-test.scene.yml, so that what the pbr shader makes of
-# a colour is a known number, see tests/runtime-vertex-colours/run.cmake.
+# a color is a known number, see tests/runtime-vertex-colors/run.cmake.
 
-scene: vertex-colours-test
+scene: vertex-colors-test
 version: 1
 
 entities:
@@ -29,16 +29,16 @@ entities:
         diffuse: [1, 1, 1]
         specular: [0, 0, 0]
 
-  # the top row: the colours as they are painted, without lighting
+  # the top row: the colors as they are painted, without lighting
   - name: painted-unlit
     components:
       Transform:
         position: [0, 1.2, 0]
       Renderable:
-        model: assets://models/coloured-quads.glb
+        model: assets://models/colored-quads.glb
         shader: engine://shaders/unlit
 
-  # the middle row: the colours lit, as the base colour of a matte
+  # the middle row: the colors lit, as the base color of a matte
   # dielectric, which the scene says since the loader does not read the
   # roughness of the file yet (#59)
   - name: painted-lit
@@ -46,7 +46,7 @@ entities:
       Transform:
         position: [0, 0, 0]
       Renderable:
-        model: assets://models/coloured-quads.glb
+        model: assets://models/colored-quads.glb
         shader: engine://shaders/pbr
         material:
           metallic: 0
@@ -60,18 +60,18 @@ entities:
         position: [-1.3, -1.2, 0]
         rotation: [0, 180, 0]
       Renderable:
-        model: assets://models/coloured-quads.glb
+        model: assets://models/colored-quads.glb
         shader: engine://shaders/unlit
 
   # the right one says never, which overrides the file, and its back is
-  # left out: the clear colour shows
+  # left out: the clear color shows
   - name: culled-from-behind
     components:
       Transform:
         position: [1.3, -1.2, 0]
         rotation: [0, 180, 0]
       Renderable:
-        model: assets://models/coloured-quads.glb
+        model: assets://models/colored-quads.glb
         shader: engine://shaders/unlit
         material:
           double_sided: never

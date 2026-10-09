@@ -26,7 +26,7 @@ namespace
     EXPECT_EQ(half.pixels.size(), 4u * 2u * 4u);
   }
 
-  TEST(ImageHalvingTest, KeepsAnImageOfOneColourAsItIs)
+  TEST(ImageHalvingTest, KeepsAnImageOfOneColorAsItIs)
   {
     const ImagePixels half = HalveImage(Filled(4, 4, 200, 100, 50, 128), true);
 
@@ -39,7 +39,7 @@ namespace
     }
   }
 
-  TEST(ImageHalvingTest, AveragesColoursAsLight)
+  TEST(ImageHalvingTest, AveragesColorsAsLight)
   {
     // black and white side by side, twice over: half the light, which in
     // sRGB is far brighter than the byte halfway

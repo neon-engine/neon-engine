@@ -6,7 +6,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-// The properties of behaviour, read from values without a file. What is
+// The properties of behavior, read from values without a file. What is
 // expected is what the specifications of CSS say a value means.
 
 namespace
@@ -28,7 +28,7 @@ namespace
   using ::testing::ElementsAre;
   using ::testing::IsEmpty;
 
-  class UiBehaviourStyleTest : public ::testing::Test
+  class UiBehaviorStyleTest : public ::testing::Test
   {
   protected:
     DataValue _map = DataValue::Map();
@@ -72,7 +72,7 @@ namespace
     }
   };
 
-  TEST_F(UiBehaviourStyleTest, StartsWithTheInitialValuesOfCss)
+  TEST_F(UiBehaviorStyleTest, StartsWithTheInitialValuesOfCss)
   {
     const UiStyle style;
 
@@ -102,7 +102,7 @@ namespace
     EXPECT_THAT(style.animations.play_states, ElementsAre(UiAnimationPlayState::Running));
   }
 
-  TEST_F(UiBehaviourStyleTest, LeavesEverythingAsItIsWhenNothingIsWritten)
+  TEST_F(UiBehaviorStyleTest, LeavesEverythingAsItIsWhenNothingIsWritten)
   {
     UiStyle before;
     before.visibility = UiVisibility::Hidden;
@@ -121,14 +121,14 @@ namespace
     EXPECT_THAT(_errors, IsEmpty());
   }
 
-  TEST_F(UiBehaviourStyleTest, ReadsVisibility)
+  TEST_F(UiBehaviorStyleTest, ReadsVisibility)
   {
     Write("visibility", "hidden");
     EXPECT_EQ(Read().visibility, UiVisibility::Hidden);
     EXPECT_THAT(_errors, IsEmpty());
   }
 
-  TEST_F(UiBehaviourStyleTest, ReadsEveryShapeOfTheCursor)
+  TEST_F(UiBehaviorStyleTest, ReadsEveryShapeOfTheCursor)
   {
     const std::pair<const char *, UiCursor> shapes[] = {
       {"auto", UiCursor::Auto},
@@ -159,7 +159,7 @@ namespace
 
   // overflow
 
-  TEST_F(UiBehaviourStyleTest, TakesOverflowForBothSides)
+  TEST_F(UiBehaviorStyleTest, TakesOverflowForBothSides)
   {
     Write("overflow", "scroll");
 
@@ -172,7 +172,7 @@ namespace
     EXPECT_THAT(_errors, IsEmpty());
   }
 
-  TEST_F(UiBehaviourStyleTest, ReadsEachSideOfOverflowByItself)
+  TEST_F(UiBehaviorStyleTest, ReadsEachSideOfOverflowByItself)
   {
     Write("overflow_x", "hidden");
     Write("overflow_y", "auto");
@@ -187,7 +187,7 @@ namespace
     EXPECT_TRUE(style.ScrollsY());
   }
 
-  TEST_F(UiBehaviourStyleTest, TakesASideThatIsVisibleNextToOneThatIsNotForAuto)
+  TEST_F(UiBehaviorStyleTest, TakesASideThatIsVisibleNextToOneThatIsNotForAuto)
   {
     // https://www.w3.org/TR/css-overflow-3/#overflow-properties
     Write("overflow_y", "scroll");
@@ -208,7 +208,7 @@ namespace
     EXPECT_TRUE(hidden.ClipsY());
   }
 
-  TEST_F(UiBehaviourStyleTest, ReadsTheShorthandInFrontOfWhatItStandsFor)
+  TEST_F(UiBehaviorStyleTest, ReadsTheShorthandInFrontOfWhatItStandsFor)
   {
     // wherever the two are written
     Write("overflow_y", "scroll");
@@ -219,7 +219,7 @@ namespace
     EXPECT_EQ(style.overflow_y, UiOverflow::Scroll);
   }
 
-  TEST_F(UiBehaviourStyleTest, CutsNothingOffThatIsVisible)
+  TEST_F(UiBehaviorStyleTest, CutsNothingOffThatIsVisible)
   {
     const UiStyle style;
     EXPECT_FALSE(style.ClipsX());
@@ -230,7 +230,7 @@ namespace
 
   // scrollbars
 
-  TEST_F(UiBehaviourStyleTest, ReadsTheScrollbar)
+  TEST_F(UiBehaviorStyleTest, ReadsTheScrollbar)
   {
     Write("scrollbar_width", "thin");
     Write("scrollbar_color", "#ff0000 #00ff0080");
@@ -253,7 +253,7 @@ namespace
     EXPECT_NEAR(style.scrollbar_track_color->a, 0.5f, 0.01f);
   }
 
-  TEST_F(UiBehaviourStyleTest, ReadsTheColoursOfTheScrollbarFromAListAndFromFunctions)
+  TEST_F(UiBehaviorStyleTest, ReadsTheColorsOfTheScrollbarFromAListAndFromFunctions)
   {
     WriteList("scrollbar_color", {"#ffffff", "#000000"});
     EXPECT_FLOAT_EQ(Read().scrollbar_thumb_color->r, 1.0f);
@@ -265,7 +265,7 @@ namespace
     EXPECT_THAT(_errors, IsEmpty());
   }
 
-  TEST_F(UiBehaviourStyleTest, TakesTheColoursOfTheScrollbarAwayWithAuto)
+  TEST_F(UiBehaviorStyleTest, TakesTheColorsOfTheScrollbarAwayWithAuto)
   {
     UiStyle before;
     before.scrollbar_thumb_color = neon::Color{1.0f, 0.0f, 0.0f, 1.0f};
@@ -278,7 +278,7 @@ namespace
     EXPECT_FALSE(style.scrollbar_track_color.has_value());
   }
 
-  TEST_F(UiBehaviourStyleTest, ReadsTheColourOfTheCaret)
+  TEST_F(UiBehaviorStyleTest, ReadsTheColorOfTheCaret)
   {
     Write("caret_color", "#00ff00");
     const UiStyle green = Read();
@@ -298,7 +298,7 @@ namespace
 
   // transitions
 
-  TEST_F(UiBehaviourStyleTest, ReadsTheLonghandsOfATransition)
+  TEST_F(UiBehaviorStyleTest, ReadsTheLonghandsOfATransition)
   {
     Write("transition_property", "opacity, background_color");
     Write("transition_duration", "0.2s, 1s");
@@ -318,7 +318,7 @@ namespace
     EXPECT_TRUE(style.transitions.IsUsed());
   }
 
-  TEST_F(UiBehaviourStyleTest, ReadsAListOfAFileForTheLonghandsOfATransition)
+  TEST_F(UiBehaviorStyleTest, ReadsAListOfAFileForTheLonghandsOfATransition)
   {
     WriteList("transition_property", {"opacity", "width"});
     WriteList("transition_duration", {"0.2s", "300ms"});
@@ -328,7 +328,7 @@ namespace
     EXPECT_THAT(style.transitions.durations, ElementsAre(0.2f, 0.3f));
   }
 
-  TEST_F(UiBehaviourStyleTest, TakesANumberWithoutAUnitForSeconds)
+  TEST_F(UiBehaviorStyleTest, TakesANumberWithoutAUnitForSeconds)
   {
     WriteNumber("transition_duration", 0.25);
     WriteNumber("animation_duration", 2);
@@ -339,7 +339,7 @@ namespace
     EXPECT_THAT(style.animations.durations, ElementsAre(2.0f));
   }
 
-  TEST_F(UiBehaviourStyleTest, ReadsTheShorthandOfATransition)
+  TEST_F(UiBehaviorStyleTest, ReadsTheShorthandOfATransition)
   {
     Write("transition", "opacity 0.2s ease-in 100ms");
 
@@ -351,7 +351,7 @@ namespace
     EXPECT_THAT(style.transitions.timing_functions, ElementsAre(UiTimingFunction::EaseIn()));
   }
 
-  TEST_F(UiBehaviourStyleTest, ReadsSeveralTransitionsFromTheShorthand)
+  TEST_F(UiBehaviorStyleTest, ReadsSeveralTransitionsFromTheShorthand)
   {
     Write("transition", "opacity 0.2s, background-color 1s linear, width 300ms steps(3, jump-start) 1s");
 
@@ -368,7 +368,7 @@ namespace
         UiTimingFunction::Steps(3, UiTimingFunction::StepPosition::JumpStart)));
   }
 
-  TEST_F(UiBehaviourStyleTest, TakesWhatTheShorthandLeavesOutForItsInitialValue)
+  TEST_F(UiBehaviorStyleTest, TakesWhatTheShorthandLeavesOutForItsInitialValue)
   {
     Write("transition", "0.5s");
 
@@ -379,7 +379,7 @@ namespace
     EXPECT_THAT(style.transitions.timing_functions, ElementsAre(UiTimingFunction::Ease()));
   }
 
-  TEST_F(UiBehaviourStyleTest, TakesTheFirstTimeOfTheShorthandForTheDurationInAnyOrder)
+  TEST_F(UiBehaviorStyleTest, TakesTheFirstTimeOfTheShorthandForTheDurationInAnyOrder)
   {
     Write("transition", "ease-out 1s width 2s");
 
@@ -390,7 +390,7 @@ namespace
     EXPECT_THAT(style.transitions.delays, ElementsAre(2.0f));
   }
 
-  TEST_F(UiBehaviourStyleTest, ReadsTheLonghandsOfATransitionBehindItsShorthand)
+  TEST_F(UiBehaviorStyleTest, ReadsTheLonghandsOfATransitionBehindItsShorthand)
   {
     Write("transition_duration", "2s");
     Write("transition", "opacity 0.2s");
@@ -400,7 +400,7 @@ namespace
     EXPECT_THAT(style.transitions.durations, ElementsAre(2.0f));
   }
 
-  TEST_F(UiBehaviourStyleTest, TakesNoneForNoTransition)
+  TEST_F(UiBehaviorStyleTest, TakesNoneForNoTransition)
   {
     Write("transition", "none");
 
@@ -410,13 +410,13 @@ namespace
     EXPECT_FALSE(style.transitions.IsUsed());
   }
 
-  TEST_F(UiBehaviourStyleTest, TakesATransitionThatOnlyWaitsForOneThatIsUsed)
+  TEST_F(UiBehaviorStyleTest, TakesATransitionThatOnlyWaitsForOneThatIsUsed)
   {
     Write("transition_delay", "1s");
     EXPECT_TRUE(Read().transitions.IsUsed());
   }
 
-  TEST_F(UiBehaviourStyleTest, AllowsADelayBelowZeroAndNoDurationBelowZero)
+  TEST_F(UiBehaviorStyleTest, AllowsADelayBelowZeroAndNoDurationBelowZero)
   {
     Write("transition_delay", "-1s");
     EXPECT_THAT(Read().transitions.delays, ElementsAre(-1.0f));
@@ -431,7 +431,7 @@ namespace
 
   // animations
 
-  TEST_F(UiBehaviourStyleTest, ReadsTheLonghandsOfAnAnimation)
+  TEST_F(UiBehaviorStyleTest, ReadsTheLonghandsOfAnAnimation)
   {
     Write("animation_name", "fade-in, slide");
     Write("animation_duration", "0.3s, 2s");
@@ -463,13 +463,13 @@ namespace
       ElementsAre(UiTimingFunction::Linear(), UiTimingFunction::EaseOut()));
   }
 
-  TEST_F(UiBehaviourStyleTest, KeepsTheNameOfAnAnimationAsItIsWritten)
+  TEST_F(UiBehaviorStyleTest, KeepsTheNameOfAnAnimationAsItIsWritten)
   {
     Write("animation_name", "Fade_In");
     EXPECT_THAT(Read().animations.names, ElementsAre("Fade_In"));
   }
 
-  TEST_F(UiBehaviourStyleTest, ReadsEveryDirectionAndFillMode)
+  TEST_F(UiBehaviorStyleTest, ReadsEveryDirectionAndFillMode)
   {
     Write("animation_direction", "normal, reverse, alternate, alternate-reverse");
     Write("animation_fill_mode", "none, forwards, backwards, both");
@@ -488,7 +488,7 @@ namespace
         UiAnimationFillMode::Both));
   }
 
-  TEST_F(UiBehaviourStyleTest, ReadsTheShorthandOfAnAnimation)
+  TEST_F(UiBehaviorStyleTest, ReadsTheShorthandOfAnAnimation)
   {
     Write("animation", "fade-in 0.3s ease-out 100ms 2 alternate both paused");
 
@@ -505,7 +505,7 @@ namespace
     EXPECT_THAT(style.animations.timing_functions, ElementsAre(UiTimingFunction::EaseOut()));
   }
 
-  TEST_F(UiBehaviourStyleTest, ReadsTheShorthandOfAnAnimationInAnyOrder)
+  TEST_F(UiBehaviorStyleTest, ReadsTheShorthandOfAnAnimationInAnyOrder)
   {
     Write("animation", "infinite 2s pulse linear");
 
@@ -517,7 +517,7 @@ namespace
     EXPECT_THAT(style.animations.timing_functions, ElementsAre(UiTimingFunction::Linear()));
   }
 
-  TEST_F(UiBehaviourStyleTest, ReadsSeveralAnimationsFromTheShorthand)
+  TEST_F(UiBehaviorStyleTest, ReadsSeveralAnimationsFromTheShorthand)
   {
     Write("animation", "fade-in 0.3s, slide 1s ease-in-out infinite alternate");
 
@@ -531,7 +531,7 @@ namespace
       ElementsAre(UiAnimationDirection::Normal, UiAnimationDirection::Alternate));
   }
 
-  TEST_F(UiBehaviourStyleTest, TakesNoneForNoAnimation)
+  TEST_F(UiBehaviorStyleTest, TakesNoneForNoAnimation)
   {
     UiStyle before;
     before.animations.names = {"fade"};
@@ -544,7 +544,7 @@ namespace
     EXPECT_THAT(style.animations.fill_modes, ElementsAre(UiAnimationFillMode::None));
   }
 
-  TEST_F(UiBehaviourStyleTest, ReadsAPartOfARunAsHowOftenAnAnimationRuns)
+  TEST_F(UiBehaviorStyleTest, ReadsAPartOfARunAsHowOftenAnAnimationRuns)
   {
     Write("animation_iteration_count", "0.5");
     EXPECT_THAT(Read().animations.iteration_counts, ElementsAre(0.5f));
@@ -556,7 +556,7 @@ namespace
 
   // what is wrong
 
-  TEST_F(UiBehaviourStyleTest, SaysWhatIsWrongWithAWord)
+  TEST_F(UiBehaviorStyleTest, SaysWhatIsWrongWithAWord)
   {
     EXPECT_THAT(
       ProblemsOf("visibility", "collapse"),
@@ -602,12 +602,12 @@ namespace
         "inertia"));
   }
 
-  TEST_F(UiBehaviourStyleTest, SaysWhatIsWrongWithAColour)
+  TEST_F(UiBehaviorStyleTest, SaysWhatIsWrongWithAColor)
   {
     EXPECT_THAT(
       ProblemsOf("scrollbar_color", "#ffffff"),
       ElementsAre(
-        "test.ui.yml:7: 'scrollbar_color' of panel 'box' is '#ffffff', where auto, or two colours: that of "
+        "test.ui.yml:7: 'scrollbar_color' of panel 'box' is '#ffffff', where auto, or two colors: that of "
         "what is dragged and that of what it is dragged along, such as \"#ffffff80 #00000040\" was "
         "expected"));
 
@@ -618,11 +618,11 @@ namespace
     EXPECT_THAT(
       ProblemsOf("caret_color", "bright"),
       ElementsAre(
-        "test.ui.yml:7: 'caret_color' of panel 'box' is 'bright', where auto, or a colour such as "
+        "test.ui.yml:7: 'caret_color' of panel 'box' is 'bright', where auto, or a color such as "
         "\"#ff8000\" or rgb(255, 128, 0) was expected"));
   }
 
-  TEST_F(UiBehaviourStyleTest, SaysWhatIsWrongWithATransition)
+  TEST_F(UiBehaviorStyleTest, SaysWhatIsWrongWithATransition)
   {
     EXPECT_THAT(
       ProblemsOf("transition_duration", "fast"),
@@ -670,7 +670,7 @@ namespace
       ElementsAre("test.ui.yml:7: 'transition' of panel 'box' is 'none, opacity 1s'" + expected));
   }
 
-  TEST_F(UiBehaviourStyleTest, SaysWhatIsWrongWithAnAnimation)
+  TEST_F(UiBehaviorStyleTest, SaysWhatIsWrongWithAnAnimation)
   {
     EXPECT_THAT(
       ProblemsOf("animation_iteration_count", "-1"),
@@ -707,7 +707,7 @@ namespace
       ElementsAre(::testing::StartsWith("test.ui.yml:7: 'animation' of panel 'box' is 'fade 1s 2s 3s', where ")));
   }
 
-  TEST_F(UiBehaviourStyleTest, LeavesAPropertyAsItWasWhenWhatIsWrittenCannotBeRead)
+  TEST_F(UiBehaviorStyleTest, LeavesAPropertyAsItWasWhenWhatIsWrittenCannotBeRead)
   {
     UiStyle before;
     before.cursor = UiCursor::Pointer;
@@ -725,7 +725,7 @@ namespace
     EXPECT_THAT(after.animations.names, ElementsAre("fade"));
   }
 
-  TEST_F(UiBehaviourStyleTest, IsListedBehindThePropertiesThatWereThereBeforeIt)
+  TEST_F(UiBehaviorStyleTest, IsListedBehindThePropertiesThatWereThereBeforeIt)
   {
     Write("colour", "red", 3);
     Read();

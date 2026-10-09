@@ -301,7 +301,7 @@ namespace neon
 
     const FieldValue value = field.get(object);
 
-    // a vector, a colour, a quaternion, or a matrix read from a component is
+    // a vector, a color, a quaternion, or a matrix read from a component is
     // the same handle every time, bound again
     if (owner != 0)
     {

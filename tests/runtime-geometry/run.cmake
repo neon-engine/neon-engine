@@ -1,9 +1,9 @@
 # Draws blockout.scene.yml without a window and reads pixels of the result.
 # Nothing in the scene comes from a model file: the room is a prism with its
 # faces pointing inward, the platform and the crate boxes, the ramp a ramp,
-# all built by the engine in metres and textured once a metre.
+# all built by the engine in meters and textured once a meter.
 #
-# The colours were read from the first render that was checked by eye, with
+# The colors were read from the first render that was checked by eye, with
 # the room's ceiling, walls, and floor all drawn and the brick upright. They
 # are what the lighting makes of brick, concrete, and wood under one light,
 # and they hold as long as the shapes, the camera, and the light stay.
@@ -35,7 +35,7 @@ expect_no_output("[error]")
 expect_no_output("[warning]")
 expect_no_output("[critical]")
 
-# expect_pixel(<what> <x> <y> <red> <green> <blue>): the colour of a pixel,
+# expect_pixel(<what> <x> <y> <red> <green> <blue>): the color of a pixel,
 # each channel within 2 of what is given, which leaves room for rounding by
 # the graphics card
 function(expect_pixel WHAT X Y RED GREEN BLUE)
@@ -70,7 +70,7 @@ if (CASE STREQUAL "a-room-built-from-a-prism-is-seen-from-within")
   expect_pixel("the far wall" 960 540 118 48 34)
   expect_pixel("the left wall" 300 540 118 48 34)
   expect_pixel("the floor" 960 1000 181 149 138)
-elseif (CASE STREQUAL "a-box-and-a-plane-are-textured-once-a-metre")
+elseif (CASE STREQUAL "a-box-and-a-plane-are-textured-once-a-meter")
   expect_image("shots/frame.png")
   expect_pixel("the wooden crate" 1400 760 111 76 42)
   expect_pixel("the concrete platform" 500 900 130 130 148)

@@ -97,8 +97,8 @@ namespace neon
   /// The elements are objects of their own and not entities of the world.
   /// The order of elements decides what is drawn on top and where the
   /// focus goes, their sizes follow from each other up and down the tree,
-  /// and each kind brings behaviour of its own. An entity store keeps
-  /// neither an order nor behaviour. A menu also outlives the scene it is
+  /// and each kind brings behavior of its own. An entity store keeps
+  /// neither an order nor behavior. A menu also outlives the scene it is
   /// shown over, and is not part of what a scene saves.
   ///
   /// Files that are shown lie on top of each other, the one loaded last on

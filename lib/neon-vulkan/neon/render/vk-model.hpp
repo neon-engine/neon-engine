@@ -33,7 +33,7 @@ namespace neon
       VK_Device *device,
       const std::shared_ptr<Logger> &logger);
 
-    /// A model from a mesh that was built at run time. It is drawn in metres
+    /// A model from a mesh that was built at run time. It is drawn in meters
     /// as it is, with a fit of `None`, since what built it meant every
     /// number.
     VK_Model(std::shared_ptr<const MeshData> mesh, VK_Device *device, const std::shared_ptr<Logger> &logger);

@@ -250,7 +250,7 @@ namespace
     EXPECT_EQ(Since().paints, 1u);
   }
 
-  TEST_F(UiDirtyTest, WorksOutOneStyleAndPlacesNothingWhenTheColourOfAButtonChangesUnderThePointer)
+  TEST_F(UiDirtyTest, WorksOutOneStyleAndPlacesNothingWhenTheColorOfAButtonChangesUnderThePointer)
   {
     ShowTwoPanels();
 

@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
-"""Writes tests/game/assets/models/coloured-boxes.glb: a model whose
+"""Writes tests/game/assets/models/colored-boxes.glb: a model whose
 meshes use different materials, for tests/runtime-materials.
 
 Two boxes, 0.8 on every side, one at x = -1 and one at x = 1, each a mesh
 of its own on a node of its own, with a material of its own: the left one
 red and the right one blue, as the baseColorFactor of each material. The
 materials have no texture and are matte dielectrics, so that what the pbr
-shader makes of each colour is a known number. The colours are in linear
+shader makes of each color is a known number. The colors are in linear
 light, as glTF keeps a factor.
 
 Run from the root of the repository:
 
-    python3 tools/make-coloured-boxes.py
+    python3 tools/make-colored-boxes.py
 """
 
 import json
@@ -21,7 +21,7 @@ from pathlib import Path
 BOXES = [("red", -1.0, (1.0, 0.0, 0.0, 1.0)), ("blue", 1.0, (0.0, 0.0, 1.0, 1.0))]
 HALF = 0.4
 
-# each face as its outward normal and its four corners, anticlockwise seen
+# each face as its outward normal and its four corners, counterclockwise seen
 # from outside
 FACES = [
     ((0.0, 0.0, 1.0), ((-1, -1, 1), (1, -1, 1), (1, 1, 1), (-1, 1, 1))),
@@ -90,7 +90,7 @@ for name, center, color in BOXES:
     nodes.append({"mesh": len(meshes) - 1, "name": f"{name}-box"})
 
 gltf = {
-    "asset": {"version": "2.0", "generator": "tools/make-coloured-boxes.py of Neon Engine"},
+    "asset": {"version": "2.0", "generator": "tools/make-colored-boxes.py of Neon Engine"},
     "scene": 0,
     "scenes": [{"nodes": list(range(len(nodes)))}],
     "nodes": nodes,
@@ -110,6 +110,6 @@ glb = (
     + struct.pack("<II", len(binary_chunk), 0x004E4942) + binary_chunk
 )
 
-target = Path(__file__).resolve().parent.parent / "tests/game/assets/models/coloured-boxes.glb"
+target = Path(__file__).resolve().parent.parent / "tests/game/assets/models/colored-boxes.glb"
 target.write_bytes(glb)
 print(f"wrote {target} ({len(glb)} bytes)")

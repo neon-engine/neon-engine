@@ -58,14 +58,14 @@ namespace neon
 
     /// Of a hinge or a slider, a motor that drives it: how fast, in
     /// radians per second around the axis or units per second along it,
-    /// and with how much at most, in newton metres or newtons. There is no
+    /// and with how much at most, in newton meters or newtons. There is no
     /// motor while the strength is 0. A motor with a velocity of 0 holds
     /// the joint where it is, as far as its strength reaches.
     float motor_velocity = 0.0f;
     float motor_strength = 0.0f;
 
     /// Of a hinge or a slider, a spring that pulls it back to where it was
-    /// made. The stiffness is the torque in newton metres for every radian
+    /// made. The stiffness is the torque in newton meters for every radian
     /// it is turned, or the force in newtons for every unit it is moved,
     /// and the damping is the same against its speed. There is no spring
     /// while the stiffness is 0. A joint has a motor or a spring, not both.

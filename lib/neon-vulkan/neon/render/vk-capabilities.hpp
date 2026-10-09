@@ -21,7 +21,7 @@ namespace neon
   struct VK_Capabilities
   {
     /// The formats the device asks about: those of the scene image and of
-    /// the textures that hold colours, as the renderer makes them, so that
+    /// the textures that hold colors, as the renderer makes them, so that
     /// what is checked is what is used.
     static constexpr VkFormat kSceneFormat = VK_SceneImage::kFormat;
     static constexpr VkFormat kSrgbFormat = VK_Texture::kColor_Format;

@@ -144,7 +144,7 @@ namespace neon
       }
 
       template<typename Reach>
-      void Colour(
+      void PlainColor(
         const std::string &name,
         Reach reach,
         const bool is_inherited,
@@ -164,10 +164,10 @@ namespace neon
         property.set = [reach](UiStyle &style, const UiPropertyValue &value) { reach(style) = value.color; };
       }
 
-      /// A colour that follows that of the text unless it is set, which
+      /// A color that follows that of the text unless it is set, which
       /// CSS calls `currentcolor`.
       template<typename Reach>
-      void ColourOfTheText(
+      void ColorOfTheText(
         const std::string &name,
         Reach reach,
         const bool is_inherited,
@@ -346,7 +346,7 @@ namespace neon
     }
 
     /// Shadows as CSS writes them: to the right, down, the blur, the
-    /// spread of a box, and the colour when one was given.
+    /// spread of a box, and the color when one was given.
     std::string FormatShadows(const std::vector<UiShadow> &shadows, const bool with_spread)
     {
       if (shadows.empty()) { return "none"; }
@@ -414,7 +414,7 @@ namespace neon
       });
     }
 
-    /// The colour of one side of the border, which is that of the border
+    /// The color of one side of the border, which is that of the border
     /// unless the side has one of its own.
     template<typename Reach>
     std::string FormatSideColor(const UiStyle &style, Reach reach)
@@ -567,7 +567,7 @@ namespace neon
   {
     Table table(_properties);
 
-    // The properties of behaviour.
+    // The properties of behavior.
 
     table.Keyword(
       "visibility", [](UiStyle &style) -> UiVisibility & { return style.visibility; },
@@ -612,7 +612,7 @@ namespace neon
 
         return FormatCssColor(*style.scrollbar_thumb_color) + " " + FormatCssColor(*style.scrollbar_track_color);
       },
-      "The colour of what is dragged of a scrollbar, and of what it is dragged along");
+      "The color of what is dragged of a scrollbar, and of what it is dragged along");
     table.Last().is_inherited = true;
 
     table.Keyword(
@@ -625,10 +625,10 @@ namespace neon
       scroll_drags, not_inherited, no_layout,
       "Whether what is inside is scrolled by dragging it. Not part of CSS");
 
-    table.ColourOfTheText(
+    table.ColorOfTheText(
       "caret-color", [](UiStyle &style) -> std::optional<Color> & { return style.caret_color; },
       inherited,
-      "The colour of the caret of a text that is typed");
+      "The color of the caret of a text that is typed");
 
     table.Shorthand(
       "transition",
@@ -807,15 +807,15 @@ namespace neon
       "padding-left", [](UiStyle &style) -> LayoutLength & { return style.layout.padding.left; },
       "The room inside the border at the left");
 
-    table.Shorthand("border", {"border-width", "border-color"}, "The width and the colour of the border");
+    table.Shorthand("border", {"border-width", "border-color"}, "The width and the color of the border");
 
     table.Edges(
       "border-width", [](UiStyle &style) -> LayoutEdges<float> & { return style.layout.border; },
       layout, "The widths of the border");
 
-    table.ColourOfTheText(
+    table.ColorOfTheText(
       "border-color", [](UiStyle &style) -> std::optional<Color> & { return style.border_color; },
-      not_inherited, "The colour of the border");
+      not_inherited, "The color of the border");
 
     // Position.
 
@@ -881,11 +881,11 @@ namespace neon
       "column-gap", [](UiStyle &style) -> float & { return style.layout.column_gap; },
       "px", not_inherited, layout, "The room between columns");
 
-    // Colours and images.
+    // Colors and images.
 
-    table.Colour(
+    table.PlainColor(
       "background-color", [](UiStyle &style) -> Color & { return style.background_color; },
-      not_inherited, "The colour behind the element");
+      not_inherited, "The color behind the element");
 
     table.Text(
       "background-image", [](UiStyle &style) -> std::string & { return style.background_image; },
@@ -912,15 +912,15 @@ namespace neon
       "outline-offset", [](UiStyle &style) -> float & { return style.outline_offset; },
       "px", not_inherited, no_layout, "How far the line is from the border");
 
-    table.ColourOfTheText(
+    table.ColorOfTheText(
       "outline-color", [](UiStyle &style) -> std::optional<Color> & { return style.outline_color; },
-      not_inherited, "The colour of the line around the border");
+      not_inherited, "The color of the line around the border");
 
     table.Number(
       "opacity", [](UiStyle &style) -> float & { return style.opacity; },
       "", not_inherited, no_layout, "How much of the element is seen, from 0 to 1");
 
-    table.Colour(
+    table.PlainColor(
       "accent-color", [](UiStyle &style) -> Color & { return style.accent_color; },
       not_inherited, "What a bar, a slider, and a checkbox are filled with");
 
@@ -934,9 +934,9 @@ namespace neon
 
     // Text. These are inherited, as in CSS.
 
-    table.Colour(
+    table.PlainColor(
       "color", [](UiStyle &style) -> Color & { return style.color; },
-      inherited, "The colour of text");
+      inherited, "The color of text");
 
     table.Text(
       "font-family", [](UiStyle &style) -> std::string & { return style.font_family; },
@@ -1009,10 +1009,10 @@ namespace neon
       },
       "A line under the text, and one through it");
 
-    table.ColourOfTheText(
+    table.ColorOfTheText(
       "text-decoration-color",
       [](UiStyle &style) -> std::optional<Color> & { return style.text_decoration_color; },
-      not_inherited, "The colour of the lines under and through the text");
+      not_inherited, "The color of the lines under and through the text");
 
     table.Number(
       "text-decoration-thickness",
@@ -1046,9 +1046,9 @@ namespace neon
       "text-stroke-width", [](UiStyle &style) -> float & { return style.text_stroke_width; },
       "px", inherited, no_layout, "The width of the line around every glyph");
 
-    table.ColourOfTheText(
+    table.ColorOfTheText(
       "text-stroke-color", [](UiStyle &style) -> std::optional<Color> & { return style.text_stroke_color; },
-      inherited, "The colour of the line around every glyph");
+      inherited, "The color of the line around every glyph");
 
     table.Keyword(
       "direction", [](UiStyle &style) -> TextDirection & { return style.direction; },
@@ -1069,7 +1069,7 @@ namespace neon
     table.Shorthand(
       "background",
       {"background-color", "background-image", "background-size", "background-position", "background-repeat"},
-      "What is behind the element: a colour, and an image or a gradient");
+      "What is behind the element: a color, and an image or a gradient");
 
     table.Other(
       "background-size",
@@ -1150,7 +1150,7 @@ namespace neon
       {
         return FormatSideColor(style, [](UiStyle &each) -> std::optional<Color> & { return each.border_top_color; });
       },
-      "The colour of the line at the top, where it differs from that of the border");
+      "The color of the line at the top, where it differs from that of the border");
 
     table.Other(
       "border-right-color",
@@ -1159,7 +1159,7 @@ namespace neon
       {
         return FormatSideColor(style, [](UiStyle &each) -> std::optional<Color> & { return each.border_right_color; });
       },
-      "The colour of the line at the right, where it differs from that of the border");
+      "The color of the line at the right, where it differs from that of the border");
 
     table.Other(
       "border-bottom-color",
@@ -1169,7 +1169,7 @@ namespace neon
         return FormatSideColor(
           style, [](UiStyle &each) -> std::optional<Color> & { return each.border_bottom_color; });
       },
-      "The colour of the line at the bottom, where it differs from that of the border");
+      "The color of the line at the bottom, where it differs from that of the border");
 
     table.Other(
       "border-left-color",
@@ -1178,7 +1178,7 @@ namespace neon
       {
         return FormatSideColor(style, [](UiStyle &each) -> std::optional<Color> & { return each.border_left_color; });
       },
-      "The colour of the line at the left, where it differs from that of the border");
+      "The color of the line at the left, where it differs from that of the border");
 
     table.Other(
       "box-shadow",
@@ -1208,7 +1208,7 @@ namespace neon
       [](const UiStyle &style) { return FormatShaderValues(style.shader_values); },
       "The values the shader is given, each by its name");
 
-    // A colour of the text and an image behind the element may be a
+    // A color of the text and an image behind the element may be a
     // gradient, which goes with them.
     for (auto &property : _properties)
     {
@@ -1434,7 +1434,7 @@ namespace neon
 
       case UiValueKind::Color:
       {
-        // With the alpha multiplied in, so that a colour that cannot be
+        // With the alpha multiplied in, so that a color that cannot be
         // seen adds nothing of its own on the way.
         const float alpha = mix(from.color.a, to.color.a);
 

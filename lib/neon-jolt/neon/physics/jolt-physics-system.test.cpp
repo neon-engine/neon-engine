@@ -885,7 +885,7 @@ namespace
 
     const auto state = Walk(player, {0.0f, 0.0f, 0.0f}, 300);
 
-    // five seconds later it stands where it stood, within a millimetre
+    // five seconds later it stands where it stood, within a millimeter
     EXPECT_TRUE(state.on_floor);
     EXPECT_FALSE(state.on_wall);
     EXPECT_NEAR(state.position.x, settled.position.x, 1e-3f);

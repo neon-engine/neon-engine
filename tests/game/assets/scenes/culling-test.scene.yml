@@ -6,7 +6,7 @@
 # The back of a triangle is left out unless the material is double-sided.
 # A transform that scales one axis below 0 mirrors what it places, which
 # turns its triangles round; it is still drawn from the front. Every quad
-# is in a plain colour, and what is left out shows the black behind it.
+# is in a plain color, and what is left out shows the black behind it.
 
 scene: culling-test
 version: 1

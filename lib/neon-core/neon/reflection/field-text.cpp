@@ -256,7 +256,7 @@ namespace neon
         float number = 0.0f;
         if (!ParseNumber(part, number)) { return false; }
 
-        // the colours count to 255, and alpha to 1
+        // the colors count to 255, and alpha to 1
         const float whole = is_percent ? 100.0f : (i < 3 ? 255.0f : 1.0f);
         values[i] = std::clamp(number / whole, 0.0f, 1.0f);
       }

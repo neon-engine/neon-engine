@@ -14,13 +14,13 @@ namespace
   /// A tube along a quarter circle of radius 2 in the plane of x and y.
   std::vector<glm::vec3> QuarterCircle(const int pieces)
   {
-    std::vector<glm::vec3> centres;
+    std::vector<glm::vec3> centers;
     for (int i = 0; i <= pieces; i++)
     {
       const float angle = 1.5707963f * static_cast<float>(i) / static_cast<float>(pieces);
-      centres.emplace_back(2.0f * std::cos(angle), 2.0f * std::sin(angle), 0.0f);
+      centers.emplace_back(2.0f * std::cos(angle), 2.0f * std::sin(angle), 0.0f);
     }
-    return centres;
+    return centers;
   }
 }
 
@@ -37,19 +37,19 @@ TEST(Tube, HasARingForEveryPointAndACapAtEachEnd)
 
 TEST(Tube, IsAsThickAsItsRadiusAllTheWayRoundABend)
 {
-  const auto centres = QuarterCircle(16);
+  const auto centers = QuarterCircle(16);
   MeshData mesh;
-  AppendTube(centres, 0.25f, 12, 1.0f, mesh);
+  AppendTube(centers, 0.25f, 12, 1.0f, mesh);
 
   // every vertex of the side is 0.25 from its point of the line, and its
   // normal points away from it
-  for (std::size_t ring = 0; ring < centres.size(); ring++)
+  for (std::size_t ring = 0; ring < centers.size(); ring++)
   {
     for (std::size_t step = 0; step <= 12; step++)
     {
       const auto &vertex = mesh.vertices[ring * 13 + step];
-      EXPECT_NEAR(glm::length(vertex.position - centres[ring]), 0.25f, 1e-5f);
-      EXPECT_NEAR(dot(vertex.normal, normalize(vertex.position - centres[ring])), 1.0f, 1e-5f);
+      EXPECT_NEAR(glm::length(vertex.position - centers[ring]), 0.25f, 1e-5f);
+      EXPECT_NEAR(dot(vertex.normal, normalize(vertex.position - centers[ring])), 1.0f, 1e-5f);
     }
   }
 }
@@ -74,12 +74,12 @@ TEST(Tube, FacesOutward)
 
 TEST(Tube, DoesNotTwistAlongABend)
 {
-  const auto centres = QuarterCircle(16);
+  const auto centers = QuarterCircle(16);
   MeshData mesh;
-  AppendTube(centres, 0.25f, 12, 1.0f, mesh);
+  AppendTube(centers, 0.25f, 12, 1.0f, mesh);
 
   // the first vertex of a ring stays next to the first of the ring before
-  for (std::size_t ring = 1; ring < centres.size(); ring++)
+  for (std::size_t ring = 1; ring < centers.size(); ring++)
   {
     const glm::vec3 before = mesh.vertices[(ring - 1) * 13].normal;
     const glm::vec3 here = mesh.vertices[ring * 13].normal;
@@ -92,7 +92,7 @@ TEST(Tube, LaysItsTextureRoundItAndAlongIt)
   MeshData mesh;
   AppendTube({{0, 0, 0}, {0, 0, 3}}, 0.5f, 8, 2.0f, mesh);
 
-  // twice a metre: round a girth of pi, along three metres
+  // twice a meter: round a girth of pi, along three meters
   EXPECT_NEAR(mesh.vertices[0].tex_coords.x, 0.0f, 1e-5f);
   EXPECT_NEAR(mesh.vertices[8].tex_coords.x, 2.0f * 3.1415927f, 1e-4f);
   EXPECT_NEAR(mesh.vertices[0].tex_coords.y, 0.0f, 1e-5f);
@@ -113,7 +113,7 @@ TEST(Tube, IsWrittenOverTheOneBeforeWithoutGrowing)
 
   // the same points somewhere else
   auto moved = QuarterCircle(8);
-  for (auto &centre : moved) { centre += glm::vec3(0.0f, 1.0f, 0.5f); }
+  for (auto &center : moved) { center += glm::vec3(0.0f, 1.0f, 0.5f); }
   mesh.vertices.clear();
   mesh.indices.clear();
   AppendTube(moved, 0.25f, 12, 1.0f, mesh);

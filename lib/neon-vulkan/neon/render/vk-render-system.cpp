@@ -21,7 +21,7 @@ namespace neon
   // Helpers of VK_RenderSystem, for this file alone.
   namespace
   {
-    // The image that is shown holds sRGB colours as bytes: what the resolve
+    // The image that is shown holds sRGB colors as bytes: what the resolve
     // step writes, and what is drawn on top of it. It is copied as it is to
     // the window and to a file.
     constexpr VkFormat color_format = VK_FORMAT_R8G8B8A8_UNORM;
@@ -146,7 +146,7 @@ namespace neon
 
     if (!CreateFrameImages()) { throw std::runtime_error("Failed to set up the Vulkan renderer"); }
 
-    // drawn on top of the resolved scene, in the sRGB colours CSS blends in
+    // drawn on top of the resolved scene, in the sRGB colors CSS blends in
     _renderer_2d.Initialize(&_device, _file_system_context, _frame_pass, &_samplers, _extent, _logger);
 
     _white_texture = VK_Texture("a plain white texture", _file_system_context, &_device, _logger);
@@ -1117,7 +1117,7 @@ namespace neon
         : nullptr;
 
     // What the model file says about its look fills in what the scene does
-    // not: its colour factor multiplies the colour of the material, its
+    // not: its color factor multiplies the color of the material, its
     // textures are shown when the scene names none, and its doubleSided
     // holds unless the scene says always or never. The textures the scene
     // names replace those of the first material of the model alone.
@@ -1138,13 +1138,13 @@ namespace neon
     }
 
     // What the surface gives off, see docs/scenes.md. The scene's emissive
-    // colour replaces the file's factor, and black, the default, leaves it
-    // to the file; a texture the scene names without a colour glows as the
+    // color replaces the file's factor, and black, the default, leaves it
+    // to the file; a texture the scene names without a color glows as the
     // texture is. The strengths multiply, so that 0 turns a file's glow off.
     const Color &glow = material_info.emissive;
-    const bool scene_names_colour = glow.r > 0.0f || glow.g > 0.0f || glow.b > 0.0f;
+    const bool scene_names_color = glow.r > 0.0f || glow.g > 0.0f || glow.b > 0.0f;
     const bool scene_names_texture = !material_info.emissive_texture.empty();
-    if (!scene_names_colour)
+    if (!scene_names_color)
     {
       if (scene_names_texture)
       {
@@ -1334,7 +1334,7 @@ namespace neon
     bool dropped = false;
 
     // The parts of a light are amounts of light that the shaders add up,
-    // and are handed over as they are. A colour of a material is written
+    // and are handed over as they are. A color of a material is written
     // as a screen shows it and is turned into light, but 0.5 here means
     // half the light, as it says.
     for (const auto &light : lights)

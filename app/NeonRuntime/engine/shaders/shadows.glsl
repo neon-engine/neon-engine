@@ -17,7 +17,7 @@ layout (set = 0, binding = 9) uniform samplerShadow shadow_sampler;
 // 1 where the direction light reaches `world_position`, 0 where something
 // stands between, and in between along the edge of a shadow: the nine
 // texels around the place are compared and averaged, each of which the
-// sampler blends with its neighbours already.
+// sampler blends with its neighbors already.
 float direction_light_visibility(vec3 world_position)
 {
     if (scene.direction_light.shadow.x < 0.5) { return 1.0; }

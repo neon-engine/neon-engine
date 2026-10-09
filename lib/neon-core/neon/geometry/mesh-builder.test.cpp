@@ -12,7 +12,7 @@ namespace
   using ::testing::Each;
 
   /// The normal a triangle's winding gives it, seen from where the corners
-  /// go round anticlockwise.
+  /// go round counterclockwise.
   glm::vec3 WindingNormal(const MeshData &mesh, const std::size_t triangle)
   {
     const glm::vec3 &a = mesh.vertices[mesh.indices[triangle * 3]].position;
@@ -47,8 +47,8 @@ namespace
     return count;
   }
 
-  /// The centre of all vertices.
-  glm::vec3 CentreOf(const MeshData &mesh)
+  /// The center of all vertices.
+  glm::vec3 CenterOf(const MeshData &mesh)
   {
     glm::vec3 sum{0.0f};
     for (const auto &vertex : mesh.vertices) { sum += vertex.position; }
@@ -68,7 +68,7 @@ namespace
     }
   }
 
-  TEST(MeshBuilder, SizesAndCentresABoxWhereItIsAsked)
+  TEST(MeshBuilder, SizesAndCentersABoxWhereItIsAsked)
   {
     const MeshData box = MeshBuilder().AddBox({2.0f, 4.0f, 6.0f}, {10.0f, 20.0f, 30.0f}).Build();
 
@@ -90,10 +90,10 @@ namespace
     EXPECT_EQ(plane.TriangleCount(), 18u);
     ExpectWindingMatchesNormals(plane);
     EXPECT_EQ(CountFacing(plane, {0, 1, 0}), 18u);
-    const glm::vec3 centre = CentreOf(plane);
-    EXPECT_NEAR(centre.x, 0.0f, 1e-5f);
-    EXPECT_NEAR(centre.y, 0.0f, 1e-5f);
-    EXPECT_NEAR(centre.z, 0.0f, 1e-5f);
+    const glm::vec3 center = CenterOf(plane);
+    EXPECT_NEAR(center.x, 0.0f, 1e-5f);
+    EXPECT_NEAR(center.y, 0.0f, 1e-5f);
+    EXPECT_NEAR(center.z, 0.0f, 1e-5f);
   }
 
   TEST(MeshBuilder, BuildsARampThatRisesTowardsTheBack)
@@ -134,14 +134,14 @@ namespace
     EXPECT_EQ(CountFacing(room, {0, 0, -1}), 2u);
   }
 
-  /// Every face of a closed shape points away from its centre.
+  /// Every face of a closed shape points away from its center.
   void ExpectEveryFacePointsOutward(const MeshData &mesh)
   {
-    const glm::vec3 centre = CentreOf(mesh);
+    const glm::vec3 center = CenterOf(mesh);
     for (std::size_t t = 0; t < mesh.TriangleCount(); t++)
     {
       const glm::vec3 &on_face = mesh.vertices[mesh.indices[t * 3]].position;
-      EXPECT_GT(dot(WindingNormal(mesh, t), on_face - centre), 0.0f) << "triangle " << t;
+      EXPECT_GT(dot(WindingNormal(mesh, t), on_face - center), 0.0f) << "triangle " << t;
     }
   }
 
@@ -168,12 +168,12 @@ namespace
 
     ExpectWindingMatchesNormals(room);
 
-    // every face now points at the centre of the room
-    const glm::vec3 centre = CentreOf(room);
+    // every face now points at the center of the room
+    const glm::vec3 center = CenterOf(room);
     for (std::size_t t = 0; t < room.TriangleCount(); t++)
     {
       const glm::vec3 &on_face = room.vertices[room.indices[t * 3]].position;
-      EXPECT_GT(dot(WindingNormal(room, t), centre - on_face), 0.0f) << "triangle " << t;
+      EXPECT_GT(dot(WindingNormal(room, t), center - on_face), 0.0f) << "triangle " << t;
     }
   }
 
@@ -203,7 +203,7 @@ namespace
     }
   }
 
-  TEST(MeshBuilder, ASphereOfThreeLengthsIsAnEllipsoidCentredWhereItIsAsked)
+  TEST(MeshBuilder, ASphereOfThreeLengthsIsAnEllipsoidCenteredWhereItIsAsked)
   {
     const MeshData egg = MeshBuilder().AddSphere({2.0f, 4.0f, 6.0f}, 16, true, {1.0f, 2.0f, 3.0f}).Build();
 
@@ -264,7 +264,7 @@ namespace
 
   TEST(MeshBuilder, AnUprightQuadFacesForwardAndCarriesATextureOnce)
   {
-    // the texels per metre are not asked: a picture lies on it once
+    // the texels per meter are not asked: a picture lies on it once
     const MeshData quad = MeshBuilder(4.0f).AddUprightQuad({3.0f, 2.0f}).Build();
 
     EXPECT_EQ(quad.TriangleCount(), 2u);
@@ -280,12 +280,12 @@ namespace
     }
   }
 
-  TEST(MeshBuilder, ProjectsTexturesOnceAMetreByDefault)
+  TEST(MeshBuilder, ProjectsTexturesOnceAMeterByDefault)
   {
     const MeshData box = MeshBuilder().AddBox({2.0f, 2.0f, 2.0f}).Build();
 
-    // every corner lies a metre from the centre on two axes, so its texture
-    // coordinates are a metre apart as well
+    // every corner lies a meter from the center on two axes, so its texture
+    // coordinates are a meter apart as well
     for (const auto &vertex : box.vertices)
     {
       EXPECT_NEAR(std::fabs(vertex.tex_coords.x), 1.0f, 1e-5f);

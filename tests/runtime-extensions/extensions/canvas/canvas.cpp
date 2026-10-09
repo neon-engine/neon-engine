@@ -1,4 +1,4 @@
-// Makes a picture of four plain colours and a square to show it on, and
+// Makes a picture of four plain colors and a square to show it on, and
 // puts the square in front of the camera, with the engine's Transform and
 // Renderable. Nothing of it is in a file. Next to it are a square lit by a
 // lightmap, and one whose picture is set again while the game runs.
@@ -14,11 +14,11 @@ namespace
   using neon::extension::Vertex;
   using neon::extension::World;
 
-  // how many pixels the picture has each way, half of them one colour
+  // how many pixels the picture has each way, half of them one color
   constexpr std::uint32_t side = 64;
 
   /// The picture: red at the top left, green at the top right, blue at the
-  /// bottom left, and a grey at the bottom right.
+  /// bottom left, and a gray at the bottom right.
   std::vector<std::uint8_t> MakePicture()
   {
     std::vector<std::uint8_t> pixels;
@@ -60,7 +60,7 @@ namespace
 
   class Canvas final : public neon::extension::Extension
   {
-    /// A square of a metre to the left of the canvas, whose picture is set
+    /// A square of a meter to the left of the canvas, whose picture is set
     /// again while the game runs, see Repainting.
     static void ShowSignal(World &world)
     {
@@ -89,7 +89,7 @@ namespace
         {0, 1, 2, 0, 2, 3});
     }
 
-    /// A white square of a metre to the right of the canvas, lit by a
+    /// A white square of a meter to the right of the canvas, lit by a
     /// lightmap of its own: half the light on its left half, all of it on
     /// its right.
     static void ShowLit(World &world)
@@ -131,7 +131,7 @@ namespace
       world.Info(lightmapped ? "The square is lit by " + light : "The square could not be lit");
     }
 
-    /// A square of one colour that is seen through, as far from its entity
+    /// A square of one color that is seen through, as far from its entity
     /// along z as `offset` says.
     static void ShowGlass(
       World &world,
@@ -166,7 +166,7 @@ namespace
 
     /// Two squares that are seen through, one behind the other below the lit
     /// square: red in front, half of it solid, and blue behind. Each lies a
-    /// metre and a half from the entity it is placed by, the other way
+    /// meter and a half from the entity it is placed by, the other way
     /// round: the entity of the red one is the farther. What is seen through
     /// is drawn from the farthest to the nearest, and only the order of
     /// where the squares are gives red over blue.
@@ -194,7 +194,7 @@ namespace
       world.SetText(canvas, world.FindField("Renderable", "shader"), "engine://shaders/unlit");
       world.SetTexts(canvas, world.FindField("Renderable", "textures"), {picture});
 
-      // two metres each way, facing the camera, which looks down z
+      // two meters each way, facing the camera, which looks down z
       const NeonVector3 towards{0.0f, 0.0f, 1.0f};
       const NeonColor white{1.0f, 1.0f, 1.0f, 1.0f};
       const bool shown = world.SetMesh(

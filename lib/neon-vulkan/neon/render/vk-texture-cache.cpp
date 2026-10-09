@@ -19,7 +19,7 @@ namespace neon
     const std::string &model_path,
     const VK_TextureOptions &options)
   {
-    // the same image kept two ways, as colours and as numbers, is two
+    // the same image kept two ways, as colors and as numbers, is two
     // textures
     std::string key = model_path.empty() ? path : model_path + "#" + path;
     key += options.is_color ? "|color" : "|data";

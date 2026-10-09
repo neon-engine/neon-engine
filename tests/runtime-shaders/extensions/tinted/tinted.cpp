@@ -40,7 +40,7 @@ namespace
 
     void Start(World &world) override
     {
-      // The numbers at place 3: a colour in linear light, which a screen
+      // The numbers at place 3: a color in linear light, which a screen
       // writes as 255 188 0.
       const bool numbered = world.SetShaderNumbers(3, {1.0f, 0.5f, 0.0f, 0.0f});
 
@@ -53,7 +53,7 @@ namespace
       world.SetText(square, world.FindField("Renderable", "shader"), "extensions://tinted/shaders/tinted");
       world.SetTexts(square, world.FindField("Renderable", "textures"), {white});
 
-      // two metres each way, facing the camera, which looks down z
+      // two meters each way, facing the camera, which looks down z
       const NeonVector3 towards{0.0f, 0.0f, 1.0f};
       const NeonColor plain{1.0f, 1.0f, 1.0f, 1.0f};
       const bool shown = world.SetMesh(

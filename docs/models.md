@@ -24,9 +24,9 @@ plan.
 |---|---|
 | The file | `Model::LoadModel()` hands assimp an `IOSystem` that opens every file through `FileSystemContext::ReadBytes`: the model, and anything it names, such as the `.mtl` of an `.obj`. No native path leaves the file system |
 | The scene | assimp triangulates every face and flips the texture coordinates, so that `0, 0` is the top left of an image, as the textures are uploaded. The glTF importer of assimp flips them the other way first, so a GLB ends up the same way round as an `.obj` |
-| The materials | Each material of the file becomes a `ModelMaterial`: its diffuse and specular textures, its base colour factor, and what it gives off. See [materials](#what-of-a-material-is-read) |
+| The materials | Each material of the file becomes a `ModelMaterial`: its diffuse and specular textures, its base color factor, and what it gives off. See [materials](#what-of-a-material-is-read) |
 | The nodes | The tree of nodes is walked from the root, with the transform of every node under those above it. Each mesh of a node is handed to the backend with that transform, which bakes it into the vertices: the renderer draws a model as one piece and has no nodes of its own. The model notes which material each mesh uses, see [several materials](#several-materials) |
-| The meshes | `Model::ReadVertices()` makes a `Vertex` of every position, normal, texture coordinate, and vertex colour of a mesh, white where the mesh has no colours. A `Vertex` also has coordinates in a lightmap, which a model file does not fill in yet (#240). A backend makes a mesh of its own from them and the indices: the Vulkan backend uploads them, the physics keeps the positions for a `mesh` or `convex_hull` collider |
+| The meshes | `Model::ReadVertices()` makes a `Vertex` of every position, normal, texture coordinate, and vertex color of a mesh, white where the mesh has no colors. A `Vertex` also has coordinates in a lightmap, which a model file does not fill in yet (#240). A backend makes a mesh of its own from them and the indices: the Vulkan backend uploads them, the physics keeps the positions for a `mesh` or `convex_hull` collider |
 | The size | A model is drawn at its own size and around its own origin, as the file says, unless the `Renderable` asks for a `fit` of `unit`, which moves it to the origin and scales it so that its longest side is 1. See [the size of a model](#the-size-of-a-model) |
 
 A model is read once for every path and fit, however many entities draw
@@ -46,13 +46,13 @@ instead, see [culling](vulkan-renderer.md).
 
 **Decision (#190):** a model is drawn at its own size and around its own
 origin, as the file says. That is what glTF means, a piece of a kit is in
-metres and stands on its origin, and what the editor's conversion (#98)
+meters and stands on its origin, and what the editor's conversion (#98)
 will assume. A `Renderable` says otherwise with `fit`:
 
 | `fit` | What is drawn | For |
 |---|---|---|
 | `none` | The model as the file says it, in its units and around its origin. The default | glTF, and every model prepared for the engine |
-| `unit` | The model moved so that its middle lies at the origin, and scaled so that its longest side is 1. The `scale` of the `Transform` then gives it a size | A model that is not in metres, such as the `.obj` leftovers of the demo scenes |
+| `unit` | The model moved so that its middle lies at the origin, and scaled so that its longest side is 1. The `scale` of the `Transform` then gives it a size | A model that is not in meters, such as the `.obj` leftovers of the demo scenes |
 
 Until the first change of #190, every model got what `unit` does, and a
 scene had to write the longest side of every kit piece as its `scale` and
@@ -69,27 +69,27 @@ is drawn. See [physics.md](physics.md). A mesh built at run time by a
 In the code, `ModelFit` is `neon/render/model-fit.hpp`; `Model` takes it
 and `Model::ComputeNormalizationMatrix` gives the identity for `None`.
 
-## The colours of the vertices
+## The colors of the vertices
 
-**Decision (#192):** a `Vertex` carries a colour, four floats, and there is
+**Decision (#192):** a `Vertex` carries a color, four floats, and there is
 one vertex layout for every model. A model that paints its vertices
 (`COLOR_0` of glTF, which some kits use in place of a texture) has them
 read, in linear light as glTF keeps them; a model without gets white on
 every vertex, and a mesh built by `MeshBuilder` too. The shaders that light,
-`pbr` and `basic-lit`, and `unlit` multiply the vertex colour into the base
-colour, next to the material's `color` and the texture, as glTF defines the
-base colour. White changes nothing, so a model without vertex colours is
+`pbr` and `basic-lit`, and `unlit` multiply the vertex color into the base
+color, next to the material's `color` and the texture, as glTF defines the
+base color. White changes nothing, so a model without vertex colors is
 drawn as before.
 
 The cost is sixteen bytes a vertex for every model, also those without
-colours. A second layout and a second pipeline per shader for models
+colors. A second layout and a second pipeline per shader for models
 without would save them, and was not worth the variant: the models of a
 game are small next to its textures, and one layout keeps every shader and
-every pipeline the same. The alpha of a vertex colour is not read: assimp
-leaves it at 0 for a colour of three components and does not say how many
+every pipeline the same. The alpha of a vertex color is not read: assimp
+leaves it at 0 for a color of three components and does not say how many
 the file had, so every vertex of a file gets 1, and the shaders multiply
 the red, green, and blue alone. A loader of the engine's own (#69) can read
-it. `tests/runtime-vertex-colours` reads a painted model pixel by pixel.
+it. `tests/runtime-vertex-colors` reads a painted model pixel by pixel.
 
 ## What of a material is read
 
@@ -97,10 +97,10 @@ it. `tests/runtime-vertex-colours` reads a painted model pixel by pixel.
 |---|---|---|
 | The diffuse texture (`map_Kd` of an `.obj`, `baseColorTexture` of glTF) | The first texture of the material | Shown when the `Renderable` names no `textures` of its own |
 | The specular texture (`map_Ks`) | The second texture | glTF has none; its `metallicRoughnessTexture` is not read (#59) |
-| The base colour factor (`baseColorFactor` of glTF) | Multiplied into `material.color` of the `Renderable` | The `Kd` of an `.obj` is not read: the scenes set the colour themselves, and a grey `Kd` would darken them |
+| The base color factor (`baseColorFactor` of glTF) | Multiplied into `material.color` of the `Renderable` | The `Kd` of an `.obj` is not read: the scenes set the color themselves, and a gray `Kd` would darken them |
 | What the material gives off (`emissiveFactor` of glTF, `Ke` of an `.obj`) | `ModelMaterial::emissive`, taken as `material.emissive` when the `Renderable` leaves it black | Black when the file says nothing, which gives off nothing |
 | Its strength (`KHR_materials_emissive_strength` of glTF) | `ModelMaterial::emissive_strength`, multiplied into `material.emissive_strength` | 1 when the file says nothing. Read only when the file lists the extension in `extensionsUsed`, as the standard asks |
-| The emissive texture (`emissiveTexture` of glTF, `map_Ke` of an `.obj`) | `ModelMaterial::emissive_texture`, shown when the `Renderable` names no `emissive_texture` | Kept apart from the textures of the colours, and read as colours, in sRGB |
+| The emissive texture (`emissiveTexture` of glTF, `map_Ke` of an `.obj`) | `ModelMaterial::emissive_texture`, shown when the `Renderable` names no `emissive_texture` | Kept apart from the textures of the colors, and read as colors, in sRGB |
 | An image kept inside the file (`*0` in assimp, a `bufferView` image of a GLB) | The texture is made from the bytes of the image | Only PNG and JPEG, as glTF allows. Raw pixels in a file are warned about and left out |
 | An image file next to the model (`colormap.png`) | A virtual path from the folder of the model, `assets://models/kit/colormap.png` | The file has to be where the model says, with the letter case the model uses |
 
@@ -120,14 +120,14 @@ white, since black is what gives off nothing:
 | `emissive` | `emissive_texture` | What glows |
 |---|---|---|
 | Left out, or black | Left out | What the file says: its factor times its texture. Nothing for a file that says nothing, and for a `Geometry` |
-| Written | Left out | The colour, times the file's emissive texture when it has one |
-| Left out, or black | Written | The texture as it is, as if the colour were white |
-| Written | Written | The colour times the texture |
+| Written | Left out | The color, times the file's emissive texture when it has one |
+| Left out, or black | Written | The texture as it is, as if the color were white |
+| Written | Written | The color times the texture |
 
 `emissive_strength` of the `Renderable` is multiplied with the file's in
 every row, so `0` turns a file's glow off and `4` makes it four times
 brighter. A factor the file gives is read as `material.color` is: as a
-colour written in sRGB, although glTF keeps both factors in linear light.
+color written in sRGB, although glTF keeps both factors in linear light.
 
 ## doubleSided
 
@@ -143,11 +143,11 @@ colour written in sRGB, although glTF keeps both factors in linear light.
 
 Reading the file is correct by the standard, and costs nothing on a model
 that says nothing. Some kits mark every material double-sided, as their
-exporter does, though every piece is closed: honouring it draws the back of
+exporter does, though every piece is closed: honoring it draws the back of
 every triangle of every piece, which the depth test then discards. The
 scene decides whether that matters: `never` on such a piece culls as
 before, and the editor's conversion (#98) is the place to clear the flag
-for a whole kit. `tests/runtime-vertex-colours` draws a model the file marks
+for a whole kit. `tests/runtime-vertex-colors` draws a model the file marks
 double-sided from behind, with and without the scene's `never`.
 
 ## Several materials
@@ -172,15 +172,15 @@ The `Renderable` of the scene stays the override of the whole model:
 
 | In the `Renderable` | Applies to |
 |---|---|
-| `material.color` | Every material: it multiplies the base colour factor of each |
+| `material.color` | Every material: it multiplies the base color factor of each |
 | `textures` | The first material alone, whose own textures it replaces. The others keep what the file names. The first material is that of the first mesh, which is the only one a model with one material has |
 | `shader`, `scale_textures`, `use_textures`, `shininess`, `metallic`, `roughness`, `alpha_mode` | Every material |
 | `material.double_sided` | Every material when `always` or `never`. `model` takes the `doubleSided` of each material of the file for its own meshes |
 
 `tests/runtime-materials` draws a model of two boxes, a red and a blue one
-with a material each, and reads both colours as they are, lit, and
-multiplied by a colour of the scene. The model, `coloured-boxes.glb`, is
-written by `tools/make-coloured-boxes.py`. A material per mesh in the file
+with a material each, and reads both colors as they are, lit, and
+multiplied by a color of the scene. The model, `colored-boxes.glb`, is
+written by `tools/make-colored-boxes.py`. A material per mesh in the file
 of the scene, so that one mesh of a model can be given another texture
 without touching the file, is not planned: that is what the editor's
 conversion (#98) is for.
@@ -206,17 +206,17 @@ floor tile, a column, a crate, and the like, each a GLB of a few boxes that
 [tools/make-test-game-assets.py](../tools/make-test-game-assets.py) writes
 from numbers. They stand in for a kit a game would buy or draw: every piece
 names the same texture next to it, `colormap.png`. A piece is
-Y-up and in metres, with its floor at `y = 0`, and is drawn the right way up
+Y-up and in meters, with its floor at `y = 0`, and is drawn the right way up
 without any change. `colormap.png` is a palette: the texture
-coordinates of a piece point at a pixel of one colour, so a piece that is
-stretched by a `Transform` keeps its colours.
+coordinates of a piece point at a pixel of one color, so a piece that is
+stretched by a `Transform` keeps its colors.
 
 ## Open questions
 
 - **A glTF loader of the engine's own**, and assimp out of the runtime (#69,
   #98): the loader of the runtime reads `.glb` and `.gltf` through the file
-  system — meshes, materials, textures, nodes, later skins and animations
-  (#149) — and nothing else; the `.obj` models of the demos become `.glb`.
+  system - meshes, materials, textures, nodes, later skins and animations
+  (#149) - and nothing else; the `.obj` models of the demos become `.glb`.
   When the editor converts a model it strips the animations out into glTF
   files of their own, so that an animation can be retargeted to another
   skeleton and reused (#149); the runtime reads a skeleton, a skinned mesh,
@@ -224,6 +224,6 @@ stretched by a `Transform` keeps its colours.
   image file next to the model too, whether the source embedded it or carried
   raw pixels, so that a texture is a file of its own that is shared, replaced,
   and compressed by the exporter.
-- **The colour and the texture.** `basic-lit` shows either the colour or the
+- **The color and the texture.** `basic-lit` shows either the color or the
   texture of a material, by `use_textures`. glTF multiplies the two. A tinted
   texture, a red and a blue of the same piece, waits for #59.

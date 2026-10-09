@@ -3,7 +3,7 @@
 
 namespace bench
 {
-  /// A crate with no behaviour: a body alone, which nothing runs over. It is
+  /// A crate with no behavior: a body alone, which nothing runs over. It is
   /// what the others are measured against.
   struct Crate
   {

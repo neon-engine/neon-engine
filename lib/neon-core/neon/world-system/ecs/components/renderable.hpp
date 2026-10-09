@@ -90,7 +90,7 @@ namespace neon
             "alpha_mode",
             [](Renderable &renderable) -> AlphaMode & { return renderable.render_info.material_info.alpha_mode; },
             {"opaque", "blend"})
-          .Describe("Whether the alpha of the colour lets what is behind show through");
+          .Describe("Whether the alpha of the color lets what is behind show through");
 
       material.Choice(
             "double_sided",

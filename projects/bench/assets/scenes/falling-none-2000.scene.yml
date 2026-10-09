@@ -1,5 +1,5 @@
 # 2000 crates placed at once that fall onto a floor and pile up, with no
-# behaviour.
+# behavior.
 scene: falling-none-2000
 version: 1
 
@@ -45,5 +45,5 @@ entities:
   - name: spawner
     components:
       NativeSpawner:
-        behaviour: 0
+        behavior: 0
         burst: 2000

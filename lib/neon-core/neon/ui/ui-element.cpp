@@ -148,8 +148,8 @@ namespace neon
 
   void UiElement::ApplyPartDefaults(const std::string &part, UiStyle &style) const
   {
-    // The parts of a scrollbar take their colours from `scrollbar_color`,
-    // and from the colour of the text without one.
+    // The parts of a scrollbar take their colors from `scrollbar_color`,
+    // and from the color of the text without one.
     const UiStyle &of_element = GetStyle();
     const Color &text = of_element.color;
 

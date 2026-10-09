@@ -1,13 +1,13 @@
 # Credits
 
 Everything in this repository that was not made for Neon Engine: what it is,
-where it came from, the licence it is under, and where the text of that
-licence is. Whether a licence allows static linking, and what it asks of a
+where it came from, the license it is under, and where the text of that
+license is. Whether a license allows static linking, and what it asks of a
 game that is distributed, is in
 [docs/third-party-licenses.md](docs/third-party-licenses.md).
 
 The libraries are Git submodules under `external/`, each at the version its
-authors published, unchanged. Each keeps its own licence file, which is the
+authors published, unchanged. Each keeps its own license file, which is the
 one named here.
 
 ## Libraries that are part of NeonRuntime
@@ -15,7 +15,7 @@ one named here.
 Built from source and linked into the runtime, so a build of the engine holds
 their code.
 
-| Library | Version | Used for | Licence | Text |
+| Library | Version | Used for | License | Text |
 |---|---|---|---|---|
 | [SDL2](https://github.com/libsdl-org/SDL) | 2.30.9 | Window, input, gamepads, files | zlib | `external/sdl2/LICENSE.txt` |
 | [Vulkan-Headers](https://github.com/KhronosGroup/Vulkan-Headers) | 1.4.357 | The declarations of Vulkan | Apache 2.0 or MIT, MIT is taken | `external/vulkan-headers/LICENSE.md`, `external/vulkan-headers/LICENSES/` |
@@ -37,13 +37,13 @@ The FreeType License asks to be named where the program is credited: portions
 of this software are copyright The FreeType Project
 (https://freetype.org). All rights reserved.
 
-SDL2 holds hidapi, which is under one of three licences to be chosen: GPL 3,
-BSD, or its original licence. The BSD one is the one to take,
+SDL2 holds hidapi, which is under one of three licenses to be chosen: GPL 3,
+BSD, or its original license. The BSD one is the one to take,
 `external/sdl2/src/hidapi/LICENSE-bsd.txt`.
 
 ## Libraries that are in the repository and not part of NeonRuntime
 
-| Library | Version | Used for | Licence | Text |
+| Library | Version | Used for | License | Text |
 |---|---|---|---|---|
 | [GoogleTest](https://github.com/google/googletest) | 1.18.0 | The tests. Linked into the test programs alone | BSD 3-Clause | `external/googletest/LICENSE` |
 | [Steam Audio](https://github.com/ValveSoftware/steam-audio) | 4.6.0 | Nothing yet: it is not built. Meant for sound in space | Apache 2.0, with libraries of its own that `core/THIRDPARTY.md` lists | `external/steam-audio/LICENSE.md` |
@@ -53,7 +53,7 @@ BSD, or its original licence. The BSD one is the one to take,
 The only assets in the repository that were taken from elsewhere. Both are
 the files as they were published, whole and unchanged.
 
-| Font | From | Licence | Text |
+| Font | From | License | Text |
 |---|---|---|---|
 | Inter, Regular and Bold, by The Inter Project Authors | https://github.com/rsms/inter/releases/tag/v4.1 | SIL Open Font License 1.1 | [app/NeonRuntime/engine/fonts/inter/LICENSE.txt](app/NeonRuntime/engine/fonts/inter/LICENSE.txt) |
 | Noto Sans Arabic, Regular, by The Noto Project Authors | https://github.com/notofonts/arabic, the file `fonts/NotoSansArabic/hinted/ttf/NotoSansArabic-Regular.ttf` of https://github.com/notofonts/notofonts.github.io | SIL Open Font License 1.1 | [app/NeonRuntime/engine/fonts/noto/LICENSE.txt](app/NeonRuntime/engine/fonts/noto/LICENSE.txt) |
@@ -63,7 +63,7 @@ the files as they were published, whole and unchanged.
 These come from the machine that builds or runs the engine. What each asks is
 in [docs/third-party-licenses.md](docs/third-party-licenses.md#not-in-the-repository-and-part-of-what-is-distributed).
 
-| What | Licence |
+| What | License |
 |---|---|
 | [MoltenVK](https://github.com/KhronosGroup/MoltenVK), which a build for macOS ships | Apache 2.0 |
 | libc++, libc++abi, libunwind, and compiler-rt, linked on Linux and Windows | Apache 2.0 with LLVM exception |
@@ -82,10 +82,10 @@ numbers.
 - In the game of the tests, `tests/game/assets/`:
     - `models/kit/`, `textures/brick.png`, `textures/concrete.png`, `textures/wood.png`, and `sounds/tone.wav`,
       written by `tools/make-test-game-assets.py`
-    - `models/coloured-boxes.glb` and `models/coloured-quads.glb`, written by `tools/make-coloured-boxes.py` and
-      `tools/make-coloured-quads.py`
+    - `models/colored-boxes.glb` and `models/colored-quads.glb`, written by `tools/make-colored-boxes.py` and
+      `tools/make-colored-quads.py`
     - `textures/sky/test-*.png`, written by `tools/make-sky-images.py`
     - `models/quad.obj`, a flat square for what shows an image or a surface
-    - `textures/gamma-test.png`, four colours for the scene `gamma-test.scene.yml`
+    - `textures/gamma-test.png`, four colors for the scene `gamma-test.scene.yml`
     - `ui/heart.png`, `ui/shield.svg`, `ui/gem-1x.png`, `ui/gem-2x.png`, `ui/gem-4x.png`, `ui/icons.png`,
       `ui/frame.png`, and `ui/test-card.jpg`, the images of the user interfaces of the tests

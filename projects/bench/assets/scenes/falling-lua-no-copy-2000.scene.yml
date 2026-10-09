@@ -45,5 +45,5 @@ entities:
   - name: spawner
     components:
       NativeSpawner:
-        behaviour: 6
+        behavior: 6
         burst: 2000

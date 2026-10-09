@@ -22,7 +22,7 @@ expect_no_output("[warning]")
 expect_no_output("[critical]")
 expect_image("shots/frame.png")
 
-# expect_pixel(<what> <x> <y> <red> <green> <blue>): the colour of a pixel,
+# expect_pixel(<what> <x> <y> <red> <green> <blue>): the color of a pixel,
 # each channel within 2 of what is given, which leaves room for rounding by
 # the graphics card
 function(expect_pixel WHAT X Y RED GREEN BLUE)
@@ -67,12 +67,12 @@ elseif (CASE STREQUAL "see-through-planes-blend-in-linear-light")
   expect_pixel("half of orange over half of blue over white" 1450 300 225 161 188)
   expect_pixel("half of orange over white" 1700 300 255 204 188)
   expect_pixel("half of orange over black" 1580 70 188 92 0)
-elseif (CASE STREQUAL "an-opaque-plane-ignores-the-alpha-of-its-colour")
+elseif (CASE STREQUAL "an-opaque-plane-ignores-the-alpha-of-its-color")
   # Were its alpha of 0.25 taken as the scene image's, the resolve would
   # divide the green by it, clamp it, and multiply it back in: 64, not 255.
   expect_pixel("the opaque green plane with an alpha of 0.25" 960 827 0 255 0)
 elseif (CASE STREQUAL "a-texture-is-shown-as-it-is")
-  # read as linear light and written as sRGB again, the colours of the file
+  # read as linear light and written as sRGB again, the colors of the file
   expect_pixel("the left top of the texture" 386 723 128 128 128)
   expect_pixel("the right top of the texture" 594 723 255 128 0)
   expect_pixel("the left bottom of the texture" 386 931 32 64 96)

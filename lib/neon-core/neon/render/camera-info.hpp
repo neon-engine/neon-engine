@@ -31,7 +31,7 @@ namespace neon
 
     /// The effects that are run over what the camera drew, as the paths of
     /// their shaders: on the light of the scene, before the tonemapper, and
-    /// on the colours a screen is given, after it. See
+    /// on the colors a screen is given, after it. See
     /// RenderContext::SetEffects().
     std::vector<std::string> effects;
     std::vector<std::string> screen_effects;

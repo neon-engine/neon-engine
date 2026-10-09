@@ -167,7 +167,7 @@ namespace neon
       switch_off(HB_TAG('c', 'l', 'i', 'g'));
       switch_off(HB_TAG('d', 'l', 'i', 'g'));
 
-      // what a font joins by looking at the neighbours, as Inter does
+      // what a font joins by looking at the neighbors, as Inter does
       // with the two characters of an arrow
       switch_off(HB_TAG('c', 'a', 'l', 't'));
     }

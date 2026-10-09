@@ -31,7 +31,7 @@ namespace neon
       }
     }
 
-    /// Metres into the units of the body, which its scale sizes.
+    /// Meters into the units of the body, which its scale sizes.
     glm::vec3 ScaleOf(const Transform &body)
     {
       return {

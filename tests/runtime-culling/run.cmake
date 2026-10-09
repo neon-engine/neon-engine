@@ -22,7 +22,7 @@ expect_no_output("[warning]")
 expect_no_output("[critical]")
 expect_image("shots/frame.png")
 
-# expect_pixel(<what> <x> <y> <red> <green> <blue>): the colour of a pixel,
+# expect_pixel(<what> <x> <y> <red> <green> <blue>): the color of a pixel,
 # each channel within 2 of what is given, which leaves room for rounding by
 # the graphics card
 function(expect_pixel WHAT X Y RED GREEN BLUE)

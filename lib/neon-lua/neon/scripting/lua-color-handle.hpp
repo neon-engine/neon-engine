@@ -10,7 +10,7 @@ struct lua_State;
 
 namespace neon
 {
-  /// A colour a script holds, bound to a field of a component when it was
+  /// A color a script holds, bound to a field of a component when it was
   /// read from one, as a vector is. See LuaVec3Handle.
   struct LuaColorHandle
   {
@@ -25,7 +25,7 @@ namespace neon
     }
   };
 
-  /// Adds the metatable of colours and the `color` function to the state,
+  /// Adds the metatable of colors and the `color` function to the state,
   /// once.
   void open_color_handles(lua_State *lua);
 
@@ -33,7 +33,7 @@ namespace neon
 
   void push_bound_color(lua_State *lua, const Color &value, const LuaComponentHandle &target, const FieldInfo &field);
 
-  /// The colour at the index, or a Lua error when there is none.
+  /// The color at the index, or a Lua error when there is none.
   [[nodiscard]] Color check_color(lua_State *lua, int index);
 
   [[nodiscard]] LuaColorHandle *test_color(lua_State *lua, int index);

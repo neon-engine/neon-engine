@@ -11,7 +11,7 @@
 
 namespace neon
 {
-  /// Reads a colour the way CSS writes it:
+  /// Reads a color the way CSS writes it:
   ///
   ///     #rgb  #rgba  #rrggbb  #rrggbbaa
   ///     rgb(255, 128, 0)  rgb(255 128 0)  rgb(100%, 50%, 0%)
@@ -19,7 +19,7 @@ namespace neon
   ///     transparent  black  white
   ///
   /// Returns false and leaves `color` alone for anything else, which
-  /// includes the other names CSS has for colours.
+  /// includes the other names CSS has for colors.
   [[nodiscard]] bool ParseCssColor(const std::string &text, Color &color);
 
   /// Reads a length: a number of pixels as `12` or `12px`, a percentage as

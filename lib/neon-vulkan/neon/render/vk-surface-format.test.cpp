@@ -16,7 +16,7 @@ namespace
 
   TEST(VkSurfaceFormatTest, TakesPlainBytesWhereverTheyAreInTheList)
   {
-    // the frame holds sRGB colours already, and an sRGB format would
+    // the frame holds sRGB colors already, and an sRGB format would
     // convert them again
     const std::vector<VkSurfaceFormatKHR> formats = {
       {VK_FORMAT_B8G8R8A8_SRGB, srgb_screen},
@@ -26,7 +26,7 @@ namespace
     EXPECT_EQ(ChooseSurfaceFormat(formats).format, VK_FORMAT_B8G8R8A8_UNORM);
   }
 
-  TEST(VkSurfaceFormatTest, TakesPlainBytesInEitherColourOrder)
+  TEST(VkSurfaceFormatTest, TakesPlainBytesInEitherColorOrder)
   {
     const std::vector<VkSurfaceFormatKHR> formats = {
       {VK_FORMAT_R8G8B8A8_SRGB, srgb_screen},

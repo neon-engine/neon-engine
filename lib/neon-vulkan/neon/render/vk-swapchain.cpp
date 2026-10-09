@@ -199,7 +199,7 @@ namespace neon
       commands, target, color, 0, 1,
       VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
-    // a scaling copy, which also converts between the colour orders that the
+    // a scaling copy, which also converts between the color orders that the
     // renderer and the window may use
     VkImageBlit blit{};
     blit.srcSubresource = {color, 0, 0, 1};

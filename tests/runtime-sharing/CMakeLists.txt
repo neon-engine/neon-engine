@@ -10,5 +10,5 @@ neon_add_application_test(runtime-sharing NeonRuntime run.cmake
         pixel-probe
         CASES
         crates-with-one-material-share-it
-        crates-of-distinct-colours-fill-more-than-one-pool
+        crates-of-distinct-colors-fill-more-than-one-pool
 )

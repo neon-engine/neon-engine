@@ -17,7 +17,7 @@ namespace neon
   /// The materials the render objects draw with, held once each.
   ///
   /// Two render objects whose material is the same, the same shader, the
-  /// same textures, the same colour and the rest of the material, over the
+  /// same textures, the same color and the rest of the material, over the
   /// same model, draw with one material: one descriptor set, one set of
   /// textures. The first one makes it, the others take a reference.
   ///

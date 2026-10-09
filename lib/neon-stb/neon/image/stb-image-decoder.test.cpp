@@ -108,11 +108,11 @@ namespace
       {
         unsigned char value = two_pixels[pixel * 4 + channel];
 
-        // Photoshop keeps the colours of a picture with alpha blended over
-        // white, and a reader takes the white off again. A colour kept as
+        // Photoshop keeps the colors of a picture with alpha blended over
+        // white, and a reader takes the white off again. A color kept as
         // it is would be darker than any blend over white can be, which
         // stb_image turns into a float below zero and then into a byte,
-        // and what that gives is not defined: 0 without the optimiser, 3
+        // and what that gives is not defined: 0 without the optimizer, 3
         // with it.
         if (channels == 4 && channel < 3)
         {
@@ -154,7 +154,7 @@ namespace
     EXPECT_GT(_image.height, 0);
     EXPECT_EQ(_image.pixels.size(), static_cast<std::size_t>(_image.width) * _image.height * 4);
 
-    // the corner of the heart is see-through, and its colour is kept
+    // the corner of the heart is see-through, and its color is kept
     EXPECT_EQ(_image.pixels[3], 0);
   }
 

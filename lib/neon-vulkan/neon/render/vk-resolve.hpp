@@ -13,7 +13,7 @@
 namespace neon
 {
   /// The resolve step: the one place where the linear light of a scene
-  /// becomes the colours of the image that is shown. A shader that covers
+  /// becomes the colors of the image that is shown. A shader that covers
   /// the image reads the scene image pixel by pixel, multiplies the
   /// exposure in, maps it through the tonemapper, and writes it in sRGB.
   ///

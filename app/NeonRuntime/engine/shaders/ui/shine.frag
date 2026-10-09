@@ -21,7 +21,7 @@ layout (set = 2, binding = 0) uniform Values
     // the element
     float lean;
 
-    // the colour of the band, whose alpha says how bright it is
+    // the color of the band, whose alpha says how bright it is
     vec4 tint;
 } values;
 

@@ -21,7 +21,7 @@ namespace neon
   public:
     /// Reads an image. The pixels are red, green, blue, and alpha, a byte
     /// each, row after row from the top, and alpha is not multiplied into
-    /// the colours. Returns false and says why for what is no image the
+    /// the colors. Returns false and says why for what is no image the
     /// decoder knows.
     virtual bool Decode(const std::vector<unsigned char> &file, ImagePixels &image, std::string &error) = 0;
   };

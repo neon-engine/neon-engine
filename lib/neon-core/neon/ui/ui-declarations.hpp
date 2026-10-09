@@ -34,7 +34,7 @@ namespace neon
     /// to. nullptr goes back to the initial value.
     const UiStyle *defaults = nullptr;
 
-    /// Whether the names of colours and `hsl()` are read. They are in
+    /// Whether the names of colors and `hsl()` are read. They are in
     /// style sheets. A file of YAML reads the notations it read before.
     bool reads_color_names = true;
   };

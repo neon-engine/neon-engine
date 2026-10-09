@@ -108,7 +108,7 @@ and hides files itself with `UiContext::Load` and `Unload`.
 | A keyword | As in CSS, hyphen included | `space-between`, `row-reverse`, `border-box` |
 | A length | A number, which counts as pixels, or text with `px` or `%` | `200`, `200px`, `50%`, `auto` |
 | Several values | Text with spaces between them, or a list | `8 16`, `[8, 16]` |
-| A colour | As in CSS, in quotes. **Preferred.** A list as in scene recipes is read as well | `"#ff8000"`, `"#ff800080"`, `"#f80"`, `rgb(255, 128, 0)`, `rgba(255, 128, 0, 0.5)`, `[1, 0.5, 0]` |
+| A color | As in CSS, in quotes. **Preferred.** A list as in scene recipes is read as well | `"#ff8000"`, `"#ff800080"`, `"#f80"`, `rgb(255, 128, 0)`, `rgba(255, 128, 0, 0.5)`, `[1, 0.5, 0]` |
 
 A `#` starts a comment in YAML, so a value with one in it needs quotes as a
 whole: `border: "2px solid #4c566a"`.
@@ -220,8 +220,8 @@ does nothing.
 | `margin_top`, `margin_right`, `margin_bottom`, `margin_left` | One value | `0` |
 | `padding`, and `padding_top` and so on | The same, without `auto` and not below 0 | `0` |
 | `border_width` | One to four numbers of pixels | `0` |
-| `border_color` | A colour | That of the text |
-| `border` | A width, `solid` or `none`, and a colour, in any order | None |
+| `border_color` | A color | That of the text |
+| `border` | A width, `solid` or `none`, and a color, in any order | None |
 | `border_top`, `border_right`, `border_bottom`, `border_left` | The same, for one side | None |
 | `border_top_width`, and `border_right_width` and so on | A number of pixels | `0` |
 
@@ -264,13 +264,13 @@ right: 32
 | `gap` | Between rows, then between columns. One value stands for both | `0` |
 | `row_gap`, `column_gap` | A number of pixels | `0` |
 
-**Colours and images.** [CSS Color](https://www.w3.org/TR/css-color-4/),
+**Colors and images.** [CSS Color](https://www.w3.org/TR/css-color-4/),
 [CSS Backgrounds and Borders](https://www.w3.org/TR/css-backgrounds-3/),
 [MDN on border-image-slice](https://developer.mozilla.org/en-US/docs/Web/CSS/border-image-slice).
 
 | Property | Holds | Default |
 |---|---|---|
-| `background_color` | A colour | `transparent` |
+| `background_color` | A color | `transparent` |
 | `background_image` | Virtual path of an image, or `none` | `none` |
 | `border_image_source` | Virtual path of an image that is drawn in nine parts, or `none` | `none` |
 | `border_image_slice` | One to four numbers: how far the corners reach into the image, in pixels of the image | `0` |
@@ -280,7 +280,7 @@ right: 32
 | `accent_color` | What a `bar` is filled with | `"#4caf50"` |
 | `object_fit` | How an `image` fills its box: `fill`, `contain`, `cover`, `none`, `scale-down` | `fill` |
 | `pointer_events` | `auto` or `none` | See above |
-| `background` | A colour, a gradient, the virtual path of an image, or `none` | None |
+| `background` | A color, a gradient, the virtual path of an image, or `none` | None |
 | `background_image` | Also a gradient: `linear-gradient(...)` or `radial-gradient(...)` | `none` |
 | `background_size` | `auto`, `cover`, `contain`, or one to two lengths, percentages, or `auto` | `100% 100%` |
 | `background_position` | One or two of `left`, `center`, `right`, `top`, `bottom`, a length, a percentage | `0% 0%` |
@@ -302,12 +302,12 @@ the middle is stretched both ways.
 | `font_family` | The name of a family, of the file or of the application | `sans-serif` |
 | `font_size` | A number of pixels above 0 | `16` |
 | `font_weight` | A number from 1 to 1000, `normal`, or `bold`. The nearest weight the family has is taken | `400` |
-| `color` | A colour | `"#ffffff"` |
+| `color` | A color | `"#ffffff"` |
 | `text_align` | `left`, `center`, `right` | `left` |
 | `line_height` | `normal`, a multiple of the size such as `1.5`, a percentage, or pixels as `"24px"` | `normal` |
-| `caret_color` | The colour of the caret of a text that is typed. Inherited | That of the text |
+| `caret_color` | The color of the caret of a text that is typed. Inherited | That of the text |
 
-**Behaviour.** [CSS Overflow](https://www.w3.org/TR/css-overflow-3/),
+**Behavior.** [CSS Overflow](https://www.w3.org/TR/css-overflow-3/),
 [CSS Scrollbars Styling](https://www.w3.org/TR/css-scrollbars-1/),
 [CSSOM View on scroll-behavior](https://www.w3.org/TR/cssom-view-1/#smooth-scrolling),
 [CSS Basic User Interface on cursor](https://www.w3.org/TR/css-ui-4/#cursor).
@@ -315,7 +315,7 @@ the middle is stretched both ways.
 | Property | Holds | Default |
 |---|---|---|
 | `scrollbar_width` | `auto`, which is 12 units, `thin`, which is 8, or `none` | `auto` |
-| `scrollbar_color` | `auto`, or two colours: what is dragged, and what it is dragged along. Inherited | `auto`, which is the colour of the text at half and at an eighth of its alpha |
+| `scrollbar_color` | `auto`, or two colors: what is dragged, and what it is dragged along. Inherited | `auto`, which is the color of the text at half and at an eighth of its alpha |
 | `scroll_behavior` | `auto`, or `smooth`, which moves what the keys, the wheel, and the game scroll to over a quarter of a second | `auto` |
 | `scroll_drag` | `none`, `auto`, which drags what is inside with the pointer and lets it run on, or `inertia`, the same with the pointer alone. Not in CSS | `none` |
 | `cursor` | `auto`, `default`, `pointer`, `text`, `move`, `grab`, `grabbing`, `crosshair`, `not-allowed`, `wait`, `progress`, `ns-resize`, `ew-resize`, `nesw-resize`, `nwse-resize`, `none`. Inherited. The window is told the shape when it changes | `auto` |
@@ -349,13 +349,13 @@ More of what text looks like. [CSS Text](https://www.w3.org/TR/css-text-3/),
 | `letter_spacing` | `letter-spacing` | `normal` or a length, which may be below 0 | `normal` | No |
 | `word_spacing` | `word-spacing` | `normal` or a length | `normal` | No |
 | `text_transform` | `text-transform` | `none`, `uppercase`, `lowercase`, `capitalize` | `none` | No |
-| `text_decoration` | `text-decoration` | `none`, `underline`, `line-through`, a colour, and a thickness, in any order | `none` | No |
+| `text_decoration` | `text-decoration` | `none`, `underline`, `line-through`, a color, and a thickness, in any order | `none` | No |
 | `text_decoration_line`, `text_decoration_color`, `text_decoration_thickness` | The same names with hyphens | Each part of it on its own | None, that of the text, what the font asks for | No |
-| `text_shadow` | `text-shadow` | Shadows with commas between them, or a list: to the right, down, a blur, a colour | `none` | No. With `sdf` the blur reaches no further than the distances do |
+| `text_shadow` | `text-shadow` | Shadows with commas between them, or a list: to the right, down, a blur, a color | `none` | No. With `sdf` the blur reaches no further than the distances do |
 | `white_space` | `white-space` | `normal`, `nowrap`, `pre`, `pre-wrap`, `pre-line` | `pre-wrap` | No |
 | `text_overflow` | `text-overflow` | `clip` or `ellipsis`, for a line that is not broken | `clip` | No |
 | `text_stroke_width`, `text_stroke_color` | `-webkit-text-stroke-width`, `-webkit-text-stroke-color` | A line around every glyph, half of it over the glyph | `0`, that of the text | No. It is a picture of its own for every glyph unless the font is `sdf` |
-| `color` | `color`, and `background-clip: text` with a gradient | A colour, or `linear-gradient(...)` or `radial-gradient(...)` | `"#ffffff"` | No |
+| `color` | `color`, and `background-clip: text` with a gradient | A color, or `linear-gradient(...)` or `radial-gradient(...)` | `"#ffffff"` | No |
 | `direction` | `direction` | `ltr` or `rtl` | `ltr` | No |
 | `text_align` | `text-align` | Also `start` and `end`, which depend on `direction` | `left` | No |
 
@@ -372,8 +372,8 @@ are what a font is kept as unless it says otherwise.
 |---|---|---|---|
 | `border_radius` | `border-radius` | One to four lengths or percentages: left top, right top, right bottom, left bottom | `0` |
 | `border_top_left_radius`, `border_top_right_radius`, `border_bottom_right_radius`, `border_bottom_left_radius` | The same names with hyphens | One length or percentage | `0` |
-| `border_top_color`, `border_right_color`, `border_bottom_color`, `border_left_color` | The same names with hyphens | A colour | That of `border_color` |
-| `box_shadow` | `box-shadow` | Shadows with commas between them, or a list: `inset` or not, to the right, down, a blur, how much larger, a colour | `none` |
+| `border_top_color`, `border_right_color`, `border_bottom_color`, `border_left_color` | The same names with hyphens | A color | That of `border_color` |
+| `box_shadow` | `box-shadow` | Shadows with commas between them, or a list: `inset` or not, to the right, down, a blur, how much larger, a color | `none` |
 | `overflow: hidden` | `overflow` | Cuts off at the round corners of the padding box | |
 | `outline_width`, `outline_offset`, `outline_color` | `outline` | Follows the round corners | |
 
@@ -400,7 +400,7 @@ as in CSS.
 | Property | Holds | Default |
 |---|---|---|
 | `shader` | Virtual path of a shader without an extension, or `none` | `none` |
-| `shader_values` | A map of names and values: a number, a colour, a list of up to four numbers, or a value of the game as `"{charge}"` | None |
+| `shader_values` | A map of names and values: a number, a color, a list of up to four numbers, or a value of the game as `"{charge}"` | None |
 
 ### States
 
@@ -446,8 +446,8 @@ the file writes a `hover` for it.
 | `background-image` repeats at its own size | It is stretched over the border box, as `background-size: 100% 100%` |
 | `border-image-slice` keeps the middle out unless `fill` is written | The middle is always drawn |
 | `border-image-width` starts as the width of the border | It starts as the width the parts have in the image |
-| `border-style` | `solid` and `none`. All four sides have one colour |
-| Colours | The notations with `#`, `rgb()`, `rgba()`, `hsl()`, `hsla()`, and the 148 names, in style sheets. A UI recipe takes `#`, `rgb()`, `rgba()`, and `transparent`, `black`, `white`. No `color()`, `lab()`, `oklch()` |
+| `border-style` | `solid` and `none`. All four sides have one color |
+| Colors | The notations with `#`, `rgb()`, `rgba()`, `hsl()`, `hsla()`, and the 148 names, in style sheets. A UI recipe takes `#`, `rgb()`, `rgba()`, and `transparent`, `black`, `white`. No `color()`, `lab()`, `oklch()` |
 | `white-space: normal` joins spaces and line feeds | They are kept. Lines are broken at spaces, as `pre-wrap`. A `textarea` breaks a word that is wider than a line, as `overflow-wrap: anywhere` |
 | `pointer-events` is inherited | It is not inherited. It starts as `none` for everything but what takes input: a button, and what is typed into and chosen |
 | A shorthand and the property it stands for apply in the order they are written | In a UI recipe the shorthand is read first, wherever it is written. In a style sheet the order holds |
@@ -468,9 +468,9 @@ the file writes a `hover` for it.
 | `border-radius` with two radii for a corner, as `10px / 20px` | One radius for a corner |
 | The inside of a border whose sides differ in width is round by what is left of the radius on each side | The same, worked out to a pixel near the outline and less exactly far from it |
 | `box-shadow` is as soft in its corners as along its sides | The blur is worked out from the distance to the outline, which is exact along a side and a little tighter in a corner |
-| `linear-gradient` to a corner, as `to right bottom`, is turned so that the other two corners have the colour of the middle | It runs at 45 degrees between the two sides, which is the same for a square |
+| `linear-gradient` to a corner, as `to right bottom`, is turned so that the other two corners have the color of the middle | It runs at 45 degrees between the two sides, which is the same for a square |
 | `radial-gradient` has a shape, a size, and a place | An ellipse around the middle of the box that reaches its corners |
-| Gradients with lengths for their colours, `repeating-linear-gradient`, `conic-gradient` | Percentages, and up to 8 colours |
+| Gradients with lengths for their colors, `repeating-linear-gradient`, `conic-gradient` | Percentages, and up to 8 colors |
 | `background-size` starts as `auto` | It starts as `100% 100%` |
 | Several backgrounds, `background-attachment`, `background-origin`, `background-clip` | One image, which is placed against the border box and cut off at it |
 | `background-repeat: space`, `round`, and `border-image-repeat: space` | Not read |
@@ -488,7 +488,7 @@ the file writes a `hover` for it.
 | `text-shadow` and `box-shadow` take lengths in `em` | In pixels |
 | `-webkit-text-stroke` | `text_stroke_width` and `text_stroke_color`, without a prefix |
 | `font-style: oblique` with an angle | `italic`, which leans by 0.2 when it is made |
-| `font-synthesis`, `font-variation-settings`, `font-feature-settings`, `font-kerning` | Not read. Kerning and ligatures are on, a bold and an italic are made when they are missing |
+| `font-synthesiz`, `font-variation-settings`, `font-feature-settings`, `font-kerning` | Not read. Kerning and ligatures are on, a bold and an italic are made when they are missing |
 | `image-set()` and `srcset` | `src` of an `image` as a list of `{ src, scale }` |
 | `image-rendering: crisp-edges` | `pixelated` |
 | `object-position` with four values, as `right 10px bottom 20px` | One or two values |
@@ -525,7 +525,7 @@ styles: [settings.css, assets://ui/common.css]
   --row-gap: 12px;
 }
 
-@import "colours.css";
+@import "colors.css";
 
 @font-face {
   font-family: Title;
@@ -554,7 +554,7 @@ select::list { background-color: #3b4252; }
 | Where a sheet is | A path without a scheme is next to the file that names it. `@import` is next to the sheet it is written in. A virtual path is taken as it is |
 | What is read | [CSS Syntax](https://www.w3.org/TR/css-syntax-3/): rules, declarations, comments, `!important`, strings, escapes, and `@charset`, `@import`, `@font-face`, `@keyframes`, `@media`. Any other at-rule is skipped with a warning |
 | Names of properties | As in CSS, with hyphens. The same properties as in a UI recipe, and each keeps its meaning |
-| What is wrong | A declaration that cannot be read is skipped and logged once as a warning, as `settings.css:14: 'colour' is not a property that is known`. A selector that cannot be read skips its rule. A sheet that cannot be read at all fails the file, as a UI recipe that is wrong does |
+| What is wrong | A declaration that cannot be read is skipped and logged once as a warning, as `settings.css:14: 'color' is not a property that is known`. A selector that cannot be read skips its rule. A sheet that cannot be read at all fails the file, as a UI recipe that is wrong does |
 | Changing a sheet while the game runs | `UiContext::ReloadStyles()` reads the sheets again and keeps everything else. The runtime does not watch files |
 
 ### Selectors
@@ -572,7 +572,7 @@ select::list { background-color: #3b4252; }
 | `:first-child`, `:last-child`, `:only-child`, `:nth-child(2n+1)`, `:nth-last-child(2)`, `:empty` | Where the element is among the elements next to it. `odd` and `even` are read |
 | `:root`, `:scope` | The root of the file, and what a query started from |
 | `:not(...)`, `:is(...)`, `:where(...)` | As in CSS, with lists inside |
-| `::placeholder`, `::selection`, `::tooltip`, `::scrollbar-thumb`, `::scrollbar-track`, `::box`, `::mark`, `::track`, `::thumb`, `::fill`, `::list`, `::option`, `::highlight`, `::arrow` | The parts of elements, which take a background and a colour of their own. A part is asked for with its element: `select::highlight`. `::-webkit-scrollbar-thumb` is read as `::scrollbar-thumb` |
+| `::placeholder`, `::selection`, `::tooltip`, `::scrollbar-thumb`, `::scrollbar-track`, `::box`, `::mark`, `::track`, `::thumb`, `::fill`, `::list`, `::option`, `::highlight`, `::arrow` | The parts of elements, which take a background and a color of their own. A part is asked for with its element: `select::highlight`. `::-webkit-scrollbar-thumb` is read as `::scrollbar-thumb` |
 
 Specificity counts ids, classes with attributes and pseudo-classes, and
 types with pseudo-elements, as the specification says. `:where()` counts
@@ -687,7 +687,7 @@ differ by a pixel.
 The scale of a file is one rule:
 
 ```
-scale = density × user scale × fit(points of the window / reference size)
+scale = density * user scale * fit(points of the window / reference size)
 ```
 
 where `fit` is the [scale mode](#scaling) of the file, and 1 for `none`.
@@ -698,14 +698,14 @@ The user scale is what the player asked for, `--ui-scale` or
 |---|---|---|---|---|
 | 1920 by 1080 points, 1920 by 1080 pixels | 1 | 1 | 1 | 100 pixels |
 | 1920 by 1080 points, 3840 by 2160 pixels | 2 | 1 | 2 | 200 pixels, the same size on the screen |
-| 1280 by 720 points, 2560 by 1440 pixels | 2 | 1 | 2 × 0.667 = 1.333 | 133 pixels: the file is fitted to the smaller window, and drawn sharp |
+| 1280 by 720 points, 2560 by 1440 pixels | 2 | 1 | 2 * 0.667 = 1.333 | 133 pixels: the file is fitted to the smaller window, and drawn sharp |
 | 1280 by 720 points, 2560 by 1440 pixels | 2 | 1.5 | 2.0 | 200 pixels |
 | 3440 by 1440 points, density 1 | 1 | 1 | 1.333, by the height | 133 pixels |
 
-Text is rasterised at `font_size` × scale, rounded to a whole pixel, so
+Text is rasterized at `font_size` * scale, rounded to a whole pixel, so
 that it is sharp at every density. When the window is resized or moved to
 a display of another density, every file is laid out again and its text
-is rasterised anew; the atlases of the old size are released, so that
+is rasterized anew; the atlases of the old size are released, so that
 moving back and forth does not pile them up.
 
 | Option of the runtime | Does |
@@ -822,7 +822,7 @@ from the right, and that `text_align: start` is the right.
 | Not supported | |
 |---|---|
 | The Unicode Bidirectional Algorithm | See above |
-| Colour emoji | Fonts that keep their glyphs as PNG images are not read, since FreeType is built without libpng. Fonts with layers of colours, as COLR version 0, are read by the code and were not tried with a font. COLR version 1 is not read |
+| Color emoji | Fonts that keep their glyphs as PNG images are not read, since FreeType is built without libpng. Fonts with layers of colors, as COLR version 0, are read by the code and were not tried with a font. COLR version 1 is not read |
 | Variable fonts | The axes of a font are not set. A file for every weight is what works |
 | Breaking Thai, Lao, Khmer, and Burmese | They are written without spaces, and breaking them needs a dictionary |
 | Breaking a word, hyphens | A soft hyphen is left out |
@@ -865,7 +865,7 @@ The first five are read by `src`, `background_image`, and
 |---|---|
 | An image of shapes | Is drawn at the size in pixels it has on the screen, and again when that size changes. While the size changes from frame to frame, the picture there is is scaled, and a new one is drawn once the size has been the same for 3 frames. Up to 4 sizes of an image are kept |
 | Screens of several densities | The image whose `scale` is the nearest above the scale of the file on the screen is taken, or the densest. It is what `image-set()` and `srcset` are on the web. The others are not read |
-| Smaller copies | Every image of pixels has them, each half the size of the one before. They are made with alpha multiplied into the colours, so that what is see-through does not darken what is next to it. Between two copies the renderer blends |
+| Smaller copies | Every image of pixels has them, each half the size of the one before. They are made with alpha multiplied into the colors, so that what is see-through does not darken what is next to it. Between two copies the renderer blends |
 | `image_rendering: pixelated` | The nearest pixel, for art that is drawn pixel by pixel |
 
 ### Atlases
@@ -948,7 +948,7 @@ second reader next to this one, which fills the same parts:
 | Fonts as images | Through TextMeshPro | BMFont | No |
 | Shaping, right to left | TextMeshPro: right to left without shaping. UI Toolkit: through Advanced Text Generator | HarfBuzz, ICU, the whole Bidirectional Algorithm | HarfBuzz. See [text](#text) for what is missing |
 | Several fonts for one text | Yes | Yes | Yes |
-| Colour emoji | Yes | Yes | No |
+| Color emoji | Yes | Yes | No |
 | Variable fonts | Yes | Yes | No |
 | Round corners, shadows, borders | UI Toolkit: yes. uGUI: from images | StyleBoxFlat | Yes |
 | Gradients | UI Toolkit: through vector images | GradientTexture | `linear-gradient`, `radial-gradient` |
@@ -968,7 +968,7 @@ An element names a shader of its own and what the shader is given:
   shader_values: { speed: 0.4, width: 0.15, lean: 0.4, tint: "#ffffff50" }
 ```
 
-A shader is the half that colours pixels. Where the corners of an element
+A shader is the half that colors pixels. Where the corners of an element
 go is the work of the shader of the engine. It is written in GLSL, in the
 folder `engine/shaders/ui` of the runtime, and compiled by the build
 into `engine://shaders/ui/<name>.frag.spv`.
@@ -994,11 +994,11 @@ void main()
 
 | A shader is given | By |
 |---|---|
-| The colour the engine would draw, with its texture, its round corners, and what it is cut off at | `ui_base()`. Alpha is multiplied into it |
+| The color the engine would draw, with its texture, its round corners, and what it is cut off at | `ui_base()`. Alpha is multiplied into it |
 | Where the pixel is in the box of the element, from 0 to 1 | `ui_element_uv()` |
 | The size of the box in pixels | `ui_element_size()` |
 | Seconds since the user interface was started | `ui_time()` |
-| The place in the texture, the colour of the corner, the texture, and the sampler it is read through | `tex_coord`, `color`, `image`, `image_sampler`. The texture and the sampler are bound apart, as every shader of the engine binds them ([shaders.md](shaders.md#what-the-sources-keep-to)): a shader that reads the texture itself writes `texture(sampler2D(image, image_sampler), tex_coord)` |
+| The place in the texture, the color of the corner, the texture, and the sampler it is read through | `tex_coord`, `color`, `image`, `image_sampler`. The texture and the sampler are bound apart, as every shader of the engine binds them ([shaders.md](shaders.md#what-the-sources-keep-to)): a shader that reads the texture itself writes `texture(sampler2D(image, image_sampler), tex_coord)` |
 | What `shader_values` holds | The members of the block `Values`, by their names |
 
 | Rule | Reason |
@@ -1008,7 +1008,7 @@ void main()
 | A value that is not written is 0 | |
 | A number for a vector is the number in every part of it | |
 | A name the shader does not declare is said once, as a warning | A name that was misspelled is found |
-| A colour is written to `frag_color` with its alpha multiplied into it | That is what the renderer blends |
+| A color is written to `frag_color` with its alpha multiplied into it | That is what the renderer blends |
 | The shader draws the box and the content of its element, and not what is inside it | A panel with a shader has children that are drawn as ever |
 | A shader that cannot be used is said once, with the element and the file, and the element is drawn without it | |
 | The block is up to 256 bytes | |
@@ -1366,11 +1366,11 @@ and `CreateFromTemplate()` start from.
 
 | Rule | |
 |---|---|
-| What is animated | Every property of the table. A number, a length, a colour, and edges are interpolated; a colour with its alpha multiplied in, as the specification asks. A keyword, a text, and an image switch halfway |
+| What is animated | Every property of the table. A number, a length, a color, and edges are interpolated; a color with its alpha multiplied in, as the specification asks. A keyword, a text, and an image switch halfway |
 | A transition | Starts when the computed value of a property changes and the property is named in `transition_property`. One that is reversed while it runs is shortened, as the specification asks. What an element starts with is not a change |
 | An animation | Runs from its first keyframe to its last, with the keyframes' own timing functions, `animation_direction`, `animation_fill_mode`, `animation_iteration_count`, and `animation_play_state`. A keyframe that is missing is the value of the element |
 | Time | Every frame advances by the time of the window, or by `Advance(seconds)` when the runtime says so, as it does with `--time-step`. `SetTimeScale()` slows and pauses the user interface apart from the game. The same steps give the same frames |
-| Layout | A property that moves boxes lays out again what changed, and a colour or an opacity only draws again |
+| Layout | A property that moves boxes lays out again what changed, and a color or an opacity only draws again |
 | From code | `StartAnimation(element, "shake", "1s linear")` and `StopAnimation(element)` run keyframes by name |
 | Reduced motion | `SetReducedMotion(true)` makes `@media (prefers-reduced-motion)` match. The engine does not ask the operating system |
 | Events | `transition_ended` and `animation_ended`, with the name of the property or the animation in `value` |
@@ -1443,8 +1443,8 @@ its own there instead, and one that names none has no pause menu, as
 neon-quake, which opens its own on escape.
 
 The project names a file in its settings, `engine://ui/pause.ui.yml`, and
-the runtime shows it when the action `pause` of the input map is pressed —
-escape, or start on a controller, in the default map — and the user
+the runtime shows it when the action `pause` of the input map is pressed  - 
+escape, or start on a controller, in the default map - and the user
 interface did not use the press. The file is modal with `cancel: close`, so escape or the
 right button of a controller take it away again, and so does its button
 `resume`; its button `quit` closes the window. While it is shown the world
@@ -1576,7 +1576,7 @@ neon::UiHandle sword = ui.FindByName("sword");
 for (neon::UiHandle slot : ui.Query(".slot:not(.selected)")) { ui.AddClass(slot, "dim"); }
 
 ui.Set(sword, "background-color", "#334");        // as a style sheet would, on the element
-std::string colour = ui.GetComputed(sword, "background-color");  // "rgb(51, 51, 68)"
+std::string color = ui.GetComputed(sword, "background-color");  // "rgb(51, 51, 68)"
 ui.SetField(sword, "text", std::string("Sword of Ada"));
 ui.SetVisible(sword, false);
 ui.FocusElement(sword);
@@ -1681,7 +1681,7 @@ The user interface says how many it takes when that changes, at the level
 | Shape | Is worked out from |
 |---|---|
 | A box with round corners | The distance of the pixel to the outline of the box |
-| Its border | That distance, and the distance to the inside of the border, whose corners are parts of ellipses where two sides differ in width. A pixel has the colour of the side it lies least deep in, so two sides meet along the line from the corner of the outside to that of the inside |
+| Its border | That distance, and the distance to the inside of the border, whose corners are parts of ellipses where two sides differ in width. A pixel has the color of the side it lies least deep in, so two sides meet along the line from the corner of the outside to that of the inside |
 | The shadow around a box | The distance to the box as the shadow has it: moved, and larger. It fades along the curve of a blur, and is not drawn under the box |
 | The shadow in a box | The same, from the inside |
 | A gradient | Where the pixel lies along the line of the gradient, or around its middle |
@@ -1694,7 +1694,7 @@ slow change has no bands. No shape needs a texture.
 
 | | |
 |---|---|
-| Blending | Alpha is multiplied into the colours, in the textures when they are loaded and by the shader. A pixel that is see-through adds no colour to its neighbours, so nothing has a fringe |
+| Blending | Alpha is multiplied into the colors, in the textures when they are loaded and by the shader. A pixel that is see-through adds no color to its neighbors, so nothing has a fringe |
 | Depth | Not tested and not written |
 | Order | Surfaces in the world first, each into its image. Then the window, after the scene, into the same image. A screenshot holds it |
 | Without a window | The same |
@@ -1713,7 +1713,7 @@ so in `VK_Renderer2D`.
 | `LoadTexture(path)` | A texture from an image file, read through the file system |
 | `GetTextureSize(texture, width, height)` | Its size in pixels |
 | `DestroyTexture(texture)` | Releases it |
-| `DrawTriangles(triangles)` | Draws, in one call: corners with a place in pixels, a place in the texture, a colour, and whether the texture is read; indices in threes; one texture or none; a translation; a rectangle to cut off at, or none |
+| `DrawTriangles(triangles)` | Draws, in one call: corners with a place in pixels, a place in the texture, a color, and whether the texture is read; indices in threes; one texture or none; a translation; a rectangle to cut off at, or none |
 | `GetRenderResolution()` | The size of the frame |
 
 What follows can be left out by a renderer. What asks for it is told that it
@@ -1737,7 +1737,7 @@ nothing of them draws rectangles where shapes would be.
 | What it has to do | |
 |---|---|
 | Places | Pixels from the left top corner, to the right and down |
-| Blending | By alpha, over what is there. Alpha of what it is given is not multiplied into the colours |
+| Blending | By alpha, over what is there. Alpha of what it is given is not multiplied into the colors |
 | Depth and culling | None |
 | Textures | Not repeated, and without smaller copies |
 | What cannot be created | Tried once |
@@ -1793,7 +1793,7 @@ one of LunaSVG. The libraries are linked privately. Files are read through
 
 ### Libraries
 
-| Library | Version | Licence | Built |
+| Library | Version | License | Built |
 |---|---|---|---|
 | [FreeType](https://freetype.org) | 2.14.3 | The FreeType License, which asks that the documentation of a product says that it uses FreeType. Or GPL 2 | From its own CMake files, as a static library. `FT_DISABLE_ZLIB`, `FT_DISABLE_BZIP2`, `FT_DISABLE_PNG`, `FT_DISABLE_HARFBUZZ`, `FT_DISABLE_BROTLI` are on, `FT_ENABLE_ERROR_STRINGS` is off, and `SKIP_INSTALL_ALL` is on for FreeType alone. FreeType reads fonts that are compressed with gzip with the zlib it brings itself |
 | [HarfBuzz](https://harfbuzz.github.io) | 14.5.0 | The "Old MIT" license | From the one file it offers for that, `src/harfbuzz.cc`, as a static library, without its own build files. `HB_MUTEX_IMPL_STD_MUTEX` and `HB_NO_PRAGMA_GCC_DIAGNOSTIC_ERROR` are defined. Nothing else is, which leaves out FreeType, ICU, glib, Graphite, CoreText, Uniscribe, DirectWrite, and GDI. Without exceptions and without information about types at run time |
@@ -1804,7 +1804,7 @@ HarfBuzz reads a font with its own OpenType functions. It does not use
 FreeType, and FreeType does not use HarfBuzz, so neither depends on the
 other.
 
-| Asset | Licence |
+| Asset | License |
 |---|---|
 | Noto Sans Arabic, Regular | SIL Open Font License 1.1, in `engine/fonts/noto/LICENSE.txt`. The whole font as it is published |
 | The images of the gallery, the flat square | Made for the engine |
@@ -1823,7 +1823,7 @@ They are not entities of the world.
 |---|---|
 | Order | What is drawn on top and where the focus goes follow the order of elements. A query of the store hands over blocks in the order of memory |
 | Sizes | They follow from each other up and down the tree, which a layout engine works out over a tree |
-| Behaviour | A kind of element brings behaviour. A component is data alone |
+| Behavior | A kind of element brings behavior. A component is data alone |
 | Lifetime | A menu outlives the scene it is shown over |
 | Saving | A scene saves every entity. Elements would be written into it |
 
@@ -1862,7 +1862,7 @@ ui_system.GetElementTypes().Add<Minimap>("minimap");
 
 ## What was weighed
 
-| | Language | Licence | Draws through the renderer of the application |
+| | Language | License | Draws through the renderer of the application |
 |---|---|---|---|
 | **Own recipes in YAML with the vocabulary of CSS, and Yoga. Chosen for now**, with the engine's own layout in place of Yoga | YAML | Own. Yoga is MIT | Yes |
 | [RmlUi](https://github.com/mikke89/RmlUi) | A dialect of HTML and CSS | MIT | Yes, through an interface the application implements. It has data binding, animation, and bindings for Lua |
@@ -1892,27 +1892,27 @@ engine.
 | The scene with surfaces in the world with a window, 5 frames | Runs and ends with exit code 0. The window was not looked at |
 | The demo scene without a user interface, again | The same image, SHA-256 `9244e048a6839d08` |
 | Small text at 11, 12, 13, 14, and 16 pixels, before and after, enlarged | Spaced evenly. `11` no longer touches, `AVATAR` and `To.` are moved together, the letters of `Resume` are as far apart as each other |
-| Round corners, enlarged 8 times | Smooth, and the border follows them. Sides of four colours and four widths meet along the line between the corners of the outside and the inside |
+| Round corners, enlarged 8 times | Smooth, and the border follows them. Sides of four colors and four widths meet along the line between the corners of the outside and the inside |
 | Shadows | Soft, without bands |
 | The SVG of the gallery at 32 and at 128 pixels | Sharp at both. Each is a picture of its own |
 | The shaders at two times, with `--time-step` and `--screenshot-at` | The band of light is elsewhere. The others do what they say |
-| The terminal in the world | The right way up and the right way around: its red corner is at the left top, its green one at the right top, its blue one at the left bottom. Its colours are those of the file |
+| The terminal in the world | The right way up and the right way around: its red corner is at the left top, its green one at the right top, its blue one at the left bottom. Its colors are those of the file |
 | What the second camera sees | Is shown on the second monitor. The terminal is seen from behind there, and is mirrored, as a sheet of glass is |
 | Arabic | Joined, and from right to left. Next to English in one line, each in its order |
 | 704 checks of the user interface with UI recipes and style sheets: styles, dirtiness, scrolling, scripting, animation, typing, choosing, describing, the display, navigation | Pass |
 | The settings menu at 1920 by 1080, without a window, looked at | The window opens by its animation, the list, the fields, the switch, the sliders, the dropdowns, and the buttons are drawn as the theme says, the focus is on Apply |
 | The settings menu at 800 by 600, at 1280 by 720 with a render scale of 2, and at 1920 by 1080 with a user scale of 1.5 | At 800 by 600 the rows go under their labels by the media query and the list scrolls with a thin bar. At the render scale of 2 the image is 2560 by 1440 and sharp. At 1.5 everything is half as large again and still fits |
-| The settings menu driven by `--input`: a click into the name, typing, and a click on the dropdown | The name reads what was typed, the dropdown is open on top of the rows under it with its choice highlighted, the border of the field that has the focus is the accent colour |
+| The settings menu driven by `--input`: a click into the name, typing, and a click on the dropdown | The name reads what was typed, the dropdown is open on top of the rows under it with its choice highlighted, the border of the field that has the focus is the accent color |
 | The demo scene without a user interface, 1920 by 1080, without a window, after all of this | Still SHA-256 `9244e048a6839d08` |
 | 2703 tests in all, in 64 programs | Pass, 3 disabled as before |
 
 | Frame of the user interface, measured | HUD, 11 elements | A list of 500 rows, 2003 elements |
 |---|---|---|
-| Nothing changed: drawn again from the cache | 4 µs | 12 µs |
-| One value changed that a text shows, and the text measures the same | 6 µs | 480 µs, which is drawing 2003 elements again |
-| One value changed that changes a size | 30 µs | |
-| The pointer moved to another row | 7 µs | 90 µs |
-| Everything laid out and drawn, as every frame was before | 210 µs | 12 600 µs |
+| Nothing changed: drawn again from the cache | 4 us | 12 us |
+| One value changed that a text shows, and the text measures the same | 6 us | 480 us, which is drawing 2003 elements again |
+| One value changed that changes a size | 30 us | |
+| The pointer moved to another row | 7 us | 90 us |
+| Everything laid out and drawn, as every frame was before | 210 us | 12 600 us |
 
 The numbers are from `user-interface.benchmark`, built by its target name
 and not a test, on the machine this was made on in a debug build. Before,
@@ -1921,7 +1921,7 @@ anything changed; drawing only what changed is left for later.
 
 | What was seen and is not right | |
 |---|---|
-| The stems of letters differ in how sharp they are in small text | A stem that is placed between two pixels is drawn over both. It is what even spacing costs without the three colours of a pixel of a screen, which are not used |
+| The stems of letters differ in how sharp they are in small text | A stem that is placed between two pixels is drawn over both. It is what even spacing costs without the three colors of a pixel of a screen, which are not used |
 | The heart of the demo looks as it did | It is drawn at exactly half its size, where blending four pixels is what a smaller copy holds. Its edge is dark in the image itself. Smaller copies show below half the size |
 | Corners of glyphs that are kept as distances are a little round at large sizes | One distance for a pixel cannot hold a corner. Several can, which is MSDF, and needs a library |
 | The glow of a text that is kept as distances is no wider than 8 pixels at the size 48 | It ends where the distances do |
@@ -1941,10 +1941,10 @@ anything changed; drawing only what changed is left for later.
 | | |
 |---|---|
 | Yoga | See [layout](#layout) |
-| More elements | Tabs, a tree, a table, a colour picker |
+| More elements | Tabs, a tree, a table, a color picker |
 | Drawing only what changed | A frame draws everything again when anything changed. The cache replays it when nothing did |
 | Shaping | `UiTextMeasure` is the seam. Kerning, ligatures, and right to left are the work of a shaper behind it |
-| Localisation | Text by key, and fonts for other scripts |
+| Localization | Text by key, and fonts for other scripts |
 | Rich text | Several styles in one text |
 | Surfaces that are drawn when what is on them changed | A surface is drawn when anything in the user interface changed (#431). Drawing only the surfaces whose own user interfaces changed needs every change to say which document it belongs to |
 | A ray that finds where the player points on a screen in the world | Done, without the physics: the ray meets the square of the entity. See [pointing](#pointing-at-a-screen-in-the-world) |
@@ -1970,8 +1970,8 @@ Standards to consider next:
   today.
 - **WebP**, which Godot reads and artists hand over. libwebp, under a BSD
   license, would stand behind `ImageDecoder`.
-- **Colour emoji.** Fonts that keep glyphs as PNG images need libpng in
-  FreeType. Fonts with layers of colours need to be tried with a font.
+- **Color emoji.** Fonts that keep glyphs as PNG images need libpng in
+  FreeType. Fonts with layers of colors need to be tried with a font.
 - **Variable fonts**, through the axes FreeType and HarfBuzz both set.
 - **Fonts as several distances**, MSDF, for corners that stay sharp at large
   sizes. msdfgen, under MIT, makes them.

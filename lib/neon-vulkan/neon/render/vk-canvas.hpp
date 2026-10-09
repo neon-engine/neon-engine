@@ -47,7 +47,7 @@ namespace neon
     VkDescriptorSet _scene_set = VK_NULL_HANDLE;
 
     // The effects of the camera that draws into the canvas in this frame:
-    // those run on the light of its scene, and those run on the colours a
+    // those run on the light of its scene, and those run on the colors a
     // screen is given. And the pictures each kind is run between, made when
     // a camera first names an effect of the kind.
     std::vector<std::string> _effects;
@@ -58,7 +58,7 @@ namespace neon
     // what the first effect on the light reads the scene image through
     VkDescriptorSet _scene_effect_set = VK_NULL_HANDLE;
 
-    // what the canvas is cleared to, as an sRGB colour, and how far its
+    // what the canvas is cleared to, as an sRGB color, and how far its
     // drawing got in this frame
     Color _clear{0.0f, 0.0f, 0.0f, 1.0f};
     VK_FrameStage _stage = VK_FrameStage::Nothing;
@@ -110,12 +110,12 @@ namespace neon
     void CleanUp();
 
     /// Starts a frame: nothing is drawn yet, and what is drawn first clears
-    /// the canvas to `clear`, which is an sRGB colour.
+    /// the canvas to `clear`, which is an sRGB color.
     void Begin(const Color &clear);
 
     /// Says which effects the camera that draws into the canvas names, for
     /// this frame: the paths of those run on the light of its scene, and of
-    /// those run on the colours a screen is given. Begin() forgets them.
+    /// those run on the colors a screen is given. Begin() forgets them.
     void SetEffects(const std::vector<std::string> &effects, const std::vector<std::string> &screen_effects);
 
     /// Gets the canvas to the stage that draws models of the scene.

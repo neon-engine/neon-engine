@@ -192,7 +192,7 @@ namespace
     EXPECT_EQ(Alpha(page, a->x, a->y + a->height), 0);
     EXPECT_GE(b->x, a->x + a->width + 1);
 
-    // white where there is nothing, so that the colour next to a glyph is
+    // white where there is nothing, so that the color next to a glyph is
     // that of the glyph
     EXPECT_EQ(page.pixels[0], 255);
     EXPECT_EQ(page.pixels[3], 0);
@@ -436,7 +436,7 @@ namespace
     EXPECT_LT(middle, 200) << "a box of 6 by 10 is thinned out by a blur of 4";
   }
 
-  TEST_F(GlyphAtlasTest, KeepsTheColoursOfAGlyphThatHasItsOwn)
+  TEST_F(GlyphAtlasTest, KeepsTheColorsOfAGlyphThatHasItsOwn)
   {
     _rasterizer.draws_colors = true;
     GlyphAtlas atlas(Settings());
@@ -452,7 +452,7 @@ namespace
     EXPECT_EQ(page.pixels[at + 2], 30);
     EXPECT_EQ(page.pixels[at + 3], 255);
 
-    // its shadow has the colour it is given
+    // its shadow has the color it is given
     const CachedGlyph *shadow = atlas.Find(65, 0, {GlyphEffect::Kind::Blur, 2.0f});
     ASSERT_NE(shadow, nullptr);
     EXPECT_FALSE(shadow->has_colors);

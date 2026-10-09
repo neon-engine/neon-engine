@@ -58,7 +58,7 @@ layout (std140, set = 0, binding = 0) uniform SceneData {
     // time stands still while the world does.
     vec4 time;
     // Numbers of a game, which the shaders it brings read: how thick its
-    // fog is, a colour, whatever they are written for. The shaders of the
+    // fog is, a color, whatever they are written for. The shaders of the
     // engine read none. Set with RenderContext::SetShaderNumbers(), and by
     // an extension with set_shader_numbers.
     vec4 numbers[SHADER_NUMBER_PLACES];
@@ -78,7 +78,7 @@ struct ObjectData {
     vec4 surface;
     // rgb the light the object gives off itself, in linear light with its
     // strength multiplied in; w is 1 when an emissive texture is bound
-    // and 0 when the colour alone glows
+    // and 0 when the color alone glows
     vec4 emissive;
     // x what the lightmap is multiplied by, y is 1 when a lightmap is bound
     // and 0 when the material has none
@@ -97,7 +97,7 @@ layout (std430, set = 0, binding = 1) readonly buffer ObjectBuffer {
 // The alpha an object writes. An opaque one covers what is behind it
 // whatever its alpha says, and writes 1. The pipeline of an opaque material
 // keeps the alpha of the scene image at 1 as well, over an opaque clear.
-// This is for a texture a camera clears to a see-through colour, where the
+// This is for a texture a camera clears to a see-through color, where the
 // pipeline cannot, so a shader of its own is well advised to use it.
 float object_alpha(vec4 material, float alpha)
 {

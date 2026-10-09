@@ -149,7 +149,7 @@ namespace
     EXPECT_EQ(texture.View(), VK_NULL_HANDLE);
   }
 
-  TEST(VkTextureFormatTest, KeepsColoursInSrgbSoThatTheyAreReadAsLinearLight)
+  TEST(VkTextureFormatTest, KeepsColorsInSrgbSoThatTheyAreReadAsLinearLight)
   {
     EXPECT_EQ(VK_Texture::FormatFor(true), VK_FORMAT_R8G8B8A8_SRGB);
   }
@@ -159,7 +159,7 @@ namespace
     EXPECT_EQ(VK_Texture::FormatFor(false), VK_FORMAT_R8G8B8A8_UNORM);
   }
 
-  TEST(VkTextureFormatTest, TakesATextureForColoursUnlessToldOtherwise)
+  TEST(VkTextureFormatTest, TakesATextureForColorsUnlessToldOtherwise)
   {
     EXPECT_TRUE(neon::VK_TextureOptions{}.is_color);
   }

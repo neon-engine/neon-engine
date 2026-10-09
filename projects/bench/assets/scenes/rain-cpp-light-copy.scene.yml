@@ -45,5 +45,5 @@ entities:
   - name: spawner
     components:
       NativeSpawner:
-        behaviour: 3
+        behavior: 3
         per_second: 60

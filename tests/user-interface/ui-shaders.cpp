@@ -112,7 +112,7 @@ namespace
     EXPECT_EQ(speed->count, 1);
     EXPECT_FLOAT_EQ(speed->numbers[0], 0.5f);
 
-    // a colour is four numbers, and its alpha is not multiplied in
+    // a color is four numbers, and its alpha is not multiplied in
     const MaterialValue2D *tint = ValueOf(batch, "tint");
     ASSERT_NE(tint, nullptr);
     EXPECT_EQ(tint->count, 4);
@@ -339,12 +339,12 @@ namespace
 
     EXPECT_THAT(ProblemsOf("shader_values:\n  speed: fast\n"), ElementsAre(
                   "assets://ui/test.ui.yml:10: 'speed' of 'shader_values' of panel 'box' is 'fast', where a "
-                  "number, a colour, a list of 1 to 4 numbers, or a value such as \"{charge}\" was "
+                  "number, a color, a list of 1 to 4 numbers, or a value such as \"{charge}\" was "
                   "expected"));
 
     EXPECT_THAT(ProblemsOf("shader_values:\n  offset: [1, 2, 3, 4, 5]\n"), ElementsAre(
                   "assets://ui/test.ui.yml:10: 'offset' of 'shader_values' of panel 'box' is a list, where a "
-                  "number, a colour, a list of 1 to 4 numbers, or a value such as \"{charge}\" was "
+                  "number, a color, a list of 1 to 4 numbers, or a value such as \"{charge}\" was "
                   "expected"));
   }
 }

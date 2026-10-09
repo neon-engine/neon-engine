@@ -65,7 +65,7 @@ namespace neon
       /// what `textured` says.
       float mode = -1.0f;
 
-      /// A colour for each corner, from the left top one around to the
+      /// A color for each corner, from the left top one around to the
       /// left bottom one, in place of `color`.
       bool has_corner_colors = false;
       Color corners[4];
@@ -214,7 +214,7 @@ namespace neon
       const UiRectangle &part,
       const Color &tint);
 
-    /// A rectangle with a colour for each corner, from the left top one
+    /// A rectangle with a color for each corner, from the left top one
     /// around to the left bottom one.
     void FillRectangle(const UiRectangle &rectangle, const Color corners[4]);
 

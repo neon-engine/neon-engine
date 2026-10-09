@@ -8,11 +8,11 @@ namespace neon
   enum class ModelFit
   {
     /// At its own size and around its own origin, as the file says. What
-    /// glTF means: a piece of a kit is in metres and stands on its origin.
+    /// glTF means: a piece of a kit is in meters and stands on its origin.
     None,
 
     /// Moved so that its middle lies at the origin, and scaled so that its
-    /// longest side is 1. For a model that is not in metres, which the
+    /// longest side is 1. For a model that is not in meters, which the
     /// `scale` of the Transform then sizes.
     Unit
   };

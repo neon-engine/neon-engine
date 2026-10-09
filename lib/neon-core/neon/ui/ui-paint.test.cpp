@@ -142,7 +142,7 @@ namespace
     ExpectPoint(moves.After(doubles), 1, 1, 7, 2);
   }
 
-  TEST(UiGradientTest, BlendsBetweenTheColoursAroundAPlace)
+  TEST(UiGradientTest, BlendsBetweenTheColorsAroundAPlace)
   {
     UiGradient gradient;
     gradient.stops = {
@@ -159,7 +159,7 @@ namespace
     EXPECT_FLOAT_EQ(gradient.At(1).g, 1);
   }
 
-  TEST(UiGradientTest, HasTheColoursOfItsEndsBeyondThem)
+  TEST(UiGradientTest, HasTheColorsOfItsEndsBeyondThem)
   {
     UiGradient gradient;
     gradient.stops = {{{1, 0, 0, 1}, 0.2f, true}, {{0, 0, 1, 1}, 0.8f, true}};
@@ -170,7 +170,7 @@ namespace
     EXPECT_FLOAT_EQ(gradient.At(5).b, 1);
   }
 
-  TEST(UiGradientTest, AColourThatIsSeeThroughDoesNotShineThroughItsNeighbour)
+  TEST(UiGradientTest, AColorThatIsSeeThroughDoesNotShineThroughItsNeighbor)
   {
     // from red to nothing, where the nothing is written as black
     UiGradient gradient;
@@ -182,7 +182,7 @@ namespace
     EXPECT_FLOAT_EQ(middle.r, 1) << "red at half its alpha, and not a dark red";
   }
 
-  TEST(UiGradientTest, TwoColoursAtOnePlaceAreASharpEdge)
+  TEST(UiGradientTest, TwoColorsAtOnePlaceAreASharpEdge)
   {
     UiGradient gradient;
     gradient.stops = {
@@ -196,7 +196,7 @@ namespace
     EXPECT_FLOAT_EQ(gradient.At(0.51f).b, 1);
   }
 
-  TEST(UiGradientTest, WithoutColoursItIsNothing)
+  TEST(UiGradientTest, WithoutColorsItIsNothing)
   {
     const UiGradient gradient;
     EXPECT_FLOAT_EQ(gradient.At(0.5f).a, 0);

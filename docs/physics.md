@@ -12,7 +12,7 @@ advances in steps of one length, whatever the frame rate is.
 
 ## What a body can be
 
-| Behaviour | Component | In Godot | Meaning |
+| Behavior | Component | In Godot | Meaning |
 |---|---|---|---|
 | Does not move | `RigidBody` with `kind: static` | StaticBody3D | Floors and walls. Everything else stops at it |
 | Collide and react | `RigidBody` with `kind: dynamic` | RigidBody3D | Moved by the simulation: gravity, forces, impulses, and what it hits |
@@ -140,10 +140,10 @@ changes gives the body its shapes anew, see
 
 The shape is sized by the `scale` of the `Transform`, as what is drawn is. A
 floor that is a cube scaled by `[100, 0.1, 100]` has a `box` with its
-defaults as its collider. So `size` and `offset` are written in the metres
+defaults as its collider. So `size` and `offset` are written in the meters
 of the piece, not of the world: a wall of the prototype kit that is 0.2 by
 1 by 1 and is stretched to 6 long and 2.5 high by `scale: [1, 2.5, 6]` has
-a `box` of `size: [0.2, 1, 1]`. Written in world metres, as `[0.2, 2.5,
+a `box` of `size: [0.2, 1, 1]`. Written in world meters, as `[0.2, 2.5,
 6]`, the box would be scaled once more, to 0.2 by 6.25 by 36. The prototype
 had every wall wrong this way once, and its doorway posts stood across the
 opening (#223).
@@ -199,12 +199,12 @@ runtime does. A character that the input drives is the [player](#the-player).
 | `anchor` | `[x, y, z]`, where the joint sits on the entity. Sized by the `scale` of the `Transform`, as the `offset` of a `Collider` is, so `[-0.5, 0, 0]` is the left edge of a scaled cube | `[0, 0, 0]` | Every type |
 | `axis` | `[x, y, z]` on the entity: what a hinge turns around, or a slider moves along. A direction, which the scale does not change | `[0, 1, 0]` | `hinge`, `slider` |
 | `other_anchor` | `[x, y, z]`, where a rope is held at its other end: on the other entity, sized by its `scale`, or a place in the world when `other` is empty. `anchor` is its end on this entity | `[0, 0, 0]` | `rope` |
-| `length` | How long a rope is, in metres: its two ends come no further apart, and are free while they are nearer. `0` for as far as they are apart when the joint is made, a rope that starts taut | `0` | `rope` |
+| `length` | How long a rope is, in meters: its two ends come no further apart, and are free while they are nearer. `0` for as far as they are apart when the joint is made, a rope that starts taut | `0` | `rope` |
 | `limits` | `[least, most]`, how far the body may go from where it is when the joint is made: degrees around the axis for a hinge, from -180 to 180, or units along it for a slider. The least is 0 or below, the most 0 or above. `[]` for no limit | `[]` | `hinge`, `slider` |
 | `collide_with_other` | Whether the body collides with the other body. `false` keeps the two apart, so a door can hang at its frame | `false` for `fixed` and `hinge`, `true` for `slider`, `point`, and `rope` | Every type |
 | `motor_velocity` | How fast a motor drives the joint: degrees per second around the axis for a hinge, units per second along it for a slider. Against the limits, the motor pushes and the limit holds. `0` with a strength holds the joint where it is, as a brake does | `0` | `hinge`, `slider` |
-| `motor_strength` | The most the motor puts in: newton metres of torque for a hinge, newtons of force for a slider. `0` is no motor. What pushes harder than the strength wins | `0` | `hinge`, `slider` |
-| `spring` | A spring that pulls the joint back to where it was made, with `stiffness` and `damping`. The stiffness is the torque in newton metres for every radian a hinge is turned, or the force in newtons for every unit a slider is moved. The damping is the torque or the force against every radian or unit per second of its speed. A stiffness of `0` is no spring. A joint has a motor or a spring, not both | `{stiffness: 0, damping: 0}` | `hinge`, `slider` |
+| `motor_strength` | The most the motor puts in: newton meters of torque for a hinge, newtons of force for a slider. `0` is no motor. What pushes harder than the strength wins | `0` | `hinge`, `slider` |
+| `spring` | A spring that pulls the joint back to where it was made, with `stiffness` and `damping`. The stiffness is the torque in newton meters for every radian a hinge is turned, or the force in newtons for every unit a slider is moved. The damping is the torque or the force against every radian or unit per second of its speed. A stiffness of `0` is no spring. A joint has a motor or a spring, not both | `{stiffness: 0, damping: 0}` | `hinge`, `slider` |
 
 In code it has `joint`, the id the physics knows the joint by, and `failed`,
 as a `RigidBody` has. `CollidesWithOther()` says what `collide_with_other`
@@ -267,13 +267,13 @@ entity with a `Camera`, which the system lifts to the eyes and pitches.
 
 | Name | Holds | Default |
 |---|---|---|
-| `walk_speed` | Metres per second along the ground | `4` |
-| `run_speed` | Metres per second along the ground while `run` is down | `6` |
-| `jump_speed` | Metres per second upward that a jump starts with | `5` |
+| `walk_speed` | Meters per second along the ground | `4` |
+| `run_speed` | Meters per second along the ground while `run` is down | `6` |
+| `jump_speed` | Meters per second upward that a jump starts with | `5` |
 | `air_control` | How much `move` steers the body while it is in the air, from 0 to 1. The body keeps the velocity it left the ground with, and the keys pull it by this much towards what they ask for: 0 keeps the take-off velocity whatever is pressed, 1 steers as on the ground | `0.3` |
 | `look_speed` | Radians the view turns for every pixel of `look` | `0.0025` |
-| `eye_height` | Metres from the feet to the eyes, where the camera is put | `1.6` |
-| `camera_offset` | `[right, up, back]`, metres the camera is moved from the eyes in the frame of the entity, so it turns with the body. A lean is `[0.3, 0, 0]`, a view from behind the shoulder `[0.5, 0.3, 2]` | `[0, 0, 0]` |
+| `eye_height` | Meters from the feet to the eyes, where the camera is put | `1.6` |
+| `camera_offset` | `[right, up, back]`, meters the camera is moved from the eyes in the frame of the entity, so it turns with the body. A lean is `[0.3, 0, 0]`, a view from behind the shoulder `[0.5, 0.3, 2]` | `[0, 0, 0]` |
 | `step_smoothing` | How quickly the eyes catch up with a step, per second. A step up of `step_height` lifts the body at once; the eyes stay where they were in that frame and glide up after the body, a tenth of what is left every sixtieth of a second at `10`. 0 lifts the eyes with the body | `10` |
 | `max_pitch` | Degrees the view can turn up or down, from 0 to 90 | `89` |
 
@@ -341,7 +341,7 @@ box, higher than `step_height` and at the height of the round end of the
 character's capsule, is ridden up as well, and the character climbs what it
 should not, which is how Jolt meets a capsule with the edge of a triangle.
 A `box` collider stops the character at its edge as a wall does, so a
-platform, a kerb, a crate is a `box`, and a `mesh` of a `Geometry` is for
+platform, a curb, a crate is a `box`, and a `mesh` of a `Geometry` is for
 the room and the ground, see [geometry.md](geometry.md#the-shapes).
 
 What could not be created is not tried again, since it would fail and say so
@@ -939,7 +939,7 @@ What a game does with a body, through `PhysicsContext` and the `body` of its
 | A collider is a component of its own | One shape can be on a body, a trigger, and a character, and a body can have several |
 | A kinematic body is moved by its `Transform` | It is what a game, an animation, and an editor write already |
 | A character is a component of its own, not a kind of `RigidBody` | It has other values, and is moved another way: by a sweep of its shape and not by the simulation |
-| A character that asks for no way along the ground does not slide down a slope it can stand on | On the ground the engine hands Jolt one step of gravity, which keeps the character on the ground and lets it walk down a ramp. Jolt turns that pull into a slide down any slope, a centimetre a frame on a ramp of 14 degrees. So when nothing along the ground is asked for, and the character neither rises nor is in the air, the backend tells Jolt in `OnContactSolve` to leave no velocity against ground that stands still and is not too steep, which is what the sample of Jolt does. Ground above `max_slope` is a wall, and the character slides down it as before (#270) |
+| A character that asks for no way along the ground does not slide down a slope it can stand on | On the ground the engine hands Jolt one step of gravity, which keeps the character on the ground and lets it walk down a ramp. Jolt turns that pull into a slide down any slope, a centimeter a frame on a ramp of 14 degrees. So when nothing along the ground is asked for, and the character neither rises nor is in the air, the backend tells Jolt in `OnContactSolve` to leave no velocity against ground that stands still and is not too steep, which is what the sample of Jolt does. Ground above `max_slope` is a wall, and the character slides down it as before (#270) |
 | A step along a wall the character leans on is climbed as a step head on is | Jolt steps up in the direction the character asks for. One that leans on a wall and strafes along it asks mostly for the wall, which eats the step forward, and what is left along the wall is too short to find the top of the step, so Jolt gives up and the character stands at the side of the step. Jolt has no setting for it: `WalkStairs` takes one direction. So the backend, when the character came short of its way after Jolt's own try, takes each wall it pushes into out of the way it asks for, one at a time, and asks Jolt for the step again along what is left, with the length that is left. Head on into a step, nothing is left and nothing is tried. It is a workaround around `ExtendedUpdate`, which Jolt calls an example of how its pieces combine (#271) |
 | The platform of the blockout is a box with a `box` collider, not a plane | A plane has no thickness, so a character walking into its edge rode up it and slid back. A `mesh` of the box lets the character climb its edge of 0.4 as well, which Jolt makes of a capsule against the edge of a triangle at the height of its round end, and a `box` collider stops it as a wall. The backend is left as it is: a plane that is a thin box would hide what a mesh does at its edges, and a mesh at an edge is a limit of Jolt that is written down instead (#272) |
 | The physics is handed the file system, and the backend is not | Reading a model is the same for every backend. The backend is handed points |

@@ -176,7 +176,7 @@ namespace
     EXPECT_LT(quads[3].bottom, 116);
   }
 
-  TEST_F(UiTextStyleTest, GivesTheLinesAColourAndAThickness)
+  TEST_F(UiTextStyleTest, GivesTheLinesAColorAndAThickness)
   {
     ShowLabel("abc", "text_decoration: \"underline line-through #00ff00 3px\"\n");
 
@@ -190,7 +190,7 @@ namespace
       ExpectColor(quads[line].color, 0, 1, 0, 1);
     }
 
-    // the text keeps its colour
+    // the text keeps its color
     ExpectColor(quads[1].color, 1, 1, 1, 1);
   }
 
@@ -276,7 +276,7 @@ namespace
     ExpectColor(quads[2].color, 1, 1, 1, 1);
   }
 
-  TEST_F(UiTextStyleTest, AShadowWithoutAColourHasThatOfTheText)
+  TEST_F(UiTextStyleTest, AShadowWithoutAColorHasThatOfTheText)
   {
     ShowLabel("a", "text_shadow: 2 2\ncolor: \"#00ff00\"\nopacity: 0.5\n");
 
@@ -320,7 +320,7 @@ namespace
     EXPECT_TRUE(Errors().empty()) << _logger->Messages(LogLevel::Error);
   }
 
-  // colours
+  // colors
 
   TEST_F(UiTextStyleTest, FillsATextWithAGradient)
   {
@@ -330,7 +330,7 @@ namespace
     const auto &vertices = _renderer.batches[0].vertices;
     ASSERT_EQ(vertices.size(), 16u);
 
-    // The text is 40 wide, from 100 to 140. Every corner has the colour
+    // The text is 40 wide, from 100 to 140. Every corner has the color
     // of the gradient where it lies.
     for (const Vertex2D &vertex : vertices)
     {
@@ -364,7 +364,7 @@ namespace
     EXPECT_NEAR(vertices[2].color.b, 0.8f, 0.002f);
   }
 
-  TEST_F(UiTextStyleTest, TheLinesOfATextWithAGradientHaveItsFirstColour)
+  TEST_F(UiTextStyleTest, TheLinesOfATextWithAGradientHaveItsFirstColor)
   {
     ShowLabel("ab", "color: \"linear-gradient(#ff0000, #0000ff)\"\ntext_decoration: underline\n");
 
@@ -572,12 +572,12 @@ namespace
 
     EXPECT_THAT(ProblemsOf("text_decoration: wavy\n"), ElementsAre(
                   "assets://ui/test.ui.yml:10: 'text_decoration' of label 'label' is 'wavy', where none, "
-                  "underline, line-through, a colour, and a thickness, such as \"underline #ff8000 2px\" was "
+                  "underline, line-through, a color, and a thickness, such as \"underline #ff8000 2px\" was "
                   "expected"));
 
     EXPECT_THAT(ProblemsOf("text_shadow: soft\n"), ElementsAre(
                   "assets://ui/test.ui.yml:10: 'text_shadow' of label 'label' is 'soft', where none, or shadows "
-                  "such as \"0 2px 4px #000000\": to the right, down, a blur that is not below 0, and a colour "
+                  "such as \"0 2px 4px #000000\": to the right, down, a blur that is not below 0, and a color "
                   "was expected"));
 
     EXPECT_THAT(ProblemsOf("white_space: break-spaces\n"), ElementsAre(
@@ -602,7 +602,7 @@ namespace
 
     EXPECT_THAT(ProblemsOf("color: \"linear-gradient(#ff0000)\"\n"), ElementsAre(
                   "assets://ui/test.ui.yml:10: 'color' of label 'label' is 'linear-gradient(#ff0000)', where a "
-                  "gradient such as linear-gradient(90deg, #f00, #00f) with 2 to 8 colours was expected"));
+                  "gradient such as linear-gradient(90deg, #f00, #00f) with 2 to 8 colors was expected"));
   }
 
   TEST_F(UiTextStyleTest, SaysWhatIsWrongWithTheStyleOfAFont)

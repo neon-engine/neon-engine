@@ -1,5 +1,5 @@
 # A crate for tests/runtime-sharing: placed hundreds of times, with the
-# same material or with a colour of its own.
+# same material or with a color of its own.
 version: 1
 prefab: sharing-crate
 

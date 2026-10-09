@@ -94,7 +94,7 @@ namespace
       return happened;
     }
 
-    /// The colours of the boxes that are not textured, from the top left.
+    /// The colors of the boxes that are not textured, from the top left.
     [[nodiscard]] std::vector<neon::testing::RecordedQuad> Boxes() const
     {
       std::vector<neon::testing::RecordedQuad> boxes;

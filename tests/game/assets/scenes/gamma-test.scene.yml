@@ -1,10 +1,10 @@
-# A scene for checking colours, which tests read pixel by pixel:
+# A scene for checking colors, which tests read pixel by pixel:
 #
 #   NeonRuntime --scene assets://scenes/gamma-test.scene.yml
 #
 # The world is lit and blended in linear light, so half of red over black
 # is half the light of red, which sRGB writes as 188, and not 128. The
-# planes are drawn in plain colours, or with their texture as it is, so
+# planes are drawn in plain colors, or with their texture as it is, so
 # that what comes out can be worked out. What a user interface draws is
 # blended as CSS blends it, in sRGB, on the screen and on a surface in the
 # world alike.
@@ -90,7 +90,7 @@ entities:
           color: [0, 0, 1, 0.5]
           alpha_mode: blend
 
-  # An opaque plane whose colour has an alpha below 1. Opaque is opaque,
+  # An opaque plane whose color has an alpha below 1. Opaque is opaque,
   # so it is shown at full brightness, and not divided by its alpha.
   - name: faint
     components:
@@ -104,7 +104,7 @@ entities:
           color: [0, 1, 0, 0.25]
           alpha_mode: opaque
 
-  # four colours, one in each quarter, shown as they are in the file
+  # four colors, one in each quarter, shown as they are in the file
   - name: textured
     components:
       Transform:

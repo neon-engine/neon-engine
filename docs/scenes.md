@@ -140,32 +140,32 @@ goes often is never made or destroyed while the game runs: see
 | `textures` | A list of virtual paths | None |
 | `preload` | A list of virtual paths of textures the entity will show later in place of its first one: the faces of a character, the skins of what a player holds. Each is loaded when the entity is first drawn and stays loaded for as long as the entity is there, so that showing it the first time costs nothing while the game runs. It changes nothing that is drawn | None |
 | `scale_textures` | Whether textures repeat as the entity grows | `false` |
-| `material` | `color` as `[red, green, blue]` or with alpha as a fourth, `metallic` and `roughness` from 0 to 1 (the `pbr` shader), `shininess` (the `basic-lit` shader), `use_textures`, `alpha_mode`, `double_sided` as `model`, `always`, or `never`, what the surface gives off: `emissive` as a colour, `emissive_strength` from 0 up, and `emissive_texture` as a virtual path, see below; and light that was worked out ahead: `lightmap` as a virtual path and `lightmap_strength` from 0 up, see [vulkan-renderer.md](vulkan-renderer.md#lightmaps) | white, `0`, `0.5`, `0`, `true`, `opaque`, `model`, black, `1`, none, none, `1` |
+| `material` | `color` as `[red, green, blue]` or with alpha as a fourth, `metallic` and `roughness` from 0 to 1 (the `pbr` shader), `shininess` (the `basic-lit` shader), `use_textures`, `alpha_mode`, `double_sided` as `model`, `always`, or `never`, what the surface gives off: `emissive` as a color, `emissive_strength` from 0 up, and `emissive_texture` as a virtual path, see below; and light that was worked out ahead: `lightmap` as a virtual path and `lightmap_strength` from 0 up, see [vulkan-renderer.md](vulkan-renderer.md#lightmaps) | white, `0`, `0.5`, `0`, `true`, `opaque`, `model`, black, `1`, none, none, `1` |
 
-`color` is written as a screen shows it, in sRGB, like the colours of an
-image. The first texture holds colours, the second how much each part of a
+`color` is written as a screen shows it, in sRGB, like the colors of an
+image. The first texture holds colors, the second how much each part of a
 surface shines. `alpha_mode` is `opaque`, which covers what is behind, or
-`blend`, where the alpha of the colour, or of the texture, lets what is
+`blend`, where the alpha of the color, or of the texture, lets what is
 behind show through. See-through surfaces are drawn after the opaque ones,
 from the farthest to the nearest, by where the middle of each thing is.
 
-A surface gives off light of its own with `emissive`: a colour, written in
+A surface gives off light of its own with `emissive`: a color, written in
 sRGB as `color` is, that the `pbr` and `basic-lit` shaders add after the
 lighting, so that it shows in a dark room. `emissive_strength` multiplies it
 in linear light, and is how a surface gets brighter than white: a strength
-of 4 gives four times the light of its colour, which a tonemapper in the
+of 4 gives four times the light of its color, which a tonemapper in the
 settings then rolls off, see
 [vulkan-renderer.md](vulkan-renderer.md#tonemapping). `emissive_texture` is
 an image, or `surface://<name>` for a render target such as a screen that
-shows a user interface, which the colour multiplies; written without an
+shows a user interface, which the color multiplies; written without an
 `emissive`, the texture is shown as it is. `unlit` and `color` ignore all
 three. A surface that gives off light does not light anything around it,
 and does not glow around its edges: that is #132 and #130.
 
 `model` is an `.obj` or a `.glb`. What the file says about its look fills in
 what the `Renderable` leaves out: the textures of the model are shown when
-`textures` is not written, the base colour factor of a glTF material is
-multiplied into `color`, a colour painted on the vertices of the model
+`textures` is not written, the base color factor of a glTF material is
+multiplied into `color`, a color painted on the vertices of the model
 is multiplied in as well, and what the file's material gives off is shown
 when `emissive` is left black and `emissive_texture` is not written, with
 `emissive_strength` multiplied into the file's, so that `0` turns a file's
@@ -175,14 +175,14 @@ shader, and what else `material` holds apply to every material of the file,
 and `textures` replace those of the first material alone, see
 [several materials](models.md#several-materials). A model is drawn at its
 own size, as the file says:
-a piece of a kit is in metres and stands on its origin. A model that is not
-in metres is drawn with `fit: unit`, scaled so that its longest side is 1,
+a piece of a kit is in meters and stands on its origin. A model that is not
+in meters is drawn with `fit: unit`, scaled so that its longest side is 1,
 and `scale` then gives it a size; the `.obj` models of the demo scenes are
 drawn so. See [models.md](models.md).
 
 The back of every triangle is left out, since most surfaces are seen from
 one side only: the outside of a closed model. The front is the side whose
-corners go round anticlockwise, as models are made. `double_sided: always`
+corners go round counterclockwise, as models are made. `double_sided: always`
 draws the back as well, for a leaf, a flag, or a pane of glass that is seen
 from both sides, and `never` leaves it out. `model`, the default, takes
 what the model file says, the `doubleSided` of a glTF material, and one
@@ -203,9 +203,9 @@ the ones that will be shown before they are.
 
 **Geometry**
 
-A shape the engine builds in place of a model, in metres: a box, a plane, a
+A shape the engine builds in place of a model, in meters: a box, a plane, a
 ramp, a prism from an outline, a sphere, a cylinder, an upright quad, or a
-tube along a curve, textured once a metre. The entity's
+tube along a curve, textured once a meter. The entity's
 `Renderable` draws it, and a `Collider` without a `model` takes the same
 shape. The fields are in [geometry.md](geometry.md).
 
@@ -222,11 +222,11 @@ two places of its own, see [physics.md](physics.md#ropes).
 | `joint` | The path of the entity whose `Joint` of type `rope` is drawn. The ends and the length are then those of the joint | Empty |
 | `from`, `to` | The paths of the entities the two ends are on. Empty for the world. Not read with `joint` | Empty |
 | `from_anchor`, `to_anchor` | `[x, y, z]`, where each end is on its entity, sized by its `scale`, or in the world | `[0, 0, 0]` |
-| `length` | How long the rope is, in metres. `0` for a rope that is always straight. Not read with `joint` | `0` |
-| `thickness` | How thick the rope is, across, in metres | `0.03` |
+| `length` | How long the rope is, in meters. `0` for a rope that is always straight. Not read with `joint` | `0` |
+| `thickness` | How thick the rope is, across, in meters | `0.03` |
 | `sides` | How many faces go round it | `8` |
 | `segments` | How many straight pieces it is drawn as from end to end | `16` |
-| `texels_per_metre` | How often a texture repeats over one metre of it | `1` |
+| `texels_per_meter` | How often a texture repeats over one meter of it | `1` |
 
 **Camera**
 
@@ -237,7 +237,7 @@ two places of its own, see [physics.md](physics.md#ropes).
 | `near`, `far` | The distances between which things are visible | `0.1`, `1000` |
 | `up` | The direction that is up | `[0, 1, 0]` |
 | `effects` | A list of shaders that are run over the whole picture the camera drew, one after the other, on the light of its scene before the tonemapper: a view that waves under water, a vignette. Each is the virtual path of a fragment shader a game brings, without an extension, see [vulkan-renderer.md](vulkan-renderer.md#the-effects-of-a-camera) | none |
-| `screen_effects` | As `effects`, but run on the colours a screen is given, after the tonemapper and before the user interface is drawn: the rows of an old monitor, the palette of an old game | none |
+| `screen_effects` | As `effects`, but run on the colors a screen is given, after the tonemapper and before the user interface is drawn: the rows of an old monitor, the palette of an old game | none |
 | `texture`, `size` | For `target: texture`: what the texture is called, and its width and height in pixels, see [user-interface.md](user-interface.md#what-a-camera-sees) | none, `[512, 512]` |
 | `mipmaps` | For `target: texture`: the most levels of smaller copies it has, 1 for none, 0 for as many as its size allows | `0` |
 | `rolls_with_entity` | Whether the view rolls with the rotation of its entity: `up` then turns with the entity, so leaning the entity leans the view. For a view from the eyes. A camera that looks at something from outside leaves it off and stays level whatever it hangs from | `false` |
@@ -248,7 +248,7 @@ two places of its own, see [physics.md](physics.md#ropes).
 |---|---|---|
 | `type` | `direction`, `point`, or `spot` | `direction` |
 | `direction` | `[x, y, z]` | `[0, 0, 0]` |
-| `ambient`, `diffuse`, `specular` | `[red, green, blue]`, amounts of light: 0.5 is half the light of 1. For the `pbr` shader `diffuse` is the light's colour and `specular` is not read, see [vulkan-renderer.md](vulkan-renderer.md#the-shaders-that-ship) | `[0, 0, 0]` |
+| `ambient`, `diffuse`, `specular` | `[red, green, blue]`, amounts of light: 0.5 is half the light of 1. For the `pbr` shader `diffuse` is the light's color and `specular` is not read, see [vulkan-renderer.md](vulkan-renderer.md#the-shaders-that-ship) | `[0, 0, 0]` |
 | `constant`, `linear`, `quadratic` | How a point or a spot light fades with distance `d`: its light is divided by `constant + linear * d + quadratic * d * d`, so a light writes a `constant` of 1 | `0` |
 | `cutoff`, `outer_cutoff` | The cone of a spot light, as the cosines of two angles from its `direction`: the light is full within the first and fades out to the second. 20 and 30 degrees are `0.9397` and `0.866`. Degrees are #342 | `0` |
 | `casts_shadows` | Whether what stands in the light shadows what is behind it. A `direction` light draws a shadow map, see [vulkan-renderer.md](vulkan-renderer.md#shadows); a `point` or `spot` light casts nothing yet, whatever this says | `true` |
@@ -306,7 +306,7 @@ direction (an equirectangular image, which is how panoramas are published):
 its middle is seen along negative z, what is right of the middle towards
 positive x, its upper edge straight up.
 
-The images are PNG or JPEG, colours as a screen shows them. The sky is
+The images are PNG or JPEG, colors as a screen shows them. The sky is
 shown as it is: no light of the scene falls on it, and it lights nothing
 itself, so a `Light` is set to match it by hand. The museum has a sky of type sphere. How it is drawn is in
 [vulkan-renderer.md](vulkan-renderer.md#the-sky).
@@ -326,13 +326,13 @@ to its eyes. How it is driven is in [physics.md](physics.md#the-player).
 
 | Name | Holds | Default |
 |---|---|---|
-| `walk_speed` | Metres per second along the ground | `4` |
-| `run_speed` | Metres per second along the ground while `run` is down | `6` |
-| `jump_speed` | Metres per second upward that a jump starts with | `5` |
+| `walk_speed` | Meters per second along the ground | `4` |
+| `run_speed` | Meters per second along the ground while `run` is down | `6` |
+| `jump_speed` | Meters per second upward that a jump starts with | `5` |
 | `air_control` | How much `move` steers the body in the air, from 0 to 1: 0 keeps the take-off velocity, 1 steers as on the ground | `0.3` |
 | `look_speed` | Radians the view turns for every pixel of `look` | `0.0025` |
-| `eye_height` | Metres from the feet to the eyes, where the camera is put | `1.6` |
-| `camera_offset` | `[right, up, back]`, metres the camera is moved from the eyes in the frame of the entity | `[0, 0, 0]` |
+| `eye_height` | Meters from the feet to the eyes, where the camera is put | `1.6` |
+| `camera_offset` | `[right, up, back]`, meters the camera is moved from the eyes in the frame of the entity | `[0, 0, 0]` |
 | `step_smoothing` | How quickly the eyes catch up with a step, per second. 0 lifts them with the body | `10` |
 | `max_pitch` | Degrees the view can turn up or down, from 0 to 90 | `89` |
 
@@ -416,7 +416,7 @@ build puts together next to a copy of the runtime:
 | [projects/bench](../projects/bench) | Scenes that measure the engine | See its [README.md](../projects/bench/README.md) |
 | [tests/game](../tests/game) | Every scene the tests start the runtime with, and what those scenes show | `cmake --build --preset macos-arm64-debug-tests`, then `build/macos-arm64-debug/tests/game/NeonRuntime --scene assets://scenes/physics.scene.yml` |
 
-Where these notes write `NeonRuntime --scene assets://scenes/…` for a scene
+Where these notes write `NeonRuntime --scene assets://scenes/...` for a scene
 of the tests, it is the runtime of `tests/game` that is meant. What the
 scenes of the tests show is built by the engine as `Geometry`, or is a small
 file that a script of `tools/` writes; nothing in the repository was taken
@@ -430,13 +430,13 @@ of the project [projects/museum](../projects/museum), is a museum
 of what the engine does, to walk through from the first person: a corridor
 with twelve halls, each with a sign that says what it shows. Nothing in it
 comes from a model file or an image. Every piece is a `Geometry` in a plain
-colour, see [geometry.md](geometry.md), until models of our own take their
+color, see [geometry.md](geometry.md), until models of our own take their
 places.
 
 | Hall | Shows | Read more |
 |---|---|---|
 | 01 Shapes | Every shape a `Geometry` builds, flat and smooth, and a pipe on the wall that is a tube along a curve | [geometry.md](geometry.md), [curves.md](curves.md) |
-| 02 Materials | The `pbr` shader over roughness, metalness, and colour; `basic-lit`, `color`, and an `emissive` material | [vulkan-renderer.md](vulkan-renderer.md#the-shaders-that-ship) |
+| 02 Materials | The `pbr` shader over roughness, metalness, and color; `basic-lit`, `color`, and an `emissive` material | [vulkan-renderer.md](vulkan-renderer.md#the-shaders-that-ship) |
 | 03 Lights | Point lights that mix, a spot light, and a cube that glows, in a room the sun does not reach | [Light](#components) |
 | 04 Transparency | `alpha_mode: blend` in order of distance, and `double_sided` | [Renderable](#components) |
 | 05 Shadows | The shadows of the sun, of what stands still and of what a script turns | [vulkan-renderer.md](vulkan-renderer.md#shadows) |
@@ -517,9 +517,9 @@ The last scene asked for in a frame is the one taken. A scene asked for
 without a path is refused and said in the log.
 
 The prototype game of the tests goes
-[title.scene.yml](../tests/game/assets/scenes/title.scene.yml) →
+[title.scene.yml](../tests/game/assets/scenes/title.scene.yml) ->
 [prototype.scene.yml](../tests/game/assets/scenes/prototype.scene.yml)
-→ [end.scene.yml](../tests/game/assets/scenes/end.scene.yml), from
+-> [end.scene.yml](../tests/game/assets/scenes/end.scene.yml), from
 which the end menu goes back to either.
 
 ## Made to be changed by hand

@@ -17,7 +17,7 @@ layout (set = 2, binding = 0) uniform Values
     // the size of a grain in pixels
     float grain;
 
-    // the colour of the edge
+    // the color of the edge
     vec4 edge;
 } values;
 
@@ -26,7 +26,7 @@ float grain_of(vec2 cell)
     return fract(sin(dot(cell, vec2(127.1, 311.7))) * 43758.5453);
 }
 
-// Grains that blend into their neighbours, so that the edge between what
+// Grains that blend into their neighbors, so that the edge between what
 // is there and what is gone is a line and not a scatter of dots.
 float noise_at(vec2 point)
 {

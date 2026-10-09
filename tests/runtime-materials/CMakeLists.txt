@@ -8,6 +8,6 @@ neon_add_application_test(runtime-materials NeonRuntime run.cmake
         pixel-probe
         CASES
         every-mesh-is-drawn-with-its-own-material
-        every-material-is-lit-with-its-own-colour
-        the-colour-of-the-scene-multiplies-every-material
+        every-material-is-lit-with-its-own-color
+        the-color-of-the-scene-multiplies-every-material
 )

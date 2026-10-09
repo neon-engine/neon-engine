@@ -22,13 +22,13 @@ namespace neon
   /// step.
   struct Player
   {
-    /// Metres per second along the ground while `run` is not down.
+    /// Meters per second along the ground while `run` is not down.
     float walk_speed = 4.0f;
 
-    /// Metres per second along the ground while `run` is down.
+    /// Meters per second along the ground while `run` is down.
     float run_speed = 6.0f;
 
-    /// Metres per second upward that a jump starts with.
+    /// Meters per second upward that a jump starts with.
     float jump_speed = 5.0f;
 
     /// How much the keys steer the body while it is in the air, from 0 to
@@ -40,10 +40,10 @@ namespace neon
     /// Radians the view turns for every pixel of `look`.
     float look_speed = 0.0025f;
 
-    /// Metres from the feet to the eyes, where the camera is put.
+    /// Meters from the feet to the eyes, where the camera is put.
     float eye_height = 1.6f;
 
-    /// Metres the camera is moved from the eyes, to the right, up, and back
+    /// Meters the camera is moved from the eyes, to the right, up, and back
     /// in the frame of the entity, so that a scene leans the view or looks
     /// at the player from behind.
     glm::vec3 camera_offset{0.0f};
@@ -61,7 +61,7 @@ namespace neon
     /// the air. Written by the engine.
     glm::vec3 ground_velocity{0.0f};
 
-    /// Metres the eyes lag behind where the last step put them, below for
+    /// Meters the eyes lag behind where the last step put them, below for
     /// a step up and above for a step down. Written by the engine.
     float eye_glide = 0.0f;
 
@@ -78,15 +78,15 @@ namespace neon
 
     type.Field("walk_speed", &Player::walk_speed)
         .AtLeast(0)
-        .Describe("Metres per second along the ground");
+        .Describe("Meters per second along the ground");
 
     type.Field("run_speed", &Player::run_speed)
         .AtLeast(0)
-        .Describe("Metres per second along the ground while run is down");
+        .Describe("Meters per second along the ground while run is down");
 
     type.Field("jump_speed", &Player::jump_speed)
         .AtLeast(0)
-        .Describe("Metres per second upward that a jump starts with");
+        .Describe("Meters per second upward that a jump starts with");
 
     type.Field("air_control", &Player::air_control)
         .AtLeast(0)
@@ -98,10 +98,10 @@ namespace neon
         .Describe("Radians the view turns for every pixel of look");
 
     type.Field("eye_height", &Player::eye_height)
-        .Describe("Metres from the feet to the eyes, where the camera is put");
+        .Describe("Meters from the feet to the eyes, where the camera is put");
 
     type.Field("camera_offset", &Player::camera_offset)
-        .Describe("Metres the camera is moved from the eyes, to the right, up, and back in the frame of the entity");
+        .Describe("Meters the camera is moved from the eyes, to the right, up, and back in the frame of the entity");
 
     type.Field("step_smoothing", &Player::step_smoothing)
         .AtLeast(0)

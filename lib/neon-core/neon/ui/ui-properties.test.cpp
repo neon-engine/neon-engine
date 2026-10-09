@@ -72,7 +72,7 @@ namespace
     return value;
   }
 
-  UiPropertyValue Colour(const float r, const float g, const float b, const float a)
+  UiPropertyValue ColorValue(const float r, const float g, const float b, const float a)
   {
     UiPropertyValue value;
     value.kind = UiValueKind::Color;
@@ -235,7 +235,7 @@ namespace
     EXPECT_TRUE(child.layout.width.IsAuto());
   }
 
-  TEST(UiPropertiesTest, KeepsAColourThatFollowsTheTextFollowingIt)
+  TEST(UiPropertiesTest, KeepsAColorThatFollowsTheTextFollowingIt)
   {
     UiStyle from;
     from.color = {1.0f, 0.0f, 0.0f, 1.0f};
@@ -341,7 +341,7 @@ namespace
     }
   }
 
-  TEST(UiPropertiesTest, ReachesEveryColourAsItIsRead)
+  TEST(UiPropertiesTest, ReachesEveryColorAsItIsRead)
   {
     for (const auto &property : UiProperties::Get().GetAll())
     {
@@ -356,7 +356,7 @@ namespace
       EXPECT_TRUE(value.flag) << property.name;
 
       UiStyle changed;
-      property.set(changed, Colour(0.0f, 1.0f, 0.0f, 0.5f));
+      property.set(changed, ColorValue(0.0f, 1.0f, 0.0f, 0.5f));
       EXPECT_FLOAT_EQ(property.get(changed).color.g, 1.0f) << property.name;
       EXPECT_FLOAT_EQ(property.get(changed).color.a, 0.5f) << property.name;
     }
@@ -439,7 +439,7 @@ namespace
     EXPECT_EQ(Formatted("justify-content", style), "flex-start");
   }
 
-  TEST(UiPropertiesTest, WritesAColourThatFollowsTheTextAsTheColourOfTheText)
+  TEST(UiPropertiesTest, WritesAColorThatFollowsTheTextAsTheColorOfTheText)
   {
     UiStyle style;
     style.color = {1.0f, 0.0f, 0.0f, 1.0f};
@@ -481,7 +481,7 @@ namespace
     EXPECT_EQ(Formatted("scrollbar-color", style), "rgb(255, 0, 0) rgba(0, 0, 0, 0.502)");
   }
 
-  TEST(UiPropertiesTest, WritesColoursAndLengths)
+  TEST(UiPropertiesTest, WritesColorsAndLengths)
   {
     EXPECT_EQ(neon::FormatCssColor({1.0f, 1.0f, 1.0f, 1.0f}), "rgb(255, 255, 255)");
     EXPECT_EQ(neon::FormatCssColor({0.0f, 0.0f, 0.0f, 0.0f}), "rgba(0, 0, 0, 0)");
@@ -585,9 +585,9 @@ namespace
     EXPECT_EQ(neon::InterpolateUiValue(from, to, 0.5f).length, LayoutLength::Pixels(100.0f));
   }
 
-  TEST(UiInterpolationTest, MovesAColourWithoutAlphaStraight)
+  TEST(UiInterpolationTest, MovesAColorWithoutAlphaStraight)
   {
-    const auto value = neon::InterpolateUiValue(Colour(1.0f, 0.0f, 0.0f, 1.0f), Colour(0.0f, 0.0f, 1.0f, 1.0f), 0.25f);
+    const auto value = neon::InterpolateUiValue(ColorValue(1.0f, 0.0f, 0.0f, 1.0f), ColorValue(0.0f, 0.0f, 1.0f, 1.0f), 0.25f);
 
     EXPECT_FLOAT_EQ(value.color.r, 0.75f);
     EXPECT_FLOAT_EQ(value.color.g, 0.0f);
@@ -595,11 +595,11 @@ namespace
     EXPECT_FLOAT_EQ(value.color.a, 1.0f);
   }
 
-  TEST(UiInterpolationTest, MovesAColourWithItsAlphaMultipliedIn)
+  TEST(UiInterpolationTest, MovesAColorWithItsAlphaMultipliedIn)
   {
     // from a red that cannot be seen to a blue that can: the red adds
-    // nothing on the way, where mixing the colours alone would give purple
-    const auto half = neon::InterpolateUiValue(Colour(1.0f, 0.0f, 0.0f, 0.0f), Colour(0.0f, 0.0f, 1.0f, 1.0f), 0.5f);
+    // nothing on the way, where mixing the colors alone would give purple
+    const auto half = neon::InterpolateUiValue(ColorValue(1.0f, 0.0f, 0.0f, 0.0f), ColorValue(0.0f, 0.0f, 1.0f, 1.0f), 0.5f);
 
     EXPECT_FLOAT_EQ(half.color.r, 0.0f);
     EXPECT_FLOAT_EQ(half.color.g, 0.0f);
@@ -608,28 +608,28 @@ namespace
 
     // rgba(255, 0, 0, 0.2) to rgba(0, 0, 255, 0.6) at half:
     // alpha 0.4, red 0.5 * 0.2 / 0.4, blue 0.5 * 0.6 / 0.4
-    const auto mixed = neon::InterpolateUiValue(Colour(1.0f, 0.0f, 0.0f, 0.2f), Colour(0.0f, 0.0f, 1.0f, 0.6f), 0.5f);
+    const auto mixed = neon::InterpolateUiValue(ColorValue(1.0f, 0.0f, 0.0f, 0.2f), ColorValue(0.0f, 0.0f, 1.0f, 0.6f), 0.5f);
 
     EXPECT_NEAR(mixed.color.a, 0.4f, 1e-6f);
     EXPECT_NEAR(mixed.color.r, 0.25f, 1e-6f);
     EXPECT_NEAR(mixed.color.b, 0.75f, 1e-6f);
   }
 
-  TEST(UiInterpolationTest, MovesBetweenTwoColoursThatCannotBeSeenWithoutDividingByZero)
+  TEST(UiInterpolationTest, MovesBetweenTwoColorsThatCannotBeSeenWithoutDividingByZero)
   {
-    const auto value = neon::InterpolateUiValue(Colour(1.0f, 0.0f, 0.0f, 0.0f), Colour(0.0f, 1.0f, 0.0f, 0.0f), 0.5f);
+    const auto value = neon::InterpolateUiValue(ColorValue(1.0f, 0.0f, 0.0f, 0.0f), ColorValue(0.0f, 1.0f, 0.0f, 0.0f), 0.5f);
 
     EXPECT_FLOAT_EQ(value.color.a, 0.0f);
     EXPECT_FLOAT_EQ(value.color.r, 0.0f);
     EXPECT_FLOAT_EQ(value.color.g, 0.0f);
   }
 
-  TEST(UiInterpolationTest, SetsAColourThatIsOnItsWay)
+  TEST(UiInterpolationTest, SetsAColorThatIsOnItsWay)
   {
-    UiPropertyValue from = Colour(1.0f, 0.0f, 0.0f, 1.0f);
+    UiPropertyValue from = ColorValue(1.0f, 0.0f, 0.0f, 1.0f);
     from.flag = false;
 
-    const auto value = neon::InterpolateUiValue(from, Colour(0.0f, 0.0f, 1.0f, 1.0f), 0.5f);
+    const auto value = neon::InterpolateUiValue(from, ColorValue(0.0f, 0.0f, 1.0f, 1.0f), 0.5f);
     EXPECT_TRUE(value.flag);
   }
 
@@ -685,8 +685,8 @@ namespace
     EXPECT_EQ(Number(1.0f), Number(1.0f));
     EXPECT_NE(Number(1.0f), Number(2.0f));
     EXPECT_NE(Number(1.0f), Keyword(1));
-    EXPECT_EQ(Colour(1.0f, 0.5f, 0.0f, 1.0f), Colour(1.0f, 0.5f, 0.0f, 1.0f));
-    EXPECT_NE(Colour(1.0f, 0.5f, 0.0f, 1.0f), Colour(1.0f, 0.5f, 0.0f, 0.5f));
+    EXPECT_EQ(ColorValue(1.0f, 0.5f, 0.0f, 1.0f), ColorValue(1.0f, 0.5f, 0.0f, 1.0f));
+    EXPECT_NE(ColorValue(1.0f, 0.5f, 0.0f, 1.0f), ColorValue(1.0f, 0.5f, 0.0f, 0.5f));
     EXPECT_EQ(Length(LayoutLength::Pixels(1.0f)), Length(LayoutLength::Pixels(1.0f)));
     EXPECT_NE(Length(LayoutLength::Pixels(1.0f)), Length(LayoutLength::Percent(1.0f)));
   }

@@ -582,7 +582,7 @@ namespace
     EXPECT_FLOAT_EQ(ScrollY(), 60.0f);
   }
 
-  TEST_F(UiScrollingTest, DrawsTheScrollbarInTheColoursOfTheStyle)
+  TEST_F(UiScrollingTest, DrawsTheScrollbarInTheColorsOfTheStyle)
   {
     ShowList(10, "scrollbar_color: \"#ff0000 #0000ff\"\n");
 

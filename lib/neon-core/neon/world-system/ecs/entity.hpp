@@ -7,7 +7,7 @@
 namespace neon
 {
   /// Names one thing in the world. An entity holds no data and has no
-  /// behaviour. What it is follows from the components it carries.
+  /// behavior. What it is follows from the components it carries.
   using Entity = std::uint64_t;
 
   /// Names a kind of component, as returned when it was registered.

@@ -13,7 +13,7 @@ namespace neon
   /// They are drawn by the engine and styled by CSS:
   ///
   ///   - `scrollbar_width` says how wide they are, and `none` hides them
-  ///   - `scrollbar_color` says the colours of the thumb and of the track
+  ///   - `scrollbar_color` says the colors of the thumb and of the track
   ///   - `::scrollbar-track` and `::scrollbar-thumb` of a style sheet reach
   ///     the two parts, of which `background_color` is what is drawn
   ///

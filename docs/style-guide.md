@@ -114,7 +114,7 @@ _window = SDL_CreateWindow(
   _window_flags);
 ```
 
-A constructor puts its initialisers on the next line, starting with the
+A constructor puts its initializers on the next line, starting with the
 colon, and each further one below the first:
 
 ```cpp
@@ -173,8 +173,8 @@ the headers longer without making anything easier to find.
 | `const` on a parameter passed by value, in the definition. The declaration leaves it out | `SetWindowFocus(bool focus)` declared, `SetWindowFocus(const bool focus)` defined | Differs, discouraged |
 | `const` on locals that do not change | `const auto current_frame = ...` | Encouraged |
 | `auto` where the type is on the same line or is long | `const auto bear = new RenderNode(...)` | Same |
-| `if` with an initialiser when the variable is only needed there | `if (std::string error; !Apply(..., error))` | |
-| Designated initialisers for the engine's own structs | `SettingsConfig{.width = 1920, .height = 1080}` | Same |
+| `if` with an initializer when the variable is only needed there | `if (std::string error; !Apply(..., error))` | |
+| Designated initializers for the engine's own structs | `SettingsConfig{.width = 1920, .height = 1080}` | Same |
 | `enum class`, never a plain `enum` | | Same |
 | `static_cast` and its relatives, never a C cast | | Same |
 | `nullptr`, never `NULL` or `0` | | Same |
@@ -211,8 +211,8 @@ Google asks for a public virtual destructor instead.
 
 ### Errors
 
-**While a game runs, the engine never throws.** A problem is a result — a
-`bool`, a struct, a list of messages — that the caller handles where it
+**While a game runs, the engine never throws.** A problem is a result - a
+`bool`, a struct, a list of messages - that the caller handles where it
 happens, and the game goes on: a scene with a mistake is loaded without what
 was wrong, a user interface that cannot be made leaves its entity showing
 nothing, an asset that cannot be read is not drawn. Every such problem is
@@ -525,7 +525,7 @@ owner to decide.
 | Closing of a namespace | `} // neon`, 75 times | A bare `}`, 9 times |
 | Header guard | The file name | 9 that do not match it. 3 are `SDL_2_...` for `sdl2-...`. 6 carry the name the file had before: `WINDOW_INFO_HPP` in `settings-config.hpp`, `LIGHT_HPP`, `TEXTURE_HPP`, `SCENE_HPP`, `PLAYER_NODE_HPP`, `SDL_2_WINDOW_CONTEXT_HPP` in `window-context.hpp` |
 | `#endif` | `#endif //NAME`, 58 times | Bare, 3 times. With a space, once |
-| Members set by a constructor | Assigned in the body | An initialiser list, in the newer classes. Google and clang-tidy prefer the list |
+| Members set by a constructor | Assigned in the body | An initializer list, in the newer classes. Google and clang-tidy prefer the list |
 | `[[nodiscard]]` on a getter | With, 19 | Without, 15 |
 | `//` comments | Lower-case first letter, 106 | Upper-case, 27, mostly where the comment is several sentences |
 | Float literals | `1.0f`, 166 | `1.f`, 13. `.5f`, 2 |
@@ -555,7 +555,7 @@ owner to decide.
 |---|---|
 | The files under "Braces" and "Contents of a namespace" above | 45 |
 | `*` and `&` at the type | 30 |
-| Line breaks that clang-format places differently: the brace that closes a designated initialiser, as in `scene-manager.cpp` and `runtime-options.cpp`, `{}` after the initialisers of a constructor, a matrix written as four rows, conditions and `<<` that continue on the next line | 120 |
+| Line breaks that clang-format places differently: the brace that closes a designated initializer, as in `scene-manager.cpp` and `runtime-options.cpp`, `{}` after the initializers of a constructor, a matrix written as four rows, conditions and `<<` that continue on the next line | 120 |
 
 The first two are inconsistencies the owner may want fixed. The others are
 places where clang-format cannot be taught the form the code uses. Running

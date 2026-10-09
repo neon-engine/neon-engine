@@ -12,7 +12,7 @@ namespace neon
   {
     // A user interface is drawn at the size of its images, and a text must
     // not show what is next to a character in its atlas. Smaller copies and
-    // an image that starts again would do that. Its colours are blended as
+    // an image that starts again would do that. Its colors are blended as
     // CSS blends them, in sRGB, so they are read as they are.
     constexpr VK_TextureOptions texture_options{
       .mip_levels = false,
@@ -259,7 +259,7 @@ namespace neon
     depth.depthWriteEnable = VK_FALSE;
     depth.depthCompareOp = VK_COMPARE_OP_ALWAYS;
 
-    // Alpha is multiplied into the colours by the time they are blended,
+    // Alpha is multiplied into the colors by the time they are blended,
     // in the textures and by the shader. The alpha of the frame stays 1
     // where it was 1.
     VkPipelineColorBlendAttachmentState blend_attachment{};
@@ -676,7 +676,7 @@ namespace neon
 
     if (!Prepare()) { return keep(); }
 
-    // A shader of an element is the half that colours pixels. Where the
+    // A shader of an element is the half that colors pixels. Where the
     // corners go is the work of the shader of the engine.
     const std::string file = shader_path + ".frag.spv";
 
@@ -773,7 +773,7 @@ namespace neon
       for (uint32_t i = 0; i < found->count; i++)
       {
         // a number for a vector is the number in every part of it, and a
-        // colour for three numbers loses its alpha
+        // color for three numbers loses its alpha
         const float number = value.count == 1
           ? value.numbers[0]
           : (i < static_cast<uint32_t>(value.count) ? value.numbers[i] : 0.0f);

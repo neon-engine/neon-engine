@@ -200,7 +200,7 @@ namespace
     EXPECT_NE(wrong[0].cluster, right[0].cluster);
   }
 
-  TEST_F(HbTextShaperTest, ArabicLettersTakeTheFormTheirNeighboursAskFor)
+  TEST_F(HbTextShaperTest, ArabicLettersTakeTheFormTheirNeighborsAskFor)
   {
     ShapingOptions options;
     options.direction = TextDirection::RightToLeft;

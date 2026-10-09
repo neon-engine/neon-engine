@@ -2,7 +2,7 @@
 #extension GL_GOOGLE_include_directive : require
 
 // Shows what a shader is told that no object carries. The left half of the
-// square is the colour of the numbers at place 3, as the extension set
+// square is the color of the numbers at place 3, as the extension set
 // them. The right half says whether the time runs: green when the seconds
 // the world has run and the length of its last frame are both above zero,
 // red when not.

@@ -1,4 +1,4 @@
-# 300 crates of distinct colours, one material each, more than one pool holds. Written by tools/make-sharing-scenes.py for
+# 300 crates of distinct colors, one material each, more than one pool holds. Written by tools/make-sharing-scenes.py for
 # tests/runtime-sharing; do not edit by hand.
 scene: sharing-distinct
 version: 1

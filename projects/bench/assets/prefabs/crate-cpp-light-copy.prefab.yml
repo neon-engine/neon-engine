@@ -1,5 +1,5 @@
-# A crate that is spawned while the game runs, with the behaviour in C++ that does the least. Half a metre,
-# in one plain colour, so that nothing is read from an image.
+# A crate that is spawned while the game runs, with the behavior in C++ that does the least. Half a meter,
+# in one plain color, so that nothing is read from an image.
 version: 1
 prefab: crate-cpp-light-copy
 

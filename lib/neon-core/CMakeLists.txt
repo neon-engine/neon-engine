@@ -1,7 +1,7 @@
 set(TARGET neon-core)
 
 add_library(${TARGET} STATIC
-        # the behaviour of the user interface, and what it needs of the input
+        # the behavior of the user interface, and what it needs of the input
         # and of the window. New files are listed in this block
         neon/command-line/display-options.cpp
         neon/command-line/display-options.hpp
@@ -53,7 +53,7 @@ add_library(${TARGET} STATIC
         neon/ui/ui-properties.hpp
         neon/ui/ui-scrollbars.cpp
         neon/ui/ui-scrollbars.hpp
-        neon/ui/ui-style-behaviour.cpp
+        neon/ui/ui-style-behavior.cpp
         neon/ui/ui-style-sheets.cpp
         neon/ui/ui-style-sheets.hpp
         neon/ui/ui-text-editor.cpp
@@ -502,7 +502,7 @@ neon_add_unit_test(${TARGET} neon/command-line/display-options.test.cpp)
   neon_add_unit_test(${TARGET} neon/ui/css/css-selector.test.cpp)
   neon_add_unit_test(${TARGET} neon/ui/css/css-style-sheet.test.cpp)
   neon_add_unit_test(${TARGET} neon/ui/ui-properties.test.cpp)
-  neon_add_unit_test(${TARGET} neon/ui/ui-style-behaviour.test.cpp)
+  neon_add_unit_test(${TARGET} neon/ui/ui-style-behavior.test.cpp)
   neon_add_unit_test(${TARGET} neon/ui/ui-style-sheets.test.cpp)
   neon_add_unit_test(${TARGET} neon/ui/ui-text-editor.test.cpp)
   neon_add_unit_test(${TARGET} neon/ui/ui-timing.test.cpp)

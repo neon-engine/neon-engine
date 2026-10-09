@@ -20,7 +20,7 @@ namespace
     EXPECT_NEAR(LinearToSrgb(1.0f), 1.0f, tolerance);
   }
 
-  TEST(ColorSpaceTest, AGreyHalfwayOnTheScreenIsAboutAFifthOfTheLight)
+  TEST(ColorSpaceTest, AGrayHalfwayOnTheScreenIsAboutAFifthOfTheLight)
   {
     // the value every table of the sRGB standard gives for 0.5
     EXPECT_NEAR(SrgbToLinear(0.5f), 0.214041f, tolerance);
@@ -51,7 +51,7 @@ namespace
     }
   }
 
-  TEST(ColorSpaceTest, TurnsAColourIntoLightAndLeavesItsAlpha)
+  TEST(ColorSpaceTest, TurnsAColorIntoLightAndLeavesItsAlpha)
   {
     const Color linear = SrgbToLinear(Color{1.0f, 0.5f, 0.0f, 0.25f});
 

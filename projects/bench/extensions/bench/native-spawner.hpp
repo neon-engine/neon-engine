@@ -11,7 +11,7 @@ namespace bench
   {
     /// Which crate, by what it does: 0 nothing, 1 NativeHeavyCopy, 2 HeavyCopy in
     /// Lua, 3 NativeLightCopy, 4 LightCopy in Lua, 5 NativeNoCopy, 6 NoCopy in Lua.
-    std::int32_t behaviour = 0;
+    std::int32_t behavior = 0;
 
     std::int32_t burst = 0;
     float per_second = 0.0f;

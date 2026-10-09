@@ -25,7 +25,7 @@ if (NOT NO_VULKAN EQUAL -1)
   return()
 endif ()
 
-# expect_pixel(<what> <x> <y> <red> <green> <blue>): the colour of a pixel,
+# expect_pixel(<what> <x> <y> <red> <green> <blue>): the color of a pixel,
 # each channel within 2 of what is given, which leaves room for rounding by
 # the graphics card
 function(expect_pixel WHAT X Y RED GREEN BLUE)
@@ -75,9 +75,9 @@ expect_image("shots/frame.png")
 if (CASE STREQUAL "the-scene-alone-shows-nothing")
   expect_pixel("the black of the empty scene" 960 540 0 0 0)
 elseif (CASE STREQUAL "a-target-spawned-from-its-prefab-is-drawn")
-  # the target of the kit, seen face on in the colours of the kit's
+  # the target of the kit, seen face on in the colors of the kit's
   # colormap, lit by the daylight: the red of its bull's eye in the middle,
-  # the grey of its plate around it, and black where nothing is
+  # the gray of its plate around it, and black where nothing is
   expect_output("Spawning assets://prefabs/target.prefab.yml as the command line asked")
   expect_pixel("the red bull's eye of the spawned target" 960 540 146 50 33)
   expect_pixel("the plate of the spawned target above it" 960 450 112 112 117)

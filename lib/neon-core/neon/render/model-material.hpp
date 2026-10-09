@@ -10,7 +10,7 @@
 namespace neon
 {
   /// What a model file says about the look of one of its materials, as far
-  /// as the renderer can use it: the textures it names and the colour it
+  /// as the renderer can use it: the textures it names and the color it
   /// multiplies them with. A scene fills in what it does not say.
   struct ModelMaterial
   {
@@ -18,8 +18,8 @@ namespace neon
     /// them.
     std::vector<TextureInfo> textures;
 
-    /// The base colour factor of a glTF material, white when there is none.
-    /// A renderer multiplies it into the colour of the material.
+    /// The base color factor of a glTF material, white when there is none.
+    /// A renderer multiplies it into the color of the material.
     Color color;
 
     /// What the material gives off itself: the `emissiveFactor` of a glTF

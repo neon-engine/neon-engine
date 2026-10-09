@@ -78,7 +78,7 @@ namespace
   {
     const VK_ShadowCascades cascades = VK_ShadowFit::Cascades(view, projection, down, distance, 4, map_size);
 
-    // a metre across the world is more of the near box than of the far one
+    // a meter across the world is more of the near box than of the far one
     const auto across = [&](const int i)
     {
       const glm::mat4 &box = cascades.view_projections[static_cast<std::size_t>(i)];
@@ -99,13 +99,13 @@ namespace
     EXPECT_TRUE(Inside(cascades.view_projections[0], above));
   }
 
-  TEST(VkShadowFitTest, ABoxMovesInWholeTexelsAsItsCentreMoves)
+  TEST(VkShadowFitTest, ABoxMovesInWholeTexelsAsItsCenterMoves)
   {
     const glm::vec3 point{4.0f, 0.0f, 2.0f};
-    const float texel_in_metres = 2.0f * 10.0f / map_size;
+    const float texel_in_meters = 2.0f * 10.0f / map_size;
 
     const glm::mat4 before = VK_ShadowFit::BoxViewProjection(down, glm::vec3(0.0f), 10.0f, 50.0f, map_size);
-    const glm::mat4 after = VK_ShadowFit::BoxViewProjection(down, glm::vec3(texel_in_metres * 7.3f, 0.0f, 0.0f), 10.0f, 50.0f, map_size);
+    const glm::mat4 after = VK_ShadowFit::BoxViewProjection(down, glm::vec3(texel_in_meters * 7.3f, 0.0f, 0.0f), 10.0f, 50.0f, map_size);
 
     // the point moved in the map by whole texels, seven of them
     const glm::vec3 at = Projected(before, point);

@@ -3,8 +3,8 @@
 #   NeonRuntime --scene assets://scenes/tonemap-test.scene.yml --tonemapper aces
 #
 # Flat planes face the camera in a scene without light, so that what each
-# shows is the light its material gives off: a plain colour, or an
-# emissive colour of the pbr and basic-lit shaders, one of them four
+# shows is the light its material gives off: a plain color, or an
+# emissive color of the pbr and basic-lit shaders, one of them four
 # times brighter than white. What a screen shows of that light depends on
 # the tonemapper and the exposure alone, see tests/runtime-tonemapping.
 
@@ -19,7 +19,7 @@ entities:
       Camera: Default
 
   # a light that gives nothing, so that the direction the shaders
-  # normalise is a direction and not zero
+  # normalize is a direction and not zero
   - name: dark
     components:
       Transform: Default
@@ -30,9 +30,9 @@ entities:
         diffuse: [0, 0, 0]
         specular: [0, 0, 0]
 
-  # the top row, from the left: a plain grey, white given off, four times
+  # the top row, from the left: a plain gray, white given off, four times
   # white given off, and blue given off by the basic-lit shader
-  - name: grey
+  - name: gray
     components:
       Transform:
         position: [-2.7, 1, 0]

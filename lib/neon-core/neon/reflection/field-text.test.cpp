@@ -107,7 +107,7 @@ namespace
     EXPECT_EQ(length, FieldLength::Pixels(7.0f));
   }
 
-  // colours
+  // colors
 
   TEST(FieldColorTest, IsWrittenInTheNotationOfCss)
   {
@@ -116,7 +116,7 @@ namespace
     EXPECT_EQ(neon::FormatFieldColor({1.0f, 1.0f, 1.0f, 0.5f}), "#ffffff80");
     EXPECT_EQ(neon::FormatFieldColor({0.0f, 0.0f, 0.0f, 0.0f}), "#00000000");
 
-    // held to what a colour can be
+    // held to what a color can be
     EXPECT_EQ(neon::FormatFieldColor({2.0f, -1.0f, 0.2f, 1.0f}), "#ff0033");
   }
 
@@ -170,7 +170,7 @@ namespace
     }
   }
 
-  TEST(FieldColorTest, RefusesWhatIsNoColour)
+  TEST(FieldColorTest, RefusesWhatIsNoColor)
   {
     Color color{0.1f, 0.2f, 0.3f, 0.4f};
 

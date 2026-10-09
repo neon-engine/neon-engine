@@ -33,7 +33,7 @@ namespace bench
     {
       using neon::extension::Field;
 
-      world.RegisterComponent<Crate>("Crate", "A crate with no behaviour", {
+      world.RegisterComponent<Crate>("Crate", "A crate with no behavior", {
         Field("spawned", &Crate::spawned),
       });
 
@@ -53,7 +53,7 @@ namespace bench
       });
 
       world.RegisterComponent<NativeSpawner>("NativeSpawner", "Places crates, at once and for ever", {
-        Field("behaviour", &NativeSpawner::behaviour,
+        Field("behavior", &NativeSpawner::behavior,
               "0 nothing, 1 NativeHeavyCopy, 2 HeavyCopy, 3 NativeLightCopy, 4 LightCopy, 5 NativeNoCopy, 6 NoCopy"),
         Field("burst", &NativeSpawner::burst, "How many are placed at once in the first frame"),
         Field("per_second", &NativeSpawner::per_second, "How many are dropped in a second, for ever"),

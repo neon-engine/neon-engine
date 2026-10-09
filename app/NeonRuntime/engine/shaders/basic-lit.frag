@@ -8,7 +8,7 @@
 layout (location = 0) in vec3 frag_coord;
 layout (location = 1) in vec3 normal_coord;
 layout (location = 2) in vec2 tex_coord;
-// the colour painted on the vertices, in linear light; white where a
+// the color painted on the vertices, in linear light; white where a
 // model has none
 layout (location = 3) in vec4 vertex_color;
 layout (location = 4) flat in uint object_index;
@@ -41,7 +41,7 @@ vec3 GetSpecularColor()
     return mix(vec3(0.0), texture_color, object.material.y);
 }
 
-// The light the surface gives off itself: the emissive colour, with its
+// The light the surface gives off itself: the emissive color, with its
 // strength multiplied in, times the emissive texture where there is one.
 // Added after lighting, so that it shows in the dark.
 vec3 GetEmissive()

@@ -11,9 +11,9 @@ namespace neon
   /// number of pixels loses its last row or column, as the graphics card's
   /// own halving does; a side of 1 stays 1.
   ///
-  /// The pixels are RGBA, 4 bytes each. When the image holds colours, which
+  /// The pixels are RGBA, 4 bytes each. When the image holds colors, which
   /// a file keeps in sRGB, red, green, and blue are averaged as light, as
-  /// the graphics card makes its smaller copies of colours; alpha, and the
+  /// the graphics card makes its smaller copies of colors; alpha, and the
   /// bytes of an image that holds numbers, are averaged as they are.
   [[nodiscard]] ImagePixels HalveImage(const ImagePixels &image, bool is_color);
 } // neon

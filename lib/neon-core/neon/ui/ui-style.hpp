@@ -205,8 +205,8 @@ namespace neon
   /// to an element, such as `font_size` to an image, does nothing.
   struct UiStyle
   {
-    // The properties of behaviour: what is scrolled, animated, and
-    // pointed at. They are read by ReadUiBehaviourStyle().
+    // The properties of behavior: what is scrolled, animated, and
+    // pointed at. They are read by ReadUiBehaviorStyle().
 
     /// It is inherited, as in CSS.
     UiVisibility visibility = UiVisibility::Visible;
@@ -221,7 +221,7 @@ namespace neon
     UiScrollbarWidth scrollbar_width = UiScrollbarWidth::Auto;
 
     /// `scrollbar_color` holds the two: what is dragged, and what it is
-    /// dragged along. Without them, they follow from the colour of the
+    /// dragged along. Without them, they follow from the color of the
     /// text.
     std::optional<Color> scrollbar_thumb_color;
     std::optional<Color> scrollbar_track_color;
@@ -229,8 +229,8 @@ namespace neon
     UiScrollBehavior scroll_behavior = UiScrollBehavior::Auto;
     UiScrollDrag scroll_drag = UiScrollDrag::None;
 
-    /// The colour of the caret of a text that is typed. Without one, it
-    /// has the colour of the text.
+    /// The color of the caret of a text that is typed. Without one, it
+    /// has the color of the text.
     std::optional<Color> caret_color;
 
     UiTransitions transitions;
@@ -285,7 +285,7 @@ namespace neon
     /// Virtual path of an image that is stretched over the element.
     std::string background_image;
 
-    /// Without one, the border has the colour of the text, which CSS calls
+    /// Without one, the border has the color of the text, which CSS calls
     /// `currentcolor`.
     std::optional<Color> border_color;
 
@@ -311,7 +311,7 @@ namespace neon
     int z_index = 0;
     UiPointerEvents pointer_events = UiPointerEvents::Auto;
 
-    /// The colour of text.
+    /// The color of text.
     Color color{1.0f, 1.0f, 1.0f, 1.0f};
 
     std::string font_family = "sans-serif";
@@ -342,7 +342,7 @@ namespace neon
     bool text_underline = false;
     bool text_line_through = false;
 
-    /// Without one, the lines have the colour of the text.
+    /// Without one, the lines have the color of the text.
     std::optional<Color> text_decoration_color;
 
     /// 0 stands for what the font asks for.
@@ -389,7 +389,7 @@ namespace neon
 
     UiCornerRadii border_radius;
 
-    /// The colour of each side where it differs from `border_color`.
+    /// The color of each side where it differs from `border_color`.
     std::optional<Color> border_top_color;
     std::optional<Color> border_right_color;
     std::optional<Color> border_bottom_color;
@@ -431,10 +431,10 @@ namespace neon
     }
   };
 
-  /// Reads the properties of behaviour that are written into `style`: what
+  /// Reads the properties of behavior that are written into `style`: what
   /// is scrolled, animated, and pointed at. ReadUiStyle() calls it, so
   /// nothing else has to.
-  void ReadUiBehaviourStyle(const DataReader &reader, UiStyle &style);
+  void ReadUiBehaviorStyle(const DataReader &reader, UiStyle &style);
 
   /// Reads the properties that are written into `style`, and leaves the
   /// others as they are. What is written and cannot be read is reported,

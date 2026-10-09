@@ -10,7 +10,7 @@ neon_add_application_test(runtime-tonemapping NeonRuntime run.cmake
         CASES
         light-above-white-is-cut-off-flat-by-default
         aces-rolls-the-light-off-towards-white
-        agx-rolls-the-light-off-and-keeps-its-colours
+        agx-rolls-the-light-off-and-keeps-its-colors
         exposure-multiplies-the-light-before-the-curve
         an-emissive-surface-shows-in-the-dark
 )

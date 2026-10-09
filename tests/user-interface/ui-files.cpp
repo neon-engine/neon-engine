@@ -427,7 +427,7 @@ namespace
     EXPECT_EQ(layout_of("auto").flex_basis, LayoutLength::Auto());
   }
 
-  TEST_F(UiFileTest, ReadsColoursTheWayCssWritesThem)
+  TEST_F(UiFileTest, ReadsColorsTheWayCssWritesThem)
   {
     ASSERT_GE(ShowUnderRoot(
       "- type: panel\n"
@@ -446,7 +446,7 @@ namespace
     ExpectColor(style.accent_color, 1, 0.502f, 0, 0.5f);
   }
 
-  TEST_F(UiFileTest, ReadsColoursTheWaySceneFilesWriteThem)
+  TEST_F(UiFileTest, ReadsColorsTheWaySceneFilesWriteThem)
   {
     ASSERT_GE(ShowUnderRoot(
       "- type: panel\n"
@@ -623,18 +623,18 @@ namespace
   {
     ASSERT_GE(ShowUnderRoot(
       "- type: button\n  name: plain\n"
-      "- type: button\n  name: coloured\n  background_color: \"#ff0000\"\n"), 0);
+      "- type: button\n  name: colored\n  background_color: \"#ff0000\"\n"), 0);
 
     // a button of the engine is lighter under the pointer
     ExpectColor(StyleIn("plain", {.hover = true}).background_color, 0.298f, 0.337f, 0.416f, 1);
 
     // as in CSS, where what an author writes wins over the browser, a
     // state of the browser included
-    ExpectColor(StyleIn("coloured", {.hover = true}).background_color, 1, 0, 0, 1);
+    ExpectColor(StyleIn("colored", {.hover = true}).background_color, 1, 0, 0, 1);
 
     // what the file did not write is still that of the engine
-    EXPECT_FLOAT_EQ(StyleIn("coloured", {.focus = true}).outline_width, 2);
-    EXPECT_FLOAT_EQ(StyleIn("coloured", {.disabled = true}).opacity, 0.5f);
+    EXPECT_FLOAT_EQ(StyleIn("colored", {.focus = true}).outline_width, 2);
+    EXPECT_FLOAT_EQ(StyleIn("colored", {.disabled = true}).opacity, 0.5f);
   }
 
   TEST_F(UiFileTest, AStateCanChangeWhereAnElementGoes)
@@ -953,7 +953,7 @@ namespace
     },
     WrongProperty{
       "border: 2px dotted red",
-      "'border' of button 'start' is '2px dotted red', where a width, solid or none, and a colour, such as "
+      "'border' of button 'start' is '2px dotted red', where a width, solid or none, and a color, such as "
       "\"2px solid #ffffff\" was expected"
     },
     WrongProperty{
@@ -1018,12 +1018,12 @@ namespace
     },
     WrongProperty{
       "background_color: red",
-      "'background_color' of button 'start' is 'red', where a colour such as \"#ff8000\", \"#ff800080\", "
+      "'background_color' of button 'start' is 'red', where a color such as \"#ff8000\", \"#ff800080\", "
       "or rgb(255, 128, 0), or a list of 3 to 4 numbers was expected"
     },
     WrongProperty{
       "color: [1, 0]",
-      "'color' of button 'start' is a list, where a colour such as \"#ff8000\", \"#ff800080\", "
+      "'color' of button 'start' is a list, where a color such as \"#ff8000\", \"#ff800080\", "
       "or rgb(255, 128, 0), or a list of 3 to 4 numbers was expected"
     },
     WrongProperty{
@@ -1106,7 +1106,7 @@ namespace
         "    background_color: red\n"
         "    text: Go\n"),
       ElementsAre(
-        "assets://ui/test.ui.yml:7: 'background_color' of 'hover' of button 'start' is 'red', where a colour "
+        "assets://ui/test.ui.yml:7: 'background_color' of 'hover' of button 'start' is 'red', where a color "
         "such as \"#ff8000\", \"#ff800080\", or rgb(255, 128, 0), or a list of 3 to 4 numbers was expected",
         StartsWith(
           "assets://ui/test.ui.yml:8: 'text' is not known to 'hover' of button 'start'. Known are: "

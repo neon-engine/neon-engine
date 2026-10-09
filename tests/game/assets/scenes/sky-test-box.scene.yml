@@ -4,7 +4,7 @@
 #
 # The camera stands at the origin, is not turned, and sees 120 degrees from
 # top to bottom, so that the sky ahead, to both sides, above, and below it
-# is in the picture. Every direction of the sky has a plain colour of its
+# is in the picture. Every direction of the sky has a plain color of its
 # own: right red, left green, top blue, bottom brown, front yellow, back
 # purple. Two small quads stand in front of the sky: an opaque magenta one
 # right of the middle, which covers it, and a half see-through red one left

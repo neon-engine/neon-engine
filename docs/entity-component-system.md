@@ -13,8 +13,8 @@ before is removed.
 | Piece | What it is |
 |---|---|
 | Entity | Names one thing in the world. It is a number and holds nothing |
-| Component | Data that an entity carries, such as a `Transform`. It has no behaviour |
-| System | Behaviour. It works on every entity that carries the components it asks for, once per frame or once per step of the world |
+| Component | Data that an entity carries, such as a `Transform`. It has no behavior |
+| System | Behavior. It works on every entity that carries the components it asks for, once per frame or once per step of the world |
 
 What an entity is follows from what it carries. A box of the start scene is
 an entity with a `Transform` and a `Renderable`. The player is one with a
@@ -27,8 +27,8 @@ its data and updated itself.
 
 | | Nodes | Entities and components |
 |---|---|---|
-| A part of a thing | An object with data and behaviour | Data only |
-| Behaviour | In each node, called while the tree is walked | In systems |
+| A part of a thing | An object with data and behavior | Data only |
+| Behavior | In each node, called while the tree is walked | In systems |
 | Hierarchy | The tree is both what a thing is made of and what it moves with | An entity has a parent. What it is made of is its components |
 | A scene | Objects that are constructed in code | A list of entities with components and their values |
 
@@ -41,7 +41,7 @@ and inspected by an agent.
 | Piece | Location | Role |
 |---|---|---|
 | `EntityStore` | neon-core | The interface. Entities, components, hierarchy, and queries |
-| `EntitySystem` | neon-core | The interface of behaviour |
+| `EntitySystem` | neon-core | The interface of behavior |
 | `Scene` | neon-core | The interface of what fills a store |
 | `EntityWorld` | neon-core | Runs the systems every frame, changes the scene when one is asked for, and spawns a prefab through the scene when a game asks, see [prefabs.md](prefabs.md#spawning-at-run-time). It is the `WorldSystem` of the runtime |
 | Components and systems of the engine | neon-core | Listed below |
@@ -249,17 +249,17 @@ not use that faster lookup.
 
 | Operation | EnTT | Flecs |
 |---|---|---|
-| Run 7 systems over all entities | 569 µs | 120 µs |
-| Create the entities | 623 µs | 6,365 µs |
-| Remove and add a component | 408 µs | 3,890 µs |
-| Look up one component by entity | 51 µs | 210 µs |
+| Run 7 systems over all entities | 569 us | 120 us |
+| Create the entities | 623 us | 6,365 us |
+| Remove and add a component | 408 us | 3,890 us |
+| Look up one component by entity | 51 us | 210 us |
 
 Flecs is faster at what happens every frame and slower at changes. The numbers
 did not decide it, because both are fast enough for a game. What decided it:
 
 | | Flecs | EnTT |
 |---|---|---|
-| Components that are declared at run time | What its C interface is made for | Possible, but the slow path. 1,455 µs in the first row above |
+| Components that are declared at run time | What its C interface is made for | Possible, but the slow path. 1,455 us in the first row above |
 | Hierarchy | Built in, with queries that order by it | Left to the application |
 
 An interface that hides the library has to name components at run time, so

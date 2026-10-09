@@ -12,7 +12,7 @@ namespace neon
 {
   /// What a model is known by, so that the render objects that draw the
   /// same one share it: a model file by its path and fit, whatever its
-  /// format (.obj, .fbx, .gltf, …), and a mesh that was built by its
+  /// format (.obj, .fbx, .gltf, ...), and a mesh that was built by its
   /// RenderInfo::mesh_key, the values it was built from.
   struct ModelKey
   {

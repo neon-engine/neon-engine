@@ -161,7 +161,7 @@ namespace
     for (const auto &quad : quads) { ExpectColor(quad, 0, 1, 0, 1); }
   }
 
-  TEST_F(UiDrawingTest, ABorderWithoutAColourHasTheColourOfTheText)
+  TEST_F(UiDrawingTest, ABorderWithoutAColorHasTheColorOfTheText)
   {
     ShowBox("border_width: 2\ncolor: \"#0000ff\"\n");
 

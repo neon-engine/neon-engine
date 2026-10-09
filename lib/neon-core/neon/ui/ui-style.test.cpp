@@ -177,7 +177,7 @@ namespace
     EXPECT_EQ(_errors.size(), 4u);
   }
 
-  TEST_F(UiStyleTest, AColourCarriesItsAlpha)
+  TEST_F(UiStyleTest, AColorCarriesItsAlpha)
   {
     Write("background_color", DataValue::Text("#10141880"));
 
@@ -187,7 +187,7 @@ namespace
     EXPECT_NEAR(style.background_color.a, 128.0f / 255.0f, 0.0001f);
   }
 
-  TEST_F(UiStyleTest, ABorderAndAnOutlineHaveTheColourOfTheTextUntilTheyAreGivenOne)
+  TEST_F(UiStyleTest, ABorderAndAnOutlineHaveTheColorOfTheTextUntilTheyAreGivenOne)
   {
     Write("color", DataValue::Text("#ff0000"));
 

@@ -33,7 +33,7 @@ namespace neon
 
     /// Draws the image so that it fills `width` by `height` pixels. The
     /// pixels are red, green, blue, and alpha, and alpha is not multiplied
-    /// into the colours.
+    /// into the colors.
     virtual bool Rasterize(int image, int width, int height, ImagePixels &pixels) = 0;
   };
 } // neon

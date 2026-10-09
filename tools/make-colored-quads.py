@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
-"""Writes tests/game/assets/models/coloured-quads.glb: a model whose
-colour is painted on its vertices, for tests/runtime-vertex-colours.
+"""Writes tests/game/assets/models/colored-quads.glb: a model whose
+color is painted on its vertices, for tests/runtime-vertex-colors.
 
 Three quads, 0.8 wide and 0.8 high, facing +z at x = -1, 0, and 1, one
 red, one green, one blue, in one mesh with one material. The material has
 no texture, is a matte dielectric, and is marked doubleSided, as a kit
-exported from Unity marks every material. The colours are in linear light,
+exported from Unity marks every material. The colors are in linear light,
 as glTF keeps COLOR_0.
 
 Run from the root of the repository:
 
-    python3 tools/make-coloured-quads.py
+    python3 tools/make-colored-quads.py
 """
 
 import json
@@ -26,7 +26,7 @@ colors = []
 indices = []
 for center, color in QUADS:
     first = len(positions)
-    # anticlockwise seen from +z, which is the front
+    # counterclockwise seen from +z, which is the front
     for x, y in ((-HALF, -HALF), (HALF, -HALF), (HALF, HALF), (-HALF, HALF)):
         positions.append((center + x, y, 0.0))
         normals.append((0.0, 0.0, 1.0))
@@ -66,10 +66,10 @@ for data, count, kind, component in (
     offset += len(padded(data, b"\0"))
 
 gltf = {
-    "asset": {"version": "2.0", "generator": "tools/make-coloured-quads.py of Neon Engine"},
+    "asset": {"version": "2.0", "generator": "tools/make-colored-quads.py of Neon Engine"},
     "scene": 0,
     "scenes": [{"nodes": [0]}],
-    "nodes": [{"mesh": 0, "name": "coloured-quads"}],
+    "nodes": [{"mesh": 0, "name": "colored-quads"}],
     "meshes": [{"primitives": [{"attributes": {"POSITION": 0, "NORMAL": 1, "COLOR_0": 2}, "indices": 3, "material": 0}]}],
     "materials": [{"name": "painted", "pbrMetallicRoughness": {"metallicFactor": 0.0, "roughnessFactor": 1.0}, "doubleSided": True}],
     "buffers": [{"byteLength": len(buffer)}],
@@ -86,6 +86,6 @@ glb = (
     + struct.pack("<II", len(binary_chunk), 0x004E4942) + binary_chunk
 )
 
-target = Path(__file__).resolve().parent.parent / "tests/game/assets/models/coloured-quads.glb"
+target = Path(__file__).resolve().parent.parent / "tests/game/assets/models/colored-quads.glb"
 target.write_bytes(glb)
 print(f"wrote {target} ({len(glb)} bytes)")

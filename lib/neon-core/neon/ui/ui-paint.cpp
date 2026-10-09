@@ -33,7 +33,7 @@ namespace neon
       furthest = stop.position;
     }
 
-    // what has no place lies evenly between its neighbours that have one
+    // what has no place lies evenly between its neighbors that have one
     for (std::size_t i = 1; i + 1 < stops.size(); i++)
     {
       if (stops[i].has_position) { continue; }
@@ -67,8 +67,8 @@ namespace neon
       const float length = to.position - from.position;
       const float part = length > 0.0f ? (position - from.position) / length : 1.0f;
 
-      // Blended with alpha multiplied in, as CSS does, so that a colour
-      // that is see-through does not shine through its neighbour.
+      // Blended with alpha multiplied in, as CSS does, so that a color
+      // that is see-through does not shine through its neighbor.
       const float alpha = from.color.a + (to.color.a - from.color.a) * part;
       const auto blend = [&](const float a, const float b)
       {

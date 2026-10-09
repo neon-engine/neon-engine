@@ -267,7 +267,7 @@ namespace
       [](Geometry &geometry) { geometry.sides = 12; },
       [](Geometry &geometry) { geometry.outline = {0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f}; },
       [](Geometry &geometry) { geometry.points = {0.0f, 0.0f, 0.0f}; },
-      [](Geometry &geometry) { geometry.texels_per_metre = 2.0f; },
+      [](Geometry &geometry) { geometry.texels_per_meter = 2.0f; },
       [](Geometry &geometry) { geometry.smooth = true; },
       [](Geometry &geometry) { geometry.inside = true; },
     };

@@ -503,7 +503,7 @@ namespace
   constexpr auto image_bytes = "PNGBYTES";
 
   /// The buffer of every GLB here: the triangle of the .obj tests at 0, its
-  /// indices at 36, a pretend image at 44, and a colour per vertex at 52.
+  /// indices at 36, a pretend image at 44, and a color per vertex at 52.
   std::string TriangleBuffer()
   {
     return Floats({0, 0, 0, 1, 0, 0, 0, 1, 0}) + Shorts({0, 1, 2}) + std::string("\0\0", 2) + image_bytes +
@@ -567,7 +567,7 @@ namespace
     EXPECT_EQ(_logger->Count(LogLevel::Warn), 0u) << _logger->Messages(LogLevel::Warn);
   }
 
-  TEST_F(ModelTest, ReadsTheBaseColourOfAGlbMaterial)
+  TEST_F(ModelTest, ReadsTheBaseColorOfAGlbMaterial)
   {
     _file_system.AddNativeFile(
       "/assets/models/cube.glb",
@@ -584,7 +584,7 @@ namespace
     EXPECT_FLOAT_EQ(a, 1.0f);
   }
 
-  TEST_F(ModelTest, LeavesTheColourOfAMaterialWithoutOneWhite)
+  TEST_F(ModelTest, LeavesTheColorOfAMaterialWithoutOneWhite)
   {
     _file_system.AddNativeFile(
       "/assets/models/cube.glb",
@@ -626,7 +626,7 @@ namespace
     EXPECT_EQ(material.emissive_texture->path, "*0");
     EXPECT_TRUE(material.emissive_texture->IsEmbedded());
 
-    // the emissive texture is not one of the colours of the surface
+    // the emissive texture is not one of the colors of the surface
     EXPECT_THAT(material.textures, IsEmpty());
     EXPECT_EQ(_logger->Count(LogLevel::Warn), 0u) << _logger->Messages(LogLevel::Warn);
   }
@@ -728,13 +728,13 @@ namespace
     EXPECT_THAT(model.meshes[0].placed_indices, ElementsAre(0u, 2u, 1u));
   }
 
-  TEST_F(ModelTest, ReadsTheColourOfEveryVertexWithAnAlphaOfOne)
+  TEST_F(ModelTest, ReadsTheColorOfEveryVertexWithAnAlphaOfOne)
   {
-    constexpr auto coloured_mesh =
+    constexpr auto colored_mesh =
       R"({"primitives": [{"attributes": {"POSITION": 0, "COLOR_0": 2}, "indices": 1, "material": 0}]})";
     _file_system.AddNativeFile(
       "/assets/models/cube.glb",
-      Glb(TriangleJson(one_node, coloured_mesh, textured_material, embedded_image), TriangleBuffer()));
+      Glb(TriangleJson(one_node, colored_mesh, textured_material, embedded_image), TriangleBuffer()));
     TestModel model("assets://models/cube.glb", &_file_system, _logger);
 
     ASSERT_TRUE(model.Initialize()) << _logger->Messages(LogLevel::Error);
@@ -746,7 +746,7 @@ namespace
     EXPECT_EQ(_logger->Count(LogLevel::Warn), 0u) << _logger->Messages(LogLevel::Warn);
   }
 
-  TEST_F(ModelTest, LeavesTheVerticesOfAMeshWithoutColoursWhite)
+  TEST_F(ModelTest, LeavesTheVerticesOfAMeshWithoutColorsWhite)
   {
     _file_system.AddNativeFile(
       "/assets/models/cube.glb",

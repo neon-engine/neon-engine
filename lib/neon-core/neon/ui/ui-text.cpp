@@ -230,7 +230,7 @@ namespace neon
       const float along_x = std::sin(radians);
       const float along_y = -std::cos(radians);
 
-      // as long as it takes for the corners to have the colours of the
+      // as long as it takes for the corners to have the colors of the
       // ends
       const float length = std::abs(box.Width() * along_x) + std::abs(box.Height() * along_y);
       if (length <= 0.0f) { return 0.0f; }
@@ -275,7 +275,7 @@ namespace neon
 
     const UiRectangle text_box{left, top, left + std::max(placed.width, content_box.Width()), top + placed.height};
 
-    // Draws every glyph of the text once: moved, in a colour, and with
+    // Draws every glyph of the text once: moved, in a color, and with
     // what is done to its picture.
     const auto draw = [&](
       const float move_x,
@@ -322,7 +322,7 @@ namespace neon
 
         if (picture->has_colors)
         {
-          // a glyph with colours of its own keeps them
+          // a glyph with colors of its own keeps them
           for (auto &corner : corners) { corner = {1.0f, 1.0f, 1.0f, opacity}; }
         } else if (gradient != nullptr)
         {

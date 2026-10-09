@@ -8,7 +8,7 @@ interfaces, and an editor to make games with. All of it is version 1.0.
 
 Every item here is an issue on the [v1.0 milestone](https://git.traparwave.net/neon-engine/neon-engine/milestone/1), where the
 work is tracked: what is done is a closed issue that names its pull request,
-what is open is an open issue, and what is still to be decided is labelled
+what is open is an open issue, and what is still to be decided is labeled
 `type: decision`. The tables below name the issue of each item as #N.
 
 ## The shape of the product
@@ -39,11 +39,11 @@ Principles that hold for both:
 | Platforms (#21) | Builds on macOS, Linux, and Windows with one toolchain |
 | Renderer (#23) | Vulkan, on all three. See [vulkan-renderer.md](vulkan-renderer.md) |
 | Resizing the window (#68) | The swapchain, and everything of the size of the frame, is made again when the window changes size |
-| Linear light (#67) | The world is lit and blended in linear light in a floating-point scene image, and a resolve step turns it into the colours of the screen. User interfaces blend in sRGB, as CSS does. See [vulkan-renderer.md](vulkan-renderer.md#colour-spaces) |
+| Linear light (#67) | The world is lit and blended in linear light in a floating-point scene image, and a resolve step turns it into the colors of the screen. User interfaces blend in sRGB, as CSS does. See [vulkan-renderer.md](vulkan-renderer.md#color-spaces) |
 | See-through materials (#67) | `alpha_mode: blend`, drawn after what is opaque, from the farthest to the nearest. The first of the alpha modes of #106 |
 | Back faces left out (#136, #194) | The back of every triangle is left out unless a material is double-sided, as the model file says or the scene's `double_sided` overrides, and what is mirrored is still drawn from the front |
 | Several materials in one model (#193) | A model whose meshes use different materials is drawn with each of them, inside one render object, and the scene's `Renderable` overrides them all. See [models.md](models.md#several-materials) |
-| Vertex colours (#192) | A `Vertex` carries a colour, white unless the model paints its vertices, and `pbr`, `basic-lit`, and `unlit` multiply it into the base colour. See [models.md](models.md#the-colours-of-the-vertices) |
+| Vertex colors (#192) | A `Vertex` carries a color, white unless the model paints its vertices, and `pbr`, `basic-lit`, and `unlit` multiply it into the base color. See [models.md](models.md#the-colors-of-the-vertices) |
 | `VK_RenderSystem` split (#163) | The swapchain, the pipelines of materials, the canvas a frame or a render target is drawn on, and the reading back of a frame are types of their own. The render system wires them. Done ahead of the programmable pipeline (#102) |
 | File system (#22) | Virtual paths with `assets://`, `user://`, `output://`, and `extensions://`. See [file-systems.md](file-systems.md) |
 | Load a project (#41) | A project is a folder with a `project.yml` at its root: its name, its organization, its scenes, and the scene it starts with. The runtime runs the project next to it, and the names place `user://`. See [projects.md](projects.md) |
@@ -73,7 +73,7 @@ Principles that hold for both:
 | User interface (#37) | Menus and what is shown during play, from UI recipes with the properties of CSS: layout by flexbox, text, values of the game, input and focus, events. It is the first version. See [user-interface.md](user-interface.md) |
 | Drawing in two dimensions (#37) | Triangles in pixels through an interface of the renderer, which is all a user interface needs of it |
 | Drawing user interfaces (#39) | Text, images, shapes, and shaders, on the screen and on surfaces in the world. Merged in #18 |
-| Behaviour of user interfaces (#40) | Style sheets, scrolling, typing, choosing, animation, scripts, and displays of high density. Merged in #20 |
+| Behavior of user interfaces (#40) | Style sheets, scrolling, typing, choosing, animation, scripts, and displays of high density. Merged in #20 |
 
 ## Next
 
@@ -139,7 +139,7 @@ These come first, because everything after them is cheaper with them in place.
 | Components from Lua (#100) | **Done with #57:** a script declares a component that takes part in scenes, reflection, and systems. Open: a sentence per field for the editor, and lists, choices, and references as fields |
 | Script everything (#101) | **The shape is in (#57):** the unit is a system over components, a script is a component and a system, and events of the physics arrive as hooks. Open: what a script reaches of audio, spawning, and the user interface |
 | Games in C++ and Lua with hot reload (#104) | Other languages after 1.0. C++ reloads as a library, which may need a runtime made for the editor |
-| Meshes with collision, generated (#97) | **First step done:** `MeshData`, `MeshBuilder` (box, plane, ramp, prism, sphere, cylinder, quad), flat and smooth normals, textures projected once a metre, the `Geometry` component drawn by its `Renderable` and collided with through a `Collider`, a level blocked out in `blockout.scene.yml`, and the museum of `demo.scene.yml` built from shapes alone (#341). Open: concave outlines, brushes and booleans, rebuilding while the game runs. See [geometry.md](geometry.md) |
+| Meshes with collision, generated (#97) | **First step done:** `MeshData`, `MeshBuilder` (box, plane, ramp, prism, sphere, cylinder, quad), flat and smooth normals, textures projected once a meter, the `Geometry` component drawn by its `Renderable` and collided with through a `Collider`, a level blocked out in `blockout.scene.yml`, and the museum of `demo.scene.yml` built from shapes alone (#341). Open: concave outlines, brushes and booleans, rebuilding while the game runs. See [geometry.md](geometry.md) |
 | Curves, and a rope that hangs between two bodies (#352) | A cubic Bézier curve, a path of them, flattening, length, and even steps along a curve, as templates over what a point is; a tube along a curve as a mesh and a `Geometry`; a mesh that changes after it was first drawn; a `Joint` of type `rope` and a `Rope` component that draws it, straight when taut and hanging when slack. Open: a rope that is simulated, particles on a trail, a path as a component. See [curves.md](curves.md) |
 | Scenes and resources serialized to binary and text (#96) | As Godot does with resources, so that saved games are the same machinery. Not decided; to be discussed |
 | A scene manager (#118) | Changes between whole scenes, with a loading screen and what carries over |
@@ -173,8 +173,8 @@ and a system. A script declares components and systems of its own.
 | Day and night from painted skies (#346) | Several skies keyed to the time of day, blended two at a time, with the lights, a tint, and the fog on the same clock |
 | A sky made by a formula (#344) | Day and night from where the sun stands, with an atmosphere that scatters its light, a moon, and stars |
 | Volumetric clouds (#345) | Clouds with depth, lit by the sun, in the sky made by a formula |
-| Tonemapping and exposure (#131) | **Done:** `rendering.tonemapper` as `none`, `aces`, or `agx`, and `rendering.exposure`, applied in the resolve step, see [vulkan-renderer.md](vulkan-renderer.md#tonemapping). The user interface is drawn after it and keeps its colours. Open: an exposure that adapts to the scene, which comes with bloom (#130) |
-| Light cast by screens (#132) | A screen can light what is around it with the average colour of its picture, if a game chooses so. A hologram only glows |
+| Tonemapping and exposure (#131) | **Done:** `rendering.tonemapper` as `none`, `aces`, or `agx`, and `rendering.exposure`, applied in the resolve step, see [vulkan-renderer.md](vulkan-renderer.md#tonemapping). The user interface is drawn after it and keeps its colors. Open: an exposure that adapts to the scene, which comes with bloom (#130) |
+| Light cast by screens (#132) | A screen can light what is around it with the average color of its picture, if a game chooses so. A hologram only glows |
 | Projected and area lights (#133) | Lights that throw a picture, and lights from a rectangle, such as a screen or a window |
 | Frustum and occlusion culling (#115) | Draw what the camera sees: bounds against the frustum, and occlusion by occluder volumes or a hierarchical depth buffer |
 
@@ -207,11 +207,11 @@ left:
 | Item | Detail |
 |---|---|
 | Yoga as the layout engine (#77) | The engine places elements with an implementation of flexbox of its own. Yoga is tested against the specification by many more users |
-| Animation, themes, localisation, rich text (#75) | |
+| Animation, themes, localization, rich text (#75) | |
 | A library with a language of its own (#78) | RmlUi is the candidate. The interface for drawing in two dimensions takes what it hands over |
 | Text that mixes directions (#74) | The Unicode Bidirectional Algorithm. SheenBidi is the candidate |
 | A keyboard on the screen (#158) | For typing with a controller: moved over with the D-pad and stick, made from a `*.ui.yml` file, and the platform's own keyboard where there is one |
-| WebP, colour emoji, variable fonts, fonts as several distances (#76) | Each needs a library, or a font to try it with |
+| WebP, color emoji, variable fonts, fonts as several distances (#76) | Each needs a library, or a font to try it with |
 | `filter`, `backdrop_filter`, opacity of a group (#76) | Built from render targets, which are there |
 | Surfaces that are drawn when something changed | Done (#431): drawn when anything in the user interface changed; only those whose own user interface changed, later |
 | A ray that finds where the player points on a screen in the world (#73) | Done. The ray meets the square of the entity, and needs no collider |
@@ -254,7 +254,7 @@ The editor can export in two ways.
 |---|---|---|
 | With precompiled runtimes | The editor takes a NeonRuntime that was built ahead of time for the target and puts the project next to it | The normal case. Needs no compiler |
 | By compiling | The editor builds the runtime for the target, inside a container | When the runtime itself was changed |
-| By compiling the game in (#105) | The game and the runtime become one executable, harder to decompile and optimised as a whole | When the developer chooses |
+| By compiling the game in (#105) | The game and the runtime become one executable, harder to decompile and optimized as a whole | When the developer chooses |
 
 
 **A shipped runtime (#143)** keeps only the options a player needs, and loads

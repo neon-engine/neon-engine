@@ -7,7 +7,7 @@
 
 namespace neon
 {
-  // Helpers of the colour handles, for this file alone.
+  // Helpers of the color handles, for this file alone.
   namespace
   {
     constexpr const char *metatable = "neon.color";
@@ -44,7 +44,7 @@ namespace neon
       void *object = store != nullptr ? handle.target.Resolve(*store) : nullptr;
       if (object == nullptr)
       {
-        luaL_error(lua, "The entity no longer has the component this colour belongs to");
+        luaL_error(lua, "The entity no longer has the component this color belongs to");
         return;
       }
       handle.field->set(object, handle.value);
@@ -56,7 +56,7 @@ namespace neon
       if (std::strcmp(key, "g") == 0) { return value.g; }
       if (std::strcmp(key, "b") == 0) { return value.b; }
       if (std::strcmp(key, "a") == 0) { return value.a; }
-      luaL_error(lua, "A colour has r, g, b, and a, not '%s'", key);
+      luaL_error(lua, "A color has r, g, b, and a, not '%s'", key);
       return value.r;
     }
 

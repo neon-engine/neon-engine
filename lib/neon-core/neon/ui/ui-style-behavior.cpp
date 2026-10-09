@@ -6,7 +6,7 @@
 
 #include "css-values.hpp"
 
-// The properties of behaviour: what is scrolled, animated, and pointed at.
+// The properties of behavior: what is scrolled, animated, and pointed at.
 // They follow https://www.w3.org/TR/css-overflow-3/,
 // https://www.w3.org/TR/css-scrollbars-1/,
 // https://www.w3.org/TR/css-transitions-1/,
@@ -15,7 +15,7 @@
 
 namespace neon
 {
-  // Helpers of ui-style-behaviour.cpp, for this file alone.
+  // Helpers of ui-style-behavior.cpp, for this file alone.
   namespace
   {
     const std::vector<std::string> visibilities = {"visible", "hidden"};
@@ -119,7 +119,7 @@ namespace neon
       });
     }
 
-    class Behaviour
+    class Behavior
     {
       const DataReader &_reader;
 
@@ -182,7 +182,7 @@ namespace neon
       }
 
     public:
-      explicit Behaviour(const DataReader &reader) : _reader(reader) {}
+      explicit Behavior(const DataReader &reader) : _reader(reader) {}
 
       template<typename T>
       bool Keyword(const std::string &name, const std::vector<std::string> &keywords, T &value) const
@@ -204,7 +204,7 @@ namespace neon
         style.overflow_y = overflow;
       }
 
-      bool OptionalColour(const std::string &name, std::optional<Color> &color) const
+      bool OptionalColor(const std::string &name, std::optional<Color> &color) const
       {
         const auto *value = _reader.ReadValue(name);
         if (value == nullptr) { return false; }
@@ -227,19 +227,19 @@ namespace neon
           }
         }
 
-        Expected(name, *value, "auto, or a colour such as \"#ff8000\" or rgb(255, 128, 0)");
+        Expected(name, *value, "auto, or a color such as \"#ff8000\" or rgb(255, 128, 0)");
         return false;
       }
 
-      /// `scrollbar_color` of CSS: `auto`, or the colour of what is
-      /// dragged and the colour of what it is dragged along.
+      /// `scrollbar_color` of CSS: `auto`, or the color of what is
+      /// dragged and the color of what it is dragged along.
       bool ScrollbarColor(UiStyle &style) const
       {
         const auto *value = _reader.ReadValue("scrollbar_color");
         if (value == nullptr) { return false; }
 
         const std::string expected =
-          "auto, or two colours: that of what is dragged and that of what it is dragged along, such as "
+          "auto, or two colors: that of what is dragged and that of what it is dragged along, such as "
           "\"#ffffff80 #00000040\"";
 
         std::vector<std::string> parts;
@@ -643,39 +643,39 @@ namespace neon
     };
   }
 
-  void ReadUiBehaviourStyle(const DataReader &reader, UiStyle &style)
+  void ReadUiBehaviorStyle(const DataReader &reader, UiStyle &style)
   {
-    const Behaviour behaviour(reader);
+    const Behavior behavior(reader);
 
-    behaviour.Keyword("visibility", visibilities, style.visibility);
-    behaviour.Keyword("cursor", cursors, style.cursor);
+    behavior.Keyword("visibility", visibilities, style.visibility);
+    behavior.Keyword("cursor", cursors, style.cursor);
 
     // the shorthand in front of what it stands for
-    behaviour.OverflowOfBoth(style.overflow, style);
-    behaviour.Keyword("overflow_x", overflows, style.overflow_x);
-    behaviour.Keyword("overflow_y", overflows, style.overflow_y);
+    behavior.OverflowOfBoth(style.overflow, style);
+    behavior.Keyword("overflow_x", overflows, style.overflow_x);
+    behavior.Keyword("overflow_y", overflows, style.overflow_y);
 
-    behaviour.Keyword("scrollbar_width", scrollbar_widths, style.scrollbar_width);
-    behaviour.ScrollbarColor(style);
-    behaviour.Keyword("scroll_behavior", scroll_behaviors, style.scroll_behavior);
-    behaviour.Keyword("scroll_drag", scroll_drags, style.scroll_drag);
+    behavior.Keyword("scrollbar_width", scrollbar_widths, style.scrollbar_width);
+    behavior.ScrollbarColor(style);
+    behavior.Keyword("scroll_behavior", scroll_behaviors, style.scroll_behavior);
+    behavior.Keyword("scroll_drag", scroll_drags, style.scroll_drag);
 
-    behaviour.OptionalColour("caret_color", style.caret_color);
+    behavior.OptionalColor("caret_color", style.caret_color);
 
-    behaviour.Transition(style.transitions);
-    behaviour.Names("transition_property", style.transitions.properties, true);
-    behaviour.Times("transition_duration", style.transitions.durations, false);
-    behaviour.Times("transition_delay", style.transitions.delays, true);
-    behaviour.TimingFunctions("transition_timing_function", style.transitions.timing_functions);
+    behavior.Transition(style.transitions);
+    behavior.Names("transition_property", style.transitions.properties, true);
+    behavior.Times("transition_duration", style.transitions.durations, false);
+    behavior.Times("transition_delay", style.transitions.delays, true);
+    behavior.TimingFunctions("transition_timing_function", style.transitions.timing_functions);
 
-    behaviour.Animation(style.animations);
-    behaviour.Names("animation_name", style.animations.names, false);
-    behaviour.Times("animation_duration", style.animations.durations, false);
-    behaviour.Times("animation_delay", style.animations.delays, true);
-    behaviour.TimingFunctions("animation_timing_function", style.animations.timing_functions);
-    behaviour.IterationCounts(style.animations.iteration_counts);
-    behaviour.Keywords("animation_direction", directions, style.animations.directions);
-    behaviour.Keywords("animation_fill_mode", fill_modes, style.animations.fill_modes);
-    behaviour.Keywords("animation_play_state", play_states, style.animations.play_states);
+    behavior.Animation(style.animations);
+    behavior.Names("animation_name", style.animations.names, false);
+    behavior.Times("animation_duration", style.animations.durations, false);
+    behavior.Times("animation_delay", style.animations.delays, true);
+    behavior.TimingFunctions("animation_timing_function", style.animations.timing_functions);
+    behavior.IterationCounts(style.animations.iteration_counts);
+    behavior.Keywords("animation_direction", directions, style.animations.directions);
+    behavior.Keywords("animation_fill_mode", fill_modes, style.animations.fill_modes);
+    behavior.Keywords("animation_play_state", play_states, style.animations.play_states);
   }
 } // neon

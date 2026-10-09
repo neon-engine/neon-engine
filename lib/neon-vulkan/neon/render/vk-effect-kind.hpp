@@ -11,7 +11,7 @@ namespace neon
     /// `effects`: the light of the scene, before the tonemapper.
     Light,
 
-    /// `screen_effects`: the colours a screen is given, after the
+    /// `screen_effects`: the colors a screen is given, after the
     /// tonemapper.
     Screen,
   };

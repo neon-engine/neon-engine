@@ -147,7 +147,7 @@ namespace neon
 
     if (!PrepareScene()) { return false; }
 
-    // the colour asked for is sRGB, and the scene image holds light
+    // the color asked for is sRGB, and the scene image holds light
     const Color clear = SrgbToLinear(_clear);
 
     std::array<VkClearValue, 2> clears{};
@@ -201,7 +201,7 @@ namespace neon
 
     // The effects of the camera, between its scene and what is drawn on
     // top. Those on the light are run first, and the resolve step reads
-    // what they made. Those on the colours of the screen follow the
+    // what they made. Those on the colors of the screen follow the
     // resolve: it writes into a picture of theirs, and the last of them
     // writes into the image that is shown, where the resolve would.
     VkDescriptorSet resolved_from = _scene_set;

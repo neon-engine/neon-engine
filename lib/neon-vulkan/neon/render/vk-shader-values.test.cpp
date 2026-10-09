@@ -100,7 +100,7 @@ namespace
     AddMember(words, block, 4, "turn", 48);
 
     AddName(words, other, "Light");
-    AddMember(words, other, 0, "colour", 0);
+    AddMember(words, other, 0, "color", 0);
 
     Add(words, op_type_float, {float_type, 32});
     Add(words, op_type_vector, {vec4_type, float_type, 4});
@@ -143,7 +143,7 @@ namespace
     EXPECT_TRUE(steps->is_integer);
 
     EXPECT_EQ(values.Find("turn"), nullptr);
-    EXPECT_EQ(values.Find("colour"), nullptr) << "of another block";
+    EXPECT_EQ(values.Find("color"), nullptr) << "of another block";
     EXPECT_EQ(values.Find("missing"), nullptr);
   }
 
@@ -216,7 +216,7 @@ namespace
       return value;
     }
 
-    static MaterialValue2D Colour(const std::string &name, const float r, const float g, const float b, const float a)
+    static MaterialValue2D ColorValue(const std::string &name, const float r, const float g, const float b, const float a)
     {
       MaterialValue2D value;
       value.name = name;
@@ -247,7 +247,7 @@ namespace
   {
     VK_Renderer2D::FillValues(
       _declared,
-      {Colour("tint", 1.0f, 0.5f, 0.25f, 0.75f), Number("intensity", 2.5f), Number("steps", 7.0f)},
+      {ColorValue("tint", 1.0f, 0.5f, 0.25f, 0.75f), Number("intensity", 2.5f), Number("steps", 7.0f)},
       _bytes,
       _unknown);
 
@@ -280,9 +280,9 @@ namespace
 
   TEST_F(FillValuesTest, AValueThatIsLongerThanItsPlaceIsCutOff)
   {
-    // a colour for two numbers writes two, and leaves what follows alone
+    // a color for two numbers writes two, and leaves what follows alone
     VK_Renderer2D::FillValues(
-      _declared, {Number("steps", 3.0f), Colour("offset", 1.0f, 2.0f, 3.0f, 4.0f)}, _bytes, _unknown);
+      _declared, {Number("steps", 3.0f), ColorValue("offset", 1.0f, 2.0f, 3.0f, 4.0f)}, _bytes, _unknown);
 
     EXPECT_FLOAT_EQ(FloatAt(32), 1.0f);
     EXPECT_FLOAT_EQ(FloatAt(36), 2.0f);

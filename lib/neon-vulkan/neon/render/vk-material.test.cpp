@@ -138,16 +138,16 @@ namespace
     EXPECT_FLOAT_EQ(data.color.a, 0.4f);
   }
 
-  TEST_F(VkMaterialTest, ReadsItsFirstTextureAsColoursAndTheOthersAsNumbers)
+  TEST_F(VkMaterialTest, ReadsItsFirstTextureAsColorsAndTheOthersAsNumbers)
   {
     // the first is what the surface looks like, the second how much it
-    // shines, which is no colour
+    // shines, which is no color
     EXPECT_TRUE(VK_Material::TextureOptionsFor(0).is_color);
     EXPECT_FALSE(VK_Material::TextureOptionsFor(1).is_color);
     EXPECT_FALSE(VK_Material::TextureOptionsFor(2).is_color);
   }
 
-  TEST_F(VkMaterialTest, KeepsWhatASurfaceGivesOffAsColours)
+  TEST_F(VkMaterialTest, KeepsWhatASurfaceGivesOffAsColors)
   {
     EXPECT_TRUE(VK_Material::EmissiveTextureOptions().is_color);
   }
@@ -164,7 +164,7 @@ namespace
 
   TEST_F(VkMaterialTest, HandsWhatTheSurfaceGivesOffToTheShadersAsLinearLightTimesItsStrength)
   {
-    // written in sRGB as the colour is, and brighter than white by the
+    // written in sRGB as the color is, and brighter than white by the
     // strength; w says that no texture of it is bound
     MaterialInfo info;
     info.emissive = {.r = 1.0f, .g = 0.5f, .b = 0.0f, .a = 1.0f};

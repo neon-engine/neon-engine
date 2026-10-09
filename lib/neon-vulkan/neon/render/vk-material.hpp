@@ -32,7 +32,7 @@ namespace neon
     std::string _model_path;
     std::vector<VK_Texture> _textures{};
 
-    // what the surface gives off, apart from the textures of its colours:
+    // what the surface gives off, apart from the textures of its colors:
     // the one the scene names, or the model's, held as the others are
     VK_Texture _emissive_texture;
     std::string _emissive_key;
@@ -62,7 +62,7 @@ namespace neon
       VK_Texture &texture,
       std::string &key) const;
 
-    /// Loads one of the textures of the colours of the surface, at its
+    /// Loads one of the textures of the colors of the surface, at its
     /// place in the list.
     bool LoadListedTexture(
       const std::string &path,
@@ -168,10 +168,10 @@ namespace neon
     [[nodiscard]] VK_ObjectData GetObjectData(const glm::mat4 &model, const Transform &transform) const;
 
     /// How the texture at a place in the list of a material is kept: the
-    /// first as colours, the others as numbers.
+    /// first as colors, the others as numbers.
     [[nodiscard]] static VK_TextureOptions TextureOptionsFor(std::size_t index);
 
-    /// How the texture of what a surface gives off is kept: as colours.
+    /// How the texture of what a surface gives off is kept: as colors.
     [[nodiscard]] static VK_TextureOptions EmissiveTextureOptions();
 
     [[nodiscard]] const std::string &ShaderPath() const { return _shader_path; }
@@ -179,12 +179,12 @@ namespace neon
     [[nodiscard]] const std::vector<VK_Texture> &Textures() const { return _textures; }
 
     /// Whether the surface gives off a texture, and the texture. Without
-    /// one the emissive colour alone glows, and the shaders are told so.
+    /// one the emissive color alone glows, and the shaders are told so.
     [[nodiscard]] bool HasEmissiveTexture() const { return _has_emissive_texture; }
     [[nodiscard]] const VK_Texture &EmissiveTexture() const { return _emissive_texture; }
 
-    /// How a lightmap is read: as colours, without smaller copies, which
-    /// would blend the light of one surface into that of its neighbour in
+    /// How a lightmap is read: as colors, without smaller copies, which
+    /// would blend the light of one surface into that of its neighbor in
     /// an atlas, and without repeating.
     [[nodiscard]] static VK_TextureOptions LightmapOptions();
 

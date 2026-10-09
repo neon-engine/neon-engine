@@ -12,12 +12,12 @@
 
 namespace neon
 {
-  /// A shape built by the engine when the scene loads, in metres, in place
+  /// A shape built by the engine when the scene loads, in meters, in place
   /// of a model from a file. The Renderable of the entity draws it with its
   /// shader and textures, and a Collider of kind `mesh` or `convex_hull`
   /// without a `model` takes its shape from it, so that a level is blocked
   /// out in a recipe alone, and an importer or a tool fills the same
-  /// component. The shape is sized in metres as it is written; the
+  /// component. The shape is sized in meters as it is written; the
   /// Transform's scale multiplies it as it does a model.
   struct Geometry
   {
@@ -44,8 +44,8 @@ namespace neon
     /// every further one, see docs/curves.md. Its thickness is `size.x`.
     std::vector<float> points;
 
-    /// How often a texture repeats over one metre of surface.
-    float texels_per_metre = 1.0f;
+    /// How often a texture repeats over one meter of surface.
+    float texels_per_meter = 1.0f;
 
     /// Whether the normals are smoothed over shared vertices, for a plane
     /// that is to look round rather than faceted, and for a sphere and the
@@ -91,9 +91,9 @@ namespace neon
           "The control points of the curve a tube follows, as triples of x, y, and z: four for the first piece of "
           "the curve, three for every further one");
 
-    type.Field("texels_per_metre", &Geometry::texels_per_metre)
+    type.Field("texels_per_meter", &Geometry::texels_per_meter)
         .Above(0)
-        .Describe("How often a texture repeats over one metre of surface");
+        .Describe("How often a texture repeats over one meter of surface");
 
     type.Field("smooth", &Geometry::smooth)
         .Describe("Whether the normals are smoothed over shared vertices");

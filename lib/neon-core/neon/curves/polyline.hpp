@@ -23,8 +23,8 @@ namespace neon
   /// before as every other. `count` is at least two.
   ///
   /// The parameter of a curve does not move along it at an even speed, so
-  /// what follows a curve at one — a particle on a trail, a camera on a
-  /// track, the rings of a rope — flattens the curve first and asks here.
+  /// what follows a curve at one - a particle on a trail, a camera on a
+  /// track, the rings of a rope - flattens the curve first and asks here.
   /// `evenly` keeps what it had room for, so that calling it every frame
   /// takes no memory after the first.
   template<typename Point>

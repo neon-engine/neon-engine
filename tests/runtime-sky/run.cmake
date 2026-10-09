@@ -2,26 +2,26 @@
 # sky-test-box.scene.yml, sky-test-sphere.scene.yml, and
 # sky-test-turned.scene.yml.
 #
-# Every direction of the sky has a plain colour of its own, as
+# Every direction of the sky has a plain color of its own, as
 # tools/make-sky-images.py writes them:
 #
 #   right 220 40 40, left 40 180 40, top 60 90 230, bottom 120 80 40,
 #   front 240 220 60, back 150 60 200
 #
-# The images hold sRGB colours, are read as linear light, and are written
-# back as sRGB by the resolve, so a plain colour comes out as it went in.
+# The images hold sRGB colors, are read as linear light, and are written
+# back as sRGB by the resolve, so a plain color comes out as it went in.
 #
 # The camera stands at the origin and is not turned, drawn at 1920 by 1080
 # with a vertical field of view of 120 degrees. A pixel x from the middle
 # column and y above the middle row is seen in the direction
 #
-#   (x / 960 × tan 60° × 16/9,  y / 540 × tan 60°,  -1)
+#   (x / 960 * tan 60 degrees * 16/9,  y / 540 * tan 60 degrees,  -1)
 #
 # so the middle of the picture is seen straight ahead, 20 pixels from the
 # left and the right edge 72 degrees to the side, which is on the left and
 # the right face of the cube, and 20 pixels from the top and the bottom
 # edge 59 degrees up and down, which is on the top and the bottom face. In
-# the panorama these fall in the middle of the bands of the same colours.
+# the panorama these fall in the middle of the bands of the same colors.
 #
 # A sky turned by 90 degrees against the clock seen from above shows ahead
 # what was to the right, to the right what was behind, and to the left what
@@ -32,8 +32,8 @@
 # opaque magenta and covers the sky. The left one is half see-through red,
 # blended over the sky in linear light:
 #
-#   over front 240 220 60:  0.5 × (1, 0, 0) + 0.5 × (0.871, 0.716, 0.045) → 248 161 41
-#   over right 220 40 40:   0.5 × (1, 0, 0) + 0.5 × (0.716, 0.021, 0.021) → 238 26 26
+#   over front 240 220 60:  0.5 * (1, 0, 0) + 0.5 * (0.871, 0.716, 0.045) -> 248 161 41
+#   over right 220 40 40:   0.5 * (1, 0, 0) + 0.5 * (0.716, 0.021, 0.021) -> 238 26 26
 
 include("${CMAKE_CURRENT_LIST_DIR}/../../cmake/scripts/run-application.cmake")
 
@@ -64,7 +64,7 @@ expect_no_output("[warning]")
 expect_no_output("[critical]")
 expect_image("shots/frame.png")
 
-# expect_pixel(<what> <x> <y> <red> <green> <blue>): the colour of a pixel,
+# expect_pixel(<what> <x> <y> <red> <green> <blue>): the color of a pixel,
 # each channel within 2 of what is given, which leaves room for rounding by
 # the graphics card
 function(expect_pixel WHAT X Y RED GREEN BLUE)

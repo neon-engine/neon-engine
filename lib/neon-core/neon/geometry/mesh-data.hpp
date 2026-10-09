@@ -8,8 +8,8 @@
 namespace neon
 {
   /// A mesh as numbers: vertices, and three indices for every triangle,
-  /// wound anticlockwise seen from outside, as the renderer expects. It is
-  /// what the engine makes when geometry is built at run time, in metres,
+  /// wound counterclockwise seen from outside, as the renderer expects. It is
+  /// what the engine makes when geometry is built at run time, in meters,
   /// and what a tool or an importer hands over to be drawn or to collide.
   /// Nothing of it belongs to a graphics card or a file.
   struct MeshData

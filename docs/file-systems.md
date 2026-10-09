@@ -225,7 +225,7 @@ loose files are ever outgrown.
 - Mounts any number of folders and archives into a single virtual tree. Later
   mounts can shadow earlier ones.
 - Names exactly one folder as the write target. All writes land there, which
-  is the behaviour wanted from `user://`.
+  is the behavior wanted from `user://`.
 - Reports the executable's folder and a per-user, per-application folder.
 - Reads zip and 7z, plus several classic game formats, without extra code.
 
@@ -243,7 +243,7 @@ other archive.
 
 | Callback | Purpose |
 |---|---|
-| Open archive | Recognise the format and read its index |
+| Open archive | Recognize the format and read its index |
 | Enumerate | List the entries in a folder |
 | Open for reading | Return a stream for one entry |
 | Stat | Report size, type, and timestamps |
@@ -275,7 +275,7 @@ loaders would not change.
 
 Nothing in the interface assumes files live on disk. An earlier version had a
 `ResolvePath` function that returned a native path. It was removed, because a
-backend serving archives could not have honoured it.
+backend serving archives could not have honored it.
 
 ## How it fits the architecture
 

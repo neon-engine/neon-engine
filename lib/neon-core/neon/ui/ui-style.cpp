@@ -29,26 +29,26 @@ namespace neon
     };
     const std::vector<std::string> overflows = {"visible", "hidden", "scroll", "auto"};
 
-    /// Reads the properties of behaviour where the function it is created
+    /// Reads the properties of behavior where the function it is created
     /// in ends. They are then asked for behind the properties that were
     /// there before them, and a message that lists what is known lists them
     /// last. `overflow` is also read in front of `overflow_x` and
     /// `overflow_y` that way, as a shorthand is.
-    class BehaviourAtTheEnd
+    class BehaviorAtTheEnd
     {
       const DataReader &_reader;
       UiStyle &_style;
 
     public:
-      BehaviourAtTheEnd(const DataReader &reader, UiStyle &style) : _reader(reader), _style(style) {}
+      BehaviorAtTheEnd(const DataReader &reader, UiStyle &style) : _reader(reader), _style(style) {}
 
-      BehaviourAtTheEnd(const BehaviourAtTheEnd &) = delete;
+      BehaviorAtTheEnd(const BehaviorAtTheEnd &) = delete;
 
-      BehaviourAtTheEnd &operator=(const BehaviourAtTheEnd &) = delete;
+      BehaviorAtTheEnd &operator=(const BehaviorAtTheEnd &) = delete;
 
-      ~BehaviourAtTheEnd()
+      ~BehaviorAtTheEnd()
       {
-        ReadUiBehaviourStyle(_reader, _style);
+        ReadUiBehaviorStyle(_reader, _style);
       }
     };
     const std::vector<std::string> pointer_events = {"auto", "none"};
@@ -221,7 +221,7 @@ namespace neon
         return true;
       }
 
-      bool Colour(const std::string &name, Color &color) const
+      bool PlainColor(const std::string &name, Color &color) const
       {
         const auto *value = _reader.ReadValue(name);
         if (value == nullptr) { return false; }
@@ -231,7 +231,7 @@ namespace neon
           if (ParseCssColor(text, color)) { return true; }
         } else if (value->IsList())
         {
-          // as scene files write a colour
+          // as scene files write a color
           const auto &items = value->GetItems();
           float numbers[4] = {0.0f, 0.0f, 0.0f, 1.0f};
           bool read = items.size() == 3 || items.size() == 4;
@@ -247,7 +247,7 @@ namespace neon
 
         Expected(
           name, *value,
-          "a colour such as \"#ff8000\", \"#ff800080\", or rgb(255, 128, 0), or a list of 3 to 4 numbers");
+          "a color such as \"#ff8000\", \"#ff800080\", or rgb(255, 128, 0), or a list of 3 to 4 numbers");
         return false;
       }
 
@@ -357,14 +357,14 @@ namespace neon
         return true;
       }
 
-      /// `border` of CSS: a width, `solid` or `none`, and a colour, in any
+      /// `border` of CSS: a width, `solid` or `none`, and a color, in any
       /// order and each of them optional.
       bool Border(UiStyle &style) const
       {
         const auto *value = _reader.ReadValue("border");
         if (value == nullptr) { return false; }
 
-        const std::string expected = "a width, solid or none, and a colour, such as \"2px solid #ffffff\"";
+        const std::string expected = "a width, solid or none, and a color, such as \"2px solid #ffffff\"";
 
         std::string text;
         if (float number = 0.0f; value->GetNumber(number)) { text = std::format("{}", number); }
@@ -476,8 +476,8 @@ namespace neon
         return value.GetText(text);
       }
 
-      /// A colour, or a gradient in its place.
-      bool ColourOrGradient(const std::string &name, Color &color, std::optional<UiGradient> &gradient) const
+      /// A color, or a gradient in its place.
+      bool ColorOrGradient(const std::string &name, Color &color, std::optional<UiGradient> &gradient) const
       {
         const auto *value = _reader.ReadValue(name);
         if (value == nullptr) { return false; }
@@ -488,7 +488,7 @@ namespace neon
           {
             gradient = read;
 
-            // what stands in for the gradient where one colour is asked
+            // what stands in for the gradient where one color is asked
             // for, such as the line under a text
             color = read.stops.front().color;
             return true;
@@ -498,12 +498,12 @@ namespace neon
           {
             Expected(
               name, *value,
-              "a gradient such as linear-gradient(90deg, #f00, #00f) with 2 to 8 colours");
+              "a gradient such as linear-gradient(90deg, #f00, #00f) with 2 to 8 colors");
             return false;
           }
         }
 
-        if (!Colour(name, color)) { return false; }
+        if (!PlainColor(name, color)) { return false; }
 
         gradient.reset();
         return true;
@@ -523,7 +523,7 @@ namespace neon
         return Pixels(name, spacing, true);
       }
 
-      /// `text-decoration` of CSS: which lines, their colour, and how
+      /// `text-decoration` of CSS: which lines, their color, and how
       /// thick they are, in any order.
       bool TextDecoration(UiStyle &style) const
       {
@@ -531,7 +531,7 @@ namespace neon
         if (value == nullptr) { return false; }
 
         const std::string expected =
-          "none, underline, line-through, a colour, and a thickness, such as \"underline #ff8000 2px\"";
+          "none, underline, line-through, a color, and a thickness, such as \"underline #ff8000 2px\"";
 
         std::string text;
         if (!value->GetText(text))
@@ -648,9 +648,9 @@ namespace neon
             name, *value,
             of_text
               ? "none, or shadows such as \"0 2px 4px #000000\": to the right, down, a blur that is not "
-                "below 0, and a colour"
+                "below 0, and a color"
               : "none, or shadows such as \"0 4px 12px 0 rgba(0, 0, 0, 0.5)\": inset or not, to the right, "
-                "down, a blur that is not below 0, how much larger, and a colour");
+                "down, a blur that is not below 0, how much larger, and a color");
           return false;
         }
 
@@ -666,7 +666,7 @@ namespace neon
         UiGradient read;
         if (!value->GetText(text) || !ParseCssGradient(text, read))
         {
-          Expected(name, *value, "a gradient such as linear-gradient(90deg, #f00, #00f) with 2 to 8 colours");
+          Expected(name, *value, "a gradient such as linear-gradient(90deg, #f00, #00f) with 2 to 8 colors");
           return false;
         }
 
@@ -789,13 +789,13 @@ namespace neon
       }
 
       /// `border_top` and the like: a width, `solid` or `none`, and a
-      /// colour, for one side.
+      /// color, for one side.
       bool BorderSide(const std::string &name, float &width, std::optional<Color> &color) const
       {
         const auto *value = _reader.ReadValue(name);
         if (value == nullptr) { return false; }
 
-        const std::string expected = "a width, solid or none, and a colour, such as \"2px solid #ffffff\"";
+        const std::string expected = "a width, solid or none, and a color, such as \"2px solid #ffffff\"";
 
         std::string text;
         if (!AsText(*value, text))
@@ -857,7 +857,7 @@ namespace neon
         return true;
       }
 
-      /// `background` of CSS, of which a colour, a gradient, or an image
+      /// `background` of CSS, of which a color, a gradient, or an image
       /// is read.
       bool Background(UiStyle &style) const
       {
@@ -899,12 +899,12 @@ namespace neon
 
         Expected(
           "background", *value,
-          "none, a colour, a gradient such as linear-gradient(90deg, #f00, #00f), or the virtual path of an "
+          "none, a color, a gradient such as linear-gradient(90deg, #f00, #00f), or the virtual path of an "
           "image");
         return false;
       }
 
-      /// The values a shader is given: a number, a colour, a list of up to
+      /// The values a shader is given: a number, a color, a list of up to
       /// four numbers, or the name of a value of the game in brackets.
       bool ShaderValues(std::vector<UiShaderValue> &values) const
       {
@@ -961,7 +961,7 @@ namespace neon
           if (!is_read)
           {
             _reader.Report(written, std::format(
-                             "'{}' of 'shader_values' of {} is {}, where a number, a colour, a list of 1 to 4 "
+                             "'{}' of 'shader_values' of {} is {}, where a number, a color, a list of 1 to 4 "
                              "numbers, or a value such as \"{{charge}}\" was expected",
                              name, _reader.GetWhere(), Describe(written)));
             return false;
@@ -1018,7 +1018,7 @@ namespace neon
 
   void ReadUiStyle(const DataReader &reader, UiStyle &style)
   {
-    const BehaviourAtTheEnd behaviour(reader, style);
+    const BehaviorAtTheEnd behavior(reader, style);
 
     const Properties properties(reader);
     LayoutStyle &layout = style.layout;
@@ -1066,7 +1066,7 @@ namespace neon
 
     properties.Border(style);
     properties.PixelEdges("border_width", layout.border);
-    if (Color color; properties.Colour("border_color", color)) { style.border_color = color; }
+    if (Color color; properties.PlainColor("border_color", color)) { style.border_color = color; }
 
     properties.Length("top", layout.inset.top, true, true);
     properties.Length("right", layout.inset.right, true, true);
@@ -1089,7 +1089,7 @@ namespace neon
     properties.Pixels("row_gap", layout.row_gap);
     properties.Pixels("column_gap", layout.column_gap);
 
-    properties.Colour("background_color", style.background_color);
+    properties.PlainColor("background_color", style.background_color);
     properties.Path("background_image", style.background_image);
 
     properties.Path("border_image_source", style.border_image_source);
@@ -1098,7 +1098,7 @@ namespace neon
 
     properties.Pixels("outline_width", style.outline_width);
     properties.Pixels("outline_offset", style.outline_offset, true);
-    if (Color color; properties.Colour("outline_color", color)) { style.outline_color = color; }
+    if (Color color; properties.PlainColor("outline_color", color)) { style.outline_color = color; }
 
     properties.Number("opacity", style.opacity, 0.0f, 1.0f);
     properties.Keyword("overflow", overflows, style.overflow);
@@ -1118,7 +1118,7 @@ namespace neon
       }
     }
 
-    properties.ColourOrGradient("color", style.color, style.color_gradient);
+    properties.ColorOrGradient("color", style.color, style.color_gradient);
     reader.Read("font_family", style.font_family);
 
     if (float size = 0.0f; properties.Pixels("font_size", size))
@@ -1138,7 +1138,7 @@ namespace neon
     properties.Keyword("text_align", text_aligns, style.text_align);
     properties.LineHeight(style);
 
-    properties.Colour("accent_color", style.accent_color);
+    properties.PlainColor("accent_color", style.accent_color);
     properties.Keyword("object_fit", object_fits, style.object_fit);
 
     // Text
@@ -1149,7 +1149,7 @@ namespace neon
 
     properties.TextDecoration(style);
     properties.TextDecorationLine(style);
-    if (Color color; properties.Colour("text_decoration_color", color)) { style.text_decoration_color = color; }
+    if (Color color; properties.PlainColor("text_decoration_color", color)) { style.text_decoration_color = color; }
     properties.Pixels("text_decoration_thickness", style.text_decoration_thickness);
 
     properties.Shadows("text_shadow", true, style.text_shadow);
@@ -1159,7 +1159,7 @@ namespace neon
     if (std::size_t index = 0; reader.ReadChoice("font_style", font_styles, index)) { style.font_italic = index == 1; }
 
     properties.Pixels("text_stroke_width", style.text_stroke_width);
-    if (Color color; properties.Colour("text_stroke_color", color)) { style.text_stroke_color = color; }
+    if (Color color; properties.PlainColor("text_stroke_color", color)) { style.text_stroke_color = color; }
 
     properties.Keyword("direction", directions, style.direction);
 
@@ -1185,7 +1185,7 @@ namespace neon
       {
         reader.Report(*value, std::format(
                         "'background_image' of {} is {}, where the virtual path of an image, none, or a "
-                        "gradient such as linear-gradient(90deg, #f00, #00f) with 2 to 8 colours was expected",
+                        "gradient such as linear-gradient(90deg, #f00, #00f) with 2 to 8 colors was expected",
                         reader.GetWhere(), Describe(*value)));
       }
       style.background_image.clear();
@@ -1209,10 +1209,10 @@ namespace neon
     properties.Pixels("border_bottom_width", layout.border.bottom);
     properties.Pixels("border_left_width", layout.border.left);
 
-    if (Color color; properties.Colour("border_top_color", color)) { style.border_top_color = color; }
-    if (Color color; properties.Colour("border_right_color", color)) { style.border_right_color = color; }
-    if (Color color; properties.Colour("border_bottom_color", color)) { style.border_bottom_color = color; }
-    if (Color color; properties.Colour("border_left_color", color)) { style.border_left_color = color; }
+    if (Color color; properties.PlainColor("border_top_color", color)) { style.border_top_color = color; }
+    if (Color color; properties.PlainColor("border_right_color", color)) { style.border_right_color = color; }
+    if (Color color; properties.PlainColor("border_bottom_color", color)) { style.border_bottom_color = color; }
+    if (Color color; properties.PlainColor("border_left_color", color)) { style.border_left_color = color; }
 
     properties.Shadows("box_shadow", false, style.box_shadow);
 

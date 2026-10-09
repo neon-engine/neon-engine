@@ -8,15 +8,15 @@
 // Physically based shading, with the metallic-roughness model of glTF:
 // Lambert for the diffuse light and Cook-Torrance for the specular, with the
 // GGX distribution, the Smith-GGX geometry term as Schlick approximates it,
-// and Schlick's Fresnel. The light's `diffuse` is its radiance: the colour a
+// and Schlick's Fresnel. The light's `diffuse` is its radiance: the color a
 // white, rough, non-metal surface facing it shows. Its `ambient` lights the
-// diffuse colour evenly. Its `specular` is not read; a surface's highlight
+// diffuse color evenly. Its `specular` is not read; a surface's highlight
 // follows from its roughness and its metalness, not from the light.
 
 layout (location = 0) in vec3 frag_coord;
 layout (location = 1) in vec3 normal_coord;
 layout (location = 2) in vec2 tex_coord;
-// the colour painted on the vertices, in linear light; white where a
+// the color painted on the vertices, in linear light; white where a
 // model has none
 layout (location = 3) in vec4 vertex_color;
 layout (location = 4) flat in uint object_index;
@@ -24,11 +24,11 @@ layout (location = 5) in vec2 lightmap_coord;
 
 layout (location = 0) out vec4 frag_color;
 
-// the base colour, in sRGB as an image keeps it, read as linear light
+// the base color, in sRGB as an image keeps it, read as linear light
 layout (set = 0, binding = 2) uniform texture2D base_color_texture;
 
 // as glTF lays it out: green is roughness, blue is metallic, both multiply
-// the material's numbers. Read as numbers, not colours.
+// the material's numbers. Read as numbers, not colors.
 layout (set = 0, binding = 3) uniform texture2D metallic_roughness_texture;
 
 // what the surface gives off, in sRGB as an image keeps it, read as linear
@@ -47,8 +47,8 @@ const float PI = 3.14159265359;
 // all of them: about 4 percent.
 const vec3 DIELECTRIC_F0 = vec3(0.04);
 
-// the material's colour, the vertex colour, and the texture multiplied, as
-// glTF's base colour is made
+// the material's color, the vertex color, and the texture multiplied, as
+// glTF's base color is made
 #include "lightmap.glsl"
 
 vec3 BaseColor()
@@ -58,7 +58,7 @@ vec3 BaseColor()
 }
 
 // The light the surface gives off itself, as glTF makes it: the emissive
-// colour, with its strength multiplied in, times the emissive texture
+// color, with its strength multiplied in, times the emissive texture
 // where there is one. Added after lighting, so that it shows in the dark,
 // and free to be brighter than white.
 vec3 Emissive()
@@ -122,7 +122,7 @@ vec3 Shade(vec3 light_dir, vec3 normal, vec3 view_dir, vec3 radiance, vec3 base_
     float n_dot_h = max(dot(normal, half_dir), 0.0);
     float v_dot_h = max(dot(view_dir, half_dir), 0.0);
 
-    // a metal reflects in its own colour, a dielectric in white
+    // a metal reflects in its own color, a dielectric in white
     vec3 f0 = mix(DIELECTRIC_F0, base_color, metallic);
     vec3 fresnel = FresnelSchlick(v_dot_h, f0);
 
@@ -152,7 +152,7 @@ void main()
     float metallic = metallic_roughness.x;
     float roughness = metallic_roughness.y;
 
-    // the ambient light reaches the diffuse colour alone, from every side
+    // the ambient light reaches the diffuse color alone, from every side
     vec3 result = scene.direction_light.ambient.rgb * base_color * (1.0 - metallic);
 
     // the direction light reaches what its shadow map says it reaches
@@ -199,7 +199,7 @@ void main()
             roughness);
     }
 
-    // light that was worked out ahead reaches the diffuse colour, as the
+    // light that was worked out ahead reaches the diffuse color, as the
     // ambient light does
     if (has_lightmap(object.lightmap))
     {

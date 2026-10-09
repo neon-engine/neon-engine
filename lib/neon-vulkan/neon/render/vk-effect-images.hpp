@@ -13,7 +13,7 @@ namespace neon
   /// The two pictures the effects of one kind of a canvas are run between:
   /// an effect reads one and writes the other, and the next one the other
   /// way around. They are as large as the canvas and hold what the kind
-  /// holds: the light of the scene, or the colours a screen is given.
+  /// holds: the light of the scene, or the colors a screen is given.
   ///
   /// A canvas makes them when a camera that draws into it first names an
   /// effect, so a camera without effects costs nothing.

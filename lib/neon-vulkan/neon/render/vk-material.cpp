@@ -210,8 +210,8 @@ namespace neon
 
   VK_TextureOptions VK_Material::TextureOptionsFor(const std::size_t index)
   {
-    // The first texture holds the colours of the surface. The second says
-    // how much each part of it shines, which is a number and not a colour.
+    // The first texture holds the colors of the surface. The second says
+    // how much each part of it shines, which is a number and not a color.
     VK_TextureOptions options;
     options.is_color = index == 0;
     return options;
@@ -340,7 +340,7 @@ namespace neon
 
   VK_ObjectData VK_Material::GetObjectData(const glm::mat4 &model, const Transform &transform) const
   {
-    // the colour is written as a screen shows it, and lit in linear light
+    // the color is written as a screen shows it, and lit in linear light
     const auto [red, green, blue, alpha] = SrgbToLinear(_material_info.color);
 
     VK_ObjectData data;

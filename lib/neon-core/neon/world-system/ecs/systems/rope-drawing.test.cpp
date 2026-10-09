@@ -183,7 +183,7 @@ namespace
     EXPECT_EQ(drawn->drawn_to, glm::vec3(0.0f, 3.9f, 0.0f));
     EXPECT_EQ(drawn->drawn_length, 2.0f);
 
-    // slack by more than a metre, so it hangs below the lamp's end of it
+    // slack by more than a meter, so it hangs below the lamp's end of it
     EXPECT_LT(Heights(MeshOf(rope)).first, 3.0f);
   }
 

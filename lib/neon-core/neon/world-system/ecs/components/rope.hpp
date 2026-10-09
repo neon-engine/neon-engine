@@ -68,8 +68,8 @@ namespace neon
     /// How many straight pieces the rope is drawn as from end to end.
     int segments = 16;
 
-    /// How often a texture repeats over one metre of the rope.
-    float texels_per_metre = 1.0f;
+    /// How often a texture repeats over one meter of the rope.
+    float texels_per_meter = 1.0f;
 
     /// The mesh the rope is drawn as, written anew when an end moves.
     /// Filled in by the engine, as everything below is.
@@ -133,9 +133,9 @@ namespace neon
         .AtLeast(1)
         .Describe("How many straight pieces the rope is drawn as from end to end");
 
-    type.Field("texels_per_metre", &Rope::texels_per_metre)
+    type.Field("texels_per_meter", &Rope::texels_per_meter)
         .Above(0.0f)
-        .Describe("How often a texture repeats over one metre of the rope");
+        .Describe("How often a texture repeats over one meter of the rope");
   }
 } // neon
 

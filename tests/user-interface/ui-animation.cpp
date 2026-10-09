@@ -323,7 +323,7 @@ namespace
     EXPECT_EQ(Style().layout.margin.left, LayoutLength::Pixels(10.0f));
   }
 
-  TEST_F(UiAnimationTest, MovesAColourWithItsAlphaMultipliedIn)
+  TEST_F(UiAnimationTest, MovesAColorWithItsAlphaMultipliedIn)
   {
     ShowBox(
       "#box { background-color: rgba(255, 0, 0, 0); transition: background-color 1s linear; }\n"

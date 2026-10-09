@@ -25,13 +25,13 @@ namespace neon
     /// drawn on.
     bool repeat = true;
 
-    /// Multiplies alpha into the colours before the image is kept, which
+    /// Multiplies alpha into the colors before the image is kept, which
     /// is what blending by ONE and ONE_MINUS_SRC_ALPHA expects. A pixel
-    /// that is see-through then adds no colour of its own to its
-    /// neighbours when the image is scaled.
+    /// that is see-through then adds no color of its own to its
+    /// neighbors when the image is scaled.
     bool premultiply_alpha = false;
 
-    /// Whether the image holds colours, which an image file keeps in sRGB.
+    /// Whether the image holds colors, which an image file keeps in sRGB.
     /// The graphics card turns them into linear light as they are read,
     /// and makes its smaller copies in linear light, which is what lighting
     /// works in. An image that holds numbers instead, such as how shiny
@@ -129,7 +129,7 @@ namespace neon
     /// The path the texture was created with, which names it.
     [[nodiscard]] const std::string &Path() const { return _texture_path; }
 
-    /// Makes the texture a single colour. Used where a material names no
+    /// Makes the texture a single color. Used where a material names no
     /// texture, so that shaders always have something to read.
     bool InitializeWithColor(unsigned char red, unsigned char green, unsigned char blue, unsigned char alpha);
 
@@ -137,7 +137,7 @@ namespace neon
     /// by a direction: its faces in the order Vulkan keeps them, towards
     /// positive x, negative x, positive y, negative y, positive z, and
     /// negative z. Every image is a square, and all six have one size.
-    /// They hold colours, and have no smaller copies. The path the texture
+    /// They hold colors, and have no smaller copies. The path the texture
     /// was created with only names it in the log.
     bool InitializeWithFaces(const std::array<std::string, kCube_Faces> &paths);
 
@@ -163,11 +163,11 @@ namespace neon
     /// leaves the image alone.
     [[nodiscard]] static VK_Texture Borrowed(VkImageView view, VK_Sampling sampling, uint32_t width, uint32_t height);
 
-    /// The format a texture is kept in: sRGB for colours, so that they are
+    /// The format a texture is kept in: sRGB for colors, so that they are
     /// read as linear light, and plain bytes for anything else.
     [[nodiscard]] static VkFormat FormatFor(bool is_color);
 
-    /// The two formats: sRGB for colours, which the graphics card turns
+    /// The two formats: sRGB for colors, which the graphics card turns
     /// into linear light as they are read, and plain bytes for anything
     /// else.
     static constexpr VkFormat kColor_Format = VK_FORMAT_R8G8B8A8_SRGB;

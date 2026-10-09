@@ -159,7 +159,7 @@ namespace neon
     /// effect is a fragment shader a game brings that is run over the whole
     /// picture the camera drew, named as a shader is. Those of `effects`
     /// are run on the light of the scene, before the tonemapper, and those
-    /// of `screen_effects` on the colours a screen is given, after it and
+    /// of `screen_effects` on the colors a screen is given, after it and
     /// before the user interface. Each list is run in its order. They hold
     /// for the frame. A renderer that leaves this as it is runs none.
     virtual void SetEffects(
@@ -244,7 +244,7 @@ namespace neon
 
     /// Sets four numbers of a game that every shader reads, at one of
     /// kShader_Number_Places places, as `scene.numbers[place]`. They are for
-    /// the shaders a game brings: how thick its fog is, the colour of it,
+    /// the shaders a game brings: how thick its fog is, the color of it,
     /// whatever its own shaders are written to read. The shaders of the
     /// engine read none of them. They stay until they are set again. Returns
     /// false for a place that there is not, and for a renderer that keeps

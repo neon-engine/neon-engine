@@ -1,7 +1,7 @@
 # The target of the kit of the tests: a plate 0.5 across and 0.5 high
 # from its origin at its foot, 0.124 thick along x with its bull's eye. It stands still and can
 # be hit, by a shot or by the player, so it has a static body and a box
-# collider of the face's size, in the piece's own metres as the walls have
+# collider of the face's size, in the piece's own meters as the walls have
 # theirs; a scene that places another target model writes its model and its
 # collider's size and offset on top. The Transform is carried from the start
 # so that a target spawned in play stands where its parent is, see

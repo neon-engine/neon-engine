@@ -60,29 +60,29 @@ namespace neon
     return corners;
   }
 
-  glm::mat4 VK_ShadowFit::View(const glm::vec3 &direction, const glm::vec3 &centre, const float radius, const float reach)
+  glm::mat4 VK_ShadowFit::View(const glm::vec3 &direction, const glm::vec3 &center, const float radius, const float reach)
   {
     const glm::vec3 along = glm::normalize(direction);
 
     // a light straight down has no sideways from y, and takes x
     const glm::vec3 up = std::abs(along.y) > 0.99f ? glm::vec3(1.0f, 0.0f, 0.0f) : glm::vec3(0.0f, 1.0f, 0.0f);
 
-    return glm::lookAt(centre - along * (radius + reach), centre, up);
+    return glm::lookAt(center - along * (radius + reach), center, up);
   }
 
   glm::mat4 VK_ShadowFit::BoxViewProjection(
     const glm::vec3 &direction,
-    const glm::vec3 &centre,
+    const glm::vec3 &center,
     const float radius,
     const float reach,
     const float map_size)
   {
-    // The centre is at the origin of the light's plane. The box around it
+    // The center is at the origin of the light's plane. The box around it
     // is moved so that its corners sit on whole texels, which has the
-    // shadows stay where they are while the centre moves within a texel.
+    // shadows stay where they are while the center moves within a texel.
     // The move is worked out from where the origin of the world lands,
-    // which is what moves with the centre.
-    const glm::mat4 view = View(direction, centre, radius, reach);
+    // which is what moves with the center.
+    const glm::mat4 view = View(direction, center, radius, reach);
     const float texel = 2.0f * radius / map_size;
 
     const glm::vec4 origin = view * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
@@ -124,15 +124,15 @@ namespace neon
       const auto corners = SliceCorners(inverse, near, far, from, to);
 
       // the sphere around the slice: one size however the camera turns
-      glm::vec3 centre(0.0f);
-      for (const glm::vec3 &corner : corners) { centre += corner; }
-      centre /= 8.0f;
+      glm::vec3 center(0.0f);
+      for (const glm::vec3 &corner : corners) { center += corner; }
+      center /= 8.0f;
       float radius = 0.0f;
-      for (const glm::vec3 &corner : corners) { radius = std::max(radius, glm::length(corner - centre)); }
+      for (const glm::vec3 &corner : corners) { radius = std::max(radius, glm::length(corner - center)); }
       radius = std::max(radius, 0.5f);
 
       cascades.view_projections[static_cast<std::size_t>(i)] =
-        BoxViewProjection(direction, centre, radius, reach, map_size);
+        BoxViewProjection(direction, center, radius, reach, map_size);
       from = to;
     }
     return cascades;

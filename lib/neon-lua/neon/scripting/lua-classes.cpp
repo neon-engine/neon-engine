@@ -255,7 +255,7 @@ namespace neon
       }
       if (lua_isfunction(lua, -1))
       {
-        problem = "'" + field.name + "' of " + declaration.name + " is a function; behaviour belongs in a System over the component";
+        problem = "'" + field.name + "' of " + declaration.name + " is a function; behavior belongs in a System over the component";
         lua_settop(lua, top);
         return false;
       }

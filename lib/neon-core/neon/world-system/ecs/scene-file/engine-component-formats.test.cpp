@@ -466,7 +466,7 @@ namespace
     map.Set("shape", DataValue::Text("prism"));
     map.Set("size", Numbers({0.0f, 3.0f, 0.0f}));
     map.Set("outline", Numbers({-4.0f, -4.0f, 4.0f, -4.0f, 4.0f, 4.0f, -4.0f, 4.0f}));
-    map.Set("texels_per_metre", DataValue::Number(0.5f));
+    map.Set("texels_per_meter", DataValue::Number(0.5f));
     map.Set("inside", DataValue::Bool(true));
 
     Read("Geometry", map);
@@ -476,12 +476,12 @@ namespace
     EXPECT_EQ(geometry->shape, neon::GeometryShape::Prism);
     EXPECT_EQ(geometry->size, glm::vec3(0.0f, 3.0f, 0.0f));
     EXPECT_EQ(geometry->outline.size(), 8u);
-    EXPECT_EQ(geometry->texels_per_metre, 0.5f);
+    EXPECT_EQ(geometry->texels_per_meter, 0.5f);
     EXPECT_TRUE(geometry->inside);
     EXPECT_THAT(_errors, IsEmpty());
   }
 
-  TEST_F(EngineComponentFormatsTest, AGeometryIsABoxOfAMetreUnlessItSaysOtherwise)
+  TEST_F(EngineComponentFormatsTest, AGeometryIsABoxOfAMeterUnlessItSaysOtherwise)
   {
     Read("Geometry", DataValue::Map());
 
@@ -489,7 +489,7 @@ namespace
     ASSERT_NE(geometry, nullptr);
     EXPECT_EQ(geometry->shape, neon::GeometryShape::Box);
     EXPECT_EQ(geometry->size, glm::vec3(1.0f));
-    EXPECT_EQ(geometry->texels_per_metre, 1.0f);
+    EXPECT_EQ(geometry->texels_per_meter, 1.0f);
     EXPECT_FALSE(geometry->inside);
     EXPECT_THAT(_errors, IsEmpty());
   }

@@ -1,5 +1,5 @@
-# A sign of the museum, demo.scene.yml: a board of 2 by 1 metres that floats
-# where it is put, centred on its origin and facing +z. The board is a quad
+# A sign of the museum, demo.scene.yml: a board of 2 by 1 meters that floats
+# where it is put, centered on its origin and facing +z. The board is a quad
 # that shows a surface, and the scene says which: it writes the `textures` of the board's
 # Renderable, `surface://` and a name, and gives the board a UiSurface of
 # that name with the user interface to draw on it, see

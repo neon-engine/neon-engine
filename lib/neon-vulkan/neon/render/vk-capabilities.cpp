@@ -43,7 +43,7 @@ namespace neon
     capabilities.device_name = answers.properties.deviceName;
     capabilities.max_texture_size = static_cast<int>(limits.maxImageDimension2D);
 
-    // the scene is drawn with colour and depth, so both have to have them
+    // the scene is drawn with color and depth, so both have to have them
     capabilities.max_samples = MostSamples(
       limits.framebufferColorSampleCounts & limits.framebufferDepthSampleCounts);
 

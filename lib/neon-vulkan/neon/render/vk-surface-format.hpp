@@ -11,7 +11,7 @@ namespace neon
   [[nodiscard]] bool IsSrgbFormat(VkFormat format);
 
   /// The format of the window to show frames in, from those it offers. The
-  /// frame already holds sRGB colours as bytes, and is copied as it is, so
+  /// frame already holds sRGB colors as bytes, and is copied as it is, so
   /// plain bytes come first: a format that converts to sRGB would convert
   /// them a second time. Whatever is offered first comes next.
   ///

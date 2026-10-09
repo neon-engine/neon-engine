@@ -36,7 +36,7 @@ namespace neon
 
     // What is drawn to, which is the image without its smaller copies, and
     // what is read, which is the image with them. The image holds sRGB
-    // colours as bytes. A model reads them as linear light, and what is
+    // colors as bytes. A model reads them as linear light, and what is
     // drawn in two dimensions reads them as the bytes they are.
     VkImageView _attachment_view = VK_NULL_HANDLE;
     VkImageView _view = VK_NULL_HANDLE;
@@ -57,7 +57,7 @@ namespace neon
     VK_RenderTarget(const std::string &name, VK_Device *device, const std::shared_ptr<Logger> &logger);
 
     /// Creates the image for a render pass that writes it, of the format
-    /// given, which holds sRGB colours as bytes. The image is black and
+    /// given, which holds sRGB colors as bytes. The image is black and
     /// see-through until it is drawn to. It has as many levels of smaller
     /// copies as its size allows, but no more than `most_levels` when that
     /// is above 0.
@@ -80,7 +80,7 @@ namespace neon
     void Finish(VkCommandBuffer commands) const;
 
     /// The format a model reads a target of `format` through, so that its
-    /// sRGB colours are turned into linear light: the sRGB format of the
+    /// sRGB colors are turned into linear light: the sRGB format of the
     /// same bytes.
     [[nodiscard]] static VkFormat SampledFormatOf(VkFormat format);
 

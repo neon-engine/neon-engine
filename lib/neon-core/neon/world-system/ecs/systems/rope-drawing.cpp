@@ -156,13 +156,13 @@ namespace neon
         _flat.clear();
         _flat.push_back(curve.p0);
         curve.Flatten(std::max(rope.thickness * 0.05f, 0.0005f), _flat);
-        ResamplePolyline(_flat, static_cast<std::size_t>(std::max(rope.segments, 1)) + 1, _centres);
+        ResamplePolyline(_flat, static_cast<std::size_t>(std::max(rope.segments, 1)) + 1, _centers);
 
         // written over the mesh of the frame before, which has as many
         // vertices, so nothing is allocated here or in the renderer
         rope.mesh->vertices.clear();
         rope.mesh->indices.clear();
-        AppendTube(_centres, rope.thickness * 0.5f, rope.sides, rope.texels_per_metre, *rope.mesh);
+        AppendTube(_centers, rope.thickness * 0.5f, rope.sides, rope.texels_per_meter, *rope.mesh);
 
         rope.drawn_from = from;
         rope.drawn_to = to;

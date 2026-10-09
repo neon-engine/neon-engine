@@ -1,7 +1,7 @@
-# A pedestal of the museum, demo.scene.yml: a block 0.8 square and a metre
+# A pedestal of the museum, demo.scene.yml: a block 0.8 square and a meter
 # high, built by the engine, that stands still and can be walked into. A
-# Geometry is centred on its entity, so the scene places it half a metre
-# above the floor, and what it shows a metre above.
+# Geometry is centered on its entity, so the scene places it half a meter
+# above the floor, and what it shows a meter above.
 version: 1
 prefab: pedestal
 

@@ -10,10 +10,10 @@
 
 namespace neon
 {
-  /// Builds a mesh from shapes, in metres, centred where each shape says.
-  /// Every face is wound anticlockwise seen from outside and carries a flat
+  /// Builds a mesh from shapes, in meters, centered where each shape says.
+  /// Every face is wound counterclockwise seen from outside and carries a flat
   /// normal; texture coordinates follow from ProjectUvs(), which the builder
-  /// applies at the end with the texels per metre it was given. Every
+  /// applies at the end with the texels per meter it was given. Every
   /// vertex is white: a mesh painted by vertex sets `Vertex::color` on the
   /// mesh it is handed.
   ///
@@ -25,32 +25,32 @@ namespace neon
   class MeshBuilder
   {
     MeshData _mesh;
-    float _texels_per_metre;
+    float _texels_per_meter;
     bool _inside_out = false;
 
     /// The texture coordinates a shape laid itself, by the index of the
     /// vertex, which Build() keeps in place of the projected ones.
     std::vector<std::pair<unsigned int, glm::vec2>> _laid_uvs;
 
-    /// Adds one face with the corners given anticlockwise seen from its
+    /// Adds one face with the corners given counterclockwise seen from its
     /// front, with the normal of that front on every corner.
     void AddFace(const std::vector<glm::vec3> &corners);
 
   public:
-    /// `texels_per_metre` is how often a texture repeats over one metre of
-    /// surface, see ProjectUvs(). 1 repeats a texture once a metre.
-    explicit MeshBuilder(float texels_per_metre = 1.0f);
+    /// `texels_per_meter` is how often a texture repeats over one meter of
+    /// surface, see ProjectUvs(). 1 repeats a texture once a meter.
+    explicit MeshBuilder(float texels_per_meter = 1.0f);
 
-    /// A box of `size`, centred at `center`.
+    /// A box of `size`, centered at `center`.
     MeshBuilder &AddBox(const glm::vec3 &size, const glm::vec3 &center = {});
 
-    /// A flat plane of `size` in x and z, facing up, centred at `center`,
+    /// A flat plane of `size` in x and z, facing up, centered at `center`,
     /// cut into `segments` by `segments` quads, which lets a floor be bent or
     /// painted by vertex later.
     MeshBuilder &AddPlane(const glm::vec2 &size, int segments = 1, const glm::vec3 &center = {});
 
     /// A ramp of `size`: a wedge that rises along z, from its low edge at
-    /// the front (positive z) to its full height at the back, centred at
+    /// the front (positive z) to its full height at the back, centered at
     /// `center` in x and z and standing on `center.y`.
     MeshBuilder &AddRamp(const glm::vec3 &size, const glm::vec3 &center = {});
 
@@ -62,29 +62,29 @@ namespace neon
     MeshBuilder &AddPrism(const std::vector<glm::vec2> &outline, float height, float floor_y = 0.0f);
 
     /// A sphere that fills `size`, an ellipsoid when its three lengths
-    /// differ, centred at `center`, with `sides` faces round its equator and
+    /// differ, centered at `center`, with `sides` faces round its equator and
     /// half as many rings from pole to pole. `smooth` gives every vertex the
     /// normal of the round surface, so that it is lit as a ball; without it
     /// every face is flat, as the faces of the other shapes are.
     MeshBuilder &AddSphere(const glm::vec3 &size, int sides = 24, bool smooth = false, const glm::vec3 &center = {});
 
-    /// A cylinder along y that fills `size`, centred at `center`, with
+    /// A cylinder along y that fills `size`, centered at `center`, with
     /// `sides` faces round it and a cap at each end. `smooth` rounds the
     /// side; the caps stay flat and their edges hard.
     MeshBuilder &AddCylinder(const glm::vec3 &size, int sides = 24, bool smooth = false, const glm::vec3 &center = {});
 
-    /// An upright quad of `size` in x and y, facing +z, centred at `center`,
+    /// An upright quad of `size` in x and y, facing +z, centered at `center`,
     /// on which a texture lies once with its top at the top, whatever the
-    /// texels per metre: what shows a picture or a surface, as a screen does.
+    /// texels per meter: what shows a picture or a surface, as a screen does.
     MeshBuilder &AddUprightQuad(const glm::vec2 &size, const glm::vec3 &center = {});
 
     /// A tube of `radius` with `sides` faces round it, along the line
-    /// through `centres` and closed at both ends, with the normals of the
+    /// through `centers` and closed at both ends, with the normals of the
     /// round surface: a curve that was flattened, drawn as a pipe or a
     /// rope. Its texture goes round it and along it, see AppendTube().
-    MeshBuilder &AddTube(const std::vector<glm::vec3> &centres, float radius, int sides = 12);
+    MeshBuilder &AddTube(const std::vector<glm::vec3> &centers, float radius, int sides = 12);
 
-    /// One quad with its corners given anticlockwise seen from the front.
+    /// One quad with its corners given counterclockwise seen from the front.
     MeshBuilder &AddQuad(const glm::vec3 &a, const glm::vec3 &b, const glm::vec3 &c, const glm::vec3 &d);
 
     /// Turns every face of the mesh round when it is built, so that the

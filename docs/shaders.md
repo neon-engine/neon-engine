@@ -8,7 +8,7 @@ its [shaders section](vulkan-renderer.md#the-shaders-that-ship).
 
 **Current decision (#89, 2026-10-02):** shaders are written in **GLSL 450**,
 once. **SPIR-V is the one intermediate form**: glslang produces it at build
-time, the Vulkan renderer loads it, and every other renderer starts from it —
+time, the Vulkan renderer loads it, and every other renderer starts from it  - 
 cross-compiled to that target's language at build time. Nothing is translated
 while a game runs, and no shader source ships. Slang (#110) was weighed and
 set aside: its Metal and WGSL targets are marked experimental, and those were
@@ -17,11 +17,11 @@ the two reasons to switch.
 ## The pipeline
 
 ```
-GLSL 450 ──glslang──► SPIR-V ──┬─► Vulkan (as it is)                         #23, done
-                               ├─► MoltenVK on macOS (as it is, until #65)   today
-                               ├─SPIRV-Cross─► MSL ──metal──► .metallib       #65 Metal
-                               ├─SPIRV-Cross─► HLSL ──dxc──► DXIL             #109 DirectX 12
-                               └─Tint or Naga─► WGSL                          #66, #86 WebGPU
+GLSL 450 --glslang--> SPIR-V --+-> Vulkan (as it is)                         #23, done
+                               +-> MoltenVK on macOS (as it is, until #65)   today
+                               +-SPIRV-Cross-> MSL --metal--> .metallib       #65 Metal
+                               +-SPIRV-Cross-> HLSL --dxc--> DXIL             #109 DirectX 12
+                               +-Tint or Naga-> WGSL                          #66, #86 WebGPU
 ```
 
 One source, one build step per renderer, one set of compiled files per
@@ -65,7 +65,7 @@ cross-compilers never meet a feature they cannot express:
 Neon does not define a shading language, and will not for 1.0. The language is
 GLSL; the compilers are glslang, SPIRV-Cross, DXC, and Tint or Naga, all made
 and kept by others; what is ours is the build step that calls them. A language
-of our own — a syntax, a parser, an emitter for every target — is what Godot
+of our own - a syntax, a parser, an emitter for every target - is what Godot
 and Unity carry and what SPIR-V as the intermediate form spares us. If one ever
 comes, after 1.0, it sits in front of the same pipeline and changes nothing
 behind it.
@@ -77,7 +77,7 @@ complete vertex and fragment stages its renderer needs, then hands GLSL to the
 same pipeline. Neon will do the same with GLSL as the syntax, in a small tool
 of its own, the first of the editor's compiler tools (#83). It is a text step,
 not a compiler: it pastes files together and never reads what it pastes. The
-wrapping is optional, too — the UI shaders do it by hand today with
+wrapping is optional, too - the UI shaders do it by hand today with
 `#include "ui-shader.glsl"`, which is enough for 1.0.
 
 1. **Includes** resolved by plain text, so the sources depend on no vendor

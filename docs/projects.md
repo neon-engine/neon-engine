@@ -95,14 +95,14 @@ that the application hands in, as it does for scenes. The tests of the reader
 are in `tests/project-files`, with the file of the runtime read as it is in
 the repository and its scenes checked against the folder.
 
-How the folder is organised is in [project-layout.md](project-layout.md).
+How the folder is organized is in [project-layout.md](project-layout.md).
 
 ## Open questions
 
 - **A compiled game, not a project** (#92, #143, #84): a shipped NeonRuntime
   knows nothing of `project.yml`. The exporter turns the project into a
-  `game.yml` — the name, the organization, the entry scene, and the runtime
-  it was built for — either embedded into the runtime or in a file next to
+  `game.yml` - the name, the organization, the entry scene, and the runtime
+  it was built for - either embedded into the runtime or in a file next to
   it, with the assets. `ProjectFile` then belongs to the editor, which wraps
   or grows out of NeonRuntime with its own command-line options; nothing is
   split in the build for that.
@@ -127,15 +127,15 @@ of follows from that:
 
 ```
 bench/
-  CMakeLists.txt             neon_add_project(bench SOURCES extensions/bench/bench.cpp …)
+  CMakeLists.txt             neon_add_project(bench SOURCES extensions/bench/bench.cpp ...)
   README.md
   assets/
     project.yml              the project: its name, its scenes, the scene it starts with
-    scenes/ prefabs/ …       the game: its scenes, prefabs, scripts, user interfaces
+    scenes/ prefabs/ ...       the game: its scenes, prefabs, scripts, user interfaces
   extensions/
     bench/                   laid out as it lies next to the runtime
       extension.yml
-      bench.cpp …            its code
+      bench.cpp ...            its code
 ```
 
 | Decision | Reason |
@@ -144,7 +144,7 @@ bench/
 | The game lives in `assets/`, even what uses the extension's components | `extensions://` is for code and what code needs to run; a scene is the game's, so a scene that holds a `NativeSpawner` is `assets://scenes/rain-cpp-heavy-copy.scene.yml` |
 | `extensions/<name>/` in the source is laid out as next to the runtime | One layout to know. The build adds the library to it |
 | `project.yml` is in `assets/` | It is where the runtime reads it. It belongs at the root, next to `assets/` and `extensions/`, which waits for a scheme of its own (#368) |
-| `neon_add_project(<name> SOURCES …)` puts the game together: `NeonRuntime`, `engine/`, `assets/`, `extensions/<name>/` | It is what a shipped game looks like, and it runs from there. Exporting (#84) will make the same folder for another platform |
+| `neon_add_project(<name> SOURCES ...)` puts the game together: `NeonRuntime`, `engine/`, `assets/`, `extensions/<name>/` | It is what a shipped game looks like, and it runs from there. Exporting (#84) will make the same folder for another platform |
 | The runtime brings its executable and its folder `engine`, and nothing of a game | The runtime knows no game. Its shaders, fonts, a plain pause and settings menu, and an input map are `engine://`, which a project uses or replaces; everything else a game shows and reads is the project's own |
 
 **Built on its own**, which is how a game is worked on: the folder is a

@@ -88,7 +88,7 @@ is stored.
 | `0.5f` | A number with a fraction that says it is a float, for the person reading the file |
 | `2.0d` | A number with a fraction that says it is a double, for the person reading the file |
 | `2d`, `2f` | Text. A whole number takes no suffix |
-| `0x1d`, `0o17` | Text. Hexadecimal and octal are the computer's forms and are never a number by surprise. A field that wants such a form, such as a colour, reads the text |
+| `0x1d`, `0o17` | Text. Hexadecimal and octal are the computer's forms and are never a number by surprise. A field that wants such a form, such as a color, reads the text |
 | `"1.3"` | Text, since it is quoted. `rendering.vulkan_version` wants it so, since `1.10` as a number is `1.1` |
 
 A suffix is for the reader and changes nothing about how the engine stores

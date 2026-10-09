@@ -29,8 +29,8 @@ debugger; the release ones with:
 
 | Flag | Why |
 |---|---|
-| `-O3 -DNDEBUG` | The optimiser at its highest, and the assertions of the libraries off |
-| Link-time optimisation, `CMAKE_INTERPROCEDURAL_OPTIMIZATION` | The engine is a dozen static libraries in one executable; optimised as one program, a call into another library is inlined as one within a file is. Thin LTO with clang, so the link stays parallel |
+| `-O3 -DNDEBUG` | The optimizer at its highest, and the assertions of the libraries off |
+| Link-time optimization, `CMAKE_INTERPROCEDURAL_OPTIMIZATION` | The engine is a dozen static libraries in one executable; optimized as one program, a call into another library is inlined as one within a file is. Thin LTO with clang, so the link stays parallel |
 | `-fno-math-errno` | `sqrt` and its kin compile to the instruction of the processor in place of a call that sets `errno`, which nothing reads |
 | `-ffunction-sections -fdata-sections` with `-Wl,-dead_strip` on macOS and `-Wl,--gc-sections` elsewhere | What nothing calls is left out of the executable: most of assimp's importers, for one |
 | `-mcpu=apple-m1` on macOS | Every Mac with Apple silicon, and the instructions all of them have |
@@ -358,7 +358,7 @@ with exit code 1. See [versions of Vulkan](vulkan-renderer.md#versions-of-vulkan
 | Exit code | Meaning |
 |---|---|
 | 0 | The run did what it was asked to |
-| 1 | The command line was not understood, something was logged as an error — a scene or a user interface with a problem, a screenshot that could not be written — or the run ended with an exception. The run goes on after an error, as a game does; the exit code says it happened, and the log says what |
+| 1 | The command line was not understood, something was logged as an error - a scene or a user interface with a problem, a screenshot that could not be written - or the run ended with an exception. The run goes on after an error, as a game does; the exit code says it happened, and the log says what |
 
 A folder that cannot be created or written to is only found out when the
 file system starts or the frame is written. The run then still renders, logs
@@ -449,7 +449,7 @@ The window mode is chosen through `SettingsConfig::window_mode`, defined in
 It defaults to `Windowed`. The sandbox's [settings.yml](../projects/sandbox/assets/settings.yml)
 sets `borderless` as `window.mode`, see [settings.md](settings.md).
 
-| Mode | Behaviour | `width` and `height` |
+| Mode | Behavior | `width` and `height` |
 |---|---|---|
 | `WindowMode::Windowed` | A regular window with a title bar and borders | Size of the window |
 | `WindowMode::Borderless` | No decorations, covers the whole display at the desktop's resolution. Switching applications stays instant because the display mode never changes | Ignored |
@@ -888,7 +888,7 @@ what it left behind.
 | `tests/` | `text-shaping` | 20 | Text with real fonts through the core: kerning, a ligature, Arabic, a second font for what the first does not have, quarters of a pixel, an atlas that grows |
 | `tests/` | `user-interface`, what was added | 211 | The properties of text, boxes, images, shaders of elements, and surfaces: what is handed to the renderer, where the pointer is on round corners and on what is moved and turned, what is wrong in a file |
 | `tests/` | `runtime-surfaces` | 4 | NeonRuntime without a window with the gallery, shaders at two times, and the scene with surfaces in the world |
-| `tests/` | `runtime-vertex-colours` | 4 | NeonRuntime without a window with a model painted by vertex: the colours unlit and lit, and a material the file marks double-sided seen from behind, with and without the scene's say |
+| `tests/` | `runtime-vertex-colors` | 4 | NeonRuntime without a window with a model painted by vertex: the colors unlit and lit, and a material the file marks double-sided seen from behind, with and without the scene's say |
 
 The headers that only declare an interface or a plain structure have no test
 of their own. There is nothing in them that can be wrong by itself.
@@ -1039,4 +1039,4 @@ section above.
 - The **Run** task does the same as Ctrl+F5 from the task menu.
 
 Breakpoints, stepping, and variable inspection work as normal. The build is
-Debug with optimisation off, so nothing is inlined away.
+Debug with optimization off, so nothing is inlined away.

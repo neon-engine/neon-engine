@@ -55,7 +55,7 @@ namespace neon
 
     /// The vertices of a mesh as the file gives them: position, normal, and
     /// the first set of texture coordinates, with what the mesh has not
-    /// left at zero, and the first set of vertex colours (`COLOR_0` of
+    /// left at zero, and the first set of vertex colors (`COLOR_0` of
     /// glTF), white when the mesh has none.
     static std::vector<Vertex> ReadVertices(const aiMesh *mesh);
 

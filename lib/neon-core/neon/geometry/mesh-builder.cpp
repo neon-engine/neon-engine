@@ -11,9 +11,9 @@
 
 namespace neon
 {
-  MeshBuilder::MeshBuilder(const float texels_per_metre)
+  MeshBuilder::MeshBuilder(const float texels_per_meter)
   {
-    _texels_per_metre = texels_per_metre;
+    _texels_per_meter = texels_per_meter;
   }
 
   void MeshBuilder::AddFace(const std::vector<glm::vec3> &corners)
@@ -21,7 +21,7 @@ namespace neon
     if (corners.size() < 3) { return; }
 
     // the normal of the front, which is the side the corners go round
-    // anticlockwise on
+    // counterclockwise on
     const glm::vec3 normal = normalize(cross(corners[1] - corners[0], corners[2] - corners[0]));
 
     const auto first = static_cast<unsigned int>(_mesh.vertices.size());
@@ -84,7 +84,7 @@ namespace neon
         const float z0 = center.z + start.y + step.y * static_cast<float>(row);
         const float z1 = z0 + step.y;
 
-        // anticlockwise seen from above, so that the plane faces up
+        // counterclockwise seen from above, so that the plane faces up
         AddQuad({x0, center.y, z1}, {x1, center.y, z1}, {x1, center.y, z0}, {x0, center.y, z0});
       }
     }
@@ -120,7 +120,7 @@ namespace neon
 
     // The order the points come in must not matter, so the outline is put
     // the one way round that makes every face below point outward: the way
-    // whose shoelace area in x and z is negative, which is anticlockwise seen
+    // whose shoelace area in x and z is negative, which is counterclockwise seen
     // from above with z towards the viewer.
     float twice_area = 0.0f;
     for (std::size_t i = 0; i < given.size(); i++)
@@ -321,10 +321,10 @@ namespace neon
     return *this;
   }
 
-  MeshBuilder &MeshBuilder::AddTube(const std::vector<glm::vec3> &centres, const float radius, const int sides)
+  MeshBuilder &MeshBuilder::AddTube(const std::vector<glm::vec3> &centers, const float radius, const int sides)
   {
     const auto first = static_cast<unsigned int>(_mesh.vertices.size());
-    AppendTube(centres, radius, sides, _texels_per_metre, _mesh);
+    AppendTube(centers, radius, sides, _texels_per_meter, _mesh);
 
     // a tube lays its texture round itself and along itself
     for (auto index = first; index < _mesh.vertices.size(); index++)
@@ -350,7 +350,7 @@ namespace neon
       for (auto &vertex : _mesh.vertices) { vertex.normal = -vertex.normal; }
     }
 
-    ProjectUvs(_mesh, _texels_per_metre);
+    ProjectUvs(_mesh, _texels_per_meter);
     for (const auto &[index, uv] : _laid_uvs) { _mesh.vertices[index].tex_coords = uv; }
 
     MeshData built = std::move(_mesh);

@@ -44,7 +44,7 @@ namespace neon
   public:
     explicit GeometryBuilding(const std::shared_ptr<Logger> &logger);
 
-    /// The mesh a Geometry describes, in metres, with its normals and
+    /// The mesh a Geometry describes, in meters, with its normals and
     /// texture coordinates. Empty, and said in the log, when the component
     /// cannot be built, such as a prism with too few points.
     static MeshData Build(const Geometry &geometry);

@@ -37,7 +37,7 @@ namespace neon
     /// These are run on the light of the scene, before the tonemapper.
     std::vector<std::string> effects;
 
-    /// As `effects`, but run on the colours a screen is given: after the
+    /// As `effects`, but run on the colors a screen is given: after the
     /// tonemapper, and before the user interface is drawn on top.
     std::vector<std::string> screen_effects;
 
@@ -83,7 +83,7 @@ namespace neon
         .Describe("Shaders that are run over the picture of the camera, on the light of its scene before the tonemapper");
 
     type.Field("screen_effects", &Camera::screen_effects)
-        .Describe("Shaders that are run over the picture of the camera, on the colours of the screen after the tonemapper");
+        .Describe("Shaders that are run over the picture of the camera, on the colors of the screen after the tonemapper");
 
     type.Field("texture", &Camera::texture)
         .Describe("For a texture: what it is called, which a model shows as surface:// and the name");

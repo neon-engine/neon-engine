@@ -1,7 +1,7 @@
 #version 450
 #extension GL_GOOGLE_include_directive : require
 
-// An effect on the colours a screen is given: every other pair of rows is
+// An effect on the colors a screen is given: every other pair of rows is
 // darker, and a band of light runs down the picture, as on a monitor with a
 // tube. It belongs in `screen_effects` of a camera, after the tonemapper,
 // since it is about the rows of the picture that is shown.

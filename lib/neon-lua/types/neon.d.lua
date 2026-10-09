@@ -342,7 +342,7 @@ function mat3(a, b, c) end
 ---@return matrix
 function mat4(a, b, c, d) end
 
----A colour, as a vector is.
+---A color, as a vector is.
 ---@class color
 ---@field r number
 ---@field g number

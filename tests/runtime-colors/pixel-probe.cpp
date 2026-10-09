@@ -1,4 +1,4 @@
-// Prints the colours of pixels of a PNG image, for the scripts of tests
+// Prints the colors of pixels of a PNG image, for the scripts of tests
 // that look at what the runtime drew, which CMake cannot read itself.
 //
 //     pixel-probe <image.png> <x>,<y> ...

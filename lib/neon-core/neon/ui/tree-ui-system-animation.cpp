@@ -68,7 +68,7 @@ namespace neon
     const DataReader reader(map, "", found->Describe(), errors);
 
     UiStyle style;
-    ReadUiBehaviourStyle(reader, style);
+    ReadUiBehaviorStyle(reader, style);
 
     if (!errors.empty() || style.animations.names.size() != 1)
     {

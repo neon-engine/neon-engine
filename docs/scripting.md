@@ -8,7 +8,7 @@ where they are: a script is loaded because it is there, in the order of its
 path.
 
 A script declares a **component**, data that an entity carries and a scene
-writes, or a **system**, behaviour over every entity that carries the
+writes, or a **system**, behavior over every entity that carries the
 components it names, or both. That is the same split the engine's own code
 has, see [entity-component-system.md](entity-component-system.md): a
 component holds, a system does. Both extend a class the engine provides,
@@ -108,7 +108,7 @@ is a field with its default, and the default says what the field holds:
 | `3`, `2.5` | A number | `speed: 2.5` |
 | `"text"` | Text, such as a virtual path | `sound: assets://sounds/door.wav` |
 | `vec2(1, 2)`, `vec3(1, 2, 3)`, `vec4(1, 2, 3, 4)` | A vector of two, three, or four numbers | `at: [1, 2, 3]` |
-| `color(1, 0, 0)` | A colour | `tint: [1, 0, 0]` |
+| `color(1, 0, 0)` | A color | `tint: [1, 0, 0]` |
 | `quat()`, `quat(x, y, z, w)`, `quat.from_euler(pitch, yaw, roll)` | A quaternion | `turn: [0, 0, 0, 1]` |
 | `mat3()`, `mat4()` | A matrix, the identity to start with | `basis: [[1, 0, 0], [0, 1, 0], [0, 0, 1]]` |
 
@@ -127,14 +127,14 @@ another entity (#211), and the narrower whole numbers (a script's whole
 number is an `Integer`; a byte or a short is reached on the engine's
 components, not declared). A field named with an underscore first is
 refused, since that is for private state (below), and a function is
-refused, since behaviour belongs in a system.
+refused, since behavior belongs in a system.
 
 ## Systems
 
 `System:extend(...)` declares a system over the components named, which are
 given as text, `System:extend("Door", "Transform")`, or as the class in
 hand, `System:extend(Door)`. A system may run over the engine's components
-alone: `System:extend "Transform"` adds behaviour to every entity that has
+alone: `System:extend "Transform"` adds behavior to every entity that has
 one. The components have to exist once every file is read, from the engine
 or from a script; a name nothing declares is reported with what the scripts
 do declare.
@@ -272,12 +272,12 @@ says when the entity lost the component.
 | `door.speed = 3` | Changes a field, in place. A value of another kind, or outside what the field allows, is an error |
 | `door._timer` | A private field, see above |
 
-A vector or a colour read from a component is bound to it: `p = t.position;
+A vector or a color read from a component is bound to it: `p = t.position;
 p.y = 1` changes the Transform. One made in the script, `vec3(1, 2, 3)` or
 `a + b`, is a value of its own until it is assigned to a field. Vectors of
 two, three, and four numbers add, subtract, scale, and have `length`,
 `normalized`, `dot`, `distance`, and `copy`; `vec3` has `cross` too. A
-colour has `r`, `g`, `b`, `a`. A quaternion has `x`, `y`, `z`, `w`,
+color has `r`, `g`, `b`, `a`. A quaternion has `x`, `y`, `z`, `w`,
 `normalized`, `inverse`, `to_euler`, and `*` with a quaternion or a vector;
 `quat.from_euler(pitch, yaw, roll)` makes one from degrees as a Transform
 reads them. A matrix is reached by `m:get(row, column)` and `m:set(row,
@@ -438,7 +438,7 @@ and a store, is #326.
 | `FileSystemContext::ListFiles` | neon-core | How the scripts are found |
 | `Lua_ScriptSystem` | neon-lua, `neon/scripting/` | The Lua backend: the state, the files, the contracts, the hooks |
 | `lua-classes`, `lua-sandbox`, `lua-libraries` | neon-lua | `Component` and `System`, what of Lua a script gets, and `world`, `input`, `log`, `scene` |
-| `lua-entity-handle`, `lua-component-handle`, `lua-vec3-handle`, `lua-color-handle` | neon-lua | What a script holds of an entity, a component, a vector, a colour |
+| `lua-entity-handle`, `lua-component-handle`, `lua-vec3-handle`, `lua-color-handle` | neon-lua | What a script holds of an entity, a component, a vector, a color |
 | `lua` | `external/luajit`, built by its own Makefile from `lib/neon-lua/CMakeLists.txt` | LuaJIT, as C, private to neon-lua |
 | `lua-compat` | neon-lua | What of the Lua 5.4 API the bindings use and LuaJIT lacks, and how many parameters a function takes |
 

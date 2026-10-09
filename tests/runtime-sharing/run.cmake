@@ -1,7 +1,7 @@
 # Draws the sharing scenes without a window and reads the renderer's own
 # account of what it loaded, shared, and freed. Three hundred crates of one
 # prefab: with one material they share one model, one texture, and one
-# material; with a colour each they share the model and the texture and
+# material; with a color each they share the model and the texture and
 # need three hundred materials, which is more descriptor sets than one pool
 # holds, so the pools grow and nothing fails.
 

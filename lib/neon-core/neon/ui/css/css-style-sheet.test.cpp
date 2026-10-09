@@ -180,7 +180,7 @@ namespace
   {
     ReadWell(
       "/* the theme */\n"
-      "a /* every link */ { /* first */ color: /* the colour */ red; /* last */ }\n"
+      "a /* every link */ { /* first */ color: /* the color */ red; /* last */ }\n"
       "/* b { color: blue; } */\n"
       "c { width: 1px }\n");
 
@@ -243,7 +243,7 @@ namespace
     ReadWell(
       "@import \"base.css\";\n"
       "@import 'assets://ui/fonts.css';\n"
-      "@import url(\"colours.css\");\n"
+      "@import url(\"colors.css\");\n"
       "@import url(plain.css);\n"
       "@IMPORT url( 'spaced.css' ) ;\n"
       "a { color: red }\n");
@@ -253,7 +253,7 @@ namespace
     EXPECT_EQ(_sheet.imports[0].line, 1u);
     EXPECT_EQ(_sheet.imports[0].media, -1);
     EXPECT_EQ(_sheet.imports[1].path, "assets://ui/fonts.css");
-    EXPECT_EQ(_sheet.imports[2].path, "colours.css");
+    EXPECT_EQ(_sheet.imports[2].path, "colors.css");
     EXPECT_EQ(_sheet.imports[3].path, "plain.css");
     EXPECT_EQ(_sheet.imports[4].path, "spaced.css");
     EXPECT_EQ(_sheet.imports[4].line, 5u);
@@ -678,7 +678,7 @@ namespace
   TEST_F(CssStyleSheetTest, FindsEveryProblemOfASheetAndNotOnlyTheFirst)
   {
     Read(
-      "a { colour red }\n"
+      "a { color red }\n"
       "b:visited { color: blue }\n"
       "@media (loud) { c { color: red } }\n"
       "@keyframes k { half { opacity: 0 } }\n"

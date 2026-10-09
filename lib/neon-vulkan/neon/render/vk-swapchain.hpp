@@ -92,7 +92,7 @@ namespace neon
     [[nodiscard]] VkSemaphore RenderFinished() const { return _render_finished; }
 
     /// Shows the image taken with Acquire(), once the commands of the frame
-    /// have signalled that they are done.
+    /// have signaled that they are done.
     void Present(uint32_t image_index);
   };
 } // neon

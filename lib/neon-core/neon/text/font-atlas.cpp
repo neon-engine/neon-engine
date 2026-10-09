@@ -153,8 +153,8 @@ namespace neon
     _width = size;
     _height = size;
 
-    // white everywhere, so that the colour next to a character is the
-    // colour of the character when the image is scaled
+    // white everywhere, so that the color next to a character is the
+    // color of the character when the image is scaled
     _pixels.assign(static_cast<std::size_t>(size) * size * 4, 255);
     for (std::size_t i = 3; i < _pixels.size(); i += 4) { _pixels[i] = 0; }
 

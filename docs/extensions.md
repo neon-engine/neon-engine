@@ -101,7 +101,7 @@ failed, as with every error.
 | The recipe has a mistake | The mistake with its line, then `The extension 'quake' is left out until its recipe is corrected` |
 | No library for the platform | `The extension 'quake' has no library for this platform, linux-arm64. It is left out` |
 | The library cannot be opened | `The library extensions://quake/quake-linux-x86_64.so of the extension 'quake' cannot be opened: ` and what the platform said |
-| The library is no extension | `The library … exports no function 'neon_extension_initialize', so it is no extension. It is left out` |
+| The library is no extension | `The library ... exports no function 'neon_extension_initialize', so it is no extension. It is left out` |
 | The extension returned 0 | `The extension 'quake' did not start. It is left out`, after what the extension logged itself |
 | The extension is newer than the application | `The extension 'quake' was built with version 3 of the interface of extensions, and this application has version 1. It is left out` |
 
@@ -206,7 +206,7 @@ also creates an entity, sets the component, and runs a query.
 | The fields lie as a script's do: one after the other, each at the alignment of what it holds | It is how a compiler lays out the struct, so the extension reads its component as a struct and the engine reads it by its description. `ScriptComponentLayout` is used for both, which was written to be neutral to the language |
 | The description carries `sizeof` the struct and `offsetof` every field, and the application checks them against where it puts the fields | A struct that holds something that is not described, or has its fields in another order, would otherwise be read as wrong values and nothing else. It is refused with the byte where the two differ |
 | The struct holds the described fields alone | What a component keeps for itself, a pointer or a handle, has no place yet. It comes with a kind for it, or with a hook for a component that is removed |
-| Numbers, booleans, vectors, colours, and quaternions; no text and no lists | Text and lists are `std::string` and `std::vector` in the engine, which do not cross the boundary. They come as kinds of their own, reached through functions |
+| Numbers, booleans, vectors, colors, and quaternions; no text and no lists | Text and lists are `std::string` and `std::vector` in the engine, which do not cross the boundary. They come as kinds of their own, reached through functions |
 | A default is up to four numbers | Enough for every kind there is. It is what a recipe leaves out |
 | A name that is taken is refused, whoever took it | The engine, another extension, or the same one twice. A script that declares the name afterwards is refused by the scripts in the same way |
 | Components are registered in `register_components` alone | It is when every system registers its own, before any query is made. Later the store would hold entities that queries have already been built for |
@@ -229,9 +229,9 @@ What an extension reaches besides the store. Like the store, they are for
 |---|---|---|
 | The fields of any component | `find_field`, `get_field`, `set_field`, `get_field_text`, `set_field_text` | By the names a recipe writes them with: `find_field(host->context, "Transform", "position")`, once, in `start`. It works for a component of the engine, of a script, and of another extension alike, through the same description the scene file and Lua use |
 | Input | `is_action_down`, `was_action_pressed`, `action_axis`, `action_axis2`, `action_axis3` | The actions of the input map, less what the user interface used, see [input.md](input.md) |
-| Files | `file_exists`, `read_file`, `write_file`, `list_files`, `list_folders` | Virtual paths, under every rule of [file-systems.md](file-systems.md). An extension's own files are `extensions://<name>/…`. What it writes goes under `user://`, see [what an extension keeps](#what-an-extension-keeps) |
+| Files | `file_exists`, `read_file`, `write_file`, `list_files`, `list_folders` | Virtual paths, under every rule of [file-systems.md](file-systems.md). An extension's own files are `extensions://<name>/...`. What it writes goes under `user://`, see [what an extension keeps](#what-an-extension-keeps) |
 | The world | `spawn`, `spawn_at`, `load_scene` | A prefab under a parent or at the top, see [prefabs.md](prefabs.md), with `spawn_at` at a position and a rotation written on top of its `Transform`; another scene when the frame is done |
-| The user interface | `set_ui_number`, `set_ui_text`, and the `ui_…` functions | The values its files show as `{name}`, see [user-interface.md](user-interface.md); and its files and elements themselves, see [what an extension shows on the screen](#what-an-extension-shows-on-the-screen) |
+| The user interface | `set_ui_number`, `set_ui_text`, and the `ui_...` functions | The values its files show as `{name}`, see [user-interface.md](user-interface.md); and its files and elements themselves, see [what an extension shows on the screen](#what-an-extension-shows-on-the-screen) |
 | The view | `get_view_size` | The size in pixels of what the camera of the window draws to |
 | Components of the engine | `add_component` | Gives an entity a component by its name, with what its fields start with, as `Renderable: Default` in a recipe. An extension has no struct for the engine's components, so this is how an entity it creates gets a `Transform` or a `Renderable`; the fields are then set with `set_field`, and a list of text, such as `textures`, with `set_field_texts` |
 | What is drawn | `set_image`, `set_mesh` | A picture and a mesh the extension made, see [what an extension draws](#what-an-extension-draws) |
@@ -243,7 +243,7 @@ What an extension reaches besides the store. Like the store, they are for
 |---|---|
 | The engine's components are reached by the names of their fields, not as structs | `Transform` is a C++ type with a layout of the compiler's. Its description is already what a recipe, the editor, and Lua go through, so an extension sees the same names and the same checks, and a component that changes its layout breaks no extension |
 | A field is found once and named by a number afterwards | The lookup by name happens in `start`, not in every frame |
-| A value crosses as up to four numbers, or as text | Every kind an extension can hold is made of them: a vector, a colour as r, g, b, a, a quaternion as x, y, z, w, a boolean as 0 or 1. A choice crosses as its word. Lists and matrices do not cross yet |
+| A value crosses as up to four numbers, or as text | Every kind an extension can hold is made of them: a vector, a color as r, g, b, a, a quaternion as x, y, z, w, a boolean as 0 or 1. A choice crosses as its word. Lists and matrices do not cross yet |
 | A field checks what it is given | As when a recipe is read: a value the field does not take is an error in the log and changes nothing |
 | `read_file` hands the bytes to a function of the extension | Nothing is allocated on one side and freed on the other. The extension copies what it keeps |
 | Reading a field with `get_field` costs a call and a conversion | It is for the handful of entities a system touches, and for a field that is worked out when it is read, such as the rotation of a `Transform` in degrees |
@@ -269,7 +269,7 @@ world.SetMesh(wall, corners, indices);
 | Decision | Reason |
 |---|---|
 | A mesh is given to the `Renderable` of an entity, in place of a model file | It is the path a `Geometry` goes, and a rope: `RenderInfo::mesh`. The shader, the material, and everything else of the `Renderable` stay what they are, and an entity that is drawn already is drawn with the new mesh from the next frame |
-| A corner is as the engine keeps its own: position, normal, where in the texture, and a colour; in metres, y up, triangles anticlockwise from outside | The corners cross as they lie, without a copy of each number. Another engine's units and axes are the extension's to convert |
+| A corner is as the engine keeps its own: position, normal, where in the texture, and a color; in meters, y up, triangles counterclockwise from outside | The corners cross as they lie, without a copy of each number. Another engine's units and axes are the extension's to convert |
 | A picture is four bytes a pixel, set under a name, and read by a material as the texture `image://<extension>/<name>` | A texture is named by a path everywhere in the engine, in a recipe, a prefab, a field; this makes a picture from memory one more thing a path can name, as `surface://` names what a camera drew. The name of the extension stands in front, so two extensions cannot take each other's |
 | A picture that is set again under its name is drawn anew, from the next frame on, when it keeps its size | A game works some pictures out while it runs: the light of a level that flickers, a map that fills in. The renderer writes the new pixels into the texture that is there, so no material is made again and nothing that names the picture has to know. It waits for the frame before to finish first, so a picture is set again a few times a second, not a few hundred. Another size is refused: what was made keeps the size it was made with |
 | All pictures that are set again in a frame are written to the graphics card together, in one run of commands and through one buffer that is kept | Each run of commands is handed over and waited for, half a millisecond whatever it does. A game whose lights flicker sets some fifty lightmaps again ten times a second: one by one that held a frame up for 20 to 30 ms, together for 2 |
@@ -313,8 +313,8 @@ world.FreeUnused();   // once the next level was shown
 
 | What such a shader may rely on | |
 |---|---|
-| `scene-data.glsl` | The declarations every shader of the engine starts with: `scene`, with the view, the projection, where the camera stands, and the lights; `objects[]`, with the matrix, the colour, and the material of what is drawn. A shader includes it and reads what it needs |
-| The corners | Position, normal, texture coordinates, colour, and lightmap coordinates, at locations 0 to 4, as `unlit.vert` reads them |
+| `scene-data.glsl` | The declarations every shader of the engine starts with: `scene`, with the view, the projection, where the camera stands, and the lights; `objects[]`, with the matrix, the color, and the material of what is drawn. A shader includes it and reads what it needs |
+| The corners | Position, normal, texture coordinates, color, and lightmap coordinates, at locations 0 to 4, as `unlit.vert` reads them |
 | The textures | The first texture of the material at binding 2, read through the sampler at binding 5, as `unlit.frag` does; a lightmap through `lightmap.glsl` |
 | `scene.time` | `x` is the seconds the world has run, `y` how long its last frame took. The time stands still while the world does, as while a game is paused |
 | `scene.numbers[0..7]` | Eight places of four numbers each for what the game tells its shaders, set with `SetShaderNumbers` |
@@ -354,7 +354,7 @@ world.SetText(door, world.FindField("SoundSource", "sound"), sound);
 | `sound://` is no scheme of the file system | Nothing reads or lists it as a file. It is the audio's, `AudioContext::SetSound`, and it is written down in one place, `SoundMemory` of neon-core |
 
 The test [tests/runtime-extensions](../tests/runtime-extensions) does this
-with a picture of four colours on a square, and reads the pixels of what the
+with a picture of four colors on a square, and reads the pixels of what the
 runtime drew.
 
 Light that was worked out ahead, as a level of another engine carries it, is
@@ -552,10 +552,10 @@ NEON_EXTENSION(Game)
 
 | Piece | Is |
 |---|---|
-| `Extension` | The class of the extension: `Initialize`, `RegisterComponents`, `Start`, `CleanUp`, and `AddSystem<S>(name, arguments…)` |
+| `Extension` | The class of the extension: `Initialize`, `RegisterComponents`, `Start`, `CleanUp`, and `AddSystem<S>(name, arguments...)` |
 | `System` | `Start`, `OnPhysicsEvent`, `Update`, `FixedUpdate`, `Interpolate` |
-| `World` | What the application offers: the log, `RegisterComponent<T>`, entities, `Set<T>`, `Get<T>`, `Has<T>`, `Remove<T>`, `CreateQuery<Ts…>`, `FindField` with `GetNumber`, `GetVector3`, `GetText` and their `Set…`, `IsActionDown`, `WasActionPressed`, `ActionAxis2`, `ReadFile`, `Spawn`, `SpawnAt`, `LoadScene`, `CastRay`, `SetUiNumber`, `SetUiText`, `ShowUi`, `CloseUi`, `FindUi`, `CreateUi`, `RemoveUi`, `SetUiField`, `SetUiStyle`, `SetUiVisible`, `ListenToUi`, `UnlistenToUi`, `GetViewSize`, `SetEnabled`, `IsEnabled`, `AddToPool`, `AcquireFromPool`, `ReleaseToPool`, `CountInPool`, `CountFreeInPool`, `SetWindowMode`, `GetWindowMode`, `SetWindowSize`, `GetWindowSize`, `ListDisplaySizes`, `SetVerticalSync`, `GetVerticalSync`, `FreeUnused`, `SetGroupVolume`, `GetGroupVolume`, `AddComponent`, `SetTexts`, `SetImage`, `SetMesh`, `SetMeshLightmap`, and `CreateBlockQuery` with `PlaceField<T>` for a field of the engine in place |
-| `Query<Ts…>` | `Each([](Entity, Ts &…) { … })` |
+| `World` | What the application offers: the log, `RegisterComponent<T>`, entities, `Set<T>`, `Get<T>`, `Has<T>`, `Remove<T>`, `CreateQuery<Ts...>`, `FindField` with `GetNumber`, `GetVector3`, `GetText` and their `Set...`, `IsActionDown`, `WasActionPressed`, `ActionAxis2`, `ReadFile`, `Spawn`, `SpawnAt`, `LoadScene`, `CastRay`, `SetUiNumber`, `SetUiText`, `ShowUi`, `CloseUi`, `FindUi`, `CreateUi`, `RemoveUi`, `SetUiField`, `SetUiStyle`, `SetUiVisible`, `ListenToUi`, `UnlistenToUi`, `GetViewSize`, `SetEnabled`, `IsEnabled`, `AddToPool`, `AcquireFromPool`, `ReleaseToPool`, `CountInPool`, `CountFreeInPool`, `SetWindowMode`, `GetWindowMode`, `SetWindowSize`, `GetWindowSize`, `ListDisplaySizes`, `SetVerticalSync`, `GetVerticalSync`, `FreeUnused`, `SetGroupVolume`, `GetGroupVolume`, `AddComponent`, `SetTexts`, `SetImage`, `SetMesh`, `SetMeshLightmap`, and `CreateBlockQuery` with `PlaceField<T>` for a field of the engine in place |
+| `Query<Ts...>` | `Each([](Entity, Ts &...) { ... })` |
 | `Field(name, &T::member, description)` | A field from the member itself: its kind from its type, its offset from where it lies, and its default from what `T{}` holds, so a default is written once, in the struct |
 | `NEON_EXTENSION(Class)` | The function the application starts the extension by |
 

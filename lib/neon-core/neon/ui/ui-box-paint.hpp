@@ -10,7 +10,7 @@ namespace neon
   /// round its corners are, and what it is filled and framed with.
   ///
   /// Everything that has round corners, a gradient, a shadow, or sides of
-  /// several colours is a shape that the shader works out for every pixel
+  /// several colors is a shape that the shader works out for every pixel
   /// from the distance to its outline. It is sharp at every size, its edge
   /// is smoothed over one pixel, and it needs no texture. A box that has
   /// none of these is drawn as plain rectangles, as before.

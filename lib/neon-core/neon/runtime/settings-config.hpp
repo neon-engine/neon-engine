@@ -167,7 +167,7 @@ struct SettingsConfig
   /// number costs little; what it really budgets is draw calls.
   std::size_t max_render_objects = 16384;
   /// How far from the camera the shadow of the direction light reaches,
-  /// in metres, along its view; what is further is lit. The shadow map is
+  /// in meters, along its view; what is further is lit. The shadow map is
   /// cascaded, see shadow_cascades, so the farther it reaches the coarser
   /// the far cascades, the near one less so.
   double shadow_distance = 120.0;

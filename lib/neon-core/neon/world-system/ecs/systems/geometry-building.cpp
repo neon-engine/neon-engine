@@ -19,7 +19,7 @@ namespace neon
 
   MeshData GeometryBuilding::Build(const Geometry &geometry)
   {
-    MeshBuilder builder(geometry.texels_per_metre);
+    MeshBuilder builder(geometry.texels_per_meter);
 
     switch (geometry.shape)
     {
@@ -82,7 +82,7 @@ namespace neon
     std::format_to(
       out, "{}_size_{}_{}_{}_segments_{}_sides_{}_texels_{}_smooth_{}_inside_{}",
       static_cast<int>(geometry.shape), geometry.size.x, geometry.size.y, geometry.size.z, geometry.segments,
-      geometry.sides, geometry.texels_per_metre, geometry.smooth, geometry.inside);
+      geometry.sides, geometry.texels_per_meter, geometry.smooth, geometry.inside);
 
     key += "_outline";
     for (const float value : geometry.outline) { std::format_to(out, "_{}", value); }

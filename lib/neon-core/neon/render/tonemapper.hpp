@@ -4,7 +4,7 @@
 namespace neon
 {
   /// The curve the resolve step maps the light of a scene through before
-  /// it is written as the colours of a screen. A scene is lit in linear
+  /// it is written as the colors of a screen. A scene is lit in linear
   /// light, which has no top: an emissive surface or a bright light makes
   /// values above 1, which a screen cannot show. The curve decides what
   /// becomes of them. See docs/vulkan-renderer.md.
@@ -19,7 +19,7 @@ namespace neon
     Aces,
 
     /// AgX, in the minimal form of Benjamin Wrensch after Troy Sobotka: a
-    /// log encoding and a sigmoid, which keeps colours from turning to
+    /// log encoding and a sigmoid, which keeps colors from turning to
     /// yellow or white as they get bright.
     Agx
   };

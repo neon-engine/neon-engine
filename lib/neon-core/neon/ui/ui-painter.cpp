@@ -294,7 +294,7 @@ namespace neon
 
     // The top and the bottom run the whole width, and the sides lie
     // between them. No pixel is drawn twice, which would show when the
-    // colour lets what is behind it through.
+    // color lets what is behind it through.
     FillRectangle({rectangle.left, rectangle.top, rectangle.right, inner_top}, color);
     FillRectangle({rectangle.left, inner_bottom, rectangle.right, rectangle.bottom}, color);
     FillRectangle(

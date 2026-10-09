@@ -913,7 +913,7 @@ namespace
     const auto root = Box(Sized(500, 200), {a, b});
     _engine.Calculate(root, 1920, 1080);
 
-    // margins of neighbours add up, they do not collapse in a flex container
+    // margins of neighbors add up, they do not collapse in a flex container
     ExpectBox(a, 20, 5, 100, 50);
     ExpectBox(b, 160, 0, 100, 50);
   }

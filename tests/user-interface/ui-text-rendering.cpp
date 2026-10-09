@@ -192,7 +192,7 @@ namespace
     const auto quads = _renderer.Quads();
     ASSERT_EQ(quads.size(), 4u);
 
-    // the glyphs first, in the colour of the text
+    // the glyphs first, in the color of the text
     EXPECT_FLOAT_EQ(quads[0].left, 101);
     EXPECT_FLOAT_EQ(quads[0].Width(), 8);
     EXPECT_FLOAT_EQ(quads[0].color.g, 1);
@@ -229,7 +229,7 @@ namespace
     EXPECT_TRUE(was_asked);
   }
 
-  TEST_F(UiTextRenderingTest, ALineWithoutAColourHasThatOfTheText)
+  TEST_F(UiTextRenderingTest, ALineWithoutAColorHasThatOfTheText)
   {
     ShowLabel("a", "text_stroke_width: 2\ncolor: \"#00ff00\"\n");
 

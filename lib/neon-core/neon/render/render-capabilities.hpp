@@ -52,7 +52,7 @@ namespace neon
     /// The widest and highest texture, in pixels.
     int max_texture_size = 0;
 
-    /// The most samples of a pixel for anti-aliasing, of colour and depth
+    /// The most samples of a pixel for anti-aliasing, of color and depth
     /// alike. 1 is none.
     int max_samples = 1;
 

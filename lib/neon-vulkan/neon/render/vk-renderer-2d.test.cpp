@@ -81,7 +81,7 @@ namespace
 
   TEST_F(VkRenderer2DTest, ACornerIsAsLargeAsTheShaderExpects)
   {
-    // two for the place, two for the texture, four for the colour, one
+    // two for the place, two for the texture, four for the color, one
     // that says whether the texture is read, one for the shape, and two
     // for the place in the shape, with nothing between them
     EXPECT_EQ(sizeof(Vertex2D), 12 * sizeof(float));

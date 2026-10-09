@@ -667,7 +667,7 @@ namespace neon
       if (!IsSensorEnabled(sensor)) { continue; }
 
       // SDL's axes: x to the right, y up, z toward the player. The gyro is
-      // radians a second about them, the accelerometer metres a second
+      // radians a second about them, the accelerometer meters a second
       // squared along them
       const SDL_SensorType type = sensor == Sensor::Gyro ? SDL_SENSOR_GYRO : SDL_SENSOR_ACCEL;
       float data[3] = {0.0f, 0.0f, 0.0f};

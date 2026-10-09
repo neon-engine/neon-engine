@@ -15,7 +15,7 @@ namespace neon
     /// and z: pitch, yaw, and roll.
     Gyro = 0,
 
-    /// How the controller is accelerated, in metres a second squared along
+    /// How the controller is accelerated, in meters a second squared along
     /// x, y, and z, gravity included.
     Accelerometer,
 

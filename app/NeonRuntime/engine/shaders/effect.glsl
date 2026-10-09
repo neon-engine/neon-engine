@@ -14,9 +14,9 @@
 // A camera names its effects in two lists. Those of `effects` are run on
 // the light of the scene, before the tonemapper: the picture holds linear
 // light, with room above white. Those of `screen_effects` are run on the
-// colours a screen is given, after the tonemapper and before the user
+// colors a screen is given, after the tonemapper and before the user
 // interface is drawn. Either way the alpha of the picture is multiplied
-// into its colours, and an effect hands on what it does not change.
+// into its colors, and an effect hands on what it does not change.
 //
 // The layout has to match VK_Effects, field for field.
 

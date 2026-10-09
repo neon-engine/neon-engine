@@ -40,7 +40,7 @@ namespace neon
     /// Whether a scalar is written the way a person writes a number: digits,
     /// a sign, a dot, an exponent. YAML also allows hexadecimal and octal,
     /// which are the computer's forms and are text here, so that 0x1d is
-    /// never a number by surprise. A field that wants one, such as a colour,
+    /// never a number by surprise. A field that wants one, such as a color,
     /// reads the text.
     bool IsDecimal(const ryml::csubstr text)
     {

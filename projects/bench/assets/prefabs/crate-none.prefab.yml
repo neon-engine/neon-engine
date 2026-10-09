@@ -1,5 +1,5 @@
-# A crate that is spawned while the game runs, with no behaviour: a body alone. Half a metre,
-# in one plain colour, so that nothing is read from an image.
+# A crate that is spawned while the game runs, with no behavior: a body alone. Half a meter,
+# in one plain color, so that nothing is read from an image.
 version: 1
 prefab: crate-none
 

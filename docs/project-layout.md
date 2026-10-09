@@ -1,6 +1,6 @@
 # The layout of a project
 
-How a Neon project is organised: where files go, how they are named, and why.
+How a Neon project is organized: where files go, how they are named, and why.
 It is to a project what the [style guide](style-guide.md) is to the engine's
 code, and it is what the editor (#82), the exporter (#84), and agents (#85)
 rely on. The museum,
@@ -18,14 +18,14 @@ and a file is found by its name alone.
 |---|---|---|
 | `project.yml` | What the project is: name, organization, scenes, entry scene, input map | [projects.md](projects.md) |
 | `settings.yml` | What the project chooses for itself and a player may change | [settings.md](settings.md) |
-| `CREDITS.md` | Where every third-party file came from, and its licence | See [credits](#credits-and-licences) |
+| `CREDITS.md` | Where every third-party file came from, and its license | See [credits](#credits-and-licenses) |
 | `scenes/` | Scene recipes, `*.scene.yml` | [scenes.md](scenes.md) |
 | `prefabs/` | Prefab recipes, entities described once and placed in scenes, `*.prefab.yml` | [prefabs.md](prefabs.md) |
 | `ui/` | UI recipes, `*.ui.yml`, their style sheets `*.css`, their atlas recipes `*.atlas.yml`, and the images they show | [user-interface.md](user-interface.md) |
 | `models/` | Meshes, `*.obj` today, glTF once models are prepared ahead of time (#98) | |
 | `textures/` | Images that materials show, `*.png` and `*.jpg` | |
 | `sounds/` | Sounds and music, `*.wav`, in folders by their use: `music/`, `ambience/`, and the sounds of things next to the top | [audio.md](audio.md) |
-| `fonts/` | Fonts of the game, `*.ttf`, one folder per family with its licence. Text falls back to the runtime's own, `engine://fonts/` | |
+| `fonts/` | Fonts of the game, `*.ttf`, one folder per family with its license. Text falls back to the runtime's own, `engine://fonts/` | |
 | `shaders/` | Compiled shaders of the game's own, `*.spv`, that materials name without an extension. Those of the engine are `engine://shaders/` | Made by the build, see below |
 | `scripts/` | Game code in Lua, `*.lua`: a component and its system per file, or `*.component.lua` and `*.system.lua`, and modules for `require`. The engine loads every `*.lua` anywhere under the assets, so this folder is where to keep them, not where they have to be | [scripting.md](scripting.md) |
 | `input/` | Input maps, `*.input.yml`, and scripts of input for runs without a window | [input.md](input.md) |
@@ -52,9 +52,9 @@ What ships is the compiled form only.
 from the internet, from an asset store, from a kit somebody else made. The
 files are kept as they were published, in a folder for the source and one for
 the kit inside it, so that where a file came from is read off its path and a
-newer version of the kit replaces the folder as a whole. The licence file of
+newer version of the kit replaces the folder as a whole. The license file of
 the kit sits next to its files, and a line in `CREDITS.md` names the kit, its
-author, and the licence, see [credits](#credits-and-licences). Everything
+author, and the license, see [credits](#credits-and-licenses). Everything
 else about them, which kit, which pieces of it, follows the needs of the
 project.
 
@@ -76,7 +76,7 @@ author keeps it as `external/<author>/<kit>/`.
 | The kind of file is a second extension before the format | `.scene.yml`, `.prefab.yml`, `.ui.yml`, `.atlas.yml`, `.input.yml` | The format says how to parse it, the kind says what it is. A tool filters by the kind, and an editor opens the right one. These are the recipes, see [recipes.md](recipes.md) |
 | Virtual paths with forward slashes, from a scheme | `assets://scenes/demo.scene.yml` | The [path rules](development.md#path-rules) refuse anything else, on every platform |
 | Images of several densities carry the density | `gem-1x.png`, `gem-2x.png`, `gem-4x.png` | The user interface picks the one for the display, see [density](user-interface.md#points-pixels-and-density) |
-| A third-party file keeps the name it was published under | `Inter-Regular.ttf`, `NotoSansArabic-Regular.ttf`, and everything under `external/` | It ties the file to its source and its licence. Everything else about it, the folder it is in, follows the rules |
+| A third-party file keeps the name it was published under | `Inter-Regular.ttf`, `NotoSansArabic-Regular.ttf`, and everything under `external/` | It ties the file to its source and its license. Everything else about it, the folder it is in, follows the rules |
 | No spaces, parentheses, or other punctuation | | They need quoting in every shell and build script, and broke the build once (#155) |
 
 The letter case of a name has to match the file on disk, on every platform.
@@ -104,18 +104,18 @@ again.
 |---|---|
 | Everything written by hand, and every asset the game needs | What the build makes: `shaders/*.spv`, the build folder |
 | Binary assets as they are, marked `binary` by kind: images, models, sounds, fonts (see [.gitattributes](../.gitattributes)) | `.DS_Store`, `Icon\r`, and the other files a desktop leaves behind (see [.gitignore](../.gitignore)) |
-| The licence of each third-party pack, next to it, and only the pieces of a kit under `external/` that the game uses | What a licence forbids to pass on, once the project is shared beyond who holds the licence |
+| The license of each third-party pack, next to it, and only the pieces of a kit under `external/` that the game uses | What a license forbids to pass on, once the project is shared beyond who holds the license |
 
-## Credits and licences
+## Credits and licenses
 
 `CREDITS.md` at the root names every third-party file or pack: where it came
-from, who made it, and under which licence, with a link. A pack that comes
-with its own licence file keeps it in its folder (`fonts/inter/LICENSE.txt`),
+from, who made it, and under which license, with a link. A pack that comes
+with its own license file keeps it in its folder (`fonts/inter/LICENSE.txt`),
 and `CREDITS.md` points at it. Files made for the project are listed too, as
-under the project's own licence, so that nothing in the folder is of unknown
+under the project's own license, so that nothing in the folder is of unknown
 origin.
 
-A file whose licence does not allow passing it on, such as music licensed to
+A file whose license does not allow passing it on, such as music licensed to
 one person, is marked so in `CREDITS.md`, with what may be done instead. See
 the engine's own [CREDITS.md](../CREDITS.md), which is at the root of the
 repository since it covers the libraries as well.

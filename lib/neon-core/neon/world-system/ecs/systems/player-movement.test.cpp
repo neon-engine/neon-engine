@@ -59,7 +59,7 @@ namespace
       _system.Initialize(_store);
     }
 
-    /// A player that walks 2 metres a second, runs 3, jumps with 5, steers
+    /// A player that walks 2 meters a second, runs 3, jumps with 5, steers
     /// half as much in the air, and turns a hundredth of a radian for every
     /// pixel, standing on the ground in a capsule of 1.8, with its camera
     /// below it.
@@ -362,7 +362,7 @@ namespace
 
   TEST_F(PlayerMovementTest, MeasuresTheEyesInTheUnitsOfABodyThatIsScaled)
   {
-    // the body is twice as large, so 1.6 metres are 0.8 of its units, and
+    // the body is twice as large, so 1.6 meters are 0.8 of its units, and
     // the capsule, which is scaled with it, still stands 0.9 of them below
     const Entity player = CreatePlayer();
     _store.Get<Transform>(player)->scale = glm::vec3{2.0f};
@@ -547,7 +547,7 @@ namespace
 
   TEST_F(PlayerMovementTest, GlidesTheEyesUpAStep)
   {
-    // the physics lifted the body a quarter of a metre between two frames
+    // the physics lifted the body a quarter of a meter between two frames
     // on the floor: the eyes stay where they were in that frame, and catch
     // up at step_smoothing, a tenth of the way left every sixtieth
     const Entity player = CreatePlayer();

@@ -18,7 +18,7 @@ namespace
     EXPECT_EQ(VK_Culling::CullModeFor(true), VK_CULL_MODE_NONE);
   }
 
-  TEST(VkCullingTest, TakesTheAnticlockwiseSideAsTheFront)
+  TEST(VkCullingTest, TakesTheCounterclockwiseSideAsTheFront)
   {
     EXPECT_EQ(VK_Culling::FrontFaceFor(false), VK_FRONT_FACE_COUNTER_CLOCKWISE);
   }

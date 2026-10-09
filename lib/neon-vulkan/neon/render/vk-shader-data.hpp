@@ -116,7 +116,7 @@ namespace neon
     glm::vec4 surface{0.0f};
     // rgb the light the object gives off itself, in linear light with its
     // strength multiplied in; w is 1 when an emissive texture is bound
-    // and 0 when the colour alone glows
+    // and 0 when the color alone glows
     glm::vec4 emissive{0.0f};
     // x what the lightmap is multiplied by, y is 1 when a lightmap is bound
     // and 0 when the material has none

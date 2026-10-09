@@ -3,7 +3,7 @@
 #
 #   NeonRuntime --scene assets://scenes/shadow-test.scene.yml
 #
-# A white floor, a white box of 1 metre on it, and one light from above at
+# A white floor, a white box of 1 meter on it, and one light from above at
 # 45 degrees, from the side of positive x, so that the box throws a shadow
 # of exactly its height onto the floor on its other side, from x = -0.5 to
 # x = -1.5. The camera stands 5 above and 5 in front of the box, looking

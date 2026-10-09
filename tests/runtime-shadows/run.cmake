@@ -6,13 +6,13 @@
 # and a diffuse of 0.8. The floor faces up, so where the light reaches it
 # it shows
 #
-#   0.2 + 0.8 × cos 45° = 0.2 + 0.566 = 0.766 → sRGB 227
+#   0.2 + 0.8 * cos 45 degrees = 0.2 + 0.566 = 0.766 -> sRGB 227
 #
 # and in the shadow of the box the ambient light alone,
 #
-#   0.2 → sRGB 124.
+#   0.2 -> sRGB 124.
 #
-# The box is 1 metre high and the light falls at 45 degrees from the side
+# The box is 1 meter high and the light falls at 45 degrees from the side
 # of positive x, so its shadow lies on the floor from x = -0.5 to x = -1.5.
 # The camera is 5 above and 5 in front of the box, looking down at 45
 # degrees, drawn at 1920 by 1080 with a vertical field of view of 45
@@ -48,7 +48,7 @@ expect_no_output("[warning]")
 expect_no_output("[critical]")
 expect_image("shots/frame.png")
 
-# expect_pixel(<what> <x> <y> <red> <green> <blue>): the colour of a pixel,
+# expect_pixel(<what> <x> <y> <red> <green> <blue>): the color of a pixel,
 # each channel within 2 of what is given, which leaves room for rounding by
 # the graphics card
 function(expect_pixel WHAT X Y RED GREEN BLUE)

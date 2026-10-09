@@ -73,7 +73,7 @@ namespace
     EXPECT_FALSE(ParseCssAngle("", degrees));
   }
 
-  TEST(ParseCssGradientTest, ReadsColoursFromTopToBottom)
+  TEST(ParseCssGradientTest, ReadsColorsFromTopToBottom)
   {
     UiGradient gradient;
     ASSERT_TRUE(ParseCssGradient("linear-gradient(#ff0000, #0000ff)", gradient));
@@ -111,7 +111,7 @@ namespace
     EXPECT_FLOAT_EQ(gradient.angle, 315);
   }
 
-  TEST(ParseCssGradientTest, ReadsWhereTheColoursLie)
+  TEST(ParseCssGradientTest, ReadsWhereTheColorsLie)
   {
     UiGradient gradient;
     ASSERT_TRUE(ParseCssGradient(
@@ -121,14 +121,14 @@ namespace
     EXPECT_FLOAT_EQ(gradient.stops[0].position, 0.1f);
     EXPECT_FLOAT_EQ(gradient.stops[0].color.a, 0.5f);
 
-    // what has no place lies evenly between its neighbours
+    // what has no place lies evenly between its neighbors
     EXPECT_FLOAT_EQ(gradient.stops[1].position, 0.3f);
     EXPECT_FLOAT_EQ(gradient.stops[2].position, 0.5f);
     EXPECT_FLOAT_EQ(gradient.stops[3].position, 0.7f);
     EXPECT_FLOAT_EQ(gradient.stops[4].position, 1.0f);
   }
 
-  TEST(ParseCssGradientTest, AColourDoesNotLieInFrontOfTheOneBeforeIt)
+  TEST(ParseCssGradientTest, AColorDoesNotLieInFrontOfTheOneBeforeIt)
   {
     UiGradient gradient;
     ASSERT_TRUE(ParseCssGradient("linear-gradient(#f00 50%, #0f0 20%, #00f)", gradient));
@@ -155,7 +155,7 @@ namespace
 
     for (const std::string text : {
            "", "#ff0000", "linear-gradient()", "linear-gradient(#f00)", "linear-gradient(90deg, #f00)",
-           "linear-gradient(#f00, nocolour)", "linear-gradient(#f00 10px, #00f)", "linear-gradient(#f00, #00f",
+           "linear-gradient(#f00, nocolor)", "linear-gradient(#f00 10px, #00f)", "linear-gradient(#f00, #00f",
            "conic-gradient(#f00, #00f)", "linear-gradient(to nowhere, #f00, #00f)",
            "linear-gradient(#000, #111, #222, #333, #444, #555, #666, #777, #888)"
          })
@@ -166,7 +166,7 @@ namespace
     EXPECT_FLOAT_EQ(gradient.angle, 7) << "and leaves what it was given alone";
   }
 
-  TEST(ParseCssGradientTest, TakesUpToEightColours)
+  TEST(ParseCssGradientTest, TakesUpToEightColors)
   {
     UiGradient gradient;
     EXPECT_TRUE(ParseCssGradient("linear-gradient(#000, #111, #222, #333, #444, #555, #666, #777)", gradient));
@@ -203,7 +203,7 @@ namespace
     EXPECT_FLOAT_EQ(shadows[1].blur, 0);
 
     EXPECT_TRUE(shadows[2].is_inset);
-    EXPECT_FALSE(shadows[2].has_color) << "which leaves it the colour of the text";
+    EXPECT_FALSE(shadows[2].has_color) << "which leaves it the color of the text";
   }
 
   TEST(ParseCssShadowsTest, TheShadowOfATextHasNoInsetAndIsNoLarger)

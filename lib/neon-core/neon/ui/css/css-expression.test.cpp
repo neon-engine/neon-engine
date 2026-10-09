@@ -77,7 +77,7 @@ namespace
     EXPECT_EQ(Resolve("  12px \n"), "12px");
   }
 
-  TEST_F(CssExpressionTest, LeavesAColourAsItIsWhateverItsDigitsSpell)
+  TEST_F(CssExpressionTest, LeavesAColorAsItIsWhateverItsDigitsSpell)
   {
     EXPECT_EQ(Resolve("#1e2em0"), "#1e2em0");
     EXPECT_EQ(Resolve("#12rem"), "#12rem");
@@ -415,7 +415,7 @@ namespace
     EXPECT_EQ(neon::FormatCssNumber(1920.0f), "1920");
   }
 
-  // colours
+  // colors
 
   TEST(CssColorsTest, WritesTheNamesOfCssAsRgba)
   {
@@ -435,7 +435,7 @@ namespace
     EXPECT_EQ(neon::ResolveCssColors("gold navy"), "rgba(255, 215, 0, 1) rgba(0, 0, 128, 1)");
   }
 
-  TEST(CssColorsTest, LeavesWhatIsNoNameOfAColourAsItIs)
+  TEST(CssColorsTest, LeavesWhatIsNoNameOfAColorAsItIs)
   {
     EXPECT_EQ(neon::ResolveCssColors("#ff8000"), "#ff8000");
     EXPECT_EQ(neon::ResolveCssColors("#bed"), "#bed");

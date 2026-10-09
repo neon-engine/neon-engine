@@ -27,7 +27,7 @@ namespace neon
   /// direction it is seen in, and the images of the sky are read by that
   /// direction: the six faces of a cube, or a panorama around a sphere.
   ///
-  /// The images are sRGB colours read as linear light, like the first
+  /// The images are sRGB colors read as linear light, like the first
   /// texture of a material, and are written into the scene image as they
   /// are: no light of the scene falls on a sky.
   ///

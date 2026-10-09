@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Writes the scenes of tests/runtime-sharing: crates that share one material,
-and crates of distinct colours that need more descriptor sets than one pool
+and crates of distinct colors that need more descriptor sets than one pool
 holds. Run from the repository root; the scenes are committed."""
 import random
 
@@ -23,7 +23,7 @@ def crate(n, x, y, z, color=None):
 
 random.seed(3)
 same = header("sharing-same", f"{COUNT} crates with one and the same material, drawn with one.")
-distinct = header("sharing-distinct", f"{COUNT} crates of distinct colours, one material each, more than one pool holds.")
+distinct = header("sharing-distinct", f"{COUNT} crates of distinct colors, one material each, more than one pool holds.")
 for n in range(COUNT):
     x = (n % 20 - 9.5) * 1.1
     y = (n // 20) * 1.1

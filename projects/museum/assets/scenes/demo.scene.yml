@@ -14,7 +14,7 @@
 # with space, run with the left shift, and pause with escape.
 #
 # Nothing but the sky comes from a model file or an image: every piece is a
-# Geometry in metres, drawn in a plain colour, and every sign is a user
+# Geometry in meters, drawn in a plain color, and every sign is a user
 # interface. The sky is a panorama painted by a script.
 # Models of our own take their places later. The scripts are under
 # assets/scripts, the prefabs under assets/prefabs/museum, and the signs
@@ -31,7 +31,7 @@ entities:
   # --------------------------------------------------------------------------
   # The building
   # A corridor runs north from the entrance, along -z, with six halls on each
-  # side, 8 metres square. Everything is a box with a box collider: walls that
+  # side, 8 meters square. Everything is a box with a box collider: walls that
   # are solid cast shadows, which a room turned inside out would not.
   # --------------------------------------------------------------------------
 
@@ -145,7 +145,7 @@ entities:
         shape: box
         size: [22.8, 4, 0.4]
 
-  # the walls between the halls, 3 metres high
+  # the walls between the halls, 3 meters high
   - name: divider-west-0
     components:
       Transform:
@@ -418,7 +418,7 @@ entities:
             size: [1024, 512]
             reach: 0.01
 
-  # a mat in the colour of its hall, and a sign that floats at the south end
+  # a mat in the color of its hall, and a sign that floats at the south end
   # of its opening, facing the corridor, for every hall
   - name: shapes-mat
     components:
@@ -994,7 +994,7 @@ entities:
         position: [-8.5, 0.5, -1]
 
   # a box turned inside out is a room: its near walls are left out. It stands
-  # a few millimetres above its pedestal: its floor faces up as the top of
+  # a few millimeters above its pedestal: its floor faces up as the top of
   # the pedestal does, and the two would flicker in one plane
   - name: shapes-room
     components:
@@ -1032,7 +1032,7 @@ entities:
   # 02 Materials
   # A rack of spheres drawn with the pbr shader. Roughness grows along the
   # rack, from 0.05 to 1. The lowest row is not metal, the middle row is, and
-  # the top row shows colours. A metal is dark where it reflects no light:
+  # the top row shows colors. A metal is dark where it reflects no light:
   # there is no environment to reflect yet. In front, the two older shaders,
   # and a material that gives off light of its own.
   # --------------------------------------------------------------------------
@@ -1251,7 +1251,7 @@ entities:
           metallic: 1
           roughness: 1
 
-  - name: materials-colour-1
+  - name: materials-color-1
     components:
       Transform:
         position: [9.2, 2.3, -6.4]
@@ -1267,7 +1267,7 @@ entities:
           metallic: 0
           roughness: 0.4
 
-  - name: materials-colour-2
+  - name: materials-color-2
     components:
       Transform:
         position: [9.2, 2.3, -5.2]
@@ -1283,7 +1283,7 @@ entities:
           metallic: 0
           roughness: 0.4
 
-  - name: materials-colour-3
+  - name: materials-color-3
     components:
       Transform:
         position: [9.2, 2.3, -4]
@@ -1299,7 +1299,7 @@ entities:
           metallic: 0
           roughness: 0.4
 
-  - name: materials-colour-4
+  - name: materials-color-4
     components:
       Transform:
         position: [9.2, 2.3, -2.8]
@@ -1315,7 +1315,7 @@ entities:
           metallic: 0
           roughness: 0.4
 
-  - name: materials-colour-5
+  - name: materials-color-5
     components:
       Transform:
         position: [9.2, 2.3, -1.6]
@@ -1381,7 +1381,7 @@ entities:
       Transform:
         position: [5.2, 0.5, -3.1]
 
-  # the color shader takes no light: a disc of one colour
+  # the color shader takes no light: a disc of one color
   - name: materials-flat
     components:
       Transform:
@@ -1500,7 +1500,7 @@ entities:
         shape: box
         size: [8.3, 0.2, 8.3]
 
-  # a white wall and white shapes, which show the colour of what lights them
+  # a white wall and white shapes, which show the color of what lights them
   - name: lights-backdrop
     components:
       Transform:
@@ -1535,7 +1535,7 @@ entities:
           color: [1, 1, 1]
           roughness: 0.5
 
-  # a point light, and a small ball in its colour where it is
+  # a point light, and a small ball in its color where it is
   - name: lights-red
     components:
       Transform:
@@ -3307,7 +3307,7 @@ entities:
   # A spatial sound on an orb that a Spinner carries round a post: it is
   # louder from close by, moves from ear to ear, and shifts in pitch as it
   # comes and goes. Its falloff is the inverse one, as sound fades in the open:
-  # full within a metre, a third at three, a tenth at ten, and next to nothing
+  # full within a meter, a third at three, a tenth at ten, and next to nothing
   # at the entrance. A `max_distance` beyond the museum keeps it fading all the
   # way; `falloff: linear` would end it in silence at that distance instead. What hears it is the SoundListener on the camera.
   # --------------------------------------------------------------------------
@@ -3383,7 +3383,7 @@ entities:
   # 12 Prefabs and scenes
   # A prefab is an entity described once in a file of its own, see
   # docs/prefabs.md. The scene places it and writes what differs: here a
-  # stack of three, as it is, moved, turned, recoloured, and with a child
+  # stack of three, as it is, moved, turned, recolored, and with a child
   # taken away. The arch is the way out of the scene, into the same scene.
   # --------------------------------------------------------------------------
 

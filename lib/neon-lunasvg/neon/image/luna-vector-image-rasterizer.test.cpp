@@ -99,7 +99,7 @@ namespace
     EXPECT_EQ(large.pixels.size(), 64u * 64u * 4u);
   }
 
-  TEST_F(LunaVectorImageRasterizerTest, HandsOverColoursWithoutAlphaMultipliedIn)
+  TEST_F(LunaVectorImageRasterizerTest, HandsOverColorsWithoutAlphaMultipliedIn)
   {
     const int image = Load(
       "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"4\" height=\"4\">"
@@ -109,7 +109,7 @@ namespace
     const ImagePixels pixels = Draw(image, 4, 4);
     const unsigned char *pixel = At(pixels, 2, 2);
 
-    // red, green, blue, alpha, and the colour as it is written
+    // red, green, blue, alpha, and the color as it is written
     EXPECT_NEAR(pixel[0], 255, 2);
     EXPECT_NEAR(pixel[1], 128, 2);
     EXPECT_NEAR(pixel[2], 0, 2);

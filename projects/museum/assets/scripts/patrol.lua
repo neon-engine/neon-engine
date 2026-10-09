@@ -9,10 +9,10 @@
 --     distance: 5
 
 local Patrol = Component:extend {
-  -- metres a second
+  -- meters a second
   speed = 1.5,
 
-  -- metres from where it starts to where it turns round
+  -- meters from where it starts to where it turns round
   distance = 4.0,
 }
 

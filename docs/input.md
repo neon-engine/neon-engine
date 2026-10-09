@@ -9,8 +9,8 @@ window is operated is in
 
 **Current decision:** a game reads **actions by their names**, such as `move`
 and `jump`, and never a key or a button. An **input map** binds the actions
-to the devices and sorts them into **states** — walking, driving, swimming, a
-menu — of which one is current, and only its actions fire. The map is a
+to the devices and sorts them into **states** - walking, driving, swimming, a
+menu - of which one is current, and only its actions fire. The map is a
 recipe of the project, `assets://input/<name>.input.yml`, which `project.yml`
 names as `input`. A project without one plays with the engine's default,
 which is the map the engine played with before a project could say. The
@@ -166,7 +166,7 @@ gives the pixels it moved in the frame and has no end, so an axis2 with
 
 A stick next to the mouse would be lost: -1 to 1 next to tens of pixels a
 frame. `rate` says how many pixels a second the stick pushed all the way
-stands for, and the stick then counts `value × rate × time of the frame`,
+stands for, and the stick then counts `value * rate * time of the frame`,
 so that `look` from the stick is as quick on a slow machine as on a fast
 one. The default map turns at 600 pixels a second, and the spectator reads
 `look` without caring where it came from. An axis2 with a rate is not cut
@@ -208,9 +208,9 @@ An axis3 is what a motion sensor of the controller gives, about or along
 its three axes, which are SDL's: x to the right, y up, z toward the player
 who holds it. A turn about x is pitch, about y yaw, about z roll. The gyro
 gives radians a second, and the frame turns that into radians turned in it,
-`value × time of the frame`, as `rate` turns a stick into pixels a frame;
+`value * time of the frame`, as `rate` turns a stick into pixels a frame;
 so an `aim` bound to the gyro is added to the view as it is. The
-accelerometer gives metres a second squared, gravity included, as it is at
+accelerometer gives meters a second squared, gravity included, as it is at
 the moment. `rate` scales either. See [sensors](#sensors) for when it reads
 at all.
 

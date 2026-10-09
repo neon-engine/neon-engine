@@ -52,9 +52,9 @@ namespace neon
     std::string text;
     std::array<float, 4> edges{0.0f, 0.0f, 0.0f, 0.0f};
 
-    /// What a number and a colour cannot say by themselves. For
+    /// What a number and a color cannot say by themselves. For
     /// `line_height`, whether the number is a multiple of the size of the
-    /// font. For a colour that follows that of the text unless it is set,
+    /// font. For a color that follows that of the text unless it is set,
     /// whether it is set.
     bool flag = false;
 
@@ -157,7 +157,7 @@ namespace neon
 
   /// The value that is part of the way from one value to another, by the
   /// rules of https://www.w3.org/TR/css-values-4/#combining-values for what
-  /// the values hold: numbers and lengths go straight, colours with their
+  /// the values hold: numbers and lengths go straight, colors with their
   /// alpha multiplied in, and what cannot be moved switches halfway.
   [[nodiscard]] UiPropertyValue InterpolateUiValue(
     const UiPropertyValue &from,
@@ -167,7 +167,7 @@ namespace neon
   /// Whether a value can be moved to another, and does not switch halfway.
   [[nodiscard]] bool CanInterpolateUiValue(const UiPropertyValue &from, const UiPropertyValue &to);
 
-  /// A colour as CSS writes a value it worked out: `rgb(255, 128, 0)`, and
+  /// A color as CSS writes a value it worked out: `rgb(255, 128, 0)`, and
   /// `rgba(255, 128, 0, 0.5)` for one that shows through.
   [[nodiscard]] std::string FormatCssColor(const Color &color);
 

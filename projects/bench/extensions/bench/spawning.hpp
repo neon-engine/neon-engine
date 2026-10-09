@@ -19,8 +19,8 @@ namespace bench
     neon::extension::Query<NativeSpawner> _spawners;
     std::mt19937 _random{7};
 
-    /// The prefab of a behaviour, see NativeSpawner::behaviour.
-    static const std::string &PrefabOf(const std::int32_t behaviour)
+    /// The prefab of a behavior, see NativeSpawner::behavior.
+    static const std::string &PrefabOf(const std::int32_t behavior)
     {
       static const std::array<std::string, 7> prefabs = {
         "assets://prefabs/crate-none.prefab.yml",
@@ -31,7 +31,7 @@ namespace bench
         "assets://prefabs/crate-cpp-no-copy.prefab.yml",
         "assets://prefabs/crate-lua-no-copy.prefab.yml",
       };
-      return prefabs[behaviour < 0 || behaviour >= static_cast<std::int32_t>(prefabs.size()) ? 0 : behaviour];
+      return prefabs[behavior < 0 || behavior >= static_cast<std::int32_t>(prefabs.size()) ? 0 : behavior];
     }
 
   public:
@@ -47,9 +47,9 @@ namespace bench
 
       _spawners.Each([&](neon::extension::Entity, NativeSpawner &spawner)
       {
-        const std::string &prefab = PrefabOf(spawner.behaviour);
+        const std::string &prefab = PrefabOf(spawner.behavior);
 
-        // the burst: 20 by 20 to a layer, a metre and a bit apart
+        // the burst: 20 by 20 to a layer, a meter and a bit apart
         while (spawner.spawned < spawner.burst)
         {
           const std::int32_t index = spawner.spawned;

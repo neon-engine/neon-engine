@@ -189,7 +189,7 @@ typedef struct NeonEntityBlock
   void *columns[NEON_QUERY_MAX_COMPONENTS];
 } NeonEntityBlock;
 
-/* Behaviour an extension brings to the world. A function that is left zero
+/* Behavior an extension brings to the world. A function that is left zero
  * is not called. `user` is the extension's own and is handed to each as it
  * is. See EntitySystem of the engine for what belongs where. */
 typedef struct NeonSystemDescription
@@ -223,8 +223,8 @@ typedef struct NeonFieldLayout
 } NeonFieldLayout;
 
 /* One corner of a mesh an extension hands over to be drawn, as the engine
- * keeps its own: in metres, with y up, and with the triangles wound
- * anticlockwise seen from outside. */
+ * keeps its own: in meters, with y up, and with the triangles wound
+ * counterclockwise seen from outside. */
 typedef struct NeonVertex
 {
   NeonVector3 position;
@@ -234,7 +234,7 @@ typedef struct NeonVertex
    * left. */
   NeonVector2 texture;
 
-  /* Multiplied into the colour of the surface. White leaves it as it is. */
+  /* Multiplied into the color of the surface. White leaves it as it is. */
   NeonColor color;
 } NeonVertex;
 
@@ -609,7 +609,7 @@ typedef struct NeonExtensionHost
   /* Sets four numbers every shader reads, as `scene.numbers[place]`, at one
    * of 8 places, 0 to 7. They are for the shaders an extension brings and
    * names in a material as `extensions://<name>/shaders/<shader>`:
-   * how thick its fog is, a colour, whatever they are written to read. The
+   * how thick its fog is, a color, whatever they are written to read. The
    * shaders of the engine read none of them. The numbers stay until they
    * are set again; two extensions that bring shaders agree on their places
    * among themselves. The time needs no setting: every shader reads the

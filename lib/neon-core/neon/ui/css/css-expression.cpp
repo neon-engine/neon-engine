@@ -570,7 +570,7 @@ namespace neon
           continue;
         }
 
-        // a colour with a hash, and a word, are left as they are
+        // a color with a hash, and a word, are left as they are
         if (letter == '#' || std::isalpha(static_cast<unsigned char>(letter)) != 0 || letter == '_')
         {
           while (i < value.size() && (IsNamePart(value[i]) || value[i] == '#'))
@@ -857,7 +857,7 @@ namespace neon
 
       if (letter == '#')
       {
-        // the digits of a colour may spell a word
+        // the digits of a color may spell a word
         result += letter;
         i++;
         while (i < value.size() && IsNamePart(value[i]))

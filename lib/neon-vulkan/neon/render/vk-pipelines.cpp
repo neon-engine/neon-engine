@@ -123,7 +123,7 @@ namespace neon
     stages[1].pName = "main";
 
     constexpr VkVertexInputBindingDescription binding{0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX};
-    // one layout for every model: a model without vertex colours carries
+    // one layout for every model: a model without vertex colors carries
     // white ones, see docs/models.md
     constexpr std::array<VkVertexInputAttributeDescription, 5> attributes{{
       {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, position)},
@@ -178,19 +178,19 @@ namespace neon
     depth.depthWriteEnable = blends ? VK_FALSE : VK_TRUE;
     depth.depthCompareOp = VK_COMPARE_OP_LESS;
 
-    // A see-through colour is blended over what is behind it, in the
+    // A see-through color is blended over what is behind it, in the
     // linear light of the scene image. Its alpha is multiplied into the
-    // colour, and the scene image keeps alpha multiplied in.
+    // color, and the scene image keeps alpha multiplied in.
     //
-    // An opaque colour replaces what is behind it, with factors of one and
-    // zero, which is the colour the shader wrote to the last bit. Its alpha
+    // An opaque color replaces what is behind it, with factors of one and
+    // zero, which is the color the shader wrote to the last bit. Its alpha
     // does not reach the scene image as the shader wrote it: the resolve
     // divides the light by the alpha, so an alpha below 1 from an opaque
     // shader would come out brighter than it is. Vulkan has no blend factor
     // that writes a constant, so the alpha is the larger of what the
     // shader wrote and what was there, for which MAX ignores the factors.
     // Over a clear that is opaque, as a frame is, that is 1 whatever the
-    // shader wrote. Over a texture a camera clears to a see-through colour
+    // shader wrote. Over a texture a camera clears to a see-through color
     // it is at least what was there, and the shaders of the engine write 1
     // themselves through object_alpha() for that case.
     VkPipelineColorBlendAttachmentState blend_attachment{};
@@ -204,7 +204,7 @@ namespace neon
     blend_attachment.colorWriteMask =
       VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 
-    // the shadow map has no colour to write
+    // the shadow map has no color to write
     VkPipelineColorBlendStateCreateInfo blend{};
     blend.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
     blend.attachmentCount = shadow ? 0 : 1;

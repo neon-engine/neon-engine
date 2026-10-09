@@ -44,7 +44,7 @@ namespace neon
   /// cases.
   ///
   /// The models of a scene are lit in a scene image of linear light. The
-  /// resolve step turns that into the sRGB colours of the image that is
+  /// resolve step turns that into the sRGB colors of the image that is
   /// shown, and what is drawn in two dimensions goes on top of it. A render
   /// target is drawn the same way.
   ///

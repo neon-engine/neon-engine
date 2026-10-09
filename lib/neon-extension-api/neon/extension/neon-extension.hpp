@@ -623,7 +623,7 @@ namespace neon::extension
     }
 
     /// Gives the `Renderable` of an entity a mesh to draw, in place of a
-    /// model file: in metres, y up, triangles anticlockwise from outside.
+    /// model file: in meters, y up, triangles counterclockwise from outside.
     bool SetMesh(
       const Entity entity,
       const std::vector<Vertex> &vertices,
@@ -846,7 +846,7 @@ namespace neon::extension
       return _host->set_field(_host->context, entity, field, numbers) != 0;
     }
 
-    /// Reads a field of four numbers: a vector, a colour as r, g, b, a, or
+    /// Reads a field of four numbers: a vector, a color as r, g, b, a, or
     /// a quaternion as x, y, z, w.
     [[nodiscard]] Vector4 GetVector4(const Entity entity, const NeonField field) const
     {
@@ -1010,7 +1010,7 @@ namespace neon::extension
     }
   };
 
-  /// Behaviour an extension brings to the world, see EntitySystem of the
+  /// Behavior an extension brings to the world, see EntitySystem of the
   /// engine for what belongs where. Added with Extension::AddSystem.
   class System
   {

@@ -8,7 +8,7 @@ sign that says what it shows. It is described in
 It is a project of its own with no code of its own: `assets/project.yml` is
 the project, and next to it are its scene, its prefabs, its signs, its
 scripts, its sky, and its hum. Nothing in it comes from a model file: every
-piece is a `Geometry` in a plain colour.
+piece is a `Geometry` in a plain color.
 
 ## Building it
 

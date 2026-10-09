@@ -62,7 +62,7 @@ namespace neon
   public:
     /// Whether a field of this kind can be part of a script's component. A
     /// bool, a whole number, a number, a precise number, text, a vector,
-    /// and a colour can; the rest is open.
+    /// and a color can; the rest is open.
     [[nodiscard]] static bool Supports(FieldKind kind);
 
     /// Lays out the fields in the order given. What is wrong with them, if

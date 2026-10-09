@@ -70,7 +70,7 @@ namespace neon
     static constexpr uint32_t kTexture_Count = 3;
     static constexpr uint32_t kFirst_Sampler_Binding = kFirst_Texture_Binding + kTexture_Count;
 
-    /// The textures by their place: the colours of the surface, the
+    /// The textures by their place: the colors of the surface, the
     /// metallic-roughness or specular map, and what the surface gives off.
     static constexpr uint32_t kDiffuse_Texture = 0;
     static constexpr uint32_t kSecond_Texture = 1;

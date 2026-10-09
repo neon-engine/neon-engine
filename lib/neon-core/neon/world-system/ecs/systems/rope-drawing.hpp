@@ -35,7 +35,7 @@ namespace neon
     /// The curve as straight pieces, and the middle of every ring of the
     /// tube. Kept from rope to rope and frame to frame for their room.
     std::vector<glm::vec3> _flat;
-    std::vector<glm::vec3> _centres;
+    std::vector<glm::vec3> _centers;
 
     /// Where the two ends of the rope are in the world, and how long it
     /// is. False, and said in the log once, when an end cannot be found.

@@ -90,7 +90,7 @@ namespace neon
     /// to a world that is gone.
     ~EntityWorld();
 
-    /// Adds behaviour of a game. Call it before Initialize.
+    /// Adds behavior of a game. Call it before Initialize.
     void AddSystem(std::unique_ptr<EntitySystem> system);
 
     /// Adds a system that needs every entity where it is drawn, such as

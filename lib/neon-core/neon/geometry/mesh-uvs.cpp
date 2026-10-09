@@ -6,7 +6,7 @@
 
 namespace neon
 {
-  void ProjectUvs(MeshData &mesh, const float texels_per_metre)
+  void ProjectUvs(MeshData &mesh, const float texels_per_meter)
   {
     for (auto &vertex : mesh.vertices)
     {
@@ -32,7 +32,7 @@ namespace neon
         across = n.z >= 0.0f ? glm::vec2(p.x, -p.y) : glm::vec2(-p.x, -p.y);
       }
 
-      vertex.tex_coords = across * texels_per_metre;
+      vertex.tex_coords = across * texels_per_meter;
     }
   }
 } // neon

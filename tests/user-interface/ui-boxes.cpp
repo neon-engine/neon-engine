@@ -2,8 +2,8 @@
 
 #include <cmath>
 
-// What a box is painted with beyond one colour: round corners, borders of
-// several colours, shadows, gradients, and what moves and turns it. Each is
+// What a box is painted with beyond one color: round corners, borders of
+// several colors, shadows, gradients, and what moves and turns it. Each is
 // a shape the renderer works out for every pixel, which a test sees as the
 // numbers that are handed over. What the pixels look like is looked at in
 // the frames the runtime writes.
@@ -254,7 +254,7 @@ namespace
     EXPECT_EQ(_renderer.batches.size(), 1u);
   }
 
-  TEST_F(UiBoxTest, EverySideOfABorderHasItsWidthAndItsColour)
+  TEST_F(UiBoxTest, EverySideOfABorderHasItsWidthAndItsColor)
   {
     ShowBox(
       "border_width: \"2 4 6 8\"\n"
@@ -313,7 +313,7 @@ namespace
     const auto quads = _renderer.Quads();
     ASSERT_EQ(quads.size(), 1u);
 
-    // the colours of the sides are those of the file, and the corners of
+    // the colors of the sides are those of the file, and the corners of
     // the rectangle say how much of them is seen
     EXPECT_FLOAT_EQ(quads[0].color.a, 0.5f);
     ExpectColor(Shapes().at(0).colors[0], 1, 0, 0, 1);
@@ -331,7 +331,7 @@ namespace
     EXPECT_EQ(KindOf(shapes[0]), ShapeKind2D::Fill);
     EXPECT_FLOAT_EQ(shapes[0].gradient[0], 1) << "linear";
     EXPECT_NEAR(shapes[0].gradient[1], 1.5708f, 0.001f) << "90 degrees";
-    EXPECT_FLOAT_EQ(shapes[0].gradient[2], 3) << "three colours";
+    EXPECT_FLOAT_EQ(shapes[0].gradient[2], 3) << "three colors";
 
     EXPECT_FLOAT_EQ(shapes[0].stop_positions[0], 0);
     EXPECT_FLOAT_EQ(shapes[0].stop_positions[1], 0.25f);
@@ -354,7 +354,7 @@ namespace
     EXPECT_EQ(_renderer.loaded + _renderer.created, 0u) << "and asks for no texture";
   }
 
-  TEST_F(UiBoxTest, DrawsAGradientOverTheColourOfTheBackground)
+  TEST_F(UiBoxTest, DrawsAGradientOverTheColorOfTheBackground)
   {
     ShowBox(
       "background_color: \"#ff0000\"\n"
@@ -366,7 +366,7 @@ namespace
     EXPECT_FLOAT_EQ(shapes[1].gradient[0], 1);
   }
 
-  TEST_F(UiBoxTest, TheBackgroundTakesAColourAsWell)
+  TEST_F(UiBoxTest, TheBackgroundTakesAColorAsWell)
   {
     ShowBox("background: \"#00ff00\"\n");
 
@@ -464,7 +464,7 @@ namespace
     EXPECT_FLOAT_EQ(quads[1].Width(), 192);
   }
 
-  TEST_F(UiBoxTest, AShadowWithoutAColourHasThatOfTheText)
+  TEST_F(UiBoxTest, AShadowWithoutAColorHasThatOfTheText)
   {
     ShowBox("color: \"#00ff00\"\nbox_shadow: \"0 0 4px\"\nopacity: 0.5\n");
 
@@ -890,28 +890,28 @@ namespace
                   "number of pixels or a percentage that is not below 0 was expected"));
 
     EXPECT_THAT(ProblemsOf("border_top_color: red\n"), ElementsAre(
-                  "assets://ui/test.ui.yml:9: 'border_top_color' of panel 'box' is 'red', where a colour such "
+                  "assets://ui/test.ui.yml:9: 'border_top_color' of panel 'box' is 'red', where a color such "
                   "as \"#ff8000\", \"#ff800080\", or rgb(255, 128, 0), or a list of 3 to 4 numbers was "
                   "expected"));
 
     EXPECT_THAT(ProblemsOf("border_left: \"2px dashed #fff\"\n"), ElementsAre(
                   "assets://ui/test.ui.yml:9: 'border_left' of panel 'box' is '2px dashed #fff', where a "
-                  "width, solid or none, and a colour, such as \"2px solid #ffffff\" was expected"));
+                  "width, solid or none, and a color, such as \"2px solid #ffffff\" was expected"));
 
     EXPECT_THAT(ProblemsOf("box_shadow: \"4px\"\n"), ElementsAre(
                   "assets://ui/test.ui.yml:9: 'box_shadow' of panel 'box' is '4px', where none, or shadows "
                   "such as \"0 4px 12px 0 rgba(0, 0, 0, 0.5)\": inset or not, to the right, down, a blur that "
-                  "is not below 0, how much larger, and a colour was expected"));
+                  "is not below 0, how much larger, and a color was expected"));
 
     EXPECT_THAT(ProblemsOf("background: \"conic-gradient(#f00, #00f)\"\n"), ElementsAre(
                   "assets://ui/test.ui.yml:9: 'background' of panel 'box' is 'conic-gradient(#f00, #00f)', "
-                  "where none, a colour, a gradient such as linear-gradient(90deg, #f00, #00f), or the "
+                  "where none, a color, a gradient such as linear-gradient(90deg, #f00, #00f), or the "
                   "virtual path of an image was expected"));
 
     EXPECT_THAT(ProblemsOf("background_image: \"linear-gradient(#f00)\"\n"), ElementsAre(
                   "assets://ui/test.ui.yml:9: 'background_image' of panel 'box' is 'linear-gradient(#f00)', "
                   "where the virtual path of an image, none, or a gradient such as "
-                  "linear-gradient(90deg, #f00, #00f) with 2 to 8 colours was expected"));
+                  "linear-gradient(90deg, #f00, #00f) with 2 to 8 colors was expected"));
 
     EXPECT_THAT(ProblemsOf("transform: \"skew(10deg)\"\n"), ElementsAre(
                   "assets://ui/test.ui.yml:9: 'transform' of panel 'box' is 'skew(10deg)', where none, or "

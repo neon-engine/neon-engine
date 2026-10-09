@@ -164,7 +164,7 @@ namespace
     Compute();
 
     EXPECT_FLOAT_EQ(_label->GetComputedStyle().opacity, 0.5f);
-    EXPECT_TRUE(IsColor(_label->GetComputedStyle().color, 1.0f, 1.0f, 1.0f)) << "the initial colour of the text";
+    EXPECT_TRUE(IsColor(_label->GetComputedStyle().color, 1.0f, 1.0f, 1.0f)) << "the initial color of the text";
 
     // unset is inherit for what is inherited, and initial otherwise
     EXPECT_TRUE(IsColor(_button->GetComputedStyle().color, 1.0f, 0.0f, 0.0f));

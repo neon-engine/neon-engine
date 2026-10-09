@@ -8,7 +8,7 @@ namespace neon
   /// The image a scene is lit in, with its depth. It holds linear light in
   /// floating point numbers, so that see-through surfaces blend as light
   /// does, and light brighter than white is kept until it is resolved into
-  /// the colours of the image that is shown.
+  /// the colors of the image that is shown.
   // ReSharper disable once CppInconsistentNaming
   class VK_SceneImage
   {

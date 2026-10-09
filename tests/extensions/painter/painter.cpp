@@ -32,7 +32,7 @@ namespace
       world.SetText(painted, world.FindField("Renderable", "shader"), "engine://shaders/unlit");
       const bool textured = world.SetTexts(painted, world.FindField("Renderable", "textures"), {picture});
 
-      // a square of two metres that faces along z, towards a camera at the
+      // a square of two meters that faces along z, towards a camera at the
       // origin that looks down it
       const NeonVector3 towards{0.0f, 0.0f, 1.0f};
       const NeonColor white{1.0f, 1.0f, 1.0f, 1.0f};

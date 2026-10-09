@@ -12,7 +12,7 @@ namespace neon
   /// Which side of a triangle is drawn. It is kept apart from the renderer
   /// so that it can be checked without a graphics card.
   ///
-  /// The front of a triangle is the side its corners go round anticlockwise
+  /// The front of a triangle is the side its corners go round counterclockwise
   /// on, as models are made. A transform that mirrors an object, with an
   /// odd number of its axes scaled below 0, turns that round, so a mirrored
   /// object is drawn with the opposite front.

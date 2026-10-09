@@ -9,7 +9,7 @@ the rope that uses one in [physics.md](physics.md#ropes).
 **Current decision:** a curve is a cubic Bézier curve, or a path of them
 laid end to end. The pieces are templates over what a point is, so one
 piece of code carries a `glm::vec3` in the world, a `glm::vec2` on a screen,
-and a float or a colour that eases over time. They are plain values in
+and a float or a color that eases over time. They are plain values in
 neon-core, `neon/curves/`, that know nothing of meshes, of the physics, or
 of the renderer; what draws or follows a curve asks it for points.
 
@@ -30,7 +30,7 @@ first towards the second and arrives at the last from the third. The point
 at `t`, from 0 to 1, is the average of the four, weighted by the Bernstein
 polynomials:
 
-    x(t) = (1 - t)³ p0 + 3 (1 - t)² t p1 + 3 (1 - t) t² p2 + t³ p3
+    x(t) = (1 - t)^3 p0 + 3 (1 - t)^2 t p1 + 3 (1 - t) t^2 p2 + t^3 p3
 
 The weights add up to 1 at every `t`, from which two things follow that the
 engine leans on: the curve never leaves the hull of its four points, and
@@ -38,7 +38,7 @@ moving, turning, or scaling the points does the same to the curve, so a
 curve is placed by placing its points.
 
 `Split` cuts a curve in two at `t` by de Casteljau's construction, three
-rounds of interpolation between neighbours; the points it passes through are
+rounds of interpolation between neighbors; the points it passes through are
 the control points of the two halves. Everything that needs a curve to a
 tolerance is built on it: `Flatten` halves a curve until each piece is
 within the tolerance of a straight line, which gives few pieces where the
@@ -63,7 +63,7 @@ keep.
 
 The parameter of a curve does not move along it at an even speed: it is
 fast where the control points are far apart. What moves along a curve at a
-speed in metres, or wants points every so many centimetres, flattens the
+speed in meters, or wants points every so many centimeters, flattens the
 curve and walks the line: `ResamplePolyline` hands back as many points as
 asked for, each as far along from the one before as every other.
 
@@ -84,7 +84,7 @@ so it follows them without swinging or whipping of its own.
   points as a path.
 - **Particles on a trail.** A particle system is to take a `BezierPath`
   and send particles along it at a speed, with `ResamplePolyline` or a
-  table of distances; float curves are to ease a size or a colour over a
+  table of distances; float curves are to ease a size or a color over a
   particle's life. Nothing reads a curve from a recipe for that yet.
 - **A component that names a path.** A `Geometry` of shape `tube` holds its
   points itself. A path that several things share, a track and the camera

@@ -9,7 +9,7 @@
 --     period: 8
 
 local Mover = Component:extend {
-  -- how far it goes from where it starts, in metres along each axis
+  -- how far it goes from where it starts, in meters along each axis
   travel = vec3(0, 1, 0),
 
   -- seconds there and back

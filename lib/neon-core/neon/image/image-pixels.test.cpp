@@ -20,7 +20,7 @@ namespace
     return image;
   }
 
-  /// An image of one colour, with alpha multiplied in.
+  /// An image of one color, with alpha multiplied in.
   ImagePixels Filled(const int width, const int height, const unsigned char value, const unsigned char alpha)
   {
     ImagePixels image;
@@ -37,14 +37,14 @@ namespace
     return image;
   }
 
-  /// The colour of a pixel as it is seen: without its alpha multiplied in.
+  /// The color of a pixel as it is seen: without its alpha multiplied in.
   float SeenAs(const ImagePixels &image, const std::size_t pixel, const std::size_t channel)
   {
     const float alpha = image.pixels[pixel * 4 + 3];
     return alpha > 0.0f ? static_cast<float>(image.pixels[pixel * 4 + channel]) / alpha * 255.0f : 0.0f;
   }
 
-  TEST(PremultiplyAlphaTest, MultipliesAlphaIntoTheColours)
+  TEST(PremultiplyAlphaTest, MultipliesAlphaIntoTheColors)
   {
     std::vector<unsigned char> pixels = {
       255, 255, 255, 255,
@@ -90,7 +90,7 @@ namespace
     EXPECT_EQ(copies[0].pixels, image.pixels);
   }
 
-  TEST(MakeSmallerCopiesTest, AnImageOfOneColourStaysThatColour)
+  TEST(MakeSmallerCopiesTest, AnImageOfOneColorStaysThatColor)
   {
     for (const auto &copy : MakeSmallerCopies(Filled(8, 8, 200, 255)))
     {
@@ -106,7 +106,7 @@ namespace
   {
     // A white pixel that covers everything next to one that is see-through,
     // written as black the way image editors write it. The mean of the
-    // colours alone would be grey.
+    // colors alone would be gray.
     ImagePixels image = Image(2, 1, {255, 255, 255, 255, 0, 0, 0, 0});
     PremultiplyAlpha(image.pixels);
 
@@ -121,11 +121,11 @@ namespace
     {
       // with alpha multiplied in, white at half the alpha
       EXPECT_EQ(copies[1].pixels[channel], 128);
-      EXPECT_NEAR(SeenAs(copies[1], 0, channel), 255, 1) << "and what is seen is white, not grey";
+      EXPECT_NEAR(SeenAs(copies[1], 0, channel), 255, 1) << "and what is seen is white, not gray";
     }
   }
 
-  TEST(MakeSmallerCopiesTest, TheColourOfWhatIsSeeThroughDoesNotCount)
+  TEST(MakeSmallerCopiesTest, TheColorOfWhatIsSeeThroughDoesNotCount)
   {
     // red that covers everything, next to green that is not there at all
     ImagePixels image = Image(2, 2, {

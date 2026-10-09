@@ -48,8 +48,8 @@ namespace neon
 
     float advance = 0.0f;
 
-    /// Whether the picture has colours of its own, as an emoji has. It is
-    /// then not drawn in the colour of the text.
+    /// Whether the picture has colors of its own, as an emoji has. It is
+    /// then not drawn in the color of the text.
     bool has_colors = false;
   };
 
@@ -62,7 +62,7 @@ namespace neon
 
     /// Red, green, blue, and alpha for each pixel, row after row from the
     /// top. White with the glyph in the alpha channel, but for glyphs with
-    /// colours of their own.
+    /// colors of their own.
     std::vector<unsigned char> pixels;
 
     /// Whether glyphs were added since the page was last handed to a

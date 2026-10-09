@@ -191,9 +191,9 @@ namespace neon
       LoadMaterialTextures(scene, material, aiTextureType_DIFFUSE, loaded.textures);
       LoadMaterialTextures(scene, material, aiTextureType_SPECULAR, loaded.textures);
 
-      // The base colour factor of glTF, which multiplies the texture. The
-      // diffuse colour of an .obj is not read: the scenes that exist set the
-      // colour themselves, and a Kd of grey would darken them.
+      // The base color factor of glTF, which multiplies the texture. The
+      // diffuse color of an .obj is not read: the scenes that exist set the
+      // color themselves, and a Kd of gray would darken them.
       if (aiColor4D color; material->Get(AI_MATKEY_BASE_COLOR, color) == aiReturn_SUCCESS)
       {
         loaded.color = Color{color.r, color.g, color.b, color.a};
@@ -353,10 +353,10 @@ namespace neon
         vertex.tex_coords = {mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y};
       }
 
-      // glTF keeps vertex colours in linear light, which is what the
+      // glTF keeps vertex colors in linear light, which is what the
       // shaders multiply in, and assimp gives them as floats whatever the
       // file stored. The alpha is not read: assimp leaves it at 0 for a
-      // colour of three components and does not say how many there were,
+      // color of three components and does not say how many there were,
       // so it is 1 for every vertex, see docs/models.md
       if (mesh->HasVertexColors(0))
       {

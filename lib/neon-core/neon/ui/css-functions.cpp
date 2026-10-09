@@ -62,7 +62,7 @@ namespace neon
       }
 
       // To a corner is taken as half way between the two sides. CSS turns
-      // it so that the corners of the box have the colours of the ends,
+      // it so that the corners of the box have the colors of the ends,
       // which is the same for a square.
       if (right == 0) { degrees = down > 0 ? 180.0f : 0.0f; }
       else if (down == 0) { degrees = right > 0 ? 90.0f : 270.0f; }

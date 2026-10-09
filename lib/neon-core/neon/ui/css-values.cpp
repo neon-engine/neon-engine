@@ -65,7 +65,7 @@ namespace neon
       return true;
     }
 
-    /// A part of a colour: a number up to `whole`, or a percentage of it.
+    /// A part of a color: a number up to `whole`, or a percentage of it.
     bool ParseChannel(const std::string &text, const float whole, float &value)
     {
       if (text.empty()) { return false; }

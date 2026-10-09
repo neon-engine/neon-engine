@@ -64,7 +64,7 @@ namespace
     EXPECT_EQ(VK_Capabilities::Fill(AnswersOfACard()).max_texture_size, 16384);
   }
 
-  TEST(VkCapabilitiesTest, TakesTheMostSamplesThatColourAndDepthBothHave)
+  TEST(VkCapabilitiesTest, TakesTheMostSamplesThatColorAndDepthBothHave)
   {
     VK_DeviceAnswers answers = AnswersOfACard();
     answers.properties.limits.framebufferColorSampleCounts |= VK_SAMPLE_COUNT_16_BIT;

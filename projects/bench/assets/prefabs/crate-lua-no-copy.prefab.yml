@@ -1,5 +1,5 @@
-# A crate that is spawned while the game runs, with the behaviour in Lua that counts its fall. Half a metre,
-# in one plain colour, so that nothing is read from an image.
+# A crate that is spawned while the game runs, with the behavior in Lua that counts its fall. Half a meter,
+# in one plain color, so that nothing is read from an image.
 version: 1
 prefab: crate-lua-no-copy
 

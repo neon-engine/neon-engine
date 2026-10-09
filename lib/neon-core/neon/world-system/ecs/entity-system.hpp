@@ -5,7 +5,7 @@
 
 namespace neon
 {
-  /// Behaviour of the world. A system works on every entity that carries the
+  /// Behavior of the world. A system works on every entity that carries the
   /// components it asks for.
   ///
   /// Update is called once per frame, with the time the frame took. It is for

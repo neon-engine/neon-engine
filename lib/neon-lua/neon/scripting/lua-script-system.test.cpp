@@ -225,7 +225,7 @@ namespace
     AddScript("door.lua", "return Component:extend { update = function() end }");
     Load();
     EXPECT_EQ(_lua.GetComponentCount(), 0u);
-    EXPECT_THAT(Errors(), HasSubstr("'update' of Door is a function; behaviour belongs in a System"));
+    EXPECT_THAT(Errors(), HasSubstr("'update' of Door is a function; behavior belongs in a System"));
   }
 
   TEST_F(LuaScriptSystemTest, RefusesAFieldWhoseDefaultIsNotSomethingAComponentHolds)

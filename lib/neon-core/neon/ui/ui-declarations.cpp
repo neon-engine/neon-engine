@@ -34,7 +34,7 @@ namespace neon
       return text;
     }
 
-    /// Whether a property holds colours, and the names of colours in its
+    /// Whether a property holds colors, and the names of colors in its
     /// value are to be read.
     bool HoldsColors(const std::string &css_name)
     {

@@ -331,7 +331,7 @@ namespace neon
               break;
             case FT_PIXEL_MODE_BGRA:
             {
-              // FreeType multiplies alpha into the colours, and the engine
+              // FreeType multiplies alpha into the colors, and the engine
               // does so itself when it keeps a texture
               const unsigned char *pixel = from + static_cast<std::ptrdiff_t>(column) * 4;
               const unsigned int alpha = pixel[3];

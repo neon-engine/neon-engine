@@ -8,21 +8,21 @@
 #include <neon/common/color.hpp>
 #include <neon/layout/layout-style.hpp>
 
-// What an element is painted with beyond one colour: gradients, shadows,
+// What an element is painted with beyond one color: gradients, shadows,
 // round corners, and what moves and turns it. The names and the meanings
 // are those of CSS.
 
 namespace neon
 {
-  /// A colour of a gradient and where along the gradient it lies, from 0
+  /// A color of a gradient and where along the gradient it lies, from 0
   /// to 1.
   struct UiGradientStop
   {
     Color color;
     float position = 0.0f;
 
-    /// Whether the file says where the colour lies. One that does not lies
-    /// evenly between its neighbours.
+    /// Whether the file says where the color lies. One that does not lies
+    /// evenly between its neighbors.
     bool has_position = false;
   };
 
@@ -35,7 +35,7 @@ namespace neon
       Radial
     };
 
-    /// As many colours as a renderer takes for one gradient.
+    /// As many colors as a renderer takes for one gradient.
     static constexpr std::size_t kMax_Stops = 8;
 
     Kind kind = Kind::Linear;
@@ -46,10 +46,10 @@ namespace neon
 
     std::vector<UiGradientStop> stops;
 
-    /// Every colour with a place, which are in rising order.
+    /// Every color with a place, which are in rising order.
     void Settle();
 
-    /// The colour at a place from 0 to 1.
+    /// The color at a place from 0 to 1.
     [[nodiscard]] Color At(float position) const;
   };
 
@@ -67,7 +67,7 @@ namespace neon
 
     Color color{0.0f, 0.0f, 0.0f, 1.0f};
 
-    /// Without one, the shadow has the colour of the text.
+    /// Without one, the shadow has the color of the text.
     bool has_color = false;
 
     /// Whether the shadow falls into the box and not around it.
@@ -260,7 +260,7 @@ namespace neon
   {
     std::string name;
 
-    /// Up to four numbers: one for a number, four for a colour.
+    /// Up to four numbers: one for a number, four for a color.
     float numbers[4] = {0.0f, 0.0f, 0.0f, 0.0f};
     std::size_t count = 1;
 

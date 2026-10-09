@@ -32,7 +32,7 @@ root:
       font_size: 36
       color: "#ffffffc8"
     - type: label
-      text: "non-metals below, metals above, colours on top."
+      text: "non-metals below, metals above, colors on top."
       font_size: 36
       color: "#ffffffc8"
     - type: label

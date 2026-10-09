@@ -74,7 +74,7 @@ namespace
     }
 
     /// The rectangle that was drawn for the background of an element,
-    /// found by its colour.
+    /// found by its color.
     [[nodiscard]] RecordedQuad QuadOf(const float red, const float green, const float blue) const
     {
       for (const auto &quad : _renderer.Quads())
@@ -85,7 +85,7 @@ namespace
         }
       }
 
-      ADD_FAILURE() << "Nothing was drawn in the colour " << red << ", " << green << ", " << blue;
+      ADD_FAILURE() << "Nothing was drawn in the color " << red << ", " << green << ", " << blue;
       return {};
     }
 

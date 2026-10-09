@@ -25,7 +25,7 @@ namespace
       Vertex{.position = {1, 0, -1}, .normal = {}, .tex_coords = {}},
     };
     // the front slope, seen from the front, and the back slope, seen from
-    // the back, both anticlockwise
+    // the back, both counterclockwise
     roof.indices = {0, 1, 2, 4, 3, 2};
     return roof;
   }

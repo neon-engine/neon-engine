@@ -5,7 +5,7 @@
 #include "scene-data.glsl"
 
 layout (location = 0) in vec2 tex_coord;
-// the colour painted on the vertices, in linear light; white where a
+// the color painted on the vertices, in linear light; white where a
 // model has none
 layout (location = 1) in vec4 vertex_color;
 layout (location = 2) flat in uint object_index;

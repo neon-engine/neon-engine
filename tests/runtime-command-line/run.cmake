@@ -25,7 +25,7 @@ if (CASE STREQUAL "help")
   expect_output("Editor:")
   expect_output("--scene PATH")
 elseif (CASE STREQUAL "window-mode-not-a-mode")
-  expect_refused("Option '--window-mode' needs windowed, borderless, or fullscreen" --window-mode maximised)
+  expect_refused("Option '--window-mode' needs windowed, borderless, or fullscreen" --window-mode maximized)
 elseif (CASE STREQUAL "headless-is-not-a-server")
   # --headless is kept for the dedicated server of #144, which does not exist
   # yet, so it is understood and refused with a pointer to the renderer

@@ -60,7 +60,7 @@ namespace neon
   /// Turns the characters of a text into the glyphs of a font, and says
   /// where each one goes: pairs are moved together, letters are joined into
   /// ligatures, and the letters of a script such as Arabic take the form
-  /// their neighbours ask for.
+  /// their neighbors ask for.
   ///
   /// It is given the bytes of a font and reads no files itself. A text that
   /// is handed over runs in one direction and is drawn with one font.
@@ -79,7 +79,7 @@ namespace neon
 
     /// Shapes `text` from `first` on, `count` characters long. The
     /// characters around that part are looked at, since the form of a
-    /// letter depends on its neighbours.
+    /// letter depends on its neighbors.
     ///
     /// The glyphs come in the order they are drawn in, from left to right,
     /// whichever way the text runs.

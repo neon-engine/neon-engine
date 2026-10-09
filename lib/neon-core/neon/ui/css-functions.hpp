@@ -28,7 +28,7 @@ namespace neon
   ///     radial-gradient(#fff, #000)
   ///
   /// A radial gradient is an ellipse around the middle of the box that
-  /// reaches its corners. Up to 8 colours are read.
+  /// reaches its corners. Up to 8 colors are read.
   [[nodiscard]] bool ParseCssGradient(const std::string &text, UiGradient &gradient);
 
   /// Reads shadows, with commas between them:

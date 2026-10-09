@@ -8,7 +8,7 @@
 
 // Values as text. It is what an inspector shows in a box that is typed
 // into, what a console takes, and what a script hands over when it knows a
-// field by its name alone. Lengths and colours are written as a style sheet
+// field by its name alone. Lengths and colors are written as a style sheet
 // writes them.
 
 namespace neon
@@ -21,7 +21,7 @@ namespace neon
   /// without a unit counts as pixels.
   [[nodiscard]] bool ParseFieldLength(const std::string &text, FieldLength &length);
 
-  /// A colour in the notation of CSS: `#ff8000`, and `#ff800080` for one
+  /// A color in the notation of CSS: `#ff8000`, and `#ff800080` for one
   /// that shows through.
   [[nodiscard]] std::string FormatFieldColor(const Color &color);
 

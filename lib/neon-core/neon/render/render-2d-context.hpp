@@ -37,11 +37,11 @@ namespace neon
     float v = 0.0f;
 
     /// Multiplied with the texture. Its alpha says how much of what is
-    /// behind shows through, and is not multiplied into its colours.
+    /// behind shows through, and is not multiplied into its colors.
     Color color;
 
     /// How much of the texture is read: 1 draws the texture times the
-    /// colour, 0 the colour alone. Plain shapes can then be drawn in one
+    /// color, 0 the color alone. Plain shapes can then be drawn in one
     /// call with shapes that have a texture, such as a panel with its text.
     /// What hands over triangles with a texture and knows nothing of this
     /// leaves it at 1.
@@ -64,11 +64,11 @@ namespace neon
   /// What a shape is, which says how the other numbers are read.
   enum class ShapeKind2D
   {
-    /// A box with round corners, filled with the colour and the texture of
+    /// A box with round corners, filled with the color and the texture of
     /// its corners, or with a gradient.
     Fill = 0,
 
-    /// The border of such a box, each side in a colour of its own.
+    /// The border of such a box, each side in a color of its own.
     Border,
 
     /// The shadow such a box casts around itself.
@@ -105,16 +105,16 @@ namespace neon
     float widths[4] = {0.0f, 0.0f, 0.0f, 0.0f};
 
     /// 0 for none, 1 for a linear and 2 for a radial gradient; the angle
-    /// in radians, clockwise from the top; the number of colours; nothing.
+    /// in radians, clockwise from the top; the number of colors; nothing.
     float gradient[4] = {0.0f, 0.0f, 0.0f, 0.0f};
 
-    /// Of a border, the colours of its sides: top, right, bottom, left. Of
-    /// text, the colour of the line around a glyph. Alpha is not
-    /// multiplied into the colours.
+    /// Of a border, the colors of its sides: top, right, bottom, left. Of
+    /// text, the color of the line around a glyph. Alpha is not
+    /// multiplied into the colors.
     float colors[4][4] = {};
 
-    /// Where the colours of the gradient lie, from 0 to 1, and the
-    /// colours.
+    /// Where the colors of the gradient lie, from 0 to 1, and the
+    /// colors.
     float stop_positions[8] = {};
     float stop_colors[8][4] = {};
   };
@@ -125,7 +125,7 @@ namespace neon
   {
     std::string name;
 
-    /// One number, or as many as `count` says: four for a colour.
+    /// One number, or as many as `count` says: four for a color.
     float numbers[4] = {0.0f, 0.0f, 0.0f, 0.0f};
     int count = 1;
   };
@@ -163,8 +163,8 @@ namespace neon
   {
     /// Smaller copies, each half the size of the one before, for an image
     /// that is drawn smaller than it is. They are made with alpha
-    /// multiplied into the colours, so that a pixel that is see-through
-    /// does not darken its neighbours.
+    /// multiplied into the colors, so that a pixel that is see-through
+    /// does not darken its neighbors.
     bool has_smaller_copies = false;
 
     /// Whether the image starts again past its edge.
@@ -250,7 +250,7 @@ namespace neon
     /// Makes a texture from pixels in memory, such as the characters of a
     /// font. `pixels` holds red, green, blue, and alpha for each pixel, a
     /// byte each, row after row from the top. Alpha is not multiplied into
-    /// the colours. Returns what the texture is known as, or No_Texture.
+    /// the colors. Returns what the texture is known as, or No_Texture.
     virtual int CreateTexture(int width, int height, const std::vector<unsigned char> &pixels) = 0;
 
     /// Makes a texture from an image file at a virtual path, read through

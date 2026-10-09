@@ -234,7 +234,7 @@ namespace
 
   TEST_F(DisplayOptionsTest, RefusesAModeThatIsNone)
   {
-    for (const char *mode : {"maximised", "Windowed", "full"})
+    for (const char *mode : {"maximized", "Windowed", "full"})
     {
       EXPECT_FALSE(Apply({"--window-mode", mode})) << mode;
       EXPECT_EQ(_error, "Option '--window-mode' needs windowed, borderless, or fullscreen");

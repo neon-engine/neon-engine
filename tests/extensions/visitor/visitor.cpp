@@ -62,7 +62,7 @@ namespace
     {
       if (world.WasActionPressed("lift"))
       {
-        // every Transform a metre up, written in place, and how many on the HUD
+        // every Transform a meter up, written in place, and how many on the HUD
         std::uint64_t count = 0;
         _transforms.Each([&](const NeonEntityBlock &block)
         {

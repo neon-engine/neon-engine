@@ -1,7 +1,7 @@
 #version 450
 
 // The resolve step: the one place where the linear light of the scene
-// becomes the colours of the image that is shown. Light that bleeds around
+// becomes the colors of the image that is shown. Light that bleeds around
 // what is bright is added to the scene image before this. Here the
 // exposure is multiplied in, the tonemapper maps what is brighter than
 // white into what a screen can show, and the result is encoded in sRGB.
@@ -42,8 +42,8 @@ vec3 tonemap_aces(vec3 light)
 // the light is mixed a little between its channels, encoded as a log over
 // about sixteen and a half stops, and put through a sigmoid that is fitted
 // by a polynomial. The mix is undone at the end, and the output is read
-// as sRGB encoded and linearised with the 2.2 power, so that the sRGB
-// curve below gives the colours of the screen.
+// as sRGB encoded and linearized with the 2.2 power, so that the sRGB
+// curve below gives the colors of the screen.
 vec3 agx_contrast(vec3 x)
 {
     vec3 x2 = x * x;
@@ -105,7 +105,7 @@ void main()
 
     // Alpha is multiplied into the light. It is taken out before the curve
     // and put back after it, so that what is drawn on top, and what shows
-    // a render target, find the colours with alpha multiplied in.
+    // a render target, find the colors with alpha multiplied in.
     float alpha = clamp(light.a, 0.0, 1.0);
     vec3 straight = alpha > 0.0 ? light.rgb / alpha : vec3(0.0);
 

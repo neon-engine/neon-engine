@@ -6,10 +6,10 @@ taken from anywhere, and all of it is small: the whole of it is a few
 kilobytes.
 
 models/kit/    Pieces a level is put together from, each a GLB of a few
-               boxes, in metres, standing on its origin: a wall, a floor
+               boxes, in meters, standing on its origin: a wall, a floor
                tile, a column, a crate, a wall with a doorway, a target, a
                supply crate, a blaster, and a small target. Every piece
-               takes its colours from one image, `colormap.png` next to
+               takes its colors from one image, `colormap.png` next to
                them, which it names as a glTF names a texture, so that the
                tests see models that share a texture
                (tests/runtime-prototype, tests/runtime-sharing).
@@ -55,10 +55,10 @@ def write_png(path, width, height, pixel):
     )
 
 
-# The kit. The colours of the pieces, each a pixel of colormap.png, which is
+# The kit. The colors of the pieces, each a pixel of colormap.png, which is
 # four pixels wide and two high.
 
-COLOURS = {
+COLORS = {
     "wall": (150, 155, 190),
     "frame": (85, 90, 112),
     "crate": (45, 50, 140),
@@ -68,11 +68,11 @@ COLOURS = {
     "supply": (110, 130, 90),
     "floor": (160, 162, 185),
 }
-COLOUR_NAMES = list(COLOURS)
+COLOR_NAMES = list(COLORS)
 COLORMAP_WIDTH = 4
 COLORMAP_HEIGHT = 2
 
-# Each piece as boxes: the colour, then the least and the most of x, y, and z.
+# Each piece as boxes: the color, then the least and the most of x, y, and z.
 PIECES = {
     "wall": [("wall", (-0.1, 0.0, -0.5), (0.1, 1.0, 0.5))],
     # a tile has no thickness to speak of: its top lies at the height of its origin
@@ -99,7 +99,7 @@ PIECES = {
     "target-small": [("red", (-0.05, -0.1, -0.1), (0.05, 0.1, 0.1))],
 }
 
-# each face of a box as its outward normal and its four corners, anticlockwise
+# each face of a box as its outward normal and its four corners, counterclockwise
 # seen from outside; 0 is the least of an axis and 1 the most
 FACES = [
     ((0.0, 0.0, 1.0), ((0, 0, 1), (1, 0, 1), (1, 1, 1), (0, 1, 1))),
@@ -120,10 +120,10 @@ def write_piece(path, name, boxes):
     normals = []
     coordinates = []
     indices = []
-    for colour, least, most in boxes:
-        # the middle of the pixel of the colour, so that every corner of
-        # the box reads that pixel and nothing of its neighbours
-        number = COLOUR_NAMES.index(colour)
+    for color, least, most in boxes:
+        # the middle of the pixel of the color, so that every corner of
+        # the box reads that pixel and nothing of its neighbors
+        number = COLOR_NAMES.index(color)
         u = (number % COLORMAP_WIDTH + 0.5) / COLORMAP_WIDTH
         v = (number // COLORMAP_WIDTH + 0.5) / COLORMAP_HEIGHT
         for normal, corners in FACES:
@@ -166,7 +166,7 @@ def write_piece(path, name, boxes):
             "pbrMetallicRoughness": {"baseColorTexture": {"index": 0}, "metallicFactor": 0.0, "roughnessFactor": 1.0},
         }],
         "textures": [{"source": 0, "sampler": 0}],
-        # nearest, so that a pixel of the image is one colour to its edge
+        # nearest, so that a pixel of the image is one color to its edge
         "samplers": [{"magFilter": 9728, "minFilter": 9728}],
         "images": [{"uri": "colormap.png"}],
         "accessors": [
@@ -196,7 +196,7 @@ def write_piece(path, name, boxes):
 
 kit = ASSETS / "models/kit"
 write_png(kit / "colormap.png", COLORMAP_WIDTH, COLORMAP_HEIGHT,
-          lambda x, y: COLOURS[COLOUR_NAMES[y * COLORMAP_WIDTH + x]])
+          lambda x, y: COLORS[COLOR_NAMES[y * COLORMAP_WIDTH + x]])
 for piece, piece_boxes in PIECES.items():
     write_piece(kit / f"{piece}.glb", piece, piece_boxes)
 
@@ -217,7 +217,7 @@ def brick(x, y):
 
 
 def concrete(x, y):
-    # grey, with a darker line along the left and the top of every repeat
+    # gray, with a darker line along the left and the top of every repeat
     if x == 0 or y == 0:
         return 110, 110, 112
     return 160, 160, 162

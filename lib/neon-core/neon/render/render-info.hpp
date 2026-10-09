@@ -23,8 +23,8 @@ namespace neon
     ModelFit fit = ModelFit::None;
 
     /// A mesh built at run time, in place of a model file: by a Geometry
-    /// component, a tool, or an importer. Drawn as it is, in metres, without
-    /// the centring and scaling a model from a file gets. Shared, so that
+    /// component, a tool, or an importer. Drawn as it is, in meters, without
+    /// the centering and scaling a model from a file gets. Shared, so that
     /// the physics may hold the same mesh.
     std::shared_ptr<const MeshData> mesh;
 

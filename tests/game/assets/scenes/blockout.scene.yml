@@ -2,8 +2,8 @@
 #
 #   NeonRuntime --scene assets://scenes/blockout.scene.yml
 #
-# Every piece is a Geometry in metres, drawn by its Renderable with the pbr
-# shader and a texture that repeats once a metre, and collided with through a
+# Every piece is a Geometry in meters, drawn by its Renderable with the pbr
+# shader and a texture that repeats once a meter, and collided with through a
 # Collider of kind mesh that takes the same shape, but for the crate and the
 # platform, which are boxes with a box for a collider. The platform is not a
 # plane: a plane has no thickness, so its edge is nothing the player can be
@@ -24,7 +24,7 @@ entities:
         ambient: [0.25, 0.25, 0.28]
         diffuse: [0.9, 0.9, 0.85]
 
-  # a room 8 metres square and 3 high, seen from within: a prism with its
+  # a room 8 meters square and 3 high, seen from within: a prism with its
   # faces pointing inward, floor and ceiling included
   - name: room
     components:
@@ -93,7 +93,7 @@ entities:
       Geometry:
         shape: box
         size: [1, 1, 1]
-        texels_per_metre: 1
+        texels_per_meter: 1
       Renderable:
         shader: engine://shaders/pbr
         textures: [assets://textures/wood.png]

@@ -4,7 +4,7 @@
 # turns it about y at 180 degrees a second. At a time step of 0.05 s the
 # first frame shows the quad turned by 9 degrees, still green in the middle
 # of the frame; the tenth frame shows it turned by 90, edge on, so the
-# middle shows the black behind it. No hash is recorded: the colours are
+# middle shows the black behind it. No hash is recorded: the colors are
 # plain and read within 2 of each channel.
 
 include("${CMAKE_CURRENT_LIST_DIR}/../../cmake/scripts/run-application.cmake")
@@ -30,7 +30,7 @@ expect_no_output("[critical]")
 # scene uses, the one script of the game of the tests
 expect_output("Scripts under assets:// declare 1 components and 1 systems")
 
-# expect_pixel(<what> <x> <y> <red> <green> <blue>): the colour of a pixel of
+# expect_pixel(<what> <x> <y> <red> <green> <blue>): the color of a pixel of
 # the image FRAME, each channel within 2 of what is given
 function(expect_pixel WHAT X Y RED GREEN BLUE)
   execute_process(

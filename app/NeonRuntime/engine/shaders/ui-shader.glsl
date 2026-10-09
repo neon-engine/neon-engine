@@ -1,6 +1,6 @@
-// What a fragment shader of the user interface is given, and the colour the
-// engine draws. The shader of the engine, flat.frag, writes that colour as
-// it is. A shader of an element includes this file, asks for the colour with
+// What a fragment shader of the user interface is given, and the color the
+// engine draws. The shader of the engine, flat.frag, writes that color as
+// it is. A shader of an element includes this file, asks for the color with
 // ui_base(), and writes what it makes of it:
 //
 //     #version 450
@@ -20,7 +20,7 @@
 //     }
 //
 // The members of `Values` are the names a file writes under `shader_values`.
-// A colour is written to `frag_color` with its alpha multiplied into it.
+// A color is written to `frag_color` with its alpha multiplied into it.
 
 #include "ui-frame.glsl"
 
@@ -32,7 +32,7 @@ layout (location = 4) in vec2 local;
 
 layout (location = 0) out vec4 frag_color;
 
-// The texture, with alpha multiplied into its colours, and the sampler it
+// The texture, with alpha multiplied into its colors, and the sampler it
 // is read through, bound apart so that every target of the shaders binds
 // what the source says: texture(sampler2D(image, image_sampler), uv).
 layout (set = 0, binding = 0) uniform texture2D image;
@@ -145,7 +145,7 @@ float ui_noise()
     return fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453);
 }
 
-// The colour of a gradient at a point of the box, with alpha multiplied in.
+// The color of a gradient at a point of the box, with alpha multiplied in.
 vec4 ui_gradient(Shape shape, vec2 point)
 {
     int count = int(shape.gradient.z);
@@ -299,7 +299,7 @@ vec4 ui_shape(Shape shape, vec4 texel, vec4 tint, float distance_value)
     return result;
 }
 
-// The colour the engine draws for the pixel, with alpha multiplied in.
+// The color the engine draws for the pixel, with alpha multiplied in.
 vec4 ui_base()
 {
     // read where every pixel passes, which is what working out how fast
@@ -309,7 +309,7 @@ vec4 ui_base()
     // a corner that reads no texture is white where the texture would be
     vec4 texel = mix(vec4(1.0), sampled, clamp(textured, 0.0, 1.0));
 
-    // Alpha is multiplied into the colour here. What is written is then
+    // Alpha is multiplied into the color here. What is written is then
     // added to what is behind it, less the part this pixel covers.
     vec4 tint = vec4(color.rgb * color.a, color.a);
 

@@ -30,7 +30,7 @@ namespace neon
 
     /// How much of a metal the surface is, from 0 (a dielectric: plastic,
     /// wood, stone) to 1 (a metal), as glTF describes it. A metal reflects
-    /// the light in its own colour and has no diffuse colour; without an
+    /// the light in its own color and has no diffuse color; without an
     /// environment to reflect it is dark, which is why 0 is the default here
     /// where glTF's is 1.
     float metallic = 0.0f;
@@ -50,12 +50,12 @@ namespace neon
 
     /// What the emissive light is multiplied by, in linear light, so that
     /// a surface can be brighter than white: 4 gives four times the light
-    /// of its colour. 0 turns the glow off, also the one of a model file.
+    /// of its color. 0 turns the glow off, also the one of a model file.
     /// Multiplied with the file's `KHR_materials_emissive_strength`.
     float emissive_strength = 1.0f;
 
     /// Virtual path of a texture of what the surface gives off, which the
-    /// emissive colour multiplies, or `surface://<name>` for a render
+    /// emissive color multiplies, or `surface://<name>` for a render
     /// target. Empty takes the model file's, when it has one.
     std::string emissive_texture;
 
@@ -63,7 +63,7 @@ namespace neon
     /// and kept in a texture, which lies over the mesh by the second set of
     /// coordinates of its vertices, `Vertex::lightmap_coords`. The `unlit`
     /// shader multiplies it into what it shows, and the shaders that light
-    /// add it to the light of the lights. Written as colours, in sRGB, and
+    /// add it to the light of the lights. Written as colors, in sRGB, and
     /// read without smaller copies and without repeating. A path of the file
     /// system, or `image://<name>` for one that was made at run time. Empty
     /// for none.

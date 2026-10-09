@@ -41,8 +41,8 @@ namespace neon
     std::vector<unsigned char> coverage;
 
     /// Red, green, blue, and alpha for each pixel of a glyph that brings
-    /// colours of its own, such as an emoji. Alpha is not multiplied into
-    /// the colours. Empty for every other glyph, which has the colour of
+    /// colors of its own, such as an emoji. Alpha is not multiplied into
+    /// the colors. Empty for every other glyph, which has the color of
     /// the text.
     std::vector<unsigned char> colors;
 

@@ -25,7 +25,7 @@ namespace neon
   // ReSharper disable once CppInconsistentNaming
   struct VK_ShadowFit
   {
-    /// How far the shadows reach when nothing says, in metres: the default
+    /// How far the shadows reach when nothing says, in meters: the default
     /// of the setting `rendering.shadow_distance`.
     static constexpr float kDistance = 50.0f;
 
@@ -49,20 +49,20 @@ namespace neon
       float from,
       float to);
 
-    /// Where the light looks from, for a box around `centre` of `radius`:
-    /// a view along `direction` with the centre at the origin of its plane,
+    /// Where the light looks from, for a box around `center` of `radius`:
+    /// a view along `direction` with the center at the origin of its plane,
     /// standing back from it by `radius` and `reach`, and up along the
     /// world's y unless the light is vertical, when it is along x.
-    [[nodiscard]] static glm::mat4 View(const glm::vec3 &direction, const glm::vec3 &centre, float radius, float reach);
+    [[nodiscard]] static glm::mat4 View(const glm::vec3 &direction, const glm::vec3 &center, float radius, float reach);
 
-    /// The view and the projection of the light for a box around `centre`
+    /// The view and the projection of the light for a box around `center`
     /// of `radius` across and along the light, reaching `reach` further
     /// back towards the light for casters above, moved by whole texels of
     /// a map `map_size` texels wide. The depth runs from -1 to 1 as glm has
     /// it, and the render system moves it onto what Vulkan expects.
     [[nodiscard]] static glm::mat4 BoxViewProjection(
       const glm::vec3 &direction,
-      const glm::vec3 &centre,
+      const glm::vec3 &center,
       float radius,
       float reach,
       float map_size);
