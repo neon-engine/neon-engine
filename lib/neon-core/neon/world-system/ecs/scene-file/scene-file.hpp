@@ -66,6 +66,11 @@ namespace neon
     // a spawn does not read its file again, and forgotten by the next load
     PrefabFiles _prefabs;
 
+    // the prefabs whose spawns were found to lack a component another
+    // needs, which is said for the first spawn and not for every nail;
+    // every spawn is mended all the same
+    std::vector<std::string> _lacking_said;
+
     // whether the last read found no document: no file, or no YAML
     bool _could_not_be_read = false;
 
@@ -92,7 +97,9 @@ namespace neon
     /// entity whose name is there already is read onto that entity, which
     /// is how a scene changes the children of a prefab; otherwise such a
     /// name is reported. A name twice in the list itself is always
-    /// reported.
+    /// reported. When `warnings` is handed in, which the top of a scene
+    /// does, every entity is checked for what it needs once it is read in
+    /// full, see CheckNeeds.
     void ReadEntities(
       const DataValue &list,
       const std::string &document,
@@ -101,7 +108,8 @@ namespace neon
       Entity parent,
       bool onto_existing,
       PrefabFiles &prefabs,
-      std::vector<std::string> &errors) const;
+      std::vector<std::string> &errors,
+      std::vector<std::string> *warnings = nullptr) const;
 
     /// Takes a child that a prefab gave away, written as `- shade: ~` among
     /// the children. `item` is what was written, for its line. A child that
@@ -116,7 +124,9 @@ namespace neon
       bool onto_existing,
       std::vector<std::string> &errors) const;
 
-    void ReadEntity(
+    /// Reads an entity of a list below a parent. Returns the entity, or
+    /// No_Entity when none was made, which was reported.
+    Entity ReadEntity(
       const DataValue &value,
       const std::string &document,
       const std::string &label,
@@ -165,6 +175,27 @@ namespace neon
       const DataValue &component,
       EntityStore &store,
       Entity entity) const;
+
+    /// Checks that an entity, and every entity below it, has what its
+    /// components need. A Renderable, a Camera, or a Light without a
+    /// Transform would be drawn nowhere, so it is given a Transform of
+    /// its defaults, and `warnings` says so. A Rope or a Geometry without a
+    /// Renderable is added to `errors`, since a Renderable of its defaults
+    /// has no shader and the renderer would refuse it. It is asked once the
+    /// entity is read in full, its prefab and what is written on top,
+    /// children included. `written` is what was written for the entity,
+    /// for the line of a message, and `where` names it.
+    void CheckNeeds(
+      EntityStore &store,
+      Entity entity,
+      const DataValue &written,
+      const std::string &document,
+      const std::string &where,
+      std::vector<std::string> &errors,
+      std::vector<std::string> &warnings) const;
+
+    /// Logs what was mended while the scene was read, as warnings.
+    void ReportWarnings(const std::vector<std::string> &warnings) const;
 
     /// The names of the components the file can hold, for a message.
     [[nodiscard]] std::string KnownComponents() const;

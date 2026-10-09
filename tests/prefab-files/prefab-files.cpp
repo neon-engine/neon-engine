@@ -840,6 +840,89 @@ namespace
     EXPECT_THAT(saved, Not(HasSubstr("post")));
   }
 
+  // components that need each other
+
+  TEST_F(PrefabFilesTest, APrefabWithoutATransformIsFineWhereTheSceneGivesItOne)
+  {
+    WritePrefab(
+      "crate",
+      "entity:\n"
+      "  components:\n"
+      "    Renderable:\n"
+      "      shader: engine://shaders/basic-lit\n"
+      "  children:\n"
+      "    - name: bulb\n"
+      "      components:\n"
+      "        Light: Default\n");
+
+    // what is asked is the entity as it is once read in full, the prefab
+    // and what the scene writes on top of it, its children included
+    Load(
+      "entities:\n"
+      "  - name: crate\n"
+      "    prefab: assets://prefabs/crate.prefab.yml\n"
+      "    components:\n"
+      "      Transform:\n"
+      "        position: [1, 2, 3]\n"
+      "    children:\n"
+      "      - name: bulb\n"
+      "        components:\n"
+      "          Transform: Default\n");
+
+    EXPECT_EQ(_logger->Count(LogLevel::Warn), 0u) << _logger->Messages(LogLevel::Warn);
+    EXPECT_EQ(_world.store.Get<Transform>(Find("crate"))->position, glm::vec3(1.0f, 2.0f, 3.0f));
+  }
+
+  TEST_F(PrefabFilesTest, APrefabWithoutATransformIsGivenOneWhereItIsPlacedWithout)
+  {
+    WritePrefab(
+      "crate",
+      "entity:\n"
+      "  components:\n"
+      "    Renderable:\n"
+      "      shader: engine://shaders/basic-lit\n"
+      "  children:\n"
+      "    - name: bulb\n"
+      "      components:\n"
+      "        Light: Default\n");
+
+    Load(
+      "entities:\n"
+      "  - name: crate\n"
+      "    prefab: assets://prefabs/crate.prefab.yml\n");
+
+    // a child the prefab gave, which the scene does not write, is said at
+    // the line of the entity the prefab was placed on
+    const std::string said = _logger->Messages(LogLevel::Warn);
+    EXPECT_THAT(said, HasSubstr(
+                  "test.scene.yml:2: entity 'crate' has a Renderable and no Transform; one was added at the origin"));
+    EXPECT_THAT(said, HasSubstr(
+                  "test.scene.yml:2: child 'bulb' of entity 'crate' has a Light and no Transform; "
+                  "one was added where its parent is"));
+    EXPECT_TRUE(_world.store.Has<Transform>(Find("crate")));
+    EXPECT_TRUE(_world.store.Has<Transform>(Find("crate/bulb")));
+  }
+
+  TEST_F(PrefabFilesTest, EverySpawnWithoutATransformIsGivenOneAndTheFirstSaysSo)
+  {
+    WritePrefab("nail", "entity:\n  components:\n    Renderable:\n      shader: engine://shaders/basic-lit\n");
+    Load("entities: []\n");
+    _logger->Clear();
+
+    const Entity first = _scene.Spawn(_world.store, "assets://prefabs/nail.prefab.yml", No_Entity, DataValue{});
+    const Entity second = _scene.Spawn(_world.store, "assets://prefabs/nail.prefab.yml", No_Entity, DataValue{});
+
+    ASSERT_NE(first, No_Entity);
+    ASSERT_NE(second, No_Entity);
+    EXPECT_TRUE(_world.store.Has<Transform>(first));
+    EXPECT_TRUE(_world.store.Has<Transform>(second));
+    EXPECT_THAT(_logger->Messages(LogLevel::Warn), HasSubstr(
+                  "spawn of assets://prefabs/nail.prefab.yml: the spawned entity has a Renderable and no Transform; "
+                  "one was added at the origin"));
+    EXPECT_EQ(_logger->Count(LogLevel::Warn), 1u) << _logger->Messages(LogLevel::Warn);
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 0u) << _logger->Messages(LogLevel::Error);
+  }
+
   // spawning
 
   TEST_F(PrefabFilesTest, SpawnsAPrefabAtTheTopAsThePrefabDescribesIt)

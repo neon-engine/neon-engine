@@ -65,6 +65,14 @@ privately, so the compiler refuses it anywhere else.
 | `Persistent` | The entity stays when the world changes scene. See [scenes.md](scenes.md#changing-the-scene) | same |
 | `SceneExit` | The scene the world changes to when a body enters the entity's `Trigger` | same |
 
+A system works on the entities that carry all of the components it asks
+for, and passes over the others without a word. `RenderSubmission` asks for
+a `Transform` with every `Renderable`, `Camera`, and `Light`, so one of
+them without a `Transform` would be drawn nowhere. A scene or a prefab
+that writes one so has a `Transform` of its defaults added when it is
+loaded, with a warning, see
+[scenes.md](scenes.md#components-that-need-another).
+
 ### Systems
 
 A frame runs them in this order.

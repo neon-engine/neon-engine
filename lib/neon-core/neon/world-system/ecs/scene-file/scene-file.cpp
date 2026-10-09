@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <format>
 
+#include <neon/common/transform.hpp>
 #include <neon/world-system/ecs/components/prefab.hpp>
 
 namespace neon
@@ -48,6 +49,28 @@ namespace neon
 
       taken = name;
       return true;
+    }
+
+    /// Whether the entity has the component, turned on or off: one that is
+    /// off needs what it needs once it is turned on, as in a pool.
+    bool Carries(EntityStore &store, const Entity entity, const std::string &component)
+    {
+      const auto id = store.FindComponent(component);
+      return id != No_Component && store.GetComponentData(entity, id) != nullptr;
+    }
+
+    /// The child written under a name in what was written for an entity,
+    /// or nullptr when it is not written there, as a child a prefab gave.
+    const DataValue *WrittenChild(const DataValue &written, const std::string &name)
+    {
+      const auto *children = written.Find("children");
+      if (children == nullptr || !children->IsList()) { return nullptr; }
+
+      for (const auto &item : children->GetItems())
+      {
+        if (NameOf(item) == name) { return &item; }
+      }
+      return nullptr;
     }
 
     /// The names of the entities below a parent, joined for a message.
@@ -126,9 +149,11 @@ namespace neon
     // the prefabs of the scene before are forgotten, so that a file that
     // changed is read anew
     _prefabs.Clear();
+    _lacking_said.clear();
     _could_not_be_read = false;
 
     std::vector<std::string> errors;
+    std::vector<std::string> warnings;
     DataValue document;
 
     // what was read ahead of this path is not read again
@@ -170,12 +195,15 @@ namespace neon
                           DataValue::Describe(entities->GetKind())));
         } else
         {
-          ReadEntities(*entities, _path, "", store, No_Entity, false, _prefabs, errors);
+          ReadEntities(*entities, _path, "", store, No_Entity, false, _prefabs, errors, &warnings);
         }
       }
 
       reader.Finish();
     }
+
+    // what was mended is no problem of the scene: it is said, and not counted
+    ReportWarnings(warnings);
 
     if (errors.empty()) { return true; }
 
@@ -246,6 +274,20 @@ namespace neon
     ReadComponents(reader, written, store, entity);
     reader.Finish();
 
+    // what a prefab lacks is mended for every spawn, and said for its
+    // first, not for every nail
+    const std::size_t errors_before = errors.size();
+    std::vector<std::string> warnings;
+    CheckNeeds(store, entity, written, reader.GetDocument(), reader.GetWhere(), errors, warnings);
+    if (std::ranges::find(_lacking_said, path) != _lacking_said.end())
+    {
+      errors.resize(errors_before);
+    } else if (errors.size() > errors_before || !warnings.empty())
+    {
+      _lacking_said.push_back(path);
+      ReportWarnings(warnings);
+    }
+
     if (!errors.empty())
     {
       ReportProblems(errors, std::format("The spawn of {}", path), "the entity holds what could be read");
@@ -261,7 +303,8 @@ namespace neon
     const Entity parent,
     const bool onto_existing,
     PrefabFiles &prefabs,
-    std::vector<std::string> &errors) const
+    std::vector<std::string> &errors,
+    std::vector<std::string> *warnings) const
   {
     std::vector<std::string> names;
     std::size_t number = 1;
@@ -292,7 +335,17 @@ namespace neon
         continue;
       }
 
-      ReadEntity(item, document, label, store, parent, onto_existing, prefabs, errors);
+      const Entity entity = ReadEntity(item, document, label, store, parent, onto_existing, prefabs, errors);
+
+      // An entity at the top of a scene is whole once it is read: its
+      // prefab, what is written on top, and its children, those a prefab
+      // gave included. Only then is it known what it lacks.
+      if (warnings != nullptr && entity != No_Entity)
+      {
+        const std::string name = NameOf(item);
+        const std::string where = name.empty() ? label : "entity '" + name + "'";
+        CheckNeeds(store, entity, item, document, where, errors, *warnings);
+      }
     }
   }
 
@@ -333,7 +386,7 @@ namespace neon
                     : std::format("{} is not known. Known are: {}", where, known));
   }
 
-  void SceneFile::ReadEntity(
+  Entity SceneFile::ReadEntity(
     const DataValue &value,
     const std::string &document,
     const std::string &label,
@@ -370,7 +423,7 @@ namespace neon
         if (!onto_existing)
         {
           reader.Report(value, std::format("{} shares its name with another entity next to it", where));
-          return;
+          return No_Entity;
         }
 
         entity = sibling;
@@ -382,6 +435,7 @@ namespace neon
 
     ReadOnto(reader, value, store, entity, onto_existing, prefabs);
     reader.Finish();
+    return entity;
   }
 
   void SceneFile::ReadOnto(
@@ -551,6 +605,81 @@ namespace neon
       if (const auto id = store.FindComponent(name); id != No_Component) { store.SetEnabled(entity, id, enabled); }
     }
     component_reader.Finish();
+  }
+
+  void SceneFile::CheckNeeds(
+    EntityStore &store,
+    const Entity entity,
+    const DataValue &written,
+    const std::string &document,
+    const std::string &where,
+    std::vector<std::string> &errors,
+    std::vector<std::string> &warnings) const
+  {
+    const DataReader problems(written, document, where, errors);
+    const DataReader mended(written, document, where, warnings);
+
+    // What is drawn without a Transform would be drawn nowhere, which is
+    // never what is meant: it is given one of its defaults, at its parent's
+    // place, and the warning says where to write it. One is enough for all.
+    const bool can_place = store.FindComponent("Transform") != No_Component;
+    const auto placed = [&](const std::string &component)
+    {
+      if (!Carries(store, entity, component) || Carries(store, entity, "Transform")) { return; }
+
+      if (!can_place)
+      {
+        problems.Report(written, std::format("{} has a {} and no Transform, so it is drawn nowhere", where, component));
+        return;
+      }
+
+      store.Set(entity, Transform{});
+      const std::string at = store.GetParent(entity) == No_Entity ? "at the origin" : "where its parent is";
+      mended.Report(written, std::format("{} has a {} and no Transform; one was added {}", where, component, at));
+    };
+
+    // what RenderSubmission asks for
+    placed("Renderable");
+    placed("Camera");
+    placed("Light");
+
+    // A Renderable of its defaults has no shader, which the renderer
+    // refuses, so one that is missing is a mistake of the recipe, as a
+    // name that is misspelled is: the entity is kept as it is written.
+    const auto lacks = [&](const std::string &component, const std::string &follows)
+    {
+      if (!Carries(store, entity, component) || Carries(store, entity, "Renderable")) { return; }
+
+      problems.Report(written, std::format("{} has a {} and no Renderable, so {}", where, component, follows));
+    };
+
+    // what RopeDrawing and GeometryBuilding ask for
+    lacks("Rope", "the rope is drawn nowhere");
+
+    // a Geometry without a Renderable is the shape of a Collider that is
+    // not seen, such as an invisible wall; without either it does nothing
+    if (!Carries(store, entity, "Collider")) { lacks("Geometry", "its shape is drawn nowhere"); }
+
+    std::size_t number = 1;
+    for (const auto child : store.GetChildren(entity))
+    {
+      const std::string name = store.GetName(child);
+      const std::string child_where = name.empty()
+                                        ? std::format("child {} of {}", number, where)
+                                        : std::format("child '{}' of {}", name, where);
+      number++;
+
+      // a child that is not written here, one a prefab gave, is said at
+      // the line of the entity it is below
+      const auto *child_written = name.empty() ? nullptr : WrittenChild(written, name);
+      CheckNeeds(
+        store, child, child_written != nullptr ? *child_written : written, document, child_where, errors, warnings);
+    }
+  }
+
+  void SceneFile::ReportWarnings(const std::vector<std::string> &warnings) const
+  {
+    for (const auto &warning : warnings) { _logger->Warn("{}", warning); }
   }
 
   std::string SceneFile::KnownComponents() const

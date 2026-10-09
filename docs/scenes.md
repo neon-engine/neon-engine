@@ -544,6 +544,39 @@ aliases, and tags are refused, are in
 | The name of an entity is unique next to its siblings, and has no `/` | `player/camera` finds a child by the names from the top |
 | `scale` takes one number for all three axes | `scale: 2` is `[2, 2, 2]` |
 | Components are written under the name they were registered with | `Transform` in a file is `Transform` in code, see [reflection.md](reflection.md) |
+| What is drawn without a `Transform` is given one, with a warning | `demo.scene.yml:12: entity 'bear' has a Renderable and no Transform; one was added at the origin`, see below |
+
+### Components that need another
+
+A system works on the entities that carry every component it asks for, so a
+component without the one it goes with is passed over, and nothing would
+say why: a model without a `Transform` is simply not there. Drawing
+something that is placed nowhere makes no sense, so the loader gives a
+`Renderable`, a `Camera`, or a `Light` without a `Transform` one of its
+defaults, which puts it where its parent is, at the origin at the top of
+the scene, and logs a warning with the line where the `Transform` belongs.
+What cannot be mended that way is a problem of the scene, logged as an
+error and counted with the others, and the game goes on.
+
+| Component | Needs | Without it |
+|---|---|---|
+| `Renderable` | `Transform` | A `Transform` of its defaults is added, with a warning |
+| `Camera` | `Transform` | The same |
+| `Light` | `Transform` | The same |
+| `Rope` | `Renderable` | A problem of the scene: the rope is drawn nowhere |
+| `Geometry` | `Renderable`, or a `Collider` that takes its shape | A problem of the scene: its shape is drawn nowhere |
+
+| Decision | Reason |
+|---|---|
+| A missing `Transform` is added, and the warning says so | An entity that is drawn is always drawn somewhere. The warning points at the line, so that the recipe is corrected |
+| A warning is not a problem of the scene: the `has N problems` line counts errors alone, and the scene was read in full | Nothing was left out. What is counted is what could not be read |
+| A missing `Renderable` is not added | A `Renderable` of its defaults has no shader, which the renderer refuses, so one made up would only move the error to the renderer |
+| `Save` writes the `Transform` that was added | The world is what is saved. A scene that is saved again has it written, and the warning is gone |
+| The entity is asked once it is read in full: its prefab, what the scene writes on top, and its children, those the prefab gave included | A prefab may leave the `Transform` to the scene that places it |
+| The message has the line of the entity, or of the nearest entity above it that the scene writes, for a child that only a prefab gave | That is where the missing component is written |
+| A component that is turned off still needs what it needs | It is drawn once it is turned on, as an instance of a pool is |
+| Every spawn is given its `Transform`, and the first spawn of each prefab says so | A nail gun spawns many nails of one prefab |
+| An entity that code makes is not asked | Only a recipe has a line to point to; code that makes an entity gives it what it needs |
 
 ## When the engine writes
 

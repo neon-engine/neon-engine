@@ -21,6 +21,7 @@
 #include <neon/testing/memory-file-system.hpp>
 #include <neon/testing/recording-logger.hpp>
 #include <neon/world-system/ecs/components/camera.hpp>
+#include <neon/world-system/ecs/components/geometry.hpp>
 #include <neon/world-system/ecs/components/light.hpp>
 #include <neon/world-system/ecs/components/persistent.hpp>
 #include <neon/world-system/ecs/components/scene-exit.hpp>
@@ -547,6 +548,114 @@ namespace
     const std::string said = _logger->Messages(LogLevel::Error);
     EXPECT_THAT(said, HasSubstr("'entites' is not known"));
     EXPECT_THAT(said, HasSubstr("The scene assets://scenes/test.scene.yml has 1 problem, the world holds what could be read"));
+  }
+
+  // components that need each other
+
+  TEST_F(SceneFilesTest, ARenderableWithoutATransformIsGivenOneAndTheWarningHasItsLine)
+  {
+    Write(
+      "entities:\n"
+      "  - name: bear\n"
+      "    components:\n"
+      "      Renderable:\n"
+      "        model: assets://models/bear.obj\n"
+      "        shader: engine://shaders/basic-lit\n");
+
+    // what was mended is no problem of the scene: the scene was read in full
+    EXPECT_TRUE(_scene.Populate(_world.store)) << _logger->Messages(LogLevel::Error);
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 0u) << _logger->Messages(LogLevel::Error);
+    EXPECT_THAT(_logger->Messages(LogLevel::Warn), HasSubstr(
+                  "test.scene.yml:2: entity 'bear' has a Renderable and no Transform; one was added at the origin"));
+
+    const Entity bear = _world.store.FindEntity("bear");
+    ASSERT_NE(bear, No_Entity);
+    ASSERT_TRUE(_world.store.Has<Transform>(bear));
+    EXPECT_EQ(_world.store.Get<Transform>(bear)->position, glm::vec3(0.0f));
+    EXPECT_EQ(_world.store.Get<Transform>(bear)->scale, glm::vec3(1.0f));
+  }
+
+  TEST_F(SceneFilesTest, ACameraOrALightBelowAnotherEntityIsGivenATransformWhereItsParentIs)
+  {
+    Write(
+      "entities:\n"
+      "  - name: player\n"
+      "    components:\n"
+      "      Transform: Default\n"
+      "    children:\n"
+      "      - name: camera\n"
+      "        components:\n"
+      "          Camera: Default\n"
+      "      - name: torch\n"
+      "        components:\n"
+      "          Light: Default\n");
+
+    EXPECT_TRUE(_scene.Populate(_world.store)) << _logger->Messages(LogLevel::Error);
+
+    const std::string said = _logger->Messages(LogLevel::Warn);
+    EXPECT_THAT(said, HasSubstr(
+                  "test.scene.yml:6: child 'camera' of entity 'player' has a Camera and no Transform; "
+                  "one was added where its parent is"));
+    EXPECT_THAT(said, HasSubstr(
+                  "test.scene.yml:9: child 'torch' of entity 'player' has a Light and no Transform; "
+                  "one was added where its parent is"));
+    EXPECT_TRUE(_world.store.Has<Transform>(_world.store.FindEntity("player/camera")));
+    EXPECT_TRUE(_world.store.Has<Transform>(_world.store.FindEntity("player/torch")));
+  }
+
+  TEST_F(SceneFilesTest, ARenderableThatIsTurnedOffIsGivenATransformToo)
+  {
+    Write(
+      "entities:\n"
+      "  - name: hidden\n"
+      "    components:\n"
+      "      Renderable:\n"
+      "        shader: engine://shaders/basic-lit\n"
+      "        enabled: false\n");
+
+    EXPECT_TRUE(_scene.Populate(_world.store)) << _logger->Messages(LogLevel::Error);
+
+    // it is drawn once a pool or a script turns it on
+    EXPECT_THAT(_logger->Messages(LogLevel::Warn), HasSubstr("entity 'hidden' has a Renderable and no Transform"));
+    EXPECT_TRUE(_world.store.Has<Transform>(_world.store.FindEntity("hidden")));
+  }
+
+  TEST_F(SceneFilesTest, ARenderableWithATransformIsFine)
+  {
+    Write(
+      "entities:\n"
+      "  - name: bear\n"
+      "    components:\n"
+      "      Transform: Default\n"
+      "      Renderable:\n"
+      "        shader: engine://shaders/basic-lit\n");
+
+    EXPECT_TRUE(_scene.Populate(_world.store)) << _logger->Messages(LogLevel::Error);
+    EXPECT_EQ(_logger->Count(LogLevel::Warn), 0u) << _logger->Messages(LogLevel::Warn);
+  }
+
+  TEST_F(SceneFilesTest, ATransformThatWasAddedIsSaved)
+  {
+    Write("entities:\n  - name: bear\n    components:\n      Renderable:\n        shader: engine://shaders/basic-lit\n");
+    _scene.Populate(_world.store);
+
+    ASSERT_TRUE(_scene.Save(_world.store, "saved", "user://saved.scene.yml"));
+
+    EXPECT_THAT(ReadFile("user://saved.scene.yml"), HasSubstr("      Transform: Default\n"));
+  }
+
+  TEST_F(SceneFilesTest, AGeometryWithoutARenderableIsAProblemAndIsNotMended)
+  {
+    _world.store.Register<neon::Geometry>("Geometry");
+
+    // a Renderable of its defaults has no shader, which the renderer refuses
+    EXPECT_THAT(
+      ProblemsOf("entities:\n  - name: box\n    components:\n      Transform: Default\n      Geometry: Default\n"),
+      HasSubstr("test.scene.yml:2: entity 'box' has a Geometry and no Renderable, so its shape is drawn nowhere"));
+    EXPECT_FALSE(_world.store.Has<Renderable>(_world.store.FindEntity("box")));
+    EXPECT_TRUE(_logger->Contains(
+      LogLevel::Error, "The scene assets://scenes/test.scene.yml has 1 problem, the world holds what could be read"))
+      << _logger->Messages(LogLevel::Error);
   }
 
   // saving
