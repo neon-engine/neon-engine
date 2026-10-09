@@ -468,6 +468,7 @@ if (NEON_BUILD_TESTS)
           neon/testing/recording-logging-context.hpp
           neon/testing/mock-script-context.hpp
           neon/testing/mock-input-system.hpp
+          neon/testing/print-chord.hpp
           neon/testing/mock-render-2d-context.hpp
           neon/testing/mock-render-context.hpp
           neon/testing/mock-ui-system.hpp

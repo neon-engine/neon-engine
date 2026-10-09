@@ -47,6 +47,19 @@ namespace neon::testing
       return state;
     }
 
+    /// Takes the dead zone off every action of the map, so that a stick or
+    /// a trigger reads as far as the test pushes it, whatever the default
+    /// dead zone is.
+    void TakeTheDevicesAsTheyAre()
+    {
+      const std::vector<InputAction> actions = map.GetActions();
+      for (InputAction action : actions)
+      {
+        action.dead_zone = 0.0f;
+        map.Add(action);
+      }
+    }
+
     /// Works the actions out from the state, as a frame does.
     void Refresh()
     {

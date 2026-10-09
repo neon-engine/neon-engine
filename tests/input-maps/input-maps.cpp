@@ -15,6 +15,7 @@
 #include <neon/data/ryml-document-format.hpp>
 #include <neon/input/input-map-file.hpp>
 #include <neon/testing/memory-file-system.hpp>
+#include <neon/testing/print-chord.hpp>
 #include <neon/testing/recording-logger.hpp>
 
 namespace

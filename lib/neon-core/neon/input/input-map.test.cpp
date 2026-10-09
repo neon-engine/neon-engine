@@ -2,6 +2,8 @@
 
 #include <gtest/gtest.h>
 
+#include <neon/testing/print-chord.hpp>
+
 namespace
 {
   using neon::Chord;
@@ -71,6 +73,19 @@ namespace
     EXPECT_TRUE(map.GetStates().front().actions.empty());
   }
 
+  TEST(InputMapTest, PrintsAChordByTheNamesOfItsKeysOrButtons)
+  {
+    // as an input map file writes them, so that a failed expectation on a
+    // binding reads as one
+    EXPECT_EQ(::testing::PrintToString(Chord<Key>{Key::W}), "w");
+    EXPECT_EQ(::testing::PrintToString(Chord<Key>{Key::LeftShift, Key::W}), "[left-shift, w]");
+    EXPECT_EQ(::testing::PrintToString(Chord<Key>{}), "[]");
+    EXPECT_EQ(::testing::PrintToString(Chord<ControllerButton>{ControllerButton::LeftShoulder, ControllerButton::South}),
+              "[left-shoulder, south]");
+    EXPECT_EQ(::testing::PrintToString(std::vector<Chord<Key>>{Key::Space, {Key::LeftControl, Key::Digit1}}),
+              "{ space, [left-control, 1] }");
+  }
+
   TEST(InputMapTest, HasADefaultThatPlaysAsTheEngineDidBeforeAProjectCouldSay)
   {
     const InputMap map = InputMap::Default();
@@ -80,6 +95,7 @@ namespace
     EXPECT_EQ(move->type, InputActionType::Axis2);
     EXPECT_EQ(move->keys, (std::vector<Chord<Key>>{Key::W, Key::S, Key::A, Key::D}));
     EXPECT_EQ(move->stick, Stick::Left);
+    EXPECT_EQ(move->dead_zone, InputAction::default_dead_zone);
 
     const auto *look = map.FindAction("look");
     ASSERT_NE(look, nullptr);
@@ -87,6 +103,7 @@ namespace
     EXPECT_TRUE(look->mouse_motion);
     EXPECT_EQ(look->stick, Stick::Right);
     EXPECT_EQ(look->rate, 600.0f);
+    EXPECT_EQ(look->dead_zone, InputAction::default_dead_zone);
 
     const auto *jump = map.FindAction("jump");
     ASSERT_NE(jump, nullptr);

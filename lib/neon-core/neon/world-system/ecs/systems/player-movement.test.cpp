@@ -57,6 +57,7 @@ namespace
       _store.Register<Collider>("Collider");
       _store.Register<Player>("Player");
       _system.Initialize(_store);
+      _input.TakeTheDevicesAsTheyAre();
     }
 
     /// A player that walks 2 meters a second, runs 3, jumps with 5, steers
@@ -111,7 +112,8 @@ namespace
     /// A frame: the actions are worked out from the keys, and the system
     /// runs. The map is the engine's default, with `move` on W, A, S, D
     /// and the left stick, `look` on the mouse, `jump` on space, and `run`
-    /// on the left shift and the click of the left stick.
+    /// on the left shift and the click of the left stick, but without a
+    /// dead zone, so that a stick reads as far as it is pushed.
     void Update()
     {
       _input.Refresh();
@@ -190,10 +192,9 @@ namespace
 
   TEST_F(PlayerMovementTest, WalksAsFarAsTheStickIsPushed)
   {
-    // the default map takes a quarter off the stick and stretches the rest,
-    // so five eighths of the way reads a half
+    // half the way is half the walking speed
     const Entity player = CreatePlayer();
-    _input.state.SetLeftStick(0.0, -0.625);
+    _input.state.SetLeftStick(0.0, -0.5);
 
     Update();
 

@@ -802,6 +802,7 @@ A mock checks what it is asked to do. A fake does the work in a simple way.
 | `mock-file-system-context.hpp` | `MockFileSystemContext` | `FileSystemContext` |
 | `mock-window-system.hpp` | `MockWindowSystem`, `MockWindowContext` | `WindowSystem`, `WindowContext` |
 | `mock-input-system.hpp` | `MockInputSystem`, and `FakeInputContext` whose state a test sets | `InputSystem`, `InputContext` |
+| `print-chord.hpp` | A `PrintTo` for `Chord`, in `neon`, so that a failed expectation on a binding prints the names of its keys or buttons, `[left-shift, w]` | |
 | `mock-render-context.hpp` | `MockRenderContext` | `RenderContext` |
 | `mock-render-system.hpp` | `MockRenderSystem` | `RenderSystem` |
 | `mock-render-pipeline.hpp` | `MockRenderPipeline` | `RenderPipeline` |

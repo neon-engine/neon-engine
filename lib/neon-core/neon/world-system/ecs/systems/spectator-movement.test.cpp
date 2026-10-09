@@ -54,6 +54,7 @@ namespace
       _store.Register<Transform>("Transform");
       _store.Register<Spectator>("Spectator");
       _system.Initialize(_store);
+      _input.TakeTheDevicesAsTheyAre();
     }
 
     /// A spectator that moves 2 units per second and turns half a degree
@@ -73,7 +74,8 @@ namespace
 
     /// A frame: the actions are worked out from the keys, and the system
     /// runs. The map is the engine's default, with `move` on W, A, S, D and
-    /// the left stick, and `look` on the mouse.
+    /// the left stick, and `look` on the mouse, but without a dead zone, so
+    /// that a stick reads as far as it is pushed.
     void Update(const double delta_time)
     {
       _input.Refresh();
@@ -196,14 +198,13 @@ namespace
 
   TEST_F(SpectatorMovementTest, MovesWithTheLeftStick)
   {
-    // pushed all the way aslant, which the dead zone of the default map
-    // leaves as it is
+    // half the way to the right and a quarter forward
     const Entity spectator = CreateSpectator();
-    _input.state.SetLeftStick(0.6, -0.8);
+    _input.state.SetLeftStick(0.5, -0.25);
 
     Update(1.0);
 
-    ExpectVector(TransformOf(spectator).position, 1.2f, 0.0f, -1.6f);
+    ExpectVector(TransformOf(spectator).position, 1.0f, 0.0f, -0.5f);
   }
 
   TEST_F(SpectatorMovementTest, TurnsWithTheRightStickByTheTimeOfTheFrame)
