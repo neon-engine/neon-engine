@@ -943,6 +943,7 @@ What a game does with a body, through `PhysicsContext` and the `body` of its
 | `SetLinearVelocity`, `SetAngularVelocity` | The same as writing the velocities of the component. Turning is in radians per second here, and in degrees in the component |
 | `SetBodyPlace`, `MoveBody` | The same as writing the `Transform` |
 | `GetBodyState` | Where the body is, how it moves, and whether it sleeps |
+| `GetCharacterPosition` | Where a character is, by the `character` of its `CharacterBody`, which is what the engine wrote into its `Transform` after the last step |
 | `SetShape` | Gives the body other shapes. The same as changing its `Collider`, which the engine does through this |
 | `CreateJoint`, `DestroyJoint`, `HasJoint` | What a `Joint` component does, see [joints](#joints) |
 | `SetGravity`, `GetGravity` | `[0, -9.81, 0]` unless it is set |

@@ -21,6 +21,7 @@ namespace neon
     const std::string time_step = "time-step";
     const std::string output_dir = "output-dir";
     const std::string spawn = "spawn";
+    const std::string log_entity = "log-entity";
     const std::string jit = "jit";
     const std::string tonemapper = "tonemapper";
     const std::string exposure = "exposure";
@@ -36,9 +37,6 @@ namespace neon
 
     const std::string editor = "Editor";
 
-    /// Reads a list of frame numbers such as `1,30,60`. Returns false when a
-    /// part of it is not a whole number above zero. The frames come out in
-    /// rising order, each of them once.
     /// Reads the name of a tonemapper, as the setting `rendering.tonemapper`
     /// names them. Returns false for a name that is none of them.
     bool read_tonemapper(const std::string &name, Tonemapper &curve)
@@ -49,6 +47,9 @@ namespace neon
       return false;
     }
 
+    /// Reads a list of frame numbers such as `1,30,60`. Returns false when a
+    /// part of it is not a whole number above zero. The frames come out in
+    /// rising order, each of them once.
     bool read_frames(const std::string_view list, std::vector<std::size_t> &frames)
     {
       std::size_t start = 0;
@@ -71,6 +72,29 @@ namespace neon
       std::ranges::sort(frames);
       const auto repeated = std::ranges::unique(frames);
       frames.erase(repeated.begin(), repeated.end());
+      return true;
+    }
+
+    /// Reads a list of paths of entities such as `player,crates/upper`.
+    /// Returns false when a part of it is empty, or starts or ends with a
+    /// slash, which names no entity. The paths come out in the order they
+    /// were given, each of them once.
+    bool read_entities(const std::string_view list, std::vector<std::string> &paths)
+    {
+      std::size_t start = 0;
+      while (start <= list.size())
+      {
+        std::size_t end = list.find(',', start);
+        if (end == std::string_view::npos) { end = list.size(); }
+
+        const std::string part(list.substr(start, end - start));
+        start = end + 1;
+
+        const bool names_none = part.empty() || part.starts_with('/') || part.ends_with('/') ||
+                                part.find("//") != std::string::npos;
+        if (names_none) { return false; }
+        if (std::ranges::find(paths, part) == paths.end()) { paths.push_back(part); }
+      }
       return true;
     }
   }
@@ -168,6 +192,14 @@ namespace neon
     });
 
     command_line.Add({
+      .name = log_entity,
+      .value_name = "NAME[,...]",
+      .description = "Log where these entities are in every frame, each by its path as a scene names it, for "
+                     "example player,crates/upper",
+      .group = editor
+    });
+
+    command_line.Add({
       .name = tonemapper,
       .value_name = "NAME",
       .description = "Curve for light brighter than white: none, aces, or agx, over rendering.tonemapper of "
@@ -234,6 +266,19 @@ namespace neon
     if (command_line.IsSet(spawn))
     {
       settings.spawn_path = command_line.GetValue(spawn);
+    }
+
+    if (command_line.IsSet(log_entity))
+    {
+      // read afresh, so that applying the same command line twice, as the
+      // application does around its settings files, logs each of them once
+      settings.logged_entities.clear();
+      if (!read_entities(command_line.GetValue(log_entity), settings.logged_entities))
+      {
+        error = "Option '--" + log_entity + "' needs paths of entities such as player or crates/upper, "
+                "separated by commas";
+        return false;
+      }
     }
 
     if (command_line.IsSet(tonemapper) && !read_tonemapper(command_line.GetValue(tonemapper), settings.tonemapper))

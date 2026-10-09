@@ -1896,6 +1896,17 @@ namespace neon
     it->second.character.SetPosition(ToJolt(position));
   }
 
+  bool Jolt_PhysicsSystem::GetCharacterPosition(const CharacterId character, glm::vec3 &position)
+  {
+    if (_state == nullptr) { return false; }
+
+    const auto it = _state->characters.find(character);
+    if (it == _state->characters.end()) { return false; }
+
+    position = ToGlm(JPH::Vec3(it->second.character.GetPosition()));
+    return true;
+  }
+
   bool Jolt_PhysicsSystem::MoveCharacter(
     const CharacterId character,
     const glm::vec3 &velocity,

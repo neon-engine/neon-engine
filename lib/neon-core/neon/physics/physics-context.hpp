@@ -108,6 +108,9 @@ namespace neon
     /// Puts a character somewhere at once.
     virtual void SetCharacterPosition(CharacterId character, const glm::vec3 &position) = 0;
 
+    /// Where a character is. Returns false when the character is not known.
+    virtual bool GetCharacterPosition(CharacterId character, glm::vec3 &position) = 0;
+
     /// Moves a character with a velocity for `seconds`. It stops at what is
     /// in its way and slides along it. Returns false when the character is
     /// not known.

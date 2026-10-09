@@ -270,6 +270,7 @@ Editor:
   --input SCRIPT            Input in place of devices, for example "1: pointer 640 360; 2: click". Needs --headless-renderer
   --input-script PATH       The same from a file, for example assets://input/menu.input. Needs --headless-renderer
   --spawn PATH              Spawn this prefab at the top of the world once the scene is read, as a script would, for example assets://prefabs/target.prefab.yml
+  --log-entity NAME[,...]   Log where these entities are in every frame, each by its path as a scene names it, for example player,crates/upper
   --tonemapper NAME         Curve for light brighter than white: none, aces, or agx, over rendering.tonemapper of the settings
   --exposure NUMBER         How bright the scene is taken to be, for example 2 for twice the light, over rendering.exposure of the settings
   --jit on|off              Compile the scripts as they run, or run them in LuaJIT's interpreter. Over scripting.jit of the settings, for comparing the two
@@ -301,6 +302,7 @@ This writes `/some/where/frame.png`.
 | `--input SCRIPT` | Input from a script in place of devices. A step is `frame: command`, with `;` or a line break between steps: `pointer X Y` or `pointer none`, `down`, `up`, `click`, `key NAME [shift] [control] [alt] [shortcut] [word]`, `text WHAT`, `compose WHAT`, `wheel X Y [precise]`, `hold ACTION [N]` for an action of the user interface such as `ui-accept` or a button of the input map such as `jump`, `hold-key KEY [N]` for a key by where it is such as `w`, `hold-button NAME [N]` for a button of a controller such as `south`, `stick X Y [N]` for the right stick and `left-stick X Y [N]` for the left one, `device keyboard` or `device gamepad`, `look X Y`. A step of a frame that was skipped is applied in the next. A hold of an action the map does not have is refused with the names it has, see [input.md](input.md#scripts) |
 | `--input-script PATH` | The same from a file at a virtual path |
 | `--spawn PATH` | Spawns the prefab at a virtual path at the top of the world once the scene is read, as a script would. A prefab that cannot be read is said in the log and sets the exit code, and the run goes on without it |
+| `--log-entity NAME[,...]` | Logs where the named entities are in every frame, at Info level, each by its path from the top of the world as a scene names it. See [where an entity is](#where-an-entity-is) |
 | `--jit on\|off` | Compiles the scripts as they run, or runs them in LuaJIT's interpreter, over `scripting.jit` of the settings |
 | `--window-size WxH` | The size in points |
 | `--render-scale N` | N pixels for each point, as a display of that density gives. `--window-size 1280x720 --render-scale 2` renders 2560 by 1440 |
@@ -363,6 +365,45 @@ with exit code 1. See [versions of Vulkan](vulkan-renderer.md#versions-of-vulkan
 A folder that cannot be created or written to is only found out when the
 file system starts or the frame is written. The run then still renders, logs
 the error, and ends with exit code 1.
+
+#### Where an entity is
+
+A check of where the player went reads the log with `--log-entity`, in
+place of the pixels of a frame. It names entities by their paths from the
+top of the world, as a scene names them, with commas between them:
+
+```bash
+NeonRuntime --headless-renderer --time-step 0.05 --frames 60 --scene assets://scenes/prototype.scene.yml --input "1: hold-key w 20" --log-entity player,walker
+```
+
+Every frame logs a line for each of them at Info level, in the order they
+were given, with the frame counted from 1 as `--screenshot-at` counts it.
+The places are written as a scene writes them, to a millimeter:
+
+```
+[EntityLogging] [info] Frame 20: player is at [0.000, 0.900, 3.767], its body at [0.000, 0.900, 3.700]
+```
+
+The first place is where the entity is drawn in the world, which is where
+its Transform puts it below its parents. When the entity is a body of the
+physics, a `RigidBody` or a `CharacterBody`, the second is where the physics
+has it, which is where the last step left it. What is drawn is blended
+between the last two steps, so it trails the body by up to a step, as in the
+line above, where the player walks four meters a second in steps of a
+sixtieth of a second. An entity whose body the physics has not made yet has only the
+first.
+
+An entity is looked for in every frame, so one that a script spawns, or that
+comes with another scene, is logged from the frame it is there. A path that
+names no entity is said once, as a warning, and not in every frame; when the
+entity is there later it is logged, and when it goes away again that is said
+once more. So is an entity without a Transform, which has no place. Neither
+changes the exit code, since the run did what it was asked to.
+
+The lines are written by the system `EntityLogging`, which the runtime adds
+after placing when the option is given. It finds the entities through
+`EntityStore::FindEntity` and asks the physics through `PhysicsContext`, so
+it works the same with any backend.
 
 ### How it is built
 
@@ -871,7 +912,7 @@ what it left behind.
 | neon-vulkan | `render/vk-texture` | 7 | Textures that cannot be used |
 | `tests/` | `world-with-flecs` | 16 | The world as an application puts it together, with the store of Flecs and the forward pipeline |
 | `tests/` | `runtime-command-line` | 11 | NeonRuntime with a command line it refuses: exit code and message |
-| `tests/` | `runtime-headless` | 8 | NeonRuntime without a window: exit code, and the images it saved, with and without a user interface |
+| `tests/` | `runtime-headless` | 8 | NeonRuntime without a window: exit code, the images it saved, with and without a user interface, and the lines that say where the entities it was asked to log are |
 | `tests/` | `user-interface` | 300 | UI recipes through the whole user interface: every element, every message for a file that is wrong, layout in frames of several sizes, values, input, focus, events, and what is drawn |
 | `tests/` | `physics-with-jolt` | 27 | The physics as an application puts it together, with Flecs, Jolt, and a scene recipe. The same state after the same steps at every frame rate, and the line the log has for every body |
 | `tests/` | `extensions` | 42 | Extensions as an application finds and starts them: eleven small ones built next to the test, in C and in C++, opened through SDL2; one that refuses, one of a later version, one of an earlier, a library that is none; a component registered, read from a recipe, set, and queried in a store of Flecs; systems in C and in C++ run per frame, per step, and between; an entity moved by the input through the fields of its Transform, a file read, a prefab spawned, a scene asked for; what touched what told to a system, and a ray cast; a field of the engine read and written in place, values of the user interface, a prefab spawned at a place; structs that are not what they describe, and calls at the wrong time; and every message of a recipe, from memory. See [extensions.md](extensions.md) |

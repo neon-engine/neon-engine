@@ -63,6 +63,13 @@ struct SettingsConfig
   /// a prefab without a scene that places it. Empty spawns none.
   std::string spawn_path;
 
+  /// The entities whose place is logged once in every frame, each by its
+  /// path from the top of the world as a scene names it, such as
+  /// `player` or `crates/upper`, in the order they were given. For checks
+  /// of where something is that do not go through the pixels of a frame.
+  /// Empty logs none.
+  std::vector<std::string> logged_entities;
+
   /// Virtual path of the menu that is shown when the player pauses, with
   /// escape or the start button of a controller. The world stands still
   /// while it is shown. Empty shows none, and pause does nothing.

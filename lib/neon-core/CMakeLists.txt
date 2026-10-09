@@ -377,6 +377,8 @@ add_library(${TARGET} STATIC
         neon/world-system/ecs/components/ui-volume.hpp
         neon/world-system/ecs/systems/audio-playback.cpp
         neon/world-system/ecs/systems/audio-playback.hpp
+        neon/world-system/ecs/systems/entity-logging.cpp
+        neon/world-system/ecs/systems/entity-logging.hpp
         neon/world-system/ecs/components/trigger.hpp
         neon/world-system/ecs/systems/physics-simulation.cpp
         neon/world-system/ecs/systems/physics-simulation.hpp
@@ -573,6 +575,7 @@ neon_add_unit_test(${TARGET} neon/command-line/display-options.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/fixed-clock.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/scene-file/physics-component-formats.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/audio-playback.test.cpp)
+  neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/entity-logging.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/physics-simulation.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/render-submission.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/player-movement.test.cpp)

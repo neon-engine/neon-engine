@@ -228,6 +228,7 @@ makes them a supported way to run a game, for automated checks and for agents.
 
 | Item | Detail |
 |---|---|
+| Where an entity is, in the log (#273) | Done. `--log-entity` logs where the named entities and their bodies are in every frame, so a check of where the player went reads the log |
 | Setting the state of a game (#79) | Options to start from a given state, such as a scene, a saved game, or values of the game's own. Waits for scenes that load from files |
 | Input and test scripts in Lua (#80) | Relative frames and waits, loops, comments, and checks along the way, for longer runs. Waits on Lua (#57) |
 | A debug mode of the runtime (#116) | The loop as a function that is stepped, and a terminal or a file of commands: step, send input, take a screenshot, read values |

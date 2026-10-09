@@ -13,4 +13,5 @@ neon_add_application_test(runtime-prototype NeonRuntime run.cmake
         the-player-walks-into-the-room
         the-kit-pieces-are-loaded-once
         the-player-keeps-its-speed-through-a-jump
+        the-player-is-logged-as-it-walks
 )

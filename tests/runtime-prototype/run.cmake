@@ -20,6 +20,11 @@ if (CASE STREQUAL "the-player-walks-into-the-room")
   run(--headless-renderer --window-size 1920x1080 --render-scale 1 --time-step 0.05 --frames 60
           --output-dir shots --screenshot output://frame.png --screenshot-at 1,60
           --scene assets://scenes/prototype.scene.yml --input "1: hold-key w 20")
+elseif (CASE STREQUAL "the-player-is-logged-as-it-walks")
+  # the walk of the-player-walks-into-the-room, read from the log in place
+  # of the pixels
+  run(--headless-renderer --window-size 320x180 --render-scale 1 --time-step 0.05 --frames 60
+          --scene assets://scenes/prototype.scene.yml --input "1: hold-key w 20" --log-entity player)
 elseif (CASE STREQUAL "the-kit-pieces-are-loaded-once")
   # two frames: the first creates the render objects, the second shows that
   # nothing is loaded again
@@ -168,6 +173,48 @@ elseif (CASE STREQUAL "the-player-walks-into-the-room")
   file(SHA256 "${DIRECTORY}/shots/frame-0060.png" AFTER)
   if (BEFORE STREQUAL AFTER)
     fail("Expected the frame to change while the player walked, and frame 1 is the same as frame 60")
+  endif ()
+elseif (CASE STREQUAL "the-player-is-logged-as-it-walks")
+  # place_of(<frame> <variable>): where the log says the player is drawn in
+  # that frame, as a list of x, y, and z
+  function(place_of FRAME VARIABLE)
+    set(NUMBER "(-?[0-9]+\\.[0-9]+)")
+    string(REGEX MATCH "Frame ${FRAME}: player is at \\[${NUMBER}, ${NUMBER}, ${NUMBER}\\], its body at"
+            LINE "${OUTPUT}")
+    if (NOT LINE)
+      fail("Expected a line that says where the player and its body are in frame ${FRAME}")
+    endif ()
+    set(${VARIABLE} "${CMAKE_MATCH_1};${CMAKE_MATCH_2};${CMAKE_MATCH_3}" PARENT_SCOPE)
+  endfunction()
+
+  # It starts where the scene put it, in the middle of the corridor, and a
+  # second of walking north at four meters a second takes it four meters,
+  # into the doorway. It stops when W is let go, two frames later, once the
+  # last step of the walk is drawn. It walks straight, so x stays, and on
+  # the floor, so does y.
+  place_of(1 START)
+  place_of(23 STOPPED)
+  place_of(60 END)
+  list(GET START 2 START_Z)
+  list(GET END 0 END_X)
+  list(GET END 1 END_Y)
+  list(GET END 2 END_Z)
+  message("The player walked from ${START} to ${END}")
+
+  if (START_Z LESS 7.49 OR START_Z GREATER 7.51)
+    fail("Expected the player to start at z = 7.5, where the scene put it, it is at ${START_Z}")
+  endif ()
+  if (END_Z LESS 3.45 OR END_Z GREATER 3.55)
+    fail("Expected the player to have walked four meters north to z = 3.5, it is at ${END_Z}")
+  endif ()
+  if (NOT STOPPED STREQUAL END)
+    fail("Expected the player to stand still after W was let go, it was at ${STOPPED} in frame 23")
+  endif ()
+  if (END_X LESS -0.05 OR END_X GREATER 0.05)
+    fail("Expected the player to have walked straight, at x = 0, it is at ${END_X}")
+  endif ()
+  if (END_Y LESS 0.85 OR END_Y GREATER 0.95)
+    fail("Expected the player to stand on the floor, at y = 0.9, it is at ${END_Y}")
   endif ()
 elseif (CASE STREQUAL "the-kit-pieces-are-loaded-once")
   # expect_output_count(<text> <count>): how many lines of the output hold

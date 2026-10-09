@@ -93,6 +93,10 @@ elseif (CASE STREQUAL "capabilities")
   run_headless(--frames 1)
 elseif (CASE STREQUAL "vulkan-version-below-what-is-needed")
   run_headless(--frames 1 --vulkan-version 1.0)
+elseif (CASE STREQUAL "log-entity")
+  # a crate that falls, a character that walks, and an entity the scene does
+  # not have
+  run_headless(--frames 3 --scene assets://scenes/physics.scene.yml --log-entity crates/upper,walker,ghost)
 else ()
   message(FATAL_ERROR "There is no case '${CASE}'")
 endif ()
@@ -125,6 +129,44 @@ if (CASE STREQUAL "window-size-and-render-scale")
   expect_no_output("[error]")
   expect_no_output("[warning]")
   expect_image_size("shots/frame.png" 1280 720)
+elseif (CASE STREQUAL "log-entity")
+  expect_exit_code(0)
+  expect_output("Rendered 3 frames, stopping")
+  expect_no_output("[error]")
+
+  # every frame says where each of them is drawn and where the physics has
+  # its body, the crate a RigidBody and the walker a CharacterBody
+  foreach (FRAME 1 2 3)
+    foreach (ENTITY crates/upper walker)
+      string(REGEX MATCH "Frame ${FRAME}: ${ENTITY} is at \\[[-0-9.]+, [-0-9.]+, [-0-9.]+\\], its body at \\[[-0-9.]+, [-0-9.]+, [-0-9.]+\\]"
+              LINE "${OUTPUT}")
+      if (NOT LINE)
+        fail("Expected a line that says where ${ENTITY} and its body are in frame ${FRAME}")
+      endif ()
+    endforeach ()
+  endforeach ()
+
+  # In the first frame they are drawn where the scene put them, while the
+  # physics has taken its steps of the frame already: what is drawn is
+  # blended between the last two steps
+  expect_output("Frame 1: crates/upper is at [-0.100, 3.500, 0.000], its body at [")
+  expect_output("Frame 1: walker is at [-6.000, 1.000, 4.000], its body at [")
+
+  # and the crate falls
+  string(REGEX MATCH "Frame 3: crates/upper is at [^\n]*, its body at \\[-0\\.100, ([0-9.]+), 0\\.000\\]"
+          LINE "${OUTPUT}")
+  if (NOT LINE OR NOT CMAKE_MATCH_1 LESS 3.5)
+    fail("Expected the body of the crate to have fallen below 3.5 in frame 3, the log says '${LINE}'")
+  endif ()
+
+  # what is not there is said once, and not in every frame
+  string(REGEX MATCHALL "there is no entity ghost to log the place of" MISSING "${OUTPUT}")
+  list(LENGTH MISSING COUNT)
+  if (NOT COUNT EQUAL 1)
+    fail("Expected the missing entity to be said once, it was said ${COUNT} times")
+  endif ()
+  expect_output("Frame 1: there is no entity ghost to log the place of. It is logged once it is there")
+  expect_no_output("ghost is at")
 elseif (CASE STREQUAL "settings-menu-with-input")
   expect_exit_code(0)
   expect_output("Loading the user interface from engine://ui/settings.ui.yml")

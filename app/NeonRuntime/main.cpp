@@ -36,6 +36,7 @@
 #include <neon/world-system/ecs/entity-world.hpp>
 #include <neon/world-system/ecs/scene-file/scene-file.hpp>
 #include <neon/world-system/ecs/systems/audio-playback.hpp>
+#include <neon/world-system/ecs/systems/entity-logging.hpp>
 #include <neon/world-system/ecs/systems/extension-running.hpp>
 #include <neon/world-system/ecs/systems/rope-drawing.hpp>
 #include <neon/world-system/ecs/systems/physics-simulation.hpp>
@@ -478,6 +479,17 @@ int main(const int argc, char *argv[])
 
   // ropes, drawn between their ends where the physics has just placed them
   world.AddSystem(std::make_unique<neon::RopeDrawing>(logging_system.CreateLogger("RopeDrawing")));
+
+  // where the entities the command line names are, once in every frame,
+  // for checks that read the log in place of the pixels. Where they are
+  // drawn, so after placing
+  if (!settings_config.logged_entities.empty())
+  {
+    world.AddSystemAfterPlacing(std::make_unique<neon::EntityLogging>(
+      settings_config.logged_entities,
+      &physics_system,
+      logging_system.CreateLogger("EntityLogging")));
+  }
 
   // The random numbers of the operating system, for the game. The engine
   // draws none itself, and no option or setting seeds them: a game that is

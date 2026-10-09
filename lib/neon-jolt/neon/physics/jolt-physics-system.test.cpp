@@ -925,6 +925,31 @@ namespace
     EXPECT_NEAR(state.position.z, 30.0f, 1e-3f);
   }
 
+  TEST_F(JoltPhysicsSystemTest, SaysWhereACharacterIs)
+  {
+    const auto player = CreateCharacter({0.0f, 1.0f, 0.0f});
+
+    glm::vec3 position{0.0f};
+    ASSERT_TRUE(_physics.GetCharacterPosition(player, position));
+    EXPECT_NEAR(position.y, 1.0f, 1e-3f);
+
+    // and where it went
+    const auto state = Walk(player, {2.0f, 0.0f, 0.0f}, 30);
+    ASSERT_TRUE(_physics.GetCharacterPosition(player, position));
+    EXPECT_NEAR(position.x, state.position.x, 1e-4f);
+    EXPECT_NEAR(position.y, state.position.y, 1e-4f);
+    EXPECT_NEAR(position.z, state.position.z, 1e-4f);
+    EXPECT_GT(position.x, 0.5f);
+  }
+
+  TEST_F(JoltPhysicsSystemTest, SaysNothingOfACharacterItDoesNotKnow)
+  {
+    glm::vec3 position{7.0f};
+
+    EXPECT_FALSE(_physics.GetCharacterPosition(42, position));
+    EXPECT_EQ(position, glm::vec3(7.0f));
+  }
+
   TEST_F(JoltPhysicsSystemTest, RefusesACharacterWithAShapeThatHasNoInside)
   {
     CharacterInfo info;

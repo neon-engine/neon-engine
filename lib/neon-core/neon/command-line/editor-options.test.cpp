@@ -116,6 +116,8 @@ namespace
       "Needs --headless-renderer\n"
       "  --spawn PATH              Spawn this prefab at the top of the world once the scene is read, as a script "
       "would, for example assets://prefabs/target.prefab.yml\n"
+      "  --log-entity NAME[,...]   Log where these entities are in every frame, each by its path as a scene names "
+      "it, for example player,crates/upper\n"
       "  --tonemapper NAME         Curve for light brighter than white: none, aces, or agx, over "
       "rendering.tonemapper of the settings\n"
       "  --exposure NUMBER         How bright the scene is taken to be, for example 2 for twice the light, over "
@@ -242,7 +244,7 @@ namespace
   TEST_F(EditorOptionsTest, EveryOptionButTheHeadlessOnesNeedsAValue)
   {
     for (const char *option : {"--scene", "--ui", "--frames", "--screenshot", "--screenshot-at", "--output-dir",
-                               "--time-step", "--spawn", "--render-scale", "--input", "--input-script", "--jit",
+                               "--time-step", "--spawn", "--log-entity", "--render-scale", "--input", "--input-script", "--jit",
                                "--tonemapper", "--exposure"})
     {
       EXPECT_FALSE(Parse({option})) << option;
@@ -356,6 +358,49 @@ namespace
     ASSERT_TRUE(Apply({}));
 
     EXPECT_TRUE(_settings.spawn_path.empty());
+  }
+
+  // --log-entity
+
+  TEST_F(EditorOptionsTest, LogsNoEntityUnlessAsked)
+  {
+    ASSERT_TRUE(Apply({}));
+
+    EXPECT_THAT(_settings.logged_entities, IsEmpty());
+  }
+
+  TEST_F(EditorOptionsTest, LogsTheEntityThatIsNamed)
+  {
+    ASSERT_TRUE(Apply({"--log-entity", "player"}));
+
+    EXPECT_THAT(_settings.logged_entities, ElementsAre("player"));
+  }
+
+  TEST_F(EditorOptionsTest, LogsEveryEntityOfAListOnceInTheOrderGiven)
+  {
+    ASSERT_TRUE(Apply({"--log-entity=player,crates/upper,player"}));
+
+    EXPECT_THAT(_settings.logged_entities, ElementsAre("player", "crates/upper"));
+  }
+
+  TEST_F(EditorOptionsTest, LogsTheSameEntitiesWhenAppliedTwice)
+  {
+    ASSERT_TRUE(Apply({"--log-entity", "player,crates/upper"}));
+    ASSERT_TRUE(_options.Apply(_command_line, _settings, _error));
+
+    EXPECT_THAT(_settings.logged_entities, ElementsAre("player", "crates/upper"));
+  }
+
+  TEST_F(EditorOptionsTest, RefusesAPathOfAnEntityThatNamesNone)
+  {
+    for (const char *list : {"player,", ",player", "player,,crates", "/player", "crates/", "crates//upper"})
+    {
+      EXPECT_FALSE(Apply({"--log-entity", list})) << list;
+      EXPECT_EQ(
+        _error,
+        "Option '--log-entity' needs paths of entities such as player or crates/upper, separated by commas")
+          << list;
+    }
   }
 
   // --frames

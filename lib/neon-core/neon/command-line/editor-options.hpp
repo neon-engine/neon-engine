@@ -24,6 +24,7 @@ namespace neon
   ///   --input SCRIPT            Input in place of devices, without a window
   ///   --input-script PATH       The same, from a file
   ///   --spawn PATH              Spawn this prefab once the scene is read
+  ///   --log-entity NAME[,...]   Log where these entities are in every frame
   ///   --headless                Run as a dedicated server. Refused until there is one (#144)
   class EditorOptions final : public CommandLineOptions
   {

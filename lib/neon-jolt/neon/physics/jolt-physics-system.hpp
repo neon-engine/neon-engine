@@ -86,6 +86,8 @@ namespace neon
 
     void SetCharacterPosition(CharacterId character, const glm::vec3 &position) override;
 
+    bool GetCharacterPosition(CharacterId character, glm::vec3 &position) override;
+
     bool MoveCharacter(
       CharacterId character,
       const glm::vec3 &velocity,

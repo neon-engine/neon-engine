@@ -314,6 +314,15 @@ namespace neon::testing
       }
     }
 
+    bool GetCharacterPosition(const CharacterId character, glm::vec3 &position) override
+    {
+      const auto it = characters.find(character);
+      if (it == characters.end()) { return false; }
+
+      position = it->second.state.position;
+      return true;
+    }
+
     bool MoveCharacter(
       const CharacterId character,
       const glm::vec3 &velocity,
