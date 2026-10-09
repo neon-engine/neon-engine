@@ -11,6 +11,9 @@ namespace neon
   /// Makes a value of the user interface the volume of a group of sounds,
   /// such as a slider of a settings menu that sets how loud the music is.
   /// The value is a number from 0 to `full`, and `full` is the volume of 1.
+  /// The first time the value is there it is set to the volume the group
+  /// has, so a slider starts at what the settings chose; from then on the
+  /// group follows the value.
   struct UiVolume
   {
     /// The name of the value, as files write it in `{music}`.
@@ -25,7 +28,8 @@ namespace neon
     float full = 100.0f;
 
     /// The volume that was last handed to the audio, so that it is handed
-    /// over again only when it changes. Kept by the engine.
+    /// over again only when it changes, and none before the value was set
+    /// to the volume of the group. Kept by the engine.
     std::optional<float> last_volume;
   };
 

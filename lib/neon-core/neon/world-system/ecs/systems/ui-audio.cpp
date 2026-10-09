@@ -1,6 +1,7 @@
 #include "ui-audio.hpp"
 
 #include <algorithm>
+#include <cmath>
 
 #include <neon/world-system/ecs/components/sound-source.hpp>
 #include <neon/world-system/ecs/components/ui-sound-switch.hpp>
@@ -38,6 +39,22 @@ namespace neon
 
         double number = 0.0;
         if (!_ui_context->GetNumber(volume.value, number) || volume.full <= 0.0f) { continue; }
+
+        if (!volume.last_volume.has_value())
+        {
+          // At first the value is set to the volume the group has, which the
+          // settings and the player's file chose, and not the other way
+          // round: what a menu's file starts the value with is no choice
+          // of the player's (#251). It is handed over all the same, so that
+          // a group that is not there is reported.
+          const double shown = std::round(_audio_context->GetGroupVolume(volume.group) * volume.full * 100.0) / 100.0;
+          _ui_context->SetNumber(volume.value, shown);
+
+          const float level = static_cast<float>(shown) / volume.full;
+          _audio_context->SetGroupVolume(volume.group, level);
+          volume.last_volume = level;
+          continue;
+        }
 
         const float level = std::max(static_cast<float>(number) / volume.full, 0.0f);
         if (volume.last_volume == level) { continue; }

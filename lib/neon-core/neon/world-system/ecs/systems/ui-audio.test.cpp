@@ -1,5 +1,6 @@
 #include "ui-audio.hpp"
 
+#include <format>
 #include <map>
 #include <string>
 
@@ -39,6 +40,10 @@ namespace
     // the values of the user interface, as a player left them
     std::map<std::string, std::string> _values;
 
+    // the volumes of the groups, as the audio holds them: 1 for a group it
+    // was not told of
+    std::map<std::string, float> _volumes;
+
     void SetUp() override
     {
       ON_CALL(_ui, GetValue(_, _)).WillByDefault([this](const std::string &name, bool *is_set)
@@ -57,6 +62,21 @@ namespace
 
         try { number = std::stod(found->second); } catch (const std::exception &) { return false; }
         return true;
+      });
+
+      ON_CALL(_ui, SetNumber(_, _)).WillByDefault([this](const std::string &name, const double number)
+      {
+        _values[name] = std::format("{}", number);
+      });
+
+      ON_CALL(_audio, GetGroupVolume(_)).WillByDefault([this](const std::string &group)
+      {
+        const auto found = _volumes.find(group);
+        return found == _volumes.end() ? 1.0f : found->second;
+      });
+      ON_CALL(_audio, SetGroupVolume(_, _)).WillByDefault([this](const std::string &group, const float volume)
+      {
+        _volumes[group] = volume;
       });
 
       // as the world does: every component is registered, by this system
@@ -91,30 +111,50 @@ namespace
 
   // UiVolume
 
+  TEST_F(UiAudioTest, StartsTheValueAtTheVolumeOfTheGroup)
+  {
+    AddVolume({.value = "music", .group = "music"});
+    _volumes["music"] = 0.4f;
+
+    // what the menu's file starts it with is no choice of the player's
+    _values["music"] = "80";
+
+    _system.Update(_store, 0.016);
+
+    EXPECT_EQ(_values["music"], "40");
+    EXPECT_FLOAT_EQ(_volumes["music"], 0.4f);
+  }
+
   TEST_F(UiAudioTest, SetsTheVolumeOfAGroupFromAValueOfTheUserInterface)
   {
     AddVolume({.value = "music", .group = "music"});
-    _values["music"] = "60";
-
-    EXPECT_CALL(_audio, SetGroupVolume("music", FloatEq(0.6f)));
-
+    _values["music"] = "100";
     _system.Update(_store, 0.016);
+
+    _values["music"] = "60";
+    _system.Update(_store, 0.016);
+
+    EXPECT_FLOAT_EQ(_volumes["music"], 0.6f);
   }
 
   TEST_F(UiAudioTest, TakesTheFullValueAsAVolumeOf1)
   {
     AddVolume({.value = "effects", .group = "effects", .full = 10.0f});
-    _values["effects"] = "5";
-
-    EXPECT_CALL(_audio, SetGroupVolume("effects", FloatEq(0.5f)));
-
+    _values["effects"] = "0";
     _system.Update(_store, 0.016);
+    EXPECT_EQ(_values["effects"], "10");
+
+    _values["effects"] = "5";
+    _system.Update(_store, 0.016);
+
+    EXPECT_FLOAT_EQ(_volumes["effects"], 0.5f);
   }
 
   TEST_F(UiAudioTest, HandsTheVolumeOverOnlyWhenItChanges)
   {
     AddVolume({.value = "music", .group = "music"});
-    _values["music"] = "60";
+    _volumes["music"] = 0.6f;
+    _values["music"] = "80";
 
     {
       ::testing::InSequence in_order;
@@ -136,6 +176,20 @@ namespace
     EXPECT_CALL(_audio, SetGroupVolume(_, _)).Times(0);
 
     _system.Update(_store, 0.016);
+    EXPECT_EQ(_values.count("music"), 0u);
+  }
+
+  TEST_F(UiAudioTest, StartsTheValueOnceItIsThere)
+  {
+    AddVolume({.value = "music", .group = "music"});
+    _volumes["music"] = 0.5f;
+    _system.Update(_store, 0.016);
+
+    // the menu is shown, with what its file says
+    _values["music"] = "80";
+    _system.Update(_store, 0.016);
+
+    EXPECT_EQ(_values["music"], "50");
   }
 
   TEST_F(UiAudioTest, LeavesTheGroupAloneForAValueThatIsNoNumber)
@@ -151,11 +205,13 @@ namespace
   TEST_F(UiAudioTest, TakesAValueBelowZeroAsSilence)
   {
     AddVolume({.value = "music", .group = "music"});
-    _values["music"] = "-20";
-
-    EXPECT_CALL(_audio, SetGroupVolume("music", FloatEq(0.0f)));
-
+    _values["music"] = "100";
     _system.Update(_store, 0.016);
+
+    _values["music"] = "-20";
+    _system.Update(_store, 0.016);
+
+    EXPECT_FLOAT_EQ(_volumes["music"], 0.0f);
   }
 
   // UiSoundSwitch

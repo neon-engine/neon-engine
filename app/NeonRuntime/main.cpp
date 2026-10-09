@@ -415,6 +415,12 @@ int main(const int argc, char *argv[])
     window_system,
     logging_system.CreateLogger("EntityWorld"));
 
+  // What values of the user interface do to what is heard. It goes on while
+  // the world is paused, as the settings menu is shown then, and comes
+  // before the playback, so that what it asks of a sound is heard in the
+  // same frame.
+  world.AddSystemAfterPlacing(std::make_unique<neon::UiAudio>(&ui_system, &audio_system));
+
   // sounds are heard where their entities are drawn, so that a sound is not
   // heard from where it was a frame ago, or from the origin in the first
   // frame, before anything was placed
@@ -422,7 +428,6 @@ int main(const int argc, char *argv[])
     std::make_unique<neon::AudioPlayback>(&audio_system, logging_system.CreateLogger("AudioPlayback")));
   world.AddSystem(std::make_unique<neon::UiViewLoading>(&ui_system, logging_system.CreateLogger("UiViewLoading")));
   world.AddSystem(std::make_unique<neon::UiClock>(&ui_system));
-  world.AddSystem(std::make_unique<neon::UiAudio>(&ui_system, &audio_system));
   world.AddSystem(std::make_unique<neon::UiSurfaceLoading>(&ui_system, logging_system.CreateLogger("UiSurfaceLoading")));
   world.AddSystem(std::make_unique<neon::UiSurfacePointing>(&ui_system, ui_system.GetGameInput()));
 

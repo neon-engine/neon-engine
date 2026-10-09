@@ -12,7 +12,7 @@ before. A layer only changes what it writes down.
 |---|---|---|
 | 1 | The defaults in `SettingsConfig` | The engine |
 | 2 | `assets://settings.yml` | The author of the project. It ships with the game |
-| 3 | `user://settings.yml` | The player, through a settings menu: the graphics of the runtime's menu are written there with Apply, see `PlayerSettings` |
+| 3 | `user://settings.yml` | The player, through a settings menu: the graphics and the volumes of the runtime's menu are written there with Apply, see `PlayerSettings` |
 | 4 | The command line | Whoever starts the runtime, see [command-line.md](command-line.md) |
 
 The command line is applied twice: once before the file system comes up,
@@ -96,7 +96,7 @@ Every project brings its own. Those of the sandbox are
 | `rendering.max_fps` | The most frames a second: a whole number from 30 to 300, or 0 for as many as can be drawn. It holds with `vsync` on and off, whichever of the two allows fewer. See [vulkan-renderer.md](vulkan-renderer.md#vertical-sync-and-the-window) | 0 |
 | `rendering.exposure` | How bright the scene is taken to be: the light of the scene is multiplied by it before the curve. A number above zero; 2 doubles the light, 0.5 halves it | 1 |
 | `audio.groups` | The [groups of sounds](audio.md#groups) the project has besides those of the engine: a list of names, or of maps with a `name` and the `volume` the group starts at. A name that is there already is an error. A group of the project is held still while the game is paused, as the effects are | None. The groups of the engine are `music`, `effects`, `voices`, and `ambience` |
-| `audio.volumes` | The volume of a group by its name, 0 for silence and 1 for the loudness of its sounds, not below 0. A name that is not a group of the engine or of the project, declared above or in a file read before, is an error | 1 for every group |
+| `audio.volumes` | The volume of a group by its name, 0 for silence and 1 for the loudness of its sounds, not below 0. A name that is not a group of the engine or of the project, declared above or in a file read before, is an error. The runtime's settings menu shows them and writes the ones the player changed to `user://settings.yml` with Apply, see [user-interface.md](user-interface.md#the-volumes-of-the-settings-menu) | 1 for every group |
 
 A name that is not known is an error, as in every recipe: the file is a
 configuration file, not a recipe, since its name says no kind, and the rules
@@ -127,6 +127,7 @@ by a file a menu wrote.
 | `SettingsFile` | neon-core, `neon/settings/settings-file.hpp` | Reads one file on top of a `SettingsConfig` through the file system and a `DocumentFormat`, checks it, and collects every problem |
 | `PlayerSettings` | neon-core, `neon/settings/player-settings.hpp` | Writes what a settings menu changed to `user://settings.yml`, keeping what the file held already |
 | `GraphicsMenu` | neon-core, `neon/runtime/graphics-menu.hpp` | The graphics of the runtime's settings menu: shows them, changes them, and keeps or puts them back |
+| `AudioMenu` | neon-core, `neon/runtime/audio-menu.hpp` | The volumes of the runtime's settings menu, one for every group: shows them, changes them, and keeps them as `audio.volumes` or puts them back |
 | `RuntimeOptions`, `DisplayOptions` | neon-core, `neon/command-line/` | The command line, layer 4 |
 | `main.cpp` | NeonRuntime | Reads the layers in order |
 
@@ -135,11 +136,6 @@ runtime read as it is in the repository.
 
 ## Open questions
 
-- **The volumes in layer 3** (#125 follow-up): the menu of `settings.ui.yml`
-  writes the graphics to `user://settings.yml` with Apply (#356), through
-  `PlayerSettings`, but not the volumes yet, which it changes and keeps
-  nothing of. The volumes of the sound groups are settings, `audio.volumes`,
-  and the menu's sliders start at the values of its file, not at them.
 - **The renderer as a setting**: `--window-size`, `--window-mode`,
   `--ui-scale`, and `--vulkan-version` have a place here now, and the
   runtime owns the options too (#143, see [command-line.md](command-line.md)).

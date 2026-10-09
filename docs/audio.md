@@ -212,9 +212,14 @@ through two components that `UiAudio` acts on:
 | | `equals` | What the value is while the sound plays | None. It has to be written |
 | | `fade` | Seconds that fading in and out take | `1` |
 
-A volume is handed to the audio only when it changes. A sound that is not
-chosen when the scene starts is silent from the start, and the one that is
-fades in. One entity for every piece of music, each with its own word, and a
+The first time the value of a `UiVolume` is there, it is set to the volume
+the group has, so that a slider starts at what the settings and the player's
+file chose and not at what the menu's file starts it with; from then on the
+group follows the value. A volume is handed to the audio only when it
+changes. A sound that is not chosen when the scene starts is silent from the
+start, and the one that is fades in. `UiAudio` goes on while the world is
+paused, as it is added after placing, so the pause menu's settings are heard
+at once. One entity for every piece of music, each with its own word, and a
 choice of radio buttons in the menu, fade from one piece to the next. The
 settings demo of the tests does this, with one tone for every piece:
 
@@ -222,11 +227,17 @@ settings demo of the tests does this, with one tone for every piece:
 NeonRuntime --scene assets://scenes/settings-demo.scene.yml
 ```
 
-The settings menu of the engine, `engine://ui/settings.ui.yml`, has a row for the effects, the
-music, and the ambience, each a slider whose value is named after its group.
-A project with a group of its own adds a row like them to its menu, with a
-value named after the group, and an entity with a `UiVolume` for that value
-and group to the scene, as the settings demo does for the three.
+The settings menu of the engine, `engine://ui/settings.ui.yml`, has a row for
+the effects, the music, and the ambience, each a slider whose value is named
+after its group: `effects`, `music`, and `ambience`. When the pause menu shows
+it, the runtime binds every group to the value of its name through
+`AudioMenu`: the sliders start at the volumes, are heard at once, are written
+to `user://settings.yml` with Apply, and are put back with Back, see
+[user-interface.md](user-interface.md#the-volumes-of-the-settings-menu). A
+project with a group of its own adds a row like them to its menu, with a
+value named after the group, and nothing else. A scene that shows the menu as
+a component of its own, as the settings demo does, carries an entity with a
+`UiVolume` for each value and group.
 
 ### Files
 
@@ -251,6 +262,8 @@ of an archive of its own, see
 | `AudioSystem` | neon-core | Base class of backends. Adds the lifecycle |
 | `Headless_AudioSystem` | neon-core | Plays nothing and reads no files. It keeps track of what it is told: what plays, what is held, the volumes of the groups, and when a sound that fades out stops |
 | `SoundGroupSetting` | neon-core | A group as the settings know it: its name, the volume it starts at, and whether it pauses with the game |
+| `UiAudio`, `UiVolume`, `UiSoundSwitch` | neon-core | Values of a user interface that set the volume of a group, and which sound plays |
+| `AudioMenu` | neon-core | The volumes of the runtime's settings menu: shows them, changes them, and keeps them or puts them back |
 | `MA_AudioSystem` | neon-miniaudio | The implementation |
 | `SoundSource`, `SoundListener` | neon-core | The components |
 | `AudioPlayback` | neon-core | The system that keeps the audio in line with the components, and hands on the fades a game asks for |

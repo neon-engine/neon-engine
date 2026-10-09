@@ -797,6 +797,36 @@ namespace
     ExpectCleanUp();
   }
 
+  TEST_F(PauseMenuTest, TheSettingsMenuShowsTheVolumesAsTheyAre)
+  {
+    const auto runtime = CreateWithMenu(3);
+    _press = [this](const int frame) { if (frame == 1) { PressPause(); } };
+
+    NiceMock<MockAudioContext> audio;
+    runtime->SetAudio(&audio);
+    ON_CALL(audio, GetGroupVolume(_)).WillByDefault(Return(1.0f));
+    ON_CALL(audio, GetGroupVolume("music")).WillByDefault(Return(0.5f));
+
+    EXPECT_CALL(_ui_system, Load(menu)).WillOnce(Return(7));
+    EXPECT_CALL(_ui_system, IsShown(7)).WillRepeatedly(Return(true));
+    EXPECT_CALL(_ui_system, WasClicked("settings")).WillOnce(Return(true));
+    EXPECT_CALL(_ui_system, Unload(7));
+    EXPECT_CALL(_ui_system, Load(settings)).WillOnce(Return(8));
+    EXPECT_CALL(_ui_system, IsShown(8)).WillRepeatedly(Return(true));
+    EXPECT_CALL(_world_system, SetPaused(true)).Times(3);
+
+    // once, as the menu is shown, from 0 to 100
+    EXPECT_CALL(_ui_system, SetNumber("music", 50.0));
+    EXPECT_CALL(_ui_system, SetNumber("effects", 100.0));
+    EXPECT_CALL(_ui_system, SetNumber("ambience", 100.0));
+
+    // and nothing changes while the player changes nothing
+    EXPECT_CALL(audio, SetGroupVolume(_, _)).Times(0);
+
+    runtime->Run();
+    ExpectCleanUp();
+  }
+
   TEST_F(PauseMenuTest, ShowsThePauseMenuAgainWhenTheSettingsMenuIsClosed)
   {
     const auto runtime = CreateWithMenu(4);

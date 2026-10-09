@@ -37,6 +37,11 @@ namespace neon
     /// Nothing is written until Write().
     void Set(const std::string &section, const std::string &name, const DataValue &value);
 
+    /// Sets `name` of the map `map` of `section`, such as `music` of
+    /// `volumes` of `audio`, keeping what else that map holds. Nothing is
+    /// written until Write().
+    void Set(const std::string &section, const std::string &map, const std::string &name, const DataValue &value);
+
     /// Whether anything was set since the last Write().
     [[nodiscard]] bool HasChanges() const { return _changed; }
 

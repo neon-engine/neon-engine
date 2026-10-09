@@ -43,6 +43,21 @@ namespace neon
     _changed = true;
   }
 
+  void PlayerSettings::Set(
+    const std::string &section,
+    const std::string &map,
+    const std::string &name,
+    const DataValue &value)
+  {
+    Read();
+
+    const DataValue *found = _document.Find(section);
+    const DataValue *inner = found != nullptr && found->IsMap() ? found->Find(map) : nullptr;
+    DataValue entries = inner != nullptr && inner->IsMap() ? *inner : DataValue::Map();
+    entries.Set(name, value);
+    Set(section, map, entries);
+  }
+
   bool PlayerSettings::Write()
   {
     if (!_changed) { return true; }

@@ -471,6 +471,22 @@ namespace
     EXPECT_FLOAT_EQ(VolumeOf("music"), 0.25f);
   }
 
+  TEST_F(SettingsFilesTest, KeepsTheVolumesThePlayerChoseAndThoseTheFileHeld)
+  {
+    WriteOfThePlayer("version: 1\naudio:\n  volumes:\n    music: 0.25\n    effects: 0.5\n");
+
+    PlayerSettings player(&_files, &_yaml, _logger);
+    player.Set("audio", "volumes", "effects", DataValue::Number(0.75f));
+    player.Set("audio", "volumes", "ambience", DataValue::Number(0.0f));
+    ASSERT_TRUE(player.Write());
+
+    ASSERT_TRUE(ReadOfThePlayer()) << ::testing::PrintToString(_errors);
+    EXPECT_FLOAT_EQ(VolumeOf("music"), 0.25f) << "what the file held";
+    EXPECT_FLOAT_EQ(VolumeOf("effects"), 0.75f);
+    EXPECT_FLOAT_EQ(VolumeOf("ambience"), 0.0f);
+    EXPECT_FLOAT_EQ(VolumeOf("voices"), 1.0f) << "what nobody chose";
+  }
+
   TEST_F(SettingsFilesTest, AChoiceThatIsMadeAgainReplacesTheOneBefore)
   {
     PlayerSettings player(&_files, &_yaml, _logger);

@@ -26,9 +26,12 @@ styles:
 values:
   player_name: Ada
   vsync: true
-  volume: 80
-  music: 60
-  ambience: 50
+  # the volumes of the groups of sounds, from 0 to 100, as the engine
+  # starts them; the runtime, or a UiVolume of the scene, sets them to the
+  # volumes the groups have when the menu is shown
+  effects: 100
+  music: 100
+  ambience: 100
   track: chilled
   # the graphics, as the engine starts them; the runtime sets them to what
   # holds when it shows the menu
@@ -283,39 +286,67 @@ root:
                       class: value
                       text: "{exposure}"
 
-            - type: panel
-              class: row
-              children:
-                - {type: label, class: row-label, text: Effects}
-                - type: panel
-                  class: with-value
-                  children:
-                    - {type: slider, name: volume, min: 0, max: 100, step: 5, value: "{volume}"}
-                    - {type: label, class: value, text: "{volume}"}
-
-            - type: panel
-              class: row
-              children:
-                - {type: label, class: row-label, text: Music}
-                - type: panel
-                  class: with-value
-                  children:
-                    - {type: slider, name: music, min: 0, max: 100, step: 5, value: "{music}"}
-                    - {type: label, class: value, text: "{music}"}
-
             # the volumes of the groups of sounds: each slider is a value
-            # that a UiVolume of the scene hands to its group. A project
-            # with a group of its own adds a row like this one, with a
-            # value named after the group
+            # named after its group, which the runtime hands to the group
+            # while the menu is shown, and keeps with Apply. A project with
+            # a group of its own adds a row like this one, with a value
+            # named after the group
             - type: panel
               class: row
               children:
-                - {type: label, class: row-label, text: Ambience}
+                - type: label
+                  class: row-label
+                  text: Effects
                 - type: panel
                   class: with-value
                   children:
-                    - {type: slider, name: ambience, min: 0, max: 100, step: 5, value: "{ambience}"}
-                    - {type: label, class: value, text: "{ambience}"}
+                    - type: slider
+                      name: effects
+                      min: 0
+                      max: 100
+                      step: 5
+                      value: "{effects}"
+                    - type: label
+                      class: value
+                      text: "{effects}"
+
+            - type: panel
+              class: row
+              children:
+                - type: label
+                  class: row-label
+                  text: Music
+                - type: panel
+                  class: with-value
+                  children:
+                    - type: slider
+                      name: music
+                      min: 0
+                      max: 100
+                      step: 5
+                      value: "{music}"
+                    - type: label
+                      class: value
+                      text: "{music}"
+
+            - type: panel
+              class: row
+              children:
+                - type: label
+                  class: row-label
+                  text: Ambience
+                - type: panel
+                  class: with-value
+                  children:
+                    - type: slider
+                      name: ambience
+                      min: 0
+                      max: 100
+                      step: 5
+                      value: "{ambience}"
+                    - type: label
+                      class: value
+                      text: "{ambience}"
 
             # which piece of music plays: the scene fades from one to the
             # next when another is chosen

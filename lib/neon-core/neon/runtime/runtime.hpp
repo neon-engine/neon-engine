@@ -8,6 +8,7 @@
 #include "neon/input/input-system.hpp"
 #include "neon/logging/logging-system.hpp"
 #include "neon/random/entropy-context.hpp"
+#include "neon/runtime/audio-menu.hpp"
 #include "neon/runtime/graphics-menu.hpp"
 #include "neon/settings/player-settings.hpp"
 #include "neon/world-system/world-system.hpp"
@@ -46,6 +47,10 @@ namespace neon
     // menu, made when it is first shown
     PlayerSettings *_player_settings = nullptr;
     std::unique_ptr<GraphicsMenu> _graphics_menu;
+
+    // the volumes of the settings menu, made when it is first shown, if the
+    // runtime has the audio
+    std::unique_ptr<AudioMenu> _audio_menu;
 
     /// Shows the pause menu when pause is pressed, takes it away when
     /// resume is chosen, closes the window on quit, opens the settings menu
@@ -94,8 +99,8 @@ namespace neon
     [[nodiscard]] EntropyContext *GetEntropy() const;
 
     /// Gives the runtime the audio, so that the sounds that pause with the
-    /// game are held while a menu holds the world still. Without it the
-    /// sounds play on.
+    /// game are held while a menu holds the world still, and the settings
+    /// menu sets the volumes of the groups. Without it the sounds play on.
     void SetAudio(AudioContext *audio_context);
 
     /// Gives the runtime where what the player chose in the settings menu is

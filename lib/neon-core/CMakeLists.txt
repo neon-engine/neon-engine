@@ -67,6 +67,8 @@ add_library(${TARGET} STATIC
         # runtime
         neon/runtime/runtime.cpp
         neon/runtime/runtime.hpp
+        neon/runtime/audio-menu.cpp
+        neon/runtime/audio-menu.hpp
         neon/runtime/graphics-menu.cpp
         neon/runtime/graphics-menu.hpp
         neon/runtime/settings-config.hpp
@@ -555,6 +557,7 @@ neon_add_unit_test(${TARGET} neon/command-line/display-options.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/texture-source.test.cpp)
   neon_add_unit_test(${TARGET} neon/runtime/frame-capture.test.cpp)
   neon_add_unit_test(${TARGET} neon/runtime/runtime.test.cpp)
+  neon_add_unit_test(${TARGET} neon/runtime/audio-menu.test.cpp)
   neon_add_unit_test(${TARGET} neon/runtime/graphics-menu.test.cpp)
   neon_add_unit_test(${TARGET} neon/text/font-atlas.test.cpp)
   neon_add_unit_test(${TARGET} neon/text/text-layout.test.cpp)

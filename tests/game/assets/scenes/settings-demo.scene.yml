@@ -6,8 +6,11 @@
 # and a controller's cancel close it, as its file says.
 #
 # The menu sets what is heard. The Effects, Music, and Ambience sliders are
-# the volumes of those groups of sounds, through UiVolume, and choosing a
-# track fades from one piece of music to another, through UiSoundSwitch.
+# the volumes of those groups of sounds, through UiVolume, and start at the
+# volumes the settings give the groups; choosing a track fades from one
+# piece of music to another, through UiSoundSwitch. The runtime binds the
+# sliders itself only when the pause menu shows the settings, so a scene
+# that shows the menu as a component of its own carries the UiVolume.
 # The reactor hums by the ball, as ambience. Every track and the reactor are
 # the same tone, sounds/tone.wav, written by tools/make-test-game-assets.py:
 # what is checked is that they play, switch, and fade, not what is heard.
@@ -69,13 +72,13 @@ entities:
           Camera: Default
           SoundListener: Default
 
-  # the sliders of the menu are the volumes of three groups, from 0 to 100.
-  # A project with a group of its own adds an entity like these, with the
-  # name of its group, and a row for it in the menu
+  # the sliders of the menu are the volumes of three groups, from 0 to 100,
+  # each a value named after its group. A scene that shows a menu with a
+  # group of the project adds an entity like these for it
   - name: effects volume
     components:
       UiVolume:
-        value: volume
+        value: effects
         group: effects
 
   - name: music volume

@@ -1482,6 +1482,26 @@ The size of the textures and of what a camera draws into holds for what is
 read and made from then on, which is the scene loaded next. Without a window
 there is no screen to wait for, so V-Sync shows off.
 
+#### The volumes of the settings menu
+
+Every group of sounds, those of the engine and those the project declares
+under `audio.groups`, is a value of the user interface named after the
+group, from 0 to 100, which a slider of the settings menu follows: the menu
+of the engine has rows for `effects`, `music`, and `ambience`. The runtime,
+through `AudioMenu`, does as it does for the graphics; a project with a group
+of its own adds a row with a value named after it, and needs nothing else.
+
+| When | What happens |
+|---|---|
+| The menu is shown | The values are set to the volumes the groups have, as the settings and the player's file chose them, and not what the menu's file starts them with |
+| A value changes | The volume of its group is heard at once, as the value over 100. Below 0 is silence |
+| Apply | The volumes that changed since the menu was shown are written to `user://settings.yml` as `audio.volumes`, on top of what the file held, and are read at the next start |
+| Back, or cancel | The volumes are put back as they were |
+
+The world stands still while the menu is shown, and `UiAudio` goes on all the
+same, so a `UiVolume` or a `UiSoundSwitch` of the scene follows the menu too,
+see [audio.md](audio.md#from-a-settings-menu).
+
 ### Which device the player uses
 
 The user interface sets two values on the window from what the player

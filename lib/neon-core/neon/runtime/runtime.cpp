@@ -103,6 +103,7 @@ namespace neon
     {
       // what the player changed is kept with Apply, and put back otherwise
       if (_graphics_menu != nullptr) { _graphics_menu->Close(_ui_system->WasClicked("apply")); }
+      if (_audio_menu != nullptr) { _audio_menu->Close(_ui_system->WasClicked("apply")); }
 
       _settings_document = -1;
       ShowPauseMenu();
@@ -110,6 +111,7 @@ namespace neon
 
     // what the player changes in the menu takes effect at once
     if (_settings_document >= 0 && _graphics_menu != nullptr) { _graphics_menu->Update(); }
+    if (_settings_document >= 0 && _audio_menu != nullptr) { _audio_menu->Update(); }
 
     // the menu closes itself as well: on cancel, as its file says
     const bool was_shown = _pause_document >= 0 || _settings_document >= 0;
@@ -145,6 +147,14 @@ namespace neon
               _ui_system, _render_system, _window_system, _player_settings, _logger);
           }
           _graphics_menu->Open();
+
+          // and the volumes as they are
+          if (_audio_menu == nullptr && _audio_context != nullptr)
+          {
+            _audio_menu = std::make_unique<AudioMenu>(
+              _ui_system, _audio_context, _settings_config.sound_groups, _player_settings, _logger);
+          }
+          if (_audio_menu != nullptr) { _audio_menu->Open(); }
         }
       }
     }

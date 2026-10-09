@@ -12,10 +12,13 @@ namespace neon
   /// plays through a UiSoundSwitch. So a settings menu works from its file
   /// and the scene, without code of the game.
   ///
-  /// It registers both components. It is added before AudioPlayback, so
-  /// that what it asks of a SoundSource is heard in the same frame.
+  /// It registers both components. It is added after placing, so that it
+  /// goes on while the world is paused, which is when a pause menu shows the
+  /// settings, and before AudioPlayback, so that what it asks of a
+  /// SoundSource is heard in the same frame.
   ///
-  ///     world.AddSystem(std::make_unique<neon::UiAudio>(&ui_system, &audio_system));
+  ///     world.AddSystemAfterPlacing(std::make_unique<neon::UiAudio>(&ui_system, &audio_system));
+  ///     world.AddSystemAfterPlacing(std::make_unique<neon::AudioPlayback>(&audio_system, logger));
   class UiAudio final : public EntitySystem
   {
     UiContext *_ui_context;
