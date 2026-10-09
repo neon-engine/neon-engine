@@ -1065,7 +1065,7 @@ Jolt Physics is a submodule in `external/jolt-physics`. Its options are set in
 | 62 checks of the formats of the components | Pass. Reading, writing, reading what was written, and every message |
 | 21 checks of `Rotation` | Pass |
 | 19 checks of `FixedClock` | Pass |
-| 27 checks of the world with Flecs, Jolt, and a scene recipe | Pass. Among them the debug line of every body in the log, with its shapes, those of a body of several shapes too, a ball that swings a door open on its hinge in a scene, with the hinge still at the frame, and a crate whose `Collider` grows while it rests and is lifted out of the lift |
+| 27 checks of the world with Flecs, Jolt, and a scene recipe | Pass. Among them the debug line of every body in the log, with its shapes, those of a body of several shapes too, a ball that swings a door that hangs above the floor wide open on its hinge in a scene, to its limit within a second and a half, with the hinge still at the frame, and a crate whose `Collider` grows while it rests and is lifted out of the lift |
 | The same scene at 30, 60, 144, and 1000 frames per second, for four seconds, with a force that a system of a game asks for | 240 steps each. Every body is in the same state after every step, down to the last bit |
 | The same scene with frames between 0.1 and 120 milliseconds | The steps of the time that passed, and the same state after every one of them |
 | A frame of ten seconds | 8 steps, and 592 given up. The state is that of 8 steps of any other run |

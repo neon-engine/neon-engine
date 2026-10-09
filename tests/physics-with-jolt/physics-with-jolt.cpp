@@ -626,7 +626,9 @@ entities:
   // joints
 
   // A door on a hinge in a frame, which a ball rolls into, and a pendulum
-  // on a point joint to the world.
+  // on a point joint to the world. The door hangs 2 cm above the floor, as
+  // that of joints.scene.yml does (#206), so that the floor does not brake
+  // its swing.
   const std::string joints_scene = R"(scene: joints
 version: 1
 
@@ -656,7 +658,7 @@ entities:
   - name: door
     components:
       Transform:
-        position: [1.05, 1, 0]
+        position: [1.05, 1.02, 0]
       RigidBody:
         mass: 5
       Collider:
@@ -719,18 +721,21 @@ entities:
     EXPECT_LT(bob.position.x, 6.0f);
     EXPECT_NEAR(length(bob.position - glm::vec3(6.0f, 5.0f, 0.0f)), std::sqrt(4.5f), 0.1f);
 
-    world.Run(60.0, 1.5);
-
+    // The ball reached the door a little before a second, and the door,
+    // which hangs above the floor as that of joints.scene.yml does, swung
+    // wide open at once, up to its limit and no further
     const auto &door = world.TransformOf("door");
-    EXPECT_GT(std::abs(door.rotation.yaw), 20.0f);
+    EXPECT_GT(std::abs(door.rotation.yaw), 75.0f);
+    EXPECT_LT(std::abs(door.rotation.yaw), 91.0f);
     EXPECT_NEAR(door.rotation.pitch, 0.0f, 2.0f);
     EXPECT_NEAR(door.rotation.roll, 0.0f, 2.0f);
 
-    // the hinge of the door is still at the frame
+    // the hinge of the door is still at the frame, and the door hangs there
+    // without sinking to the floor
     const auto hinge = door.position + door.rotation.GetQuaternion() * glm::vec3(-0.85f, 0.0f, 0.0f);
     EXPECT_NEAR(hinge.x, 0.2f, 0.1f);
     EXPECT_NEAR(hinge.z, 0.0f, 0.1f);
-    EXPECT_NEAR(door.position.y, 1.0f, 0.1f);
+    EXPECT_NEAR(door.position.y, 1.02f, 0.01f);
 
     const auto *joint = world.store.Get<neon::Joint>(world.store.FindEntity("door"));
     EXPECT_NE(joint->joint, neon::No_Joint);
