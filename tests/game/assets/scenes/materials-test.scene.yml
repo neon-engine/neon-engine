@@ -41,8 +41,8 @@ entities:
         shader: engine://shaders/color
 
   # the middle row: each color lit, as the base color of a matte
-  # dielectric, which the scene says since the loader does not read the
-  # roughness of the file yet (#59)
+  # dielectric, which the metallicFactor of 0 and the roughnessFactor of 1
+  # of the file say, the scene leaving both out (#260)
   - name: boxes-lit
     components:
       Transform:
@@ -50,9 +50,6 @@ entities:
       Renderable:
         model: assets://models/colored-boxes.glb
         shader: engine://shaders/pbr
-        material:
-          metallic: 0
-          roughness: 1
 
   # the bottom row: the color of the scene multiplies the color of every
   # material of the model, so both boxes are drawn at half their light

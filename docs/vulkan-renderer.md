@@ -263,6 +263,11 @@ A roughness below 0.045 is raised to it, so that a mirror does not become a
 spike no pixel hits. The defaults, `metallic: 0` and `roughness: 0.5`,
 differ from glTF's 1 and 1 on purpose: without an environment to reflect
 (#64, #90) a metal is dark, and most surfaces of a game are not metals.
+They hold for a surface whose model file says nothing of either, such as a
+`Geometry`. A glTF file always says, and its `metallicFactor` and
+`roughnessFactor` are taken when the scene leaves the numbers out, and
+multiplied by them when it writes them, see
+[models.md](models.md#what-of-a-material-is-read).
 
 `tests/runtime-pbr` checks the shader against numbers worked out by hand:
 flat planes face the camera and one white light shines from it, so that every

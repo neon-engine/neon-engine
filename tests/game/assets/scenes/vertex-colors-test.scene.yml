@@ -39,8 +39,8 @@ entities:
         shader: engine://shaders/unlit
 
   # the middle row: the colors lit, as the base color of a matte
-  # dielectric, which the scene says since the loader does not read the
-  # roughness of the file yet (#59)
+  # dielectric, which the metallicFactor of 0 and the roughnessFactor of 1
+  # of the file say, the scene leaving both out (#260)
   - name: painted-lit
     components:
       Transform:
@@ -48,9 +48,6 @@ entities:
       Renderable:
         model: assets://models/colored-quads.glb
         shader: engine://shaders/pbr
-        material:
-          metallic: 0
-          roughness: 1
 
   # the bottom row, seen from behind: the file says doubleSided, so the
   # left one is drawn from its back too

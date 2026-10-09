@@ -92,6 +92,14 @@ namespace neon
     /// a set of its own, which has no one address.
     std::function<void *(void *object)> reach;
 
+    /// Whether an object gives the field, for one that may be left out,
+    /// such as the roughness of a material, which a model file fills in
+    /// when the scene does not. Such a field is written whenever it is
+    /// given, also when it holds what `get` reads for one that is left
+    /// out, so that what was written is read back the same. Empty for
+    /// every other field, which is written when it is not its default.
+    std::function<bool(const void *object)> given;
+
     /// Says what is wrong with a value for this field, or nothing when it
     /// can be set. `what` is how the field is called in the message, such as
     /// `'fov' of Camera`.

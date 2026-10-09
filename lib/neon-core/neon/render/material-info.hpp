@@ -1,5 +1,6 @@
 #ifndef MATERIAL_INFO_HPP
 #define MATERIAL_INFO_HPP
+#include <optional>
 #include <string>
 #include "neon/common/color.hpp"
 
@@ -31,15 +32,46 @@ namespace neon
     /// How much of a metal the surface is, from 0 (a dielectric: plastic,
     /// wood, stone) to 1 (a metal), as glTF describes it. A metal reflects
     /// the light in its own color and has no diffuse color; without an
-    /// environment to reflect it is dark, which is why 0 is the default here
-    /// where glTF's is 1.
-    float metallic = 0.0f;
+    /// environment to reflect it is dark, which is why kMetallic, 0, is the
+    /// default here where glTF's is 1.
+    ///
+    /// Left out, the `metallicFactor` of the model file is taken, and
+    /// kMetallic when the file gives none. Written, it is multiplied into
+    /// the file's factor, as `color` is into the base color factor: left
+    /// out counts as 1 there. See MetallicWith().
+    std::optional<float> metallic;
 
     /// How rough the surface is, from 0 (a mirror) to 1 (matte), as glTF
     /// describes it. The `pbr` shader reads the green channel of the second
     /// texture for it, and the blue channel for metallic, as a glTF
     /// metallic-roughness texture is laid out; both multiply these numbers.
-    float roughness = 0.5f;
+    ///
+    /// Left out, the `roughnessFactor` of the model file is taken, and
+    /// kRoughness when the file gives none. Written, it is multiplied into
+    /// the file's factor. See RoughnessWith().
+    std::optional<float> roughness;
+
+    /// What `metallic` and `roughness` come to for a surface whose model
+    /// file says nothing of them, such as a Geometry, when they are left
+    /// out.
+    static constexpr float kMetallic = 0.0f;
+    static constexpr float kRoughness = 0.5f;
+
+    /// What `metallic` comes to with the `metallicFactor` a model file
+    /// gives, if any: the scene's number times the file's, the scene's
+    /// counting as 1 when it is left out. Without a factor of the file,
+    /// the scene's number, or kMetallic.
+    [[nodiscard]] float MetallicWith(const std::optional<float> &file_factor) const
+    {
+      return WithFactor(metallic, file_factor, kMetallic);
+    }
+
+    /// What `roughness` comes to with the `roughnessFactor` a model file
+    /// gives, as MetallicWith() does for metallic.
+    [[nodiscard]] float RoughnessWith(const std::optional<float> &file_factor) const
+    {
+      return WithFactor(roughness, file_factor, kRoughness);
+    }
 
     /// The light the surface gives off itself, added after lighting by the
     /// shaders that light, so that it shows in the dark. Written in sRGB,
@@ -77,6 +109,16 @@ namespace neon
     /// says unless the scene says otherwise, see DoubleSided. A renderer
     /// settles `Model` against the file before it draws.
     DoubleSided double_sided = DoubleSided::Model;
+
+  private:
+    [[nodiscard]] static float WithFactor(
+      const std::optional<float> &scene,
+      const std::optional<float> &file_factor,
+      const float standard)
+    {
+      if (file_factor.has_value()) { return scene.value_or(1.0f) * *file_factor; }
+      return scene.value_or(standard);
+    }
   };
 } // neon
 

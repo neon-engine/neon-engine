@@ -22,8 +22,8 @@ namespace neon
       material_info.shininess,
       material_info.use_textures,
       static_cast<int>(material_info.alpha_mode),
-      material_info.metallic,
-      material_info.roughness,
+      material_info.MetallicWith(std::nullopt),
+      material_info.RoughnessWith(std::nullopt),
       static_cast<int>(material_info.double_sided));
 
     // what the surface gives off, which two materials alike in all else

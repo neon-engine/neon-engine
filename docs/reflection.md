@@ -94,6 +94,7 @@ it written as the four numbers.
 | `Field(name, &T::member)` | A member | `type.Field("fov", &Camera::fov)` |
 | `Field(name, function)` | A member of a member | `type.Field("model", [](Renderable &r) -> std::string & { return r.render_info.model_path; })` |
 | `Field<V>(name, get, set)` | What is kept as something else than it is seen as | The rotation of a `Transform`, which is seen as three numbers |
+| `OptionalField(name, function, standard)` | A `std::optional` that may be left out, and comes to something that is decided elsewhere then. Seen as `standard` while it is left out, and written whenever it is given, also when it holds `standard`, so that what was written reads back as written. It has no one address, as a field with a get and a set has none | The `metallic` and `roughness` of a `Renderable`, which take the model file's factors when they are left out |
 | `Choice(name, member, words)` | An enum | `type.Choice("target", &Camera::target, {"window", "texture"})` |
 | `Group(name, function)` | Fields under a name of their own | The material of a `Renderable` |
 | `Layers(name, member)` | One bit for each of 32 layers, seen as the numbers of the layers | `type.Layers("mask", &RigidBody::mask)` |

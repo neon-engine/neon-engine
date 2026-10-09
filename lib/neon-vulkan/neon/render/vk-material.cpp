@@ -355,7 +355,7 @@ namespace neon
       _material_info.use_textures ? 1.0f : 0.0f,
       _material_info.alpha_mode == AlphaMode::Blend ? 1.0f : 0.0f,
       0.0f};
-    data.surface = {_material_info.metallic, _material_info.roughness, 0.0f, 0.0f};
+    data.surface = {_material_info.MetallicWith(std::nullopt), _material_info.RoughnessWith(std::nullopt), 0.0f, 0.0f};
 
     // what the surface gives off is written as a screen shows it too, and
     // its strength multiplies the light; w tells the shaders whether a

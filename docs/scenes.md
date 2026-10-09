@@ -140,7 +140,7 @@ goes often is never made or destroyed while the game runs: see
 | `textures` | A list of virtual paths | None |
 | `preload` | A list of virtual paths of textures the entity will show later in place of its first one: the faces of a character, the skins of what a player holds. Each is loaded when the entity is first drawn and stays loaded for as long as the entity is there, so that showing it the first time costs nothing while the game runs. It changes nothing that is drawn | None |
 | `scale_textures` | Whether textures repeat as the entity grows | `false` |
-| `material` | `color` as `[red, green, blue]` or with alpha as a fourth, `metallic` and `roughness` from 0 to 1 (the `pbr` shader), `shininess` (the `basic-lit` shader), `use_textures`, `alpha_mode`, `double_sided` as `model`, `always`, or `never`, what the surface gives off: `emissive` as a color, `emissive_strength` from 0 up, and `emissive_texture` as a virtual path, see below; and light that was worked out ahead: `lightmap` as a virtual path and `lightmap_strength` from 0 up, see [vulkan-renderer.md](vulkan-renderer.md#lightmaps) | white, `0`, `0.5`, `0`, `true`, `opaque`, `model`, black, `1`, none, none, `1` |
+| `material` | `color` as `[red, green, blue]` or with alpha as a fourth, `metallic` and `roughness` from 0 to 1 (the `pbr` shader), `shininess` (the `basic-lit` shader), `use_textures`, `alpha_mode`, `double_sided` as `model`, `always`, or `never`, what the surface gives off: `emissive` as a color, `emissive_strength` from 0 up, and `emissive_texture` as a virtual path, see below; and light that was worked out ahead: `lightmap` as a virtual path and `lightmap_strength` from 0 up, see [vulkan-renderer.md](vulkan-renderer.md#lightmaps) | white, the model file's or `0`, the model file's or `0.5`, `0`, `true`, `opaque`, `model`, black, `1`, none, none, `1` |
 
 `color` is written as a screen shows it, in sRGB, like the colors of an
 image. The first texture holds colors, the second how much each part of a
@@ -166,7 +166,9 @@ and does not glow around its edges: that is #132 and #130.
 what the `Renderable` leaves out: the textures of the model are shown when
 `textures` is not written, the base color factor of a glTF material is
 multiplied into `color`, a color painted on the vertices of the model
-is multiplied in as well, and what the file's material gives off is shown
+is multiplied in as well, the metallic and roughness factors of the file
+are multiplied into `metallic` and `roughness`, which count as 1 when they
+are left out, so that the file's are taken then, and what the file's material gives off is shown
 when `emissive` is left black and `emissive_texture` is not written, with
 `emissive_strength` multiplied into the file's, so that `0` turns a file's
 glow off. A model whose meshes use different materials is drawn with each of

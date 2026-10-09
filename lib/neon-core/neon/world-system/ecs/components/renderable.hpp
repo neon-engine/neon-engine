@@ -70,17 +70,31 @@ namespace neon
         "color",
         [](Renderable &renderable) -> Color & { return renderable.render_info.material_info.color; });
 
-      material.Field(
+      // Left out, the model file's factor is taken, so they are written
+      // whenever they are given
+      material.OptionalField(
             "metallic",
-            [](Renderable &renderable) -> float & { return renderable.render_info.material_info.metallic; })
+            [](Renderable &renderable) -> std::optional<float> &
+            {
+              return renderable.render_info.material_info.metallic;
+            },
+            MaterialInfo::kMetallic)
           .AtLeast(0.0f).AtMost(1.0f)
-          .Describe("How much of a metal the surface is, 0 for plastic or stone and 1 for metal. Read by the pbr shader");
+          .Describe(
+            "How much of a metal the surface is, 0 for plastic or stone and 1 for metal. Read by the pbr shader. "
+            "Multiplied into the metallicFactor of the model file; left out, the file's is taken, or 0");
 
-      material.Field(
+      material.OptionalField(
             "roughness",
-            [](Renderable &renderable) -> float & { return renderable.render_info.material_info.roughness; })
+            [](Renderable &renderable) -> std::optional<float> &
+            {
+              return renderable.render_info.material_info.roughness;
+            },
+            MaterialInfo::kRoughness)
           .AtLeast(0.0f).AtMost(1.0f)
-          .Describe("How rough the surface is, 0 for a mirror and 1 for matte. Read by the pbr shader");
+          .Describe(
+            "How rough the surface is, 0 for a mirror and 1 for matte. Read by the pbr shader. Multiplied into the "
+            "roughnessFactor of the model file; left out, the file's is taken, or 0.5");
 
       material.Field(
         "use_textures",

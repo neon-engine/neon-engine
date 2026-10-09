@@ -1,5 +1,6 @@
 #include <cstdint>
 #include <format>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -1213,5 +1214,103 @@ namespace
     neon::ReadFields(type, DataReader(bad, "gauges.yml", "Gauge of entity 'g'", errors), &gauge);
     ASSERT_EQ(errors.size(), 1u);
     EXPECT_THAT(errors[0], ::testing::HasSubstr("where 3 rows of 3 numbers were expected"));
+  }
+}
+
+// Fields that may be left out.
+
+namespace
+{
+  struct Surface
+  {
+    std::optional<float> roughness;
+  };
+
+  void Describe(TypeBuilder<Surface> &type)
+  {
+    type.Named("Surface");
+    type.OptionalField("roughness", [](Surface &surface) -> std::optional<float> & { return surface.roughness; }, 0.5f)
+        .AtLeast(0.0f)
+        .AtMost(1.0f);
+  }
+
+  class OptionalDocumentsTest : public ::testing::Test
+  {
+  protected:
+    TypeInfo _type = TypeInfo::Of<Surface>();
+    std::vector<std::string> _errors;
+    Surface _surface;
+
+    void Read(const DataValue &map)
+    {
+      const DataReader reader(map, "surface.yml", "Surface", _errors);
+      neon::ReadFields(_type, reader, &_surface);
+      reader.Finish();
+    }
+
+    DataValue Write(const Surface &standard = {}) const
+    {
+      auto map = DataValue::Map();
+      neon::WriteFields(_type, &_surface, &standard, map);
+      return map;
+    }
+  };
+
+  TEST_F(OptionalDocumentsTest, LeftOutIsSeenAsItsStandardAndIsNotGiven)
+  {
+    Read(DataValue::Map());
+
+    EXPECT_THAT(_errors, IsEmpty());
+    EXPECT_FALSE(_surface.roughness.has_value());
+
+    const auto &field = *_type.Find("roughness");
+    float seen = 0.0f;
+    EXPECT_TRUE(neon::ToDataValue(field.get(&_surface)).GetNumber(seen));
+    EXPECT_FLOAT_EQ(seen, 0.5f);
+    EXPECT_FALSE(field.given(&_surface));
+    EXPECT_FALSE(field.reach) << "an optional has no one address";
+  }
+
+  TEST_F(OptionalDocumentsTest, ReadsAndChecksWhatIsGiven)
+  {
+    auto map = DataValue::Map();
+    map.Set("roughness", DataValue::Number(0.25f));
+    Read(map);
+
+    EXPECT_THAT(_errors, IsEmpty());
+    ASSERT_TRUE(_surface.roughness.has_value());
+    EXPECT_FLOAT_EQ(*_surface.roughness, 0.25f);
+
+    auto rough = DataValue::Map();
+    rough.Set("roughness", DataValue::Number(2.0f));
+    Read(rough);
+
+    EXPECT_EQ(_errors.size(), 1u);
+    EXPECT_FLOAT_EQ(*_surface.roughness, 0.25f);
+  }
+
+  TEST_F(OptionalDocumentsTest, WritesWhatIsGivenAlsoWhenItIsTheStandard)
+  {
+    EXPECT_THAT(NamesOf(Write()), IsEmpty());
+
+    _surface.roughness = 0.5f;
+    const DataValue written = Write();
+    ASSERT_NE(written.Find("roughness"), nullptr);
+    float number = 0.0f;
+    EXPECT_TRUE(written.Find("roughness")->GetNumber(number));
+    EXPECT_FLOAT_EQ(number, 0.5f);
+
+    // and it reads back as given, not as left out
+    _surface = {};
+    Read(written);
+    EXPECT_EQ(_surface.roughness, std::optional(0.5f));
+  }
+
+  TEST_F(OptionalDocumentsTest, LeavesOutWhatTheStandardGivesTheSame)
+  {
+    _surface.roughness = 0.3f;
+
+    EXPECT_THAT(NamesOf(Write(Surface{.roughness = 0.3f})), IsEmpty());
+    EXPECT_THAT(NamesOf(Write(Surface{.roughness = 0.8f})), ElementsAre("roughness"));
   }
 }

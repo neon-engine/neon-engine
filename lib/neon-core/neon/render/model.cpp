@@ -199,6 +199,19 @@ namespace neon
         loaded.color = Color{color.r, color.g, color.b, color.a};
       }
 
+      // The metallicFactor and roughnessFactor of glTF, which assimp gives
+      // for every material of a glTF file, 1 when the file says nothing,
+      // and the Pm and Pr of an .obj, which it gives only when written.
+      // The scene's numbers multiply them, see MaterialInfo::MetallicWith()
+      if (float metallic = 1.0f; material->Get(AI_MATKEY_METALLIC_FACTOR, metallic) == aiReturn_SUCCESS)
+      {
+        loaded.metallic = metallic;
+      }
+      if (float roughness = 1.0f; material->Get(AI_MATKEY_ROUGHNESS_FACTOR, roughness) == aiReturn_SUCCESS)
+      {
+        loaded.roughness = roughness;
+      }
+
       // What the material gives off itself: the emissiveFactor of glTF,
       // the strength of KHR_materials_emissive_strength, and the first
       // emissiveTexture, which the factor multiplies. The Ke of an .obj

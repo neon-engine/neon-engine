@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <functional>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <type_traits>
@@ -185,6 +186,36 @@ namespace neon
       field.set = [set](void *object, const FieldValue &value)
       {
         set(*static_cast<T *>(object), std::get<V>(value));
+      };
+
+      return *this;
+    }
+
+    /// A field that may be left out, kept as a std::optional. One that is
+    /// left out is seen as `standard`; what it comes to is decided where it
+    /// is used, so it is written whenever it is given, see
+    /// FieldInfo::given. It has no one address, as a computed field has
+    /// none.
+    template<typename Reach, typename V>
+      requires std::is_invocable_r_v<std::optional<V> &, Reach, T &>
+    TypeBuilder &OptionalField(const std::string &name, Reach reach, const V standard)
+    {
+      auto &field = Add(name, KindOf<V>());
+
+      field.get = [reach, standard](const void *object)
+      {
+        // reaching does not change the object
+        return FieldValue{reach(*const_cast<T *>(static_cast<const T *>(object))).value_or(standard)};
+      };
+
+      field.set = [reach](void *object, const FieldValue &value)
+      {
+        reach(*static_cast<T *>(object)) = std::get<V>(value);
+      };
+
+      field.given = [reach](const void *object)
+      {
+        return reach(*const_cast<T *>(static_cast<const T *>(object))).has_value();
       };
 
       return *this;

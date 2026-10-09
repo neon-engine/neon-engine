@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <cstring>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -674,6 +675,62 @@ namespace
 
     ASSERT_NE(model.GetFirstMaterial(), nullptr);
     EXPECT_FALSE(model.GetFirstMaterial()->double_sided);
+  }
+
+  TEST_F(ModelTest, ReadsTheMetallicAndRoughnessFactorsOfAGlbMaterial)
+  {
+    constexpr auto brushed =
+      R"({"name": "brushed", "pbrMetallicRoughness": {"metallicFactor": 0.25, "roughnessFactor": 0.75}})";
+    _file_system.AddNativeFile(
+      "/assets/models/cube.glb",
+      Glb(TriangleJson(one_node, one_mesh, brushed, embedded_image), TriangleBuffer()));
+    TestModel model("assets://models/cube.glb", &_file_system, _logger);
+
+    ASSERT_TRUE(model.Initialize()) << _logger->Messages(LogLevel::Error);
+
+    ASSERT_NE(model.GetFirstMaterial(), nullptr);
+    const auto &material = *model.GetFirstMaterial();
+    ASSERT_TRUE(material.metallic.has_value());
+    ASSERT_TRUE(material.roughness.has_value());
+    EXPECT_FLOAT_EQ(*material.metallic, 0.25f);
+    EXPECT_FLOAT_EQ(*material.roughness, 0.75f);
+  }
+
+  TEST_F(ModelTest, TakesTheFactorsGltfStandsForWhenAGlbMaterialLeavesThemOut)
+  {
+    // glTF says 1 for both, a rough metal, when the file is silent
+    _file_system.AddNativeFile(
+      "/assets/models/cube.glb",
+      Glb(TriangleJson(one_node, one_mesh, R"({"name": "plain"})", embedded_image), TriangleBuffer()));
+    TestModel model("assets://models/cube.glb", &_file_system, _logger);
+
+    ASSERT_TRUE(model.Initialize()) << _logger->Messages(LogLevel::Error);
+
+    ASSERT_NE(model.GetFirstMaterial(), nullptr);
+    EXPECT_EQ(model.GetFirstMaterial()->metallic, std::optional(1.0f));
+    EXPECT_EQ(model.GetFirstMaterial()->roughness, std::optional(1.0f));
+  }
+
+  TEST_F(ModelTest, ReadsTheMetallicAndRoughnessOfAnObjMaterialOnlyWhenItGivesThem)
+  {
+    _file_system.AddNativeFile("/assets/models/triangle.obj", triangle_with_material);
+    _file_system.AddNativeFile("/assets/models/triangle.mtl", "newmtl red\nKd 1 0 0\n");
+    TestModel plain("assets://models/triangle.obj", &_file_system, _logger);
+
+    ASSERT_TRUE(plain.Initialize()) << _logger->Messages(LogLevel::Error);
+
+    ASSERT_NE(plain.GetFirstMaterial(), nullptr);
+    EXPECT_FALSE(plain.GetFirstMaterial()->metallic.has_value());
+    EXPECT_FALSE(plain.GetFirstMaterial()->roughness.has_value());
+
+    _file_system.AddNativeFile("/assets/models/triangle.mtl", "newmtl red\nKd 1 0 0\nPm 0.5\nPr 0.25\n");
+    TestModel physical("assets://models/triangle.obj", &_file_system, _logger);
+
+    ASSERT_TRUE(physical.Initialize()) << _logger->Messages(LogLevel::Error);
+
+    ASSERT_NE(physical.GetFirstMaterial(), nullptr);
+    EXPECT_EQ(physical.GetFirstMaterial()->metallic, std::optional(0.5f));
+    EXPECT_EQ(physical.GetFirstMaterial()->roughness, std::optional(0.25f));
   }
 
   TEST_F(ModelTest, NamesTheImageFileOfAGlbFromTheFolderOfTheModel)

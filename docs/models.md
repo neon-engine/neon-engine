@@ -105,6 +105,7 @@ it. `tests/runtime-vertex-colors` reads a painted model pixel by pixel.
 | The diffuse texture (`map_Kd` of an `.obj`, `baseColorTexture` of glTF) | The first texture of the material | Shown when the `Renderable` names no `textures` of its own |
 | The specular texture (`map_Ks`) | The second texture | glTF has none; its `metallicRoughnessTexture` is not read (#59) |
 | The base color factor (`baseColorFactor` of glTF) | Multiplied into `material.color` of the `Renderable` | The `Kd` of an `.obj` is not read: the scenes set the color themselves, and a gray `Kd` would darken them |
+| The metallic and roughness factors (`metallicFactor` and `roughnessFactor` of glTF, `Pm` and `Pr` of an `.obj`) | `ModelMaterial::metallic` and `ModelMaterial::roughness`, multiplied into `material.metallic` and `material.roughness` of the `Renderable`, which count as 1 when they are left out | A glTF material always has them: 1 and 1 when the file leaves them out, as the standard says. An `.obj` has them only when its material file writes them; without, the scene's numbers, or `0` and `0.5`, hold |
 | What the material gives off (`emissiveFactor` of glTF, `Ke` of an `.obj`) | `ModelMaterial::emissive`, taken as `material.emissive` when the `Renderable` leaves it black | Black when the file says nothing, which gives off nothing |
 | Its strength (`KHR_materials_emissive_strength` of glTF) | `ModelMaterial::emissive_strength`, multiplied into `material.emissive_strength` | 1 when the file says nothing. Read only when the file lists the extension in `extensionsUsed`, as the standard asks |
 | The emissive texture (`emissiveTexture` of glTF, `map_Ke` of an `.obj`) | `ModelMaterial::emissive_texture`, shown when the `Renderable` names no `emissive_texture` | Kept apart from the textures of the colors, and read as colors, in sRGB |
@@ -116,9 +117,17 @@ it. `tests/runtime-vertex-colors` reads a painted model pixel by pixel.
 The scene has the last word. A `Renderable` that lists `textures` shows
 those and not the model's. Its `material.color` is multiplied with the
 model's factor, so white, the default, shows the model as the file means it.
-Its `material.double_sided` is `model` unless written, which takes the
-file's. What else a `Renderable` says, `shininess` and `alpha_mode`, comes
-from the scene only. A model with several materials takes the scene's word
+Its `material.metallic` and `material.roughness` are multiplied with the
+model's factors in the same way: left out, they count as 1, so the model is
+as metal and as rough as the file says, and a matte piece of a kit, whose
+`roughnessFactor` is 1, is drawn matte without the scene saying so. Written,
+they scale the file's: `roughness: 0.5` makes a piece of roughness 1 half as
+rough, and `metallic: 0` turns off the metal of a file. Like the color, the
+scene cannot go above what the file says. A surface whose file says nothing
+of them, such as a `Geometry`, takes the scene's numbers as they are, and
+`0` and `0.5` when they are left out. Its `material.double_sided` is `model`
+unless written, which takes the file's. What else a `Renderable` says,
+`shininess` and `alpha_mode`, comes from the scene only. A model with several materials takes the scene's word
 on every one of them, see [several materials](#several-materials).
 
 What a surface gives off follows the same idea, with black in place of
@@ -180,8 +189,9 @@ The `Renderable` of the scene stays the override of the whole model:
 | In the `Renderable` | Applies to |
 |---|---|
 | `material.color` | Every material: it multiplies the base color factor of each |
+| `material.metallic`, `material.roughness` | Every material: each multiplies the factor of each material, and each material takes its own factor when they are left out |
 | `textures` | The first material alone, whose own textures it replaces. The others keep what the file names. The first material is that of the first mesh, which is the only one a model with one material has |
-| `shader`, `scale_textures`, `use_textures`, `shininess`, `metallic`, `roughness`, `alpha_mode` | Every material |
+| `shader`, `scale_textures`, `use_textures`, `shininess`, `alpha_mode` | Every material |
 | `material.double_sided` | Every material when `always` or `never`. `model` takes the `doubleSided` of each material of the file for its own meshes |
 
 `tests/runtime-materials` draws a model of two boxes, a red and a blue one
@@ -199,7 +209,7 @@ conversion (#98) is for.
 | Animations | Read by assimp, not played. The log says the model has them | Skeletal animation (#149) |
 | Skins and skeletons | The mesh is drawn in its bind pose | #149 |
 | Cameras and lights | Left out. The log says the model has them | A scene places its own |
-| Metalness and roughness | Not read. `basic-lit` has shininess and a specular texture | Physically based materials (#59) |
+| The metallic-roughness texture (`metallicRoughnessTexture`) | Not read. The factors are, see [what of a material is read](#what-of-a-material-is-read) | Physically based materials (#59) |
 | A second emissive texture, or one on another set of texture coordinates | The first is read, on the first set | |
 | Tangents, a second set of texture coordinates | Not read | Normal maps come with #59 |
 | `KHR_texture_transform` | assimp reads it; only a transform that is the identity has been seen | |

@@ -461,8 +461,14 @@ namespace neon
         continue;
       }
 
+      // A field that may be left out is written when it is given, unless
+      // the standard gives the same, as the prefab of an entity does
       const auto value = field.get(object);
-      if (!field.always_written && Same(value, field.get(standard))) { continue; }
+      if (field.given)
+      {
+        if (!field.given(object)) { continue; }
+        if (field.given(standard) && Same(value, field.get(standard))) { continue; }
+      } else if (!field.always_written && Same(value, field.get(standard))) { continue; }
 
       map.Set(field.name, ToDataValue(value));
     }

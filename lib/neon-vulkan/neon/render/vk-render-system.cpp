@@ -1117,10 +1117,11 @@ namespace neon
         : nullptr;
 
     // What the model file says about its look fills in what the scene does
-    // not: its color factor multiplies the color of the material, its
-    // textures are shown when the scene names none, and its doubleSided
-    // holds unless the scene says always or never. The textures the scene
-    // names replace those of the first material of the model alone.
+    // not: its color, metallic, and roughness factors are multiplied with
+    // the scene's numbers, its textures are shown when the scene names
+    // none, and its doubleSided holds unless the scene says always or
+    // never. The textures the scene names replace those of the first
+    // material of the model alone.
     MaterialInfo material_info = render_info.material_info;
     if (material_info.double_sided == DoubleSided::Model)
     {
@@ -1136,6 +1137,10 @@ namespace neon
         material_info.color.b * factor.b,
         material_info.color.a * factor.a};
     }
+    const std::optional<float> file_metallic = model_material != nullptr ? model_material->metallic : std::nullopt;
+    const std::optional<float> file_roughness = model_material != nullptr ? model_material->roughness : std::nullopt;
+    material_info.metallic = material_info.MetallicWith(file_metallic);
+    material_info.roughness = material_info.RoughnessWith(file_roughness);
 
     // What the surface gives off, see docs/scenes.md. The scene's emissive
     // color replaces the file's factor, and black, the default, leaves it
