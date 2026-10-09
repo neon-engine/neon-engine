@@ -36,6 +36,13 @@ as one entity draws them, see
 points of a model once for every path and fit as well, and holds one shape
 for every scale a collider uses them at, see [physics.md](physics.md).
 
+A model that cannot be read, a file that is missing or that assimp does not
+take, is said in the log once for its path and fit, and is not read again
+while the game runs: the renderer and the physics both remember it, and
+every other entity that names it draws nothing and has no collider, without
+a word. A file that is put right is read at the next start, see
+[what is shared](vulkan-renderer.md#what-is-shared).
+
 A node that mirrors its mesh, with a transform whose determinant is below 0,
 turns its triangles inside out. The loader reverses the winding of every
 triangle of such a mesh, so that the front still faces out and culling still

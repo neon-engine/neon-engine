@@ -29,14 +29,23 @@ namespace neon
       }
     }
 
+    // a file that could not be read was said once, and is not read again
     const bool is_built = render_info.mesh != nullptr;
+    if (!is_built && key.has_value() && _failed.contains(*key)) { return -1; }
+
     VK_Model model = is_built
                        ? VK_Model(render_info.mesh, _device, _logger)
                        : VK_Model(render_info.model_path, render_info.fit, _file_system_context, _device, _logger);
     if (!model.Initialize())
     {
       if (is_built) { _logger->Error("Could not initialize model the mesh that was built"); }
-      else { _logger->Error("Could not initialize model {}", render_info.model_path); }
+      else
+      {
+        _logger->Error(
+          "Could not initialize model {}: the render objects that name it draw nothing, and it is not read again",
+          render_info.model_path);
+        _failed.insert(*key);
+      }
       return -1;
     }
 
@@ -95,5 +104,6 @@ namespace neon
       if (_models.Contains(id)) { Free(id); }
     }
     _shared.Clear();
+    _failed.clear();
   }
 } // neon

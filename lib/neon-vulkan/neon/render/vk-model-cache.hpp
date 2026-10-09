@@ -3,6 +3,7 @@
 
 #include <cstddef>
 #include <memory>
+#include <set>
 #include <neon/common/data-buffer.hpp>
 #include <neon/common/shared-ids.hpp>
 #include <neon/filesystem/file-system-context.hpp>
@@ -27,6 +28,12 @@ namespace neon
   ///
   /// A model is known by an id that stays the same while it is held, which
   /// a render object keeps as its model id.
+  ///
+  /// A file that cannot be read, by its path and fit, is remembered as
+  /// failed for the life of the cache, as the physics remembers it: it is
+  /// read and logged once, and every render object that names it after
+  /// that draws nothing and says nothing. A scene that takes the place of
+  /// another does not forget it, since the cache keeps nothing by scene.
   // ReSharper disable once CppInconsistentNaming
   class VK_ModelCache
   {
@@ -34,6 +41,10 @@ namespace neon
 
     // which models are shared, by their keys
     SharedIds<ModelKey> _shared;
+
+    // the files, by path and fit, that could not be read, which was said
+    // once, so that they are not read again
+    std::set<ModelKey> _failed;
 
     FileSystemContext *_file_system_context = nullptr;
     VK_Device *_device = nullptr;
@@ -52,13 +63,15 @@ namespace neon
 
     /// Hands over the model a render object draws, loading it when it is
     /// not held yet. Returns its id, or -1 when it cannot be loaded or
-    /// there is no room, which is logged.
+    /// there is no room, which is logged. A file that could not be read
+    /// before is not read again, and returns -1 without a word.
     int Acquire(const RenderInfo &render_info);
 
     /// Gives a model back. It is freed when nothing holds it any more.
     void Release(int id);
 
-    /// Frees every model, whatever still held one.
+    /// Frees every model, whatever still held one, and forgets the files
+    /// that could not be read.
     void CleanUp();
 
     [[nodiscard]] bool Contains(const int id) const { return _models.Contains(id); }
@@ -79,6 +92,10 @@ namespace neon
 
     /// How many times a render object took a model that was held already.
     [[nodiscard]] std::size_t Shares() const { return _shared.Shares(); }
+
+    /// How many files, by path and fit, could not be read and are not read
+    /// again.
+    [[nodiscard]] std::size_t Failures() const { return _failed.size(); }
   };
 } // neon
 

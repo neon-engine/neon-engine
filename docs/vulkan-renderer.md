@@ -391,6 +391,7 @@ descriptor set, one set of textures.
 | What | Held once for every | By | Freed |
 |---|---|---|---|
 | A model from a file: its vertex and index buffers | Path and `fit` | `VK_ModelCache` | When the last render object that drew it is destroyed, and at clean-up |
+| A model file that could not be read: that it failed | Path and `fit` | `VK_ModelCache` | At clean-up, see below |
 | A texture: an image file, or an image a model carries | Image path and how it is kept (colors or numbers, smaller copies, repeating), and the model's path for an image it carries, since two models may each call theirs `*0` | `VK_TextureCache` | When the last material that read it is cleaned up, and at clean-up |
 | A material: the shader, the textures, the color and the rest of `MaterialInfo`, over a model | Everything it is made from, as `VK_MaterialCache::KeyOf` writes it | `VK_MaterialCache` | When nothing draws with it any more and what is unused is freed, see below, and at clean-up |
 | A mesh a `Geometry` built | Nothing: it belongs to its entity | The model cache, uncounted | With its render object |
@@ -405,6 +406,21 @@ with its textures, until what is unused is asked to be freed
 | A scene took the place of another, after its first frame was drawn | `EntityWorld`. What both scenes show is held by the new one by then, and is not read again |
 | A game that changes its levels within one scene says a level is over | The game: `free_unused` of an extension, `World::FreeUnused()` |
 | There is no room for another material | The renderer itself |
+
+A model file that cannot be read is read once, and the error is said once:
+"Error importing model …" from assimp, and "Could not initialize model …"
+from the cache (#248, #507). The cache then remembers the path and fit as
+failed, and every render object that names it after that draws nothing and
+says nothing, and is neither looked for in the file system nor handed to
+assimp again. Before this, the bench, which spawns sixty crates a second
+that named a missing model, logged thousands of errors a second. What
+failed is remembered until clean-up, and not forgotten when a scene takes
+the place of another: the model cache keeps nothing by scene, since a model
+is freed as soon as nothing draws it and `FreeUnused` does not reach it, and
+the physics remembers a model it could not read for as long as it runs as
+well, so the two never disagree about whether a model is there. A file that
+was put right while the game runs is read at the next start.
+`VK_ModelCache::Failures()` says how many paths and fits failed.
 
 It is how a game with levels loads: what a level showed stays until the
 level is over. An entity that shows one texture after another, a face, a
