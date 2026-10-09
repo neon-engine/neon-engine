@@ -124,8 +124,9 @@ elseif (CASE STREQUAL "the-player-keeps-its-speed-through-a-jump")
   set(FRAME "jump/frame-0060.png")
   expect_pixel("the sky above the room after the jump" 960 160 0 0 0)
   expect_pixel("the north wall of the room after the jump" 700 500 136 133 153)
-  expect_pixel("the target on the north wall after the jump" 960 580 204 69 43)
-  expect_pixel("the walker to the right after the jump" 1180 700 46 87 165)
+  expect_pixel("the walker in front of the target after the jump" 960 580 49 93 170)
+  expect_pixel("the foot of the walker, stopped by the target, after the jump" 960 917 43 84 161)
+  expect_pixel("the north wall right of the walker after the jump" 1180 700 133 130 152)
   expect_pixel("the floor of the room after the jump" 1000 1000 178 173 184)
 
   # halfway through the jump the eyes are above the walls, and the black
@@ -144,18 +145,23 @@ elseif (CASE STREQUAL "the-player-walks-into-the-room")
   expect_pixel("the black above the doorway before the walk" 960 160 0 0 0)
   expect_pixel("the west post of the doorway before the walk" 750 700 58 61 80)
 
-  # Inside the room: the doorway is behind the player now, the target on the
-  # north wall is ahead, the walker to the right. Before the colliders of
-  # the doorway stood beside it (#190) the posts stopped the walker under the
-  # lintel, which is what the old check saw. The target has a body since
-  # #231, and the walker passes east of it before it reaches the wall, so
-  # the frame is the one from before.
+  # Inside the room: the doorway is behind the player now, and the north
+  # wall is ahead. Before the colliders of the doorway stood beside it
+  # (#190) the posts stopped the walker under the lintel, which is what an
+  # older check saw. The walker walks straight north into the target on the
+  # north wall, which has a body since #231 (#244), and stands in front of
+  # it, hiding it. The body stops it 10 cm before the wall would: there its
+  # foot reaches down to 960,917, which is the floor when the walker stands
+  # at the wall, as it does with the target moved out of its way. The last
+  # pixel of the walker in this column is at 920 at the target and at 911
+  # at the wall, so the check has room on either side.
   set(FRAME "shots/frame-0060.png")
   expect_image("${FRAME}")
   expect_pixel("the sky above the room after the walk" 960 160 0 0 0)
   expect_pixel("the north wall of the room after the walk" 700 500 136 133 153)
-  expect_pixel("the target on the north wall after the walk" 960 580 204 69 43)
-  expect_pixel("the walker to the right after the walk" 1180 700 46 87 165)
+  expect_pixel("the walker in front of the target after the walk" 960 580 49 93 170)
+  expect_pixel("the foot of the walker, stopped by the target, after the walk" 960 917 43 84 161)
+  expect_pixel("the north wall right of the walker after the walk" 1180 700 133 130 152)
   expect_pixel("the floor of the room after the walk" 1000 1000 178 173 184)
 
   file(SHA256 "${DIRECTORY}/shots/frame-0001.png" BEFORE)

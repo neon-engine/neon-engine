@@ -1061,7 +1061,7 @@ Jolt Physics is a submodule in `external/jolt-physics`. Its options are set in
 | 99 checks of `PhysicsSimulation` with a physics that is a fake | Pass |
 | 28 checks of `PlayerMovement` with an input that is a fake, and 6 of the format of `Player` | Pass. Walking the way the body faces at the walking and the running speed, turning the body and pitching the camera within the clamp, the camera at the eyes, jumping from the ground once per press and not in the air, and what is no player left alone |
 | The blockout, with D held for three seconds without a window | The player stands at the edge of the platform, 0.4 high and above its step, from the first second to the third: the same image, byte for byte |
-| The prototype level, with W held for a second without a window | The player stands in the doorway, with the lintel above it where the black behind the walls was, and the first frame is the same byte for byte as before the player could walk |
+| The prototype level, with W held for a second without a window | The player stands in the doorway, with the lintel above it where the black behind the walls was, and the first frame is the same byte for byte as before the player could walk. Three seconds in, the walker stands in front of the target on the north wall, whose body stopped it 10 cm before the wall: its foot reaches lower in the frame than it does at the wall |
 | 62 checks of the formats of the components | Pass. Reading, writing, reading what was written, and every message |
 | 21 checks of `Rotation` | Pass |
 | 19 checks of `FixedClock` | Pass |

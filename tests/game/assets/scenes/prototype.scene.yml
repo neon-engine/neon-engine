@@ -9,8 +9,7 @@
 # each end wall. The reactor hums, as ambience. The player starts in the corridor, facing
 # the doorway, and walks with the actions of the input map: W, A, S, D, the
 # mouse to look, space to jump, and the left shift to run. A walker crosses
-# the room and slides along its north wall, as the character of
-# physics.scene.yml does.
+# the room and is stopped by the target on its north wall.
 #
 # The kit pieces are in meters and stand on their origin, and are drawn so,
 # as the file says: the `fit` of a Renderable is `none` unless written. A
@@ -300,14 +299,15 @@ entities:
         volume: 0.5
         group: ambience
 
-  # the character of physics.scene.yml: it walks north across the room into
-  # the wall, and slides along it
+  # the character of physics.scene.yml: it walks straight north across the
+  # room into the target on the north wall, whose body stops it a little
+  # before the wall (#244)
   - name: walker
     components:
       Transform:
-        position: [-0.5, 1, 1.5]
+        position: [0, 1, 1.5]
       CharacterBody:
-        velocity: [0.5, 0, -1.5]
+        velocity: [0, 0, -1.5]
       Collider:
         shape: capsule
         radius: 0.4
