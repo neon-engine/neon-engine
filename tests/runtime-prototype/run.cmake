@@ -191,6 +191,11 @@ elseif (CASE STREQUAL "the-kit-pieces-are-loaded-once")
   # and freed once, when the last render object that drew it was destroyed
   expect_output_count("Model assets://models/kit/wall.glb was freed, nothing draws it any more" 1)
   expect_output_count("Texture assets://models/kit/colormap.png\\|color was freed" 1)
+
+  # The targets are prefabs with a body since #231, and the physics says in
+  # the log which body every entity got (#243)
+  expect_output("Created static body for 'room-target' with 1 box shape")
+  expect_output("Created static body for 'corridor-target' with 1 box shape")
 else ()
   message(FATAL_ERROR "There is no case '${CASE}'")
 endif ()

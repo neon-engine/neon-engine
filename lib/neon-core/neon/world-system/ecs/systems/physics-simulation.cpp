@@ -579,6 +579,7 @@ namespace neon
         if (!Prepare(store, entity, transforms[i], "RigidBody", record, info.shapes)) { continue; }
 
         info.entity = entity;
+        info.name = PathOf(store, entity);
         info.kind = body.kind;
         info.position = record.current.position;
         info.rotation = record.current.rotation;
@@ -646,6 +647,7 @@ namespace neon
         if (!Prepare(store, entity, transforms[i], "Trigger", record, info.shapes)) { continue; }
 
         info.entity = entity;
+        info.name = PathOf(store, entity);
         info.kind = BodyKind::Kinematic;
         info.trigger = true;
         info.position = record.current.position;
@@ -696,6 +698,7 @@ namespace neon
         record.pushed = record.current;
 
         info.entity = entity;
+        info.name = PathOf(store, entity);
         info.position = record.current.position;
         info.max_slope = character.max_slope;
         info.step_height = character.step_height;

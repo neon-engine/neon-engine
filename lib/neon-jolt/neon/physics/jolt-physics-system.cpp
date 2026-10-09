@@ -155,6 +155,39 @@ namespace neon
       return "shape";
     }
 
+    /// The shapes of a body as the log names them, such as `1 box shape`
+    /// or `2 box shapes and 1 sphere shape`, each kind in the order it
+    /// first comes in.
+    std::string Describe(const std::vector<ShapeInfo> &shapes)
+    {
+      std::vector<std::pair<ShapeKind, std::size_t>> counts;
+      for (const auto &shape : shapes)
+      {
+        const auto it = std::ranges::find(counts, shape.kind, &std::pair<ShapeKind, std::size_t>::first);
+        if (it == counts.end()) { counts.emplace_back(shape.kind, 1); } else { it->second++; }
+      }
+
+      std::string said;
+      for (std::size_t i = 0; i < counts.size(); i++)
+      {
+        if (i > 0) { said += counts.size() == 2 ? " and " : (i + 1 == counts.size() ? ", and " : ", "); }
+        const auto [kind, count] = counts[i];
+        said += std::format("{} {} shape{}", count, Name(kind), count == 1 ? "" : "s");
+      }
+      return said;
+    }
+
+    std::string Name(const BodyKind kind)
+    {
+      switch (kind)
+      {
+        case BodyKind::Static: return "static";
+        case BodyKind::Kinematic: return "kinematic";
+        case BodyKind::Dynamic: return "dynamic";
+      }
+      return "body";
+    }
+
     /// What a body is in and looks for. Jolt keeps a number of 16 bits
     /// with every body, which is the place of one of these in a list. So
     /// all 32 layers are there, and as many different sets of them as the
@@ -1449,6 +1482,13 @@ namespace neon
     };
     _state->body_count++;
     _state->added_since_rebuild++;
+
+    // so that a run without a window, and a test, can tell from the log
+    // that a recipe got its body, and which shapes it has
+    // the logger takes what it is given by reference
+    const std::string what = info.trigger ? "trigger" : Name(info.kind) + " body";
+    const auto shapes = Describe(info.shapes);
+    _logger->Debug("Created {} for '{}' with {}", what, info.name, shapes);
     return true;
   }
 
@@ -1804,6 +1844,8 @@ namespace neon
     _state->added_since_rebuild++;
 
     character = _state->next_character++;
+    const auto shapes = Describe(info.shapes);
+    _logger->Debug("Created character for '{}' with {}", info.name, shapes);
     return true;
   }
 

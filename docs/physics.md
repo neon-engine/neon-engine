@@ -57,6 +57,27 @@ shows every kind of joint: a door on a hinge, which a spring pulls shut
 again, a pendulum on a point, a sled on a slider, and two crates glued
 together.
 
+### What the log says
+
+The physics says in the log, as a debug line, every body it creates: the
+path of its entity, how it moves, and its shapes with their kinds, as the
+renderer says every render object it creates. A run without a window, and a
+test, can so tell that a recipe or a prefab got its body, and which shapes it
+has, without comparing a frame:
+
+```
+Created static body for 'room-target' with 1 box shape
+Created dynamic body for 'pile/middle' with 1 convex hull shape
+Created kinematic body for 'lift' with 1 box shape
+Created dynamic body for 'table' with 2 box shapes and 1 sphere shape
+Created trigger for 'gate' with 1 box shape
+Created character for 'player' with 1 capsule shape
+```
+
+A body of several shapes names each kind once, with how many it has of it,
+in the order its colliders come in. What could not be created is said as an
+error instead.
+
 ## Components
 
 What a component leaves out keeps its default. A value that is wrong is
@@ -1044,7 +1065,7 @@ Jolt Physics is a submodule in `external/jolt-physics`. Its options are set in
 | 62 checks of the formats of the components | Pass. Reading, writing, reading what was written, and every message |
 | 21 checks of `Rotation` | Pass |
 | 19 checks of `FixedClock` | Pass |
-| 25 checks of the world with Flecs, Jolt, and a scene recipe | Pass. Among them a ball that swings a door open on its hinge in a scene, with the hinge still at the frame, and a crate whose `Collider` grows while it rests and is lifted out of the lift |
+| 27 checks of the world with Flecs, Jolt, and a scene recipe | Pass. Among them the debug line of every body in the log, with its shapes, those of a body of several shapes too, a ball that swings a door open on its hinge in a scene, with the hinge still at the frame, and a crate whose `Collider` grows while it rests and is lifted out of the lift |
 | The same scene at 30, 60, 144, and 1000 frames per second, for four seconds, with a force that a system of a game asks for | 240 steps each. Every body is in the same state after every step, down to the last bit |
 | The same scene with frames between 0.1 and 120 milliseconds | The steps of the time that passed, and the same state after every one of them |
 | A frame of ten seconds | 8 steps, and 592 given up. The state is that of 8 steps of any other run |

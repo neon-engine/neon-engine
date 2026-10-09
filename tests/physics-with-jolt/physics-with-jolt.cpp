@@ -404,6 +404,62 @@ entities:
     EXPECT_EQ(world.physics.GetCharacterCount(), 1u);
   }
 
+  TEST(PhysicsWithJolt, SaysInTheLogWhichBodyEveryEntityGotWithItsShapes)
+  {
+    World world;
+    world.world->Initialize();
+    world.Run(60.0, 0.1);
+
+    const auto said = world.logger->Messages(LogLevel::Debug);
+    EXPECT_TRUE(world.logger->Contains(LogLevel::Debug, "Created static body for 'floor' with 1 box shape")) << said;
+    EXPECT_TRUE(world.logger->Contains(LogLevel::Debug, "Created static body for 'slope' with 1 mesh shape")) << said;
+    EXPECT_TRUE(world.logger->Contains(
+      LogLevel::Debug, "Created dynamic body for 'pile/middle' with 1 convex hull shape")) << said;
+    EXPECT_TRUE(world.logger->Contains(LogLevel::Debug, "Created kinematic body for 'lift' with 1 box shape")) << said;
+    EXPECT_TRUE(world.logger->Contains(LogLevel::Debug, "Created trigger for 'gate' with 1 box shape")) << said;
+    EXPECT_TRUE(world.logger->Contains(LogLevel::Debug, "Created character for 'player' with 1 capsule shape")) << said;
+  }
+
+  TEST(PhysicsWithJolt, SaysInTheLogEveryKindOfShapeOfABodyOfSeveral)
+  {
+    World world(R"(scene: table
+entities:
+  - name: table
+    components:
+      Transform:
+        position: [0, 1, 0]
+      RigidBody: Default
+    children:
+      - name: top
+        components:
+          Transform:
+            position: [0, 0.9, 0]
+          Collider:
+            shape: box
+            size: [2, 0.2, 2]
+      - name: leg
+        components:
+          Transform:
+            position: [-0.9, 0.4, -0.9]
+          Collider:
+            shape: box
+            size: [0.2, 0.8, 0.2]
+      - name: knob
+        components:
+          Transform:
+            position: [0.9, 1.1, 0.9]
+          Collider:
+            shape: sphere
+            radius: 0.1
+)");
+    world.world->Initialize();
+    world.Run(60.0, 0.1);
+
+    EXPECT_TRUE(world.logger->Contains(
+      LogLevel::Debug, "Created dynamic body for 'table' with 2 box shapes and 1 sphere shape"))
+      << world.logger->Messages(LogLevel::Debug);
+  }
+
   TEST(PhysicsWithJolt, LetsDynamicBodiesCollideAndReact)
   {
     World world;

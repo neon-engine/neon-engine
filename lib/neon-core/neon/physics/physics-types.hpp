@@ -132,6 +132,10 @@ namespace neon
     /// The entity the body belongs to. It is what events and queries name.
     Entity entity = No_Entity;
 
+    /// What the log calls the body: the path of its entity, such as
+    /// `pile/lower`.
+    std::string name;
+
     BodyKind kind = BodyKind::Dynamic;
 
     /// A trigger reports what overlaps it, and neither stops nor pushes
@@ -203,6 +207,9 @@ namespace neon
   struct CharacterInfo
   {
     Entity entity = No_Entity;
+
+    /// What the log calls the character: the path of its entity.
+    std::string name;
 
     std::vector<ShapeInfo> shapes;
 
