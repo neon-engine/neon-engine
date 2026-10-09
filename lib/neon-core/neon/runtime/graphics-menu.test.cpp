@@ -9,6 +9,7 @@
 #include <gtest/gtest.h>
 
 #include <neon/testing/memory-file-system.hpp>
+#include <neon/render/shadow-map-size.hpp>
 #include <neon/testing/mock-render-context.hpp>
 #include <neon/testing/mock-ui-system.hpp>
 #include <neon/testing/mock-window-system.hpp>
@@ -20,6 +21,7 @@ namespace
   using neon::DocumentFormat;
   using neon::GraphicsMenu;
   using neon::PlayerSettings;
+  using neon::ShadowFilter;
   using neon::Tonemapper;
   using neon::testing::LogLevel;
   using neon::testing::MemoryFileSystem;
@@ -68,6 +70,9 @@ namespace
     int _target_mipmaps = 0;
     double _shadow_distance = 120.0;
     int _shadow_cascades = 4;
+    bool _shadows = true;
+    int _shadow_map_size = 2048;
+    ShadowFilter _shadow_filter = ShadowFilter::Pcf;
     Tonemapper _tonemapper = Tonemapper::None;
     double _exposure = 1.0;
 
@@ -117,6 +122,17 @@ namespace
         _shadow_cascades = cascades;
         return true;
       });
+      ON_CALL(_render, GetShadowsEnabled()).WillByDefault([this] { return _shadows; });
+      ON_CALL(_render, SetShadowsEnabled(_)).WillByDefault([this](const bool enabled) { _shadows = enabled; return true; });
+      ON_CALL(_render, GetShadowMapSize()).WillByDefault([this] { return _shadow_map_size; });
+      ON_CALL(_render, SetShadowMapSize(_)).WillByDefault([this](const int size)
+      {
+        if (!neon::ShadowMapSize::IsSize(size)) { return false; }
+        _shadow_map_size = size;
+        return true;
+      });
+      ON_CALL(_render, GetShadowFilter()).WillByDefault([this] { return _shadow_filter; });
+      ON_CALL(_render, SetShadowFilter(_)).WillByDefault([this](const ShadowFilter filter) { _shadow_filter = filter; return true; });
       ON_CALL(_render, GetTonemapper()).WillByDefault([this] { return _tonemapper; });
       ON_CALL(_render, GetExposure()).WillByDefault([this] { return _exposure; });
       ON_CALL(_render, SetTonemapping(_, _)).WillByDefault([this](const Tonemapper tonemapper, const double exposure)
@@ -157,6 +173,9 @@ namespace
     EXPECT_EQ(_values["texture_scale"], "1");
     EXPECT_EQ(_values["target_scale"], "1");
     EXPECT_EQ(_values["target_mipmaps"], "0");
+    EXPECT_EQ(_values["shadows"], "true");
+    EXPECT_EQ(_values["shadow_map_size"], "2048");
+    EXPECT_EQ(_values["shadow_filter"], "pcf");
     EXPECT_EQ(_values["shadow_cascades"], "4");
     EXPECT_EQ(_values["shadow_distance"], "120");
     EXPECT_EQ(_values["tonemapper"], "none");
@@ -165,7 +184,7 @@ namespace
 
   TEST_F(GraphicsMenuTest, HasAValueForEveryGraphicsSetting)
   {
-    EXPECT_EQ(Menu().GetValueNames().size(), 11u);
+    EXPECT_EQ(Menu().GetValueNames().size(), 14u);
   }
 
   TEST_F(GraphicsMenuTest, ChangesWhatThePlayerChangesAtOnce)
@@ -181,6 +200,9 @@ namespace
     _values["tonemapper"] = "agx";
     _values["exposure"] = "1.5";
     _values["target_mipmaps"] = "4";
+    _values["shadows"] = "false";
+    _values["shadow_map_size"] = "1024";
+    _values["shadow_filter"] = "none";
     menu.Update();
 
     EXPECT_EQ(_anisotropy, 16);
@@ -192,6 +214,62 @@ namespace
     EXPECT_EQ(_tonemapper, Tonemapper::Agx);
     EXPECT_DOUBLE_EQ(_exposure, 1.5);
     EXPECT_EQ(_target_mipmaps, 4);
+    EXPECT_FALSE(_shadows);
+    EXPECT_EQ(_shadow_map_size, 1024);
+    EXPECT_EQ(_shadow_filter, ShadowFilter::None);
+  }
+
+  TEST_F(GraphicsMenuTest, KeepsTheShadowSettingsAsTheFileWritesThem)
+  {
+    GraphicsMenu menu = Menu(&_player);
+    menu.Open();
+    _values["shadows"] = "false";
+    _values["shadow_map_size"] = "512";
+    _values["shadow_filter"] = "none";
+    menu.Update();
+
+    menu.Close(true);
+
+    bool shadows = true;
+    ASSERT_NE(Kept("rendering", "shadows"), nullptr);
+    EXPECT_TRUE(Kept("rendering", "shadows")->GetBool(shadows));
+    EXPECT_FALSE(shadows) << "a flag, as rendering.vsync is";
+
+    double size = 0.0;
+    ASSERT_NE(Kept("rendering", "shadow_map_size"), nullptr);
+    EXPECT_TRUE(Kept("rendering", "shadow_map_size")->GetNumber(size));
+    EXPECT_DOUBLE_EQ(size, 512.0);
+
+    std::string filter;
+    ASSERT_NE(Kept("rendering", "shadow_filter"), nullptr);
+    EXPECT_TRUE(Kept("rendering", "shadow_filter")->GetText(filter));
+    EXPECT_EQ(filter, "none");
+  }
+
+  TEST_F(GraphicsMenuTest, RefusesASizeOfTheShadowMapThatIsNoneAndKeepsTheMap)
+  {
+    GraphicsMenu menu = Menu(&_player);
+    menu.Open();
+    _values["shadow_map_size"] = "3000";
+    menu.Update();
+
+    EXPECT_EQ(_shadow_map_size, 2048);
+    EXPECT_EQ(_logger->Count(LogLevel::Warn), 1u) << _logger->Messages(LogLevel::Warn);
+  }
+
+  TEST_F(GraphicsMenuTest, PutsTheShadowsBackWhenTheyAreNotKept)
+  {
+    GraphicsMenu menu = Menu(&_player);
+    menu.Open();
+    _values["shadows"] = "false";
+    _values["shadow_map_size"] = "4096";
+    menu.Update();
+    EXPECT_FALSE(_shadows);
+
+    menu.Close(false);
+
+    EXPECT_TRUE(_shadows);
+    EXPECT_EQ(_shadow_map_size, 2048);
   }
 
   TEST_F(GraphicsMenuTest, ChangesNothingWhenNothingChanged)

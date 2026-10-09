@@ -4,7 +4,7 @@
 
 namespace neon
 {
-  bool VK_ShadowMap::Initialize(VK_Device *device, const std::shared_ptr<Logger> &logger)
+  bool VK_ShadowMap::Initialize(VK_Device *device, const uint32_t size, const std::shared_ptr<Logger> &logger)
   {
     _device = device;
     _logger = logger;
@@ -19,16 +19,47 @@ namespace neon
       return false;
     }
 
+    if (!CreateRenderPass())
+    {
+      _logger->Critical("Could not create the render pass of the shadow map");
+      CleanUp();
+      return false;
+    }
+
+    if (!CreateImage(size))
+    {
+      CleanUp();
+      return false;
+    }
+    return true;
+  }
+
+  bool VK_ShadowMap::Resize(const uint32_t size)
+  {
+    if (_render_pass == VK_NULL_HANDLE) { return false; }
+    if (size == _size && IsReady()) { return true; }
+
+    DestroyImage();
+    if (!CreateImage(size))
+    {
+      DestroyImage();
+      return false;
+    }
+    return true;
+  }
+
+  bool VK_ShadowMap::CreateImage(const uint32_t size)
+  {
+    _size = size;
+
     constexpr auto layers = static_cast<uint32_t>(kMax_Shadow_Cascades);
     if (!_device->CreateImage(
-          kSize, kSize, 1, kFormat,
+          size, size, 1, kFormat,
           VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
           _image, _memory, 0, layers) ||
-        !_device->CreateImageView(_image, kFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1, _view, 0, layers) ||
-        !CreateRenderPass())
+        !_device->CreateImageView(_image, kFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1, _view, 0, layers))
     {
-      _logger->Critical("Could not create the shadow map");
-      CleanUp();
+      _logger->Critical("Could not create the shadow map of {} by {}", size, size);
       return false;
     }
 
@@ -38,7 +69,6 @@ namespace neon
       if (!_device->CreateImageView(_image, kFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1, _layer_views[layer], layer, 1))
       {
         _logger->Critical("Could not create the view of a layer of the shadow map");
-        CleanUp();
         return false;
       }
 
@@ -47,14 +77,13 @@ namespace neon
       framebuffer.renderPass = _render_pass;
       framebuffer.attachmentCount = 1;
       framebuffer.pAttachments = &_layer_views[layer];
-      framebuffer.width = kSize;
-      framebuffer.height = kSize;
+      framebuffer.width = size;
+      framebuffer.height = size;
       framebuffer.layers = 1;
 
       if (vkCreateFramebuffer(_device->Device(), &framebuffer, nullptr, &_framebuffers[layer]) != VK_SUCCESS)
       {
         _logger->Critical("Could not create the framebuffer of the shadow map");
-        CleanUp();
         return false;
       }
     }
@@ -62,7 +91,6 @@ namespace neon
     if (!ClearToLit())
     {
       _logger->Critical("Could not clear the shadow map");
-      CleanUp();
       return false;
     }
     return true;
@@ -143,7 +171,7 @@ namespace neon
     return _device->EndCommands(commands);
   }
 
-  void VK_ShadowMap::CleanUp()
+  void VK_ShadowMap::DestroyImage()
   {
     if (_device == nullptr || _device->Device() == VK_NULL_HANDLE) { return; }
 
@@ -159,15 +187,23 @@ namespace neon
       if (view != VK_NULL_HANDLE) { vkDestroyImageView(device, view, nullptr); }
       view = VK_NULL_HANDLE;
     }
-    if (_render_pass != VK_NULL_HANDLE) { vkDestroyRenderPass(device, _render_pass, nullptr); }
     if (_view != VK_NULL_HANDLE) { vkDestroyImageView(device, _view, nullptr); }
     if (_image != VK_NULL_HANDLE) { vkDestroyImage(device, _image, nullptr); }
     if (_memory != VK_NULL_HANDLE) { vkFreeMemory(device, _memory, nullptr); }
 
-    _render_pass = VK_NULL_HANDLE;
     _view = VK_NULL_HANDLE;
     _image = VK_NULL_HANDLE;
     _memory = VK_NULL_HANDLE;
+    _size = 0;
+  }
+
+  void VK_ShadowMap::CleanUp()
+  {
+    if (_device == nullptr || _device->Device() == VK_NULL_HANDLE) { return; }
+
+    DestroyImage();
+    if (_render_pass != VK_NULL_HANDLE) { vkDestroyRenderPass(_device->Device(), _render_pass, nullptr); }
+    _render_pass = VK_NULL_HANDLE;
   }
 
   void VK_ShadowMap::Begin(const VkCommandBuffer commands, const uint32_t layer) const
@@ -179,7 +215,7 @@ namespace neon
     pass.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     pass.renderPass = _render_pass;
     pass.framebuffer = _framebuffers[layer];
-    pass.renderArea = {{0, 0}, {kSize, kSize}};
+    pass.renderArea = {{0, 0}, {_size, _size}};
     pass.clearValueCount = 1;
     pass.pClearValues = &clear;
 
@@ -191,12 +227,12 @@ namespace neon
     // The shaders that read the map turn its rows round again.
     const VkViewport viewport{
       0.0f,
-      static_cast<float>(kSize),
-      static_cast<float>(kSize),
-      -static_cast<float>(kSize),
+      static_cast<float>(_size),
+      static_cast<float>(_size),
+      -static_cast<float>(_size),
       0.0f,
       1.0f};
-    const VkRect2D scissor{{0, 0}, {kSize, kSize}};
+    const VkRect2D scissor{{0, 0}, {_size, _size}};
 
     vkCmdSetViewport(commands, 0, 1, &viewport);
     vkCmdSetScissor(commands, 0, 1, &scissor);

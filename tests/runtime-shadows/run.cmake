@@ -1,5 +1,8 @@
 # Draws shadow-test.scene.yml without a window and reads pixels of the
-# result, and then the same scene with a light that casts no shadow.
+# result, and then the same scene with a light that casts no shadow, with
+# the shadows switched off in the settings, which is to be the same frame
+# byte for byte, and with the smallest map and no filter, which shadows the
+# floor the same where the probe is, well inside the edge of the shadow.
 #
 # The floor and the box are white, drawn with basic-lit and no shininess,
 # and the one light comes from above at 45 degrees with an ambient of 0.2
@@ -23,16 +26,40 @@
 
 include("${CMAKE_CURRENT_LIST_DIR}/../../cmake/scripts/run-application.cmake")
 
+set(OPTIONS)
 if (CASE STREQUAL "a-box-shadows-the-floor-beside-it")
   set(SCENE assets://scenes/shadow-test.scene.yml)
 elseif (CASE STREQUAL "a-light-that-casts-no-shadow-leaves-the-floor-lit")
   set(SCENE assets://scenes/shadow-test-unshadowed.scene.yml)
+elseif (CASE STREQUAL "shadows-off-leaves-the-floor-lit")
+  set(SCENE assets://scenes/shadow-test.scene.yml)
+  set(OPTIONS --shadows off)
+elseif (CASE STREQUAL "shadows-off-is-the-frame-of-a-light-that-casts-none")
+  set(SCENE assets://scenes/shadow-test.scene.yml)
+  set(OPTIONS --shadows off)
+elseif (CASE STREQUAL "a-small-map-with-hard-edges-shadows-the-floor-too")
+  set(SCENE assets://scenes/shadow-test.scene.yml)
+  set(OPTIONS --shadow-map-size 512 --shadow-filter none)
 else ()
   message(FATAL_ERROR "There is no case '${CASE}'")
 endif ()
 
+# the frame of the light that casts no shadow first, to compare against
+if (CASE STREQUAL "shadows-off-is-the-frame-of-a-light-that-casts-none")
+  run(--headless-renderer --window-size 1920x1080 --render-scale 1 --time-step 0.05 --frames 2
+          --output-dir shots --screenshot output://unshadowed.png --scene assets://scenes/shadow-test-unshadowed.scene.yml)
+  string(FIND "${OUTPUT}" "Failed to initialize Vulkan" NO_VULKAN)
+  if (NOT NO_VULKAN EQUAL -1)
+    message("SKIPPED: this machine cannot start the Vulkan renderer")
+    message("${OUTPUT}")
+    return()
+  endif ()
+  expect_exit_code(0)
+  expect_image("shots/unshadowed.png")
+endif ()
+
 run(--headless-renderer --window-size 1920x1080 --render-scale 1 --time-step 0.05 --frames 2
-        --output-dir shots --screenshot output://frame.png --scene ${SCENE})
+        --output-dir shots --screenshot output://frame.png --scene ${SCENE} ${OPTIONS})
 
 # a machine that cannot render at all skips the test
 string(FIND "${OUTPUT}" "Failed to initialize Vulkan" NO_VULKAN)
@@ -82,9 +109,18 @@ expect_pixel("the floor in the light, far from the box" 407 540 227 227 227)
 expect_pixel("the floor in the light, on the side of the light" 1329 540 227 227 227)
 expect_pixel("the top of the box" 960 395 227 227 227)
 
-if (CASE STREQUAL "a-box-shadows-the-floor-beside-it")
+if (CASE STREQUAL "a-box-shadows-the-floor-beside-it" OR CASE STREQUAL "a-small-map-with-hard-edges-shadows-the-floor-too")
   # the ambient light alone: what the diffuse light added is kept off
   expect_pixel("the floor in the shadow of the box" 776 540 124 124 124)
 else ()
   expect_pixel("the floor beside the box, with no shadow" 776 540 227 227 227)
+endif ()
+
+if (CASE STREQUAL "shadows-off-is-the-frame-of-a-light-that-casts-none")
+  # the switch shades every light as if it cast none, so the frames are one
+  file(SHA256 "${DIRECTORY}/shots/unshadowed.png" UNSHADOWED)
+  file(SHA256 "${DIRECTORY}/shots/frame.png" SWITCHED_OFF)
+  if (NOT UNSHADOWED STREQUAL SWITCHED_OFF)
+    fail("Expected the frame with the shadows switched off to be the frame of a light that casts none, byte for byte")
+  endif ()
 endif ()

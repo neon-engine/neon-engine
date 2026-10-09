@@ -14,6 +14,7 @@
 #include "render-object-ref.hpp"
 #include "render-target-options.hpp"
 #include "sky-info.hpp"
+#include "shadow-filter.hpp"
 #include "texture-source.hpp"
 #include "tonemapper.hpp"
 
@@ -232,6 +233,30 @@ namespace neon
     [[nodiscard]] virtual double GetShadowDistance() { return 0.0; }
 
     [[nodiscard]] virtual int GetShadowCascades() { return 0; }
+
+    /// Whether the direction light casts shadows at all, while the
+    /// application runs, from the next frame on. Off, the shadow pass is
+    /// not recorded and every light is shaded as if it had `casts_shadows:
+    /// false`. Returns false for a renderer that cannot change it.
+    virtual bool SetShadowsEnabled(bool enabled) { return false; }
+
+    [[nodiscard]] virtual bool GetShadowsEnabled() { return false; }
+
+    /// How many texels the shadow map has along each side, one of
+    /// ShadowMapSize::kSizes, while the application runs: the map is made
+    /// again at the new size before the next frame, as the frame is when
+    /// the window changes its size. Returns false for a size that is none
+    /// of them, or a renderer that cannot change it.
+    virtual bool SetShadowMapSize(int size) { return false; }
+
+    [[nodiscard]] virtual int GetShadowMapSize() { return 0; }
+
+    /// How the shadow map is compared against, while the application runs,
+    /// from the next frame on. Returns false for a renderer that cannot
+    /// change it.
+    virtual bool SetShadowFilter(ShadowFilter filter) { return false; }
+
+    [[nodiscard]] virtual ShadowFilter GetShadowFilter() { return ShadowFilter::Pcf; }
 
     /// How many places there are for numbers of a game that every shader
     /// reads, see SetShaderNumbers().

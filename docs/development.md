@@ -255,6 +255,11 @@ Display:
   --texture-scale NUMBER    Size textures read from files are kept at: 1, 0.5, 0.25, or 0.125 of their size, over rendering.texture_scale of the settings
   --target-scale NUMBER     Size what a camera draws into is made at: 1, 0.5, or 0.25 of what it asks for, over rendering.target_scale of the settings
   --target-mipmaps NUMBER   Most levels of smaller copies a render target has: 0 for as many as its size allows, 1 for none, up to 16, over rendering.target_mipmaps of the settings
+  --shadows on|off          Whether the direction light casts shadows at all, over rendering.shadows of the settings; off skips the shadow pass
+  --shadow-map-size NUMBER  Texels the shadow map has along each side: 512, 1024, 2048, or 4096, over rendering.shadow_map_size of the settings
+  --shadow-filter NAME      How the shadow map is compared against: none for one comparison, pcf for nine averaged, over rendering.shadow_filter of the settings
+  --shadow-distance METERS  How far from the camera the shadows reach, above 0, over rendering.shadow_distance of the settings
+  --shadow-cascades NUMBER  How many cascades the shadow map has, 1 to 4, over rendering.shadow_cascades of the settings
   --ui-scale NUMBER         Makes the user interface larger or smaller, for example 1.5
 
 Editor:
@@ -419,7 +424,7 @@ the runtime's sets plus its own, and the runtime only its own.
 | `CommandLineContext` | [neon-core](../lib/neon-core/neon/command-line/command-line-context.hpp) | The read side, for code that wants to know what was asked for |
 | `CommandLineOptions` | [neon-core](../lib/neon-core/neon/command-line/command-line-options.hpp) | Interface of a set of options: what they are, and what they do to the settings |
 | `RuntimeOptions` | [neon-core](../lib/neon-core/neon/command-line/runtime-options.hpp) | Owned by the runtime: `--renderer`, `--vulkan-version` |
-| `DisplayOptions` | [neon-core](../lib/neon-core/neon/command-line/display-options.hpp) | Owned by the runtime, the window and the size of what is shown: `--window-size`, `--window-mode`, `--vsync`, `--max-fps`, `--anisotropy`, `--texture-scale`, `--target-scale`, `--target-mipmaps`, `--ui-scale` |
+| `DisplayOptions` | [neon-core](../lib/neon-core/neon/command-line/display-options.hpp) | Owned by the runtime, the window and the size of what is shown: `--window-size`, `--window-mode`, `--vsync`, `--max-fps`, `--anisotropy`, `--texture-scale`, `--target-scale`, `--target-mipmaps`, `--shadows`, `--shadow-map-size`, `--shadow-filter`, `--shadow-distance`, `--shadow-cascades`, `--ui-scale` |
 | `EditorOptions` | [neon-core](../lib/neon-core/neon/command-line/editor-options.hpp) | Owned by the editor: another scene, no window, screenshots, input from a script |
 
 An application puts them together in `main.cpp`:

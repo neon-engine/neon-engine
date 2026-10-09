@@ -1466,10 +1466,17 @@ is closed, so a menu that takes the mouse writes `modal: true`.
 Every graphics setting the engine has is a value of the user interface,
 named as the setting is, which a row of the settings menu follows (#356):
 `window_mode`, `vsync`, `max_fps`, `anisotropy`, `texture_scale`,
-`target_scale`, `target_mipmaps`, `shadow_cascades`, `shadow_distance`,
-`tonemapper`, and `exposure`. The runtime, through `GraphicsMenu`, does the
-rest; a project that brings a settings menu of its own gets the same by
-naming its elements' values so.
+`target_scale`, `target_mipmaps`, `shadows`, `shadow_map_size`,
+`shadow_filter`, `shadow_cascades`, `shadow_distance`, `tonemapper`, and
+`exposure`. The runtime, through `GraphicsMenu`, does the rest; a project
+that brings a settings menu of its own gets the same by naming its
+elements' values so.
+
+The shadows have five rows: Shadows, a box that is ticked, which switches
+the shadow pass off altogether; Shadow map, the texels of the map along a
+side, which is made again at the new size before the next frame, as the
+frame is when the window changes its size; Shadow edges, Hard for one
+comparison and Soft for nine; Shadow cascades; and Shadow distance.
 
 | When | What happens |
 |---|---|

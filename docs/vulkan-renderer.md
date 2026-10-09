@@ -490,7 +490,7 @@ what a screenshot shows is what a window would show.
 
 | Stage | Drawn into | What happens |
 |---|---|---|
-| Shadow pass | The shadow map, `D32_SFLOAT`, 2048 by 2048, a layer a cascade | The opaque models of the first scene of the frame whose direction light casts, as the light sees them, depth alone, once into every cascade. Recorded apart and run before everything below, so that every scene of the frame reads the finished map. Left out when no light casts. See [Shadows](#shadows) |
+| Shadow pass | The shadow map, `D32_SFLOAT`, `rendering.shadow_map_size` texels a side, 2048 unless the settings say otherwise, a layer a cascade | The opaque models of the first scene of the frame whose direction light casts, as the light sees them, depth alone, once into every cascade. Recorded apart and run before everything below, so that every scene of the frame reads the finished map. Left out when no light casts, and when `rendering.shadows` is off. See [Shadows](#shadows) |
 | Render targets | Each target, in the order they are drawn | Each goes through the stages below on its own: a camera that draws into a texture lights a scene in a scene image of the target, a user interface on a surface draws on top. A target that shows only a user interface has no scene image |
 | Scene | The scene image, `R16G16B16A16_SFLOAT`, and its depth | Opaque models in the order that costs the least, see below, then the sky wherever none of them is, see [The sky](#the-sky), then see-through ones from the farthest to the nearest, tested against depth but not writing it. The back of every triangle is left out unless the material is double-sided. Lighting and blending are in linear light. An opaque model replaces what is behind it and leaves the alpha of the scene image at 1, whatever its shader wrote |
 | Effects on the light | Two pictures as the scene image, in turn | The `effects` of the camera, each a triangle that covers the picture: the first reads the scene image, and each one after it what the one before wrote. Left out, with the pictures, for a camera that names none. See [the effects of a camera](#the-effects-of-a-camera) |
@@ -727,11 +727,12 @@ cast nothing yet.
 
 | Part | What it is |
 |---|---|
-| The map | One depth image of 2048 by 2048 in whole floats with four layers, `VK_ShadowMap`, a layer a cascade, drawn once a frame and read by every scene of it as an array. It is left all lit when it is made, so that a frame in which nothing casts reads it and lights everything |
+| The map | One depth image in whole floats with four layers, `VK_ShadowMap`, a layer a cascade, of `rendering.shadow_map_size` texels along each side, 2048 unless the [settings](settings.md) say otherwise, drawn once a frame and read by every scene of it as an array. It is left all lit when it is made, so that a frame in which nothing casts reads it and lights everything. `RenderContext::SetShadowMapSize()` makes it again at another size while the game runs, at the start of the next frame as the frame's images are made again when the window changes its size: the render pass stays, so the pipelines of the pass do, and every material's set is written again with the new view |
+| The switch | `rendering.shadows`, `RenderContext::SetShadowsEnabled()`: off, no light is fitted and nothing casts, so the pass is not recorded and the shaders skip the comparison, which is the frame of a light with `casts_shadows: false` byte for byte. The other shadow settings are kept for when it is on again |
 | The pass | Before the scene, in commands of its own that are submitted first. Every opaque model of the first scene that casts is drawn with the depth-only `shadow` shader through a variant of `VK_Pipelines`, once into each cascade's layer, the cascade named by a push constant, culled as its material is: a plane seen from one side casts from that side alone, and a double-sided material from both. In batches of its own, by model and not by material, so two thousand crates are one draw a cascade whatever their materials are. See-through models cast nothing for now |
 | The fit | `VK_ShadowFit`: cascades, as Godot, Unity, and Unreal fit theirs. What the camera sees up to `rendering.shadow_distance`, 120 meters unless the [settings](settings.md) say otherwise, is cut into `rendering.shadow_cascades` slices along the view, four by default, split halfway between even and logarithmic so that the near slice is thin; each slice gets a box around the sphere that holds its corners, seen along the light without perspective, reaching back towards the light by the distance so that what casts into the slice from above it is in the map. A sphere gives the box one size however the camera turns, and the box moves in whole texels of the map, so that the edge of a shadow stays where it is while the camera moves by less than one and does not shimmer. The shaders pick the cascade by the point's distance along the view and read its layer; past the last one everything is lit |
 | The bias | Two parts. The pipeline of the pass pushes a caster back along the slope of its surface by two texels of depth (`depthBiasSlopeFactor`), which covers the texels the comparison reaches across on a surface that slopes away from the light. The shaders move the compared depth by 0.0002 of the depth of the box, about 1.6 centimeters, which covers a surface that faces the light. With whole floats the constant bias of the pipeline is too fine to be of use, which is why that part is in the shaders |
-| The comparison | `shadows.glsl`, bound to every lit shader: the place in the map and the depth of the point, compared through a sampler that compares (`VK_Sampling::ShadowCompare`), which blends the answers of the four texels around the place. Nine such comparisons one texel apart are averaged, which softens the edge of a shadow over about three texels. Past the edge of the map, and further from the light than the box reaches, everything is lit |
+| The comparison | `shadows.glsl`, bound to every lit shader: the place in the map and the depth of the point, compared through a sampler that compares (`VK_Sampling::ShadowCompare`), which blends the answers of the four texels around the place. With `rendering.shadow_filter` of `pcf` nine such comparisons one texel apart are averaged, which softens the edge of a shadow over about three texels; with `none` the place is compared once, and the edge is about a texel wide. The scene data tells the shader how many comparisons across, 1 or 3, in `shadow.x`, and 0 for a light that casts none. Past the edge of the map, and further from the light than the box reaches, everything is lit |
 | What it dims | The diffuse and the specular light of the direction light, never its ambient. A point in full shadow shows the ambient light alone |
 
 Why culling as the material is, and a bias, rather than drawing the backs
@@ -743,9 +744,11 @@ caster where it is, to within two texels.
 `tests/runtime-shadows` checks the numbers: a white box on a white floor
 under one light at 45 degrees, where the floor beside the box shows the
 ambient light alone, and the same scene with `casts_shadows: false` shows
-the floor lit. The frames of every scene whose light does not cast are
-byte for byte what they were before the pass existed, since the shaders
-skip the comparison for such a light.
+the floor lit, as it does with `--shadows off`, whose frame is the frame
+of that light byte for byte; and the smallest map with `--shadow-filter
+none` shadows the floor the same. The frames of every scene whose light
+does not cast are byte for byte what they were before the pass existed,
+since the shaders skip the comparison for such a light.
 
 What is open:
 
@@ -753,7 +756,7 @@ What is open:
 |---|---|
 | Between cascades | A point picks one cascade, so the edge of a shadow changes its softness where one cascade hands over to the next. Blending the two over a band of depth hides the seam, and is later |
 | Point and spot lights | A spot light needs a map with perspective, a point light six of them in a cube, or a map of two paraboloids. The scene data and the bindings have room, the shaders do not read any yet |
-| Soft shadows | The nine comparisons give a fixed softness of three texels. Percentage-closer soft shadows, which widen with the distance between the caster and the receiver, or a Poisson disc, are later |
+| Soft shadows | The filter gives a fixed softness of three texels, or one without it. Percentage-closer soft shadows, which widen with the distance between the caster and the receiver, or a Poisson disc, are later |
 | One map a frame | The map is fitted around the camera of the frame, the one the window shows, and holds what that scene casts. What a camera draws into a texture is left unshadowed: it is drawn before the frame and picks a cascade by its own depth, so it cannot read a map fitted to another camera. Before, the first camera of a frame took the map, which was the camera of a texture, and the window lost its shadows. A map per camera, or per light, is later (#350) |
 | The bias per cascade | One bias serves every cascade, in texels of each, so the far cascades push a caster back further in meters than the near one. A bias scaled to the cascade, and normal offset, are later |
 

@@ -24,6 +24,7 @@ namespace
   using neon::RYML_DocumentFormat;
   using neon::SettingsFile;
   using neon::SoundGroupSetting;
+  using neon::ShadowFilter;
   using neon::Tonemapper;
   using neon::testing::LogLevel;
   using neon::testing::MemoryFileSystem;
@@ -64,6 +65,9 @@ namespace
     "  max_render_objects: 2048\n"
     "  shadow_distance: 80\n"
     "  shadow_cascades: 2\n"
+    "  shadows: false\n"
+    "  shadow_map_size: 1024\n"
+    "  shadow_filter: none\n"
     "  tonemapper: aces\n"
     "  exposure: 1.5\n"
     "\n"
@@ -170,6 +174,9 @@ namespace
     EXPECT_EQ(_settings.max_render_objects, 2048u);
     EXPECT_DOUBLE_EQ(_settings.shadow_distance, 80.0);
     EXPECT_EQ(_settings.shadow_cascades, 2u);
+    EXPECT_FALSE(_settings.shadows);
+    EXPECT_EQ(_settings.shadow_map_size, 1024);
+    EXPECT_EQ(_settings.shadow_filter, ShadowFilter::None);
     EXPECT_EQ(_settings.tonemapper, Tonemapper::Aces);
     EXPECT_DOUBLE_EQ(_settings.exposure, 1.5);
     EXPECT_EQ(VolumeOf("music"), 0.6f);
@@ -389,6 +396,69 @@ namespace
       EXPECT_THAT(_errors.front(), HasSubstr("'anisotropy'"));
       EXPECT_THAT(_errors.front(), HasSubstr("1, 2, 4, 8, or 16"));
     }
+  }
+
+  TEST_F(SettingsFilesTest, ReadsWhetherTheDirectionLightCastsShadows)
+  {
+    EXPECT_TRUE(SettingsConfig{}.shadows) << "unless a file says otherwise";
+
+    WriteOfTheProject("version: 1\nrendering:\n  shadows: false\n");
+    ASSERT_TRUE(ReadOfTheProject()) << ::testing::PrintToString(_errors);
+    EXPECT_FALSE(_settings.shadows);
+
+    WriteOfTheProject("version: 1\nrendering:\n  shadows: true\n");
+    ASSERT_TRUE(ReadOfTheProject()) << ::testing::PrintToString(_errors);
+    EXPECT_TRUE(_settings.shadows);
+  }
+
+  TEST_F(SettingsFilesTest, ReadsTheSizeOfTheShadowMap)
+  {
+    EXPECT_EQ(SettingsConfig{}.shadow_map_size, 2048) << "unless a file says otherwise";
+
+    for (const char *size : {"512", "1024", "2048", "4096"})
+    {
+      WriteOfTheProject(std::string("version: 1\nrendering:\n  shadow_map_size: ") + size + "\n");
+      ASSERT_TRUE(ReadOfTheProject()) << ::testing::PrintToString(_errors);
+      EXPECT_EQ(_settings.shadow_map_size, std::stoi(size));
+    }
+  }
+
+  TEST_F(SettingsFilesTest, RefusesASizeOfTheShadowMapThatIsNone)
+  {
+    for (const char *wrong : {"0", "256", "1000", "8192"})
+    {
+      _errors.clear();
+      WriteOfTheProject(std::string("version: 1\nrendering:\n  shadow_map_size: ") + wrong + "\n");
+
+      EXPECT_FALSE(ReadOfTheProject()) << wrong;
+      ASSERT_EQ(_errors.size(), 1u) << ::testing::PrintToString(_errors);
+      EXPECT_THAT(_errors.front(), HasSubstr("'shadow_map_size'"));
+      EXPECT_THAT(_errors.front(), HasSubstr("512, 1024, 2048, or 4096"));
+      EXPECT_EQ(_settings.shadow_map_size, 2048) << "and the size stays";
+    }
+  }
+
+  TEST_F(SettingsFilesTest, ReadsHowTheShadowMapIsCompared)
+  {
+    EXPECT_EQ(SettingsConfig{}.shadow_filter, ShadowFilter::Pcf) << "unless a file says otherwise";
+
+    WriteOfTheProject("version: 1\nrendering:\n  shadow_filter: none\n");
+    ASSERT_TRUE(ReadOfTheProject()) << ::testing::PrintToString(_errors);
+    EXPECT_EQ(_settings.shadow_filter, ShadowFilter::None);
+
+    WriteOfTheProject("version: 1\nrendering:\n  shadow_filter: pcf\n");
+    ASSERT_TRUE(ReadOfTheProject()) << ::testing::PrintToString(_errors);
+    EXPECT_EQ(_settings.shadow_filter, ShadowFilter::Pcf);
+  }
+
+  TEST_F(SettingsFilesTest, RefusesAShadowFilterThatIsNone)
+  {
+    WriteOfTheProject("version: 1\nrendering:\n  shadow_filter: soft\n");
+
+    EXPECT_FALSE(ReadOfTheProject());
+    ASSERT_EQ(_errors.size(), 1u) << ::testing::PrintToString(_errors);
+    EXPECT_THAT(_errors.front(), HasSubstr("'shadow_filter'"));
+    EXPECT_EQ(_settings.shadow_filter, ShadowFilter::Pcf) << "and the filter stays";
   }
 
   TEST_F(SettingsFilesTest, ReadsTheSizeTexturesAreKeptAt)

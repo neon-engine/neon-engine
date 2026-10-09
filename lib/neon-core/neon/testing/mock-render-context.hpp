@@ -48,6 +48,12 @@ namespace neon::testing
     MOCK_METHOD(bool, SetShadows, (double distance, int cascades), (override));
     MOCK_METHOD(double, GetShadowDistance, (), (override));
     MOCK_METHOD(int, GetShadowCascades, (), (override));
+    MOCK_METHOD(bool, SetShadowsEnabled, (bool enabled), (override));
+    MOCK_METHOD(bool, GetShadowsEnabled, (), (override));
+    MOCK_METHOD(bool, SetShadowMapSize, (int size), (override));
+    MOCK_METHOD(int, GetShadowMapSize, (), (override));
+    MOCK_METHOD(bool, SetShadowFilter, (ShadowFilter filter), (override));
+    MOCK_METHOD(ShadowFilter, GetShadowFilter, (), (override));
     MOCK_METHOD(void, UpdateRenderObjectMesh, (int render_object_id, const MeshData &mesh), (override));
 
     MOCK_METHOD(bool, SetImage, (const std::string &name, const ImagePixels &pixels), (override));

@@ -41,6 +41,9 @@ values:
   texture_scale: "1"
   target_scale: "1"
   target_mipmaps: "0"
+  shadows: true
+  shadow_map_size: "2048"
+  shadow_filter: pcf
   shadow_cascades: "4"
   shadow_distance: 120
   tonemapper: none
@@ -210,25 +213,75 @@ root:
                     - value: "1"
                       text: None
 
-            # the cascades of the shadow map, and how far its shadows reach
+            # whether the direction light casts at all: off skips the
+            # shadow pass; then how fine its map is, how its edges are
+            # softened, its cascades, and how far its shadows reach
             - type: panel
               class: row
               children:
                 - type: label
                   class: row-label
                   text: Shadows
+                - type: panel
+                  class: choices
+                  children:
+                    - type: toggle
+                      name: shadows
+                      text: On
+                      checked: "{shadows}"
+
+            - type: panel
+              class: row
+              children:
+                - type: label
+                  class: row-label
+                  text: Shadow map
+                - type: select
+                  name: shadow_map_size
+                  value: "{shadow_map_size}"
+                  options:
+                    - value: "512"
+                      text: 512
+                    - value: "1024"
+                      text: 1024
+                    - value: "2048"
+                      text: 2048
+                    - value: "4096"
+                      text: 4096
+
+            - type: panel
+              class: row
+              children:
+                - type: label
+                  class: row-label
+                  text: Shadow edges
+                - type: select
+                  name: shadow_filter
+                  value: "{shadow_filter}"
+                  options:
+                    - value: "none"
+                      text: Hard
+                    - value: "pcf"
+                      text: Soft
+
+            - type: panel
+              class: row
+              children:
+                - type: label
+                  class: row-label
+                  text: Shadow cascades
                 - type: select
                   name: shadow_cascades
                   value: "{shadow_cascades}"
                   options:
                     - value: "1"
-                      text: Low
+                      text: 1
                     - value: "2"
-                      text: Medium
+                      text: 2
                     - value: "3"
-                      text: High
+                      text: 3
                     - value: "4"
-                      text: Ultra
+                      text: 4
 
             - type: panel
               class: row

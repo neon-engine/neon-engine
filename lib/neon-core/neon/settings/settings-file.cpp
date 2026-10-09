@@ -123,6 +123,25 @@ namespace neon
         settings.shadow_cascades = 4;
       }
 
+      // whether the direction light casts at all, how fine its map is,
+      // and how the map is compared against, see docs/vulkan-renderer.md
+      reader.Read("shadows", settings.shadows);
+      if (int size = 0; reader.Read("shadow_map_size", size))
+      {
+        if (!ShadowMapSize::IsSize(size))
+        {
+          reader.Report(*reader.ReadValue("shadow_map_size"), std::format(
+                          "'shadow_map_size' of {} is {}, where 512, 1024, 2048, or 4096 was expected", reader.GetWhere(), size));
+        } else
+        {
+          settings.shadow_map_size = size;
+        }
+      }
+      if (std::size_t filter = 0; reader.ReadChoice("shadow_filter", {"none", "pcf"}, filter))
+      {
+        settings.shadow_filter = static_cast<ShadowFilter>(filter);
+      }
+
       // the curve of the resolve step, and how bright the scene is taken
       // to be before it, see docs/vulkan-renderer.md
       if (std::size_t curve = 0; reader.ReadChoice("tonemapper", {"none", "aces", "agx"}, curve))

@@ -2,6 +2,8 @@
 
 #include <cmath>
 #include <neon/render/anisotropy.hpp>
+#include <neon/render/shadow-filter.hpp>
+#include <neon/render/shadow-map-size.hpp>
 #include <neon/render/target-quality.hpp>
 #include <neon/render/texture-scale.hpp>
 #include <neon/window/frame-limit.hpp>
@@ -21,6 +23,11 @@ namespace neon
     const std::string texture_scale = "texture-scale";
     const std::string target_scale = "target-scale";
     const std::string target_mipmaps = "target-mipmaps";
+    const std::string shadows = "shadows";
+    const std::string shadow_map_size = "shadow-map-size";
+    const std::string shadow_filter = "shadow-filter";
+    const std::string shadow_distance = "shadow-distance";
+    const std::string shadow_cascades = "shadow-cascades";
     const std::string ui_scale = "ui-scale";
 
     const std::string windowed = "windowed";
@@ -121,6 +128,45 @@ namespace neon
       .value_name = "NUMBER",
       .description = "Most levels of smaller copies a render target has: 0 for as many as its size allows, 1 for "
                      "none, up to 16, over rendering.target_mipmaps of the settings",
+      .group = display
+    });
+
+    command_line.Add({
+      .name = shadows,
+      .value_name = "on|off",
+      .description = "Whether the direction light casts shadows at all, over rendering.shadows of the settings; "
+                     "off skips the shadow pass",
+      .group = display
+    });
+
+    command_line.Add({
+      .name = shadow_map_size,
+      .value_name = "NUMBER",
+      .description = "Texels the shadow map has along each side: 512, 1024, 2048, or 4096, over "
+                     "rendering.shadow_map_size of the settings",
+      .group = display
+    });
+
+    command_line.Add({
+      .name = shadow_filter,
+      .value_name = "NAME",
+      .description = "How the shadow map is compared against: none for one comparison, pcf for nine averaged, "
+                     "over rendering.shadow_filter of the settings",
+      .group = display
+    });
+
+    command_line.Add({
+      .name = shadow_distance,
+      .value_name = "METERS",
+      .description = "How far from the camera the shadows reach, above 0, over rendering.shadow_distance of "
+                     "the settings",
+      .group = display
+    });
+
+    command_line.Add({
+      .name = shadow_cascades,
+      .value_name = "NUMBER",
+      .description = "How many cascades the shadow map has, 1 to 4, over rendering.shadow_cascades of the settings",
       .group = display
     });
 
@@ -235,6 +281,62 @@ namespace neon
         return false;
       }
       settings.target_mipmaps = static_cast<int>(mipmaps);
+    }
+
+    if (command_line.IsSet(shadows))
+    {
+      const std::string wanted = command_line.GetValue(shadows);
+      if (wanted != "on" && wanted != "off")
+      {
+        error = "Option '--" + shadows + "' needs on or off";
+        return false;
+      }
+      settings.shadows = wanted == "on";
+    }
+
+    if (command_line.IsSet(shadow_map_size))
+    {
+      double size = 0.0;
+      if (!command_line.GetNumber(shadow_map_size, size) || size != std::floor(size) ||
+          !ShadowMapSize::IsSize(static_cast<int>(size)))
+      {
+        error = "Option '--" + shadow_map_size + "' needs 512, 1024, 2048, or 4096";
+        return false;
+      }
+      settings.shadow_map_size = static_cast<int>(size);
+    }
+
+    if (command_line.IsSet(shadow_filter))
+    {
+      const std::string wanted = command_line.GetValue(shadow_filter);
+      if (wanted != "none" && wanted != "pcf")
+      {
+        error = "Option '--" + shadow_filter + "' needs none or pcf";
+        return false;
+      }
+      settings.shadow_filter = wanted == "pcf" ? ShadowFilter::Pcf : ShadowFilter::None;
+    }
+
+    if (command_line.IsSet(shadow_distance))
+    {
+      double distance = 0.0;
+      if (!command_line.GetNumber(shadow_distance, distance) || !(distance > 0.0))
+      {
+        error = "Option '--" + shadow_distance + "' needs a number of meters above 0";
+        return false;
+      }
+      settings.shadow_distance = distance;
+    }
+
+    if (command_line.IsSet(shadow_cascades))
+    {
+      double count = 0.0;
+      if (!command_line.GetNumber(shadow_cascades, count) || count != std::floor(count) || count < 1.0 || count > 4.0)
+      {
+        error = "Option '--" + shadow_cascades + "' needs a number from 1 to 4";
+        return false;
+      }
+      settings.shadow_cascades = static_cast<std::size_t>(count);
     }
 
     if (command_line.IsSet(ui_scale))

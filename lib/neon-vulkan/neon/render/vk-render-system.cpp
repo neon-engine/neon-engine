@@ -8,6 +8,7 @@
 #include <stdexcept>
 #include <glm/gtc/matrix_transform.hpp>
 #include <neon/render/anisotropy.hpp>
+#include <neon/render/shadow-map-size.hpp>
 #include <neon/render/texture-scale.hpp>
 #include <neon/render/target-quality.hpp>
 #include <neon/render/texture-source.hpp>
@@ -100,7 +101,7 @@ namespace neon
 
     if (!_samplers.Initialize(&_device, _settings_config.anisotropy, _logger) ||
         !CreateRenderPasses() ||
-        !_shadow_map.Initialize(&_device, _logger) ||
+        !_shadow_map.Initialize(&_device, static_cast<uint32_t>(_settings_config.shadow_map_size), _logger) ||
         !_resolve.Initialize(
           &_device,
           _file_system_context,
@@ -706,6 +707,41 @@ namespace neon
     _renderer_2d.WriteSamplersAgain();
   }
 
+  void VK_RenderSystem::SettleShadowMap()
+  {
+    if (_shadow_size_asked == 0) { return; }
+
+    const auto size = static_cast<uint32_t>(_shadow_size_asked);
+    _shadow_size_asked = 0;
+
+    // the frame before is finished, and nothing reads the map
+    vkDeviceWaitIdle(_device.Device());
+    if (!_shadow_map.Resize(size))
+    {
+      // the size there was is made again, so that every set reads a map
+      // that is; and if the graphics card refuses that too, nothing casts
+      const auto before = static_cast<uint32_t>(_settings_config.shadow_map_size);
+      _logger->Error("The shadow map could not be made again at {} by {}, and stays {} by {}", size, size, before, before);
+      if (!_shadow_map.Resize(before))
+      {
+        _logger->Error("The shadow map could not be made again at all, and the shadows are off");
+        _settings_config.shadows = false;
+        return;
+      }
+    } else
+    {
+      _settings_config.shadow_map_size = static_cast<int>(size);
+      _logger->Info("The shadow map is {} by {}", size, size);
+    }
+
+    // every set reads the map through its view, which is new
+    for (int id = 0; id < _materials.Capacity(); id++)
+    {
+      if (!_materials.Contains(id) || _materials[id].DescriptorSet() == VK_NULL_HANDLE) { continue; }
+      WriteDescriptorSet(_materials[id], _materials[id].DescriptorSet());
+    }
+  }
+
   void VK_RenderSystem::SetShaderTime(const double seconds, const double delta)
   {
     _shader_time = {static_cast<float>(seconds), static_cast<float>(delta), 0.0f, 0.0f};
@@ -814,6 +850,7 @@ namespace neon
   {
     SettleRenderTargets();
     SettleSamplers();
+    SettleShadowMap();
     SettleImages();
 
     // a window that changed its size, or has no area to draw to
@@ -1320,7 +1357,7 @@ namespace neon
         // the setting says, as many as it says
         _shadow_cascades = VK_ShadowFit::Cascades(
           view, projection, light.direction, static_cast<float>(_settings_config.shadow_distance),
-          static_cast<int>(_settings_config.shadow_cascades), static_cast<float>(VK_ShadowMap::kSize));
+          static_cast<int>(_settings_config.shadow_cascades), static_cast<float>(_shadow_map.Size()));
         for (auto &cascade : _shadow_cascades.view_projections) { cascade = depth_correction * cascade; }
         _shadow_fitted = true;
       }
@@ -1329,8 +1366,12 @@ namespace neon
         scene.direction_light.cascades[i] = _shadow_cascades.view_projections[static_cast<std::size_t>(i)];
         scene.direction_light.splits[i] = _shadow_cascades.splits[static_cast<std::size_t>(i)];
       }
+
+      // how many comparisons across the place are averaged: one, or
+      // three by three with the filter, see shadows.glsl
+      const float taps = _settings_config.shadow_filter == ShadowFilter::Pcf ? 3.0f : 1.0f;
       scene.direction_light.shadow = {
-        1.0f, 1.0f / static_cast<float>(VK_ShadowMap::kSize), VK_ShadowSettings::kBias,
+        taps, 1.0f / static_cast<float>(_shadow_map.Size()), VK_ShadowSettings::kBias,
         static_cast<float>(_shadow_cascades.count)};
     };
 
@@ -1353,9 +1394,11 @@ namespace neon
           scene.direction_light.diffuse = glm::vec4(light.diffuse, 0.0f);
           scene.direction_light.specular = glm::vec4(light.specular, 0.0f);
 
-          // a light with no direction lights nothing, and shadows nothing
+          // a light with no direction lights nothing, and shadows nothing;
+          // with the shadows off every light is shaded as if it cast none
           const bool is_frame = _current_target == No_Render_Target;
-          if (is_frame && light.casts_shadows && glm::dot(light.direction, light.direction) > 0.0f)
+          if (is_frame && _settings_config.shadows && light.casts_shadows &&
+              glm::dot(light.direction, light.direction) > 0.0f)
           {
             fit_shadow(light);
           }
@@ -1913,6 +1956,46 @@ namespace neon
   int VK_RenderSystem::GetShadowCascades()
   {
     return static_cast<int>(_settings_config.shadow_cascades);
+  }
+
+  bool VK_RenderSystem::SetShadowsEnabled(const bool enabled)
+  {
+    // a map that could not be made casts nothing
+    if (enabled && !_shadow_map.IsReady()) { return false; }
+
+    _settings_config.shadows = enabled;
+    return true;
+  }
+
+  bool VK_RenderSystem::GetShadowsEnabled()
+  {
+    return _settings_config.shadows;
+  }
+
+  bool VK_RenderSystem::SetShadowMapSize(const int size)
+  {
+    if (!ShadowMapSize::IsSize(size) || _device.Device() == VK_NULL_HANDLE) { return false; }
+
+    // made at the start of the next frame, when nothing reads the map of
+    // this one, as the frame is when the window changes its size
+    _shadow_size_asked = size;
+    return true;
+  }
+
+  int VK_RenderSystem::GetShadowMapSize()
+  {
+    return _shadow_size_asked != 0 ? _shadow_size_asked : _settings_config.shadow_map_size;
+  }
+
+  bool VK_RenderSystem::SetShadowFilter(const ShadowFilter filter)
+  {
+    _settings_config.shadow_filter = filter;
+    return true;
+  }
+
+  ShadowFilter VK_RenderSystem::GetShadowFilter()
+  {
+    return _settings_config.shadow_filter;
   }
 
   int VK_RenderSystem::CreateRenderTarget(

@@ -14,6 +14,7 @@ namespace
   using neon::CommandLine;
   using neon::DisplayOptions;
   using neon::RuntimeOptions;
+  using neon::ShadowFilter;
   using ::testing::HasSubstr;
 
   /// The two sets the runtime owns, and nothing of the editor's.
@@ -205,6 +206,75 @@ namespace
     {
       EXPECT_FALSE(Apply({"--target-mipmaps", wrong})) << wrong;
       EXPECT_EQ(_error, "Option '--target-mipmaps' needs 0 for as many as the size allows, or 1 to 16") << wrong;
+    }
+  }
+
+  TEST_F(DisplayOptionsTest, TakesWhetherTheDirectionLightCastsShadows)
+  {
+    EXPECT_TRUE(_settings.shadows) << "unless something says otherwise";
+
+    ASSERT_TRUE(Apply({"--shadows", "off"}));
+    EXPECT_FALSE(_settings.shadows);
+
+    ASSERT_TRUE(Apply({"--shadows=on"}));
+    EXPECT_TRUE(_settings.shadows);
+
+    for (const char *wrong: {"true", "0", "no"})
+    {
+      EXPECT_FALSE(Apply({"--shadows", wrong})) << wrong;
+      EXPECT_EQ(_error, "Option '--shadows' needs on or off") << wrong;
+    }
+  }
+
+  TEST_F(DisplayOptionsTest, TakesTheSizeOfTheShadowMap)
+  {
+    EXPECT_EQ(_settings.shadow_map_size, 2048) << "unless something says otherwise";
+
+    ASSERT_TRUE(Apply({"--shadow-map-size", "4096"}));
+    EXPECT_EQ(_settings.shadow_map_size, 4096);
+
+    ASSERT_TRUE(Apply({"--shadow-map-size=512"}));
+    EXPECT_EQ(_settings.shadow_map_size, 512);
+
+    for (const char *wrong: {"0", "256", "1000", "8192", "2048.5", "large"})
+    {
+      EXPECT_FALSE(Apply({"--shadow-map-size", wrong})) << wrong;
+      EXPECT_EQ(_error, "Option '--shadow-map-size' needs 512, 1024, 2048, or 4096") << wrong;
+    }
+  }
+
+  TEST_F(DisplayOptionsTest, TakesHowTheShadowMapIsCompared)
+  {
+    EXPECT_EQ(_settings.shadow_filter, ShadowFilter::Pcf) << "unless something says otherwise";
+
+    ASSERT_TRUE(Apply({"--shadow-filter", "none"}));
+    EXPECT_EQ(_settings.shadow_filter, ShadowFilter::None);
+
+    ASSERT_TRUE(Apply({"--shadow-filter=pcf"}));
+    EXPECT_EQ(_settings.shadow_filter, ShadowFilter::Pcf);
+
+    for (const char *wrong: {"soft", "PCF", "0"})
+    {
+      EXPECT_FALSE(Apply({"--shadow-filter", wrong})) << wrong;
+      EXPECT_EQ(_error, "Option '--shadow-filter' needs none or pcf") << wrong;
+    }
+  }
+
+  TEST_F(DisplayOptionsTest, TakesHowFarTheShadowsReachAndHowManyCascadesThereAre)
+  {
+    ASSERT_TRUE(Apply({"--shadow-distance", "60", "--shadow-cascades", "2"}));
+    EXPECT_DOUBLE_EQ(_settings.shadow_distance, 60.0);
+    EXPECT_EQ(_settings.shadow_cascades, 2u);
+
+    for (const char *wrong: {"0", "-5", "far"})
+    {
+      EXPECT_FALSE(Apply({"--shadow-distance", wrong})) << wrong;
+      EXPECT_EQ(_error, "Option '--shadow-distance' needs a number of meters above 0") << wrong;
+    }
+    for (const char *wrong: {"0", "5", "2.5", "many"})
+    {
+      EXPECT_FALSE(Apply({"--shadow-cascades", wrong})) << wrong;
+      EXPECT_EQ(_error, "Option '--shadow-cascades' needs a number from 1 to 4") << wrong;
     }
   }
 

@@ -9,6 +9,8 @@
 #include "neon/audio/sound-group-setting.hpp"
 #include "neon/render/anisotropy.hpp"
 #include "neon/render/api-version.hpp"
+#include "neon/render/shadow-filter.hpp"
+#include "neon/render/shadow-map-size.hpp"
 #include "neon/render/texture-scale.hpp"
 #include "neon/render/target-quality.hpp"
 #include "neon/render/tonemapper.hpp"
@@ -183,6 +185,21 @@ struct SettingsConfig
   /// shadows near the camera at the same distance, and the casters drawn
   /// once more each.
   std::size_t shadow_cascades = 4;
+  /// Whether the direction light casts shadows at all. Off, the shadow
+  /// pass is not recorded and every light is shaded as if it had
+  /// `casts_shadows: false`, so a frame is byte for byte what it is
+  /// without the pass. Changed while the application runs with
+  /// RenderContext::SetShadowsEnabled().
+  bool shadows = true;
+  /// How many texels the shadow map has along each side, every cascade:
+  /// 512, 1024, 2048, or 4096, see ShadowMapSize. Changed while the
+  /// application runs with RenderContext::SetShadowMapSize(), which makes
+  /// the map again at the new size.
+  int shadow_map_size = neon::ShadowMapSize::kDefault;
+  /// How the shadow map is compared against: `none` for one comparison,
+  /// `pcf` for nine averaged, which soften the edge of a shadow, see
+  /// ShadowFilter. Changed with RenderContext::SetShadowFilter().
+  neon::ShadowFilter shadow_filter = neon::ShadowFilter::Pcf;
 
   /// Render without a window: frames are drawn off-screen at width by
   /// height, input comes from a script, and the sound is mixed and

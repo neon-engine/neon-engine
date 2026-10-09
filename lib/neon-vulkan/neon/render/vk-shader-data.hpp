@@ -48,10 +48,11 @@ namespace neon
     // how far from the camera each cascade reaches, along its view
     glm::vec4 splits{0.0f};
 
-    // x is 1 when the shadow map is to be compared against and 0 when the
-    // light casts no shadow, y the size of a texel of the map across it,
-    // z the bias a depth is moved towards the light by before it is
-    // compared, w how many cascades there are, see shadows.glsl
+    // x is how many comparisons across the place are averaged when the
+    // shadow map is to be compared against, 1 or 3 for three by three, and
+    // 0 when the light casts no shadow, y the size of a texel of the map
+    // across it, z the bias a depth is moved towards the light by before
+    // it is compared, w how many cascades there are, see shadows.glsl
     glm::vec4 shadow{0.0f};
   };
 

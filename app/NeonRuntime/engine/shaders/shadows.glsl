@@ -15,12 +15,15 @@ layout (set = 0, binding = 8) uniform texture2DArray shadow_map;
 layout (set = 0, binding = 9) uniform samplerShadow shadow_sampler;
 
 // 1 where the direction light reaches `world_position`, 0 where something
-// stands between, and in between along the edge of a shadow: the nine
-// texels around the place are compared and averaged, each of which the
-// sampler blends with its neighbors already.
+// stands between, and in between along the edge of a shadow: with the
+// filter the nine texels around the place are compared and averaged, each
+// of which the sampler blends with its neighbors already; without it the
+// place alone is compared, which the sampler blends the same.
 float direction_light_visibility(vec3 world_position)
 {
     if (scene.direction_light.shadow.x < 0.5) { return 1.0; }
+    int taps = int(scene.direction_light.shadow.x);
+    int reach = taps / 2;
 
     // how far along the view the point is, which picks the cascade; past
     // the last one the point is lit
@@ -44,11 +47,11 @@ float direction_light_visibility(vec3 world_position)
     vec3 compared = vec3(0.5 + 0.5 * place.x, 0.5 - 0.5 * place.y, place.z - scene.direction_light.shadow.z);
 
     float lit = 0.0;
-    for (int x = -1; x <= 1; x++) {
-        for (int y = -1; y <= 1; y++) {
+    for (int x = -reach; x <= reach; x++) {
+        for (int y = -reach; y <= reach; y++) {
             vec2 at = compared.xy + vec2(x, y) * texel;
             lit += texture(sampler2DArrayShadow(shadow_map, shadow_sampler), vec4(at, float(cascade), compared.z));
         }
     }
-    return lit / 9.0;
+    return lit / float(taps * taps);
 }

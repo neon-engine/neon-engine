@@ -32,12 +32,22 @@ namespace neon
     VkDeviceMemory _memory = VK_NULL_HANDLE;
     VkImageView _view = VK_NULL_HANDLE;
     VkRenderPass _render_pass = VK_NULL_HANDLE;
+    uint32_t _size = 0;
 
     // a layer is drawn through a view and a framebuffer of its own
     std::array<VkImageView, kMax_Shadow_Cascades> _layer_views{};
     std::array<VkFramebuffer, kMax_Shadow_Cascades> _framebuffers{};
 
     bool CreateRenderPass();
+
+    /// Makes the image of `size` texels a side, its views, and a
+    /// framebuffer a layer, for the render pass there is, and leaves the
+    /// map all lit.
+    bool CreateImage(uint32_t size);
+
+    /// Destroys the image, its views, and its framebuffers, and keeps the
+    /// render pass, which the pipelines of the pass were made for.
+    void DestroyImage();
 
     /// Leaves the map all lit, and in the layout a shader reads it in.
     bool ClearToLit() const;
@@ -46,20 +56,29 @@ namespace neon
     /// Depth alone, in whole floats: the map is compared, not shown.
     static constexpr VkFormat kFormat = VK_FORMAT_D32_SFLOAT;
 
-    /// The map is square, this many texels along each side, every layer.
-    static constexpr uint32_t kSize = 2048;
-
     /// The layout the map is in between two passes, which is what the
     /// descriptor of every material says.
     static constexpr VkImageLayout kRead_Layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-    /// Makes the image, its render pass, and its framebuffer, and leaves
-    /// the map all lit. Returns false when the graphics card refuses.
-    bool Initialize(VK_Device *device, const std::shared_ptr<Logger> &logger);
+    /// Makes the image of `size` texels along each side, every layer, its
+    /// render pass, and its framebuffers, and leaves the map all lit.
+    /// Returns false when the graphics card refuses.
+    bool Initialize(VK_Device *device, uint32_t size, const std::shared_ptr<Logger> &logger);
+
+    /// Makes the image again at another size, as the frame is made again
+    /// when the window changes its size: the render pass stays, so the
+    /// pipelines of the pass do, and every set that reads the map has to
+    /// be written again with View(). Nothing may be reading the map. The
+    /// map is left all lit. Returns false when the graphics card refuses,
+    /// and the map is gone then.
+    bool Resize(uint32_t size);
 
     void CleanUp();
 
     [[nodiscard]] bool IsReady() const { return _framebuffers[0] != VK_NULL_HANDLE; }
+
+    /// The map is square, this many texels along each side, every layer.
+    [[nodiscard]] uint32_t Size() const { return _size; }
 
     /// Begins the pass that draws one layer of the map, the cascade at
     /// `layer`: clears it to the far depth and sets the viewport to the

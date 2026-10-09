@@ -5,6 +5,7 @@
 #include <format>
 
 #include <neon/render/anisotropy.hpp>
+#include <neon/render/shadow-filter.hpp>
 #include <neon/render/target-quality.hpp>
 #include <neon/render/texture-scale.hpp>
 #include <neon/render/tonemapper.hpp>
@@ -44,6 +45,7 @@ namespace neon
 
     constexpr std::array<const char *, 3> window_modes = {"windowed", "borderless", "fullscreen"};
     constexpr std::array<const char *, 3> tonemappers = {"none", "aces", "agx"};
+    constexpr std::array<const char *, 2> shadow_filters = {"none", "pcf"};
 
     /// The place of a name in a list of names, or -1.
     template<std::size_t Count>
@@ -165,6 +167,38 @@ namespace neon
         return ReadWhole(text, mipmaps) && _render->SetTargetMipmaps(mipmaps);
       },
       .kept = AsNumber,
+    });
+
+    _settings.push_back({
+      .value = "shadows", .section = "rendering", .name = "shadows",
+      .current = [this] { return std::string(_render->GetShadowsEnabled() ? "true" : "false"); },
+      .apply = [this](const std::string &text)
+      {
+        return (text == "true" || text == "false") && _render->SetShadowsEnabled(text == "true");
+      },
+      .kept = [](const std::string &text) { return DataValue::Bool(text == "true"); },
+    });
+
+    _settings.push_back({
+      .value = "shadow_map_size", .section = "rendering", .name = "shadow_map_size",
+      .current = [this] { return std::format("{}", _render->GetShadowMapSize()); },
+      .apply = [this](const std::string &text)
+      {
+        int size = 0;
+        return ReadWhole(text, size) && _render->SetShadowMapSize(size);
+      },
+      .kept = AsNumber,
+    });
+
+    _settings.push_back({
+      .value = "shadow_filter", .section = "rendering", .name = "shadow_filter",
+      .current = [this] { return std::string(shadow_filters[static_cast<std::size_t>(_render->GetShadowFilter())]); },
+      .apply = [this](const std::string &text)
+      {
+        const int place = PlaceOf(shadow_filters, text);
+        return place >= 0 && _render->SetShadowFilter(static_cast<ShadowFilter>(place));
+      },
+      .kept = AsText,
     });
 
     _settings.push_back({

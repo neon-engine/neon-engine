@@ -11,7 +11,7 @@ registered by the application that owns it.
 | Set | Owner | Holds |
 |---|---|---|
 | `RuntimeOptions` | The runtime | `--renderer`, `--vulkan-version` |
-| `DisplayOptions` | The runtime | `--window-size`, `--window-mode`, `--vsync`, `--max-fps`, `--anisotropy`, `--texture-scale`, `--target-scale`, `--target-mipmaps`, `--ui-scale` |
+| `DisplayOptions` | The runtime | `--window-size`, `--window-mode`, `--vsync`, `--max-fps`, `--anisotropy`, `--texture-scale`, `--target-scale`, `--target-mipmaps`, `--shadows`, `--shadow-map-size`, `--shadow-filter`, `--shadow-distance`, `--shadow-cascades`, `--ui-scale` |
 | `EditorOptions` | The editor | `--scene`, `--ui`, and everything under the `Editor` heading below |
 
 Until NeonEditor exists, NeonRuntime registers the editor's set too, so that
@@ -45,6 +45,11 @@ The last column is the decision of #143: who owns the option.
 | `--target-scale NUMBER` | Display | The size what a camera draws into is made at: 1, 0.5, or 0.25 of what it asks for, over `rendering.target_scale` of the settings | **Runtime.** A menu's choice as well |
 | `--target-mipmaps NUMBER` | Display | The most levels of smaller copies a render target has: 0 for as many as its size allows, 1 for none, up to 16, over `rendering.target_mipmaps` of the settings | **Runtime.** A menu's choice as well, and a way to see what the smaller copies of a camera's picture cost (#431) |
 | `--max-fps NUMBER` | Display | The most frames a second, from 30 to 300, or 0 for as many as can be drawn, over `rendering.max_fps` of the settings | **Runtime.** A menu's choice as well, and a way to keep a laptop cool or a measurement steady |
+| `--shadows on\|off` | Display | Whether the direction light casts shadows at all, over `rendering.shadows` of the settings; `off` leaves the shadow pass out of the frame, see [vulkan-renderer.md](vulkan-renderer.md#shadows) | **Runtime.** A menu's choice as well, and the way to tell whether a problem is the shadows |
+| `--shadow-map-size NUMBER` | Display | Texels the shadow map has along each side: 512, 1024, 2048, or 4096, over `rendering.shadow_map_size` of the settings | **Runtime.** A menu's choice as well, and a way to see what the map costs |
+| `--shadow-filter NAME` | Display | How the shadow map is compared against: `none` for one comparison, `pcf` for nine averaged, over `rendering.shadow_filter` of the settings | **Runtime.** A menu's choice as well |
+| `--shadow-distance METERS` | Display | How far from the camera the shadows reach, above 0, over `rendering.shadow_distance` of the settings | **Runtime.** A menu's choice as well |
+| `--shadow-cascades NUMBER` | Display | How many cascades the shadow map has, 1 to 4, over `rendering.shadow_cascades` of the settings | **Runtime.** A menu's choice as well |
 | `--ui-scale NUMBER` | Display | Makes the user interface larger or smaller, over `ui.scale` of the settings | **Runtime.** It helps players who need larger text before a settings menu can be read |
 | `--scene PATH` | Editor | Starts with this scene in place of the entry scene of the project | **Editor.** It loads any content at all, the heart of #143 |
 | `--ui PATH` | Editor | Shows this user interface on top | **Editor**, for the same reason |

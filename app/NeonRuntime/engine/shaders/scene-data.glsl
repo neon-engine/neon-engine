@@ -16,10 +16,11 @@ struct DirectionLight {
     mat4 cascades[MAX_SHADOW_CASCADES];
     // how far from the camera each cascade reaches, along its view
     vec4 splits;
-    // x is 1 when the shadow map is to be compared against and 0 when the
-    // light casts no shadow, y the size of a texel of the map across it,
-    // z the bias a depth is moved towards the light by before it is
-    // compared, w how many cascades there are, see shadows.glsl
+    // x is how many comparisons across the place are averaged when the
+    // shadow map is to be compared against, 1 or 3 for three by three, and
+    // 0 when the light casts no shadow, y the size of a texel of the map
+    // across it, z the bias a depth is moved towards the light by before
+    // it is compared, w how many cascades there are, see shadows.glsl
     vec4 shadow;
 };
 

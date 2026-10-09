@@ -32,6 +32,9 @@ namespace neon
   /// | `texture_scale` | `rendering.texture_scale` | 1, 0.5, 0.25, 0.125, for the textures read from then on |
   /// | `target_scale` | `rendering.target_scale` | 1, 0.5, 0.25, for the targets made from then on |
   /// | `target_mipmaps` | `rendering.target_mipmaps` | 0 to 16, for the targets made from then on |
+  /// | `shadows` | `rendering.shadows` | a flag: off skips the shadow pass |
+  /// | `shadow_map_size` | `rendering.shadow_map_size` | 512, 1024, 2048, 4096; the map is made again |
+  /// | `shadow_filter` | `rendering.shadow_filter` | `none`, `pcf` |
   /// | `shadow_cascades` | `rendering.shadow_cascades` | 1 to 4 |
   /// | `shadow_distance` | `rendering.shadow_distance` | meters, above 0 |
   /// | `tonemapper` | `rendering.tonemapper` | `none`, `aces`, `agx` |

@@ -219,6 +219,10 @@ namespace neon
     // when nothing was asked
     int _anisotropy_asked = 0;
 
+    // the size of the shadow map that was asked for, made from the next
+    // frame on; 0 when nothing was asked
+    int _shadow_size_asked = 0;
+
     // the quality of the targets made from now on, see TargetQuality
     double _target_scale = 1.0;
     int _target_mipmaps = 0;
@@ -250,6 +254,10 @@ namespace neon
     /// Makes the samplers that read from the side again with the
     /// anisotropy that was asked for, and tells every set that holds them.
     void SettleSamplers();
+
+    /// Makes the shadow map again at the size that was asked for, and
+    /// tells every set that reads it.
+    void SettleShadowMap();
 
     /// Writes the pixels of every image that was set again into the
     /// textures that were made of it, once the frame before is finished.
@@ -411,6 +419,18 @@ namespace neon
     [[nodiscard]] double GetShadowDistance() override;
 
     [[nodiscard]] int GetShadowCascades() override;
+
+    bool SetShadowsEnabled(bool enabled) override;
+
+    [[nodiscard]] bool GetShadowsEnabled() override;
+
+    bool SetShadowMapSize(int size) override;
+
+    [[nodiscard]] int GetShadowMapSize() override;
+
+    bool SetShadowFilter(ShadowFilter filter) override;
+
+    [[nodiscard]] ShadowFilter GetShadowFilter() override;
 
     void SetShaderTime(double seconds, double delta) override;
 
