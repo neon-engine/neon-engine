@@ -200,6 +200,73 @@ directory on `PATH`, and run the same two preset commands from a shell. The
 toolchain file reads `LLVM_MINGW_ROOT` from the environment if llvm-mingw is not
 installed at `/opt/llvm-mingw`.
 
+### Running on Windows
+
+The release build puts four folders under `bin/release/windows-x86_64/`,
+laid out as the macOS and Linux builds lay theirs out: `NeonRuntime`, the
+runtime alone with its `engine` folder, and `museum`, `sandbox`, and `bench`,
+each with `NeonRuntime.exe`, its `assets`, and its `engine`. The bench has an
+`extensions` folder too, with its extension as a DLL. Copy any of the three
+project folders to the Windows machine, whole; nothing else is needed, and
+nothing is installed. The executable links the C++ runtime statically and
+imports Windows system libraries alone: its import table names kernel32,
+user32, gdi32, shell32, ole32, winmm, bcrypt, the UCRT (`api-ms-win-crt-*`),
+and nothing of llvm-mingw or SDL. The UCRT is part of Windows 10 and later.
+The Vulkan loader, `vulkan-1.dll`, is not imported: it is loaded when the run
+starts, and comes with the graphics driver. A machine whose driver has no
+Vulkan stops with `The Vulkan library could not be loaded, is a Vulkan driver
+installed?` in the log.
+
+The executable is a console application: started from Explorer it opens a
+console window next to the game window, and started from a terminal it
+prints there, which is where `--help` and the log lines are read. A zip that
+was downloaded is marked by Windows, and SmartScreen asks once before an
+unsigned executable from it runs; `More info`, then `Run anyway`.
+
+Run the museum from a terminal, PowerShell or cmd, in its folder:
+
+```
+cd museum
+.\NeonRuntime.exe --vsync on --window-size 1280x720
+```
+
+Everything the run writes goes under `user://`, which is
+`%APPDATA%\neon-engine\<name of the project>` on Windows, so for the museum
+`C:\Users\<you>\AppData\Roaming\neon-engine\neon-museum\`. The log file is
+`logs\neon-engine.log` in there, and `settings.yml` next to it holds what
+the settings menu was set to. The log says both in its lines `user:// is`
+and `Logging to`. The same rules as elsewhere hold: the engine reads and
+writes virtual paths with forward slashes, and a backslash in one is
+rejected, see [path rules](#path-rules). A user name with letters outside
+ASCII is #156, which is worked on apart from this.
+
+A first run shows the museum's entrance in a window of 1280 by 720 points,
+with the mouse captured for looking around; W, A, S, D move, Escape opens
+the pause menu, and the settings menu is reached from there. The console
+shows the start-up: `Initializing SDL2 file system`, where `assets://` and
+`engine://` are, `Rendering with <graphics card> in Vulkan 1.N`, the lines of
+the capabilities, `Present modes: ...` among them, and `Presenting with
+<mode>, vertical sync <on or off>`.
+
+A run without a window checks the renderer alone, and is what to try when
+the window does not open:
+
+```
+.\NeonRuntime.exe --headless-renderer --frames 3 --output-dir shots --screenshot output://frame.png
+```
+
+It writes `shots\frame.png` in the current folder and exits with 0.
+
+What to report on #43, from the first run:
+
+| | |
+|---|---|
+| The first lines of the log | From `Initializing SDL2 file system` down to `Presenting with`, with the `Rendering with` line that names the graphics card and the Vulkan version, and the `Present modes:` line |
+| Whether the window opened | And whether the museum was drawn in it, or what was shown instead |
+| The frame rate | With `--vsync on` it is the refresh rate of the display; with `--vsync off` what the machine does. `--max-fps 0` lifts the limit of the settings |
+| Any error | The lines at `error` or `critical` level, and the exit code, `echo $LASTEXITCODE` in PowerShell, `echo %ERRORLEVEL%` in cmd |
+| The headless run | Whether `shots\frame.png` was written and shows the entrance |
+
 ## Renderer
 
 The engine renders with Vulkan, through the neon-vulkan library. On macOS that
