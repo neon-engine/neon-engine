@@ -14,9 +14,15 @@ window:
 
 # The graphics, every one the engine has so far, at the engine's defaults,
 # so that each is changed here. A player's settings go on top, and so does
-# the command line: --vsync, --max-fps, --anisotropy, --texture-scale,
+# the command line: --quality, --vsync, --max-fps, --anisotropy, --texture-scale,
 # --target-scale, and --target-mipmaps. See docs/settings.md.
 rendering:
+  # a preset of the graphics that cost frame time: low, medium, high, ultra,
+  # or custom for none. While a preset holds, the names below it that it
+  # decides are left out; custom lets them apply, which is why this file,
+  # which writes every one of them, says custom. The values are high's
+  quality: custom
+
   # whether a frame waits for the screen: no tearing, and no more frames
   # than the screen shows
   vsync: true

@@ -4,6 +4,7 @@
 #include <format>
 
 #include <neon/data/data-reader.hpp>
+#include <neon/render/graphics-preset-reader.hpp>
 
 namespace neon
 {
@@ -11,6 +12,97 @@ namespace neon
   namespace
   {
     const std::string what_is_read = "the project";
+    const std::string graphics_presets = "graphics_presets";
+
+    /// The names of the presets of a table, for a message.
+    std::string names_of(const GraphicsPresets &presets)
+    {
+      std::string names;
+      for (const auto &preset : presets.All())
+      {
+        if (!names.empty()) { names += ", "; }
+        names += preset.name;
+      }
+      return names;
+    }
+
+    /// Reads `graphics_presets`, when it is written, on top of the table
+    /// of the engine: a name with a map changes the preset of that name
+    /// value by value, or adds one with the defaults of the engine for what
+    /// it leaves out; a name with `off` drops the preset.
+    void read_graphics_presets(const DataReader &reader, GraphicsPresets &presets)
+    {
+      const DataValue *written = reader.ReadValue(graphics_presets);
+      if (written == nullptr) { return; }
+
+      if (written->GetKind() != DataValue::Kind::Map)
+      {
+        reader.Report(*written, std::format(
+                        "'{}' is {}, where a map of presets by name was expected", graphics_presets,
+                        DataValue::Describe(written->GetKind())));
+        return;
+      }
+
+      for (const auto &[name, value] : written->GetEntries())
+      {
+        if (name == GraphicsPresets::kCustom)
+        {
+          reader.Report(value, std::format(
+                          "'{}' of '{}' is the name of no preset: it is what the settings menu shows when the "
+                          "values match none, and cannot be defined or dropped",
+                          name, graphics_presets));
+          continue;
+        }
+
+        if (!ProjectFile::IsPlainName(name))
+        {
+          reader.Report(value, std::format(
+                          "'{}' of '{}' is not a plain name: lowercase letters, digits, and dashes, starting with "
+                          "a letter, as a preset is named in the settings and on the command line",
+                          name, graphics_presets));
+          continue;
+        }
+
+        // `off` drops a preset, so that a menu does not offer it
+        if (std::string text; value.GetText(text) && text == "off")
+        {
+          if (!presets.Remove(name))
+          {
+            reader.Report(value, std::format(
+                            "'{}' of '{}' is off, and there is no preset {} to drop. There are: {}",
+                            name, graphics_presets, name, names_of(presets)));
+          }
+          continue;
+        }
+
+        if (value.GetKind() != DataValue::Kind::Map)
+        {
+          reader.Report(value, std::format(
+                          "'{}' of '{}' is {}, where a map of the values of the preset was expected, or off to "
+                          "drop it",
+                          name, graphics_presets, DataValue::Describe(value.GetKind())));
+          continue;
+        }
+
+        // on top of the preset of that name, or the defaults of the engine
+        GraphicsPreset preset;
+        if (const GraphicsPreset *existing = presets.Named(name); existing != nullptr) { preset = *existing; }
+        preset.name = name;
+
+        const DataReader values(value, reader.GetDocument(), std::format("preset '{}' of the project", name),
+                                reader.GetErrors());
+        GraphicsPresetReader::Read(values, preset);
+        values.Finish();
+
+        (void) presets.Set(preset);
+      }
+
+      if (presets.All().empty())
+      {
+        reader.Report(*written, std::format(
+                        "'{}' drops every preset, and the settings menu offers at least one", graphics_presets));
+      }
+    }
   }
 
   ProjectFile::ProjectFile(
@@ -134,6 +226,9 @@ namespace neon
     {
       reader.Report(*document.Find("input"), "'input' is empty. It is the path of the input map, or left out");
     }
+
+    // the quality presets the game offers, on top of the engine's
+    read_graphics_presets(reader, read.graphics_presets);
 
     reader.Finish();
 

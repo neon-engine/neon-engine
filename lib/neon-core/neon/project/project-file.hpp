@@ -26,7 +26,18 @@ namespace neon
   ///
   ///     entry_scene: assets://scenes/demo.scene.yml
   ///
-  /// `version` is the version of this layout. A name that is not known is an
+  ///     graphics_presets:
+  ///       low:
+  ///         texture_scale: 1
+  ///       potato:
+  ///         anisotropy: 1
+  ///         shadow_cascades: 1
+  ///       ultra: off
+  ///
+  /// `version` is the version of this layout. `graphics_presets` changes
+  /// the quality presets the game offers, see GraphicsPresets: a built-in
+  /// name is changed value by value, a new name is added with the defaults
+  /// of the engine for what it leaves out, and `off` drops one. A name that is not known is an
   /// error, so that a name that was misspelled does not go unnoticed. What
   /// the file holds is read before anything else of the project is, since
   /// `user://` has no place until the names are known.

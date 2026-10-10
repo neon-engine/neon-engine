@@ -39,11 +39,20 @@ if (CASE STREQUAL "window-size-and-render-scale")
   run_headless(--frames 2 --output-dir shots --screenshot output://frame.png --window-size 640x360 --render-scale 2
           --ui assets://ui/hud.ui.yml)
 elseif (CASE STREQUAL "settings-menu-with-input")
-  # a name is typed, and the dropdown of the window mode is opened. The steps
+  # a name is typed, and the dropdown of the texture filtering is opened. The steps
   # are on lines of their own, since a semicolon is a list to CMake
   set(SCRIPT "20: pointer 1000 321\n21: click\n23: text Lovelace\n30: pointer 1000 439\n31: click")
   run_headless(--output-dir shots --screenshot output://frame.png --screenshot-at 20,40
           --scene assets://scenes/settings-demo.scene.yml --input "${SCRIPT}")
+elseif (CASE STREQUAL "quality-preset-of-the-project")
+  # pause, down to Settings, accept; the dropdown of the quality is opened
+  # with the pointer, and down twice from high is the project's potato,
+  # which accept chooses
+  set(SCRIPT "5: hold pause\n8: hold ui-down\n11: hold ui-accept\n20: pointer 1000 246\n21: click\n25: hold ui-down\n28: hold ui-down\n31: hold ui-accept")
+  run_headless(--output-dir shots --screenshot output://frame.png --screenshot-at 18,40
+          --scene assets://scenes/hud-demo.scene.yml --input "${SCRIPT}")
+elseif (CASE STREQUAL "quality-of-the-command-line-from-the-project")
+  run_headless(--frames 1 --quality potato)
 elseif (CASE STREQUAL "ui-scale")
   run_headless(--frames 2 --output-dir shots --screenshot output://plain.png --ui assets://ui/hud.ui.yml)
   set(PLAIN_EXIT_CODE "${EXIT_CODE}")
@@ -182,6 +191,37 @@ elseif (CASE STREQUAL "settings-menu-with-input")
   if (BEFORE STREQUAL AFTER)
     fail("Expected the input to change the frame")
   endif ()
+elseif (CASE STREQUAL "quality-preset-of-the-project")
+  expect_exit_code(0)
+  expect_output("Rendered 40 frames, stopping")
+  expect_no_output("[error]")
+  expect_no_output("[warning]")
+  expect_output("Loading the user interface from engine://ui/settings.ui.yml")
+
+  # the menu offers the preset of the project after the engine's, and
+  # choosing it sets the values the project wrote and the engine's defaults
+  # for the rest
+  expect_output("The menu offers the presets low, medium, high, ultra, potato, custom")
+  expect_output("The menu set quality to potato")
+  expect_output("The menu set anisotropy to 1")
+  expect_output("The menu set texture_scale to 0.25")
+  expect_output("The menu set shadow_map_size to 512")
+  expect_output("The menu set shadow_cascades to 1")
+  expect_output("The menu set shadow_distance to 20")
+  expect_output("Textures are read with anisotropic filtering of 1x")
+  expect_image("shots/frame-0018.png")
+  expect_image("shots/frame-0040.png")
+
+  # the shadows behind the menu change with the preset
+  file(SHA256 "${DIRECTORY}/shots/frame-0018.png" BEFORE)
+  file(SHA256 "${DIRECTORY}/shots/frame-0040.png" AFTER)
+  if (BEFORE STREQUAL AFTER)
+    fail("Expected the preset to change the frame")
+  endif ()
+elseif (CASE STREQUAL "quality-of-the-command-line-from-the-project")
+  expect_exit_code(0)
+  expect_output("Textures are read with anisotropic filtering of 1x")
+  expect_no_output("[error]")
 elseif (CASE STREQUAL "title-screen-starts-the-level")
   expect_exit_code(0)
   expect_output("Rendered 12 frames, stopping")

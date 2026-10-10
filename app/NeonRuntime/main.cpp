@@ -95,14 +95,17 @@ int main(const int argc, char *argv[])
   // defaults, the settings of the project, the settings of the player, and
   // the command line. The command line is applied here already, since the
   // file system needs what it says to come up, and again after the files,
-  // so that it wins.
+  // so that it wins. --quality waits for the second pass, since it may name
+  // a preset the project defines.
   auto settings_config = SettingsConfig{.selected_api = RenderingApi::Vulkan};
 
-  const auto apply_command_line = [&]
+  const auto apply_command_line = [&](const bool with_quality)
   {
     std::string error;
     if (runtime_options.Apply(command_line, settings_config, error) &&
-        display_options.Apply(command_line, settings_config, error) &&
+        (with_quality
+           ? display_options.Apply(command_line, settings_config, error)
+           : display_options.ApplyExceptTheQuality(command_line, settings_config, error)) &&
         editor_options.Apply(command_line, settings_config, error))
     {
       return true;
@@ -111,7 +114,7 @@ int main(const int argc, char *argv[])
     return false;
   };
 
-  if (!apply_command_line()) { return EXIT_FAILURE; }
+  if (!apply_command_line(false)) { return EXIT_FAILURE; }
 
   neon::LoggingSystem logging_system(settings_config);
 
@@ -149,6 +152,9 @@ int main(const int argc, char *argv[])
 
   settings_config.organization = project.organization;
   settings_config.application = project.name;
+
+  // the presets the settings and --quality choose from are the project's
+  settings_config.graphics_presets = project.graphics_presets;
 
   // the command line may start another scene, which is an option of the
   // editor's set
@@ -192,10 +198,15 @@ int main(const int argc, char *argv[])
   }
 
   // the command line wins over the files
-  if (!apply_command_line())
+  if (!apply_command_line(true))
   {
     file_system.CleanUp();
     return EXIT_FAILURE;
+  }
+  if (!display_options.GetWarnings().empty())
+  {
+    const auto options_logger = logging_system.CreateLogger("NeonRuntime");
+    for (const auto &warning : display_options.GetWarnings()) { options_logger->Warn("{}", warning); }
   }
 
   // What extends the runtime: every folder of extensions://, next to the

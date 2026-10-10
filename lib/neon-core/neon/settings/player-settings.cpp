@@ -58,6 +58,22 @@ namespace neon
     Set(section, map, entries);
   }
 
+  void PlayerSettings::Remove(const std::string &section, const std::string &name)
+  {
+    Read();
+
+    const DataValue *found = _document.Find(section);
+    if (found == nullptr || !found->IsMap() || found->Find(name) == nullptr) { return; }
+
+    DataValue map = DataValue::Map();
+    for (const auto &[key, value] : found->GetEntries())
+    {
+      if (key != name) { map.Set(key, value); }
+    }
+    _document.Set(section, map);
+    _changed = true;
+  }
+
   bool PlayerSettings::Write()
   {
     if (!_changed) { return true; }

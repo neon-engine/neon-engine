@@ -19,7 +19,11 @@ namespace
 {
   using neon::DataValue;
   using neon::DocumentFormat;
+  using neon::FieldValue;
   using neon::GraphicsMenu;
+  using neon::GraphicsPreset;
+  using neon::GraphicsPresets;
+  using neon::UiHandle;
   using neon::PlayerSettings;
   using neon::ShadowFilter;
   using neon::Tonemapper;
@@ -30,6 +34,7 @@ namespace
   using neon::testing::MockWindowContext;
   using neon::testing::RecordingLogger;
   using ::testing::_;
+  using ::testing::HasSubstr;
   using ::testing::NiceMock;
 
   // A format that reads nothing and writes a line, for a test that looks at
@@ -59,6 +64,13 @@ namespace
 
     // what the user interface holds, as text, as the menu's elements would
     std::map<std::string, std::string> _values;
+
+    // the select of the quality, and the options it was given last
+    static constexpr UiHandle quality_select{.id = 7};
+    std::vector<std::string> _quality_options;
+
+    // the table the menu is made with, the engine's unless a test says
+    GraphicsPresets _presets;
 
     // the graphics as they are
     bool _vsync = true;
@@ -97,6 +109,16 @@ namespace
         const auto found = _values.find(name);
         if (is_set != nullptr) { *is_set = found != _values.end(); }
         return found != _values.end() ? found->second : std::string();
+      });
+      ON_CALL(_ui, FindByName(_, _)).WillByDefault([](const std::string &name, UiHandle)
+      {
+        return name == "quality" ? quality_select : UiHandle{};
+      });
+      ON_CALL(_ui, SetField(_, _, _)).WillByDefault([this](const UiHandle element, const std::string &name, const FieldValue &value)
+      {
+        if (element != quality_select || name != "options") { return false; }
+        _quality_options = std::get<std::vector<std::string>>(value);
+        return true;
       });
 
       ON_CALL(_render, GetVerticalSync()).WillByDefault([this] { return _vsync; });
@@ -150,7 +172,7 @@ namespace
 
     GraphicsMenu Menu(PlayerSettings *player = nullptr)
     {
-      return GraphicsMenu(&_ui, &_render, &_window, player, _logger);
+      return GraphicsMenu(&_ui, &_render, &_window, _presets, player, _logger);
     }
 
     /// What the file of the player would hold under a name, or null.
@@ -166,6 +188,7 @@ namespace
     GraphicsMenu menu = Menu();
     menu.Open();
 
+    EXPECT_EQ(_values["quality"], "high") << "the defaults are the preset high";
     EXPECT_EQ(_values["window_mode"], "borderless");
     EXPECT_EQ(_values["vsync"], "true");
     EXPECT_EQ(_values["max_fps"], "0");
@@ -184,7 +207,271 @@ namespace
 
   TEST_F(GraphicsMenuTest, HasAValueForEveryGraphicsSetting)
   {
-    EXPECT_EQ(Menu().GetValueNames().size(), 14u);
+    EXPECT_EQ(Menu().GetValueNames().size(), 15u);
+    EXPECT_EQ(Menu().GetValueNames().front(), "quality") << "the preset first, the rows it sets below it";
+  }
+
+  // the preset
+
+  TEST_F(GraphicsMenuTest, OffersThePresetsOfTheTableWhenItIsOpened)
+  {
+    GraphicsMenu menu = Menu();
+    menu.Open();
+
+    EXPECT_THAT(_quality_options, ::testing::ElementsAre("low", "medium", "high", "ultra", "custom"));
+    EXPECT_THAT(_logger->Messages(LogLevel::Info), HasSubstr("The menu offers the presets low, medium, high, ultra, custom"));
+  }
+
+  TEST_F(GraphicsMenuTest, OffersWhatTheProjectAddedAndNotWhatItDropped)
+  {
+    EXPECT_TRUE(_presets.Set(GraphicsPreset{.name = "potato", .anisotropy = 1, .shadow_cascades = 1}));
+    EXPECT_TRUE(_presets.Remove("ultra"));
+
+    GraphicsMenu menu = Menu();
+    menu.Open();
+
+    EXPECT_THAT(_quality_options, ::testing::ElementsAre("low", "medium", "high", "potato", "custom"));
+  }
+
+  TEST_F(GraphicsMenuTest, LeavesAMenuWithoutAQualityRowAsItIs)
+  {
+    ON_CALL(_ui, FindByName(_, _)).WillByDefault([](const std::string &, UiHandle) { return UiHandle{}; });
+    EXPECT_CALL(_ui, SetField(_, _, _)).Times(0);
+
+    GraphicsMenu menu = Menu();
+    menu.Open();
+
+    EXPECT_TRUE(_quality_options.empty());
+    EXPECT_EQ(_logger->Count(LogLevel::Warn), 0u) << _logger->Messages(LogLevel::Warn);
+  }
+
+  TEST_F(GraphicsMenuTest, APresetOfTheProjectIsAppliedAndShownLikeABuiltInOne)
+  {
+    EXPECT_TRUE(_presets.Set(GraphicsPreset{.name = "potato", .anisotropy = 1, .shadow_map_size = 512, .shadow_cascades = 1}));
+
+    GraphicsMenu menu = Menu(&_player);
+    menu.Open();
+
+    _values["quality"] = "potato";
+    menu.Update();
+
+    EXPECT_EQ(_anisotropy, 1);
+    EXPECT_EQ(_shadow_map_size, 512);
+    EXPECT_EQ(_shadow_cascades, 1);
+    EXPECT_DOUBLE_EQ(_texture_scale, 1.0) << "what the project left out is the engine's default";
+    EXPECT_EQ(_values["quality"], "potato");
+    EXPECT_EQ(_values["anisotropy"], "1");
+
+    // the values of the preset, however they came about, show its name
+    _values["shadow_cascades"] = "2";
+    menu.Update();
+    EXPECT_EQ(_values["quality"], "custom");
+    _values["shadow_cascades"] = "1";
+    menu.Update();
+    EXPECT_EQ(_values["quality"], "potato");
+
+    menu.Close(true);
+    std::string name;
+    ASSERT_NE(Kept("rendering", "quality"), nullptr);
+    EXPECT_TRUE(Kept("rendering", "quality")->GetText(name));
+    EXPECT_EQ(name, "potato");
+  }
+
+  TEST_F(GraphicsMenuTest, APresetTheProjectDroppedIsNoPreset)
+  {
+    EXPECT_TRUE(_presets.Remove("low"));
+
+    GraphicsMenu menu = Menu();
+    menu.Open();
+    _values["quality"] = "low";
+    menu.Update();
+
+    EXPECT_EQ(_anisotropy, 8);
+    EXPECT_EQ(_logger->Count(LogLevel::Warn), 1u) << _logger->Messages(LogLevel::Warn);
+  }
+
+  TEST_F(GraphicsMenuTest, APresetSetsEverySettingThatCostsFrameTimeAtOnce)
+  {
+    GraphicsMenu menu = Menu();
+    menu.Open();
+
+    _values["quality"] = "low";
+    menu.Update();
+
+    EXPECT_EQ(_anisotropy, 2);
+    EXPECT_DOUBLE_EQ(_texture_scale, 0.5);
+    EXPECT_DOUBLE_EQ(_target_scale, 0.5);
+    EXPECT_EQ(_target_mipmaps, 1);
+    EXPECT_EQ(_shadow_map_size, 1024);
+    EXPECT_EQ(_shadow_filter, ShadowFilter::None);
+    EXPECT_EQ(_shadow_cascades, 1);
+    EXPECT_DOUBLE_EQ(_shadow_distance, 40.0);
+
+    EXPECT_TRUE(_vsync) << "what is a matter of taste stays";
+    EXPECT_TRUE(_shadows) << "whether shadows are drawn at all is the player's own choice";
+    EXPECT_EQ(_tonemapper, Tonemapper::None);
+    EXPECT_DOUBLE_EQ(_exposure, 1.0);
+    EXPECT_EQ(_mode, WindowMode::Borderless);
+
+    // the rows show what the preset set, and the preset stays what was chosen
+    EXPECT_EQ(_values["anisotropy"], "2");
+    EXPECT_EQ(_values["texture_scale"], "0.5");
+    EXPECT_EQ(_values["shadow_distance"], "40");
+    EXPECT_EQ(_values["shadow_map_size"], "1024");
+    EXPECT_EQ(_values["shadow_filter"], "none");
+    EXPECT_EQ(_values["quality"], "low");
+  }
+
+  TEST_F(GraphicsMenuTest, ASettingChangedByHandMakesThePresetCustom)
+  {
+    GraphicsMenu menu = Menu();
+    menu.Open();
+
+    _values["anisotropy"] = "16";
+    menu.Update();
+
+    EXPECT_EQ(_anisotropy, 16);
+    EXPECT_EQ(_values["quality"], "custom");
+
+    // and the values of a preset, however they came about, show its name
+    _values["anisotropy"] = "8";
+    menu.Update();
+    EXPECT_EQ(_values["quality"], "high");
+  }
+
+  TEST_F(GraphicsMenuTest, CustomChangesNothing)
+  {
+    GraphicsMenu menu = Menu();
+    menu.Open();
+
+    _values["quality"] = "custom";
+    EXPECT_CALL(_render, SetAnisotropy(_)).Times(0);
+    EXPECT_CALL(_render, SetShadows(_, _)).Times(0);
+    menu.Update();
+
+    EXPECT_EQ(_values["quality"], "high") << "the values are still those of high, which is what is shown";
+  }
+
+  TEST_F(GraphicsMenuTest, KeepsThePresetWithItsValuesWhenTheMenuIsClosedWithApply)
+  {
+    GraphicsMenu menu = Menu(&_player);
+    menu.Open();
+    _values["quality"] = "medium";
+    menu.Update();
+
+    menu.Close(true);
+
+    ASSERT_NE(Kept("rendering", "quality"), nullptr);
+    std::string name;
+    EXPECT_TRUE(Kept("rendering", "quality")->GetText(name));
+    EXPECT_EQ(name, "medium");
+    EXPECT_EQ(Kept("rendering", "anisotropy"), nullptr) << "the preset names its values, which would be left out next to it";
+    EXPECT_EQ(Kept("rendering", "shadow_cascades"), nullptr);
+    EXPECT_EQ(Kept("rendering", "texture_scale"), nullptr);
+    EXPECT_EQ(Kept("rendering", "exposure"), nullptr);
+  }
+
+  TEST_F(GraphicsMenuTest, APresetTakesTheValuesTheFileHeldOutOfIt)
+  {
+    // what an earlier Apply kept with custom; the format of this test reads
+    // no file, so it is set as the menu would have
+    _player.Set("rendering", "quality", DataValue::Text("custom"));
+    _player.Set("rendering", "anisotropy", DataValue::Number(16));
+    _player.Set("rendering", "exposure", DataValue::Number(2));
+
+    GraphicsMenu menu = Menu(&_player);
+    menu.Open();
+    _values["quality"] = "low";
+    menu.Update();
+    menu.Close(true);
+
+    std::string name;
+    ASSERT_NE(Kept("rendering", "quality"), nullptr);
+    EXPECT_TRUE(Kept("rendering", "quality")->GetText(name));
+    EXPECT_EQ(name, "low");
+    EXPECT_EQ(Kept("rendering", "anisotropy"), nullptr) << "a value the preset decides is gone from the file";
+    EXPECT_NE(Kept("rendering", "exposure"), nullptr) << "the rest stays";
+  }
+
+  TEST_F(GraphicsMenuTest, ARowChangedByHandIsKeptWithCustom)
+  {
+    GraphicsMenu menu = Menu(&_player);
+    menu.Open();
+    _values["anisotropy"] = "16";
+    menu.Update();
+    EXPECT_EQ(_values["quality"], "custom");
+
+    menu.Close(true);
+
+    std::string name;
+    ASSERT_NE(Kept("rendering", "quality"), nullptr);
+    EXPECT_TRUE(Kept("rendering", "quality")->GetText(name));
+    EXPECT_EQ(name, "custom") << "so that the value applies over a preset a layer before chose";
+    ASSERT_NE(Kept("rendering", "anisotropy"), nullptr);
+  }
+
+  TEST_F(GraphicsMenuTest, ARowChangedByHandWhileCustomIsKeptWithCustomToo)
+  {
+    // the values match no preset when the menu opens, so custom is shown
+    // from the start and would not count as a change by itself
+    _anisotropy = 16;
+    GraphicsMenu menu = Menu(&_player);
+    menu.Open();
+    EXPECT_EQ(_values["quality"], "custom");
+    _values["shadow_distance"] = "60";
+    menu.Update();
+
+    menu.Close(true);
+
+    std::string name;
+    ASSERT_NE(Kept("rendering", "quality"), nullptr);
+    EXPECT_TRUE(Kept("rendering", "quality")->GetText(name));
+    EXPECT_EQ(name, "custom");
+    ASSERT_NE(Kept("rendering", "shadow_distance"), nullptr);
+  }
+
+  TEST_F(GraphicsMenuTest, ARowNoPresetDecidesIsKeptWithoutAPreset)
+  {
+    GraphicsMenu menu = Menu(&_player);
+    menu.Open();
+    _values["vsync"] = "false";
+    menu.Update();
+    menu.Close(true);
+
+    EXPECT_EQ(Kept("rendering", "quality"), nullptr);
+    ASSERT_NE(Kept("rendering", "vsync"), nullptr);
+  }
+
+  TEST_F(GraphicsMenuTest, PutsBackThePresetThatWasNotKept)
+  {
+    GraphicsMenu menu = Menu(&_player);
+    menu.Open();
+    _values["quality"] = "low";
+    menu.Update();
+
+    menu.Close(false);
+
+    EXPECT_EQ(_anisotropy, 8);
+    EXPECT_EQ(_shadow_map_size, 2048);
+    EXPECT_EQ(_shadow_filter, ShadowFilter::Pcf);
+    EXPECT_EQ(_shadow_cascades, 4);
+    EXPECT_DOUBLE_EQ(_shadow_distance, 120.0);
+    EXPECT_FALSE(_files.Exists("user://settings.yml"));
+  }
+
+  TEST_F(GraphicsMenuTest, SaysOnceWhatIsNoPreset)
+  {
+    GraphicsMenu menu = Menu(&_player);
+    menu.Open();
+    _values["quality"] = "best";
+    menu.Update();
+    menu.Update();
+
+    EXPECT_EQ(_anisotropy, 8);
+    EXPECT_EQ(_logger->Count(LogLevel::Warn), 1u) << _logger->Messages(LogLevel::Warn);
+
+    menu.Close(true);
+    EXPECT_EQ(Kept("rendering", "quality"), nullptr);
   }
 
   TEST_F(GraphicsMenuTest, ChangesWhatThePlayerChangesAtOnce)

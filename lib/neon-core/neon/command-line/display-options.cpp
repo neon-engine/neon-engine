@@ -1,7 +1,10 @@
 #include "display-options.hpp"
 
+#include <format>
+
 #include <cmath>
 #include <neon/render/anisotropy.hpp>
+#include <neon/render/graphics-presets.hpp>
 #include <neon/render/shadow-filter.hpp>
 #include <neon/render/shadow-map-size.hpp>
 #include <neon/render/target-quality.hpp>
@@ -19,6 +22,7 @@ namespace neon
     const std::string window_mode = "window-mode";
     const std::string vsync = "vsync";
     const std::string max_fps = "max-fps";
+    const std::string quality = "quality";
     const std::string anisotropy = "anisotropy";
     const std::string texture_scale = "texture-scale";
     const std::string target_scale = "target-scale";
@@ -96,6 +100,14 @@ namespace neon
       .value_name = "NUMBER",
       .description = "Most frames a second, from 30 to 300, or 0 for as many as can be drawn, over "
                      "rendering.max_fps of the settings",
+      .group = display
+    });
+
+    command_line.Add({
+      .name = quality,
+      .value_name = "NAME",
+      .description = "Preset of the graphics that cost frame time: low, medium, high, ultra, or custom for none, "
+                     "over rendering.quality of the settings. The options below it change one of its values",
       .group = display
     });
 
@@ -183,6 +195,36 @@ namespace neon
     SettingsConfig &settings,
     std::string &error)
   {
+    return Apply(command_line, settings, error, true);
+  }
+
+  bool DisplayOptions::ApplyExceptTheQuality(
+    const CommandLineContext &command_line,
+    SettingsConfig &settings,
+    std::string &error)
+  {
+    return Apply(command_line, settings, error, false);
+  }
+
+  bool DisplayOptions::Apply(
+    const CommandLineContext &command_line,
+    SettingsConfig &settings,
+    std::string &error,
+    const bool with_quality)
+  {
+    _warnings.clear();
+
+    /// Whether an option a preset decides may be taken: while a preset
+    /// holds it is left out, and said once.
+    const auto decided = [&](const std::string &option)
+    {
+      if (settings.quality == GraphicsPresets::kCustom) { return true; }
+      _warnings.push_back(std::format(
+        "Option '--{}' is set by the preset {}, and is left out unless '--{}' is custom",
+        option, settings.quality, quality));
+      return false;
+    };
+
     if (command_line.IsSet(window_size))
     {
       if (!read_size(command_line.GetValue(window_size), settings.width, settings.height))
@@ -237,6 +279,23 @@ namespace neon
       settings.max_fps = static_cast<int>(most);
     }
 
+    // the preset first: its values hold over the options it decides, and
+    // custom lets them apply
+    if (with_quality && command_line.IsSet(quality))
+    {
+      const std::string name = command_line.GetValue(quality);
+      if (!settings.graphics_presets.IsName(name))
+      {
+        error = "Option '--" + quality + "' needs " + settings.graphics_presets.NamesForAMessage();
+        return false;
+      }
+      settings.quality = name;
+      if (const GraphicsPreset *preset = settings.graphics_presets.Named(name); preset != nullptr)
+      {
+        preset->ApplyTo(settings);
+      }
+    }
+
     if (command_line.IsSet(anisotropy))
     {
       double level = 0.0;
@@ -246,7 +305,7 @@ namespace neon
         error = "Option '--" + anisotropy + "' needs 1 for none, 2, 4, 8, or 16";
         return false;
       }
-      settings.anisotropy = static_cast<int>(level);
+      if (decided(anisotropy)) { settings.anisotropy = static_cast<int>(level); }
     }
 
     if (command_line.IsSet(texture_scale))
@@ -257,7 +316,7 @@ namespace neon
         error = "Option '--" + texture_scale + "' needs 1, 0.5, 0.25, or 0.125";
         return false;
       }
-      settings.texture_scale = scale;
+      if (decided(texture_scale)) { settings.texture_scale = scale; }
     }
 
     if (command_line.IsSet(target_scale))
@@ -268,7 +327,7 @@ namespace neon
         error = "Option '--" + target_scale + "' needs 1, 0.5, or 0.25";
         return false;
       }
-      settings.target_scale = scale;
+      if (decided(target_scale)) { settings.target_scale = scale; }
     }
 
     if (command_line.IsSet(target_mipmaps))
@@ -280,7 +339,7 @@ namespace neon
         error = "Option '--" + target_mipmaps + "' needs 0 for as many as the size allows, or 1 to 16";
         return false;
       }
-      settings.target_mipmaps = static_cast<int>(mipmaps);
+      if (decided(target_mipmaps)) { settings.target_mipmaps = static_cast<int>(mipmaps); }
     }
 
     if (command_line.IsSet(shadows))
@@ -303,7 +362,7 @@ namespace neon
         error = "Option '--" + shadow_map_size + "' needs 512, 1024, 2048, or 4096";
         return false;
       }
-      settings.shadow_map_size = static_cast<int>(size);
+      if (decided(shadow_map_size)) { settings.shadow_map_size = static_cast<int>(size); }
     }
 
     if (command_line.IsSet(shadow_filter))
@@ -314,7 +373,7 @@ namespace neon
         error = "Option '--" + shadow_filter + "' needs none or pcf";
         return false;
       }
-      settings.shadow_filter = wanted == "pcf" ? ShadowFilter::Pcf : ShadowFilter::None;
+      if (decided(shadow_filter)) { settings.shadow_filter = wanted == "pcf" ? ShadowFilter::Pcf : ShadowFilter::None; }
     }
 
     if (command_line.IsSet(shadow_distance))
@@ -325,7 +384,7 @@ namespace neon
         error = "Option '--" + shadow_distance + "' needs a number of meters above 0";
         return false;
       }
-      settings.shadow_distance = distance;
+      if (decided(shadow_distance)) { settings.shadow_distance = distance; }
     }
 
     if (command_line.IsSet(shadow_cascades))
@@ -336,7 +395,7 @@ namespace neon
         error = "Option '--" + shadow_cascades + "' needs a number from 1 to 4";
         return false;
       }
-      settings.shadow_cascades = static_cast<std::size_t>(count);
+      if (decided(shadow_cascades)) { settings.shadow_cascades = static_cast<std::size_t>(count); }
     }
 
     if (command_line.IsSet(ui_scale))

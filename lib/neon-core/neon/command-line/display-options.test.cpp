@@ -144,6 +144,89 @@ namespace
     }
   }
 
+  TEST_F(DisplayOptionsTest, TakesAPresetOfTheGraphics)
+  {
+    ASSERT_TRUE(Apply({"--quality", "low"}));
+    EXPECT_EQ(_settings.anisotropy, 2);
+    EXPECT_DOUBLE_EQ(_settings.texture_scale, 0.5);
+    EXPECT_DOUBLE_EQ(_settings.target_scale, 0.5);
+    EXPECT_EQ(_settings.target_mipmaps, 1);
+    EXPECT_EQ(_settings.shadow_cascades, 1u);
+    EXPECT_DOUBLE_EQ(_settings.shadow_distance, 40.0);
+    EXPECT_TRUE(_settings.vertical_sync) << "what is a matter of taste stays";
+
+    ASSERT_TRUE(Apply({"--quality=custom"}));
+    EXPECT_EQ(_settings.anisotropy, 2) << "custom changes nothing";
+    EXPECT_EQ(_settings.quality, "custom");
+
+    for (const char *wrong: {"best", "Low", "4"})
+    {
+      EXPECT_FALSE(Apply({"--quality", wrong})) << wrong;
+      EXPECT_EQ(_error, "Option '--quality' needs low, medium, high, ultra, or custom") << wrong;
+    }
+  }
+
+  TEST_F(DisplayOptionsTest, AnOptionThePresetDecidesIsLeftOutWithAWarning)
+  {
+    ASSERT_TRUE(Apply({"--anisotropy", "16", "--quality", "low", "--shadow-distance", "60", "--vsync", "off"}));
+    EXPECT_EQ(_settings.quality, "low");
+    EXPECT_EQ(_settings.anisotropy, 2) << "the preset holds, whichever order the two are written in";
+    EXPECT_DOUBLE_EQ(_settings.shadow_distance, 40.0);
+    EXPECT_DOUBLE_EQ(_settings.texture_scale, 0.5);
+    EXPECT_FALSE(_settings.vertical_sync) << "what no preset decides applies";
+
+    ASSERT_EQ(_options.GetWarnings().size(), 2u);
+    EXPECT_EQ(_options.GetWarnings()[0],
+              "Option '--anisotropy' is set by the preset low, and is left out unless '--quality' is custom");
+    EXPECT_EQ(_options.GetWarnings()[1],
+              "Option '--shadow-distance' is set by the preset low, and is left out unless '--quality' is custom");
+  }
+
+  TEST_F(DisplayOptionsTest, AnOptionUnderCustomApplies)
+  {
+    ASSERT_TRUE(Apply({"--quality", "custom", "--anisotropy", "16"}));
+    EXPECT_EQ(_settings.anisotropy, 16);
+    EXPECT_TRUE(_options.GetWarnings().empty());
+
+    // and over a preset a layer before chose
+    _settings.quality = "low";
+    _settings.anisotropy = 2;
+    ASSERT_TRUE(Apply({"--quality", "custom", "--anisotropy", "16"}));
+    EXPECT_EQ(_settings.anisotropy, 16);
+  }
+
+  TEST_F(DisplayOptionsTest, AnOptionUnderAPresetALayerBeforeChoseIsLeftOut)
+  {
+    _settings.quality = "low";
+    _settings.anisotropy = 2;
+    ASSERT_TRUE(Apply({"--anisotropy", "16"}));
+    EXPECT_EQ(_settings.anisotropy, 2);
+    ASSERT_EQ(_options.GetWarnings().size(), 1u);
+  }
+
+  TEST_F(DisplayOptionsTest, AWrongOptionUnderAPresetIsStillAMistake)
+  {
+    EXPECT_FALSE(Apply({"--quality", "low", "--anisotropy", "3"}));
+    EXPECT_EQ(_error, "Option '--anisotropy' needs 1 for none, 2, 4, 8, or 16");
+  }
+
+  TEST_F(DisplayOptionsTest, ThePassBeforeTheProjectLeavesThePresetForLater)
+  {
+    ASSERT_TRUE(Parse({"--quality", "potato", "--anisotropy", "16"}));
+    ASSERT_TRUE(_options.ApplyExceptTheQuality(_command_line, _settings, _error)) << _error;
+    EXPECT_EQ(_settings.quality, "custom") << "the project's table is not known yet";
+    EXPECT_EQ(_settings.anisotropy, 16);
+
+    EXPECT_FALSE(_options.Apply(_command_line, _settings, _error));
+    EXPECT_EQ(_error, "Option '--quality' needs low, medium, high, ultra, or custom");
+
+    ASSERT_TRUE(_settings.graphics_presets.Set(neon::GraphicsPreset{.name = "potato", .anisotropy = 1}));
+    ASSERT_TRUE(_options.Apply(_command_line, _settings, _error)) << _error;
+    EXPECT_EQ(_settings.quality, "potato");
+    EXPECT_EQ(_settings.anisotropy, 1) << "and then the preset holds";
+    ASSERT_EQ(_options.GetWarnings().size(), 1u);
+  }
+
   TEST_F(DisplayOptionsTest, TakesTheSamplesATextureIsReadWithFromTheSide)
   {
     EXPECT_EQ(_settings.anisotropy, 8) << "unless something says otherwise";

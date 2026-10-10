@@ -591,6 +591,34 @@ namespace
     EXPECT_EQ(Text("quality", "value"), "b");
   }
 
+  TEST_F(UiChoicesTest, AnOptionThatStaysKeepsTheTextTheFileGaveIt)
+  {
+    ShowColumn(
+      "- type: select\n"
+      "  name: quality\n"
+      "  value: high\n"
+      "  options:\n"
+      "    - {value: low, text: Low}\n"
+      "    - {value: high, text: High}\n");
+    EXPECT_EQ(Text("quality", "text"), "High");
+
+    // the runtime sets the presets of the project: the ones the file knows
+    // keep their texts, a new one is shown as its value, and the order is
+    // the new one
+    EXPECT_TRUE(_ui->SetField(_ui->FindByName("quality"), "options", std::vector<std::string>{"high", "potato", "low"}));
+    EXPECT_EQ(Text("quality", "value"), "high");
+    EXPECT_EQ(Text("quality", "text"), "High");
+
+    EXPECT_TRUE(_ui->SetField(_ui->FindByName("quality"), "value", std::string("potato")));
+    EXPECT_EQ(Text("quality", "text"), "potato");
+    EXPECT_TRUE(_ui->SetField(_ui->FindByName("quality"), "value", std::string("low")));
+    EXPECT_EQ(Text("quality", "text"), "Low");
+
+    neon::FieldValue options;
+    ASSERT_TRUE(_ui->GetField(_ui->FindByName("quality"), "options", options));
+    EXPECT_THAT(std::get<std::vector<std::string>>(options), ElementsAre("high", "potato", "low"));
+  }
+
   TEST_F(UiChoicesTest, TheChoicesAreStyledByTheirParts)
   {
     WriteAsset(

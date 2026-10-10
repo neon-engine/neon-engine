@@ -85,6 +85,8 @@ namespace
       "the settings\n"
       "  --max-fps NUMBER          Most frames a second, from 30 to 300, or 0 for as many as can be drawn, over "
       "rendering.max_fps of the settings\n"
+      "  --quality NAME            Preset of the graphics that cost frame time: low, medium, high, ultra, or custom "
+      "for none, over rendering.quality of the settings. The options below it change one of its values\n"
       "  --anisotropy NUMBER       Samples a texture is read with where it is seen from the side: 1 for none, 2, 4, 8, "
       "or 16, over rendering.anisotropy of the settings\n"
       "  --texture-scale NUMBER    Size textures read from files are kept at: 1, 0.5, 0.25, or 0.125 of their size, "

@@ -312,6 +312,12 @@ add_library(${TARGET} STATIC
         neon/render/render-system.hpp
         neon/render/anisotropy.hpp
         neon/render/api-version.hpp
+        neon/render/graphics-preset.cpp
+        neon/render/graphics-preset.hpp
+        neon/render/graphics-preset-reader.cpp
+        neon/render/graphics-preset-reader.hpp
+        neon/render/graphics-presets.cpp
+        neon/render/graphics-presets.hpp
         neon/render/texture-scale.hpp
         neon/render/render-target-options.hpp
         neon/render/target-quality.hpp
@@ -554,6 +560,8 @@ neon_add_unit_test(${TARGET} neon/command-line/display-options.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/anisotropy.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/shadow-map-size.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/api-version.test.cpp)
+  neon_add_unit_test(${TARGET} neon/render/graphics-preset.test.cpp)
+  neon_add_unit_test(${TARGET} neon/render/graphics-presets.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/target-quality.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/texture-source.test.cpp)
   neon_add_unit_test(${TARGET} neon/runtime/frame-capture.test.cpp)

@@ -36,13 +36,13 @@ namespace neon
   ///
   ///     rendering:
   ///       vulkan_version: "1.3"
+  ///       quality: high
   ///       tonemapper: aces
   ///       exposure: 1
   ///       vsync: true
   ///       max_fps: 0
   ///       anisotropy: 8
   ///       texture_scale: 1
-
   ///       target_scale: 1
   ///       target_mipmaps: 0
   ///

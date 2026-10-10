@@ -32,3 +32,17 @@ scenes:
   - assets://scenes/vertex-colors-test.scene.yml
 
 entry_scene: assets://scenes/shadow-test.scene.yml
+
+# A quality preset of the project, next to the engine's four, for the test
+# that chooses it in the settings menu and on the command line. See
+# docs/projects.md.
+graphics_presets:
+  potato:
+    anisotropy: 1
+    texture_scale: 0.25
+    target_scale: 0.5
+    target_mipmaps: 1
+    shadow_map_size: 512
+    shadow_filter: none
+    shadow_cascades: 1
+    shadow_distance: 20

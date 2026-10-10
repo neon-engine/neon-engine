@@ -144,7 +144,7 @@ namespace neon
           if (_graphics_menu == nullptr)
           {
             _graphics_menu = std::make_unique<GraphicsMenu>(
-              _ui_system, _render_system, _window_system, _player_settings, _logger);
+              _ui_system, _render_system, _window_system, _settings_config.graphics_presets, _player_settings, _logger);
           }
           _graphics_menu->Open();
 

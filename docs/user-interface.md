@@ -182,7 +182,7 @@ whole: `border: "2px solid #4c566a"`.
 | `value` | `radio` | What it stands for, which the value of the game becomes when it is chosen | Empty |
 | `min`, `max`, `step` | `slider` | Numbers. `step` is above 0 | `0`, `100`, `1` |
 | `value` | `slider` | A number, or a value such as `"{volume}"`, which moving the knob changes | `min` |
-| `options` | `select` | A list of texts, or of maps with `value` and `text` | None |
+| `options` | `select` | A list of texts, or of maps with `value` and `text`. Set from code as a list of values, an option that is still there keeps the text the file gave it, and a new one is shown as its value | None |
 | `value` | `select` | The value of what is chosen, or a value of the game such as `"{quality}"` | Nothing is chosen |
 | `enabled`, `autofocus` | Every element that takes input | As for `button` | `true`, `false` |
 
@@ -1465,7 +1465,7 @@ is closed, so a menu that takes the mouse writes `modal: true`.
 
 Every graphics setting the engine has is a value of the user interface,
 named as the setting is, which a row of the settings menu follows (#356):
-`window_mode`, `vsync`, `max_fps`, `anisotropy`, `texture_scale`,
+`quality`, `window_mode`, `vsync`, `max_fps`, `anisotropy`, `texture_scale`,
 `target_scale`, `target_mipmaps`, `shadows`, `shadow_map_size`,
 `shadow_filter`, `shadow_cascades`, `shadow_distance`, `tonemapper`, and
 `exposure`. The runtime, through `GraphicsMenu`, does the rest; a project
@@ -1477,6 +1477,29 @@ the shadow pass off altogether; Shadow map, the texels of the map along a
 side, which is made again at the new size before the next frame, as the
 frame is when the window changes its size; Shadow edges, Hard for one
 comparison and Soft for nine; Shadow cascades; and Shadow distance.
+
+The Quality row at the top is a preset of the project's table, the
+engine's `low`, `medium`, `high`, and `ultra` unless the project's
+`project.yml` changes, adds to, or drops from them, or `custom`, see
+[settings.md](settings.md#quality-presets) and
+[projects.md](projects.md#quality-presets): choosing one sets the rows that
+cost frame time, Texture filtering, Texture size, Camera pictures, Camera
+detail, Shadow map, Shadow edges, Shadow cascades, and Shadow distance, as
+if the player had chosen each, and each takes effect at once. A row changed
+by hand afterwards shows the preset as Custom, and rows that happen to
+match a preset show its name. Apply writes what reads back the same at the
+next start: a preset alone, with the values it decides taken out of the
+player's file, since a value written next to a preset is left out, or
+`custom` with the rows changed by hand, so that they apply over a preset
+the project chose, see [settings.md](settings.md#what-a-preset-holds-over).
+Back puts them back. When the menu is shown, the runtime sets the options
+of the select named `quality` to the names of the table and `custom`,
+through `SetField`, since the file cannot know what a project added: the
+five the file writes keep their texts, Low to Custom, and a preset of the
+project is shown as its name. A menu of a project's own that has no such
+row is left as it is. The rows that are a matter of taste, V-Sync, Frame
+limit, Window, Tone mapping, and Exposure, are not part of a preset, and
+neither is the Shadows box: off changes what is seen, not how finely.
 
 | When | What happens |
 |---|---|

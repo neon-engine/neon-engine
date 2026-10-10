@@ -639,8 +639,15 @@ namespace neon
 
       const std::string chosen = GetValue();
 
-      _options.clear();
-      for (const auto &each : *values) { _options.push_back({each, each}); }
+      // an option that was there keeps the text the file gave it, a new one
+      // is shown as its value
+      std::vector<Option> options;
+      for (const auto &each : *values)
+      {
+        const std::size_t before = IndexOf(each);
+        options.push_back(before < _options.size() ? _options[before] : Option{each, each});
+      }
+      _options = std::move(options);
 
       // what was chosen stays chosen while it is still there
       const std::size_t index = IndexOf(chosen);

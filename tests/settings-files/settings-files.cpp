@@ -510,6 +510,158 @@ namespace
     EXPECT_THAT(_errors.front(), HasSubstr("'target_mipmaps'"));
   }
 
+  TEST_F(SettingsFilesTest, ReadsAPresetOfTheGraphics)
+  {
+    WriteOfTheProject("version: 1\nrendering:\n  quality: low\n");
+    ASSERT_TRUE(ReadOfTheProject()) << ::testing::PrintToString(_errors);
+    EXPECT_EQ(_settings.anisotropy, 2);
+    EXPECT_DOUBLE_EQ(_settings.texture_scale, 0.5);
+    EXPECT_DOUBLE_EQ(_settings.target_scale, 0.5);
+    EXPECT_EQ(_settings.target_mipmaps, 1);
+    EXPECT_EQ(_settings.shadow_cascades, 1u);
+    EXPECT_DOUBLE_EQ(_settings.shadow_distance, 40.0);
+    EXPECT_TRUE(_settings.vertical_sync) << "what is a matter of taste is not part of a preset";
+    EXPECT_DOUBLE_EQ(_settings.exposure, 1.0);
+  }
+
+  TEST_F(SettingsFilesTest, ANameUnderThePresetIsLeftOutWithAWarning)
+  {
+    // whichever order the two are written in
+    WriteOfTheProject("version: 1\nrendering:\n  anisotropy: 16\n  quality: low\n  shadow_distance: 60\n  vsync: false\n");
+    ASSERT_TRUE(ReadOfTheProject()) << ::testing::PrintToString(_errors);
+    EXPECT_EQ(_settings.quality, "low");
+    EXPECT_EQ(_settings.anisotropy, 2) << "the preset holds";
+    EXPECT_DOUBLE_EQ(_settings.shadow_distance, 40.0);
+    EXPECT_DOUBLE_EQ(_settings.texture_scale, 0.5);
+    EXPECT_FALSE(_settings.vertical_sync) << "what no preset decides applies";
+
+    EXPECT_EQ(_logger->Count(LogLevel::Warn), 2u) << _logger->Messages(LogLevel::Warn);
+    EXPECT_THAT(_logger->Messages(LogLevel::Warn), HasSubstr(
+                  "assets://settings.yml:3: 'anisotropy' of 'rendering' of the settings is set by the preset low, "
+                  "and is left out unless 'quality' is custom"));
+    EXPECT_THAT(_logger->Messages(LogLevel::Warn), HasSubstr("assets://settings.yml:5: 'shadow_distance' of 'rendering'"));
+  }
+
+  TEST_F(SettingsFilesTest, ANameUnderCustomApplies)
+  {
+    WriteOfTheProject("version: 1\nrendering:\n  quality: custom\n  anisotropy: 16\n  shadow_distance: 60\n");
+    ASSERT_TRUE(ReadOfTheProject()) << ::testing::PrintToString(_errors);
+    EXPECT_EQ(_settings.quality, "custom");
+    EXPECT_EQ(_settings.anisotropy, 16);
+    EXPECT_DOUBLE_EQ(_settings.shadow_distance, 60.0);
+    EXPECT_EQ(_logger->Count(LogLevel::Warn), 0u) << _logger->Messages(LogLevel::Warn);
+  }
+
+  TEST_F(SettingsFilesTest, ANameWithoutAPresetApplies)
+  {
+    // no layer chose a preset, so the file sets what it writes, as it did
+    WriteOfTheProject("version: 1\nrendering:\n  anisotropy: 16\n");
+    ASSERT_TRUE(ReadOfTheProject()) << ::testing::PrintToString(_errors);
+    EXPECT_EQ(_settings.quality, "custom");
+    EXPECT_EQ(_settings.anisotropy, 16);
+    EXPECT_EQ(_logger->Count(LogLevel::Warn), 0u) << _logger->Messages(LogLevel::Warn);
+  }
+
+  TEST_F(SettingsFilesTest, AWrongNameUnderAPresetIsStillAMistake)
+  {
+    WriteOfTheProject("version: 1\nrendering:\n  quality: low\n  anisotropy: 3\n");
+    ExpectRefused("'anisotropy' of 'rendering' of the settings is 3, where 1, 2, 4, 8, or 16 was expected");
+  }
+
+  TEST_F(SettingsFilesTest, ThePlayersNameUnderTheProjectsPresetIsLeftOut)
+  {
+    WriteOfTheProject("version: 1\nrendering:\n  quality: low\n");
+    ASSERT_TRUE(ReadOfTheProject()) << ::testing::PrintToString(_errors);
+    WriteOfThePlayer("version: 1\nrendering:\n  anisotropy: 16\n");
+    ASSERT_TRUE(ReadOfThePlayer()) << ::testing::PrintToString(_errors);
+
+    EXPECT_EQ(_settings.anisotropy, 2) << "the preset the project chose holds";
+    EXPECT_THAT(_logger->Messages(LogLevel::Warn), HasSubstr(
+                  "user://settings.yml:3: 'anisotropy' of 'rendering' of the settings is set by the preset low"));
+  }
+
+  TEST_F(SettingsFilesTest, ThePlayersCustomLetsTheirNamesApply)
+  {
+    WriteOfTheProject("version: 1\nrendering:\n  quality: low\n");
+    ASSERT_TRUE(ReadOfTheProject()) << ::testing::PrintToString(_errors);
+    WriteOfThePlayer("version: 1\nrendering:\n  quality: custom\n  anisotropy: 16\n");
+    ASSERT_TRUE(ReadOfThePlayer()) << ::testing::PrintToString(_errors);
+
+    EXPECT_EQ(_settings.quality, "custom");
+    EXPECT_EQ(_settings.anisotropy, 16);
+    EXPECT_DOUBLE_EQ(_settings.texture_scale, 0.5) << "the rest stays what the preset set";
+    EXPECT_EQ(_logger->Count(LogLevel::Warn), 0u) << _logger->Messages(LogLevel::Warn);
+  }
+
+  TEST_F(SettingsFilesTest, CustomChangesNoValue)
+  {
+    WriteOfTheProject("version: 1\nrendering:\n  anisotropy: 16\n");
+    ASSERT_TRUE(ReadOfTheProject()) << ::testing::PrintToString(_errors);
+    WriteOfThePlayer("version: 1\nrendering:\n  quality: custom\n");
+    ASSERT_TRUE(ReadOfThePlayer()) << ::testing::PrintToString(_errors);
+    EXPECT_EQ(_settings.anisotropy, 16);
+  }
+
+  TEST_F(SettingsFilesTest, ThePlayersPresetReadsOnTopOfTheProjectsValues)
+  {
+    WriteOfTheProject("version: 1\nrendering:\n  quality: custom\n  anisotropy: 16\n");
+    ASSERT_TRUE(ReadOfTheProject()) << ::testing::PrintToString(_errors);
+    WriteOfThePlayer("version: 1\nrendering:\n  quality: medium\n");
+    ASSERT_TRUE(ReadOfThePlayer()) << ::testing::PrintToString(_errors);
+    EXPECT_EQ(_settings.anisotropy, 4);
+    EXPECT_EQ(_settings.shadow_cascades, 2u);
+  }
+
+  TEST_F(SettingsFilesTest, RefusesAPresetItDoesNotKnow)
+  {
+    for (const char *wrong : {"best", "High", "3"})
+    {
+      _errors.clear();
+      WriteOfTheProject(std::string("version: 1\nrendering:\n  quality: ") + wrong + "\n");
+      EXPECT_FALSE(ReadOfTheProject()) << wrong;
+      ASSERT_EQ(_errors.size(), 1u) << ::testing::PrintToString(_errors);
+      EXPECT_THAT(_errors.front(), HasSubstr("'quality'"));
+      EXPECT_THAT(_errors.front(), HasSubstr("low, medium, high, ultra, or custom"));
+    }
+  }
+
+  TEST_F(SettingsFilesTest, AQualityNamesAPresetOfTheProjectsTable)
+  {
+    ASSERT_TRUE(_settings.graphics_presets.Set(neon::GraphicsPreset{.name = "potato", .anisotropy = 1, .shadow_cascades = 1}));
+    ASSERT_TRUE(_settings.graphics_presets.Remove("ultra"));
+
+    WriteOfTheProject("version: 1\nrendering:\n  quality: potato\n");
+    ASSERT_TRUE(ReadOfTheProject()) << ::testing::PrintToString(_errors);
+    EXPECT_EQ(_settings.anisotropy, 1);
+    EXPECT_EQ(_settings.shadow_cascades, 1u);
+    EXPECT_DOUBLE_EQ(_settings.texture_scale, 1.0) << "what the project left out is the engine's default";
+
+    // the player's file chooses from the same table
+    WriteOfThePlayer("version: 1\nrendering:\n  quality: ultra\n");
+    EXPECT_FALSE(ReadOfThePlayer());
+    ASSERT_EQ(_errors.size(), 1u) << ::testing::PrintToString(_errors);
+    EXPECT_THAT(_errors.front(), HasSubstr("low, medium, high, potato, or custom was expected"));
+    EXPECT_EQ(_settings.anisotropy, 1) << "and a file with a mistake changes nothing";
+  }
+
+  TEST_F(SettingsFilesTest, RefusesPresetsWhichBelongToTheProject)
+  {
+    WriteOfTheProject("version: 1\nrendering:\n  presets:\n    potato:\n      anisotropy: 1\n");
+
+    ExpectRefused("assets://settings.yml:3: 'presets' of 'rendering' of the settings is not where the quality presets are defined: "
+                  "they are 'graphics_presets' of assets://project.yml, see docs/projects.md");
+
+    // the player's file is refused the same way, and left out
+    _errors.clear();
+    WriteOfTheProject("version: 1\n");
+    WriteOfThePlayer("version: 1\nrendering:\n  presets:\n    low: off\n");
+    ASSERT_TRUE(ReadOfTheProject()) << ::testing::PrintToString(_errors);
+    EXPECT_FALSE(ReadOfThePlayer());
+    ASSERT_EQ(_errors.size(), 1u) << ::testing::PrintToString(_errors);
+    EXPECT_THAT(_errors.front(), HasSubstr("user://settings.yml:3: 'presets' of 'rendering' of the settings is not where the quality presets are defined"));
+    EXPECT_THAT(_settings.graphics_presets.Names(), ::testing::ElementsAre("low", "medium", "high", "ultra", "custom"));
+  }
+
   // what a settings menu keeps for the player
 
   TEST_F(SettingsFilesTest, KeepsWhatThePlayerChoseForTheNextStart)
@@ -525,6 +677,33 @@ namespace
     EXPECT_FALSE(_settings.vertical_sync);
     EXPECT_EQ(_settings.anisotropy, 4);
     EXPECT_EQ(_settings.window_mode, WindowMode::Windowed);
+  }
+
+  TEST_F(SettingsFilesTest, KeepsThePresetThePlayerChoseForTheNextStart)
+  {
+    PlayerSettings player(&_files, &_yaml, _logger);
+    player.Set("rendering", "quality", DataValue::Text("low"));
+    ASSERT_TRUE(player.Write()) << _logger->Messages(LogLevel::Error);
+
+    ASSERT_TRUE(ReadOfThePlayer()) << ::testing::PrintToString(_errors);
+    EXPECT_EQ(_settings.anisotropy, 2);
+    EXPECT_EQ(_settings.shadow_cascades, 1u);
+  }
+
+  TEST_F(SettingsFilesTest, TakesANameOutOfThePlayersFile)
+  {
+    WriteOfThePlayer("version: 1\nrendering:\n  anisotropy: 16\n  exposure: 2\n");
+
+    PlayerSettings player(&_files, &_yaml, _logger);
+    player.Remove("rendering", "anisotropy");
+    player.Remove("rendering", "shadow_distance");
+    player.Remove("window", "mode");
+    EXPECT_TRUE(player.HasChanges());
+    ASSERT_TRUE(player.Write());
+
+    ASSERT_TRUE(ReadOfThePlayer()) << ::testing::PrintToString(_errors);
+    EXPECT_EQ(_settings.anisotropy, 8) << "gone";
+    EXPECT_DOUBLE_EQ(_settings.exposure, 2.0) << "the rest of the file is kept";
   }
 
   TEST_F(SettingsFilesTest, KeepsWhatThePlayersFileHeldAlready)

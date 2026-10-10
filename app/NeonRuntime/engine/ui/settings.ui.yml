@@ -35,6 +35,7 @@ values:
   track: chilled
   # the graphics, as the engine starts them; the runtime sets them to what
   # holds when it shows the menu
+  quality: high
   window_mode: windowed
   max_fps: "0"
   anisotropy: "8"
@@ -92,7 +93,33 @@ root:
             # as they are when the menu opens, changes them as they are chosen,
             # keeps them in user://settings.yml with Apply, and puts them back
             # with Back, see GraphicsMenu. The size of the textures and of the
-            # camera pictures holds for the scene that is loaded next
+            # camera pictures holds for the scene that is loaded next.
+            # Quality is a preset: it sets the rows that cost frame time at
+            # once, and shows Custom when one of them is changed by hand
+            - type: panel
+              class: row
+              children:
+                - type: label
+                  class: row-label
+                  text: Quality
+                # the engine's presets and Custom; when the runtime shows the
+                # menu it sets the options to the project's table, so a
+                # preset the project adds is offered and one it drops is not
+                - type: select
+                  name: quality
+                  value: "{quality}"
+                  options:
+                    - value: "low"
+                      text: Low
+                    - value: "medium"
+                      text: Medium
+                    - value: "high"
+                      text: High
+                    - value: "ultra"
+                      text: Ultra
+                    - value: "custom"
+                      text: Custom
+
             - type: panel
               class: row
               children:

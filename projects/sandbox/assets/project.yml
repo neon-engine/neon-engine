@@ -8,6 +8,11 @@
 # the project. It names no `input`, so the game is played with the engine's
 # own map, engine://input/default.input.yml, see docs/input.md. What the file
 # holds is described in docs/projects.md.
+#
+# `graphics_presets` changes the quality presets the settings menu offers
+# and `rendering.quality` names: the engine's low, medium, high, and ultra
+# are there without a word; `potato` is one more, for a machine that
+# struggles, with the engine's default for every value it leaves out.
 
 version: 1
 name: neon-sandbox
@@ -17,3 +22,13 @@ scenes:
   - assets://scenes/start.scene.yml
 
 entry_scene: assets://scenes/start.scene.yml
+
+graphics_presets:
+  potato:
+    anisotropy: 1
+    texture_scale: 0.25
+    target_scale: 0.5
+    shadow_map_size: 512
+    shadow_filter: none
+    shadow_cascades: 1
+    shadow_distance: 20

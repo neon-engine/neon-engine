@@ -657,7 +657,14 @@ brings:
 The settings menu of the runtime changes all of these while the game runs,
 along with the other graphics, and keeps what the player chose with Apply,
 see [user-interface.md](user-interface.md#the-graphics-of-the-settings-menu)
-(#356).
+(#356). The graphics that cost frame time, the anisotropy, the texture
+size, the size and the levels of what a camera draws into, and the cascades
+and the reach of the shadows, are set at once by a preset,
+`rendering.quality` of the settings, `--quality` on the command line, and
+the Quality row of the menu, see
+[settings.md](settings.md#quality-presets); vertical sync, the frame
+limit, the window, and the tonemapping are the player's taste, and no
+preset touches them.
 
 ## Tonemapping
 

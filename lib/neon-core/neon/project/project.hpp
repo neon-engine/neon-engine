@@ -5,6 +5,8 @@
 #include <string_view>
 #include <vector>
 
+#include <neon/render/graphics-presets.hpp>
+
 namespace neon
 {
   /// What a project says about itself, as its `project.yml` holds it. A
@@ -36,6 +38,13 @@ namespace neon
     /// `assets://input/game.input.yml`. Empty for the map the engine brings,
     /// `engine://input/default.input.yml`.
     std::string input;
+
+    /// The quality presets the game offers, as `graphics_presets` has them:
+    /// the engine's `low`, `medium`, `high`, and `ultra`, changed value by
+    /// value, added to, and dropped from by the project. What the presets
+    /// are is part of what the project is; which one is chosen is a
+    /// setting, `rendering.quality`.
+    GraphicsPresets graphics_presets;
   };
 } // neon
 

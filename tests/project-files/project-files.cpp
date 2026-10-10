@@ -266,6 +266,174 @@ namespace
     EXPECT_EQ(_errors.size(), 3u) << ::testing::PrintToString(_errors);
   }
 
+  // the quality presets
+
+  TEST_F(ProjectFilesTest, BringsTheEnginesPresetsWithoutAWord)
+  {
+    Write(complete);
+
+    ASSERT_TRUE(Read()) << ::testing::PrintToString(_errors);
+    EXPECT_THAT(_project.graphics_presets.Names(), ElementsAre("low", "medium", "high", "ultra", "custom"));
+    EXPECT_EQ(_project.graphics_presets.Named("low")->anisotropy, 2);
+  }
+
+  TEST_F(ProjectFilesTest, ABuiltInPresetIsChangedValueByValue)
+  {
+    Write(complete +
+          "graphics_presets:\n"
+          "  low:\n"
+          "    texture_scale: 1\n"
+          "    shadow_filter: pcf\n");
+
+    ASSERT_TRUE(Read()) << ::testing::PrintToString(_errors);
+    const neon::GraphicsPreset *low = _project.graphics_presets.Named("low");
+    ASSERT_NE(low, nullptr);
+    EXPECT_DOUBLE_EQ(low->texture_scale, 1.0);
+    EXPECT_EQ(low->shadow_filter, neon::ShadowFilter::Pcf);
+    EXPECT_EQ(low->anisotropy, 2) << "what is not written stays the engine's";
+    EXPECT_EQ(low->shadow_cascades, 1);
+    EXPECT_THAT(_project.graphics_presets.Names(), ElementsAre("low", "medium", "high", "ultra", "custom"))
+      << "and it keeps its place";
+  }
+
+  TEST_F(ProjectFilesTest, ANewPresetComesAfterTheBuiltInOnesWithTheEnginesDefaults)
+  {
+    Write(complete +
+          "graphics_presets:\n"
+          "  potato:\n"
+          "    anisotropy: 1\n"
+          "    texture_scale: 0.25\n"
+          "    target_scale: 0.5\n"
+          "    target_mipmaps: 1\n"
+          "    shadow_map_size: 512\n"
+          "    shadow_filter: none\n"
+          "    shadow_cascades: 1\n"
+          "    shadow_distance: 20\n"
+          "  cinematic:\n"
+          "    shadow_distance: 300\n");
+
+    ASSERT_TRUE(Read()) << ::testing::PrintToString(_errors);
+    EXPECT_THAT(_project.graphics_presets.Names(),
+                ElementsAre("low", "medium", "high", "ultra", "potato", "cinematic", "custom"));
+
+    const neon::GraphicsPreset *potato = _project.graphics_presets.Named("potato");
+    ASSERT_NE(potato, nullptr);
+    EXPECT_EQ(potato->anisotropy, 1);
+    EXPECT_DOUBLE_EQ(potato->texture_scale, 0.25);
+    EXPECT_DOUBLE_EQ(potato->target_scale, 0.5);
+    EXPECT_EQ(potato->target_mipmaps, 1);
+    EXPECT_EQ(potato->shadow_map_size, 512);
+    EXPECT_EQ(potato->shadow_filter, neon::ShadowFilter::None);
+    EXPECT_EQ(potato->shadow_cascades, 1);
+    EXPECT_DOUBLE_EQ(potato->shadow_distance, 20.0);
+
+    const neon::GraphicsPreset *cinematic = _project.graphics_presets.Named("cinematic");
+    ASSERT_NE(cinematic, nullptr);
+    EXPECT_DOUBLE_EQ(cinematic->shadow_distance, 300.0);
+    EXPECT_EQ(cinematic->anisotropy, 8) << "what it leaves out is the engine's default, which is high";
+    EXPECT_EQ(cinematic->shadow_map_size, 2048);
+  }
+
+  TEST_F(ProjectFilesTest, APresetTurnedOffIsDropped)
+  {
+    Write(complete + "graphics_presets:\n  ultra: off\n  low: off\n");
+
+    ASSERT_TRUE(Read()) << ::testing::PrintToString(_errors);
+    EXPECT_THAT(_project.graphics_presets.Names(), ElementsAre("medium", "high", "custom"));
+    EXPECT_FALSE(_project.graphics_presets.IsName("ultra"));
+  }
+
+  TEST_F(ProjectFilesTest, RefusesTurningOffAPresetThatIsNotThere)
+  {
+    Write(complete + "graphics_presets:\n  best: off\n");
+
+    ExpectRefused("assets://project.yml:11: 'best' of 'graphics_presets' is off, and there is no preset best to drop. "
+                  "There are: low, medium, high, ultra");
+  }
+
+  TEST_F(ProjectFilesTest, RefusesDroppingEveryPreset)
+  {
+    Write(complete + "graphics_presets:\n  low: off\n  medium: off\n  high: off\n  ultra: off\n");
+
+    ExpectRefused("'graphics_presets' drops every preset, and the settings menu offers at least one");
+  }
+
+  TEST_F(ProjectFilesTest, RefusesDefiningCustom)
+  {
+    Write(complete + "graphics_presets:\n  custom:\n    anisotropy: 1\n");
+
+    ExpectRefused("assets://project.yml:11: 'custom' of 'graphics_presets' is the name of no preset: it is what the "
+                  "settings menu shows when the values match none, and cannot be defined or dropped");
+  }
+
+  TEST_F(ProjectFilesTest, RefusesAPresetWhoseNameIsNotPlain)
+  {
+    Write(complete + "graphics_presets:\n  Very Low:\n    anisotropy: 1\n");
+
+    ExpectRefused("'Very Low' of 'graphics_presets' is not a plain name: lowercase letters, digits, and dashes, "
+                  "starting with a letter, as a preset is named in the settings and on the command line");
+  }
+
+  TEST_F(ProjectFilesTest, RefusesAPresetThatIsNeitherAMapNorOff)
+  {
+    Write(complete + "graphics_presets:\n  low: on\n  medium: [1, 2]\n");
+
+    EXPECT_FALSE(Read());
+    ASSERT_EQ(_errors.size(), 2u) << ::testing::PrintToString(_errors);
+    EXPECT_THAT(_errors[0], HasSubstr("'low' of 'graphics_presets' is text, where a map of the values of the "
+                                      "preset was expected, or off to drop it"));
+    EXPECT_THAT(_errors[1], HasSubstr("'medium' of 'graphics_presets' is a list, where a map"));
+  }
+
+  TEST_F(ProjectFilesTest, RefusesPresetsThatAreNoMap)
+  {
+    Write(complete + "graphics_presets: [low, high]\n");
+
+    ExpectRefused("assets://project.yml:10: 'graphics_presets' is a list, where a map of presets by name was expected");
+  }
+
+  TEST_F(ProjectFilesTest, RefusesAValueOfAPresetAsTheSettingsRefuseIt)
+  {
+    Write(complete +
+          "graphics_presets:\n"
+          "  potato:\n"
+          "    anisotropy: 3\n"
+          "    texture_scale: 0.3\n"
+          "    target_scale: 2\n"
+          "    target_mipmaps: 17\n"
+          "    shadow_map_size: 3000\n"
+          "    shadow_filter: soft\n"
+          "    shadow_cascades: 5\n"
+          "    shadow_distance: 0\n");
+
+    EXPECT_FALSE(Read());
+    ASSERT_EQ(_errors.size(), 8u) << ::testing::PrintToString(_errors);
+    EXPECT_EQ(_errors[0], "assets://project.yml:12: 'anisotropy' of preset 'potato' of the project is 3, where 1, 2, 4, 8, "
+                          "or 16 was expected");
+    EXPECT_THAT(_errors[1], HasSubstr("'texture_scale' of preset 'potato' of the project is 0.3, where 1, 0.5, 0.25, or 0.125 was expected"));
+    EXPECT_THAT(_errors[2], HasSubstr("'target_scale' of preset 'potato' of the project is 2, where 1, 0.5, or 0.25 was expected"));
+    EXPECT_THAT(_errors[3], HasSubstr("'target_mipmaps' of preset 'potato' of the project is 17, where 0 for as many as the size allows, or 1 to 16 was expected"));
+    EXPECT_THAT(_errors[4], HasSubstr("'shadow_map_size' of preset 'potato' of the project is 3000, where 512, 1024, 2048, or 4096 was expected"));
+    EXPECT_THAT(_errors[5], HasSubstr("'shadow_filter'"));
+    EXPECT_THAT(_errors[6], HasSubstr("'shadow_cascades' of preset 'potato' of the project is 5, where 1 to 4 was expected"));
+    EXPECT_THAT(_errors[7], HasSubstr("'shadow_distance' of preset 'potato' of the project is 0, where a number above zero was expected"));
+  }
+
+  TEST_F(ProjectFilesTest, RefusesAValueOfAPresetItDoesNotKnow)
+  {
+    Write(complete + "graphics_presets:\n  low:\n    vsync: false\n");
+
+    ExpectRefused("assets://project.yml:12: 'vsync' is not known to preset 'low' of the project. Known are: ");
+  }
+
+  TEST_F(ProjectFilesTest, LeavesTheProjectAloneWhenAPresetIsWrong)
+  {
+    Write(complete + "graphics_presets:\n  potato:\n    anisotropy: 3\n");
+
+    EXPECT_FALSE(Read());
+    EXPECT_THAT(_project.graphics_presets.Names(), ElementsAre("low", "medium", "high", "ultra", "custom"));
+  }
+
   // plain names
 
   TEST(ProjectFile, AcceptsPlainNames)

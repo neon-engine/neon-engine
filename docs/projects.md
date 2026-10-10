@@ -10,10 +10,10 @@ build puts next to the executable, since there is no editor and no exporter
 yet and the runtime is the player the editor will grow into or wrap. A
 shipped runtime will instead run a **compiled game** and read what the
 exporter made of the project, see [the open questions](#open-questions).
-The file says what the project is called, who makes it, and which scenes it
-has. What a game chooses for itself and what a player may change is not in
-it; that is `settings.yml`, see [settings.md](settings.md), which the runtime
-reads after the project.
+The file says what the project is called, who makes it, which scenes it
+has, and which quality presets it offers. What a game chooses for itself and
+what a player may change is not in it; that is `settings.yml`, see
+[settings.md](settings.md), which the runtime reads after the project.
 
 ## The file
 
@@ -28,6 +28,14 @@ scenes:
 
 entry_scene: assets://scenes/title.scene.yml
 input: assets://input/game.input.yml
+
+graphics_presets:
+  low:
+    texture_scale: 1
+  potato:
+    anisotropy: 1
+    shadow_cascades: 1
+  ultra: off
 ```
 
 NeonRuntime ships no project: it is a runtime and knows no game. Every game
@@ -45,6 +53,7 @@ runtime says so and stops.
 | `scenes` | The scenes of the project, as virtual paths. At least one | An error |
 | `entry_scene` | The scene the project starts with. One of `scenes` | The first of `scenes` |
 | `input` | The input map the game is played with, as a virtual path, see [input.md](input.md) | The map the engine brings, `engine://input/default.input.yml` |
+| `graphics_presets` | The [quality presets](#quality-presets) the game offers, by name: a map of the values a preset decides changes a preset of the engine or adds one, and `off` drops one | The four of the engine, `low`, `medium`, `high`, and `ultra`, as they are |
 
 A name that is not known is an error, as in every recipe, so that a name
 that was misspelled does not go unnoticed. Every problem is reported with its
@@ -65,6 +74,48 @@ of the window is the name too, until a project can say otherwise.
 Two projects of one organization share the organization's folder and have a
 folder each inside it. Two organizations never share one.
 
+### Quality presets
+
+A quality preset sets every graphics setting that costs frame time at once:
+`rendering.quality` of the settings names one, `--quality` on the command
+line does, and so does the Quality row of the settings menu, see
+[settings.md](settings.md#quality-presets). Which presets there are is part
+of what the project is, not a setting a layer changes, so the table is
+written here, and the settings and the player's file only choose from it.
+The engine brings four, which every project has without a word:
+
+| Preset | `anisotropy` | `texture_scale` | `target_scale` | `target_mipmaps` | `shadow_map_size` | `shadow_filter` | `shadow_cascades` | `shadow_distance` |
+|---|---|---|---|---|---|---|---|---|
+| `low` | 2 | 0.5 | 0.5 | 1 | 1024 | `none` | 1 | 40 |
+| `medium` | 4 | 1 | 1 | 4 | 2048 | `pcf` | 2 | 80 |
+| `high` | 8 | 1 | 1 | 0 | 2048 | `pcf` | 4 | 120 |
+| `ultra` | 16 | 1 | 1 | 0 | 4096 | `pcf` | 4 | 160 |
+
+`graphics_presets` is a map of presets by name. Each name holds a map of the
+values a preset decides, the eight columns above, each taking what the
+setting of that name takes in [settings.md](settings.md#the-file) and
+refused as it is refused there, or `off`:
+
+| A name that | Does |
+|---|---|
+| Is one of the engine's, with a map | Changes that preset value by value. What the map leaves out stays as the engine has it, so a project writes only what differs: `low: {texture_scale: 1}` is the engine's `low` with full-size textures |
+| Is new, with a map | Adds a preset after the engine's, in the order the file writes them. What the map leaves out is the default of the engine for that setting, which is `high`: a `potato` with only `anisotropy: 1` is `high` without filtering |
+| Is one of the engine's, with `off` | Drops it from the table, so that the menu does not offer it and the settings cannot name it. `off` is one word on the line of the preset, next to the maps, rather than a second list to keep in step with them |
+| Is `custom` | An error. `custom` is the name of no preset: it is what the menu shows when the values match none, and what a file writes to change nothing |
+| Is not a plain name, as `name` is | An error, since a preset is named in the settings, on the command line, and as the value of the menu's row |
+
+The order of the menu's names is the engine's, with the project's after
+them and `custom` last. A table with every preset turned off is an error:
+the settings menu offers at least one. A `presets` map under `rendering` of
+`settings.yml` is an error that points here, so that a file written for the
+wrong place does not go unnoticed.
+
+The sandbox adds a `potato` for a machine that struggles, see its
+[project.yml](../projects/sandbox/assets/project.yml). The runtime reads
+the table before the settings files, so that `assets://settings.yml` names
+a preset of the project, and keeps it in `SettingsConfig::graphics_presets`,
+which `rendering.quality`, `--quality`, and `GraphicsMenu` work from.
+
 ## How the runtime starts
 
 | Step | What happens | Why in this order |
@@ -74,7 +125,7 @@ folder each inside it. Two organizations never share one.
 | 3 | `assets://project.yml` is read | It is the only file that can be read before `user://` exists, and it is what places `user://` |
 | 4 | `user://` is placed under the organization and the name | `FileSystem::PlaceUserDirectory`. The SDL2 backend asks the platform for the folder and creates it |
 | 5 | The log file is opened under `user://` | What was logged before is written into it first, see [file-systems.md](file-systems.md#the-log-file) |
-| 6 | `assets://settings.yml`, then `user://settings.yml`, then the command line again | The layers of settings, see [settings.md](settings.md). The command line wins |
+| 6 | `assets://settings.yml`, then `user://settings.yml`, then the command line again | The layers of settings, see [settings.md](settings.md). The command line wins. The display options, `--quality` among them, are applied here for the first time, since a preset they name may be the project's |
 | 7 | The input map the project names is read, `InputMapFile` | The input system has it before a script of input is checked against it, see [input.md](input.md) |
 | 8 | The rest of the systems start, and the entry scene is loaded | `--scene` names another scene for development. A shipped runtime runs what its project says (#143) |
 
@@ -87,8 +138,9 @@ place yet when the project is read.
 |---|---|---|
 | `Project` | neon-core, `neon/project/project.hpp` | What the file holds, as values |
 | `ProjectFile` | neon-core, `neon/project/project-file.hpp` | Reads the file through the file system and a `DocumentFormat`, checks it, and collects every problem |
+| `GraphicsPresets`, `GraphicsPresetReader` | neon-core, `neon/render/` | The table of the quality presets, the engine's four and what the project does to them, and the reader of a preset's values, which `rendering` of a settings file is read with too |
 | `FileSystem::PlaceUserDirectory` | neon-core | The step that gives `user://` its folder, implemented by each backend |
-| `main.cpp` | NeonRuntime | Reads the project, places `user://`, and carries the names and the entry scene into `SettingsConfig` |
+| `main.cpp` | NeonRuntime | Reads the project, places `user://`, and carries the names, the entry scene, and the quality presets into `SettingsConfig` |
 
 `ProjectFile` knows no format: YAML comes from the `RYML_DocumentFormat`
 that the application hands in, as it does for scenes. The tests of the reader

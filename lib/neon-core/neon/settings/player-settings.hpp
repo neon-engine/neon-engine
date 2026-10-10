@@ -42,6 +42,11 @@ namespace neon
     /// written until Write().
     void Set(const std::string &section, const std::string &map, const std::string &name, const DataValue &value);
 
+    /// Takes `name` of `section` out of the file, when it is there: what a
+    /// preset decides, once a preset is chosen. Nothing is written until
+    /// Write().
+    void Remove(const std::string &section, const std::string &name);
+
     /// Whether anything was set since the last Write().
     [[nodiscard]] bool HasChanges() const { return _changed; }
 

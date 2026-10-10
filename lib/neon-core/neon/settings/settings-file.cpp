@@ -3,8 +3,11 @@
 #include <algorithm>
 #include <format>
 
-#include <neon/window/frame-limit.hpp>
 #include <neon/data/data-reader.hpp>
+#include <neon/project/project-file.hpp>
+#include <neon/render/graphics-preset-reader.hpp>
+#include <neon/render/graphics-presets.hpp>
+#include <neon/window/frame-limit.hpp>
 
 namespace neon
 {
@@ -94,7 +97,9 @@ namespace neon
       reader.Finish();
     }
 
-    void read_rendering(const DataReader &reader, SettingsConfig &settings)
+    /// `warnings` takes what is left out and why: a value a preset decides,
+    /// written while a preset holds.
+    void read_rendering(const DataReader &reader, SettingsConfig &settings, std::vector<std::string> &warnings)
     {
       // Written in quotes, since 1.10 as a number is 1.1
       if (const DataValue *written = reader.ReadValue("vulkan_version"); written != nullptr)
@@ -114,32 +119,61 @@ namespace neon
 
       read_count(reader, "max_light_sources", settings.max_light_sources);
       read_count(reader, "max_render_objects", settings.max_render_objects);
-      read_amount(reader, "shadow_distance", settings.shadow_distance);
-      read_count(reader, "shadow_cascades", settings.shadow_cascades);
-      if (settings.shadow_cascades > 4)
+
+      // The presets themselves are the project's, in its project.yml, not a
+      // setting any layer changes; a file that writes them here is told
+      // where they go
+      if (const DataValue *presets = reader.ReadValue("presets"); presets != nullptr)
       {
-        reader.Report(*reader.ReadValue("shadow_cascades"), std::format(
-                        "'shadow_cascades' of {} is {}, where 1 to 4 was expected", reader.GetWhere(), settings.shadow_cascades));
-        settings.shadow_cascades = 4;
+        reader.Report(*presets, std::format(
+                        "'presets' of {} is not where the quality presets are defined: they are 'graphics_presets' "
+                        "of {}, see docs/projects.md",
+                        reader.GetWhere(), ProjectFile::path));
       }
 
-      // whether the direction light casts at all, how fine its map is,
-      // and how the map is compared against, see docs/vulkan-renderer.md
-      reader.Read("shadows", settings.shadows);
-      if (int size = 0; reader.Read("shadow_map_size", size))
+      // the preset first: its values hold over the names below it that it
+      // decides, and custom lets them apply
+      if (const DataValue *written = reader.ReadValue("quality"); written != nullptr)
       {
-        if (!ShadowMapSize::IsSize(size))
+        std::string name;
+        if (!written->GetText(name) || !settings.graphics_presets.IsName(name))
         {
-          reader.Report(*reader.ReadValue("shadow_map_size"), std::format(
-                          "'shadow_map_size' of {} is {}, where 512, 1024, 2048, or 4096 was expected", reader.GetWhere(), size));
+          reader.Report(*written, std::format(
+                          "'quality' of {} is not a preset of the graphics: {} was expected",
+                          reader.GetWhere(), settings.graphics_presets.NamesForAMessage()));
         } else
         {
-          settings.shadow_map_size = size;
+          settings.quality = name;
+          if (const GraphicsPreset *preset = settings.graphics_presets.Named(name); preset != nullptr)
+          {
+            preset->ApplyTo(settings);
+          }
         }
       }
-      if (std::size_t filter = 0; reader.ReadChoice("shadow_filter", {"none", "pcf"}, filter))
+
+      // whether the direction light casts at all, which no preset decides
+      reader.Read("shadows", settings.shadows);
+
+      // the values a preset decides, each on its own, read and checked as a
+      // preset of the project is; they apply while no preset holds
+      GraphicsPreset values = GraphicsPresets::ValuesOf(settings);
+      GraphicsPresetReader::Read(reader, values);
+      if (settings.quality == GraphicsPresets::kCustom)
       {
-        settings.shadow_filter = static_cast<ShadowFilter>(filter);
+        values.ApplyTo(settings);
+      } else
+      {
+        for (const char *name : {GraphicsPresetReader::kAnisotropy, GraphicsPresetReader::kTextureScale,
+                                 GraphicsPresetReader::kTargetScale, GraphicsPresetReader::kTargetMipmaps,
+                                 GraphicsPresetReader::kShadowMapSize, GraphicsPresetReader::kShadowFilter,
+                                 GraphicsPresetReader::kShadowCascades, GraphicsPresetReader::kShadowDistance})
+        {
+          const DataValue *written = reader.ReadValue(name);
+          if (written == nullptr) { continue; }
+          warnings.push_back(std::format(
+            "{}:{}: '{}' of {} is set by the preset {}, and is left out unless 'quality' is custom",
+            reader.GetDocument(), written->GetLine(), name, reader.GetWhere(), settings.quality));
+        }
       }
 
       // the curve of the resolve step, and how bright the scene is taken
@@ -152,57 +186,6 @@ namespace neon
 
       // whether a frame waits for the screen, see docs/vulkan-renderer.md
       reader.Read("vsync", settings.vertical_sync);
-
-      // how many samples a texture is read with from the side
-      if (int level = 0; reader.Read("anisotropy", level))
-      {
-        if (!Anisotropy::IsLevel(level))
-        {
-          reader.Report(*reader.ReadValue("anisotropy"), std::format(
-                          "'anisotropy' of {} is {}, where 1, 2, 4, 8, or 16 was expected", reader.GetWhere(), level));
-        } else
-        {
-          settings.anisotropy = level;
-        }
-      }
-
-      // the size textures read from files are kept at
-      if (double scale = 0.0; reader.Read("texture_scale", scale))
-      {
-        if (!TextureScale::IsScale(scale))
-        {
-          reader.Report(*reader.ReadValue("texture_scale"), std::format(
-                          "'texture_scale' of {} is {}, where 1, 0.5, 0.25, or 0.125 was expected", reader.GetWhere(), scale));
-        } else
-        {
-          settings.texture_scale = scale;
-        }
-      }
-
-      // the quality of render targets
-      if (double scale = 0.0; reader.Read("target_scale", scale))
-      {
-        if (!TargetQuality::IsScale(scale))
-        {
-          reader.Report(*reader.ReadValue("target_scale"), std::format(
-                          "'target_scale' of {} is {}, where 1, 0.5, or 0.25 was expected", reader.GetWhere(), scale));
-        } else
-        {
-          settings.target_scale = scale;
-        }
-      }
-      if (int mipmaps = 0; reader.Read("target_mipmaps", mipmaps))
-      {
-        if (!TargetQuality::IsMipmaps(mipmaps))
-        {
-          reader.Report(*reader.ReadValue("target_mipmaps"), std::format(
-                          "'target_mipmaps' of {} is {}, where 0 for as many as the size allows, or 1 to 16 was expected",
-                          reader.GetWhere(), mipmaps));
-        } else
-        {
-          settings.target_mipmaps = mipmaps;
-        }
-      }
 
       // the most frames a second, 0 for as many as can be drawn
       if (int most = 0; reader.Read("max_fps", most))
@@ -419,16 +402,24 @@ namespace neon
 
     // read on top of a copy, so that a file with a mistake changes nothing
     SettingsConfig read = settings;
+    std::vector<std::string> warnings;
     read_part(reader, "window", read, read_window);
     read_part(reader, "ui", read, read_ui);
     read_part(reader, "world", read, read_world);
     read_part(reader, "input", read, read_input);
     read_part(reader, "scripting", read, read_scripting);
-    read_part(reader, "rendering", read, read_rendering);
+    {
+      bool has_rendering = false;
+      const DataReader rendering = reader.ReadMap("rendering", has_rendering);
+      if (has_rendering) { read_rendering(rendering, read, warnings); }
+    }
     read_part(reader, "audio", read, read_audio);
     reader.Finish();
 
     if (errors.size() > before) { return false; }
+
+    // what a preset left out is said, since the file is right and applies
+    for (const auto &warning : warnings) { _logger->Warn("{}", warning); }
 
     settings = read;
     return true;

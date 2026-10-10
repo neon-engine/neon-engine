@@ -69,18 +69,23 @@ namespace neon
     {
       return DataValue::Text(text);
     }
+
+    const std::string quality = "quality";
+    const std::string rendering = "rendering";
   }
 
   GraphicsMenu::GraphicsMenu(
     UiContext *ui,
     RenderContext *render,
     WindowContext *window,
+    const GraphicsPresets &presets,
     PlayerSettings *player,
     const std::shared_ptr<Logger> &logger)
   {
     _ui = ui;
     _render = render;
     _window = window;
+    _presets = presets;
     _player = player;
     _logger = logger;
     Describe();
@@ -126,7 +131,7 @@ namespace neon
     });
 
     _settings.push_back({
-      .value = "anisotropy", .section = "rendering", .name = "anisotropy",
+      .value = "anisotropy", .section = "rendering", .name = "anisotropy", .decided = true,
       .current = [this] { return std::format("{}", _render->GetAnisotropy()); },
       .apply = [this](const std::string &text)
       {
@@ -137,7 +142,7 @@ namespace neon
     });
 
     _settings.push_back({
-      .value = "texture_scale", .section = "rendering", .name = "texture_scale",
+      .value = "texture_scale", .section = "rendering", .name = "texture_scale", .decided = true,
       .current = [this] { return Write(_render->GetTextureScale()); },
       .apply = [this](const std::string &text)
       {
@@ -148,7 +153,7 @@ namespace neon
     });
 
     _settings.push_back({
-      .value = "target_scale", .section = "rendering", .name = "target_scale",
+      .value = "target_scale", .section = "rendering", .name = "target_scale", .decided = true,
       .current = [this] { return Write(_render->GetTargetScale()); },
       .apply = [this](const std::string &text)
       {
@@ -159,7 +164,7 @@ namespace neon
     });
 
     _settings.push_back({
-      .value = "target_mipmaps", .section = "rendering", .name = "target_mipmaps",
+      .value = "target_mipmaps", .section = "rendering", .name = "target_mipmaps", .decided = true,
       .current = [this] { return std::format("{}", _render->GetTargetMipmaps()); },
       .apply = [this](const std::string &text)
       {
@@ -180,7 +185,7 @@ namespace neon
     });
 
     _settings.push_back({
-      .value = "shadow_map_size", .section = "rendering", .name = "shadow_map_size",
+      .value = "shadow_map_size", .section = "rendering", .name = "shadow_map_size", .decided = true,
       .current = [this] { return std::format("{}", _render->GetShadowMapSize()); },
       .apply = [this](const std::string &text)
       {
@@ -191,7 +196,7 @@ namespace neon
     });
 
     _settings.push_back({
-      .value = "shadow_filter", .section = "rendering", .name = "shadow_filter",
+      .value = "shadow_filter", .section = "rendering", .name = "shadow_filter", .decided = true,
       .current = [this] { return std::string(shadow_filters[static_cast<std::size_t>(_render->GetShadowFilter())]); },
       .apply = [this](const std::string &text)
       {
@@ -202,7 +207,7 @@ namespace neon
     });
 
     _settings.push_back({
-      .value = "shadow_cascades", .section = "rendering", .name = "shadow_cascades",
+      .value = "shadow_cascades", .section = "rendering", .name = "shadow_cascades", .decided = true,
       .current = [this] { return std::format("{}", _render->GetShadowCascades()); },
       .apply = [this](const std::string &text)
       {
@@ -213,7 +218,7 @@ namespace neon
     });
 
     _settings.push_back({
-      .value = "shadow_distance", .section = "rendering", .name = "shadow_distance",
+      .value = "shadow_distance", .section = "rendering", .name = "shadow_distance", .decided = true,
       .current = [this] { return Write(_render->GetShadowDistance()); },
       .apply = [this](const std::string &text)
       {
@@ -248,33 +253,112 @@ namespace neon
 
   void GraphicsMenu::Open()
   {
+    // the Quality row offers the presets of the project, which its file
+    // cannot know; a menu without such a row is left as it is
+    if (const UiHandle select = _ui->FindByName(quality); select.IsSet())
+    {
+      const std::vector<std::string> names = _presets.Names();
+      if (_ui->SetField(select, "options", names))
+      {
+        std::string offered;
+        for (const auto &name : names) { offered += (offered.empty() ? "" : ", ") + name; }
+        _logger->Info("The menu offers the presets {}", offered);
+      } else
+      {
+        _logger->Warn("The options of {} of the menu cannot be set to the presets", quality);
+      }
+    }
+
     for (auto &setting : _settings)
     {
       setting.opened = setting.current();
       setting.applied = setting.opened;
       setting.refused.clear();
-
-      // a flag as a flag and a number as a number, so that a box that is
-      // ticked and a slider follow it; a choice as the text it is
-      double number = 0.0;
-      if (setting.opened == "true" || setting.opened == "false")
-      {
-        _ui->SetFlag(setting.value, setting.opened == "true");
-      } else if (setting.value == "shadow_distance" || setting.value == "exposure")
-      {
-        (void) ReadNumber(setting.opened, number);
-        _ui->SetNumber(setting.value, number);
-      } else
-      {
-        _ui->SetText(setting.value, setting.opened);
-      }
+      Show(setting, setting.opened);
     }
+
+    _quality_opened = QualityNow();
+    _quality_shown = _quality_opened;
+    _quality_refused.clear();
+    _ui->SetText(quality, _quality_shown);
     _is_open = true;
+  }
+
+  void GraphicsMenu::Show(const Setting &setting, const std::string &text) const
+  {
+    // a flag as a flag and a number as a number, so that a box that is
+    // ticked and a slider follow it; a choice as the text it is
+    if (text == "true" || text == "false")
+    {
+      _ui->SetFlag(setting.value, text == "true");
+    } else if (setting.value == "shadow_distance" || setting.value == "exposure")
+    {
+      double number = 0.0;
+      (void) ReadNumber(text, number);
+      _ui->SetNumber(setting.value, number);
+    } else
+    {
+      _ui->SetText(setting.value, text);
+    }
+  }
+
+  std::string GraphicsMenu::QualityNow() const
+  {
+    const GraphicsPreset values{
+      .name = std::string(GraphicsPresets::kCustom),
+      .anisotropy = _render->GetAnisotropy(),
+      .texture_scale = _render->GetTextureScale(),
+      .target_scale = _render->GetTargetScale(),
+      .target_mipmaps = _render->GetTargetMipmaps(),
+      .shadow_map_size = _render->GetShadowMapSize(),
+      .shadow_filter = _render->GetShadowFilter(),
+      .shadow_cascades = _render->GetShadowCascades(),
+      .shadow_distance = _render->GetShadowDistance(),
+    };
+    return std::string(_presets.NameOf(values));
+  }
+
+  void GraphicsMenu::UpdateQuality()
+  {
+    bool is_set = false;
+    const std::string chosen = _ui->GetValue(quality, &is_set);
+    if (!is_set || chosen == _quality_shown || chosen == _quality_refused) { return; }
+
+    const GraphicsPreset *preset = _presets.Named(chosen);
+    if (preset == nullptr && chosen != GraphicsPresets::kCustom)
+    {
+      _logger->Warn("The menu asked for {} of {}, which is no preset of the graphics", chosen, quality);
+      _quality_refused = chosen;
+      return;
+    }
+
+    _logger->Info("The menu set {} to {}", quality, chosen);
+    _quality_shown = chosen;
+    if (preset == nullptr) { return; }
+
+    // the values the preset decides are shown as if the player had chosen
+    // each, and take effect below as every value does
+    for (const auto &setting : _settings)
+    {
+      if (setting.value == "anisotropy") { Show(setting, std::format("{}", preset->anisotropy)); }
+      if (setting.value == "texture_scale") { Show(setting, Write(preset->texture_scale)); }
+      if (setting.value == "target_scale") { Show(setting, Write(preset->target_scale)); }
+      if (setting.value == "target_mipmaps") { Show(setting, std::format("{}", preset->target_mipmaps)); }
+      if (setting.value == "shadow_map_size") { Show(setting, std::format("{}", preset->shadow_map_size)); }
+      if (setting.value == "shadow_filter")
+      {
+        Show(setting, std::string(shadow_filters[static_cast<std::size_t>(preset->shadow_filter)]));
+      }
+      if (setting.value == "shadow_cascades") { Show(setting, std::format("{}", preset->shadow_cascades)); }
+      if (setting.value == "shadow_distance") { Show(setting, Write(preset->shadow_distance)); }
+    }
   }
 
   void GraphicsMenu::Update()
   {
     if (!_is_open) { return; }
+
+    UpdateQuality();
 
     for (auto &setting : _settings)
     {
@@ -297,6 +381,14 @@ namespace neon
       _logger->Info("The menu set {} to {}", setting.value, shown);
       setting.applied = shown;
     }
+
+    // a value changed by hand makes the preset custom, and values that
+    // happen to match one show its name
+    if (const std::string now = QualityNow(); now != _quality_shown)
+    {
+      _quality_shown = now;
+      _ui->SetText(quality, now);
+    }
   }
 
   void GraphicsMenu::Close(const bool keep)
@@ -306,16 +398,38 @@ namespace neon
     Update();
     _is_open = false;
 
+    // Whether a preset holds: the file then names it alone, since a value
+    // it decides written next to it would be left out with a warning. With
+    // custom, the values that changed are written, and custom with them, so
+    // that they apply over a preset a layer before chose.
+    const bool is_preset = _quality_shown != GraphicsPresets::kCustom;
+    bool decided_changed = false;
+
     for (auto &setting : _settings)
     {
       if (setting.applied == setting.opened) { continue; }
+      if (setting.decided) { decided_changed = true; }
 
       if (keep)
       {
-        if (_player != nullptr) { _player->Set(setting.section, setting.name, setting.kept(setting.applied)); }
+        if (_player == nullptr) { continue; }
+        if (setting.decided && is_preset) { _player->Remove(setting.section, setting.name); }
+        else { _player->Set(setting.section, setting.name, setting.kept(setting.applied)); }
       } else if (!setting.apply(setting.opened))
       {
         _logger->Warn("The menu could not put {} back to {}", setting.value, setting.opened);
+      }
+    }
+
+    if (keep && _player != nullptr && (_quality_shown != _quality_opened || decided_changed))
+    {
+      _player->Set(rendering, quality, DataValue::Text(_quality_shown));
+      if (is_preset)
+      {
+        for (const auto &setting : _settings)
+        {
+          if (setting.decided) { _player->Remove(setting.section, setting.name); }
+        }
       }
     }
 
@@ -324,7 +438,7 @@ namespace neon
 
   std::vector<std::string> GraphicsMenu::GetValueNames() const
   {
-    std::vector<std::string> names;
+    std::vector<std::string> names{quality};
     for (const auto &setting : _settings) { names.push_back(setting.value); }
     return names;
   }

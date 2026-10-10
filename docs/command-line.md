@@ -11,7 +11,7 @@ registered by the application that owns it.
 | Set | Owner | Holds |
 |---|---|---|
 | `RuntimeOptions` | The runtime | `--renderer`, `--vulkan-version` |
-| `DisplayOptions` | The runtime | `--window-size`, `--window-mode`, `--vsync`, `--max-fps`, `--anisotropy`, `--texture-scale`, `--target-scale`, `--target-mipmaps`, `--shadows`, `--shadow-map-size`, `--shadow-filter`, `--shadow-distance`, `--shadow-cascades`, `--ui-scale` |
+| `DisplayOptions` | The runtime | `--window-size`, `--window-mode`, `--vsync`, `--max-fps`, `--quality`, `--anisotropy`, `--texture-scale`, `--target-scale`, `--target-mipmaps`, `--shadows`, `--shadow-map-size`, `--shadow-filter`, `--shadow-distance`, `--shadow-cascades`, `--ui-scale` |
 | `EditorOptions` | The editor | `--scene`, `--ui`, and everything under the `Editor` heading below |
 
 Until NeonEditor exists, NeonRuntime registers the editor's set too, so that
@@ -40,6 +40,7 @@ The last column is the decision of #143: who owns the option.
 | `--window-size WxH` | Display | The size of the window in points, over `window` of the settings. Shows a window of that size unless `--window-mode` says otherwise | **Runtime.** Usually a menu's choice, but a game that comes up on a display it does not expect is reached this way |
 | `--window-mode MODE` | Display | `windowed`, `borderless`, or `fullscreen`, over `window.mode` of the settings | **Runtime**, for the same reason. The mode wins over the window that `--window-size` shows |
 | `--vsync on\|off` | Display | Whether a frame waits for the screen before it is shown, over `rendering.vsync` of the settings | **Runtime.** A menu's choice as well, and the way to tell whether a problem is the sync |
+| `--quality NAME` | Display | A preset of the graphics that cost frame time, by name: one of the project's table, the engine's `low`, `medium`, `high`, and `ultra` unless its `project.yml` says otherwise, or `custom` for none, over `rendering.quality` of the settings, see [settings.md](settings.md#quality-presets) and [projects.md](projects.md#quality-presets). It holds over the options it decides: `--quality low --anisotropy 16` is low, and the log says that `--anisotropy` is set by the preset and left out, whichever order they are written in; `--quality custom --anisotropy 16` applies the 16, and so does `--anisotropy 16` alone while no layer chose a preset. It is applied after the project is read, since it may name a preset of the project | **Runtime.** A menu's choice as well, and one word for a machine that struggles |
 | `--anisotropy NUMBER` | Display | Samples a texture is read with where it is seen from the side: 1 for none, 2, 4, 8, or 16, over `rendering.anisotropy` of the settings | **Runtime.** A menu's choice as well, and a way to see what anisotropic filtering costs |
 | `--texture-scale NUMBER` | Display | The size textures read from files are kept at: 1, 0.5, 0.25, or 0.125 of their size, over `rendering.texture_scale` of the settings | **Runtime.** A menu's choice as well, and a way to see how a game looks on a computer with little memory for textures |
 | `--target-scale NUMBER` | Display | The size what a camera draws into is made at: 1, 0.5, or 0.25 of what it asks for, over `rendering.target_scale` of the settings | **Runtime.** A menu's choice as well |

@@ -9,6 +9,7 @@
 #include "neon/audio/sound-group-setting.hpp"
 #include "neon/render/anisotropy.hpp"
 #include "neon/render/api-version.hpp"
+#include "neon/render/graphics-presets.hpp"
 #include "neon/render/shadow-filter.hpp"
 #include "neon/render/shadow-map-size.hpp"
 #include "neon/render/texture-scale.hpp"
@@ -124,6 +125,22 @@ struct SettingsConfig
   /// then those the project declares in its settings file. The audio
   /// system starts with them, and a settings menu changes the volumes.
   std::vector<neon::SoundGroupSetting> sound_groups = neon::built_in_sound_groups();
+
+  /// The quality presets `rendering.quality`, `--quality`, and the Quality
+  /// row of a settings menu choose from: those of the engine, changed,
+  /// added to, and dropped from by the project in its project.yml, see
+  /// Project. Read before the settings files are, so that a file names a
+  /// preset of the project.
+  neon::GraphicsPresets graphics_presets;
+
+  /// The quality preset in effect: a name of `graphics_presets`, or
+  /// `custom` for none. While a preset holds, its values do, and the
+  /// settings it decides that a file or the command line writes are left
+  /// out with a warning; only `custom` lets them apply. A later layer may
+  /// choose another preset, or `custom` and then its own values. The
+  /// default is none, so that a file that says nothing of a preset sets
+  /// what it writes, and the values below are those of `high`.
+  std::string quality = std::string(neon::GraphicsPresets::kCustom);
   WindowMode window_mode = WindowMode::Windowed;
 
   /// Whether a frame waits for the screen before it is shown: with it, no

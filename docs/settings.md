@@ -6,7 +6,9 @@ project *is* - its name, who makes it, its scenes - is not a setting; that is
 [projects.md](projects.md).
 
 **Current decision:** settings come in layers, each read on top of the one
-before. A layer only changes what it writes down.
+before. A layer only changes what it writes down, with one exception: a
+quality preset holds over the graphics values it decides, see
+[Quality presets](#quality-presets).
 
 | Layer | Where | Who writes it |
 |---|---|---|
@@ -18,7 +20,8 @@ before. A layer only changes what it writes down.
 The command line is applied twice: once before the file system comes up,
 since `--headless-renderer` and `--output-dir` decide how it does, and once after the
 files, so that it wins. Applying it twice gives the same result; the options
-are written so.
+are written so. `--quality` alone waits for the second pass, since the
+preset it names may be one the project defines.
 
 ## The file
 
@@ -49,6 +52,7 @@ rendering:
   vulkan_version: "1.3"
   max_light_sources: 1024
   max_render_objects: 16384
+  quality: high
   tonemapper: none
   exposure: 1
   vsync: true
@@ -85,6 +89,7 @@ Every project brings its own. Those of the sandbox are
 | `rendering.vulkan_version` | The version of Vulkan to ask for, in quotes, since `1.10` as a number is `1.1` | `"1.3"` |
 | `rendering.max_light_sources` | How many lights a frame may hold. A whole number above zero | 1024 |
 | `rendering.max_render_objects` | How many render objects a frame may hold, each one draw. A whole number above zero. It sizes a per-frame buffer of twice 208 bytes an object, once for the scene and once for the shadow pass, so a larger number costs little; a scene that passes it is told, with this name | 16384 |
+| `rendering.quality` | A preset of the graphics that cost frame time, by name: one of the project's table, which is the engine's `low`, `medium`, `high`, and `ultra` unless its `project.yml` says otherwise, or `custom` for none, see [Quality presets](#quality-presets). A preset holds: the names below that it decides are left out with a warning, in this file and in a layer after it, until a layer writes `custom` and then its own values | `custom`: no preset holds, and the values below, which are those of `high`, apply as a file writes them |
 | `rendering.shadow_distance` | How far from the camera the shadow of the direction light reaches, in meters, along its view, see [vulkan-renderer.md](vulkan-renderer.md#shadows). What is further is lit. Farther is coarser in the far cascades. Above zero | 120 |
 | `rendering.shadow_cascades` | How many cascades the shadow map has, 1 to 4: slices of what the camera sees, the nearest drawn the finest. More is finer near the camera at the same distance, and the casters drawn once more each | 4 |
 | `rendering.shadows` | Whether the direction light casts shadows at all. `false` leaves the shadow pass out of the frame and shades every light as if it had `casts_shadows: false`, so a frame is byte for byte what it is for such a light; the other shadow settings are kept for when it is `true` again. A flag, as `vsync` is | `true` |
@@ -100,6 +105,77 @@ Every project brings its own. Those of the sandbox are
 | `rendering.exposure` | How bright the scene is taken to be: the light of the scene is multiplied by it before the curve. A number above zero; 2 doubles the light, 0.5 halves it | 1 |
 | `audio.groups` | The [groups of sounds](audio.md#groups) the project has besides those of the engine: a list of names, or of maps with a `name` and the `volume` the group starts at. A name that is there already is an error. A group of the project is held still while the game is paused, as the effects are | None. The groups of the engine are `music`, `effects`, `voices`, and `ambience` |
 | `audio.volumes` | The volume of a group by its name, 0 for silence and 1 for the loudness of its sounds, not below 0. A name that is not a group of the engine or of the project, declared above or in a file read before, is an error. The runtime's settings menu shows them and writes the ones the player changed to `user://settings.yml` with Apply, see [user-interface.md](user-interface.md#the-volumes-of-the-settings-menu) | 1 for every group |
+
+### Quality presets
+
+A preset sets every graphics setting that costs frame time at once, so that
+a player picks one word and a game ships with one (#356). The settings
+that are a matter of taste rather than cost, the tonemapper and the
+exposure, vertical sync, the frame limit, and the window, are not part of
+one. The table is `GraphicsPresets` in neon-core, with a unit test over it,
+and the engine brings four presets:
+
+| Preset | `anisotropy` | `texture_scale` | `target_scale` | `target_mipmaps` | `shadow_map_size` | `shadow_filter` | `shadow_cascades` | `shadow_distance` |
+|---|---|---|---|---|---|---|---|---|
+| `low` | 2 | 0.5 | 0.5 | 1 | 1024 | `none` | 1 | 40 |
+| `medium` | 4 | 1 | 1 | 4 | 2048 | `pcf` | 2 | 80 |
+| `high` | 8 | 1 | 1 | 0 | 2048 | `pcf` | 4 | 120 |
+| `ultra` | 16 | 1 | 1 | 0 | 4096 | `pcf` | 4 | 160 |
+
+`rendering.shadows`, whether shadows are drawn at all, is not part of a
+preset: off changes what is seen rather than how finely, so it is the
+player's own choice, as vertical sync is, and a preset leaves it alone.
+
+The default is `high`, since it is what the defaults of the engine have
+been: every setting at the full quality of the renderer apart from the
+anisotropy, which has been 8 with 16 a step above it. `ultra` turns that up
+and reaches the shadows farther; `low` halves the textures and the camera
+pictures, and keeps one cascade close by. `custom` names no preset and
+changes nothing: it is what the settings menu shows when the values match
+none, and what it writes then.
+
+The same preset is `--quality` on the command line, applied before the
+other options of its set, and the Quality row of the settings menu, which
+sets the rows below it as if the player had chosen each, see
+[user-interface.md](user-interface.md#the-graphics-of-the-settings-menu).
+
+#### What a preset holds over
+
+A preset is used as it is, or not at all: while one holds, the eight
+settings it decides are the preset's, and a file or a command line that
+writes one of them next to a preset, or in a layer after it, has that name
+left out with a warning in the log, `'anisotropy' of 'rendering' of the
+settings is set by the preset low, and is left out unless 'quality' is
+custom`. The file still has to be right: a wrong value is an error as it
+is without a preset. The settings no preset decides, `vsync`, `max_fps`,
+`shadows`, `tonemapper`, and `exposure`, apply as always.
+
+| Layer writes | Then |
+|---|---|
+| `quality: low` | The values of `low` hold. `anisotropy: 16` next to it is left out, with a warning |
+| `quality: custom` | No preset holds. `anisotropy: 16` next to it applies, and so does a value in a layer after it that names no preset |
+| Nothing of `quality` | Whatever held before holds: a preset a layer before chose, or none from the start, which is the default, so that a file that says nothing of a preset sets what it writes |
+| `quality: low` in the project's file, `anisotropy: 16` in the player's | Left out with a warning: the project's preset holds until the player's file writes `quality: custom` |
+| `quality: low` in the project's file, `quality: custom` and `anisotropy: 16` in the player's | 16, and the rest of `low` stays as the project set it |
+| `--quality low --anisotropy 16` | 2, and the log says that `--anisotropy` is set by the preset |
+| `--quality custom --anisotropy 16` | 16 |
+
+The settings menu writes what reads back the same: a preset chosen in the
+menu is written alone, and the values it decides are taken out of the
+player's file, since they would be left out next to it; a row changed by
+hand is written with `quality: custom`, so that it applies over a preset
+the project chose, see
+[user-interface.md](user-interface.md#the-graphics-of-the-settings-menu).
+
+What the presets are is the project's to say, in its `project.yml` under
+`graphics_presets`, see [projects.md](projects.md#quality-presets): a
+preset of the engine changed value by value, a new one after them with the
+engine's defaults for what it leaves out, and one turned `off` so that the
+menu does not offer it. It is written there and not here because the table
+is part of what the project is, not a setting a layer changes: the
+settings, the project's and the player's alike, only choose from it with
+`rendering.quality`. A `presets` map under `rendering` is an error that
+says so.
 
 A name that is not known is an error, as in every recipe: the file is a
 configuration file, not a recipe, since its name says no kind, and the rules
@@ -129,6 +205,8 @@ by a file a menu wrote.
 | `SettingsConfig` | neon-core, `neon/runtime/settings-config.hpp` | Every setting, with its default |
 | `SettingsFile` | neon-core, `neon/settings/settings-file.hpp` | Reads one file on top of a `SettingsConfig` through the file system and a `DocumentFormat`, checks it, and collects every problem |
 | `PlayerSettings` | neon-core, `neon/settings/player-settings.hpp` | Writes what a settings menu changed to `user://settings.yml`, keeping what the file held already |
+| `GraphicsPreset`, `GraphicsPresets` | neon-core, `neon/render/graphics-preset.hpp`, `graphics-presets.hpp` | One quality preset, and the table of them: the engine's four and what the project does to them, which one a set of values is, and the names a setting takes |
+| `GraphicsPresetReader` | neon-core, `neon/render/graphics-preset-reader.hpp` | Reads the values a preset decides, checked as the settings of those names are; `rendering` of a settings file and a preset of `project.yml` are read with it |
 | `GraphicsMenu` | neon-core, `neon/runtime/graphics-menu.hpp` | The graphics of the runtime's settings menu: shows them, changes them, and keeps or puts them back |
 | `AudioMenu` | neon-core, `neon/runtime/audio-menu.hpp` | The volumes of the runtime's settings menu, one for every group: shows them, changes them, and keeps them as `audio.volumes` or puts them back |
 | `RuntimeOptions`, `DisplayOptions` | neon-core, `neon/command-line/` | The command line, layer 4 |

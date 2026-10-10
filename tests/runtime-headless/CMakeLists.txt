@@ -5,6 +5,8 @@ neon_add_application_test(runtime-headless NeonRuntime run.cmake
         CASES
         window-size-and-render-scale
         settings-menu-with-input
+        quality-preset-of-the-project
+        quality-of-the-command-line-from-the-project
         ui-scale
         last-frame
         listed-frames
