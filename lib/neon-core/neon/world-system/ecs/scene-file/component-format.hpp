@@ -49,7 +49,9 @@ namespace neon
     }
 
     /// The format of a C++ type that is described. How it is read and
-    /// written follows from the description, see TypeBuilder.
+    /// written follows from the description, see TypeBuilder. A type whose
+    /// description has problems reads nothing: a file that writes the
+    /// component is told the problems, and the entity goes without it.
     template<typename T>
     static ComponentFormat Of()
     {
@@ -61,6 +63,18 @@ namespace neon
 
       format.read = [type](const DataReader &reader, EntityStore &store, const Entity entity)
       {
+        if (!type->problems.empty())
+        {
+          for (const auto &problem : type->problems)
+          {
+            reader.Report(reader.GetWhere() + " cannot be read, its description is wrong: " + problem);
+          }
+          // what was described is asked for, so that it is not reported
+          // as unknown on top
+          for (const auto &field : type->fields) { (void) reader.ReadValue(field.name); }
+          return;
+        }
+
         T component = StartFrom<T>(store, type->name, entity);
         ReadFields(*type, reader, &component);
         store.Set(entity, component);

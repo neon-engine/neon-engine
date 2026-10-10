@@ -89,6 +89,19 @@ namespace
     return text;
   }
 
+  /// A component whose description has a mistake in it.
+  struct Twisted
+  {
+    float value = 0.0f;
+  };
+
+  void Describe(neon::TypeBuilder<Twisted> &type)
+  {
+    type.Named("Twisted");
+    type.Field("value", &Twisted::value);
+    type.Field("value", &Twisted::value);
+  }
+
   class EngineComponentFormatsTest : public ::testing::Test
   {
   protected:
@@ -156,6 +169,21 @@ namespace
     EXPECT_EQ(transform->scale, glm::vec3(2.0f));
     EXPECT_EQ(transform->rotation.yaw, 90.0f);
     EXPECT_THAT(_errors, IsEmpty());
+  }
+
+  TEST_F(EngineComponentFormatsTest, ATypeWhoseDescriptionIsWrongReadsNothingAndSaysWhy)
+  {
+    _store.Register<Twisted>("Twisted");
+    _formats.Add(neon::ComponentFormat::Of<Twisted>());
+    auto value = DataValue::Map();
+    value.Set("value", DataValue::Number(2.0f));
+
+    Read("Twisted", value);
+
+    EXPECT_EQ(_store.Get<Twisted>(_entity), nullptr) << "the entity goes without the component";
+    EXPECT_THAT(
+      _errors,
+      ElementsAre("scene.yml: Twisted of entity 'thing' cannot be read, its description is wrong: Field 'value' is described twice"));
   }
 
   TEST_F(EngineComponentFormatsTest, StartsFromTheDefaultsWhenTheEntityHasNone)

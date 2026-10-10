@@ -18,6 +18,8 @@ neon_add_application_test(runtime-headless NeonRuntime run.cmake
         user-interface-of-a-scene
         user-interface-that-is-missing
         scene-that-is-missing
+        scene-with-a-broken-entity
+        user-interface-with-a-mistake
         pause-menu
         title-screen-starts-the-level
         input-map-of-the-engine-by-default

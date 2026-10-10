@@ -210,6 +210,11 @@ namespace neon
       }
 
       const ComponentId id = extension.store->RegisterComponent(layout.GetComponentInfo());
+      if (id == No_Component)
+      {
+        extension.logger->Error("The component '{}' is refused: the store did not take it", name);
+        return No_Component;
+      }
       extension.formats->Add(layout.GetComponentFormat());
 
       extension.logger->Info("Registered the component '{}'", name);
@@ -542,7 +547,13 @@ namespace neon
 
       // 0 stands for no query on the side of the extension, and is a query
       // like any other on the side of the store
-      return static_cast<NeonQuery>(store->CreateQuery(info)) + 1;
+      const QueryId query = store->CreateQuery(info);
+      if (query == No_Query)
+      {
+        extension.logger->Error("create_query was refused by the store, see the log");
+        return 0;
+      }
+      return static_cast<NeonQuery>(query) + 1;
     }
 
     void each(

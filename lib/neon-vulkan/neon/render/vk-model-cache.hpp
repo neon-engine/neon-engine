@@ -76,7 +76,8 @@ namespace neon
 
     [[nodiscard]] bool Contains(const int id) const { return _models.Contains(id); }
 
-    [[nodiscard]] const VK_Model &operator[](const int id) const { return _models[id]; }
+    /// The model of an id, or nullptr when there is none.
+    [[nodiscard]] const VK_Model *Get(const int id) const { return _models.Find(id); }
 
     /// Draws the model at `id`, which was made from a mesh of its render
     /// object's own, with `mesh` from now on. A shared model is never

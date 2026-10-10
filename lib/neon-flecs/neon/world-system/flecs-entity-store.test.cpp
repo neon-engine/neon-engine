@@ -24,6 +24,7 @@ namespace
   using neon::Flecs_EntityStore;
   using neon::No_Component;
   using neon::No_Entity;
+  using neon::No_Query;
   using neon::QueryOrder;
   using neon::testing::LogLevel;
   using neon::testing::RecordingLogger;
@@ -191,7 +192,8 @@ namespace
     _store.CleanUp();
     _store.Initialize();
 
-    EXPECT_THROW(_store.Each(query, [](const EntityBlock &) {}), std::runtime_error);
+    EXPECT_THAT(Visit(query), IsEmpty());
+    EXPECT_TRUE(_logger->Contains(LogLevel::Error, "A query was used that the store does not know"));
   }
 
   // components
@@ -318,8 +320,15 @@ namespace
 
   TEST_F(FlecsEntityStoreTest, RefusesANameThatIsRegisteredAgainWithAnotherSize)
   {
-    EXPECT_THROW(_store.RegisterComponent(ComponentInfo::Of<Inventory>("Position")), std::runtime_error);
-    EXPECT_THROW(_store.RegisterComponent(ComponentInfo::Of<double>("Position")), std::runtime_error);
+    EXPECT_EQ(_store.RegisterComponent(ComponentInfo::Of<Inventory>("Position")), No_Component);
+    EXPECT_EQ(_store.RegisterComponent(ComponentInfo::Of<double>("Position")), No_Component);
+
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 2u);
+    EXPECT_TRUE(_logger->Contains(LogLevel::Error, "Component 'Position' was registered before with another size"));
+
+    // what was registered first stays as it was
+    EXPECT_NE(_store.FindComponent("Position"), No_Component);
+    EXPECT_EQ(_store.GetComponentSize(_store.FindComponent("Position")), sizeof(Position));
   }
 
   TEST_F(FlecsEntityStoreTest, DoesNotFindAComponentThatWasNeverRegistered)
@@ -344,21 +353,35 @@ namespace
 
     for (const auto &info : {without_size, without_construct, without_destruct, without_copy, without_move})
     {
-      EXPECT_THROW(_store.RegisterComponent(info), std::runtime_error) << info.name;
+      EXPECT_EQ(_store.RegisterComponent(info), No_Component) << info.name;
       EXPECT_EQ(_store.FindComponent(info.name), No_Component) << info.name;
+      EXPECT_TRUE(_logger->Contains(LogLevel::Error, "Component '" + info.name + "' is not described completely")) << info.name;
     }
   }
 
-  TEST_F(FlecsEntityStoreTest, RefusesATypeThatWasNeverRegistered)
+  TEST_F(FlecsEntityStoreTest, ATypeThatWasNeverRegisteredIsOnNoEntityAndNothingIsThrown)
   {
     const Entity player = _store.CreateEntity("player");
 
-    EXPECT_THROW((void) _store.IdOf<Health>(), std::runtime_error);
-    EXPECT_THROW(_store.Set(player, Health{}), std::runtime_error);
-    EXPECT_THROW((void) _store.Get<Health>(player), std::runtime_error);
-    EXPECT_THROW((void) _store.Has<Health>(player), std::runtime_error);
-    EXPECT_THROW(_store.Remove<Health>(player), std::runtime_error);
-    EXPECT_THROW((void) (_store.Query<Position, Health>()), std::runtime_error);
+    EXPECT_EQ(_store.IdOf<Health>(), No_Component);
+
+    // what asks about it is told that it is not there, and the game goes on
+    EXPECT_EQ(_store.Get<Health>(player), nullptr);
+    EXPECT_FALSE(_store.Has<Health>(player));
+    EXPECT_FALSE(_store.IsEnabled<Health>(player));
+    EXPECT_EQ(_store.GetComponentData(player, No_Component), nullptr);
+    _store.Remove<Health>(player);
+    _store.SetEnabled<Health>(player, false);
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 0u);
+
+    // what would change the world with it is refused and says so
+    _store.Set(player, Health{});
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 1u);
+    EXPECT_TRUE(_logger->Contains(LogLevel::Error, "A component was used that the store does not know"));
+
+    EXPECT_EQ((_store.Query<Position, Health>()), No_Query);
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 2u);
+    EXPECT_TRUE(_store.IsAlive(player));
   }
 
   TEST_F(FlecsEntityStoreTest, RefusesToSetAComponentIdItDoesNotKnow)
@@ -366,7 +389,10 @@ namespace
     const Entity player = _store.CreateEntity("player");
     const Health health;
 
-    EXPECT_THROW(_store.SetComponent(player, 123456789, &health), std::runtime_error);
+    _store.SetComponent(player, 123456789, &health);
+
+    EXPECT_TRUE(_logger->Contains(LogLevel::Error, "A component was used that the store does not know"));
+    EXPECT_FALSE(_store.HasComponent(player, 123456789));
   }
 
   TEST_F(FlecsEntityStoreTest, KeepsComponentsApartFromEntitiesOfTheSameName)
@@ -900,7 +926,8 @@ namespace
 
   TEST_F(FlecsEntityStoreTest, RefusesAQueryWithoutComponents)
   {
-    EXPECT_THROW(_store.CreateQuery({}), std::runtime_error);
+    EXPECT_EQ(_store.CreateQuery({}), No_Query);
+    EXPECT_TRUE(_logger->Contains(LogLevel::Error, "A query names between 1 and 8 components, this one names 0"));
   }
 
   TEST_F(FlecsEntityStoreTest, AcceptsAQueryWithAsManyComponentsAsABlockHolds)
@@ -940,19 +967,28 @@ namespace
       components.push_back(_store.RegisterComponent(ComponentInfo::Of<Health>("Health" + std::to_string(i))));
     }
 
-    EXPECT_THROW(_store.CreateQuery({.components = components}), std::runtime_error);
+    EXPECT_EQ(_store.CreateQuery({.components = components}), No_Query);
+    EXPECT_TRUE(_logger->Contains(LogLevel::Error, "A query names between 1 and 8 components, this one names 9"));
   }
 
   TEST_F(FlecsEntityStoreTest, RefusesAQueryForAComponentItDoesNotKnow)
   {
-    EXPECT_THROW(_store.CreateQuery({.components = {123456789}}), std::runtime_error);
+    EXPECT_EQ(_store.CreateQuery({.components = {123456789}}), No_Query);
+    EXPECT_TRUE(_logger->Contains(LogLevel::Error, "A component was used that the store does not know"));
   }
 
-  TEST_F(FlecsEntityStoreTest, RefusesAQueryItDoesNotKnow)
+  TEST_F(FlecsEntityStoreTest, HandsOverNothingForAQueryItDoesNotKnow)
   {
+    _store.Set(_store.CreateEntity("player"), Position{});
     const auto query = _store.Query<Position>();
 
-    EXPECT_THROW(_store.Each(query + 1, [](const EntityBlock &) {}), std::runtime_error);
+    // a query that could not be made was logged when it was asked for
+    EXPECT_THAT(Visit(No_Query), IsEmpty());
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 0u);
+
+    // one that was never made at all is a mistake of its own
+    EXPECT_THAT(Visit(query + 1), IsEmpty());
+    EXPECT_TRUE(_logger->Contains(LogLevel::Error, "A query was used that the store does not know"));
   }
 
   TEST_F(FlecsEntityStoreTest, LeavesTheParentOfABlockOutWhenTheOrderIsAny)

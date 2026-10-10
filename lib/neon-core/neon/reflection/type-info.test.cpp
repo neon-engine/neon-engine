@@ -1,5 +1,4 @@
 #include <cstdint>
-#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -550,32 +549,74 @@ namespace
 
   TEST(TypeBuilder, RefusesADescriptionThatDoesNotNameItsType)
   {
-    EXPECT_THROW((void) TypeInfo::Of<Nameless>(), std::logic_error);
+    const TypeInfo type = TypeInfo::Of<Nameless>();
+
+    EXPECT_THAT(type.problems, ElementsAre("A description has to name its type, with Named()"));
+    EXPECT_EQ(type.name, "");
   }
 
   TEST(TypeBuilder, RefusesAFieldThatIsDescribedTwice)
   {
-    EXPECT_THROW((void) TypeInfo::Of<Twice>(), std::logic_error);
+    const TypeInfo type = TypeInfo::Of<Twice>();
+
+    EXPECT_THAT(type.problems, ElementsAre("Field 'value' is described twice"));
+    // the first description is kept, the second left out
+    EXPECT_THAT(type.GetPaths(), ElementsAre("value"));
   }
 
   TEST(TypeBuilder, RefusesWhatIsAboutAFieldBeforeThereIsOne)
   {
-    EXPECT_THROW((void) TypeInfo::Of<Early>(), std::logic_error);
+    const TypeInfo type = TypeInfo::Of<Early>();
+
+    EXPECT_THAT(type.problems, ElementsAre("There is no field yet that this could be about"));
+    EXPECT_THAT(type.fields, IsEmpty());
   }
 
   TEST(TypeBuilder, RefusesAConditionOnWhatIsNoChoiceDescribedBefore)
   {
-    EXPECT_THROW((void) TypeInfo::Of<Unsure>(), std::logic_error);
+    const TypeInfo type = TypeInfo::Of<Unsure>();
+
+    EXPECT_THAT(type.problems, ElementsAre("'value' depends on 'kind', which is no choice described before it"));
+    EXPECT_FALSE(type.Find("value")->only_when.has_value()) << "the condition is left out";
   }
 
   TEST(TypeBuilder, RefusesAConditionOnAWordTheChoiceDoesNotHave)
   {
-    EXPECT_THROW((void) TypeInfo::Of<Misworded>(), std::logic_error);
+    const TypeInfo type = TypeInfo::Of<Misworded>();
+
+    EXPECT_THAT(type.problems, ElementsAre("'huge' is not a word of the choice 'size'"));
+    EXPECT_FALSE(type.Find("value")->only_when.has_value());
   }
 
   TEST(TypeBuilder, RefusesARuleInAGroup)
   {
-    EXPECT_THROW((void) TypeInfo::Of<Grouped>(), std::logic_error);
+    const TypeInfo type = TypeInfo::Of<Grouped>();
+
+    EXPECT_THAT(type.problems, ElementsAre("A rule is about the whole type, not about a group"));
+    EXPECT_THAT(type.rules, IsEmpty());
+  }
+
+  TEST(TypeBuilder, WhatFollowsARefusedCallLandsNowhere)
+  {
+    struct Plain
+    {
+      float value = 0.0f;
+    };
+
+    TypeBuilder<Plain> builder;
+    builder.Named("Plain");
+    builder.Field("value", &Plain::value);
+    builder.Field("value", &Plain::value).Describe("the second one").Required();
+    const TypeInfo type = builder.Build();
+
+    EXPECT_THAT(type.problems, ElementsAre("Field 'value' is described twice"));
+    EXPECT_EQ(type.Find("value")->description, "");
+    EXPECT_FALSE(type.Find("value")->required);
+  }
+
+  TEST(TypeBuilder, ADescriptionThatIsRightHasNoProblems)
+  {
+    EXPECT_THAT(TypeInfo::Of<Monster>().problems, IsEmpty());
   }
 
   // values

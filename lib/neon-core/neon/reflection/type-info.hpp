@@ -136,6 +136,14 @@ namespace neon
     /// Checked once the fields of an object were read from a document.
     std::vector<TypeRule> rules;
 
+    /// What is wrong with the description, in the order it was found: a
+    /// field described twice, a condition on a choice that was not
+    /// described, a description without a name. Empty for a description
+    /// that is right. What was wrong is left out of the type, and whoever
+    /// registers the type logs the problems and refuses it, see
+    /// ComponentFormat::Of. Nothing is thrown (#179).
+    std::vector<std::string> problems;
+
     /// Called with an object after a field of it was written from outside:
     /// by a script, by an extension, or from a document. It is how a type
     /// that somebody else keeps a copy of, as the renderer keeps what a

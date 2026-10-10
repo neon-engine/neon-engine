@@ -551,10 +551,7 @@ namespace neon
 
     for (int id = 0; id < _targets.Capacity(); id++)
     {
-      if (!_targets.Contains(id)) { continue; }
-
-      Target removed = _targets.Remove(id);
-      ReleaseTarget(removed);
+      if (auto removed = _targets.Remove(id)) { ReleaseTarget(*removed); }
     }
     for (auto &target : _targets_to_release) { ReleaseTarget(target); }
     _targets_to_release.clear();
@@ -641,8 +638,7 @@ namespace neon
     if (!_frame_open) { return; }
 
     // of the render target that is drawn to, or else of the frame
-    VK_Canvas &canvas = _current_target != No_Render_Target ? _targets[_current_target].canvas : _frame;
-    canvas.SetEffects(effects, screen_effects);
+    CurrentCanvas().SetEffects(effects, screen_effects);
   }
 
   bool VK_RenderSystem::SetVerticalSync(const bool enabled)
@@ -701,8 +697,9 @@ namespace neon
 
     for (int id = 0; id < _materials.Capacity(); id++)
     {
-      if (!_materials.Contains(id) || _materials[id].DescriptorSet() == VK_NULL_HANDLE) { continue; }
-      WriteDescriptorSet(_materials[id], _materials[id].DescriptorSet());
+      const VK_Material *material = _materials.Get(id);
+      if (material == nullptr || material->DescriptorSet() == VK_NULL_HANDLE) { continue; }
+      WriteDescriptorSet(*material, material->DescriptorSet());
     }
     _renderer_2d.WriteSamplersAgain();
   }
@@ -737,8 +734,9 @@ namespace neon
     // every set reads the map through its view, which is new
     for (int id = 0; id < _materials.Capacity(); id++)
     {
-      if (!_materials.Contains(id) || _materials[id].DescriptorSet() == VK_NULL_HANDLE) { continue; }
-      WriteDescriptorSet(_materials[id], _materials[id].DescriptorSet());
+      const VK_Material *material = _materials.Get(id);
+      if (material == nullptr || material->DescriptorSet() == VK_NULL_HANDLE) { continue; }
+      WriteDescriptorSet(*material, material->DescriptorSet());
     }
   }
 
@@ -765,9 +763,10 @@ namespace neon
   {
     for (int id = 0; id < _targets.Capacity(); id++)
     {
-      if (!_targets.Contains(id) || _targets[id].target.Name() != name) { continue; }
+      const Target *kept = _targets.Find(id);
+      if (kept == nullptr || kept->target.Name() != name) { continue; }
 
-      const VK_RenderTarget &target = _targets[id].target;
+      const VK_RenderTarget &target = kept->target;
       texture = VK_Texture::Borrowed(
         target.View(), VK_RenderTarget::kSampling, target.Extent().width, target.Extent().height);
       return true;
@@ -786,9 +785,10 @@ namespace neon
     {
       for (int id = 0; id < _materials.Capacity(); id++)
       {
-        if (!_materials.Contains(id) || !_materials[id].ShowsSurfaces()) { continue; }
+        VK_Material *shows = _materials.Get(id);
+        if (shows == nullptr || !shows->ShowsSurfaces()) { continue; }
 
-        VK_Material &material = _materials[id];
+        VK_Material &material = *shows;
         material.ResolveSurfaces(VK_Texture());
 
         if (material.DescriptorSet() != VK_NULL_HANDLE) { WriteDescriptorSet(material, material.DescriptorSet()); }
@@ -813,7 +813,10 @@ namespace neon
 
   VK_Canvas &VK_RenderSystem::CurrentCanvas()
   {
-    return _current_target != No_Render_Target ? _targets[_current_target].canvas : _frame;
+    // the target was checked when it was begun, see BeginRenderTarget();
+    // one that is gone all the same leaves the frame to draw to
+    Target *target = _current_target != No_Render_Target ? _targets.Find(_current_target) : nullptr;
+    return target != nullptr ? target->canvas : _frame;
   }
 
   bool VK_RenderSystem::FitWindow()
@@ -863,7 +866,7 @@ namespace neon
 
     for (int id = 0; id < _targets.Capacity(); id++)
     {
-      if (_targets.Contains(id)) { _targets[id].is_drawn = false; }
+      if (Target *target = _targets.Find(id); target != nullptr) { target->is_drawn = false; }
     }
     _target_commands_open = false;
     _current_target = No_Render_Target;
@@ -1029,7 +1032,13 @@ namespace neon
 
   bool VK_RenderSystem::AcquireObjectMaterials(const RenderInfo &render_info, RenderObjectRef &object)
   {
-    const VK_Model &model = _models[object.model_id];
+    const VK_Model *held = _models.Get(object.model_id);
+    if (held == nullptr)
+    {
+      _logger->Error("A render object has no model to take its materials from, model {} is gone", object.model_id);
+      return false;
+    }
+    const VK_Model &model = *held;
 
     // One material for each material of the file that a mesh uses, so that
     // every mesh is drawn with its own, see docs/models.md. A mesh that
@@ -1112,9 +1121,10 @@ namespace neon
 
   void VK_RenderSystem::UpdateRenderObject(const int render_object_id, const RenderInfo &render_info)
   {
-    if (!_render_object_buffer.Contains(render_object_id)) { return; }
+    RenderObjectRef *kept = _render_object_buffer.Find(render_object_id);
+    if (kept == nullptr) { return; }
 
-    const RenderObjectRef before = _render_object_buffer[render_object_id];
+    const RenderObjectRef before = *kept;
 
     // A mesh that was built stays the one the object has: it is changed
     // with UpdateRenderObjectMesh(). A file is taken anew, which costs
@@ -1138,7 +1148,8 @@ namespace neon
 
     ReleaseObjectMaterials(before);
     if (!keeps_model) { _models.Release(before.model_id); }
-    _render_object_buffer[render_object_id] = after;
+    // nothing moves in the buffer, so the pointer is still the object's
+    *kept = after;
   }
 
   int VK_RenderSystem::AcquireObjectMaterial(
@@ -1488,18 +1499,32 @@ namespace neon
   {
     if (!_frame_open) { return; }
 
-    const RenderObjectRef &object = _render_object_buffer[render_object_id];
+    const RenderObjectRef *drawn = _render_object_buffer.Find(render_object_id);
+    if (drawn == nullptr)
+    {
+      _logger->Error("Render object {} is not drawn, there is none with that id", render_object_id);
+      return;
+    }
+    const RenderObjectRef &object = *drawn;
     const int model_id = object.model_id;
-    const auto &model = _models[model_id];
+    const VK_Model *held = _models.Get(model_id);
+    if (held == nullptr)
+    {
+      _logger->Error("Render object {} is not drawn, its model {} is gone", render_object_id, model_id);
+      return;
+    }
+    const auto &model = *held;
 
     // What is drawn into a render target cannot show that target, since
     // an image is not read while it is written. It is left out there.
-    if (_current_target != No_Render_Target)
+    if (const Target *current = _current_target != No_Render_Target ? _targets.Find(_current_target) : nullptr;
+        current != nullptr)
     {
-      const std::string &target = _targets[_current_target].target.Name();
+      const std::string &target = current->target.Name();
       for (const int material_id : object.material_ids)
       {
-        if (_materials[material_id].Shows(target)) { return; }
+        const VK_Material *material = _materials.Get(material_id);
+        if (material != nullptr && material->Shows(target)) { return; }
       }
     }
 
@@ -1570,7 +1595,10 @@ namespace neon
     std::vector<VK_ShadowCasting::Caster> casters(count);
     for (std::size_t i = 0; i < count; i++)
     {
-      auto &material = _materials[object.material_ids[i]];
+      // a material that is gone leaves its pipeline empty, and is skipped below
+      VK_Material *held_material = _materials.Get(object.material_ids[i]);
+      if (held_material == nullptr) { continue; }
+      auto &material = *held_material;
       casters[i].model_material = i < model_materials.size() ? model_materials[i] : -1;
 
       pipelines[i] = material.Pipeline(mirrored);
@@ -1611,7 +1639,9 @@ namespace neon
       if (pipelines[i] == VK_NULL_HANDLE) { continue; }
 
       const int material_id = object.material_ids[i];
-      const auto &material = _materials[material_id];
+      const VK_Material *drawn_with = _materials.Get(material_id);
+      if (drawn_with == nullptr) { continue; }
+      const auto &material = *drawn_with;
 
       // kept until the scene ends, see FlushDraws(). What is see-through is
       // drawn when the scene is finished, over what is opaque, from the
@@ -1689,9 +1719,10 @@ namespace neon
         _frame_set_binds++;
       }
 
-      const VK_Model &model = _models[batch.model_id];
-      model.Draw(commands, batch.instances, base + batch.first_instance, batch.model_material);
-      _frame_draws += model.MeshCount(batch.model_material);
+      const VK_Model *model = _models.Get(batch.model_id);
+      if (model == nullptr) { continue; }
+      model->Draw(commands, batch.instances, base + batch.first_instance, batch.model_material);
+      _frame_draws += model->MeshCount(batch.model_material);
     }
 
     // The shadow map holds what the scene of the frame that casts draws, as
@@ -1735,9 +1766,10 @@ namespace neon
             _frame_set_binds++;
           }
 
-          const VK_Model &model = _models[batch.model_id];
-          model.Draw(_shadow_commands, batch.instances, shadow_base + batch.first_instance, batch.model_material);
-          _frame_draws += model.MeshCount(batch.model_material);
+          const VK_Model *model = _models.Get(batch.model_id);
+          if (model == nullptr) { continue; }
+          model->Draw(_shadow_commands, batch.instances, shadow_base + batch.first_instance, batch.model_material);
+          _frame_draws += model->MeshCount(batch.model_material);
         }
         _shadow_map.End(_shadow_commands);
       }
@@ -1804,18 +1836,24 @@ namespace neon
     // nothing may still be drawing with what is about to be destroyed
     vkDeviceWaitIdle(_device.Device());
 
-    const RenderObjectRef object = _render_object_buffer.Remove(render_object_id);
-    ReleaseObjectMaterials(object);
-    _models.Release(object.model_id);
+    const auto object = _render_object_buffer.Remove(render_object_id);
+    if (!object)
+    {
+      _logger->Error("Render object {} cannot be destroyed, there is none with that id", render_object_id);
+      return;
+    }
+    ReleaseObjectMaterials(*object);
+    _models.Release(object->model_id);
   }
 
   void VK_RenderSystem::UpdateRenderObjectMesh(const int render_object_id, const MeshData &mesh)
   {
-    if (!_render_object_buffer.Contains(render_object_id)) { return; }
+    const RenderObjectRef *object = _render_object_buffer.Find(render_object_id);
+    if (object == nullptr) { return; }
 
     // a frame is done before the next one starts, see FinishFrame(), so
     // nothing draws with the buffers that are written here
-    _models.UpdateMesh(_render_object_buffer[render_object_id].model_id, mesh);
+    _models.UpdateMesh(object->model_id, mesh);
   }
 
   int VK_RenderSystem::CreateTexture(const int width, const int height, const std::vector<unsigned char> &pixels)
@@ -1880,7 +1918,7 @@ namespace neon
   {
     for (int id = 0; id < _targets.Capacity(); id++)
     {
-      if (_targets.Contains(id) && _targets[id].target.Name() == name) { return id; }
+      if (const Target *target = _targets.Find(id); target != nullptr && target->target.Name() == name) { return id; }
     }
     return No_Render_Target;
   }
@@ -2062,15 +2100,16 @@ namespace neon
 
   void VK_RenderSystem::DestroyRenderTarget(const int target)
   {
-    if (!_targets.Contains(target)) { return; }
+    const Target *destroyed = _targets.Find(target);
+    if (destroyed == nullptr) { return; }
     if (_current_target == target) { EndRenderTarget(); }
 
-    const std::string name = _targets[target].target.Name();
+    const std::string name = destroyed->target.Name();
     _logger->Info("Destroying the render target '{}'", name);
 
     // The frame that is being drawn may show it. It is released when that
     // frame is finished, and models that show it are told then.
-    _targets_to_release.push_back(_targets.Remove(target));
+    if (auto removed = _targets.Remove(target)) { _targets_to_release.push_back(*removed); }
     _surfaces_changed = true;
 
     std::erase(_refused_targets, name);
@@ -2078,8 +2117,9 @@ namespace neon
 
   bool VK_RenderSystem::BeginRenderTarget(const int target, const Color &clear)
   {
-    if (!_frame_open || !_targets.Contains(target) || _current_target != No_Render_Target) { return false; }
-    if (_targets[target].is_drawn) { return false; }
+    if (!_frame_open || _current_target != No_Render_Target) { return false; }
+    Target *begun = _targets.Find(target);
+    if (begun == nullptr || begun->is_drawn) { return false; }
 
     if (!_target_commands_open)
     {
@@ -2096,7 +2136,7 @@ namespace neon
     // what the frame's canvas kept is drawn there before the target's own
     if (_draws_canvas != nullptr && !_draws.Empty()) { FlushDraws(*_draws_canvas); }
 
-    Target &kept = _targets[target];
+    Target &kept = *begun;
     const VkExtent2D extent = kept.target.Extent();
 
     kept.canvas.Begin(clear);
@@ -2115,9 +2155,11 @@ namespace neon
   {
     if (_current_target == No_Render_Target) { return; }
 
-    Target &kept = _targets[_current_target];
-    kept.canvas.Leave();
-    kept.target.Finish(_target_commands);
+    if (Target *kept = _targets.Find(_current_target); kept != nullptr)
+    {
+      kept->canvas.Leave();
+      kept->target.Finish(_target_commands);
+    }
 
     _current_target = No_Render_Target;
     _has_last_scene = false;
@@ -2128,9 +2170,10 @@ namespace neon
 
   int VK_RenderSystem::GetRenderTargetTexture(const int target)
   {
-    if (!_targets.Contains(target)) { return No_Texture; }
+    Target *found = _targets.Find(target);
+    if (found == nullptr) { return No_Texture; }
 
-    Target &kept = _targets[target];
+    Target &kept = *found;
 
     if (kept.texture == No_Texture)
     {
@@ -2143,10 +2186,11 @@ namespace neon
 
   bool VK_RenderSystem::GetRenderTargetSize(const int target, int &width, int &height)
   {
-    if (!_targets.Contains(target)) { return false; }
+    const Target *kept = _targets.Find(target);
+    if (kept == nullptr) { return false; }
 
-    width = static_cast<int>(_targets[target].target.Extent().width);
-    height = static_cast<int>(_targets[target].target.Extent().height);
+    width = static_cast<int>(kept->target.Extent().width);
+    height = static_cast<int>(kept->target.Extent().height);
     return true;
   }
 } // neon

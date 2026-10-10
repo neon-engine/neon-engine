@@ -99,6 +99,8 @@ namespace neon
     _world = ecs_mini();
     if (_world == nullptr)
     {
+      // start-up: without a world there is no game to run, see the style guide
+      _logger->Critical("Failed to create the Flecs world");
       throw std::runtime_error("Failed to create the Flecs world");
     }
 
@@ -142,7 +144,8 @@ namespace neon
     const auto it = _components_by_id.find(component);
     if (it == _components_by_id.end())
     {
-      throw std::runtime_error("A component was used that the store does not know");
+      _logger->Error("A component was used that the store does not know");
+      return nullptr;
     }
     return it->second;
   }
@@ -153,7 +156,8 @@ namespace neon
     {
       if (it->second->info.size != info.size || it->second->info.alignment != info.alignment)
       {
-        throw std::runtime_error("Component '" + info.name + "' was registered before with another size");
+        _logger->Error("Component '{}' was registered before with another size", info.name);
+        return No_Component;
       }
       return it->second->id;
     }
@@ -161,7 +165,8 @@ namespace neon
     if (info.size == 0 || info.construct == nullptr || info.destruct == nullptr
         || info.copy == nullptr || info.move == nullptr)
     {
-      throw std::runtime_error("Component '" + info.name + "' is not described completely");
+      _logger->Error("Component '{}' is not described completely", info.name);
+      return No_Component;
     }
 
     auto &component = _components.emplace_back(std::make_unique<Component>());
@@ -190,7 +195,8 @@ namespace neon
     if (component->id == 0)
     {
       _components.pop_back();
-      throw std::runtime_error("Flecs did not accept component '" + info.name + "'");
+      _logger->Error("Flecs did not accept component '{}'", info.name);
+      return No_Component;
     }
 
     // every component can be turned off and on for an entity, see SetEnabled()
@@ -316,6 +322,7 @@ namespace neon
   void Flecs_EntityStore::SetComponent(const Entity entity, const ComponentId component, const void *value)
   {
     const auto *known = FindComponentById(component);
+    if (known == nullptr || !IsAlive(entity)) { return; }
     ecs_set_id(_world, entity, component, known->info.size, value);
   }
 
@@ -333,18 +340,20 @@ namespace neon
 
   void *Flecs_EntityStore::GetComponentData(const Entity entity, const ComponentId component)
   {
-    if (!IsAlive(entity) || !ecs_has_id(_world, entity, component)) { return nullptr; }
+    if (component == No_Component || !IsAlive(entity) || !ecs_has_id(_world, entity, component)) { return nullptr; }
     return ecs_get_mut_id(_world, entity, component);
   }
 
   bool Flecs_EntityStore::IsEnabled(const Entity entity, const ComponentId component)
   {
-    return IsAlive(entity) && ecs_has_id(_world, entity, component) && ecs_is_enabled_id(_world, entity, component);
+    // No_Component is on no entity, and Flecs is never asked about it
+    return component != No_Component && IsAlive(entity) && ecs_has_id(_world, entity, component)
+      && ecs_is_enabled_id(_world, entity, component);
   }
 
   void Flecs_EntityStore::SetEnabled(const Entity entity, const ComponentId component, const bool enabled)
   {
-    if (!IsAlive(entity) || !ecs_has_id(_world, entity, component)) { return; }
+    if (component == No_Component || !IsAlive(entity) || !ecs_has_id(_world, entity, component)) { return; }
     if (ecs_is_enabled_id(_world, entity, component) == enabled) { return; }
 
     ecs_enable_id(_world, entity, component, enabled);
@@ -359,7 +368,7 @@ namespace neon
 
   void Flecs_EntityStore::RemoveComponent(const Entity entity, const ComponentId component)
   {
-    if (!IsAlive(entity)) { return; }
+    if (component == No_Component || !IsAlive(entity)) { return; }
 
     // One that is turned off is turned on first, so that nothing of it is
     // left behind: a component the entity is given later is on.
@@ -374,8 +383,10 @@ namespace neon
   {
     if (info.components.empty() || info.components.size() > EntityBlock::Max_Components)
     {
-      throw std::runtime_error(
-        "A query names between 1 and " + std::to_string(EntityBlock::Max_Components) + " components");
+      const std::size_t most = EntityBlock::Max_Components;
+      const std::size_t named = info.components.size();
+      _logger->Error("A query names between 1 and {} components, this one names {}", most, named);
+      return No_Query;
     }
 
     Query query;
@@ -387,7 +398,9 @@ namespace neon
     std::size_t term = 0;
     for (const auto component : info.components)
     {
-      query.sizes.push_back(FindComponentById(component)->info.size);
+      const auto *known = FindComponentById(component);
+      if (known == nullptr) { return No_Query; }
+      query.sizes.push_back(known->info.size);
       desc.terms[term].id = component;
       term++;
     }
@@ -411,7 +424,8 @@ namespace neon
     query.query = ecs_query_init(_world, &desc);
     if (query.query == nullptr)
     {
-      throw std::runtime_error("Flecs did not accept a query");
+      _logger->Error("Flecs did not accept a query");
+      return No_Query;
     }
 
     for (const auto entity : GetChildren(No_Entity))
@@ -425,9 +439,12 @@ namespace neon
 
   void Flecs_EntityStore::Each(const QueryId query, const std::function<void(const EntityBlock &)> &visit)
   {
+    // a query that could not be made was logged when it was asked for
+    if (query == No_Query) { return; }
     if (query >= _queries.size())
     {
-      throw std::runtime_error("A query was used that the store does not know");
+      _logger->Error("A query was used that the store does not know");
+      return;
     }
 
     // by index, because a query that is created during the visit moves them

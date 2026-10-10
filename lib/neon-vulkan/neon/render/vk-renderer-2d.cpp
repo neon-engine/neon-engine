@@ -496,10 +496,11 @@ namespace neon
 
   bool VK_Renderer2D::GetTextureSize(const int texture, int &width, int &height) const
   {
-    if (!_textures.Contains(texture)) { return false; }
+    const Texture *kept = _textures.Find(texture);
+    if (kept == nullptr) { return false; }
 
-    width = static_cast<int>(_textures[texture].texture.Width());
-    height = static_cast<int>(_textures[texture].texture.Height());
+    width = static_cast<int>(kept->texture.Width());
+    height = static_cast<int>(kept->texture.Height());
     return true;
   }
 
@@ -510,13 +511,14 @@ namespace neon
     // nothing may still be drawing with what is about to be destroyed
     vkDeviceWaitIdle(_device->Device());
 
-    Texture removed = _textures.Remove(texture);
-    vkFreeDescriptorSets(_device->Device(), _descriptor_pool, 1, &removed.descriptor_set);
-    if (removed.pixelated_set != VK_NULL_HANDLE)
+    auto removed = _textures.Remove(texture);
+    if (!removed) { return; }
+    vkFreeDescriptorSets(_device->Device(), _descriptor_pool, 1, &removed->descriptor_set);
+    if (removed->pixelated_set != VK_NULL_HANDLE)
     {
-      vkFreeDescriptorSets(_device->Device(), _descriptor_pool, 1, &removed.pixelated_set);
+      vkFreeDescriptorSets(_device->Device(), _descriptor_pool, 1, &removed->pixelated_set);
     }
-    removed.texture.CleanUp();
+    removed->texture.CleanUp();
   }
 
   bool VK_Renderer2D::UpdateTexture(
@@ -527,7 +529,8 @@ namespace neon
     const int height,
     const std::vector<unsigned char> &pixels)
   {
-    if (!_textures.Contains(texture) || texture == _white_texture) { return false; }
+    Texture *kept = _textures.Find(texture);
+    if (kept == nullptr || texture == _white_texture) { return false; }
 
     if (x < 0 || y < 0 || width <= 0 || height <= 0 ||
         pixels.size() != static_cast<std::size_t>(width) * height * 4)
@@ -535,7 +538,7 @@ namespace neon
       return false;
     }
 
-    return _textures[texture].texture.Update(
+    return kept->texture.Update(
       pixels.data(),
       static_cast<uint32_t>(x),
       static_cast<uint32_t>(y),
@@ -599,7 +602,12 @@ namespace neon
 
   VkDescriptorSet VK_Renderer2D::SetOf(const int texture, const TextureFilter2D filter)
   {
-    Texture &kept = _textures[texture];
+    // the caller checked the id; a texture that is gone all the same is
+    // drawn with the plain white one
+    Texture *found = _textures.Find(texture);
+    if (found == nullptr) { found = _textures.Find(_white_texture); }
+    if (found == nullptr) { return VK_NULL_HANDLE; }
+    Texture &kept = *found;
     if (filter == TextureFilter2D::Smooth) { return kept.descriptor_set; }
 
     if (kept.pixelated_set == VK_NULL_HANDLE)
@@ -626,9 +634,10 @@ namespace neon
   {
     for (int id = 0; id < _textures.Capacity(); id++)
     {
-      if (!_textures.Contains(id)) { continue; }
+      const Texture *found = _textures.Find(id);
+      if (found == nullptr) { continue; }
 
-      const Texture &kept = _textures[id];
+      const Texture &kept = *found;
       if (kept.descriptor_set == VK_NULL_HANDLE || !VK_Samplers::ReadsFromTheSide(kept.texture.Sampling())) { continue; }
 
       WriteSet(kept.descriptor_set, kept.texture.View(), kept.texture.Sampling());
@@ -995,7 +1004,7 @@ namespace neon
 
     for (int id = 0; id < _textures.Capacity(); id++)
     {
-      if (_textures.Contains(id)) { _textures.Remove(id).texture.CleanUp(); }
+      if (auto removed = _textures.Remove(id)) { removed->texture.CleanUp(); }
     }
     _white_texture = No_Texture;
 

@@ -80,7 +80,8 @@ namespace neon
 
   void VK_ModelCache::UpdateMesh(const int id, const MeshData &mesh)
   {
-    if (!_models.Contains(id)) { return; }
+    VK_Model *model = _models.Find(id);
+    if (model == nullptr) { return; }
 
     // what others draw as well stays as it is
     if (_shared.Contains(id))
@@ -89,12 +90,12 @@ namespace neon
       return;
     }
 
-    _models[id].UpdateMesh(mesh);
+    model->UpdateMesh(mesh);
   }
 
   void VK_ModelCache::Free(const int id)
   {
-    _models.Remove(id).CleanUp();
+    if (auto removed = _models.Remove(id)) { removed->CleanUp(); }
   }
 
   void VK_ModelCache::CleanUp()

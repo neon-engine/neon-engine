@@ -103,7 +103,7 @@ namespace neon
         const int id = shared->second.id;
         _keys.erase(id);
         shared = _shared.erase(shared);
-        clean_up(_materials.Remove(id));
+        if (auto removed = _materials.Remove(id)) { clean_up(*removed); }
         _unused--;
         freed++;
       }
@@ -120,7 +120,7 @@ namespace neon
     {
       for (int id = 0; id < _materials.Capacity(); id++)
       {
-        if (_materials.Contains(id)) { clean_up(_materials.Remove(id)); }
+        if (auto removed = _materials.Remove(id)) { clean_up(*removed); }
       }
       _shared.clear();
       _keys.clear();
@@ -129,9 +129,10 @@ namespace neon
 
     [[nodiscard]] bool Contains(const int id) const { return _materials.Contains(id); }
 
-    [[nodiscard]] VK_Material &operator[](const int id) { return _materials[id]; }
+    /// The material of an id, or nullptr when there is none.
+    [[nodiscard]] VK_Material *Get(const int id) { return _materials.Find(id); }
 
-    [[nodiscard]] const VK_Material &operator[](const int id) const { return _materials[id]; }
+    [[nodiscard]] const VK_Material *Get(const int id) const { return _materials.Find(id); }
 
     [[nodiscard]] int Capacity() const { return _materials.Capacity(); }
 

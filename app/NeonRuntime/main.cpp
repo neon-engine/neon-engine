@@ -1,4 +1,5 @@
 #include <cstdlib>
+#include <exception>
 #include <iostream>
 #include <memory>
 #include <optional>
@@ -124,7 +125,16 @@ int main(const int argc, char *argv[])
   // everything that loads files depends on the file system, so it comes up
   // before the other systems are created
   neon::SDL2_FileSystem file_system(settings_config, logging_system.CreateLogger("SDL2_FileSystem"));
-  file_system.Initialize();
+  try
+  {
+    file_system.Initialize();
+  } catch (const std::exception &e)
+  {
+    // without the folder of the executable nothing else is found, and the
+    // log file has no place yet
+    std::cerr << e.what() << "\n";
+    return EXIT_FAILURE;
+  }
 
   neon::RYML_DocumentFormat yaml;
 

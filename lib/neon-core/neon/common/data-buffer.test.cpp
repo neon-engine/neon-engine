@@ -1,6 +1,5 @@
 #include "data-buffer.hpp"
 
-#include <stdexcept>
 #include <string>
 
 #include <gtest/gtest.h>
@@ -42,8 +41,8 @@ namespace
     const int first = buffer.Add("first");
     const int second = buffer.Add("second");
 
-    EXPECT_EQ(buffer[first], "first");
-    EXPECT_EQ(buffer[second], "second");
+    EXPECT_EQ(*buffer.Find(first), "first");
+    EXPECT_EQ(*buffer.Find(second), "second");
   }
 
   TEST(DataBuffer, StoresACopy)
@@ -54,7 +53,7 @@ namespace
     const int id = buffer.Add(original);
     original = "changed";
 
-    EXPECT_EQ(buffer[id], "original");
+    EXPECT_EQ(*buffer.Find(id), "original");
   }
 
   TEST(DataBuffer, LetsAnElementBeChangedInPlace)
@@ -62,9 +61,9 @@ namespace
     DataBuffer<int> buffer(4);
     const int id = buffer.Add(1);
 
-    buffer[id] = 2;
+    *buffer.Find(id) = 2;
 
-    EXPECT_EQ(buffer[id], 2);
+    EXPECT_EQ(*buffer.Find(id), 2);
   }
 
   TEST(DataBuffer, ReadsThroughAConstBuffer)
@@ -74,8 +73,8 @@ namespace
 
     const DataBuffer<int> &read_only = buffer;
 
-    EXPECT_EQ(read_only[id], 7);
-    EXPECT_THROW((void) read_only[id + 1], std::out_of_range);
+    EXPECT_EQ(*read_only.Find(id), 7);
+    EXPECT_EQ(read_only.Find(id + 1), nullptr);
   }
 
   TEST(DataBuffer, RefusesAnElementWhenEverySlotIsTaken)
@@ -109,7 +108,7 @@ namespace
     DataBuffer<std::string> buffer(4);
     const int id = buffer.Add("element");
 
-    EXPECT_EQ(buffer.Remove(id), "element");
+    EXPECT_EQ(buffer.Remove(id), std::optional<std::string>("element"));
     EXPECT_EQ(buffer.Size(), 0);
     EXPECT_FALSE(buffer.Contains(id));
   }
@@ -123,8 +122,8 @@ namespace
 
     buffer.Remove(second);
 
-    EXPECT_EQ(buffer[first], 10);
-    EXPECT_EQ(buffer[third], 30);
+    EXPECT_EQ(*buffer.Find(first), 10);
+    EXPECT_EQ(*buffer.Find(third), 30);
     EXPECT_EQ(buffer.Size(), 2);
   }
 
@@ -138,7 +137,7 @@ namespace
     const int reused = buffer.Add(30);
 
     EXPECT_EQ(reused, first);
-    EXPECT_EQ(buffer[reused], 30);
+    EXPECT_EQ(*buffer.Find(reused), 30);
     EXPECT_EQ(buffer.Size(), 2);
   }
 
@@ -153,48 +152,36 @@ namespace
     EXPECT_EQ(buffer.Add(40), -1);
   }
 
-  TEST(DataBuffer, ThrowsWhenTheSameIdIsRemovedTwice)
+  TEST(DataBuffer, RemovesNothingWhenTheSameIdIsRemovedTwice)
   {
     DataBuffer<int> buffer(4);
     const int id = buffer.Add(10);
     buffer.Remove(id);
 
-    EXPECT_THROW(buffer.Remove(id), std::out_of_range);
+    EXPECT_EQ(buffer.Remove(id), std::nullopt);
+    EXPECT_EQ(buffer.Size(), 0);
   }
 
-  TEST(DataBuffer, ThrowsWhenAnIdThatHoldsNothingIsRemoved)
+  TEST(DataBuffer, RemovesNothingForAnIdThatHoldsNothing)
   {
     DataBuffer<int> buffer(4);
     buffer.Add(10);
 
-    EXPECT_THROW(buffer.Remove(-1), std::out_of_range);
-    EXPECT_THROW(buffer.Remove(1), std::out_of_range);
-    EXPECT_THROW(buffer.Remove(4), std::out_of_range);
+    EXPECT_EQ(buffer.Remove(-1), std::nullopt);
+    EXPECT_EQ(buffer.Remove(1), std::nullopt);
+    EXPECT_EQ(buffer.Remove(4), std::nullopt);
+    EXPECT_EQ(buffer.Size(), 1) << "what is there stays";
   }
 
-  TEST(DataBuffer, ThrowsWhenAnIdThatHoldsNothingIsRead)
+  TEST(DataBuffer, FindsNothingForAnIdThatHoldsNothing)
   {
     DataBuffer<int> buffer(4);
     const int id = buffer.Add(10);
     buffer.Remove(id);
 
-    EXPECT_THROW((void) buffer[id], std::out_of_range);
-    EXPECT_THROW((void) buffer[-1], std::out_of_range);
-    EXPECT_THROW((void) buffer[3], std::out_of_range);
-  }
-
-  TEST(DataBuffer, NamesTheIdInWhatItThrows)
-  {
-    DataBuffer<int> buffer(4);
-
-    try
-    {
-      (void) buffer[3];
-      FAIL() << "nothing was thrown";
-    } catch (const std::out_of_range &error)
-    {
-      EXPECT_STREQ(error.what(), "DataBuffer holds no element with id 3");
-    }
+    EXPECT_EQ(buffer.Find(id), nullptr);
+    EXPECT_EQ(buffer.Find(-1), nullptr);
+    EXPECT_EQ(buffer.Find(3), nullptr);
   }
 
   TEST(DataBuffer, ContainsOnlyTheIdsThatHoldAnElement)
@@ -215,12 +202,12 @@ namespace
   {
     DataBuffer<int> buffer(64);
     const int first = buffer.Add(10);
-    const int *address = &buffer[first];
+    const int *address = buffer.Find(first);
 
     for (int i = 0; i < 63; i++) { buffer.Add(i); }
 
-    EXPECT_EQ(&buffer[first], address);
-    EXPECT_EQ(buffer[first], 10);
+    EXPECT_EQ(buffer.Find(first), address);
+    EXPECT_EQ(*buffer.Find(first), 10);
   }
 
   TEST(DataBuffer, StoresATypeWithoutADefaultConstructor)
@@ -230,6 +217,6 @@ namespace
     buffer.Remove(first);
     const int second = buffer.Add(Named("second"));
 
-    EXPECT_EQ(buffer[second].name, "second");
+    EXPECT_EQ(buffer.Find(second)->name, "second");
   }
 }

@@ -599,7 +599,8 @@ namespace neon
     /// known. A game adds its own before it loads a file that uses them.
     [[nodiscard]] UiElementTypes &GetElementTypes();
 
-    /// Throws when the file that is shown from the start cannot be used.
+    /// A file that is shown from the start and cannot be used is said in
+    /// the log, and nothing is shown. Nothing is thrown (#179).
     void Initialize() override;
 
     void Update() override;

@@ -92,6 +92,13 @@ elseif (CASE STREQUAL "scene-that-is-missing")
   # many frames are asked for, and none is drawn
   run_headless(--frames 300 --output-dir shots --screenshot output://frame.png
           --scene assets://scenes/missing.scene.yml)
+elseif (CASE STREQUAL "scene-with-a-broken-entity")
+  # a component that does not exist and a value of the wrong kind
+  run_headless(--frames 3 --output-dir shots --screenshot output://frame.png
+          --scene assets://scenes/broken-entity.scene.yml)
+elseif (CASE STREQUAL "user-interface-with-a-mistake")
+  # an element of a kind that does not exist
+  run_headless(--frames 3 --output-dir shots --screenshot output://frame.png --ui assets://ui/broken.ui.yml)
 elseif (CASE STREQUAL "pause-menu")
   # pause is pressed, the menu is closed with cancel, and pressed again
   set(SCRIPT "5: hold pause\n20: hold ui-cancel\n30: hold pause")
@@ -381,6 +388,23 @@ elseif (CASE STREQUAL "user-interface-that-is-missing")
   expect_exit_code(1)
   expect_output("assets://ui/missing.ui.yml: the file cannot be read")
   expect_output("The user interface assets://ui/missing.ui.yml cannot be used, nothing is shown from the start")
+  expect_image("shots/frame.png")
+elseif (CASE STREQUAL "scene-with-a-broken-entity")
+  # the game goes on with what could be read, says what was wrong, and
+  # fails all the same, so that a script learns of it (#179)
+  expect_exit_code(1)
+  expect_output("component 'Teleporter' of entity 'ghost' is not known")
+  expect_output("'type' of Light of entity 'lamp' is a number, where one of these was expected: direction, point, spot")
+  expect_output("has 2 problems, the world holds what could be read")
+  expect_output("The world runs with what could be read of its scene")
+  expect_output("Rendered 3 frames, stopping")
+  expect_image("shots/frame.png")
+elseif (CASE STREQUAL "user-interface-with-a-mistake")
+  # the file is not shown, the run goes on and renders, says why, and fails
+  expect_exit_code(1)
+  expect_output("assets://ui/broken.ui.yml:")
+  expect_output("The user interface assets://ui/broken.ui.yml has 1 problem and is not shown")
+  expect_output("Rendered 3 frames, stopping")
   expect_image("shots/frame.png")
 elseif (CASE STREQUAL "scene-that-is-missing")
   # the run stops at once rather than show nothing, says why, and fails

@@ -1,0 +1,59 @@
+# A scene with mistakes in it, for the test that a mistake never ends the
+# game: the ghost carries a component that does not exist, and the lamp
+# gives a number where a kind of light was expected. Both are said in the
+# log, the ball and the floor are drawn all the same, and the run goes on.
+#
+#   NeonRuntime --scene assets://scenes/broken-entity.scene.yml
+
+scene: broken-entity
+version: 1
+
+entities:
+  - name: ball
+    components:
+      Transform: Default
+      Geometry:
+        shape: sphere
+        sides: 12
+      Renderable:
+        shader: engine://shaders/basic-lit
+        material:
+          shininess: 32
+          color: [1, 0.5, 0.31]
+
+  - name: floor
+    components:
+      Transform:
+        position: [0, -0.55, 0]
+        scale: [100, 0.1, 100]
+      Geometry:
+        shape: box
+      Renderable:
+        shader: engine://shaders/basic-lit
+        material:
+          shininess: 32
+          color: [0.5, 0.5, 0.5]
+
+  - name: ghost
+    components:
+      Transform: Default
+      Teleporter: Default
+
+  - name: lamp
+    components:
+      Transform:
+        position: [1.2, 1, -2]
+      Light:
+        type: 7
+        direction: [-0.2, -1, -0.3]
+
+  - name: player
+    components:
+      Transform:
+        position: [0, 0, 2]
+    children:
+      - name: camera
+        components:
+          Transform: Default
+          Camera:
+            fov: 60

@@ -2,7 +2,6 @@
 #define ENTITY_STORE_HPP
 
 #include <functional>
-#include <stdexcept>
 #include <string>
 #include <typeindex>
 #include <unordered_map>
@@ -42,7 +41,9 @@ namespace neon
     virtual void CleanUp() = 0;
 
     /// Makes a kind of component known. Returns the same id when the name is
-    /// registered again.
+    /// registered again, and No_Component, with the reason logged, when the
+    /// name is registered again with another size or the description is
+    /// not complete.
     virtual ComponentId RegisterComponent(const ComponentInfo &info) = 0;
 
     /// The component registered under this name, or No_Component.
@@ -114,10 +115,15 @@ namespace neon
     /// holds while it is off, as a document and a script do.
     virtual void *GetComponentData(Entity entity, ComponentId component) = 0;
 
-    /// Prepares a query. Create it once and keep the id.
+    /// Prepares a query. Create it once and keep the id. Returns No_Query,
+    /// with the reason logged, when a component is not known or the query
+    /// names none or too many.
     virtual QueryId CreateQuery(const QueryInfo &info) = 0;
 
     /// Hands over every entity that matches the query, block by block.
+    /// Nothing for No_Query, whose reason was logged when it was asked for,
+    /// and nothing but an error in the log for a query the store does not
+    /// know.
     virtual void Each(QueryId query, const std::function<void(const EntityBlock &)> &visit) = 0;
 
     Entity CreateEntity(const std::string &name)
@@ -153,16 +159,15 @@ namespace neon
       return id;
     }
 
-    /// The id a C++ type was registered under.
+    /// The id a C++ type was registered under, or No_Component for a type
+    /// that was never registered. Such a component is on no entity: Get()
+    /// gives nullptr, Has() false, and Remove() does nothing, while Set()
+    /// and Query() are refused by the store with an error in the log.
     template<typename T>
     [[nodiscard]] ComponentId IdOf() const
     {
       const auto it = _component_ids.find(std::type_index(typeid(T)));
-      if (it == _component_ids.end())
-      {
-        throw std::runtime_error("A component was used before it was registered");
-      }
-      return it->second;
+      return it == _component_ids.end() ? No_Component : it->second;
     }
 
     template<typename T>

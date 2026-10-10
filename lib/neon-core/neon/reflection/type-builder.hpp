@@ -5,7 +5,6 @@
 #include <cstdint>
 #include <functional>
 #include <optional>
-#include <stdexcept>
 #include <string>
 #include <type_traits>
 #include <utility>
@@ -33,6 +32,11 @@ namespace neon
   /// itself stays out of a scene file.
   ///
   /// What follows a field, such as Describe() above, is about that field.
+  ///
+  /// A mistake in a description, such as a field that is described twice,
+  /// is kept as a problem and left out of the type, and Build() hands the
+  /// problems over in TypeInfo::problems. Nothing is thrown, since a type
+  /// may be described while a game runs (#179).
   template<typename T>
   class TypeBuilder
   {
@@ -42,6 +46,21 @@ namespace neon
     std::vector<std::vector<FieldInfo> *> _open;
 
     FieldInfo *_last = nullptr;
+
+    // what is wrong with the description, in the order it was found
+    std::vector<std::string> _problems;
+
+    // what a call that was refused writes into, so that what follows it
+    // lands nowhere
+    FieldInfo _discarded;
+
+    FieldInfo &Refuse(const std::string &problem)
+    {
+      _problems.push_back(problem);
+      _discarded = FieldInfo{};
+      _last = &_discarded;
+      return _discarded;
+    }
 
     template<typename V>
     static FieldKind KindOf()
@@ -88,7 +107,7 @@ namespace neon
       {
         if (field.name == name)
         {
-          throw std::logic_error("Field '" + name + "' is described twice");
+          return Refuse("Field '" + name + "' is described twice");
         }
       }
 
@@ -103,7 +122,7 @@ namespace neon
     {
       if (_last == nullptr)
       {
-        throw std::logic_error("There is no field yet that this could be about");
+        return Refuse("There is no field yet that this could be about");
       }
       return *_last;
     }
@@ -332,7 +351,11 @@ namespace neon
       const std::string &field,
       const std::function<std::string(const T &object, const std::string &where)> &check)
     {
-      if (_open.size() != 1) { throw std::logic_error("A rule is about the whole type, not about a group"); }
+      if (_open.size() != 1)
+      {
+        (void) Refuse("A rule is about the whole type, not about a group");
+        return *this;
+      }
 
       _type.rules.push_back({field, [check](const void *object, const std::string &where)
       {
@@ -409,15 +432,16 @@ namespace neon
 
       if (found == nullptr)
       {
-        throw std::logic_error(
-          "'" + field.name + "' depends on '" + choice + "', which is no choice described before it");
+        (void) Refuse("'" + field.name + "' depends on '" + choice + "', which is no choice described before it");
+        return *this;
       }
 
       for (const auto &word : words)
       {
         if (std::ranges::find(found->choices, word) == found->choices.end())
         {
-          throw std::logic_error("'" + word + "' is not a word of the choice '" + choice + "'");
+          (void) Refuse("'" + word + "' is not a word of the choice '" + choice + "'");
+          return *this;
         }
       }
 
@@ -440,13 +464,17 @@ namespace neon
       return *this;
     }
 
+    /// The type as it was described, with what was wrong with the
+    /// description in TypeInfo::problems.
     [[nodiscard]] TypeInfo Build() const
     {
-      if (_type.name.empty())
+      TypeInfo type = _type;
+      type.problems = _problems;
+      if (type.name.empty())
       {
-        throw std::logic_error("A description has to name its type, with Named()");
+        type.problems.emplace_back("A description has to name its type, with Named()");
       }
-      return _type;
+      return type;
     }
   };
 } // neon

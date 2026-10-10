@@ -212,22 +212,40 @@ Google asks for a public virtual destructor instead.
 ### Errors
 
 **While a game runs, the engine never throws.** A problem is a result - a
-`bool`, a struct, a list of messages - that the caller handles where it
-happens, and the game goes on: a scene with a mistake is loaded without what
-was wrong, a user interface that cannot be made leaves its entity showing
-nothing, an asset that cannot be read is not drawn. Every such problem is
-logged as an error, and the runtime turns the count of errors into its exit
-code, so that a script or a test learns that something went wrong even though
-the run went on (`LoggingSystem::CountErrors`, `Runtime::HasFailed`). A file
-never ends a game (#179).
+`bool`, a `nullptr`, an id that stands for nothing such as `No_Component`
+or `No_Query`, a struct, a list of messages - that the caller handles where
+it happens, and the game goes on: a scene with a mistake is loaded without
+what was wrong, a user interface that cannot be made leaves its entity
+showing nothing, an asset that cannot be read is not drawn, a component or
+a query the store does not know is logged and ignored, a description of a
+type with a mistake is logged and the type is not registered. Every such
+problem is logged as an error, and the runtime turns the count of errors
+into its exit code, so that a script or a test learns that something went
+wrong even though the run went on (`LoggingSystem::CountErrors`,
+`Runtime::HasFailed`). A file never ends a game, and neither does a script
+or an extension that uses the engine wrongly (#179).
+
+Registering things counts as run time: scripts and extensions register
+components, queries, and types while the game runs, so what registers
+refuses with a result and a logged error, never with a throw.
+
+**Start-up is the one place a throw is allowed**, and only for what keeps
+the engine from coming up at all: no window, no graphics device, no Vulkan
+library, no folder for the executable, no world. `Initialize()` of such a
+system logs the reason with `Critical` and throws `std::runtime_error`.
+`main.cpp` of each application catches around every `Initialize()` it calls
+and around `Run()`, logs what was thrown, cleans up, and exits with
+`EXIT_FAILURE`: never a black screen and never an uncaught exception.
+Nothing but `main.cpp` catches, with one exception: a callback of a
+third-party library that may not return, such as the error callback of
+rapidyaml, throws, and the function of the engine that called the library
+catches it before it returns. The throw never leaves the file.
 
 | Situation | What the code does | Google |
 |---|---|---|
-| Something that can fail while the game runs: reading a file, a recipe with a mistake, a user interface that cannot be made | Logs the reason as an error, returns `false` or a result, and goes on with what it has | Same in spirit |
-| A system cannot start, in `Initialize()`: no window, no graphics device, no folder for the executable | Logs with `Critical`, then throws `std::runtime_error`, which `main.cpp` catches. Whether these become results too is open (#179) | Differs, no exceptions |
-| A programming mistake, such as an id that holds nothing or a component that was never registered | Throws, `std::out_of_range` in `DataBuffer`, `std::runtime_error` in the store. To be decided with scripting, which makes these reachable at run time (#179) | Differs |
-
-`main.cpp` is the only place that catches.
+| Something that can fail while the game runs: reading a file, a recipe with a mistake, a user interface that cannot be made, a sound card that cannot be opened | Logs the reason as an error, returns `false` or a result, and goes on with what it has | Same in spirit |
+| A programming mistake that a script or an extension can make at run time: a component that was never registered, a query the store does not know, a field described twice, an id that holds nothing | Logs the reason as an error, returns `nullptr`, `No_Component`, `No_Query`, `std::nullopt`, or a list of problems, and does nothing else | Differs, no exceptions |
+| A system cannot start, in `Initialize()`: no window, no graphics device, no folder for the executable | Logs with `Critical`, then throws `std::runtime_error`, which `main.cpp` catches | Differs, no exceptions |
 
 ### Logging
 

@@ -265,13 +265,14 @@ namespace neon
     for (const auto &draw : _see_through)
     {
       // a model that was destroyed since is left out
-      if (!models.Contains(draw.model_id)) { continue; }
+      const VK_Model *model = models.Get(draw.model_id);
+      if (model == nullptr) { continue; }
 
       vkCmdBindPipeline(_commands, VK_PIPELINE_BIND_POINT_GRAPHICS, draw.pipeline);
       vkCmdBindDescriptorSets(
         _commands, VK_PIPELINE_BIND_POINT_GRAPHICS, _shared->pipeline_layout, 0, 1, &draw.set, 1, &draw.scene_offset);
 
-      models[draw.model_id].Draw(_commands, 1, draw.object_index, draw.material);
+      model->Draw(_commands, 1, draw.object_index, draw.material);
     }
 
     _see_through.clear();

@@ -23,6 +23,11 @@ namespace neon
   /// Stands for a component that was never registered.
   // ReSharper disable once CppInconsistentNaming
   inline constexpr ComponentId No_Component = 0;
+
+  /// Stands for a query that could not be made. The reason was logged when
+  /// it was asked for, and EntityStore::Each() hands over nothing for it.
+  // ReSharper disable once CppInconsistentNaming
+  inline constexpr QueryId No_Query = static_cast<QueryId>(-1);
 } // neon
 
 #endif //ENTITY_HPP

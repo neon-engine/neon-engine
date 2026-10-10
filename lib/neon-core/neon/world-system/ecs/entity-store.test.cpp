@@ -1,6 +1,5 @@
 #include "entity-store.hpp"
 
-#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -19,7 +18,9 @@ namespace
   using neon::ComponentInfo;
   using neon::Entity;
   using neon::EntityBlock;
+  using neon::No_Component;
   using neon::No_Entity;
+  using neon::No_Query;
   using neon::QueryInfo;
   using neon::QueryOrder;
   using neon::testing::MockEntityStore;
@@ -122,29 +123,27 @@ namespace
     EXPECT_EQ(_store.IdOf<Velocity>(), velocity_id);
   }
 
-  TEST_F(EntityStoreTest, RefusesATypeThatWasNotRegistered)
+  TEST_F(EntityStoreTest, HandsNoComponentForATypeThatWasNotRegistered)
   {
     RegisterPositionAndVelocity();
     const Name name;
 
-    EXPECT_THROW((void) _store.IdOf<Name>(), std::runtime_error);
-    EXPECT_THROW(_store.Set(player, name), std::runtime_error);
-    EXPECT_THROW((void) _store.Get<Name>(player), std::runtime_error);
-    EXPECT_THROW((void) _store.Has<Name>(player), std::runtime_error);
-    EXPECT_THROW(_store.Remove<Name>(player), std::runtime_error);
-    EXPECT_THROW((void) (_store.Query<Position, Name>()), std::runtime_error);
-  }
+    EXPECT_EQ(_store.IdOf<Name>(), No_Component);
 
-  TEST_F(EntityStoreTest, SaysThatTheComponentWasNotRegistered)
-  {
-    try
-    {
-      (void) _store.IdOf<Name>();
-      FAIL() << "nothing was thrown";
-    } catch (const std::runtime_error &error)
-    {
-      EXPECT_STREQ(error.what(), "A component was used before it was registered");
-    }
+    // the backend is handed No_Component and decides what it does with it:
+    // it refuses with an error in the log, and nothing is thrown
+    EXPECT_CALL(_store, SetComponent(player, No_Component, &name));
+    EXPECT_CALL(_store, GetComponent(player, No_Component)).WillOnce(Return(nullptr));
+    EXPECT_CALL(_store, HasComponent(player, No_Component)).WillOnce(Return(false));
+    EXPECT_CALL(_store, RemoveComponent(player, No_Component));
+    EXPECT_CALL(_store, CreateQuery(Field(&QueryInfo::components, ElementsAre(position_id, No_Component))))
+      .WillOnce(Return(No_Query));
+
+    _store.Set(player, name);
+    EXPECT_EQ(_store.Get<Name>(player), nullptr);
+    EXPECT_FALSE(_store.Has<Name>(player));
+    _store.Remove<Name>(player);
+    EXPECT_EQ((_store.Query<Position, Name>()), No_Query);
   }
 
   TEST_F(EntityStoreTest, TakesTheIdOfTheLastRegistrationOfAType)

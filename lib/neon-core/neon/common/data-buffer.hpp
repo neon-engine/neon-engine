@@ -1,8 +1,7 @@
 #ifndef DATA_BUFFER_HPP
 #define DATA_BUFFER_HPP
 
-#include <stdexcept>
-#include <string>
+#include <optional>
 #include <vector>
 
 namespace neon
@@ -12,10 +11,14 @@ namespace neon
   /// slot of a removed element is given out again.
   ///
   /// Elements sit next to each other in memory, so going through many of them
-  /// is fast. Nothing moves once stored: a reference from operator[] stays
-  /// valid until its element is removed.
+  /// is fast. Nothing moves once stored: a pointer from Find() stays valid
+  /// until its element is removed.
   ///
   /// T has to be copyable. It does not need a default constructor.
+  ///
+  /// An id that holds nothing, such as one that was removed, gives nothing:
+  /// Find() nullptr and Remove() an empty optional. Nothing is thrown, the
+  /// caller decides what it does without the element (#179).
   template<typename T>
   class DataBuffer
   {
@@ -23,14 +26,6 @@ namespace neon
     std::vector<T> _elements;
     std::vector<bool> _occupied;
     std::vector<int> _free_ids;
-
-    void RequireOccupied(const int id) const
-    {
-      if (!Contains(id))
-      {
-        throw std::out_of_range("DataBuffer holds no element with id " + std::to_string(id));
-      }
-    }
 
   public:
     explicit DataBuffer(const int max_capacity)
@@ -63,14 +58,14 @@ namespace neon
       return static_cast<int>(_elements.size()) - 1;
     }
 
-    /// Takes the element out and returns it. Its id can be given out again
-    /// afterwards. Throws std::out_of_range if the id holds nothing, which
-    /// includes removing the same id twice.
-    T Remove(const int id)
+    /// Takes the element out and returns it, or nothing when the id holds
+    /// nothing, which includes removing the same id twice. Its id can be
+    /// given out again afterwards.
+    std::optional<T> Remove(const int id)
     {
-      RequireOccupied(id);
+      if (!Contains(id)) { return std::nullopt; }
 
-      T element = _elements[id];
+      std::optional<T> element(_elements[id]);
       _occupied[id] = false;
       _free_ids.push_back(id);
       return element;
@@ -94,18 +89,16 @@ namespace neon
       return _capacity;
     }
 
-    /// Throws std::out_of_range if the id holds nothing.
-    T &operator[](const int id)
+    /// The element of an id, or nullptr when the id holds nothing. The
+    /// pointer stays valid until the element is removed.
+    [[nodiscard]] T *Find(const int id)
     {
-      RequireOccupied(id);
-      return _elements[id];
+      return Contains(id) ? &_elements[static_cast<std::size_t>(id)] : nullptr;
     }
 
-    /// Throws std::out_of_range if the id holds nothing.
-    const T &operator[](const int id) const
+    [[nodiscard]] const T *Find(const int id) const
     {
-      RequireOccupied(id);
-      return _elements[id];
+      return Contains(id) ? &_elements[static_cast<std::size_t>(id)] : nullptr;
     }
   };
 } // neon

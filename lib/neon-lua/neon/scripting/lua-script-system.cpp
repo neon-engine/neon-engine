@@ -356,6 +356,11 @@ namespace neon
     component.file = path;
     component.type = layout->GetTypeInfo();
     component.id = store.RegisterComponent(layout->GetComponentInfo());
+    if (component.id == No_Component)
+    {
+      _host.logger->Error("The script {} is refused: the store did not take its component {}", path, declaration.name);
+      return false;
+    }
     formats.Add(layout->GetComponentFormat());
     component.layout = std::move(layout);
 

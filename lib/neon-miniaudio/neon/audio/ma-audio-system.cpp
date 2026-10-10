@@ -4,7 +4,6 @@
 #include <atomic>
 #include <cmath>
 #include <map>
-#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -175,8 +174,10 @@ namespace neon
       result = ma_engine_init(&config, &_state->engine);
       if (result != MA_SUCCESS)
       {
-        throw std::runtime_error(
-          std::string("Failed to initialize miniaudio: ") + ma_result_description(result));
+        // the game runs without sound, and every sound it creates is said
+        const std::string reason = ma_result_description(result);
+        _logger->Error("Failed to initialize miniaudio, the game runs without sound: {}", reason);
+        return;
       }
 
       _logger->Info("Audio is mixed without a sound card");

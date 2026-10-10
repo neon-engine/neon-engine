@@ -171,6 +171,17 @@ A rule is also how a limit that depends on a choice is said. The radii of a
 tapered cylinder may be 0, and those of a tapered capsule may not, so the
 field says `AtLeast(0)` and a rule says the rest.
 
+### A description with a mistake
+
+A description can be wrong: a field described twice, `Required()` before any
+field, a condition on a choice that was not described, a rule inside a group,
+no `Named()`. Nothing is thrown for it, since a type may be described while
+a game runs (#179). The builder keeps what is wrong as a problem and leaves it
+out of the type, and `Build()` hands the problems over in
+`TypeInfo::problems`. A format made from such a type reads nothing: a scene
+that writes the component is told the problems, and the entity goes without
+it.
+
 ### What is left out
 
 A member that is not described is not seen from outside. That is how what the

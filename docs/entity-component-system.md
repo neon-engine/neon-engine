@@ -240,6 +240,18 @@ or a renderer. The decisions below follow from that.
 | A component can ask to be told when it is removed | `Renderable` refers to what the renderer holds. That is released when the entity is destroyed, without a system having to watch for it |
 | A name with a dot is one name | Paths are written with forward slashes, as everywhere else in the engine: `player/camera` |
 
+### What is refused
+
+The store never throws, see the [style guide](style-guide.md#errors): a
+mistake is said in the log and the game goes on (#179).
+
+| Mistake | What happens |
+|---|---|
+| A name registered again with another size, or a component not described completely | `RegisterComponent` returns `No_Component`. A script or an extension that declared it is refused with the reason |
+| `IdOf<T>()` for a type that was never registered | `No_Component`, which is on no entity: `Get<T>` gives `nullptr`, `Has<T>` false, `Remove<T>` does nothing, `Set<T>` is refused with an error in the log |
+| A component the store does not know, set on an entity | Nothing is set, and the log says so |
+| A query that names no component, more than `EntityBlock::Max_Components`, or a component the store does not know | `CreateQuery` returns `No_Query`, with the reason logged. `Each` hands over nothing for `No_Query`, and says so for a query it does not know |
+
 ### Limits
 
 There is no limit on how many kinds of component a store knows, or on how

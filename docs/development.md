@@ -948,7 +948,7 @@ what it left behind.
 |---|---|---|---|
 | neon-core | `command-line/command-line` | 94 | Every way to write an option, every message of the parser, defaults, whole numbers, numbers, the help text |
 | neon-core | `command-line/runtime-options` | 67 | Every option and every message of `Apply`. The help text is compared with the one in this guide |
-| neon-core | `common/data-buffer` | 20 | Ids, capacity, reuse of slots, what is thrown |
+| neon-core | `common/data-buffer` | 20 | Ids, capacity, reuse of slots, what an id that holds nothing gives |
 | neon-core | `common/rotation` | 21 | The quaternion of known angles, the order of the turns, and the angles of a quaternion |
 | neon-core | `common/transform` | 11 | `Forward` and `Right`. 1 disabled |
 | neon-core | `common/util` | 12 | All four functions |

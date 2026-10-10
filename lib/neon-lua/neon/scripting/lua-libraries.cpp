@@ -105,7 +105,9 @@ namespace neon
       auto found = host.queries.find(key);
       if (found == host.queries.end())
       {
-        found = host.queries.emplace(key, store.CreateQuery(QueryInfo{.components = ids})).first;
+        const auto query = store.CreateQuery(QueryInfo{.components = ids});
+        if (query == neon::No_Query) { return luaL_error(lua, "The query over %s could not be made, see the log", key.c_str()); }
+        found = host.queries.emplace(key, query).first;
       }
 
       lua_newtable(lua);
