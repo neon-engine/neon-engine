@@ -433,7 +433,9 @@ of what the engine does, to walk through from the first person: a corridor
 with twelve halls, each with a sign that says what it shows. Nothing in it
 comes from a model file or an image. Every piece is a `Geometry` in a plain
 color, see [geometry.md](geometry.md), until models of our own take their
-places.
+places. A quiet piano piece and a bed of wind and birds play throughout, with
+birds by the entrance and a stream by the far wall: public domain recordings,
+named in [CREDITS.md](../CREDITS.md).
 
 | Hall | Shows | Read more |
 |---|---|---|
@@ -447,7 +449,7 @@ places.
 | 08 Character | Steps, slopes, a lift, and a second character that a script walks | [physics.md](physics.md#the-player) |
 | 09 Scripts | The `Spinner`, the `Mover`, and the `TriggerLamp` of `assets/scripts` | [scripting.md](scripting.md) |
 | 10 Surfaces | A terminal that is pointed at and pressed, whose buttons call handlers of the `Terminal` of `assets/scripts` with `on_click`: Unlock slides the door of a safe, Alarm has a lamp blink. And what a second camera sees | [user-interface.md](user-interface.md#surfaces) |
-| 11 Sound | A spatial `SoundSource` that circles the listener | [audio.md](audio.md) |
+| 11 Sound | A spatial `SoundSource` that circles the listener, over the music and the ambience of the whole museum | [audio.md](audio.md) |
 | 12 Prefabs and scenes | One prefab placed five times with what differs, and a `SceneExit` | [prefabs.md](prefabs.md), [below](#changing-the-scene) |
 
 The player is a `Player` with a `CharacterBody` and a camera below it with a

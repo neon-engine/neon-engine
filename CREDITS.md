@@ -72,13 +72,27 @@ in [docs/third-party-licenses.md](docs/third-party-licenses.md#not-in-the-reposi
 ## Made for the engine
 
 Everything else, under the license of the engine, [MIT](LICENSE). No model,
-texture, sound, or image in the repository was taken from elsewhere: what a scene shows is built by the engine as
-`Geometry`, or is one of these files, each written by a program from
-numbers.
+texture, or image in the repository was taken from elsewhere, and no sound but
+the public domain recordings of the museum listed below: what a scene shows is
+built by the engine as `Geometry`, or is one of these files, each written by a
+program from numbers.
 
 - `app/NeonRuntime/engine/ui/panel.png`, the panel of the engine's pause menu, and its copy `tests/game/assets/ui/panel.png`
 - In the museum, `projects/museum/assets/`: `textures/sky/museum-panorama.png`, written by
   `tools/make-sky-images.py` from a formula, and `sounds/hum.wav`, made from sine waves
+
+## Taken from elsewhere, in the public domain
+
+The music and the ambience of the museum, `projects/museum/assets/sounds/`, come from
+[OpenGameArt](https://opengameart.org) under [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/),
+which asks for nothing; their makers are named here all the same. The files were encoded to
+Ogg Vorbis, and the two park recordings cut to three minutes with a fade at each end.
+
+| File | Work | By |
+|---|---|---|
+| `music/core-theme.ogg` | [Yoiyami Core Theme: Deep Blue Ambient Piano](https://opengameart.org/content/yoiyami-core-theme-%E2%80%93-deep-blue-ambient-piano) | Yoiyami |
+| `ambience/birds-and-wind.ogg` | [Birds and Wind: Ambient, Birds, Wind and Synth](https://opengameart.org/content/birds-and-wind-ambient-birds-wind-and-synth), the plain ambience mix; its bird calls are public domain sounds by isaiah658, syncopika, and pauliuw | Spring Spring |
+| `ambience/park-birds.ogg`, `ambience/park-river.ogg` | [Park ambiences](https://opengameart.org/content/park-ambiences), the birds and the river | Thimras |
 - In the game of the tests, `tests/game/assets/`:
     - `models/kit/`, `textures/brick.png`, `textures/concrete.png`, `textures/wood.png`, and `sounds/tone.wav`,
       written by `tools/make-test-game-assets.py`

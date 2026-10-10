@@ -413,7 +413,7 @@ with its textures, until what is unused is asked to be freed
 | There is no room for another material | The renderer itself |
 
 A model file that cannot be read is read once, and the error is said once:
-"Error importing model …" from assimp, and "Could not initialize model …"
+"Error importing model ..." from assimp, and "Could not initialize model ..."
 from the cache (#248, #507). The cache then remembers the path and fit as
 failed, and every render object that names it after that draws nothing and
 says nothing, and is neither looked for in the file system nor handed to

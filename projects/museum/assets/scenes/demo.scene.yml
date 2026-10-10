@@ -15,7 +15,8 @@
 #
 # Nothing but the sky comes from a model file or an image: every piece is a
 # Geometry in meters, drawn in a plain color, and every sign is a user
-# interface. The sky is a panorama painted by a script.
+# interface. The sky is a panorama painted by a script. The music and the
+# ambience are public domain recordings, named in CREDITS.md.
 # Models of our own take their places later. The scripts are under
 # assets/scripts, the prefabs under assets/prefabs/museum, and the signs
 # under assets/ui/museum.
@@ -54,6 +55,59 @@ entities:
       Sky:
         type: sphere
         texture: assets://textures/sky/museum-panorama.png
+
+  # --------------------------------------------------------------------------
+  # Music and ambience
+  # What the museum sounds like before any exhibit is heard: a quiet piece of
+  # piano everywhere, in the music group, and a bed of wind and birds in the
+  # ambience group, both without a place. Two field recordings of a park have
+  # a place: birds by the entrance, a stream by the far wall, so that walking
+  # the corridor moves from the one to the other. The music plays on while the
+  # game is paused; the ambience is held still with it. The files are public
+  # domain, see CREDITS.md.
+  # --------------------------------------------------------------------------
+
+  - name: music
+    components:
+      SoundSource:
+        sound: assets://sounds/music/core-theme.ogg
+        looping: true
+        volume: 0.35
+        group: music
+
+  - name: ambience
+    components:
+      SoundSource:
+        sound: assets://sounds/ambience/birds-and-wind.ogg
+        looping: true
+        volume: 0.25
+        group: ambience
+
+  - name: ambience-entrance
+    components:
+      Transform:
+        position: [0, 2.5, 7]
+      SoundSource:
+        sound: assets://sounds/ambience/park-birds.ogg
+        looping: true
+        spatial: true
+        volume: 0.5
+        min_distance: 4
+        max_distance: 60
+        group: ambience
+
+  - name: ambience-far-wall
+    components:
+      Transform:
+        position: [0, 1, -51]
+      SoundSource:
+        sound: assets://sounds/ambience/park-river.ogg
+        looping: true
+        spatial: true
+        volume: 0.5
+        min_distance: 4
+        max_distance: 60
+        group: ambience
 
   - name: floor
     components:
