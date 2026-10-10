@@ -6,6 +6,7 @@
 #include <vector>
 
 #include <neon/render/graphics-presets.hpp>
+#include <neon/settings/setting-declaration.hpp>
 
 namespace neon
 {
@@ -38,6 +39,12 @@ namespace neon
     /// `assets://input/game.input.yml`. Empty for the map the engine brings,
     /// `engine://input/default.input.yml`.
     std::string input;
+
+    /// The settings the game declares for itself, under `settings`: what
+    /// each holds, its default, and where and how the settings menu shows
+    /// it, see SettingDeclaration. What each is set to is in the settings
+    /// files, under `game`, see SettingsFile.
+    std::vector<SettingDeclaration> settings;
 
     /// The quality presets the game offers, as `graphics_presets` has them:
     /// the engine's `low`, `medium`, `high`, and `ultra`, changed value by

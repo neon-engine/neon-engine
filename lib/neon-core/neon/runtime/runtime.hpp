@@ -9,8 +9,10 @@
 #include "neon/logging/logging-system.hpp"
 #include "neon/random/entropy-context.hpp"
 #include "neon/runtime/audio-menu.hpp"
+#include "neon/runtime/game-menu.hpp"
 #include "neon/runtime/graphics-menu.hpp"
 #include "neon/settings/player-settings.hpp"
+#include "neon/settings/settings-store.hpp"
 #include "neon/world-system/world-system.hpp"
 #include "neon/render/render-pipeline.hpp"
 #include "neon/render/render-system.hpp"
@@ -51,6 +53,11 @@ namespace neon
     // the volumes of the settings menu, made when it is first shown, if the
     // runtime has the audio
     std::unique_ptr<AudioMenu> _audio_menu;
+
+    // the settings of the game, and the rows of the settings menu that
+    // follow them, made when the menu is first shown
+    SettingsStore *_settings_store = nullptr;
+    std::unique_ptr<GameMenu> _game_menu;
 
     /// Shows the pause menu when pause is pressed, takes it away when
     /// resume is chosen, closes the window on quit, opens the settings menu
@@ -107,6 +114,11 @@ namespace neon
     /// kept. Without it the graphics of the menu still change while the game
     /// runs, and nothing is kept for the next start.
     void SetPlayerSettings(PlayerSettings *player_settings);
+
+    /// Gives the runtime the settings of the game, so that the rows of the
+    /// settings menu named after them show and change them, see GameMenu.
+    /// Without it the menu changes the graphics alone.
+    void SetSettingsStore(SettingsStore *settings_store);
 
     virtual void Run();
 

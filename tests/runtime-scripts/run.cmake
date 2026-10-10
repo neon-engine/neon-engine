@@ -13,6 +13,12 @@
 # focus, the toggle under it, the select under that, and the input the tab
 # key moves to. The handler says in the log what it was handed.
 
+#
+# The third case runs settings-probe.scene.yml, whose SettingsProbe,
+# scripts/settings-probe.lua, reads the settings of the game of the tests,
+# declared in its project.yml under `settings`, hears of a change through
+# settings.on_change, and sets one, once within its range and once above it.
+
 include("${CMAKE_CURRENT_LIST_DIR}/../../cmake/scripts/run-application.cmake")
 
 if (CASE STREQUAL "a-script-turns-the-card-until-it-is-gone")
@@ -23,6 +29,9 @@ elseif (CASE STREQUAL "controls-call-their-handlers")
   set(SCRIPT "3: hold ui-right\n6: hold ui-down\n9: hold ui-right\n12: hold ui-down\n15: hold ui-down\n18: key tab\n21: text Ada")
   run(--headless-renderer --window-size 1280x720 --render-scale 1 --time-step 0.05 --frames 25
           --scene assets://scenes/controls-demo.scene.yml --input "${SCRIPT}")
+elseif (CASE STREQUAL "a-script-reads-and-hears-a-setting")
+  run(--headless-renderer --window-size 640x360 --render-scale 1 --time-step 0.05 --frames 3
+          --scene assets://scenes/settings-probe.scene.yml)
 else ()
   message(FATAL_ERROR "There is no case '${CASE}'")
 endif ()
@@ -37,12 +46,11 @@ endif ()
 
 expect_exit_code(0)
 expect_no_output("[error]")
-expect_no_output("[warning]")
 expect_no_output("[critical]")
 
 # the scripts were found and what they declare is said: the Spinner and the
-# Tuner of the game of the tests
-expect_output("Scripts under assets:// declare 2 components and 2 systems")
+# Tuner, and the SettingsProbe, the three scripts of the game of the tests
+expect_output("Scripts under assets:// declare 3 components and 3 systems")
 
 if (CASE STREQUAL "controls-call-their-handlers")
   # once for each change the player made, and not for the volume of 20 the
@@ -58,8 +66,21 @@ if (CASE STREQUAL "controls-call-their-handlers")
   if (NOT TIMES EQUAL 4)
     fail("Expected the handler to be called 4 times, once for each change, it was called ${TIMES} times")
   endif ()
+  expect_no_output("[warning]")
   return()
 endif ()
+
+if (CASE STREQUAL "a-script-reads-and-hears-a-setting")
+  expect_output("The game declares 2 settings of its own")
+  expect_output("The probe reads spin_speed as 180")
+  expect_output("The probe reads greeting as hello")
+  expect_output("The probe heard spin_speed as 360")
+  # the second set is above the most, and is refused by the store, once
+  expect_output("The setting spin_speed cannot be set: 1000 is above the most, which is 720")
+  return()
+endif ()
+
+expect_no_output("[warning]")
 
 # expect_pixel(<what> <x> <y> <red> <green> <blue>): the color of a pixel of
 # the image FRAME, each channel within 2 of what is given

@@ -22,6 +22,8 @@ namespace
   using neon::Project;
   using neon::ProjectFile;
   using neon::RYML_DocumentFormat;
+  using neon::SettingControl;
+  using neon::SettingKind;
   using neon::testing::MemoryFileSystem;
   using neon::testing::RecordingLogger;
   using ::testing::ElementsAre;
@@ -455,6 +457,240 @@ namespace
   }
 
   // the project of the sandbox
+
+  // the settings of the game
+
+  const std::string with_settings =
+    "version: 1\n"
+    "name: a-game\n"
+    "scenes:\n"
+    "  - assets://scenes/demo.scene.yml\n"
+    "settings:\n"
+    "  difficulty:\n"
+    "    kind: choice\n"
+    "    default: normal\n"
+    "    choices:\n"
+    "      - easy\n"
+    "      - normal\n"
+    "      - hard\n"
+    "  subtitles:\n"
+    "    kind: flag\n"
+    "    default: true\n"
+    "  field_of_view:\n"
+    "    kind: number\n"
+    "    default: 90\n"
+    "    least: 60\n"
+    "    most: 120\n"
+    "  player_name:\n"
+    "    kind: text\n"
+    "    default: Ada\n";
+
+  /// A project with these declarations under `settings`.
+  std::string Declaring(const std::string &settings)
+  {
+    return "version: 1\nname: a-game\nscenes:\n  - assets://scenes/demo.scene.yml\nsettings:\n" + settings;
+  }
+
+  TEST_F(ProjectFilesTest, ReadsTheSettingsTheGameDeclares)
+  {
+    Write(with_settings);
+
+    ASSERT_TRUE(Read()) << ::testing::PrintToString(_errors);
+    ASSERT_EQ(_project.settings.size(), 4u);
+
+    const auto &difficulty = _project.settings[0];
+    EXPECT_EQ(difficulty.name, "difficulty");
+    EXPECT_EQ(difficulty.kind, SettingKind::Choice);
+    EXPECT_THAT(difficulty.choices, ElementsAre("easy", "normal", "hard"));
+    std::string text;
+    EXPECT_TRUE(difficulty.default_value.GetText(text));
+    EXPECT_EQ(text, "normal");
+    EXPECT_TRUE(difficulty.value.IsEmpty()) << "nothing set it: the settings files do";
+
+    const auto &subtitles = _project.settings[1];
+    EXPECT_EQ(subtitles.kind, SettingKind::Flag);
+    bool flag = false;
+    EXPECT_TRUE(subtitles.default_value.GetBool(flag));
+    EXPECT_TRUE(flag);
+
+    const auto &field_of_view = _project.settings[2];
+    EXPECT_EQ(field_of_view.kind, SettingKind::Number);
+    ASSERT_TRUE(field_of_view.least.has_value());
+    ASSERT_TRUE(field_of_view.most.has_value());
+    EXPECT_DOUBLE_EQ(*field_of_view.least, 60.0);
+    EXPECT_DOUBLE_EQ(*field_of_view.most, 120.0);
+
+    EXPECT_EQ(_project.settings[3].kind, SettingKind::Text);
+    EXPECT_FALSE(_project.settings[3].least.has_value());
+  }
+
+  TEST_F(ProjectFilesTest, TakesTheNaturalControlForAKind)
+  {
+    Write(with_settings);
+    ASSERT_TRUE(Read()) << ::testing::PrintToString(_errors);
+    EXPECT_EQ(_project.settings[0].GetControl(), SettingControl::Dropdown) << "a choice";
+    EXPECT_EQ(_project.settings[1].GetControl(), SettingControl::Toggle) << "a flag";
+    EXPECT_EQ(_project.settings[2].GetControl(), SettingControl::Slider) << "a number with a least and a most";
+    EXPECT_EQ(_project.settings[3].GetControl(), SettingControl::Field) << "a text";
+  }
+
+  TEST_F(ProjectFilesTest, ReadsWhereAndHowTheMenuShowsASetting)
+  {
+    Write(Declaring(
+      "  field_of_view:\n"
+      "    kind: number\n"
+      "    default: 90\n"
+      "    least: 60\n"
+      "    most: 120\n"
+      "    category: Controls\n"
+      "    group: Camera\n"
+      "    order: 2\n"
+      "    control: slider\n"
+      "    step: 5\n"
+      "    label: Field of view\n"
+      "  invert_look:\n"
+      "    kind: flag\n"
+      "    default: false\n"
+      "    control: checkbox\n"
+      "  reset_progress:\n"
+      "    kind: action\n"
+      "    category: Gameplay\n"
+      "  sensitivity:\n"
+      "    kind: number\n"
+      "    default: 1\n"
+      "    control: field\n"));
+
+    ASSERT_TRUE(Read()) << ::testing::PrintToString(_errors);
+    ASSERT_EQ(_project.settings.size(), 4u);
+
+    const auto &field_of_view = _project.settings[0];
+    EXPECT_EQ(field_of_view.category, "Controls");
+    EXPECT_EQ(field_of_view.group, "Camera");
+    EXPECT_DOUBLE_EQ(field_of_view.order, 2.0);
+    EXPECT_EQ(field_of_view.GetControl(), SettingControl::Slider);
+    ASSERT_TRUE(field_of_view.step.has_value());
+    EXPECT_DOUBLE_EQ(*field_of_view.step, 5.0);
+    EXPECT_EQ(field_of_view.GetLabel(), "Field of view");
+
+    const auto &invert_look = _project.settings[1];
+    EXPECT_EQ(invert_look.GetControl(), SettingControl::Checkbox);
+    EXPECT_EQ(invert_look.GetLabel(), "Invert look") << "the name, with spaces and a capital";
+    EXPECT_TRUE(invert_look.category.empty());
+    EXPECT_DOUBLE_EQ(invert_look.order, 0.0);
+
+    const auto &reset_progress = _project.settings[2];
+    EXPECT_EQ(reset_progress.kind, SettingKind::Action);
+    EXPECT_EQ(reset_progress.GetControl(), SettingControl::Button);
+    EXPECT_TRUE(reset_progress.default_value.IsEmpty());
+
+    EXPECT_EQ(_project.settings[3].GetControl(), SettingControl::Field);
+  }
+
+  TEST_F(ProjectFilesTest, RefusesADeclarationWithoutAKindOrADefault)
+  {
+    Write(Declaring(
+      "  difficulty:\n"
+      "    default: normal\n"
+      "  subtitles:\n"
+      "    kind: flag\n"));
+    EXPECT_FALSE(Read());
+    ASSERT_EQ(_errors.size(), 2u) << ::testing::PrintToString(_errors);
+    EXPECT_THAT(_errors[0], HasSubstr("'kind' is missing"));
+    EXPECT_THAT(_errors[1], HasSubstr("'default' is missing"));
+  }
+
+  TEST_F(ProjectFilesTest, RefusesADeclarationWhoseDefaultDoesNotFit)
+  {
+    Write(Declaring(
+      "  difficulty:\n"
+      "    kind: choice\n"
+      "    default: nightmare\n"
+      "    choices: [easy, hard]\n"
+      "  field_of_view:\n"
+      "    kind: number\n"
+      "    default: 200\n"
+      "    least: 60\n"
+      "    most: 120\n"));
+    EXPECT_FALSE(Read());
+    ASSERT_EQ(_errors.size(), 2u) << ::testing::PrintToString(_errors);
+    EXPECT_THAT(_errors[0], HasSubstr("'default' of 'difficulty' of 'settings' of the project does not fit: 'nightmare' is none of the choices, which are: easy, hard"));
+    EXPECT_THAT(_errors[1], HasSubstr("200 is above the most, which is 120"));
+    EXPECT_TRUE(_project.settings.empty());
+  }
+
+  TEST_F(ProjectFilesTest, RefusesAKindItDoesNotKnowAndAChoiceWithoutChoices)
+  {
+    Write(Declaring(
+      "  difficulty:\n"
+      "    kind: choice\n"
+      "    default: normal\n"
+      "  volume:\n"
+      "    kind: slider\n"
+      "    default: 1\n"));
+    EXPECT_FALSE(Read());
+    ASSERT_EQ(_errors.size(), 2u) << ::testing::PrintToString(_errors);
+    EXPECT_THAT(_errors[0], HasSubstr("'choices' is missing"));
+    EXPECT_THAT(_errors[1], HasSubstr("'kind' of 'volume' of 'settings' of the project is 'slider', where flag, number, text, choice, or action was expected"));
+  }
+
+  TEST_F(ProjectFilesTest, RefusesANameThatIsNoneAndWhatAKindHasNoUseFor)
+  {
+    Write(Declaring(
+      "  player-name:\n"
+      "    kind: text\n"
+      "    default: Ada\n"
+      "  subtitles:\n"
+      "    kind: flag\n"
+      "    default: true\n"
+      "    least: 0\n"));
+    EXPECT_FALSE(Read());
+    ASSERT_EQ(_errors.size(), 2u) << ::testing::PrintToString(_errors);
+    EXPECT_THAT(_errors[0], HasSubstr("'player-name' of 'settings' of the project is not the name of a setting"));
+    EXPECT_THAT(_errors[1], HasSubstr("'least' is not known to 'subtitles' of 'settings' of the project"));
+  }
+
+  TEST_F(ProjectFilesTest, RefusesAControlThatDoesNotShowTheKind)
+  {
+    Write(Declaring(
+      "  subtitles:\n"
+      "    kind: flag\n"
+      "    default: true\n"
+      "    control: slider\n"
+      "  sensitivity:\n"
+      "    kind: number\n"
+      "    default: 1\n"
+      "    control: slider\n"
+      "  difficulty:\n"
+      "    kind: choice\n"
+      "    default: easy\n"
+      "    choices: [easy, hard]\n"
+      "    control: knob\n"
+      "  reset_progress:\n"
+      "    kind: action\n"
+      "    default: true\n"));
+    EXPECT_FALSE(Read());
+    ASSERT_EQ(_errors.size(), 4u) << ::testing::PrintToString(_errors);
+    EXPECT_THAT(_errors[0], HasSubstr("'control' of 'subtitles' of 'settings' of the project is slider, which does not show flag"));
+    EXPECT_THAT(_errors[1], HasSubstr("is a slider, which needs 'least' and 'most'"));
+    EXPECT_THAT(_errors[2], HasSubstr("'control' of 'difficulty' of 'settings' of the project is 'knob'"));
+    EXPECT_THAT(_errors[3], HasSubstr("'default' of 'reset_progress' of 'settings' of the project is not taken: an action holds nothing"));
+  }
+
+  TEST_F(ProjectFilesTest, RefusesASettingThatIsNotDeclaredAsAMap)
+  {
+    Write(Declaring("  difficulty: hard\n"));
+    EXPECT_FALSE(Read());
+    ASSERT_EQ(_errors.size(), 1u) << ::testing::PrintToString(_errors);
+    EXPECT_THAT(_errors[0], HasSubstr("'difficulty' of 'settings' of the project is text, where a map with the kind and the default of the setting was expected. What a setting is set to is in settings.yml under 'game'"));
+  }
+
+  TEST_F(ProjectFilesTest, RefusesSettingsThatAreNotAMap)
+  {
+    Write(Declaring("  - difficulty\n"));
+    EXPECT_FALSE(Read());
+    ASSERT_EQ(_errors.size(), 1u) << ::testing::PrintToString(_errors);
+    EXPECT_THAT(_errors[0], HasSubstr("'settings' of the project is a list, where a map of settings was expected"));
+  }
 
   TEST_F(ProjectFilesTest, ReadsTheProjectOfTheSandbox)
   {

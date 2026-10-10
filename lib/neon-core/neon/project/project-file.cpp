@@ -5,6 +5,7 @@
 
 #include <neon/data/data-reader.hpp>
 #include <neon/render/graphics-preset-reader.hpp>
+#include <neon/settings/settings-store.hpp>
 
 namespace neon
 {
@@ -101,6 +102,176 @@ namespace neon
       {
         reader.Report(*written, std::format(
                         "'{}' drops every preset, and the settings menu offers at least one", graphics_presets));
+      }
+    }
+
+    SettingDeclaration *find_setting(std::vector<SettingDeclaration> &settings, const std::string &name)
+    {
+      const auto it = std::ranges::find(settings, name, &SettingDeclaration::name);
+      return it == settings.end() ? nullptr : &*it;
+    }
+
+    /// A setting the game declares: a map with its kind, its default, for
+    /// a number its least and most, for a choice its choices, and where and
+    /// how the settings menu shows it.
+    void read_declaration(
+      const DataReader &reader,
+      const std::string &name,
+      const DataValue &written,
+      std::vector<SettingDeclaration> &settings)
+    {
+      if (!SettingsStore::IsName(name))
+      {
+        reader.Report(written, std::format(
+                        "'{}' of {} is not the name of a setting: letters, digits, and underscores were expected",
+                        name, reader.GetWhere()));
+        return;
+      }
+
+
+      if (find_setting(settings, name) != nullptr)
+      {
+        reader.Report(written, std::format("'{}' of {} is declared twice", name, reader.GetWhere()));
+        return;
+      }
+
+      const DataReader entry(written, reader.GetDocument(), std::format("'{}' of {}", name, reader.GetWhere()),
+                             reader.GetErrors());
+      SettingDeclaration declaration;
+      declaration.name = name;
+
+      std::string kind;
+      if (!entry.Read("kind", kind))
+      {
+        if (!entry.Has("kind")) { entry.Report("'kind' is missing. It is flag, number, text, choice, or action"); }
+        return;
+      }
+      if (!setting_kind_of(kind, declaration.kind))
+      {
+        entry.Report(*entry.ReadValue("kind"), std::format(
+                       "'kind' of {} is '{}', where flag, number, text, choice, or action was expected", entry.GetWhere(), kind));
+        return;
+      }
+
+      const DataValue *fallback = entry.ReadValue("default");
+      if (declaration.kind == SettingKind::Action)
+      {
+        if (fallback != nullptr)
+        {
+          entry.Report(*fallback, std::format("'default' of {} is not taken: an action holds nothing", entry.GetWhere()));
+          return;
+        }
+      } else if (fallback == nullptr)
+      {
+        entry.Report("'default' is missing. It is what the setting holds until the player or the game changes it");
+        return;
+      } else
+      {
+        declaration.default_value = *fallback;
+      }
+
+      if (declaration.kind == SettingKind::Number)
+      {
+        if (double least = 0.0; entry.Read("least", least)) { declaration.least = least; }
+        if (double most = 0.0; entry.Read("most", most)) { declaration.most = most; }
+        if (declaration.least.has_value() && declaration.most.has_value() && *declaration.least > *declaration.most)
+        {
+          entry.Report(*entry.ReadValue("least"), std::format(
+                         "'least' of {} is {}, which is above 'most', {}", entry.GetWhere(), *declaration.least,
+                         *declaration.most));
+        }
+        if (double step = 0.0; entry.Read("step", step))
+        {
+          if (step <= 0.0)
+          {
+            entry.Report(*entry.ReadValue("step"), std::format(
+                           "'step' of {} is {}, where a number above zero was expected", entry.GetWhere(), step));
+          } else
+          {
+            declaration.step = step;
+          }
+        }
+      } else if (declaration.kind == SettingKind::Choice)
+      {
+        if (!entry.Read("choices", declaration.choices) || declaration.choices.empty())
+        {
+          if (!entry.Has("choices")) { entry.Report("'choices' is missing. It lists the texts the setting may be"); }
+          else if (declaration.choices.empty()) { entry.Report(*entry.ReadValue("choices"), std::format("'choices' of {} is empty", entry.GetWhere())); }
+          return;
+        }
+      }
+
+      // where and how the menu shows it
+      entry.Read("category", declaration.category);
+      entry.Read("group", declaration.group);
+      entry.Read("order", declaration.order);
+      entry.Read("label", declaration.label);
+      if (std::string control; entry.Read("control", control))
+      {
+        SettingControl chosen = SettingControl::Field;
+        if (!setting_control_of(control, chosen))
+        {
+          entry.Report(*entry.ReadValue("control"), std::format(
+                         "'control' of {} is '{}', where slider, toggle, checkbox, dropdown, field, or button was expected",
+                         entry.GetWhere(), control));
+          return;
+        }
+        if (!control_fits_kind(chosen, declaration.kind))
+        {
+          entry.Report(*entry.ReadValue("control"), std::format(
+                         "'control' of {} is {}, which does not show {}: a slider shows a number, a toggle and a "
+                         "checkbox a flag, a dropdown a choice, a field a text or a number, a button an action",
+                         entry.GetWhere(), control, setting_kind_name(declaration.kind)));
+          return;
+        }
+        if (chosen == SettingControl::Slider && !(declaration.least.has_value() && declaration.most.has_value()))
+        {
+          entry.Report(*entry.ReadValue("control"), std::format(
+                         "'control' of {} is a slider, which needs 'least' and 'most'", entry.GetWhere()));
+          return;
+        }
+        declaration.control = chosen;
+      }
+
+      // what a kind has no use for is a mistake, as any other name is; a
+      // declaration refused above is not looked at further
+      entry.Finish();
+
+      if (std::string why; !SettingsStore::Fits(declaration, declaration.default_value, why))
+      {
+        entry.Report(*fallback, std::format("'default' of {} does not fit: {}", entry.GetWhere(), why));
+        return;
+      }
+
+      settings.push_back(declaration);
+    }
+
+    /// The settings of the game, each declared under its name.
+    void read_settings(const DataReader &reader, std::vector<SettingDeclaration> &settings)
+    {
+      const DataValue *written = reader.ReadValue("settings");
+      if (written == nullptr) { return; }
+
+      if (!written->IsMap())
+      {
+        reader.Report(*written, std::format(
+                        "'settings' of {} is {}, where a map of settings was expected",
+                        reader.GetWhere(), DataValue::Describe(written->GetKind())));
+        return;
+      }
+
+      const DataReader part(*written, reader.GetDocument(), std::format("'settings' of {}", reader.GetWhere()), reader.GetErrors());
+      for (const auto &[name, declaration] : written->GetEntries())
+      {
+        if (!declaration.IsMap())
+        {
+          part.Report(declaration, std::format(
+                        "'{}' of {} is {}, where a map with the kind and the default of the setting was expected. "
+                        "What a setting is set to is in settings.yml under 'game'",
+                        name, part.GetWhere(), DataValue::Describe(declaration.GetKind())));
+          continue;
+        }
+        read_declaration(part, name, declaration, settings);
       }
     }
   }
@@ -229,6 +400,7 @@ namespace neon
 
     // the quality presets the game offers, on top of the engine's
     read_graphics_presets(reader, read.graphics_presets);
+    read_settings(reader, read.settings);
 
     reader.Finish();
 

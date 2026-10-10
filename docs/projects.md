@@ -11,8 +11,9 @@ yet and the runtime is the player the editor will grow into or wrap. A
 shipped runtime will instead run a **compiled game** and read what the
 exporter made of the project, see [the open questions](#open-questions).
 The file says what the project is called, who makes it, which scenes it
-has, and which quality presets it offers. What a game chooses for itself and
-what a player may change is not in it; that is `settings.yml`, see
+has, which settings the game has of its own, and which quality presets it
+offers. What those settings and the engine's are set to is not in it; that
+is `settings.yml`, see
 [settings.md](settings.md), which the runtime reads after the project.
 
 ## The file
@@ -28,6 +29,16 @@ scenes:
 
 entry_scene: assets://scenes/title.scene.yml
 input: assets://input/game.input.yml
+
+settings:
+  difficulty:
+    kind: choice
+    default: normal
+    choices:
+      - easy
+      - normal
+      - hard
+    category: Gameplay
 
 graphics_presets:
   low:
@@ -53,6 +64,7 @@ runtime says so and stops.
 | `scenes` | The scenes of the project, as virtual paths. At least one | An error |
 | `entry_scene` | The scene the project starts with. One of `scenes` | The first of `scenes` |
 | `input` | The input map the game is played with, as a virtual path, see [input.md](input.md) | The map the engine brings, `engine://input/default.input.yml` |
+| `settings` | The [settings of the game](#settings-of-the-game), each declared under its name | None |
 | `graphics_presets` | The [quality presets](#quality-presets) the game offers, by name: a map of the values a preset decides changes a preset of the engine or adds one, and `off` drops one | The four of the engine, `low`, `medium`, `high`, and `ultra`, as they are |
 
 A name that is not known is an error, as in every recipe, so that a name
@@ -116,6 +128,89 @@ the table before the settings files, so that `assets://settings.yml` names
 a preset of the project, and keeps it in `SettingsConfig::graphics_presets`,
 which `rendering.quality`, `--quality`, and `GraphicsMenu` work from.
 
+## Settings of the game
+
+A game has settings of its own: a difficulty, a sensitivity, whether hints
+are shown. It declares them here, under `settings`, and the runtime does the
+rest: the settings menu shows them in sections of their own, the settings
+files set them and the player's file keeps what was chosen, a script reads
+them and hears when one changes, and nothing of it is written by hand
+(#542). The declaration says what a setting is; what it is set to is in
+`settings.yml` under `game`, see
+[settings.md](settings.md#settings-of-the-game).
+
+```yaml
+settings:
+  show_hints:
+    kind: flag
+    default: true
+    category: Gameplay
+    order: 1
+  look_sensitivity:
+    kind: number
+    default: 1
+    least: 0.1
+    most: 5
+    step: 0.1
+    category: Controls
+    group: Camera
+    order: 1
+    label: Look sensitivity
+  invert_look:
+    kind: flag
+    default: false
+    control: checkbox
+    category: Controls
+    group: Camera
+    order: 2
+  text_size:
+    kind: choice
+    default: normal
+    choices:
+      - small
+      - normal
+      - large
+    category: Accessibility
+  reset_progress:
+    kind: action
+    category: Gameplay
+    order: 2
+```
+
+The name of a setting is its key: letters, digits, and underscores. Each
+declaration is a map with these keys:
+
+| Key | Holds | Default |
+|---|---|---|
+| `kind` | What the setting holds: `flag`, `number`, `text`, `choice`, or `action`, see the table below | Required |
+| `default` | What it holds until a settings file, the player, or the game changes it, of the kind. An action has none | Required, but for an action |
+| `least`, `most` | For a number: the range it is held to, either or both | No range |
+| `choices` | For a choice: the texts it may be, in the order the menu shows them | Required for a choice |
+| `category` | The section of the settings menu it is shown in, after the engine's own rows: `Gameplay`, `Controls`, `Accessibility`, as it is written | `Game` |
+| `group` | A heading inside the category that lumps rows together, such as `Camera` | None: the row is in front of the groups |
+| `order` | A number that sorts the rows of a group, and the groups of a category. A category or a group takes the order of the first setting that names it. Ties keep the order of declaration | 0 |
+| `control` | What the player sees: `slider`, `toggle`, `checkbox`, `dropdown`, `field`, or `button`, see the table below. A control that does not show the kind is a mistake | The natural one for the kind |
+| `step` | For a slider: what it moves by | The slider's own |
+| `label` | The text of the row | The name, with its underscores as spaces and its first letter capitalized |
+
+| Kind | Holds | Natural control | Other controls |
+|---|---|---|---|
+| `flag` | `true` or `false` | `toggle` | `checkbox` |
+| `number` | A number, whole or not, within `least` and `most` when they are declared | `slider` with a `least` and a `most`, `field` without | `field`; a `slider` needs both ends |
+| `text` | Any text | `field` | |
+| `choice` | One of the `choices` | `dropdown` | |
+| `action` | Nothing: a button such as "Reset progress", which is triggered rather than set, and whose subscribers are told with no value. Nothing is kept of it | `button` | |
+
+A mistake in a declaration stops the runtime, as every mistake in this file
+does: a default that does not fit, a choice without choices, a slider
+without its ends, a control that does not show the kind, a key the kind has
+no use for. The sandbox declares five as an example,
+[project.yml](../projects/sandbox/assets/project.yml). How the menu shows
+them is in
+[user-interface.md](user-interface.md#the-settings-of-the-game-in-the-menu),
+and what a script reads of them in
+[scripting.md](scripting.md#what-a-script-reaches-of-the-engine).
+
 ## How the runtime starts
 
 | Step | What happens | Why in this order |
@@ -140,7 +235,8 @@ place yet when the project is read.
 | `ProjectFile` | neon-core, `neon/project/project-file.hpp` | Reads the file through the file system and a `DocumentFormat`, checks it, and collects every problem |
 | `GraphicsPresets`, `GraphicsPresetReader` | neon-core, `neon/render/` | The table of the quality presets, the engine's four and what the project does to them, and the reader of a preset's values, which `rendering` of a settings file is read with too |
 | `FileSystem::PlaceUserDirectory` | neon-core | The step that gives `user://` its folder, implemented by each backend |
-| `main.cpp` | NeonRuntime | Reads the project, places `user://`, and carries the names, the entry scene, and the quality presets into `SettingsConfig` |
+| `SettingDeclaration`, `SettingKind`, `SettingControl` | neon-core, `neon/settings/` | A setting of the game as it is declared: its name, kind, default, range or choices, and where and how the menu shows it |
+| `main.cpp` | NeonRuntime | Reads the project, places `user://`, and carries the names, the entry scene, the quality presets, and the declared settings into `SettingsConfig`, where the settings files set the latter |
 
 `ProjectFile` knows no format: YAML comes from the `RYML_DocumentFormat`
 that the application hands in, as it does for scenes. The tests of the reader

@@ -71,6 +71,8 @@ add_library(${TARGET} STATIC
         neon/runtime/audio-menu.hpp
         neon/runtime/graphics-menu.cpp
         neon/runtime/graphics-menu.hpp
+        neon/runtime/game-menu.cpp
+        neon/runtime/game-menu.hpp
         neon/runtime/settings-config.hpp
         neon/runtime/frame-capture.cpp
         neon/runtime/frame-capture.hpp
@@ -129,6 +131,13 @@ add_library(${TARGET} STATIC
         neon/settings/player-settings.hpp
         neon/settings/settings-file.cpp
         neon/settings/settings-file.hpp
+        neon/settings/setting-declaration.hpp
+        neon/settings/setting-control.hpp
+        neon/settings/setting-kind.hpp
+        neon/settings/settings-store.cpp
+        neon/settings/settings-store.hpp
+        neon/settings/settings-subscription.cpp
+        neon/settings/settings-subscription.hpp
 
         # command line
         neon/command-line/command-line.cpp
@@ -570,6 +579,8 @@ neon_add_unit_test(${TARGET} neon/command-line/display-options.test.cpp)
   neon_add_unit_test(${TARGET} neon/runtime/runtime.test.cpp)
   neon_add_unit_test(${TARGET} neon/runtime/audio-menu.test.cpp)
   neon_add_unit_test(${TARGET} neon/runtime/graphics-menu.test.cpp)
+  neon_add_unit_test(${TARGET} neon/runtime/game-menu.test.cpp)
+  neon_add_unit_test(${TARGET} neon/settings/settings-store.test.cpp)
   neon_add_unit_test(${TARGET} neon/text/font-atlas.test.cpp)
   neon_add_unit_test(${TARGET} neon/text/text-layout.test.cpp)
   neon_add_unit_test(${TARGET} neon/text/utf8.test.cpp)

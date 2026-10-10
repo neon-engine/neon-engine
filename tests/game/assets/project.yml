@@ -19,6 +19,7 @@ scenes:
   - assets://scenes/prototype.scene.yml
   - assets://scenes/scripting-demo.scene.yml
   - assets://scenes/settings-demo.scene.yml
+  - assets://scenes/settings-probe.scene.yml
   - assets://scenes/shadow-test-unshadowed.scene.yml
   - assets://scenes/shadow-test.scene.yml
   - assets://scenes/sharing-distinct.scene.yml
@@ -47,3 +48,17 @@ graphics_presets:
     shadow_filter: none
     shadow_cascades: 1
     shadow_distance: 20
+
+# The settings of the game of the tests, which scripts/settings-probe.lua
+# reads and hears of, see tests/runtime-scripts
+settings:
+  spin_speed:
+    kind: number
+    default: 90
+    least: 0
+    most: 720
+    category: Gameplay
+  greeting:
+    kind: text
+    default: hello
+    category: Gameplay

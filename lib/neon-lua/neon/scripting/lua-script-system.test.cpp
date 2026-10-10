@@ -13,6 +13,7 @@
 #include <neon/testing/fake-entity-store.hpp>
 #include <neon/testing/memory-file-system.hpp>
 #include <neon/testing/mock-ui-system.hpp>
+#include <neon/settings/settings-store.hpp>
 #include <neon/testing/recording-logger.hpp>
 #include <neon/world-system/ecs/scene-file/component-format.hpp>
 
@@ -28,6 +29,8 @@ namespace
   using neon::No_Component;
   using neon::PhysicsEvent;
   using neon::PhysicsEventKind;
+  using neon::SettingKind;
+  using neon::SettingsStore;
   using neon::Transform;
   using neon::testing::FakeEntityStore;
   using neon::testing::LogLevel;
@@ -1101,5 +1104,160 @@ namespace
     _lua.Update(_store, 0.1);
 
     EXPECT_THAT(Errors(), HasSubstr("boolean expected"));
+  }
+
+  // the settings of the game
+
+  class LuaSettingsTest : public LuaScriptSystemTest
+  {
+  protected:
+    SettingsStore _settings{_logger};
+
+    void SetUp() override
+    {
+      LuaScriptSystemTest::SetUp();
+      ASSERT_TRUE(_settings.Declare({.name = "subtitles", .kind = SettingKind::Flag, .default_value = neon::DataValue::Bool(true)}));
+      ASSERT_TRUE(_settings.Declare({
+        .name = "field_of_view", .kind = SettingKind::Number, .default_value = neon::DataValue::Number(90.0), .least = 60.0,
+        .most = 120.0
+      }));
+      ASSERT_TRUE(_settings.Declare({
+        .name = "difficulty", .kind = SettingKind::Choice, .default_value = neon::DataValue::Text("normal"),
+        .choices = {"easy", "normal", "hard"}
+      }));
+      ASSERT_TRUE(_settings.Declare({.name = "reset_progress", .kind = SettingKind::Action}));
+      _lua.SetSettings(&_settings);
+    }
+  };
+
+  TEST_F(LuaSettingsTest, ReadsAndSetsTheSettingsOfTheGame)
+  {
+    AddScript("probe.lua", R"(
+      local Probe = Component:extend { done = false }
+      local ProbeSystem = System:extend "Probe"
+      function ProbeSystem:update(entity, probe, dt)
+        if probe.done then return end
+        probe.done = true
+        log.info("subtitles", settings.get("subtitles"), "fov", settings.get("field_of_view"),
+                 "difficulty", settings.get("difficulty"), "reset", settings.get("reset_progress"))
+        log.info("set hard", settings.set("difficulty", "hard"))
+        log.info("set wide", settings.set("field_of_view", 200))
+        log.info("set off", settings.set("subtitles", false))
+        log.info("trigger", settings.trigger("reset_progress"))
+      end
+      return Probe, ProbeSystem
+    )");
+    ASSERT_TRUE(Load());
+    Give(Place("a"), "Probe");
+
+    int pressed = 0;
+    const neon::SettingsSubscription subscription = _settings.OnChange("reset_progress", [&](const std::string &, const neon::DataValue &) { pressed++; });
+    _lua.Update(_store, 0.1);
+
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 0u) << Errors();
+    const std::string info = _logger->Messages(LogLevel::Info);
+    EXPECT_THAT(info, HasSubstr("subtitles true fov 90 difficulty normal reset nil"));
+    EXPECT_THAT(info, HasSubstr("set hard true"));
+    EXPECT_THAT(info, HasSubstr("set wide false")) << "above the most, which the store says";
+    EXPECT_THAT(info, HasSubstr("set off true"));
+    EXPECT_THAT(info, HasSubstr("trigger true"));
+    EXPECT_EQ(pressed, 1);
+
+    std::string difficulty;
+    EXPECT_TRUE(_settings.GetText("difficulty", difficulty));
+    EXPECT_EQ(difficulty, "hard");
+    bool subtitles = true;
+    EXPECT_TRUE(_settings.GetFlag("subtitles", subtitles));
+    EXPECT_FALSE(subtitles);
+    double field_of_view = 0.0;
+    EXPECT_TRUE(_settings.GetNumber("field_of_view", field_of_view));
+    EXPECT_DOUBLE_EQ(field_of_view, 90.0);
+  }
+
+  TEST_F(LuaSettingsTest, HearsOfAChangeForAsLongAsTheScriptsRun)
+  {
+    AddScript("probe.lua", R"(
+      local Probe = Component:extend { heard = 0 }
+      local ProbeSystem = System:extend "Probe"
+      function ProbeSystem:ready(entity, probe)
+        settings.on_change("difficulty", function(value) log.info("difficulty is now", value) end)
+        settings.on_change("reset_progress", function(value) log.info("reset with", value) end)
+      end
+      return Probe, ProbeSystem
+    )");
+    ASSERT_TRUE(Load());
+    Give(Place("a"), "Probe");
+    _lua.Update(_store, 0.1);
+    const std::size_t before = _logger->Count(LogLevel::Info);
+
+    EXPECT_TRUE(_settings.Set("difficulty", neon::DataValue::Text("easy")));
+    EXPECT_TRUE(_settings.Set("difficulty", neon::DataValue::Text("easy"))) << "the same, which is no change";
+    EXPECT_TRUE(_settings.Trigger("reset_progress"));
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 0u) << Errors();
+    const std::string info = _logger->Messages(LogLevel::Info);
+    EXPECT_THAT(info, HasSubstr("difficulty is now easy"));
+    EXPECT_THAT(info, HasSubstr("reset with nil"));
+    EXPECT_EQ(_logger->Count(LogLevel::Info), before + 2) << info;
+
+    // once the scripts are gone nothing is called, and nothing goes wrong
+    _lua.CleanUp();
+    EXPECT_TRUE(_settings.Set("difficulty", neon::DataValue::Text("hard")));
+    EXPECT_EQ(_logger->Count(LogLevel::Info), before + 2);
+  }
+
+  TEST_F(LuaSettingsTest, AFunctionThatFailsIsReportedWithTheSetting)
+  {
+    AddScript("probe.lua", R"(
+      local Probe = Component:extend { heard = 0 }
+      local ProbeSystem = System:extend "Probe"
+      function ProbeSystem:ready(entity, probe)
+        settings.on_change("subtitles", function(value) error("no subtitles today") end)
+      end
+      return Probe, ProbeSystem
+    )");
+    ASSERT_TRUE(Load());
+    Give(Place("a"), "Probe");
+    _lua.Update(_store, 0.1);
+
+    EXPECT_TRUE(_settings.Set("subtitles", neon::DataValue::Bool(false)));
+    EXPECT_THAT(Errors(), HasSubstr("settings.on_change was given for subtitles failed"));
+    EXPECT_THAT(Errors(), HasSubstr("no subtitles today"));
+  }
+
+  TEST_F(LuaSettingsTest, ANameThatIsNotDeclaredIsAnErrorThatListsTheNames)
+  {
+    AddScript("probe.lua", R"(
+      local Probe = Component:extend { heard = 0 }
+      local ProbeSystem = System:extend "Probe"
+      function ProbeSystem:update(entity, probe, dt)
+        settings.get("volume")
+      end
+      return Probe, ProbeSystem
+    )");
+    ASSERT_TRUE(Load());
+    Give(Place("a"), "Probe");
+    _lua.Update(_store, 0.1);
+
+    EXPECT_THAT(Errors(), HasSubstr("There is no setting called 'volume'. The settings are: subtitles, field_of_view, difficulty, reset_progress"));
+  }
+
+  TEST_F(LuaSettingsTest, WithoutAStoreEverySettingIsNilAndNothingIsSet)
+  {
+    AddScript("probe.lua", R"(
+      local Probe = Component:extend { heard = 0 }
+      local ProbeSystem = System:extend "Probe"
+      function ProbeSystem:update(entity, probe, dt)
+        log.info("get", settings.get("subtitles"), "set", settings.set("subtitles", false))
+        settings.on_change("subtitles", function(value) end)
+      end
+      return Probe, ProbeSystem
+    )");
+    _lua.SetSettings(nullptr);
+    ASSERT_TRUE(Load());
+    Give(Place("a"), "Probe");
+    _lua.Update(_store, 0.1);
+
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 0u) << Errors();
+    EXPECT_THAT(_logger->Messages(LogLevel::Info), HasSubstr("get nil set false"));
   }
 }

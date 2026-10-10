@@ -147,6 +147,10 @@ namespace neon
     /// What `ui` sets. May be left out for a run without a user interface.
     void SetUi(UiContext *ui);
 
+    /// What `settings` reads and sets. May be left out for a run without
+    /// settings of the game.
+    void SetSettings(SettingsStore *settings);
+
     /// Whether LuaJIT compiles the scripts as they run; off runs them in
     /// its interpreter. On by default.
     /// Takes effect at once, on a state that is ready or on the next one.

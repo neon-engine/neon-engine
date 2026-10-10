@@ -119,6 +119,11 @@ namespace neon
     _host.ui = ui;
   }
 
+  void Lua_ScriptSystem::SetSettings(SettingsStore *settings)
+  {
+    _host.settings = settings;
+  }
+
   void Lua_ScriptSystem::SetWorld(WorldSystem *world)
   {
     _host.world = world;
@@ -146,6 +151,7 @@ namespace neon
     open_world_library(_lua);
     open_input_library(_lua);
     open_ui_library(_lua);
+    open_settings_library(_lua);
     open_log_library(_lua);
     open_scene_library(_lua);
     open_math_extras(_lua);
@@ -171,6 +177,8 @@ namespace neon
   {
     if (_lua == nullptr) { return; }
 
+    // before the state, since each calls into it
+    _host.subscriptions.clear();
     lua_close(_lua);
     _lua = nullptr;
     _components.clear();

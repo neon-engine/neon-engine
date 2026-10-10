@@ -31,6 +31,16 @@ namespace neon
   /// `on_click` or `on_change`.
   void open_ui_library(lua_State *lua);
 
+  /// `settings`: the settings of the game, named as the SettingsStore
+  /// names them. `settings.get(name)` is what one holds, as a boolean, a
+  /// number, or a string, and nil for an action; `settings.set(name,
+  /// value)` sets one and returns whether it was taken; `settings.trigger(
+  /// name)` presses an action; `settings.on_change(name, function(value)
+  /// end)` calls the function after one changes, for as long as the
+  /// scripts run. A name that is not declared is an error that lists the
+  /// names. Without a store every setting is nil and nothing is set.
+  void open_settings_library(lua_State *lua);
+
   /// `log`: the engine's log. `log.debug`, `log.info`, `log.warn`, and
   /// `log.error`, each taking any values, written with a space between.
   /// `print` is `log.info`.

@@ -346,10 +346,32 @@ and a method of an entity is the store's function on it,
 | | `input.action_axis2(action)`, `input.action_axis2(action)`, `input.action_axis3(action)` | A trigger, a stick as two numbers, a sensor as three |
 | `ui` | `ui.set_text(name, text)`, `ui.set_number(name, number)`, `ui.set_flag(name, flag)` | Sets a value that files refer to as `{name}` |
 | | `ui.set_text_of(interface, name, text)`, `ui.set_number_of`, `ui.set_flag_of` | The same for one user interface, where it wins over the shared value |
+| `settings` | `settings.get(name)`, `settings.set(name, value)` | The [settings of the game](projects.md#settings-of-the-game), which the project declares and the settings files set: a flag as a boolean, a number, a text or a choice as a string, an action as `nil`. `set` returns whether the value was taken; one that does not fit is refused, and the log says why once |
+| | `settings.trigger(name)` | Presses an action, which tells whoever hears of it |
+| | `settings.on_change(name, function(value) end)` | Calls the function after the setting changes, with what it holds now, for as long as the scripts run. A name the game does not declare is an error that lists the names |
 | `log` | `log.debug(...)`, `log.info(...)`, `log.warn(...)`, `log.error(...)` | The engine's log, with a space between the values. `print` is `log.info` |
 | `math` | `math.move_toward(from, to, by)`, `math.clamp(value, low, high)` | On top of Lua's `math` |
 | | `vec3(x, y, z)`, `vec3(n)`, `vec3()`, `color(r, g, b, a)` | Values |
 | | `require "scripts.lib.tween"` | A module, by its path below `assets://`, loaded once |
+
+A system reads a setting where it needs it, and hears of a change where it
+would otherwise poll:
+
+```lua
+local LookSystem = System:extend("Player", "Transform")
+
+function LookSystem:ready(entity, player, transform)
+  player.sensitivity = settings.get("look_sensitivity")
+  settings.on_change("look_sensitivity", function(value)
+    player.sensitivity = value
+  end)
+end
+```
+
+The function is called at once, from whoever changed the setting: the
+settings menu, between frames, or another script. It is not inside a hook,
+so the world is not handed to it; it keeps what it was told, and the next
+hook uses it.
 
 `require` takes the path below `assets://` with dots for the slashes and
 resolves through the engine's file system, inside the assets alone: a name

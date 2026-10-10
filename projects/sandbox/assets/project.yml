@@ -32,3 +32,48 @@ graphics_presets:
     shadow_filter: none
     shadow_cascades: 1
     shadow_distance: 20
+
+# The settings of the game itself: what each holds, its default, and where
+# and how the settings menu shows it, which builds a section per category
+# after the engine's rows, with a heading per group and a control per
+# setting. The scripts read them with settings.get and hear of a change with
+# settings.on_change; settings.yml and the player's file set them under
+# `game`. The sandbox reads none of them yet; they are the example, see
+# docs/projects.md and docs/settings.md.
+settings:
+  show_hints:
+    kind: flag
+    default: true
+    category: Gameplay
+    order: 1
+    label: Show hints
+  reset_progress:
+    kind: action
+    category: Gameplay
+    order: 2
+    label: Reset progress
+  look_sensitivity:
+    kind: number
+    default: 1
+    least: 0.1
+    most: 5
+    step: 0.1
+    category: Controls
+    group: Camera
+    order: 1
+  invert_look:
+    kind: flag
+    default: false
+    control: checkbox
+    category: Controls
+    group: Camera
+    order: 2
+  text_size:
+    kind: choice
+    default: normal
+    choices:
+      - small
+      - normal
+      - large
+    category: Accessibility
+    order: 3

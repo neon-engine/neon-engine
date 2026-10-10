@@ -23,6 +23,7 @@
 #include <neon/scripting/lua-script-system.hpp>
 #include <neon/settings/player-settings.hpp>
 #include <neon/settings/settings-file.hpp>
+#include <neon/settings/settings-store.hpp>
 #include <neon/layout/flex-layout-engine.hpp>
 #include <neon/render/forward-render-pipeline.hpp>
 #include <neon/render/vk-render-system.hpp>
@@ -152,6 +153,8 @@ int main(const int argc, char *argv[])
 
   settings_config.organization = project.organization;
   settings_config.application = project.name;
+  // the settings of the game, which the settings files set under `game`
+  settings_config.game_settings = project.settings;
 
   // the presets the settings and --quality choose from are the project's
   settings_config.graphics_presets = project.graphics_presets;
@@ -207,6 +210,18 @@ int main(const int argc, char *argv[])
   {
     const auto options_logger = logging_system.CreateLogger("NeonRuntime");
     for (const auto &warning : display_options.GetWarnings()) { options_logger->Warn("{}", warning); }
+  }
+
+  // The settings the game declared for itself, with what the player's
+  // file set them to: the menu changes them, the scripts read them, and a
+  // change is heard by whoever subscribed. The files were checked above,
+  // so nothing is refused here.
+  const auto settings_store_logger = logging_system.CreateLogger("SettingsStore");
+  neon::SettingsStore settings_store(settings_store_logger);
+  for (const auto &declaration : settings_config.game_settings) { (void) settings_store.Declare(declaration); }
+  if (const std::size_t declared = settings_config.game_settings.size(); declared > 0)
+  {
+    settings_store_logger->Info("The game declares {} settings of its own", declared);
   }
 
   // What extends the runtime: every folder of extensions://, next to the
@@ -469,6 +484,8 @@ int main(const int argc, char *argv[])
   script_system.Initialize();
   script_system.SetInput(ui_system.GetGameInput());
   script_system.SetUi(&ui_system);
+  // the settings of the game, which a script reads and hears of
+  script_system.SetSettings(&settings_store);
   script_system.SetWorld(&world);
   auto script_running = std::make_unique<neon::ScriptRunning>(
     &script_system,
@@ -532,6 +549,8 @@ int main(const int argc, char *argv[])
   // what the player chooses in the settings menu is kept for the next start
   neon::PlayerSettings player_settings(&file_system, &yaml, logging_system.CreateLogger("PlayerSettings"));
   app.SetPlayerSettings(&player_settings);
+  // the rows of the settings menu named after the settings of the game
+  app.SetSettingsStore(&settings_store);
 
   // a script that starts the runtime learns from the exit code whether the
   // run did what it was asked to

@@ -30,6 +30,7 @@ namespace
   using neon::testing::MemoryFileSystem;
   using neon::DataValue;
   using neon::PlayerSettings;
+  using neon::SettingKind;
   using neon::testing::RecordingLogger;
   using ::testing::HasSubstr;
   using ::testing::IsEmpty;
@@ -918,6 +919,123 @@ namespace
   }
 
   // the settings of the sandbox
+
+  // the settings of the game: the project declares them, see
+  // tests/project-files, and the settings files set them
+
+  class GameSettingsTest : public SettingsFilesTest
+  {
+  protected:
+    void SetUp() override
+    {
+      SettingsFilesTest::SetUp();
+      _settings.game_settings.push_back({
+        .name = "difficulty", .kind = SettingKind::Choice, .default_value = DataValue::Text("normal"),
+        .choices = {"easy", "normal", "hard"}
+      });
+      _settings.game_settings.push_back({.name = "subtitles", .kind = SettingKind::Flag, .default_value = DataValue::Bool(true)});
+      _settings.game_settings.push_back({
+        .name = "field_of_view", .kind = SettingKind::Number, .default_value = DataValue::Number(90.0), .least = 60.0,
+        .most = 120.0
+      });
+      _settings.game_settings.push_back({.name = "player_name", .kind = SettingKind::Text, .default_value = DataValue::Text("Ada")});
+      _settings.game_settings.push_back({.name = "reset_progress", .kind = SettingKind::Action});
+    }
+  };
+
+  TEST_F(GameSettingsTest, TheProjectsFileSetsASettingOfTheGame)
+  {
+    WriteOfTheProject(
+      "version: 1\n"
+      "game:\n"
+      "  difficulty: hard\n"
+      "  field_of_view: 100\n");
+
+    ASSERT_TRUE(ReadOfTheProject()) << ::testing::PrintToString(_errors);
+
+    std::string difficulty;
+    EXPECT_TRUE(_settings.game_settings[0].value.GetText(difficulty));
+    EXPECT_EQ(difficulty, "hard");
+    double field_of_view = 0.0;
+    EXPECT_TRUE(_settings.game_settings[2].value.GetNumber(field_of_view));
+    EXPECT_DOUBLE_EQ(field_of_view, 100.0);
+    EXPECT_TRUE(_settings.game_settings[1].value.IsEmpty()) << "what the file did not set keeps its default";
+
+    // the default stays what the project declared
+    std::string fallback;
+    EXPECT_TRUE(_settings.game_settings[0].default_value.GetText(fallback));
+    EXPECT_EQ(fallback, "normal");
+  }
+
+  TEST_F(GameSettingsTest, ThePlayersFileSetsASettingOnTopOfTheProjects)
+  {
+    WriteOfTheProject("version: 1\ngame:\n  difficulty: hard\n  subtitles: false\n");
+    WriteOfThePlayer("version: 1\ngame:\n  difficulty: easy\n");
+
+    ASSERT_TRUE(ReadOfTheProject()) << ::testing::PrintToString(_errors);
+    ASSERT_TRUE(ReadOfThePlayer()) << ::testing::PrintToString(_errors);
+
+    std::string difficulty;
+    EXPECT_TRUE(_settings.game_settings[0].value.GetText(difficulty));
+    EXPECT_EQ(difficulty, "easy");
+    bool subtitles = true;
+    EXPECT_TRUE(_settings.game_settings[1].value.GetBool(subtitles));
+    EXPECT_FALSE(subtitles) << "what the player's file leaves out keeps the project's value";
+  }
+
+  TEST_F(GameSettingsTest, RefusesAValueThatDoesNotFitAndLeavesTheFileOut)
+  {
+    WriteOfThePlayer(
+      "version: 1\n"
+      "game:\n"
+      "  difficulty: nightmare\n"
+      "  field_of_view: 30\n"
+      "  subtitles: 1\n"
+      "  volume: 0.5\n"
+      "  reset_progress: true\n");
+
+    EXPECT_FALSE(ReadOfThePlayer());
+
+    ASSERT_EQ(_errors.size(), 5u) << ::testing::PrintToString(_errors);
+    EXPECT_THAT(_errors[0], HasSubstr("'difficulty' of 'game' of the settings does not fit: 'nightmare' is none of the choices, which are: easy, normal, hard"));
+    EXPECT_THAT(_errors[1], HasSubstr("30 is below the least, which is 60"));
+    EXPECT_THAT(_errors[2], HasSubstr("'subtitles' of 'game' of the settings does not fit"));
+    EXPECT_THAT(_errors[3], HasSubstr("'volume' of 'game' of the settings is not a setting the game declares in assets://project.yml under 'settings'. There are: difficulty, subtitles, field_of_view, player_name, reset_progress"));
+    EXPECT_THAT(_errors[4], HasSubstr("'reset_progress' of 'game' of the settings is an action, which holds nothing"));
+
+    // the file changed nothing
+    EXPECT_TRUE(_settings.game_settings[0].value.IsEmpty());
+    EXPECT_TRUE(_settings.game_settings[2].value.IsEmpty());
+  }
+
+  TEST_F(GameSettingsTest, ADeclarationInTheSettingsIsAMistakeThatPointsAtTheProject)
+  {
+    WriteOfTheProject(
+      "version: 1\n"
+      "game:\n"
+      "  subtitles:\n"
+      "    kind: flag\n"
+      "    default: false\n");
+    EXPECT_FALSE(ReadOfTheProject());
+    ASSERT_EQ(_errors.size(), 1u) << ::testing::PrintToString(_errors);
+    EXPECT_THAT(_errors[0], HasSubstr("'subtitles' of 'game' of the settings is a map, where a value was expected. A setting is declared in assets://project.yml under 'settings', and this file sets it: subtitles: true"));
+  }
+
+  TEST_F(GameSettingsTest, RefusesGameSettingsThatAreNotAMap)
+  {
+    WriteOfTheProject("version: 1\ngame: hard\n");
+    EXPECT_FALSE(ReadOfTheProject());
+    ASSERT_EQ(_errors.size(), 1u) << ::testing::PrintToString(_errors);
+    EXPECT_THAT(_errors[0], HasSubstr("'game' of the settings is text, where a map of settings was expected"));
+  }
+
+  TEST_F(SettingsFilesTest, AGameThatDeclaresNoSettingsCannotSetAny)
+  {
+    WriteOfTheProject("version: 1\ngame:\n  difficulty: hard\n");
+    EXPECT_FALSE(ReadOfTheProject());
+    ASSERT_EQ(_errors.size(), 1u) << ::testing::PrintToString(_errors);
+    EXPECT_THAT(_errors[0], HasSubstr("There are: none"));
+  }
 
   TEST_F(SettingsFilesTest, ReadsTheSettingsOfTheSandbox)
   {

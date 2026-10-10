@@ -1,0 +1,22 @@
+# A scene for the settings of the game in a script, which a test reads the
+# log of:
+#
+#   NeonRuntime --scene assets://scenes/settings-probe.scene.yml
+#
+# An entity carries a SettingsProbe, the component scripts/settings-probe.lua
+# declares, which reads the settings declared in settings.yml under `game`,
+# hears of a change, and makes one.
+
+scene: settings-probe
+version: 1
+
+entities:
+  - name: camera
+    components:
+      Transform:
+        position: [0, 0, 5]
+      Camera: Default
+
+  - name: probe
+    components:
+      SettingsProbe: Default

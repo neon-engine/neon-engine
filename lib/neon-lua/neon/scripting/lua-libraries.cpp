@@ -288,6 +288,133 @@ namespace neon
       {nullptr, nullptr}
     };
 
+    SettingsStore *settings_of(lua_State *lua)
+    {
+      return host_of(lua).settings;
+    }
+
+    /// The setting of that name, or a Lua error that lists the names.
+    const SettingDeclaration &setting_of(lua_State *lua, SettingsStore &settings, const char *name)
+    {
+      const SettingDeclaration *declaration = settings.Find(name);
+      if (declaration == nullptr)
+      {
+        std::string names;
+        for (const std::string &each : settings.Names()) { names += (names.empty() ? "" : ", ") + each; }
+        luaL_error(lua, "There is no setting called '%s'. The settings are: %s", name, names.empty() ? "none" : names.c_str());
+      }
+      return *declaration;
+    }
+
+    /// Pushes a value of a setting as the Lua value it is.
+    void push_setting_value(lua_State *lua, const DataValue &value)
+    {
+      bool flag = false;
+      double number = 0.0;
+      std::string text;
+      if (value.GetBool(flag)) { lua_pushboolean(lua, flag ? 1 : 0); }
+      else if (value.GetNumber(number)) { lua_pushnumber(lua, number); }
+      else if (value.GetText(text)) { lua_pushlstring(lua, text.data(), text.size()); }
+      else { lua_pushnil(lua); }
+    }
+
+    int settings_get(lua_State *lua)
+    {
+      const char *name = luaL_checkstring(lua, 1);
+      SettingsStore *settings = settings_of(lua);
+      if (settings == nullptr)
+      {
+        lua_pushnil(lua);
+        return 1;
+      }
+
+      (void) setting_of(lua, *settings, name);
+      push_setting_value(lua, *settings->Get(name));
+      return 1;
+    }
+
+    int settings_set(lua_State *lua)
+    {
+      const char *name = luaL_checkstring(lua, 1);
+      luaL_checkany(lua, 2);
+      SettingsStore *settings = settings_of(lua);
+      if (settings == nullptr)
+      {
+        lua_pushboolean(lua, 0);
+        return 1;
+      }
+
+      (void) setting_of(lua, *settings, name);
+
+      // a value as the Lua value it is; the store says what does not fit
+      DataValue value;
+      switch (lua_type(lua, 2))
+      {
+        case LUA_TBOOLEAN: value = DataValue::Bool(lua_toboolean(lua, 2) != 0);
+          break;
+        case LUA_TNUMBER: value = DataValue::Number(static_cast<double>(lua_tonumber(lua, 2)));
+          break;
+        case LUA_TSTRING: value = DataValue::Text(lua_tostring(lua, 2));
+          break;
+        default: return luaL_error(lua, "settings.set takes a boolean, a number, or a string, not %s", luaL_typename(lua, 2));
+      }
+
+      lua_pushboolean(lua, settings->Set(name, value) ? 1 : 0);
+      return 1;
+    }
+
+    int settings_trigger(lua_State *lua)
+    {
+      const char *name = luaL_checkstring(lua, 1);
+      SettingsStore *settings = settings_of(lua);
+      if (settings == nullptr)
+      {
+        lua_pushboolean(lua, 0);
+        return 1;
+      }
+
+      (void) setting_of(lua, *settings, name);
+      lua_pushboolean(lua, settings->Trigger(name) ? 1 : 0);
+      return 1;
+    }
+
+    int settings_on_change(lua_State *lua)
+    {
+      const char *name = luaL_checkstring(lua, 1);
+      luaL_checktype(lua, 2, LUA_TFUNCTION);
+      SettingsStore *settings = settings_of(lua);
+      if (settings == nullptr) { return 0; }
+
+      (void) setting_of(lua, *settings, name);
+
+      // the function is kept in the registry for as long as the state lives
+      lua_pushvalue(lua, 2);
+      const int function = luaL_ref(lua, LUA_REGISTRYINDEX);
+      LuaHost &host = host_of(lua);
+
+      host.subscriptions.push_back(settings->OnChange(name, [lua, function, &host](const std::string &setting, const DataValue &value)
+      {
+        lua_rawgeti(lua, LUA_REGISTRYINDEX, function);
+        push_setting_value(lua, value);
+        if (lua_pcall(lua, 1, 0, 0) != LUA_OK)
+        {
+          const char *text = lua_tostring(lua, -1);
+          const std::string message = text != nullptr ? text : "no message";
+          host.logger->Error("The function settings.on_change was given for {} failed: {}", setting, message);
+          lua_pop(lua, 1);
+        }
+      }));
+      return 0;
+    }
+
+    constexpr luaL_Reg settings_functions[] = {
+      {"get", settings_get},
+      {"set", settings_set},
+      {"trigger", settings_trigger},
+      {"on_change", settings_on_change},
+      {nullptr, nullptr}
+    };
+
     /// Every argument as text, with a space between, as print does.
     std::string line_of(lua_State *lua)
     {
@@ -388,6 +515,12 @@ namespace neon
   {
     luaL_newlib(lua, ui_functions);
     lua_setglobal(lua, "ui");
+  }
+
+  void open_settings_library(lua_State *lua)
+  {
+    luaL_newlib(lua, settings_functions);
+    lua_setglobal(lua, "settings");
   }
 
   void open_log_library(lua_State *lua)

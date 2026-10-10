@@ -13,3 +13,9 @@ window:
 ui:
   pause_menu: engine://ui/pause.ui.yml
   settings_menu: engine://ui/settings.ui.yml
+
+# The settings of the game of the tests are declared in project.yml, and
+# scripts/settings-probe.lua reads them, see tests/runtime-scripts. This
+# file sets one of them, over its default of 180
+game:
+  spin_speed: 180

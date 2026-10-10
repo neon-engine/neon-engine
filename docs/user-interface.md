@@ -1402,6 +1402,7 @@ ui.SetFlag("paused", true);
 | A whole number is written without a point, any other with two digits behind it | `75`, not `75.000000` |
 | A name without a value is shown as it is written, and logged once | A name that was misspelled is seen on the screen |
 | `values` of a file do not replace what the game has set | A file can be tried without the game |
+| A value named after a [setting of the game](projects.md#settings-of-the-game) is bound by the runtime while the settings menu is shown | A row that follows it shows and changes the setting with no code, see [the settings of the game in the menu](#the-settings-of-the-game-in-the-menu) |
 | Values belong to the user interface, not to a file | Two files show the same health |
 | A text is made again only when a value has changed | Nothing is formatted in a frame in which nothing changed |
 
@@ -1533,6 +1534,34 @@ of its own adds a row with a value named after it, and needs nothing else.
 The world stands still while the menu is shown, and `UiAudio` goes on all the
 same, so a `UiVolume` or a `UiSoundSwitch` of the scene follows the menu too,
 see [audio.md](audio.md#from-a-settings-menu).
+
+#### The settings of the game in the menu
+
+The [settings a game declares](projects.md#settings-of-the-game) are values
+of the user interface as well, each named as the setting is, and the
+runtime, through `GameMenu`, binds them as it binds the graphics: a value
+named after a setting is seeded when the menu opens, set on the store as
+soon as it changes, which tells whoever hears of it, kept with Apply under
+`game` of `user://settings.yml`, and put back with Back. A game with a menu
+of its own writes a row that follows a setting, `checked: "{subtitles}"`,
+`value: "{difficulty}"`, and the runtime does the rest.
+
+The engine's menu goes further and builds the rows itself. When it is
+shown, every setting that no element of the file is named after is made
+inside the element named `list`, after the rows of the file: a heading of
+class `section` per `category`, in the order of the first setting of each,
+a heading of class `group` per `group` inside it, after the rows that have
+none, and a row of class `row` per setting, in its `order`, with a label of
+class `row-label` and the control the declaration asks for. The rows look
+as the rows of the file do, since the same classes are styled in
+`settings.css`: a slider sits in a panel of class `with-value` with a label
+of class `value` that shows the number, a dropdown is a `select` with the
+choices as its options, a field is an `input` that takes digits for a
+number, a toggle and a checkbox are what they are called, and a button
+carries the label itself and presses the action. A game that names
+`engine://ui/settings.ui.yml` as its settings menu gets its sections with no
+file of its own; one that brings a file with an element named `list` gets
+them there, and a row it writes by hand for a setting is left to the file.
 
 ### Which device the player uses
 

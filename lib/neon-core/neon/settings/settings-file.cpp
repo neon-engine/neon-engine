@@ -9,6 +9,9 @@
 #include <neon/render/graphics-presets.hpp>
 #include <neon/window/frame-limit.hpp>
 
+#include "settings-store.hpp"
+#include <neon/project/project-file.hpp>
+
 namespace neon
 {
   // Helpers of SettingsFile, for this file alone.
@@ -331,6 +334,71 @@ namespace neon
       reader.Finish();
     }
 
+    SettingDeclaration *find_setting(std::vector<SettingDeclaration> &settings, const std::string &name)
+    {
+      const auto it = std::ranges::find(settings, name, &SettingDeclaration::name);
+      return it == settings.end() ? nullptr : &*it;
+    }
+
+    std::string names_of(const std::vector<SettingDeclaration> &settings)
+    {
+      std::string names;
+      for (const auto &setting : settings)
+      {
+        if (!names.empty()) { names += ", "; }
+        names += setting.name;
+      }
+      return names.empty() ? "none" : names;
+    }
+
+    /// The settings of the game, by name: a value for each that the
+    /// project declares, see ProjectFile. A declaration here is a mistake
+    /// that points at the project's file.
+    void read_game(const DataReader &reader, const DataValue &game, SettingsConfig &settings)
+    {
+      if (!game.IsMap())
+      {
+        reader.Report(game, std::format(
+                        "'game' of {} is {}, where a map of settings was expected",
+                        reader.GetWhere(), DataValue::Describe(game.GetKind())));
+        return;
+      }
+
+      const DataReader part(game, reader.GetDocument(), std::format("'game' of {}", reader.GetWhere()), reader.GetErrors());
+      for (const auto &[name, written] : game.GetEntries())
+      {
+        SettingDeclaration *declared = find_setting(settings.game_settings, name);
+        if (declared == nullptr)
+        {
+          part.Report(written, std::format(
+                        "'{}' of {} is not a setting the game declares in {} under 'settings'. There are: {}",
+                        name, part.GetWhere(), ProjectFile::path, names_of(settings.game_settings)));
+          continue;
+        }
+        if (written.IsMap())
+        {
+          part.Report(written, std::format(
+                        "'{}' of {} is a map, where a value was expected. A setting is declared in {} under "
+                        "'settings', and this file sets it: {}: {}",
+                        name, part.GetWhere(), ProjectFile::path, name, declared->kind == SettingKind::Flag ? "true" : "..."));
+          continue;
+        }
+        if (declared->kind == SettingKind::Action)
+        {
+          part.Report(written, std::format("'{}' of {} is an action, which holds nothing", name, part.GetWhere()));
+          continue;
+        }
+
+        if (std::string why; !SettingsStore::Fits(*declared, written, why))
+        {
+          part.Report(written, std::format("'{}' of {} does not fit: {}", name, part.GetWhere(), why));
+          continue;
+        }
+
+        declared->value = written;
+      }
+    }
+
     /// Reads the map under a name, when it is written.
     void read_part(
       const DataReader &reader,
@@ -414,6 +482,7 @@ namespace neon
       if (has_rendering) { read_rendering(rendering, read, warnings); }
     }
     read_part(reader, "audio", read, read_audio);
+    if (const DataValue *game = reader.ReadValue("game"); game != nullptr) { read_game(reader, *game, read); }
     reader.Finish();
 
     if (errors.size() > before) { return false; }

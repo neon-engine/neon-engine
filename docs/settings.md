@@ -14,7 +14,7 @@ quality preset holds over the graphics values it decides, see
 |---|---|---|
 | 1 | The defaults in `SettingsConfig` | The engine |
 | 2 | `assets://settings.yml` | The author of the project. It ships with the game |
-| 3 | `user://settings.yml` | The player, through a settings menu: the graphics and the volumes of the runtime's menu are written there with Apply, see `PlayerSettings` |
+| 3 | `user://settings.yml` | The player, through a settings menu: the graphics and the volumes of the runtime's menu and the settings of the game are written there with Apply, see `PlayerSettings` |
 | 4 | The command line | Whoever starts the runtime, see [command-line.md](command-line.md) |
 
 The command line is applied twice: once before the file system comes up,
@@ -66,6 +66,9 @@ audio:
   volumes:
     music: 0.6
     ambience: 0.5
+
+game:
+  difficulty: hard
 ```
 
 Every project brings its own. Those of the sandbox are
@@ -105,6 +108,7 @@ Every project brings its own. Those of the sandbox are
 | `rendering.exposure` | How bright the scene is taken to be: the light of the scene is multiplied by it before the curve. A number above zero; 2 doubles the light, 0.5 halves it | 1 |
 | `audio.groups` | The [groups of sounds](audio.md#groups) the project has besides those of the engine: a list of names, or of maps with a `name` and the `volume` the group starts at. A name that is there already is an error. A group of the project is held still while the game is paused, as the effects are | None. The groups of the engine are `music`, `effects`, `voices`, and `ambience` |
 | `audio.volumes` | The volume of a group by its name, 0 for silence and 1 for the loudness of its sounds, not below 0. A name that is not a group of the engine or of the project, declared above or in a file read before, is an error. The runtime's settings menu shows them and writes the ones the player changed to `user://settings.yml` with Apply, see [user-interface.md](user-interface.md#the-volumes-of-the-settings-menu) | 1 for every group |
+| `game` | The [settings of the game](#settings-of-the-game), each set by its name, which the project declares | The default each is declared with |
 
 ### Quality presets
 
@@ -189,6 +193,45 @@ be what its author meant. A mistake in the player's file is said in the log
 and the file is left out, since a player should not be locked out of the game
 by a file a menu wrote.
 
+## Settings of the game
+
+A game has settings of its own, which it declares in its `project.yml`
+under `settings`: what each holds, its default, its range or its choices,
+and where and how the settings menu shows it, see
+[projects.md](projects.md#settings-of-the-game). The settings files set
+them, by name, under `game`, the project's file and the player's alike,
+each on top of the one before:
+
+```yaml
+game:
+  look_sensitivity: 2.5
+  invert_look: true
+```
+
+A value that does not fit its kind, its range, or its choices, a name the
+project does not declare, and a value written for an action, which holds
+nothing, are mistakes like any other in the file: in the project's file
+they stop the runtime, in the player's file they are said in the log and
+the file is left out until it is corrected. A declaration written here, a
+map with a `kind` and a `default`, is a mistake that points at
+`project.yml`.
+
+What holds while the game runs is in the `SettingsStore`: `Get`, `Set`,
+which refuses what does not fit and says so once in the log, `Trigger` for an
+action, and `OnChange(name, callback)`, whose subscription ends when its
+holder goes. A change tells every subscriber of the name after the value is
+stored; a value set to what it is already tells nobody. The settings menu
+sets the store as the player changes a row, and keeps what the player
+chose with Apply, as `game` of `user://settings.yml`; a script reads and
+hears of it through the `settings` library, see
+[scripting.md](scripting.md#what-a-script-reaches-of-the-engine). How the
+menu shows the sections is in
+[user-interface.md](user-interface.md#the-settings-of-the-game-in-the-menu).
+
+The engine's own settings, `rendering.*`, `window.*`, and the volumes, are
+not in the store yet: they join it later, and the graphics and the audio of
+the menu then become rows like any other (#542).
+
 ## What is not here
 
 | What | Where it is decided | Why not a setting |
@@ -209,11 +252,17 @@ by a file a menu wrote.
 | `GraphicsPresetReader` | neon-core, `neon/render/graphics-preset-reader.hpp` | Reads the values a preset decides, checked as the settings of those names are; `rendering` of a settings file and a preset of `project.yml` are read with it |
 | `GraphicsMenu` | neon-core, `neon/runtime/graphics-menu.hpp` | The graphics of the runtime's settings menu: shows them, changes them, and keeps or puts them back |
 | `AudioMenu` | neon-core, `neon/runtime/audio-menu.hpp` | The volumes of the runtime's settings menu, one for every group: shows them, changes them, and keeps them as `audio.volumes` or puts them back |
+| `SettingsStore`, `SettingsSubscription` | neon-core, `neon/settings/settings-store.hpp` | The settings of the game while it runs: what each holds, `Set` with its checks, and the change callbacks. `main.cpp` declares it from what `ProjectFile` read and the layers set, and hands it to the runtime and the scripts |
+| `GameMenu` | neon-core, `neon/runtime/game-menu.hpp` | The settings of the game in the settings menu: builds a section per category, binds every value named after a setting, sets the store at once, keeps with Apply, puts back with Back |
+| `settings` in Lua | neon-lua, `neon/scripting/lua-libraries.cpp` | `settings.get`, `settings.set`, `settings.trigger`, and `settings.on_change` over the store |
 | `RuntimeOptions`, `DisplayOptions` | neon-core, `neon/command-line/` | The command line, layer 4 |
 | `main.cpp` | NeonRuntime | Reads the layers in order |
 
 The tests of the reader are in `tests/settings-files`, with the file of the
-runtime read as it is in the repository.
+sandbox read as it is in the repository; those of the declarations in
+`tests/project-files`, and those of the store, the menu, and the library
+next to each. `tests/runtime-scripts` runs a script that reads a setting
+and hears of a change.
 
 ## Open questions
 

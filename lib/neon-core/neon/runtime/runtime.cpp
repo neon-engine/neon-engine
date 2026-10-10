@@ -50,6 +50,11 @@ namespace neon
     _player_settings = player_settings;
   }
 
+  void Runtime::SetSettingsStore(SettingsStore *settings_store)
+  {
+    _settings_store = settings_store;
+  }
+
   void Runtime::Initialize() const
   {
     // order here matters
@@ -104,6 +109,7 @@ namespace neon
       // what the player changed is kept with Apply, and put back otherwise
       if (_graphics_menu != nullptr) { _graphics_menu->Close(_ui_system->WasClicked("apply")); }
       if (_audio_menu != nullptr) { _audio_menu->Close(_ui_system->WasClicked("apply")); }
+      if (_game_menu != nullptr) { _game_menu->Close(_ui_system->WasClicked("apply")); }
 
       _settings_document = -1;
       ShowPauseMenu();
@@ -112,6 +118,7 @@ namespace neon
     // what the player changes in the menu takes effect at once
     if (_settings_document >= 0 && _graphics_menu != nullptr) { _graphics_menu->Update(); }
     if (_settings_document >= 0 && _audio_menu != nullptr) { _audio_menu->Update(); }
+    if (_settings_document >= 0 && _game_menu != nullptr) { _game_menu->Update(); }
 
     // the menu closes itself as well: on cancel, as its file says
     const bool was_shown = _pause_document >= 0 || _settings_document >= 0;
@@ -155,6 +162,13 @@ namespace neon
               _ui_system, _audio_context, _settings_config.sound_groups, _player_settings, _logger);
           }
           if (_audio_menu != nullptr) { _audio_menu->Open(); }
+
+          // and the settings of the game as they are
+          if (_game_menu == nullptr && _settings_store != nullptr)
+          {
+            _game_menu = std::make_unique<GameMenu>(_ui_system, _settings_store, _player_settings, _logger);
+          }
+          if (_game_menu != nullptr) { _game_menu->Open(_settings_document); }
         }
       }
     }

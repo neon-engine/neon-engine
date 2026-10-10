@@ -52,6 +52,21 @@
   font-weight: bold;
 }
 
+/* The sections and headings the runtime makes for the settings of the game,
+   one section per category of the declarations and a heading per group,
+   after the rows of this file, see GameMenu in docs/settings.md. The rows
+   it makes under them are rows like the ones above. */
+.section {
+  margin-top: 12px;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.group {
+  margin-top: 4px;
+  color: var(--ink-dim);
+}
+
 /* the list takes what is left of the window, and scrolls */
 .list {
   flex-direction: column;

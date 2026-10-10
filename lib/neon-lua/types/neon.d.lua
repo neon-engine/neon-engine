@@ -447,6 +447,37 @@ function ui.set_number_of(interface, name, number) end
 ---@param flag boolean
 function ui.set_flag_of(interface, name, flag) end
 
+---The settings of the game, named as the project's settings file declares
+---them under `game`, see docs/settings.md. A name that is not declared is
+---an error that lists the names.
+---@class settingslib
+settings = {}
+
+---What a setting holds: a boolean for a flag, a number for a number, a
+---string for a text or a choice, and nil for an action.
+---@param name string
+---@return boolean|number|string|nil
+function settings.get(name) end
+
+---Sets a setting, which tells whoever hears of it. Returns false for a
+---value that does not fit its kind, its range, or its choices, which the
+---log says once.
+---@param name string
+---@param value boolean|number|string
+---@return boolean
+function settings.set(name, value) end
+
+---Presses an action, which tells whoever hears of it.
+---@param name string
+---@return boolean
+function settings.trigger(name) end
+
+---Calls the function after the setting changes, with what it holds now,
+---or with nil for an action, for as long as the scripts run.
+---@param name string
+---@param handler fun(value: boolean|number|string|nil)
+function settings.on_change(name, handler) end
+
 ---@class scenelib
 scene = {}
 

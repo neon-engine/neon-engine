@@ -15,6 +15,7 @@
 #include "neon/render/texture-scale.hpp"
 #include "neon/render/target-quality.hpp"
 #include "neon/render/tonemapper.hpp"
+#include "neon/settings/setting-declaration.hpp"
 #include "neon/window/window-mode.hpp"
 
 enum class RenderingApi
@@ -125,6 +126,13 @@ struct SettingsConfig
   /// then those the project declares in its settings file. The audio
   /// system starts with them, and a settings menu changes the volumes.
   std::vector<neon::SoundGroupSetting> sound_groups = neon::built_in_sound_groups();
+
+  /// The settings the game declares for itself under `game` of its
+  /// settings file, each with its kind, its default, and what it may be
+  /// set to, and with what the player's file set it to. The runtime
+  /// declares them with a SettingsStore, which the menu, the scripts, and
+  /// the game read and change. See docs/settings.md.
+  std::vector<neon::SettingDeclaration> game_settings;
 
   /// The quality presets `rendering.quality`, `--quality`, and the Quality
   /// row of a settings menu choose from: those of the engine, changed,

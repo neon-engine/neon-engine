@@ -54,12 +54,20 @@ namespace neon
   ///         music: 0.6
   ///         ambience: 0.5
   ///
+  ///     game:
+  ///       difficulty: hard
+  ///
   /// What a file leaves out keeps the value it had, so that the files are
   /// read in layers, each on top of the one before: the defaults in code,
   /// the file of the project at `assets://settings.yml`, the file of the
   /// player at `user://settings.yml`, and then the command line. A name
   /// that is not known is an error, so that a name that was misspelled
   /// does not go unnoticed.
+  ///
+  /// Under `game` a plain value sets a setting of the game, which the
+  /// project's file declares, see ProjectFile and SettingDeclaration. The
+  /// project's settings and the player's set them alike, each on top of the
+  /// one before.
   ///
   /// Which format the file has is up to the DocumentFormat that is handed in.
   class SettingsFile final

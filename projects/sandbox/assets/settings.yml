@@ -13,3 +13,8 @@ window:
 ui:
   pause_menu: engine://ui/pause.ui.yml
   settings_menu: engine://ui/settings.ui.yml
+
+# The settings of the game itself are declared in project.yml, see
+# docs/projects.md, and what each is set to would be written here under
+# `game`, as the player's file writes it: `game: show_hints: false`. The
+# sandbox keeps the defaults its project declares.
