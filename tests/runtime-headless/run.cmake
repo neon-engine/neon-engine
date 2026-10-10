@@ -51,6 +51,15 @@ elseif (CASE STREQUAL "quality-preset-of-the-project")
   set(SCRIPT "5: hold pause\n8: hold ui-down\n11: hold ui-accept\n20: pointer 1000 246\n21: click\n25: hold ui-down\n28: hold ui-down\n31: hold ui-accept")
   run_headless(--output-dir shots --screenshot output://frame.png --screenshot-at 18,40
           --scene assets://scenes/hud-demo.scene.yml --input "${SCRIPT}")
+elseif (CASE STREQUAL "settings-menu-with-a-controller")
+  # pause, down to Settings, accept; then, with the focus on Apply, up
+  # through every row to the first, and down through every row to the
+  # buttons, which accept presses. More presses than rows, so that the
+  # walk reaches the ends whatever the project adds to the menu; a press
+  # at an end is refused and changes nothing
+  set(SCRIPT "5: hold pause\n8: hold ui-down\n11: hold ui-accept\n14: hold ui-up\n16: hold ui-up\n18: hold ui-up\n20: hold ui-up\n22: hold ui-up\n24: hold ui-up\n26: hold ui-up\n28: hold ui-up\n30: hold ui-up\n32: hold ui-up\n34: hold ui-up\n36: hold ui-up\n38: hold ui-up\n40: hold ui-up\n42: hold ui-up\n44: hold ui-up\n46: hold ui-up\n48: hold ui-up\n50: hold ui-up\n52: hold ui-up\n54: hold ui-up\n56: hold ui-up\n58: hold ui-up\n60: hold ui-up\n62: hold ui-up\n64: hold ui-up\n66: hold ui-up\n68: hold ui-up\n70: hold ui-up\n72: hold ui-up\n74: hold ui-up\n76: hold ui-up\n78: hold ui-down\n80: hold ui-down\n82: hold ui-down\n84: hold ui-down\n86: hold ui-down\n88: hold ui-down\n90: hold ui-down\n92: hold ui-down\n94: hold ui-down\n96: hold ui-down\n98: hold ui-down\n100: hold ui-down\n102: hold ui-down\n104: hold ui-down\n106: hold ui-down\n108: hold ui-down\n110: hold ui-down\n112: hold ui-down\n114: hold ui-down\n116: hold ui-down\n118: hold ui-down\n120: hold ui-down\n122: hold ui-down\n124: hold ui-down\n126: hold ui-down\n128: hold ui-down\n130: hold ui-down\n132: hold ui-down\n134: hold ui-down\n136: hold ui-down\n138: hold ui-down\n140: hold ui-down\n144: hold ui-accept")
+  run_headless(--output-dir shots --screenshot output://frame.png --screenshot-at 18,142,150
+          --scene assets://scenes/hud-demo.scene.yml --input "${SCRIPT}")
 elseif (CASE STREQUAL "quality-of-the-command-line-from-the-project")
   run_headless(--frames 1 --quality potato)
 elseif (CASE STREQUAL "ui-scale")
@@ -217,6 +226,35 @@ elseif (CASE STREQUAL "quality-preset-of-the-project")
   file(SHA256 "${DIRECTORY}/shots/frame-0040.png" AFTER)
   if (BEFORE STREQUAL AFTER)
     fail("Expected the preset to change the frame")
+  endif ()
+elseif (CASE STREQUAL "settings-menu-with-a-controller")
+  expect_exit_code(0)
+  expect_output("Rendered 150 frames, stopping")
+  expect_no_output("[error]")
+  expect_no_output("[warning]")
+  expect_output("Loading the user interface from engine://ui/settings.ui.yml")
+
+  # the focus went up to the first row and down to the last control, past
+  # every dropdown, slider, toggle, and text on the way
+  expect_output("The focus moved to player-name")
+  expect_output("The focus moved to back")
+
+  # moving the focus changed no setting, and accept on Back closed the menu
+  expect_no_output("The menu set ")
+  expect_output("Unloading the user interface of engine://ui/settings.ui.yml")
+  expect_image("shots/frame-0018.png")
+  expect_image("shots/frame-0142.png")
+  expect_image("shots/frame-0150.png")
+
+  # the list scrolled to keep the focus in view, and the menu is gone
+  file(SHA256 "${DIRECTORY}/shots/frame-0018.png" OPENED)
+  file(SHA256 "${DIRECTORY}/shots/frame-0142.png" WALKED)
+  file(SHA256 "${DIRECTORY}/shots/frame-0150.png" CLOSED)
+  if (OPENED STREQUAL WALKED)
+    fail("Expected the walk to change the frame")
+  endif ()
+  if (WALKED STREQUAL CLOSED)
+    fail("Expected Back to close the menu")
   endif ()
 elseif (CASE STREQUAL "quality-of-the-command-line-from-the-project")
   expect_exit_code(0)

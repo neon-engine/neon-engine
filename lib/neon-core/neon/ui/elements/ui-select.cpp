@@ -312,10 +312,12 @@ namespace neon
 
   bool UiSelect::UsesDirection(const Key direction) const
   {
-    // up and down are its own: they move through the choices. Left and
-    // right move the focus, unless the list is open, which they then do
-    // nothing in
-    return direction == Key::Up || direction == Key::Down || _is_open;
+    // While the list is open the directions are its own: up and down move
+    // through the choices, and left and right do nothing, so that the focus
+    // stays in it. While it is closed every direction moves the focus, so
+    // that a controller gets past it to the next row
+    (void) direction;
+    return _is_open;
   }
 
   bool UiSelect::HasContent() const
@@ -443,30 +445,18 @@ namespace neon
 
       case UiInteraction::Kind::Direction:
       {
-        if (interaction.key != Key::Up && interaction.key != Key::Down)
-        {
-          interaction.is_used = _is_open;
-          break;
-        }
+        // only the open list takes a direction; closed, they move the focus
+        if (!_is_open) { break; }
 
+        interaction.is_used = true;
+        if (interaction.key != Key::Up && interaction.key != Key::Down) { break; }
         if (_options.empty()) { break; }
 
-        if (_is_open)
-        {
-          // through the list, without going around
-          if (interaction.key == Key::Down && _highlighted + 1 < _options.size()) { _highlighted++; }
-          if (interaction.key == Key::Up && _highlighted > 0) { _highlighted--; }
-          ShowHighlighted();
-          Invalidate(UiDirty::Paint);
-        } else
-        {
-          // the next choice, right away
-          const std::size_t now = _has_chosen ? _chosen : 0;
-          if (interaction.key == Key::Down && now + 1 < _options.size()) { Choose(now + 1, true); }
-          if (interaction.key == Key::Up && now > 0) { Choose(now - 1, true); }
-          if (!_has_chosen) { Choose(0, true); }
-        }
-        interaction.is_used = true;
+        // through the list, without going around
+        if (interaction.key == Key::Down && _highlighted + 1 < _options.size()) { _highlighted++; }
+        if (interaction.key == Key::Up && _highlighted > 0) { _highlighted--; }
+        ShowHighlighted();
+        Invalidate(UiDirty::Paint);
         break;
       }
 

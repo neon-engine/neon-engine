@@ -130,6 +130,32 @@ namespace neon
     return true;
   }
 
+  UiRectangle Tree_UiSystem::BoxAfterScrolling(const UiElement &element) const
+  {
+    UiRectangle box = element.GetBox();
+
+    for (const UiElement *around = element.GetParent(); around != nullptr; around = around->GetParent())
+    {
+      float scroll_x = around->GetScrollX();
+      float scroll_y = around->GetScrollY();
+
+      for (const auto &move : _scroll_moves)
+      {
+        if (move.element != around->GetId()) { continue; }
+
+        box.left -= move.to_x - scroll_x;
+        box.right -= move.to_x - scroll_x;
+        box.top -= move.to_y - scroll_y;
+        box.bottom -= move.to_y - scroll_y;
+
+        scroll_x = move.to_x;
+        scroll_y = move.to_y;
+      }
+    }
+
+    return box;
+  }
+
   void Tree_UiSystem::ScrollToShow(UiElement &element)
   {
     UiRectangle box = element.GetBox();

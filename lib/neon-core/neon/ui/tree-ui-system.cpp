@@ -884,61 +884,117 @@ namespace neon
       return true;
     }
 
-    // in pixels, since the files that are shown may differ in scale
-    const auto center_of = [this](const UiElement *element)
+    // in pixels, since the files that are shown may differ in scale, and
+    // where a list that is still scrolling smoothly will have it
+    const auto box_of = [this](const UiElement *element)
     {
       const UiDocument *document = DocumentOf(element);
-      const UiRectangle box = ToPixels(element->GetBox(), document != nullptr ? document->frame.scale : 1.0f);
-      return std::pair{(box.left + box.right) / 2.0f, (box.top + box.bottom) / 2.0f};
+      return ToPixels(BoxAfterScrolling(*element), document != nullptr ? document->frame.scale : 1.0f);
     };
 
-    const auto [from_x, from_y] = center_of(_focused);
+    const UiRectangle from = box_of(_focused);
+    const float from_x = (from.left + from.right) / 2.0f;
+    const float from_y = (from.top + from.bottom) / 2.0f;
 
-    UiElement *nearest = nullptr;
-    float least = std::numeric_limits<float>::max();
-
-    for (UiElement *candidate : candidates)
+    // What scrolls around what has the focus, as the list of a settings
+    // menu: a row of it that is scrolled out of sight is still the next
+    // one in its direction, and comes before what lies outside the list,
+    // as its Back button. The focus leaves the list from its last row
+    const UiElement *scrolling = _focused->GetParent();
+    while (scrolling != nullptr && !scrolling->GetStyle().ScrollsX() && !scrolling->GetStyle().ScrollsY())
     {
-      if (candidate == _focused) { continue; }
-
-      const auto [x, y] = center_of(candidate);
-      const float right = x - from_x;
-      const float down = y - from_y;
-
-      float along = 0.0f;
-      float across = 0.0f;
-
-      switch (direction)
-      {
-        case Direction::Up:
-          along = -down;
-          across = right;
-          break;
-        case Direction::Right:
-          along = right;
-          across = down;
-          break;
-        case Direction::Down:
-          along = down;
-          across = right;
-          break;
-        case Direction::Left:
-          along = -right;
-          across = down;
-          break;
-      }
-
-      if (along <= 0.5f) { continue; }
-
-      // what lies straight ahead is preferred to what is nearer and off
-      // to the side
-      const float distance = along + 2.0f * std::abs(across);
-      if (distance < least)
-      {
-        least = distance;
-        nearest = candidate;
-      }
+      scrolling = scrolling->GetParent();
     }
+
+    const auto is_inside = [](const UiElement *element, const UiElement *container)
+    {
+      for (const UiElement *up = element->GetParent(); up != nullptr; up = up->GetParent())
+      {
+        if (up == container) { return true; }
+      }
+      return false;
+    };
+
+    // Whether a candidate overlaps what has the focus across the direction,
+    // which is what lies straight ahead: a small switch under a wide
+    // dropdown is the next row down, not something off to the side
+    const auto overlaps = [](const float start, const float end, const float other_start, const float other_end)
+    {
+      return other_start <= end && other_end >= start;
+    };
+
+    const auto nearest_of = [&](const bool within_scrolling)
+    {
+      UiElement *nearest = nullptr;
+      bool nearest_is_ahead = false;
+      float least = std::numeric_limits<float>::max();
+
+      for (UiElement *candidate : candidates)
+      {
+        if (candidate == _focused) { continue; }
+        if (within_scrolling && !is_inside(candidate, scrolling)) { continue; }
+
+        const UiRectangle box = box_of(candidate);
+        const float right = (box.left + box.right) / 2.0f - from_x;
+        const float down = (box.top + box.bottom) / 2.0f - from_y;
+
+        // between the centers, and from edge to edge
+        float along = 0.0f;
+        float across = 0.0f;
+        float ahead = 0.0f;
+        bool is_ahead = false;
+
+        switch (direction)
+        {
+          case Direction::Up:
+            along = -down;
+            across = right;
+            ahead = from.top - box.bottom;
+            is_ahead = overlaps(from.left, from.right, box.left, box.right);
+            break;
+          case Direction::Right:
+            along = right;
+            across = down;
+            ahead = box.left - from.right;
+            is_ahead = overlaps(from.top, from.bottom, box.top, box.bottom);
+            break;
+          case Direction::Down:
+            along = down;
+            across = right;
+            ahead = box.top - from.bottom;
+            is_ahead = overlaps(from.left, from.right, box.left, box.right);
+            break;
+          case Direction::Left:
+            along = -right;
+            across = down;
+            ahead = from.left - box.right;
+            is_ahead = overlaps(from.top, from.bottom, box.top, box.bottom);
+            break;
+        }
+
+        // its center has to lie in the direction
+        if (along <= 0.5f) { continue; }
+
+        // What lies straight ahead comes before anything off to the side,
+        // the nearest edge first. Off to the side, what is nearer and
+        // less to the side wins
+        if (is_ahead && !nearest_is_ahead) { least = std::numeric_limits<float>::max(); }
+        if (!is_ahead && nearest_is_ahead) { continue; }
+
+        const float distance = is_ahead ? std::max(0.0f, ahead) : along + 2.0f * std::abs(across);
+        if (distance < least)
+        {
+          least = distance;
+          nearest = candidate;
+          nearest_is_ahead = is_ahead;
+        }
+      }
+
+      return nearest;
+    };
+
+    UiElement *nearest = scrolling != nullptr ? nearest_of(true) : nullptr;
+    if (nearest == nullptr) { nearest = nearest_of(false); }
 
     // nothing in that direction leaves the focus where it is
     if (nearest == nullptr) { return false; }

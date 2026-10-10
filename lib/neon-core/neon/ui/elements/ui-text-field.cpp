@@ -211,9 +211,13 @@ namespace neon
 
   bool UiTextField::UsesDirection(const Key direction) const
   {
-    // the arrows move the caret. Up and down move it in a text of several
-    // lines, and to the ends of a text of one
-    return direction == Key::Left || direction == Key::Right || direction == Key::Up || direction == Key::Down;
+    // Left and right move the caret. Up and down move it in a text of
+    // several lines, as far as its first and last line; a text of one line
+    // has no lines to move in, and leaves them to the focus. The arrows of
+    // the keyboard come as keys, not as directions, and move to the ends of
+    // one line as before
+    if (direction == Key::Left || direction == Key::Right) { return true; }
+    return _editor.IsMultiline();
   }
 
   bool UiTextField::HasContent() const
@@ -309,7 +313,7 @@ namespace neon
     return _editor.FromShown(MeasureOf(frame).OffsetAt(RequestOf(frame, shown), at_x, at_y));
   }
 
-  void UiTextField::MoveVertically(const UiFrame &frame, const bool up, const bool selecting)
+  bool UiTextField::MoveVertically(const UiFrame &frame, const bool up, const bool selecting)
   {
     std::size_t caret = 0;
     std::size_t start = 0;
@@ -328,21 +332,26 @@ namespace neon
     const float y = at.y + (up ? -0.5f : 1.5f) * std::max(1.0f, at.height);
     if (y < 0.0f)
     {
+      // on the first line already: to its start, and from there nowhere
+      const bool at_start = caret == 0;
       _editor.MoveToStart(selecting);
       _wanted_x = std::numeric_limits<float>::quiet_NaN();
-      return;
+      return !at_start;
     }
 
     const auto lines = measure.LinesOf(request);
     if (!lines.empty() && y >= lines.back().top + lines.back().height)
     {
+      // on the last line already: to its end, and from there nowhere
+      const bool at_end = caret >= shown.size();
       _editor.MoveToEnd(selecting);
       _wanted_x = std::numeric_limits<float>::quiet_NaN();
-      return;
+      return !at_end;
     }
 
     _editor.SetCaret(_editor.FromShown(measure.OffsetAt(request, x, y)), selecting);
     _wanted_x = x;
+    return true;
   }
 
   void UiTextField::KeepCaretInView(const UiFrame &frame)
@@ -408,11 +417,11 @@ namespace neon
         _editor.MoveRight(selecting, modifiers.word);
         break;
       case Key::Up:
-        if (_editor.IsMultiline()) { MoveVertically(frame, true, selecting); }
+        if (_editor.IsMultiline()) { moved = MoveVertically(frame, true, selecting); }
         else { _editor.MoveToStart(selecting); }
         break;
       case Key::Down:
-        if (_editor.IsMultiline()) { MoveVertically(frame, false, selecting); }
+        if (_editor.IsMultiline()) { moved = MoveVertically(frame, false, selecting); }
         else { _editor.MoveToEnd(selecting); }
         break;
       case Key::Home:
@@ -469,7 +478,9 @@ namespace neon
         return;
     }
 
-    interaction.is_used = true;
+    // a caret that had nowhere to go leaves the key to the focus, which a
+    // controller moves on from the first or the last line of a text with
+    interaction.is_used = changed || moved || (interaction.key != Key::Up && interaction.key != Key::Down);
 
     if (changed)
     {

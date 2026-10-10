@@ -82,8 +82,10 @@ namespace neon
     /// the file from the corner of the document.
     [[nodiscard]] std::size_t OffsetAt(const UiFrame &frame, float x, float y) const;
 
-    /// Moves the caret up or down a line, to the place under it.
-    void MoveVertically(const UiFrame &frame, bool up, bool selecting);
+    /// Moves the caret up or down a line, to the place under it. Says
+    /// whether it moved: it does not from the start of the text upwards,
+    /// nor from its end downwards.
+    bool MoveVertically(const UiFrame &frame, bool up, bool selecting);
 
     void KeepCaretInView(const UiFrame &frame);
 

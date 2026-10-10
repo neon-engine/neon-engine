@@ -620,8 +620,14 @@ namespace
       "    - value: 2\n"
       "      text: High\n");
 
-    // closed, down chooses the next right away
+    // closed, down moves the focus and chooses nothing; accept opens the
+    // list, down moves through it, and accept chooses
     PressAction(Action::Ui_Down);
+    EXPECT_TRUE(TakeChanges().empty());
+
+    PressAction(Action::Ui_Accept);
+    PressAction(Action::Ui_Down);
+    PressAction(Action::Ui_Accept);
     auto changes = TakeChanges();
     ASSERT_EQ(changes.size(), 1u);
     EXPECT_EQ(changes.front().value, UiValue::Text("2"));

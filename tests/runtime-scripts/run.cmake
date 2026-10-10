@@ -10,8 +10,9 @@
 # controls-call-their-handlers shows controls-demo.scene.yml, whose
 # controls name the handler `tune` of scripts/tuner.lua with `on_change`,
 # and changes each of them with an input script: the slider, which has the
-# focus, the toggle under it, the select under that, and the input the tab
-# key moves to. The handler says in the log what it was handed.
+# focus, the toggle under it, the select under that, which accept opens
+# and chooses from, and the input the tab key moves to. The handler says
+# in the log what it was handed.
 
 #
 # The third case runs settings-probe.scene.yml, whose SettingsProbe,
@@ -26,8 +27,8 @@ if (CASE STREQUAL "a-script-turns-the-card-until-it-is-gone")
           --output-dir shots --screenshot output://frame.png --screenshot-at 1,10
           --scene assets://scenes/scripting-demo.scene.yml)
 elseif (CASE STREQUAL "controls-call-their-handlers")
-  set(SCRIPT "3: hold ui-right\n6: hold ui-down\n9: hold ui-right\n12: hold ui-down\n15: hold ui-down\n18: key tab\n21: text Ada")
-  run(--headless-renderer --window-size 1280x720 --render-scale 1 --time-step 0.05 --frames 25
+  set(SCRIPT "3: hold ui-right\n6: hold ui-down\n9: hold ui-right\n12: hold ui-down\n15: hold ui-accept\n18: hold ui-down\n21: hold ui-accept\n24: key tab\n27: text Ada")
+  run(--headless-renderer --window-size 1280x720 --render-scale 1 --time-step 0.05 --frames 31
           --scene assets://scenes/controls-demo.scene.yml --input "${SCRIPT}")
 elseif (CASE STREQUAL "a-script-reads-and-hears-a-setting")
   run(--headless-renderer --window-size 640x360 --render-scale 1 --time-step 0.05 --frames 3

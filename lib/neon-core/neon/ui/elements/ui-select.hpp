@@ -22,8 +22,8 @@ namespace neon
   ///
   /// `value` is what is chosen, or a value of the game in brackets, which
   /// choosing sets. A click, accept, or space opens the list; up and down
-  /// move through it and change the choice while it is closed; accept
-  /// chooses, and cancel closes. It reports `changed` with the value, and
+  /// move through it once it is open, and move the focus on while it is
+  /// closed; accept chooses, and cancel closes. It reports `changed` with the value, and
   /// with `on_change: tune` choosing calls a function of the scripts.
   ///
   /// The list is drawn on top of everything else, and is the part `list`;

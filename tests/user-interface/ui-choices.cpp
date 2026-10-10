@@ -460,15 +460,16 @@ namespace
       "- {type: select, name: quality, options: [low, medium, high], value: low, autofocus: true}\n"
       "- {type: button, name: ok, text: OK}\n");
 
-    // closed, down goes to the next choice right away
+    // closed, down moves the focus on and changes nothing, so that a
+    // controller gets past it
     Press(Action::Ui_Down);
-    EXPECT_EQ(Text("quality", "value"), "medium");
+    EXPECT_EQ(Text("quality", "value"), "low");
     EXPECT_FALSE(Flag("quality", "open"));
-    EXPECT_EQ(_ui->GetFocused(), "quality");
+    EXPECT_EQ(_ui->GetFocused(), "ok");
 
     Press(Action::Ui_Up);
-    Press(Action::Ui_Up);
-    EXPECT_EQ(Text("quality", "value"), "low") << "no further than the first";
+    EXPECT_EQ(_ui->GetFocused(), "quality");
+    EXPECT_EQ(Text("quality", "value"), "low");
 
     // accept opens, down moves through the list, and accept chooses
     Press(Action::Ui_Accept);

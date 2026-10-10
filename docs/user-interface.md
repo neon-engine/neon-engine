@@ -1269,7 +1269,7 @@ An element that scrolled reports `scroll`, with where it is now.
 | Escape | Cancel, which takes the focus away. Backspace deletes and does not cancel here |
 | Tab | Moves the focus on |
 | The shortcut key with A, C, X, V, Z, Y, and shift Z | Select all, copy, cut, paste, undo, redo, redo |
-| A controller | The directions move the caret as the arrows do, and accept does nothing |
+| A controller | Left and right move the caret as the arrows do, and accept does nothing. Up and down move the focus on from an `input`, and from the first and the last line of a `textarea`; between its lines they move the caret |
 
 The shortcut key is command on a Mac and control elsewhere; the word key
 is option on a Mac and control elsewhere. The backend says which, so that
@@ -1299,7 +1299,7 @@ replace it: where the caret is at a byte, and which byte is at a place.
 | `checkbox`, `toggle` | A click ticks it, or takes the tick away | Accept does the same. Left and right move a `toggle` off and on |
 | `radio` | A click chooses it, and lets go of the others of its `group` in the file | Accept chooses it |
 | `slider` | A press puts the knob where the pointer is, and dragging moves it | Left and right move it a `step`, page up and down ten, home and end to the ends. The wheel moves it a step |
-| `select` | A click opens the list, and a click on a choice takes it. A click anywhere else closes it | Accept opens it, up and down move through it, accept takes the choice, cancel closes it. While it is closed, up and down change the choice right away, as in HTML. Home and end go to the ends of an open list |
+| `select` | A click opens the list, and a click on a choice takes it. A click anywhere else closes it | Accept opens it, up and down move through it, accept takes the choice, cancel closes it. While it is closed, every direction moves the focus on, so that a controller gets past it: a choice is changed by opening the list. Home and end go to the ends of an open list |
 
 Each reports `changed`: `true` or `false`, the number, or the value. A
 radio that is let go of reports `changed` with `false`, in the order of the
@@ -1412,7 +1412,7 @@ ui.SetFlag("paused", true);
 |---|---|
 | The pointer over an element that takes it | The element is in `hover`. After it rested for 0.6 seconds the `title` of the element is shown under it, styled as `::tooltip` |
 | The button of the pointer, pressed and released on the same element | A click. Two within 0.4 seconds are a `double_click` as well |
-| Up, down, left, right | Moves the focus to the nearest element in that direction that takes it, unless what has the focus uses the direction itself: a slider its left and right, a text its arrows. What lies straight ahead is preferred. At the edge the focus stays. A modal file keeps the focus inside |
+| Up, down, left, right | Moves the focus to the nearest element in that direction that takes it, unless what has the focus uses the direction itself: a slider its left and right, a text its left and right, an open `select` all four. What has no use for it after all, as a `textarea` from its last line downwards, lets the focus move. What lies straight ahead is preferred. At the edge the focus stays. A modal file keeps the focus inside |
 | Tab, shift and tab | Moves the focus in the order of the file, around again at the end. `tab_index` puts elements in front, and `-1` leaves one out |
 | Accept | A click on what has the focus |
 | Cancel | What the file on top says: `close` takes it away and the focus returns to where it was before the file was shown; `blur` takes the focus away; `none` does nothing; `auto` closes a modal file and blurs otherwise. What has something open closes it first, as a select its list. The game hears `cancel` in every case |

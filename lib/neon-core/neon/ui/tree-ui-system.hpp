@@ -315,6 +315,12 @@ namespace neon
     /// Scrolls whatever the element is inside of so that it can be seen.
     void ScrollToShow(UiElement &element);
 
+    /// Where the element will be once what it is inside of has scrolled
+    /// to where it is on its way to, in units of its file. The box is
+    /// placed at what is scrolled by now, which a smooth scroll lags
+    /// behind.
+    [[nodiscard]] UiRectangle BoxAfterScrolling(const UiElement &element) const;
+
     /// Returns whether the press went to a scrollbar.
     bool PressScrollbar(float x, float y);
 

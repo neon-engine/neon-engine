@@ -121,7 +121,11 @@ namespace neon
         Emit(*_focused, "focused", event);
 
         // what the keys moved the focus to may be out of sight
-        if (_focus_came_by_keys) { ScrollToShow(*_focused); }
+        if (_focus_came_by_keys)
+        {
+          ScrollToShow(*_focused);
+          if (!_focused->GetName().empty()) { _logger->Debug("The focus moved to {}", _focused->GetName()); }
+        }
       }
 
       _told_focus = now;
@@ -554,15 +558,20 @@ namespace neon
       {
         const Key key = KeyOf(i);
 
+        bool used = false;
+
         if (_focused != nullptr && _focused->IsEnabled() && _focused->UsesDirection(key))
         {
           // what has the focus moves by itself: a slider, and what
-          // chooses one of several
+          // chooses one of several. What it had no use for, as down from
+          // the last line of a text, moves the focus after all
           UiInteraction interaction;
           interaction.kind = UiInteraction::Kind::Direction;
           interaction.key = key;
-          Interact(*_focused, interaction);
-        } else if (!MoveFocus(static_cast<Direction>(i)))
+          used = Interact(*_focused, interaction);
+        }
+
+        if (!used && !MoveFocus(static_cast<Direction>(i)))
         {
           _direction_was_refused[i] = true;
         }
