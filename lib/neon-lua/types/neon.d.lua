@@ -447,9 +447,9 @@ function ui.set_number_of(interface, name, number) end
 ---@param flag boolean
 function ui.set_flag_of(interface, name, flag) end
 
----The settings of the game, named as the project's settings file declares
----them under `game`, see docs/settings.md. A name that is not declared is
----an error that lists the names.
+---The settings of the game, named as the project's project.yml declares
+---them under `settings`, see docs/projects.md and docs/settings.md. A name
+---that is not declared is an error that lists the names.
 ---@class settingslib
 settings = {}
 

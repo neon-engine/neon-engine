@@ -127,9 +127,10 @@ struct SettingsConfig
   /// system starts with them, and a settings menu changes the volumes.
   std::vector<neon::SoundGroupSetting> sound_groups = neon::built_in_sound_groups();
 
-  /// The settings the game declares for itself under `game` of its
-  /// settings file, each with its kind, its default, and what it may be
-  /// set to, and with what the player's file set it to. The runtime
+  /// The settings the game declares for itself under `settings` of its
+  /// project file, each with its kind, its default, and what it may be set
+  /// to, and with what the settings files set it to under `game`, the
+  /// project's and then the player's. The runtime
   /// declares them with a SettingsStore, which the menu, the scripts, and
   /// the game read and change. See docs/settings.md.
   std::vector<neon::SettingDeclaration> game_settings;

@@ -21,10 +21,11 @@ namespace neon
 
   /// The settings of a game, by name: each declared with its kind, its
   /// default, and what it may be set to, see SettingDeclaration, and what
-  /// it holds now. A game declares them in its settings file under `game`
-  /// (SettingsFile), the player's file sets them, the settings menu changes
-  /// them (GameMenu), the scripts read and set them (`settings` in Lua),
-  /// and whoever cares hears of a change through OnChange().
+  /// it holds now. A game declares them in its project file under
+  /// `settings` (ProjectFile), the settings files set them under `game`
+  /// (SettingsFile), the settings menu shows and changes them (GameMenu),
+  /// the scripts read and set them (`settings` in Lua), and whoever cares
+  /// hears of a change through OnChange().
   ///
   /// A value that does not fit the kind, the range, or the choices is
   /// refused, which is said in the log once for a name. A change notifies
