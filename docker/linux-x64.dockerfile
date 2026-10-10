@@ -34,16 +34,22 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # LLVM from the official apt repository, pinned to a single major version.
+#
+# llvm-${LLVM_VERSION} brings llvm-ar and llvm-ranlib. The release presets
+# build with link-time optimization, and CMake then archives static libraries
+# with those two instead of GNU ar, which cannot read LLVM bitcode objects.
+# Without them every static library of a release build fails to link with
+# "CMAKE_C_COMPILER_AR-NOTFOUND: not found".
 RUN curl -fsSL https://apt.llvm.org/llvm-snapshot.gpg.key \
         | gpg --dearmor -o /usr/share/keyrings/llvm.gpg \
     && echo "deb [signed-by=/usr/share/keyrings/llvm.gpg] http://apt.llvm.org/noble/ llvm-toolchain-noble-${LLVM_VERSION} main" \
         > /etc/apt/sources.list.d/llvm.list \
     && apt-get update && apt-get install -y --no-install-recommends \
-        clang-${LLVM_VERSION} lld-${LLVM_VERSION} lldb-${LLVM_VERSION} \
+        clang-${LLVM_VERSION} lld-${LLVM_VERSION} lldb-${LLVM_VERSION} llvm-${LLVM_VERSION} \
         libc++-${LLVM_VERSION}-dev libc++abi-${LLVM_VERSION}-dev \
         clang-format-${LLVM_VERSION} clang-tidy-${LLVM_VERSION} \
     && rm -rf /var/lib/apt/lists/* \
-    && for tool in clang clang++ lld ld.lld lldb clang-format clang-tidy; do \
+    && for tool in clang clang++ lld ld.lld lldb llvm-ar llvm-ranlib clang-format clang-tidy; do \
            update-alternatives --install /usr/bin/${tool} ${tool} /usr/bin/${tool}-${LLVM_VERSION} 100; \
        done
 

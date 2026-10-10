@@ -134,7 +134,8 @@ image is defined in [docker/linux-x64.dockerfile](../docker/linux-x64.dockerfile
 and installs LLVM 20 from apt.llvm.org plus the X11, Wayland, graphics, and audio
 development packages that SDL2 needs to build from source.
 
-Build the image once, from the repository root:
+Build the image once, from the repository root, and again whenever the
+dockerfile changes:
 
 ```bash
 docker build --platform linux/amd64 \
