@@ -4,6 +4,7 @@
 #include <cmath>
 #include <format>
 
+#include <neon/ui/ui-call-field.hpp>
 #include <neon/ui/ui-fields.hpp>
 
 #include "ui-binding.hpp"
@@ -61,7 +62,7 @@ namespace neon
     return Snapped(_min + static_cast<double>(fraction) * (_max - _min));
   }
 
-  void UiSlider::Change(const double value)
+  void UiSlider::Change(const double value, const bool by_player)
   {
     const double snapped = Snapped(value);
     if (snapped == _value) { return; }
@@ -70,7 +71,7 @@ namespace neon
     Invalidate(UiDirty::Paint);
 
     const UiValue number = UiValue::Number(snapped);
-    Notify("changed", number.AsText(), _binding, number);
+    Notify("changed", number.AsText(), _binding, number, by_player);
   }
 
   void UiSlider::ApplyDefaults(UiStyle &style) const
@@ -160,6 +161,8 @@ namespace neon
 
     _value = Snapped(_value);
 
+    UiCallField::Read(reader, "on_change", _on_change);
+
     if (const auto *value = reader.ReadValue("enabled"); value != nullptr && !UiFlag::Read(*value, _enabled))
     {
       std::string text;
@@ -200,6 +203,11 @@ namespace neon
     return true;
   }
 
+  const UiCall *UiSlider::CallsWhenChanged() const
+  {
+    return _on_change.IsEmpty() ? nullptr : &_on_change;
+  }
+
   LayoutSize UiSlider::Measure(const UiFrame &frame, const float available_width, const float available_height)
   {
     (void) frame;
@@ -237,13 +245,13 @@ namespace neon
     {
       case UiInteraction::Kind::PointerDown:
         _is_dragging = true;
-        Change(ValueAt(interaction.x));
+        Change(ValueAt(interaction.x), true);
         interaction.is_used = true;
         break;
 
       case UiInteraction::Kind::PointerMove:
         if (!_is_dragging) { break; }
-        Change(ValueAt(interaction.x));
+        Change(ValueAt(interaction.x), true);
         interaction.is_used = true;
         break;
 
@@ -253,7 +261,7 @@ namespace neon
         break;
 
       case UiInteraction::Kind::Direction:
-        Change(_value + (interaction.key == Key::Right ? _step : -_step));
+        Change(_value + (interaction.key == Key::Right ? _step : -_step), true);
         interaction.is_used = true;
         break;
 
@@ -261,16 +269,16 @@ namespace neon
         switch (interaction.key)
         {
           case Key::Home:
-            Change(_min);
+            Change(_min, true);
             break;
           case Key::End:
-            Change(_max);
+            Change(_max, true);
             break;
           case Key::PageUp:
-            Change(_value + 10.0 * _step);
+            Change(_value + 10.0 * _step, true);
             break;
           case Key::PageDown:
-            Change(_value - 10.0 * _step);
+            Change(_value - 10.0 * _step, true);
             break;
           default:
             return;
@@ -281,7 +289,7 @@ namespace neon
       case UiInteraction::Kind::Wheel:
         // a notch of the wheel is a step
         if (interaction.wheel_y == 0.0f) { break; }
-        Change(_value + (interaction.wheel_y < 0.0f ? _step : -_step));
+        Change(_value + (interaction.wheel_y < 0.0f ? _step : -_step), true);
         interaction.is_used = true;
         break;
 
@@ -361,6 +369,12 @@ namespace neon
       return true;
     }
 
+    if (name == "on_change")
+    {
+      value = _on_change.AsText();
+      return true;
+    }
+
     return false;
   }
 
@@ -373,7 +387,8 @@ namespace neon
       float number = 0.0f;
       if (!TakeNumber(value, what, number, error)) { return false; }
 
-      Change(number);
+      // what the game sets calls nothing
+      Change(number, false);
       return true;
     }
 
@@ -392,7 +407,7 @@ namespace neon
 
       // what was chosen may be outside of the ends now
       const double snapped = Snapped(_value);
-      if (snapped != _value) { Change(snapped); }
+      if (snapped != _value) { Change(snapped, false); }
       Invalidate(UiDirty::Paint);
       return true;
     }
@@ -409,6 +424,8 @@ namespace neon
 
     if (name == "autofocus") { return TakeFlag(value, what, _autofocus, error); }
 
+    if (name == "on_change") { return UiCallField::Set(value, what, _on_change, error); }
+
     return UiElement::SetField(name, value, error);
   }
 
@@ -420,7 +437,8 @@ namespace neon
       {"max", FieldKind::Float, "The most it can be", {}},
       {"step", FieldKind::Float, "What it moves by", {}},
       {"enabled", FieldKind::Boolean, "Whether it can be moved", {}},
-      {"autofocus", FieldKind::Boolean, "Whether it has the focus when its file is shown", {}}
+      {"autofocus", FieldKind::Boolean, "Whether it has the focus when its file is shown", {}},
+      {"on_change", FieldKind::String, "The function of the game that the player moving it calls, with what it is handed: tune, or tune(3, $event)", {}}
     };
   }
 

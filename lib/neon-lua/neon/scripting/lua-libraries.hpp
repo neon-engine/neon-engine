@@ -26,8 +26,9 @@ namespace neon
   /// `ui.set_flag(name, flag)` set a value that files refer to as `{name}`,
   /// and `ui.set_text_of(interface, name, text)`, `ui.set_number_of`, and
   /// `ui.set_flag_of` set it for one user interface. Without a user
-  /// interface a value that is set is dropped. A click is not asked for
-  /// here: an element names the function it calls with `on_click`.
+  /// interface a value that is set is dropped. A click or a change is not
+  /// asked for here: an element names the function it calls with
+  /// `on_click` or `on_change`.
   void open_ui_library(lua_State *lua);
 
   /// `log`: the engine's log. `log.debug`, `log.info`, `log.warn`, and

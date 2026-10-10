@@ -665,10 +665,10 @@ namespace
       return names;
     };
 
-    EXPECT_THAT(names("a"), ElementsAre("checked", "text", "enabled", "autofocus"));
-    EXPECT_THAT(names("b"), ElementsAre("checked", "text", "enabled", "autofocus"));
+    EXPECT_THAT(names("a"), ElementsAre("checked", "text", "enabled", "autofocus", "on_change"));
+    EXPECT_THAT(names("b"), ElementsAre("checked", "text", "enabled", "autofocus", "on_change"));
     EXPECT_THAT(names("c"), ElementsAre("checked", "value", "group", "text", "enabled", "autofocus"));
-    EXPECT_THAT(names("d"), ElementsAre("value", "min", "max", "step", "enabled", "autofocus"));
-    EXPECT_THAT(names("e"), ElementsAre("value", "text", "options", "placeholder", "open", "enabled", "autofocus"));
+    EXPECT_THAT(names("d"), ElementsAre("value", "min", "max", "step", "enabled", "autofocus", "on_change"));
+    EXPECT_THAT(names("e"), ElementsAre("value", "text", "options", "placeholder", "open", "enabled", "autofocus", "on_change"));
   }
 }

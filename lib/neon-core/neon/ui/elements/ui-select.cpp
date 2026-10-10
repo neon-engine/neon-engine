@@ -5,6 +5,7 @@
 #include <format>
 
 #include <neon/text/utf8.hpp>
+#include <neon/ui/ui-call-field.hpp>
 #include <neon/ui/ui-fields.hpp>
 
 #include "ui-binding.hpp"
@@ -106,7 +107,7 @@ namespace neon
     Invalidate(UiDirty::Paint);
   }
 
-  void UiSelect::Choose(const std::size_t index)
+  void UiSelect::Choose(const std::size_t index, const bool by_player)
   {
     if (index >= _options.size()) { return; }
     if (_has_chosen && index == _chosen) { return; }
@@ -115,7 +116,7 @@ namespace neon
     _has_chosen = true;
     Invalidate(UiDirty::Paint);
 
-    Notify("changed", _options[index].value, _binding, UiValue::Text(_options[index].value));
+    Notify("changed", _options[index].value, _binding, UiValue::Text(_options[index].value), by_player);
   }
 
   void UiSelect::ShowHighlighted()
@@ -209,6 +210,7 @@ namespace neon
   void UiSelect::ReadAttributes(const DataReader &reader)
   {
     reader.Read("autofocus", _autofocus);
+    UiCallField::Read(reader, "on_change", _on_change);
     reader.Read("placeholder", _placeholder);
 
     if (const auto *options = reader.ReadValue("options"); options != nullptr)
@@ -326,6 +328,11 @@ namespace neon
     return true;
   }
 
+  const UiCall *UiSelect::CallsWhenChanged() const
+  {
+    return _on_change.IsEmpty() ? nullptr : &_on_change;
+  }
+
   LayoutSize UiSelect::Measure(const UiFrame &frame, const float available_width, const float available_height)
   {
     (void) available_width;
@@ -392,7 +399,7 @@ namespace neon
         {
           // a press on a choice takes it, and one anywhere else closes
           const std::size_t index = OptionAt(interaction.y);
-          if (index < _options.size() && ListBox().Contains(interaction.x, interaction.y)) { Choose(index); }
+          if (index < _options.size() && ListBox().Contains(interaction.x, interaction.y)) { Choose(index, true); }
           Close();
         } else
         {
@@ -408,7 +415,7 @@ namespace neon
         {
           if (_is_open)
           {
-            Choose(_highlighted);
+            Choose(_highlighted, true);
             Close();
           } else
           {
@@ -455,9 +462,9 @@ namespace neon
         {
           // the next choice, right away
           const std::size_t now = _has_chosen ? _chosen : 0;
-          if (interaction.key == Key::Down && now + 1 < _options.size()) { Choose(now + 1); }
-          if (interaction.key == Key::Up && now > 0) { Choose(now - 1); }
-          if (!_has_chosen) { Choose(0); }
+          if (interaction.key == Key::Down && now + 1 < _options.size()) { Choose(now + 1, true); }
+          if (interaction.key == Key::Up && now > 0) { Choose(now - 1, true); }
+          if (!_has_chosen) { Choose(0, true); }
         }
         interaction.is_used = true;
         break;
@@ -605,6 +612,12 @@ namespace neon
       return true;
     }
 
+    if (name == "on_change")
+    {
+      value = _on_change.AsText();
+      return true;
+    }
+
     return false;
   }
 
@@ -624,7 +637,8 @@ namespace neon
         return false;
       }
 
-      Choose(index);
+      // what the game sets calls nothing
+      Choose(index, false);
       return true;
     }
 
@@ -696,6 +710,8 @@ namespace neon
 
     if (name == "autofocus") { return TakeFlag(value, what, _autofocus, error); }
 
+    if (name == "on_change") { return UiCallField::Set(value, what, _on_change, error); }
+
     return UiElement::SetField(name, value, error);
   }
 
@@ -708,7 +724,8 @@ namespace neon
       {"placeholder", FieldKind::String, "What is shown while nothing is chosen", {}},
       {"open", FieldKind::Boolean, "Whether the list is open", {}},
       {"enabled", FieldKind::Boolean, "Whether it can be chosen from", {}},
-      {"autofocus", FieldKind::Boolean, "Whether it has the focus when its file is shown", {}}
+      {"autofocus", FieldKind::Boolean, "Whether it has the focus when its file is shown", {}},
+      {"on_change", FieldKind::String, "The function of the game that the player choosing calls, with what it is handed: tune, or tune(3, $event)", {}}
     };
   }
 

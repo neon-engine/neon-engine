@@ -12,6 +12,7 @@
 
 #include "ui-call.hpp"
 #include "ui-handle.hpp"
+#include "ui-values.hpp"
 
 namespace neon
 {
@@ -23,7 +24,13 @@ namespace neon
     {
       /// An element was chosen: with the pointer, the keys, or a
       /// controller.
-      Click = 0
+      Click = 0,
+
+      /// The player changed what an element holds that names a function
+      /// with `on_change`: moved a slider, ticked a toggle, chose from a
+      /// select, or typed into an input. Once a frame for an element, with
+      /// what it holds at the end of it. What the game sets is no change.
+      Change
     };
 
     Kind kind = Kind::Click;
@@ -46,11 +53,17 @@ namespace neon
     /// `action: scene`. Empty for a click that asks for none.
     std::string scene;
 
-    /// The function the element names with `on_click`, with what it is
-    /// handed. A value of the user interface that was named is what it
-    /// held when the element was chosen, or nothing when there was none.
-    /// Empty for a click that calls nothing.
+    /// The function the element names with `on_click`, or with `on_change`
+    /// for a change, with what it is handed. A value of the user interface
+    /// that was named is what it held when the element was chosen or
+    /// changed, or nothing when there was none. Empty for a click that
+    /// calls nothing.
     UiCall call;
+
+    /// For a change, what the element holds now: a number for a slider, a
+    /// flag for a checkbox and a toggle, and a text for a select, an
+    /// input, and a textarea.
+    UiValue value;
   };
 
   /// The surface every application has: what the frame is drawn to, which

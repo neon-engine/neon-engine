@@ -22,7 +22,8 @@ namespace neon
   /// What the physics reported in the frame reaches the scripts before
   /// their `update`, so that a hook of a trigger or a touch sees the frame
   /// it happened in. So does what the user interface asked for: a click on
-  /// an element that names a function with `on_click` calls it on the
+  /// an element that names a function with `on_click`, or a change the
+  /// player made to one that names it with `on_change`, calls it on the
   /// systems of the entity whose `Ui` or `UiSurface` shows the file.
   class ScriptRunning final : public EntitySystem
   {

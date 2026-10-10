@@ -7,6 +7,7 @@ organization: neon-engine
 
 scenes:
   - assets://scenes/blockout.scene.yml
+  - assets://scenes/controls-demo.scene.yml
   - assets://scenes/culling-test.scene.yml
   - assets://scenes/end.scene.yml
   - assets://scenes/gamma-test.scene.yml

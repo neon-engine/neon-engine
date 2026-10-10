@@ -154,13 +154,13 @@ whole: `border: "2px solid #4c566a"`.
 | `image` | An image from a file | `img` | `src`, which has to be written | No |
 | `button` | What a player chooses. It reports a click. With `action: close` it also closes its file, as the Back button of a menu. With `action: scene` and the `scene` to change to it asks the game for that scene and closes its file, as the Start button of a title screen, see [scenes.md](scenes.md#changing-the-scene). With `on_click: unlock` or `on_click: open('safe', door, $event)` it calls a function of the scripts by its name, see [scripting.md](scripting.md#what-the-user-interface-calls) | `button` | `text`, `enabled`, `autofocus`, `action`, `scene`, `on_click` | Yes, in place of `text` |
 | `bar` | How much of something there is | `progress` | `value`, `max` | No |
-| `input` | A text of one line that is typed into. See [typing](#typing) | `input` | `value`, `kind`, `placeholder`, `max_length`, `read_only`, `pattern`, `enabled`, `autofocus` | No |
+| `input` | A text of one line that is typed into. See [typing](#typing). With `on_change: rename` what the player types calls a function of the scripts, see [what the player changes](#what-the-player-changes) | `input` | `value`, `kind`, `placeholder`, `max_length`, `read_only`, `pattern`, `enabled`, `autofocus`, `on_change` | No |
 | `textarea` | A text of several lines that is typed into | `textarea` | The same but `kind`, and `rows` | No |
-| `checkbox` | A box that is ticked or not. See [choosing](#choosing) | `input type=checkbox` | `checked`, `text`, `enabled`, `autofocus` | No |
+| `checkbox` | A box that is ticked or not. See [choosing](#choosing). With `on_change: tune` ticking it calls a function of the scripts | `input type=checkbox` | `checked`, `text`, `enabled`, `autofocus`, `on_change` | No |
 | `toggle` | A checkbox drawn as a switch | `input type=checkbox` with `role=switch` | The same | No |
 | `radio` | One of several, of which one is chosen at a time | `input type=radio` | `group`, `value`, `checked`, `text`, `enabled`, `autofocus` | No |
-| `slider` | A number between two others | `input type=range` | `min`, `max`, `step`, `value`, `enabled`, `autofocus` | No |
-| `select` | One of several, from a list that opens | `select` | `options`, `value`, `placeholder`, `enabled`, `autofocus` | No |
+| `slider` | A number between two others. With `on_change: tune` moving it calls a function of the scripts | `input type=range` | `min`, `max`, `step`, `value`, `enabled`, `autofocus`, `on_change` | No |
+| `select` | One of several, from a list that opens. With `on_change: tune` choosing calls a function of the scripts | `select` | `options`, `value`, `placeholder`, `enabled`, `autofocus`, `on_change` | No |
 
 | Name | Of | Holds | Default |
 |---|---|---|---|
@@ -185,6 +185,7 @@ whole: `border: "2px solid #4c566a"`.
 | `options` | `select` | A list of texts, or of maps with `value` and `text`. Set from code as a list of values, an option that is still there keeps the text the file gave it, and a new one is shown as its value | None |
 | `value` | `select` | The value of what is chosen, or a value of the game such as `"{quality}"` | Nothing is chosen |
 | `enabled`, `autofocus` | Every element that takes input | As for `button` | `true`, `false` |
+| `on_change` | `slider`, `checkbox`, `toggle`, `select`, `input`, `textarea` | The function of the scripts that the player changing it calls, written as `on_click` of a button is: `tune`, or `tune(3, $event)`. See [what the player changes](#what-the-player-changes) | None |
 
 What the engine gives an element when the file says nothing, as the style
 sheet of a browser does for HTML:
@@ -1305,7 +1306,8 @@ radio that is let go of reports `changed` with `false`, in the order of the
 file. Each follows a value of the game when it is given one in brackets,
 and sets it when it is chosen. The list of a `select` is drawn on top of
 everything, eight rows at a time, and takes the pointer before what lies
-under it.
+under it. All but the radio can name a function of the scripts with
+`on_change`, see [what the player changes](#what-the-player-changes).
 
 Each is drawn from parts a style sheet reaches: `::box` and `::mark` of a
 checkbox and a radio, `::track` and `::thumb` of a toggle, `::track`,
@@ -1588,6 +1590,7 @@ looked up; `ScriptRunning` hands those to the scripts with the entity that
 shows the file, and code in C++ reads them from `GetEvents()` as it reads
 any click. A click of a button with `action: scene` carries the scene in `event.scene`,
 which the runtime hands to the world; it is empty for every other click.
+`OnClick()` and `WasClicked()` are about clicks alone.
 
 | Rule | Reason |
 |---|---|
@@ -1613,6 +1616,37 @@ element. See [from code and scripts](#from-code-and-scripts).
 
 A game makes its sounds from these: a tick on `focused`, a clack on
 `click`, a switch on `changed`, and one for `cancel`.
+
+### What the player changes
+
+A slider, a checkbox, a toggle, a select, an input, and a textarea name the
+function of the scripts that the player changing them calls with
+`on_change`, written as `on_click` of a button is, see
+[scripting.md](scripting.md#what-the-user-interface-calls):
+
+```yaml
+- type: slider
+  name: music
+  min: 0
+  max: 1
+  step: 0.05
+  value: "{music_volume}"
+  on_change: tune('music', $event)
+
+- type: toggle
+  name: subtitles
+  text: Subtitles
+  on_change: show_subtitles
+```
+
+| | |
+|---|---|
+| When | Once a frame for an element the player changed in it, with the pointer, the keys, or a controller, with what it holds at the end of the frame. Dragging a slider calls it in every frame the knob moved, and typing in every frame something was typed or taken away. A frame in which nothing changed calls nothing, and neither does a step beyond the end of a slider, a choice that was chosen already, or return in an input, which is `submitted` |
+| What the game sets | Calls nothing: neither a value the element follows that the game sets, with `ui.set_number` and the rest in a script or `SetNumber()` in C++, nor a field set with `SetField()`. Listeners from code still hear `changed` for a field that was set, as before |
+| `$event` | As for a click, with `kind` `"change"`, and `value`: what the element holds now, a number for a slider, `true` or `false` for a checkbox and a toggle, and a text for a select (the `value` of the option), an input, and a textarea |
+| A value it follows | Still followed: what the player chose is written to it first, so `on_change: tune(music_volume)` is handed the new number |
+| In C++ | A `UiEvent` of `Kind::Change` in `GetEvents()`, with the function in `event.call` and what the element holds in `event.value`, a `UiValue`, for an element that has `on_change`. `OnClick()` and `WasClicked()` are not about it |
+| A radio | Has none yet: a radio that is let go of reports `changed` as well, and which of the two is the change is not settled |
 
 ## From code and scripts
 
@@ -1657,8 +1691,9 @@ ui.StartAnimation(sword, "shake", "0.5s linear");
 | Describing | `GetElementTypeNames`, `DescribeElement(type, TypeInfo &)`, which gives every field of a kind with what it holds and what it is for, and the style as a group, through the reflection of the engine. It is what an inspector and a binding for scripts are made from |
 
 A script in Lua has the first of it: a button names the handler of a system
-it calls with `on_click`, with arguments, and `ui.set_text` and the rest set
-values, see [scripting.md](scripting.md#what-the-user-interface-calls).
+it calls with `on_click`, and a control the one it calls with `on_change`,
+with arguments, and `ui.set_text` and the rest set values, see
+[scripting.md](scripting.md#what-the-user-interface-calls).
 Elements, their styles, and listeners from code are not bound yet (#436).
 What the rest of a binding for Lua might read as, from the same functions:
 

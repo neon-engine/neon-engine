@@ -1,0 +1,44 @@
+# Controls that call a handler of the scripts when the player changes them,
+# shown by assets://scenes/controls-demo.scene.yml. Each names the handler
+# `tune` of scripts/tuner.lua with `on_change`, and hands it what it stands
+# for and what happened. The slider follows the value `volume`, which the
+# script sets when the scene starts; that calls nothing.
+
+ui: controls
+version: 1
+
+reference_size: [1920, 1080]
+
+root:
+  type: panel
+  width: 100%
+  height: 100%
+  padding: 48
+  gap: 16
+  flex_direction: column
+  align_items: flex-start
+  children:
+    - type: slider
+      name: volume
+      min: 0
+      max: 100
+      step: 5
+      value: "{volume}"
+      autofocus: true
+      on_change: tune('volume', $event)
+    - type: toggle
+      name: vsync
+      text: V-Sync
+      on_change: tune('vsync', $event)
+    - type: select
+      name: quality
+      options:
+        - low
+        - medium
+        - high
+      value: low
+      on_change: tune('quality', $event)
+    - type: input
+      name: player
+      placeholder: Your name
+      on_change: tune('player', $event)

@@ -1085,6 +1085,6 @@ namespace
     for (const auto &field : Element("field").GetFields()) { names.push_back(field.name); }
 
     EXPECT_THAT(names, ElementsAre(
-      "kind", "value", "placeholder", "max_length", "read_only", "enabled", "pattern", "valid", "autofocus"));
+      "kind", "value", "placeholder", "max_length", "read_only", "enabled", "pattern", "valid", "autofocus", "on_change"));
   }
 }

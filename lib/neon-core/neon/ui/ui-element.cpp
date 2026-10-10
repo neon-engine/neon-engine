@@ -118,6 +118,11 @@ namespace neon
     return nullptr;
   }
 
+  const UiCall *UiElement::CallsWhenChanged() const
+  {
+    return nullptr;
+  }
+
   bool UiElement::WantsFocus() const
   {
     return false;
@@ -574,9 +579,10 @@ namespace neon
     const std::string &name,
     const std::string &value,
     const std::string &binding,
-    const UiValue &bound_value)
+    const UiValue &bound_value,
+    const bool by_player)
   {
-    _notices.push_back({name, value, binding, bound_value});
+    _notices.push_back({name, value, binding, bound_value, by_player});
     Invalidate(UiDirty::Notice);
   }
 

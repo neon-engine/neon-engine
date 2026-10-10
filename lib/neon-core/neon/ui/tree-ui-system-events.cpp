@@ -62,7 +62,11 @@ namespace neon
     {
       element->ClearDirty(UiDirty::Notice);
 
-      for (const auto &notice : element->TakeNotices())
+      // what the player changed last in the frame, for `on_change`
+      const UiNotice *changed = nullptr;
+      const std::vector<UiNotice> notices = element->TakeNotices();
+
+      for (const auto &notice : notices)
       {
         // what is typed is written back to the value of the game it shows
         if (!notice.binding.empty()) { _values.Set(notice.binding, notice.bound_value); }
@@ -70,7 +74,19 @@ namespace neon
         UiElementEvent event;
         event.value = notice.value;
         Emit(*element, notice.name, event);
+
+        if (notice.name == "changed" && notice.by_player) { changed = &notice; }
       }
+
+      // the function is called once a frame, with what the element holds
+      // at the end of it, and with the values it names as they are after
+      // it wrote its own
+      const UiCall *call = element->CallsWhenChanged();
+      if (changed == nullptr || call == nullptr) { continue; }
+
+      UiEvent event = EventOf(*element, UiEvent::Kind::Change, call);
+      event.value = changed->bound_value;
+      _events.push_back(event);
     }
   }
 

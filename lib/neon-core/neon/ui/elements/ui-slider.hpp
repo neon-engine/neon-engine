@@ -19,6 +19,7 @@ namespace neon
   /// the knob sets. The pointer drags the knob or puts it where it
   /// clicked; left and right move it by a step, page up and down by ten,
   /// and home and end to the ends. It reports `changed` with the number.
+  /// With `on_change: tune` moving it calls a function of the scripts.
   /// The track is the part `track`, what is filled up to the knob the
   /// part `fill`, and the knob the part `thumb`.
   class UiSlider final : public UiElement
@@ -37,14 +38,18 @@ namespace neon
 
     bool _is_dragging = false;
 
+    // the function `on_change` names, with what it is handed
+    UiCall _on_change;
+
     /// Rounds to a step from the least, and keeps it between the ends.
     [[nodiscard]] double Snapped(double value) const;
 
     /// The value at a place of the pointer, in units of the file.
     [[nodiscard]] double ValueAt(float x) const;
 
-    /// Sets it and tells the game when it changed.
-    void Change(double value);
+    /// Sets it and tells the game when it changed. `by_player` says that
+    /// the player moved it, and not the game.
+    void Change(double value, bool by_player);
 
   public:
     static constexpr const char *kType = "slider";
@@ -68,6 +73,8 @@ namespace neon
     [[nodiscard]] bool HasContent() const override;
 
     [[nodiscard]] bool TellsWhenItChanged() const override;
+
+    [[nodiscard]] const UiCall *CallsWhenChanged() const override;
 
     [[nodiscard]] LayoutSize Measure(
       const UiFrame &frame,

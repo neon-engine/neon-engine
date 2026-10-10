@@ -803,53 +803,58 @@ namespace neon
     // a click is told of an element that has a name to be asked for by, or
     // that names a function to call
     if (element.GetName().empty() && element.CallsWhenClicked() == nullptr) { return; }
+    UiEvent clicked = EventOf(element, UiEvent::Kind::Click, element.CallsWhenClicked());
+    clicked.scene = element.AsksForScene();
+    _events.push_back(clicked);
+  }
+
+  UiEvent Tree_UiSystem::EventOf(UiElement &element, const UiEvent::Kind kind, const UiCall *call)
+  {
+    const UiDocument *document = DocumentOf(&element);
     const Surface *surface = document != nullptr ? FindSurface(document->surface) : nullptr;
 
-    UiEvent clicked;
-    clicked.kind = UiEvent::Kind::Click;
-    clicked.scene = element.AsksForScene();
-    clicked.element = element.GetName();
-    clicked.document = document != nullptr ? document->name : "";
-    clicked.document_id = document != nullptr ? document->id : -1;
-    clicked.surface = surface != nullptr ? surface->name : "";
+    UiEvent event;
+    event.kind = kind;
+    event.element = element.GetName();
+    event.document = document != nullptr ? document->name : "";
+    event.document_id = document != nullptr ? document->id : -1;
+    event.surface = surface != nullptr ? surface->name : "";
 
-    if (const UiCall *call = element.CallsWhenClicked(); call != nullptr)
+    if (call == nullptr) { return event; }
+    event.call = *call;
+
+    // a value is handed over as what it holds now: that of the file
+    // before the one every user interface shares
+    const UiValues &values = document != nullptr ? ValuesOf(document->name) : _values;
+    for (UiCallArgument &argument : event.call.arguments)
     {
-      clicked.call = *call;
+      if (argument.kind != UiCallArgument::Kind::Value) { continue; }
 
-      // a value is handed over as what it holds now: that of the file
-      // before the one every user interface shares
-      const UiValues &values = document != nullptr ? ValuesOf(document->name) : _values;
-      for (UiCallArgument &argument : clicked.call.arguments)
+      const UiValue *value = values.Find(argument.text);
+      if (value == nullptr)
       {
-        if (argument.kind != UiCallArgument::Kind::Value) { continue; }
+        argument.kind = UiCallArgument::Kind::Nothing;
+        continue;
+      }
 
-        const UiValue *value = values.Find(argument.text);
-        if (value == nullptr)
-        {
-          argument.kind = UiCallArgument::Kind::Nothing;
-          continue;
-        }
-
-        switch (value->kind)
-        {
-          case UiValue::Kind::Number:
-            argument.kind = UiCallArgument::Kind::Number;
-            argument.number = value->number;
-            break;
-          case UiValue::Kind::Text:
-            argument.kind = UiCallArgument::Kind::Text;
-            argument.text = value->text;
-            break;
-          case UiValue::Kind::Flag:
-            argument.kind = UiCallArgument::Kind::Flag;
-            argument.flag = value->flag;
-            break;
-        }
+      switch (value->kind)
+      {
+        case UiValue::Kind::Number:
+          argument.kind = UiCallArgument::Kind::Number;
+          argument.number = value->number;
+          break;
+        case UiValue::Kind::Text:
+          argument.kind = UiCallArgument::Kind::Text;
+          argument.text = value->text;
+          break;
+        case UiValue::Kind::Flag:
+          argument.kind = UiCallArgument::Kind::Flag;
+          argument.flag = value->flag;
+          break;
       }
     }
 
-    _events.push_back(clicked);
+    return event;
   }
 
   bool Tree_UiSystem::MoveFocus(const Direction direction)

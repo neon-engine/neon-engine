@@ -16,6 +16,7 @@ namespace neon
   ///     on_click: unlock
   ///     on_click: open('safe', 2, true)
   ///     on_click: set_door(door, $event)
+  ///     on_change: tune(3, $event)
   ///
   /// An argument is a number, a text between quotes, `true` or `false`, the
   /// name of a value of the user interface, which is handed over as what

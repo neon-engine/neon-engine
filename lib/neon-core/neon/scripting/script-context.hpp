@@ -51,10 +51,11 @@ namespace neon
 
     /// Calls the functions the user interface asked for in a frame, each
     /// on the systems of the entity that shows the user interface: an
-    /// element that says `on_click: unlock` calls `unlock` of every system
-    /// that runs over the entity and has a function of that name, with
-    /// the entity as what it is called on, `self` in Lua, and what the file
-    /// wrote as arguments.
+    /// element that says `on_click: unlock`, or `on_change: unlock` for a
+    /// change the player made, calls `unlock` of every system that runs
+    /// over the entity and has a function of that name, with the entity as
+    /// what it is called on, `self` in Lua, and what the file wrote as
+    /// arguments.
     virtual void DispatchUiCalls(EntityStore &store, const std::vector<ScriptUiCall> &calls) = 0;
 
     /// How many components the scripts declared.

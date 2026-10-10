@@ -129,6 +129,11 @@ namespace neon
     /// written back to. Empty for none.
     std::string binding;
     UiValue bound_value;
+
+    /// Whether the player made it happen, with the pointer, the keys, or a
+    /// controller, and not the game by setting a field. Only what the
+    /// player did calls the function `on_change` names.
+    bool by_player = false;
   };
 
   /// The states of an element, named as the pseudo-classes of CSS.
@@ -308,6 +313,10 @@ namespace neon
     /// The function of the game choosing it calls, as a button that says
     /// `on_click: unlock` does. nullptr calls none.
     [[nodiscard]] virtual const UiCall *CallsWhenClicked() const;
+
+    /// The function of the game the player changing it calls, as a slider
+    /// that says `on_change: tune` does. nullptr calls none.
+    [[nodiscard]] virtual const UiCall *CallsWhenChanged() const;
 
     /// Whether it has the focus when its file is loaded.
     [[nodiscard]] virtual bool WantsFocus() const;
@@ -543,11 +552,13 @@ namespace neon
     /// Tells the game that something happened to the element, named as its
     /// event, such as `changed`. For a kind of element. With `binding`,
     /// `bound_value` is written to the value of the game of that name.
+    /// `by_player` says that the player did it, and not the game.
     void Notify(
       const std::string &name,
       const std::string &value,
       const std::string &binding = "",
-      const UiValue &bound_value = {});
+      const UiValue &bound_value = {},
+      bool by_player = false);
 
     // What is inside an element, while the game runs.
 

@@ -231,23 +231,50 @@ function TerminalSystem.handlers:paint(color, event)
 end
 ```
 
+A slider, a checkbox, a toggle, a select, an input, and a textarea name a
+handler the same way with `on_change`, which the player changing them
+calls, with what the element holds now in `$event.value`:
+
+```yaml
+- type: slider
+  name: brightness
+  min: 0
+  max: 1
+  step: 0.1
+  on_change: dim($event)
+```
+
+```lua
+-- on_change: dim($event)
+function TerminalSystem.handlers:dim(event)
+  self.Terminal._brightness = event.value -- a number, from 0 to 1
+end
+```
+
+It is called once a frame for what the player changed in it, and never for
+what the game sets: a value the element follows that a script sets with
+`ui.set_number` and the rest, or a field set from C++ with `SetField()`.
+See [user-interface.md](user-interface.md#what-the-player-changes).
+
 | | |
 |---|---|
 | Who is called | The entity that shows the user interface, with a `Ui` or a `UiSurface`: every system that runs over that entity and has a handler of the name. Two terminals in a scene each get their own clicks |
 | `self` | The entity that shows the user interface. Its components are reached through it, `self.Terminal`, and so is what a system keeps for itself on one, `self.Terminal._unlocked`. Any other entity is found by its name, `world.find_entity("vault/door")`. The system's class is reached by its name, `TerminalSystem`. A hook still has the class as `self` and the entity as its first parameter, which #442 brings in line |
 | The parameters | The arguments, as many as the file wrote and in its order |
 | A number, `'a text'` or `"a text"`, `true`, `false` | As written |
-| A name, as `blinks_per_second` | A value of the user interface, which says what a number is for where a `2` would not, as what it holds when the button is chosen: that of the file before the one every user interface shares. `nil` when there is none |
-| `$event` | A table: `kind` (`"click"`), `element` (the `name` of the button), `interface` (what the file writes as `ui`), `surface`, and `instigator`, the entity the click comes from: for a screen in the world the player who pointed at it, which is the nearest entity from the window's camera up that carries a `Player`, or the camera's own entity. `nil` for a click on the window, which no entity made |
+| A name, as `blinks_per_second` | A value of the user interface, which says what a number is for where a `2` would not, as what it holds when the button is chosen or the control changed, after a value the control follows took what the player chose: that of the file before the one every user interface shares. `nil` when there is none |
+| `$event` | A table: `kind` (`"click"`, or `"change"` for `on_change`), `element` (the `name` of the element), `interface` (what the file writes as `ui`), `surface`, `value` for a change, and `instigator`, the entity the click or the change comes from: for a screen in the world the player who pointed at it, which is the nearest entity from the window's camera up that carries a `Player`, or the camera's own entity. `nil` for a click or a change on the window, which no entity made |
+| `$event.value` | For a change alone: what the element holds after it, a number for a slider, `true` or `false` for a checkbox and a toggle, and a text for a select (the `value` of the option), an input, and a textarea |
 | Any other entity | Its name as a text, `on_click: open('vault/door')`, and `world.find_entity(name)` in the handler |
 | When | Before `update` of the same frame, where the world is the handler's to change |
-| A handler that fails | Reported with the button that called it, and called again at the next click |
+| A handler that fails | Reported with the element that called it, and called again at the next click or change |
 | Nothing to call | A warning: no handler of that name over the entity, or no entity shows the user interface, which is so for a file the runtime loaded itself, the pause menu or `--ui` |
 
-A click is not asked for in every frame. `ui` only sets values, see
-[below](#what-a-script-reaches-of-the-engine). Only a button has `on_click`,
-and a click is the only event so far; listening from code, and the elements
-themselves, are #436.
+A click or a change is not asked for in every frame. `ui` only sets values,
+see [below](#what-a-script-reaches-of-the-engine). Only a button has
+`on_click`, and `on_change` is on the controls named above; a radio has
+none yet. A click and a change are the only events so far; listening from
+code, and the elements themselves, are #436.
 
 ## Entities and components in a script
 

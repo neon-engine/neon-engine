@@ -806,6 +806,9 @@ namespace neon
     const std::vector<UiEvent> events = _events;
     for (const auto &event : events)
     {
+      // a callback is called for a click alone
+      if (event.kind != UiEvent::Kind::Click) { continue; }
+
       // the one for the element of one user interface, where there is one
       if (const auto found = _callbacks_in.find({event.document, event.element}); found != _callbacks_in.end())
       {

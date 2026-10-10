@@ -4,6 +4,7 @@
 #include <cmath>
 #include <format>
 
+#include <neon/ui/ui-call-field.hpp>
 #include <neon/ui/ui-fields.hpp>
 
 #include "ui-binding.hpp"
@@ -34,13 +35,13 @@ namespace neon
     return 18.0f;
   }
 
-  void UiCheckbox::SetChecked(const bool checked)
+  void UiCheckbox::SetChecked(const bool checked, const bool by_player)
   {
     if (checked == _checked) { return; }
 
     _checked = checked;
     Invalidate(UiDirty::Style | UiDirty::Paint);
-    Notify("changed", checked ? "true" : "false", _binding, UiValue::Flag(checked));
+    Notify("changed", checked ? "true" : "false", _binding, UiValue::Flag(checked), by_player);
   }
 
   void UiCheckbox::ApplyDefaults(UiStyle &style) const
@@ -92,6 +93,7 @@ namespace neon
   {
     _text.Read(reader);
     reader.Read("autofocus", _autofocus);
+    UiCallField::Read(reader, "on_change", _on_change);
 
     if (const auto *value = reader.ReadValue("checked"); value != nullptr)
     {
@@ -155,6 +157,11 @@ namespace neon
     return true;
   }
 
+  const UiCall *UiCheckbox::CallsWhenChanged() const
+  {
+    return _on_change.IsEmpty() ? nullptr : &_on_change;
+  }
+
   LayoutSize UiCheckbox::Measure(const UiFrame &frame, const float available_width, const float available_height)
   {
     (void) available_height;
@@ -197,7 +204,7 @@ namespace neon
 
     if (interaction.kind == UiInteraction::Kind::Accept)
     {
-      SetChecked(!_checked);
+      SetChecked(!_checked, true);
       interaction.is_used = true;
     }
   }
@@ -266,6 +273,12 @@ namespace neon
       return true;
     }
 
+    if (name == "on_change")
+    {
+      value = _on_change.AsText();
+      return true;
+    }
+
     return false;
   }
 
@@ -278,7 +291,8 @@ namespace neon
       bool flag = false;
       if (!TakeFlag(value, what, flag, error)) { return false; }
 
-      SetChecked(flag);
+      // what the game sets calls nothing
+      SetChecked(flag, false);
       return true;
     }
 
@@ -309,6 +323,8 @@ namespace neon
 
     if (name == "autofocus") { return TakeFlag(value, what, _autofocus, error); }
 
+    if (name == "on_change") { return UiCallField::Set(value, what, _on_change, error); }
+
     return UiElement::SetField(name, value, error);
   }
 
@@ -318,7 +334,8 @@ namespace neon
       {"checked", FieldKind::Boolean, "Whether it is ticked, which may follow a value of the game as {name}", {}},
       {"text", FieldKind::String, "What is written next to it, which may refer to values of the game as {name}", {}},
       {"enabled", FieldKind::Boolean, "Whether it can be chosen", {}},
-      {"autofocus", FieldKind::Boolean, "Whether it has the focus when its file is shown", {}}
+      {"autofocus", FieldKind::Boolean, "Whether it has the focus when its file is shown", {}},
+      {"on_change", FieldKind::String, "The function of the game that the player ticking it calls, with what it is handed: tune, or tune(3, $event)", {}}
     };
   }
 
@@ -362,7 +379,7 @@ namespace neon
     if (interaction.kind == UiInteraction::Kind::Direction)
     {
       // right is on, and left is off
-      SetChecked(interaction.key == Key::Right);
+      SetChecked(interaction.key == Key::Right, true);
       interaction.is_used = true;
       return;
     }

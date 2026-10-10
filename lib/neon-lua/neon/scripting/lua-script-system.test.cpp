@@ -910,6 +910,44 @@ namespace
     EXPECT_EQ(_logger->Count(LogLevel::Error), 0u) << Errors();
   }
 
+  TEST_F(LuaScriptSystemTest, AChangeHandsTheEventWithTheValueAsWhatItIs)
+  {
+    AddScript("panel.lua", R"(
+      local Panel = Component:extend { said = "", volume = 0, vsync = false, quality = "" }
+      local PanelSystem = System:extend "Panel"
+      function PanelSystem.handlers:tune(what, event)
+        local panel = self.Panel
+        panel.said = what .. " " .. event.kind .. " " .. event.element .. " " .. event.interface .. " " .. type(event.value)
+        if type(event.value) == "number" then panel.volume = event.value end
+        if type(event.value) == "boolean" then panel.vsync = event.value end
+        if type(event.value) == "string" then panel.quality = event.value end
+      end
+      return Panel, PanelSystem
+    )");
+    ASSERT_TRUE(Load());
+
+    const Entity a = Place("a");
+    Give(a, "Panel");
+
+    const auto changed = [&a](const std::string &element, const neon::UiValue &value)
+    {
+      neon::ScriptUiCall asked = Asked(a, "tune('" + element + "', $event)", element);
+      asked.event.kind = neon::UiEvent::Kind::Change;
+      asked.event.value = value;
+      return asked;
+    };
+
+    _lua.DispatchUiCalls(_store, {changed("volume", neon::UiValue::Number(0.75))});
+    EXPECT_EQ(std::get<std::string>(Field(a, "Panel", "said")), "volume change volume terminal number");
+    EXPECT_FLOAT_EQ(std::get<float>(Field(a, "Panel", "volume")), 0.75f);
+
+    _lua.DispatchUiCalls(_store, {changed("vsync", neon::UiValue::Flag(true)), changed("quality", neon::UiValue::Text("high"))});
+    EXPECT_TRUE(std::get<bool>(Field(a, "Panel", "vsync")));
+    EXPECT_EQ(std::get<std::string>(Field(a, "Panel", "quality")), "high");
+    EXPECT_EQ(std::get<std::string>(Field(a, "Panel", "said")), "quality change quality terminal string");
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 0u) << Errors();
+  }
+
   TEST_F(LuaScriptSystemTest, EverySystemOverTheEntityThatHasTheFunctionIsCalled)
   {
     AddScript("panel.lua", R"(

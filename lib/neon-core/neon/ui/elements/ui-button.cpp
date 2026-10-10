@@ -1,5 +1,6 @@
 #include "ui-button.hpp"
 
+#include <neon/ui/ui-call-field.hpp>
 #include <neon/ui/ui-fields.hpp>
 
 #include <format>
@@ -112,28 +113,7 @@ namespace neon
       return TakeText(value, what, _scene, error);
     }
 
-    if (name == "on_click")
-    {
-      std::string text;
-      if (!TakeText(value, what, text, error)) { return false; }
-
-      // an empty text takes the call away
-      if (text.empty())
-      {
-        _on_click = {};
-        return true;
-      }
-
-      UiCall call;
-      if (std::string problem; !UiCall::Parse(text, call, problem))
-      {
-        error = std::format("{} is '{}', which is no call of a function: {}", what, text, problem);
-        return false;
-      }
-
-      _on_click = call;
-      return true;
-    }
+    if (name == "on_click") { return UiCallField::Set(value, what, _on_click, error); }
 
     return UiElement::SetField(name, value, error);
   }
@@ -204,25 +184,7 @@ namespace neon
     }
     if (!(has_action && action == 2)) { _scene.clear(); }
 
-    if (const auto *value = reader.ReadValue("on_click"); value != nullptr)
-    {
-      std::string on_click;
-      std::string problem;
-      if (!value->GetText(on_click))
-      {
-        reader.Report(*value, std::format(
-                        "'on_click' of {} is {}, where the call of a function was expected, such as unlock or open('safe')",
-                        reader.GetWhere(),
-                        DataValue::Describe(value->GetKind())));
-      } else if (!UiCall::Parse(on_click, _on_click, problem))
-      {
-        reader.Report(*value, std::format(
-                        "'on_click' of {} is '{}', which is no call of a function: {}",
-                        reader.GetWhere(),
-                        on_click,
-                        problem));
-      }
-    }
+    UiCallField::Read(reader, "on_click", _on_click);
 
     if (const auto *value = reader.ReadValue("enabled"); value != nullptr && !UiFlag::Read(*value, _enabled))
     {

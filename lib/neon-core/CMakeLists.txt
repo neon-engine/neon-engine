@@ -202,6 +202,8 @@ add_library(${TARGET} STATIC
         neon/ui/ui-call-argument.hpp
         neon/ui/ui-call.cpp
         neon/ui/ui-call.hpp
+        neon/ui/ui-call-field.cpp
+        neon/ui/ui-call-field.hpp
         neon/ui/ui-values.cpp
         neon/ui/ui-values.hpp
         neon/ui/ui-resources.cpp

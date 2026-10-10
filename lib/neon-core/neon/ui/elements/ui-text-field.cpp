@@ -5,6 +5,7 @@
 #include <format>
 
 #include <neon/text/utf8.hpp>
+#include <neon/ui/ui-call-field.hpp>
 #include <neon/ui/ui-fields.hpp>
 
 #include "ui-binding.hpp"
@@ -176,6 +177,7 @@ namespace neon
 
     reader.Read("pattern", _pattern);
     reader.Read("autofocus", _autofocus);
+    UiCallField::Read(reader, "on_change", _on_change);
 
     if (const auto *value = reader.ReadValue("enabled"); value != nullptr && !UiFlag::Read(*value, _enabled))
     {
@@ -222,6 +224,11 @@ namespace neon
   bool UiTextField::TellsWhenItChanged() const
   {
     return true;
+  }
+
+  const UiCall *UiTextField::CallsWhenChanged() const
+  {
+    return _on_change.IsEmpty() ? nullptr : &_on_change;
   }
 
   bool UiTextField::IsInvalid() const
@@ -375,7 +382,8 @@ namespace neon
     KeepCaretInView(frame);
 
     Invalidate(UiDirty::Arrange | UiDirty::Paint | (_pattern.empty() ? 0u : UiDirty::Style));
-    Notify("changed", _editor.GetText(), _binding, UiValue::Text(_editor.GetText()));
+    // only the player types, and the game puts its text in with SetText()
+    Notify("changed", _editor.GetText(), _binding, UiValue::Text(_editor.GetText()), true);
   }
 
   void UiTextField::HandleKey(UiInteraction &interaction, const UiFrame &frame)
@@ -809,6 +817,12 @@ namespace neon
       return true;
     }
 
+    if (name == "on_change")
+    {
+      value = _on_change.AsText();
+      return true;
+    }
+
     return false;
   }
 
@@ -874,6 +888,8 @@ namespace neon
 
     if (name == "autofocus") { return TakeFlag(value, what, _autofocus, error); }
 
+    if (name == "on_change") { return UiCallField::Set(value, what, _on_change, error); }
+
     if (name == "valid")
     {
       error = what + " follows from the text and its pattern, and cannot be set";
@@ -893,7 +909,8 @@ namespace neon
       {"enabled", FieldKind::Boolean, "Whether it can be typed into", {}},
       {"pattern", FieldKind::String, "What the text has to fit, with * for anything and ? for one character", {}},
       {"valid", FieldKind::Boolean, "Whether the text fits its pattern", {}},
-      {"autofocus", FieldKind::Boolean, "Whether it has the focus when its file is shown", {}}
+      {"autofocus", FieldKind::Boolean, "Whether it has the focus when its file is shown", {}},
+      {"on_change", FieldKind::String, "The function of the game that the player typing calls, with what it is handed: rename, or rename(3, $event)", {}}
     };
   }
 

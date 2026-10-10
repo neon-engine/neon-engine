@@ -15,7 +15,8 @@ namespace neon
   ///     checked: "{fullscreen}"
   ///
   /// `checked` is true, false, or a value of the game in brackets, which
-  /// ticking the box changes. It reports `changed` with `true` or `false`.
+  /// ticking the box changes. It reports `changed` with `true` or `false`,
+  /// and with `on_change: tune` ticking it calls a function of the scripts.
   /// The box is the part `box`, and the tick in it the part `mark`; a
   /// style sheet reaches them as `checkbox::box` and `checkbox::mark`, and
   /// asks for the ticked one with `checkbox:checked`.
@@ -31,6 +32,9 @@ namespace neon
     bool _has_followed = false;
     std::uint64_t _followed_revision = 0;
 
+    // the function `on_change` names, with what it is handed
+    UiCall _on_change;
+
   protected:
     /// How large the box is, in units of the file.
     [[nodiscard]] virtual float BoxWidth() const;
@@ -41,7 +45,8 @@ namespace neon
     virtual void PaintBox(UiPainter &painter, const UiFrame &frame, const UiRectangle &box, float opacity);
 
     /// Ticks the box, or takes the tick away, and tells the game.
-    void SetChecked(bool checked);
+    /// `by_player` says that the player did it, and not the game.
+    void SetChecked(bool checked, bool by_player);
 
   public:
     static constexpr const char *kType = "checkbox";
@@ -69,6 +74,8 @@ namespace neon
     [[nodiscard]] bool HasContent() const override;
 
     [[nodiscard]] bool TellsWhenItChanged() const override;
+
+    [[nodiscard]] const UiCall *CallsWhenChanged() const override;
 
     [[nodiscard]] LayoutSize Measure(
       const UiFrame &frame,

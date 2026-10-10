@@ -1,0 +1,26 @@
+# Controls of a user interface that call a handler of the scripts when the
+# player changes them, which tests/runtime-scripts plays with an input
+# script:
+#
+#   NeonRuntime --scene assets://scenes/controls-demo.scene.yml
+#
+# The entity that shows the user interface carries the Tuner, the component
+# scripts/tuner.lua declares, whose system has the handler the controls
+# name with `on_change`.
+
+scene: controls-demo
+version: 1
+
+entities:
+  - name: camera
+    components:
+      Transform:
+        position: [0, 0, 5]
+      Camera: Default
+
+  - name: controls
+    components:
+      Ui:
+        file: assets://ui/controls.ui.yml
+      Tuner:
+        volume: 20

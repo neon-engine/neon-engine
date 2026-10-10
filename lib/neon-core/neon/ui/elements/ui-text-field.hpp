@@ -24,7 +24,8 @@ namespace neon
   /// `value` may be text, or the name of a value of the game in brackets.
   /// With a name, what the game sets is shown, and what is typed is written
   /// back to it. The game is told of every change as `changed`, and of
-  /// return in a text of one line as `submitted`.
+  /// return in a text of one line as `submitted`. With `on_change: tune`
+  /// what is typed calls a function of the scripts.
   ///
   /// The parts a style sheet reaches: `::placeholder` for what is shown
   /// while nothing is typed, and `::selection` for what is selected.
@@ -38,6 +39,9 @@ namespace neon
     UiFlag _enabled{true};
     bool _is_enabled = true;
     bool _autofocus = false;
+
+    // the function `on_change` names, with what it is handed
+    UiCall _on_change;
 
     // the values of the game the text was last taken from
     std::uint64_t _followed_revision = 0;
@@ -125,6 +129,8 @@ namespace neon
     [[nodiscard]] bool HasContent() const override;
 
     [[nodiscard]] bool TellsWhenItChanged() const override;
+
+    [[nodiscard]] const UiCall *CallsWhenChanged() const override;
     [[nodiscard]] bool IsInvalid() const override;
 
     [[nodiscard]] LayoutSize Measure(

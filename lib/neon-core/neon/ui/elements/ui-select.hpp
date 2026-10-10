@@ -23,7 +23,8 @@ namespace neon
   /// `value` is what is chosen, or a value of the game in brackets, which
   /// choosing sets. A click, accept, or space opens the list; up and down
   /// move through it and change the choice while it is closed; accept
-  /// chooses, and cancel closes. It reports `changed` with the value.
+  /// chooses, and cancel closes. It reports `changed` with the value, and
+  /// with `on_change: tune` choosing calls a function of the scripts.
   ///
   /// The list is drawn on top of everything else, and is the part `list`;
   /// each choice in it the part `option`, and the one the keys are on the
@@ -41,6 +42,9 @@ namespace neon
     UiFlag _enabled{true};
     bool _is_enabled = true;
     bool _autofocus = false;
+
+    // the function `on_change` names, with what it is handed
+    UiCall _on_change;
 
     std::vector<Option> _options;
     std::string _placeholder;
@@ -73,8 +77,9 @@ namespace neon
 
     void Close();
 
-    /// Chooses the option, and tells the game.
-    void Choose(std::size_t index);
+    /// Chooses the option, and tells the game. `by_player` says that the
+    /// player chose it, and not the game.
+    void Choose(std::size_t index, bool by_player);
 
     /// Keeps the highlighted option in the part of the list that is seen.
     void ShowHighlighted();
@@ -109,6 +114,8 @@ namespace neon
     [[nodiscard]] bool HasContent() const override;
 
     [[nodiscard]] bool TellsWhenItChanged() const override;
+
+    [[nodiscard]] const UiCall *CallsWhenChanged() const override;
 
     [[nodiscard]] LayoutSize Measure(
       const UiFrame &frame,

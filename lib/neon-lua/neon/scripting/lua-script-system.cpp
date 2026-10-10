@@ -787,9 +787,23 @@ namespace neon
             case UiCallArgument::Kind::Flag: lua_pushboolean(_lua, argument.flag ? 1 : 0);
               break;
             case UiCallArgument::Kind::Event:
-              lua_createtable(_lua, 0, 5);
-              lua_pushstring(_lua, "click");
+              lua_createtable(_lua, 0, 6);
+              lua_pushstring(_lua, event.kind == UiEvent::Kind::Change ? "change" : "click");
               lua_setfield(_lua, -2, "kind");
+              if (event.kind == UiEvent::Kind::Change)
+              {
+                // what the element holds now, as what it is
+                switch (event.value.kind)
+                {
+                  case UiValue::Kind::Number: lua_pushnumber(_lua, event.value.number);
+                    break;
+                  case UiValue::Kind::Text: lua_pushlstring(_lua, event.value.text.data(), event.value.text.size());
+                    break;
+                  case UiValue::Kind::Flag: lua_pushboolean(_lua, event.value.flag ? 1 : 0);
+                    break;
+                }
+                lua_setfield(_lua, -2, "value");
+              }
               lua_pushlstring(_lua, event.element.data(), event.element.size());
               lua_setfield(_lua, -2, "element");
               lua_pushlstring(_lua, event.document.data(), event.document.size());

@@ -78,7 +78,7 @@ function Component:extend(name, fields) end
 ---A system: its hooks, over every entity that carries the components it
 ---named. `self` is the class.
 ---@class System
----@field handlers table<string, fun(self: Entity, ...: any)> The functions a button of the user interface calls by name with `on_click`. `self` is the entity that shows the user interface, and the parameters are what the file wrote as arguments
+---@field handlers table<string, fun(self: Entity, ...: any)> The functions an element of the user interface calls by name: a button with `on_click`, and a slider, a toggle, a select, an input, or a textarea with `on_change`. `self` is the entity that shows the user interface, and the parameters are what the file wrote as arguments
 System = {}
 
 ---Declares a system over the components named, as text or as the class in
@@ -409,9 +409,11 @@ function input.action_axis2(action) end
 function input.action_axis3(action) end
 
 ---The values of the user interface, named as `UiContext` names them. A
----user interface is named by what its file writes as `ui`. A click is not
----asked for here: a button names the function of a system that it calls,
----`on_click: unlock` or `on_click: open('safe', door, $event)`.
+---user interface is named by what its file writes as `ui`. A click or a
+---change is not asked for here: an element names the function of a system
+---that it calls, `on_click: unlock` or `on_click: open('safe', door, $event)`
+---on a button, and `on_change: tune($event)` on a slider, a toggle, a
+---select, an input, or a textarea.
 ---@class uilib
 ui = {}
 

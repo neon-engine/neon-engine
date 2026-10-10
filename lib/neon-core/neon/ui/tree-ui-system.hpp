@@ -565,6 +565,11 @@ namespace neon
 
     void Click(UiElement &element, bool by_pointer);
 
+    /// What the game is told of something that happened to an element:
+    /// where it is, and the function it calls, with the values it names
+    /// looked up as they are now. `call` may be nullptr, for none.
+    [[nodiscard]] UiEvent EventOf(UiElement &element, UiEvent::Kind kind, const UiCall *call);
+
     static void Collect(UiElement &element, std::vector<UiElement *> &elements);
 
     [[nodiscard]] static UiElement *FindByName(UiElement &element, const std::string &name);
