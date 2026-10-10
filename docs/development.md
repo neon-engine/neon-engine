@@ -192,6 +192,13 @@ on the host. The runtime is linked statically, so no llvm-mingw DLLs need to
 ship alongside it. Copy the folder of a project, such as
 `bin/debug/windows-x86_64/sandbox`, to a Windows machine to run it.
 
+Native paths are UTF-8 inside the engine, and Windows takes them in wide
+characters. The conversion is written once, in `NativePath` of neon-core, and
+spdlog is built with `SPDLOG_WCHAR_FILENAMES` there, so the log file and
+everything else opened by its native path works under a user folder with
+letters outside ASCII in its name, see
+[file-systems.md](file-systems.md#portable-paths).
+
 As with Linux, dropping `--platform linux/amd64` on an Apple Silicon Mac uses a
 native arm64 image. The output is still a Windows x64 executable either way.
 

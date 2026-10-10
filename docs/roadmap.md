@@ -382,7 +382,6 @@ A document for each feature is written with the feature, not as a step.
 |---|---|
 | [CMakeLists.txt](../CMakeLists.txt) | Turn on `-Wall`, `-Wextra`, and `-Werror`, once the libraries in `external/` no longer compile as part of the project |
 | [CMakeLists.txt](../CMakeLists.txt) | Set the compiler flags for release builds |
-| [CMakeLists.txt](../CMakeLists.txt) | Consider whether the C++ runtime still has to be linked statically |
 
 ## Backlog
 

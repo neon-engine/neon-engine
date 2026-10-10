@@ -84,6 +84,13 @@ if(APPLE AND TARGET zlibstatic)
   target_compile_definitions(zlibstatic PRIVATE fdopen=fdopen)
 endif()
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/JoltPhysics.cmake")
+# On Windows spdlog takes the name of its file in wide characters, so that a
+# log file under a user folder with letters outside ASCII opens (#156). The
+# define is public, so every target that includes spdlog sees the same
+# filename_t. Elsewhere spdlog forces the option off.
+if (WIN32)
+  set(SPDLOG_WCHAR_FILENAMES ON CACHE BOOL "" FORCE)
+endif ()
 add_subdirectory(external/spdlog)
 
 # Vulkan. The engine builds against the headers alone and volk finds the
@@ -157,8 +164,9 @@ foreach (APP IN LISTS APP_TARGETS)
   set(BASE_APP_BIN_DIRECTORY "${NEON_BIN_DIRECTORY}/${LOWER_CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}")
   set(APP_BIN_DIRECTORY "${BASE_APP_BIN_DIRECTORY}/${APP}")
 
-  # ensure binaries can run anywhere, assuming they are ABI compatible that is
-  # todo consider downgrading GCC so this is not necessary
+  # The C++ runtime is linked statically, which is decided (#48): no C++
+  # runtime ships next to the executables, and they run on a machine without
+  # the compiler that built them.
   # Apple has no static C++ runtime to link. It ships with the system instead.
   # The flag is the linker's alone: given to the compiler as well, clang
   # reports it as unused, which -Werror turns into a failed build

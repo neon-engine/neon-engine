@@ -5,6 +5,8 @@
 #include <system_error>
 #include <SDL.h>
 
+#include "neon/filesystem/native-path.hpp"
+
 namespace neon
 {
   void SDL2_FileSystem::Initialize()
@@ -68,8 +70,7 @@ namespace neon
     // or absolute. It is made absolute once, so that it keeps pointing at the
     // same place. Paths are UTF-8, see ListDirectory.
     std::error_code error;
-    std::filesystem::path directory =
-      std::filesystem::absolute(std::filesystem::path(std::u8string(wanted.begin(), wanted.end())), error);
+    std::filesystem::path directory = std::filesystem::absolute(NativePath::FromUtf8(wanted), error);
 
     if (!error)
     {
@@ -90,8 +91,7 @@ namespace neon
       return;
     }
 
-    const std::u8string native = directory.u8string();
-    _output_directory.assign(native.begin(), native.end());
+    _output_directory = NativePath::ToUtf8(directory);
     if (_output_directory.back() != _native_separator) { _output_directory += _native_separator; }
 
     _logger->Info("output:// is {}", _output_directory);
@@ -112,6 +112,8 @@ namespace neon
     std::string native_path;
     if (!Locate(path, native_path)) { return false; }
 
+    // SDL takes its paths in UTF-8 on every platform and turns them into
+    // wide characters on Windows itself, so the native path goes in as it is
     SDL_RWops *file = SDL_RWFromFile(native_path.c_str(), "rb");
     if (file == nullptr) { return false; }
 
@@ -123,8 +125,9 @@ namespace neon
   {
     // SDL2 cannot list a folder, that arrives with SDL3. The standard library
     // does it here, which stays a detail of this backend. Paths are UTF-8, as
-    // they are everywhere else SDL is involved.
-    const std::filesystem::path directory(std::u8string(native_directory.begin(), native_directory.end()));
+    // they are everywhere else SDL is involved, and NativePath turns them
+    // into what the operating system takes.
+    const std::filesystem::path directory = NativePath::FromUtf8(native_directory);
 
     std::error_code error;
     std::filesystem::directory_iterator entries(directory, error);
@@ -134,8 +137,7 @@ namespace neon
     {
       if (error) { return false; }
 
-      const std::u8string name = entries->path().filename().u8string();
-      names.emplace_back(name.begin(), name.end());
+      names.push_back(NativePath::ToUtf8(entries->path().filename()));
     }
 
     return true;
@@ -144,7 +146,7 @@ namespace neon
   bool SDL2_FileSystem::MakeDirectory(const std::string &native_directory)
   {
     // SDL2 cannot create folders either, see ListDirectory
-    const std::filesystem::path directory(std::u8string(native_directory.begin(), native_directory.end()));
+    const std::filesystem::path directory = NativePath::FromUtf8(native_directory);
 
     std::error_code error;
     std::filesystem::create_directory(directory, error);

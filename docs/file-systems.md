@@ -91,6 +91,23 @@ return one. `FileSystem::Locate` produces them and is protected. The SDL2
 backend learns the platform's separator from the base path SDL2 reports, so it
 contains no platform checks of its own.
 
+Native paths are UTF-8 on every platform, as SDL reports and takes them. The
+operating system of Windows takes wide characters instead, and a
+`std::filesystem::path` built from a `std::string` there reads the bytes in
+the ANSI code page, so a folder with letters outside ASCII in its name, such as
+the user folder of José, would not be found. Every place the engine opens a
+file by its native path with the standard library therefore goes through
+`NativePath` in neon-core: `NativePath::FromUtf8` decodes the UTF-8 into the
+path the operating system opens, wide characters on Windows, and
+`NativePath::ToUtf8` is its inverse. On macOS and Linux both are the identity.
+SDL does the same conversion inside its own calls, so a path handed to
+`SDL_RWFromFile` goes in as it is.
+
+| Decision | Reason |
+|---|---|
+| The conversion is written once, in `NativePath` | A `std::u8string` cast at each site is easy to forget, and the mistake shows only on a Windows machine whose user name has an accent |
+| The helper is the standard library's own UTF-8 decoding, with no Win32 call | `std::filesystem::path` decodes `char8_t` on every platform, so neon-core stays free of platform headers |
+
 Names reserved by Windows are not checked. See open questions.
 
 ### The output folder
@@ -133,6 +150,7 @@ it is, in its line `Logging to ...`.
 | What is logged before the file is opened is held back and written into it first, with the times it was logged at | The start-up is where most problems show, and a log file without it would leave them out |
 | At most 4096 messages are held, and the file says how many are missing | A run whose file is never opened does not grow forever. A start-up logs far fewer |
 | `FileSystem::PlaceLogFile` hands the native path straight to the logging system | spdlog opens and rotates its file itself, so it needs a native path. The caller never sees it, which keeps the interface free of native paths, as with `output://` |
+| On Windows spdlog is built with `SPDLOG_WCHAR_FILENAMES`, and the logging system hands it the path in wide characters through `NativePath` (#156) | `%APPDATA%` holds the user's name. With letters outside ASCII in it, a file named in narrow characters may not open, and the run would go on without a log file |
 | It is on `FileSystem`, not on `FileSystemContext` | Only `main.cpp` places the log file, and it holds the backend. Code that reads files does not need it |
 | When the file cannot be placed or opened, logging goes on without it on the console, and says why | A log file is not worth stopping the application for |
 

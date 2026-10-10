@@ -255,6 +255,8 @@ add_library(${TARGET} STATIC
         neon/filesystem/file-system.cpp
         neon/filesystem/file-system.hpp
         neon/filesystem/file-system-context.hpp
+        neon/filesystem/native-path.cpp
+        neon/filesystem/native-path.hpp
 
         # window
         neon/window/window-system.hpp
@@ -544,6 +546,7 @@ neon_add_unit_test(${TARGET} neon/command-line/display-options.test.cpp)
   neon_add_unit_test(${TARGET} neon/common/util.test.cpp)
   neon_add_unit_test(${TARGET} neon/data/data-reader.test.cpp)
   neon_add_unit_test(${TARGET} neon/filesystem/file-system.test.cpp)
+  neon_add_unit_test(${TARGET} neon/filesystem/native-path.test.cpp)
   neon_add_unit_test(${TARGET} neon/random/entropy-seed.test.cpp)
   neon_add_unit_test(${TARGET} neon/input/headless-input-system.test.cpp)
   neon_add_unit_test(${TARGET} neon/input/input-actions.test.cpp)

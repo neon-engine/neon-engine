@@ -2,6 +2,8 @@
 
 #include <string_view>
 
+#include "neon/filesystem/native-path.hpp"
+
 namespace neon
 {
   DeferredFileSink::DeferredFileSink(const std::size_t max_size, const std::size_t max_files, const std::size_t max_held)
@@ -17,9 +19,16 @@ namespace neon
 
     _file.reset();
 
+    // The path arrives in UTF-8. spdlog opens its file by the characters
+    // the operating system takes: wide ones on Windows, where the engine
+    // builds it with SPDLOG_WCHAR_FILENAMES, bytes elsewhere. native() is
+    // that spelling on every platform, so the name is right whatever the
+    // folder of the user is called (#156).
+    const spdlog::filename_t filename = NativePath::FromUtf8(native_path).native();
+
     try
     {
-      _file = std::make_unique<spdlog::sinks::rotating_file_sink_st>(native_path, _max_size, _max_files);
+      _file = std::make_unique<spdlog::sinks::rotating_file_sink_st>(filename, _max_size, _max_files);
     } catch (...)
     {
       // nothing will ever read what was held, so it is let go
