@@ -1,12 +1,12 @@
-#ifndef PLAYER_MOVEMENT_HPP
-#define PLAYER_MOVEMENT_HPP
+#ifndef FIRST_PERSON_CONTROLLER_SYSTEM_HPP
+#define FIRST_PERSON_CONTROLLER_SYSTEM_HPP
 
 #include <neon/input/input-context.hpp>
 #include <neon/world-system/ecs/entity-system.hpp>
 
 namespace neon
 {
-  /// Drives every entity that carries a Player and a CharacterBody by the
+  /// Drives every entity that carries a FirstPersonController and a CharacterBody by the
   /// input, and places the camera below it at the eyes.
   ///
   /// Once a frame it turns the body by `look`, sets the velocity of the
@@ -20,14 +20,14 @@ namespace neon
   /// `look`, within `max_pitch`. A step the physics took the body up or
   /// down is seen over a few frames: the eyes lag behind it and catch up
   /// at `step_smoothing`.
-  class PlayerMovement final : public EntitySystem
+  class FirstPersonControllerSystem final : public EntitySystem
   {
     InputContext *_input_context;
     QueryId _players = 0;
     QueryId _cameras = 0;
 
   public:
-    explicit PlayerMovement(InputContext *input_context);
+    explicit FirstPersonControllerSystem(InputContext *input_context);
 
     void Initialize(EntityStore &store) override;
 
@@ -35,4 +35,4 @@ namespace neon
   };
 } // neon
 
-#endif //PLAYER_MOVEMENT_HPP
+#endif //FIRST_PERSON_CONTROLLER_SYSTEM_HPP

@@ -1,4 +1,4 @@
-#include "player-movement.hpp"
+#include "first-person-controller-system.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -7,11 +7,11 @@
 #include <neon/world-system/ecs/components/camera.hpp>
 #include <neon/world-system/ecs/components/character-body.hpp>
 #include <neon/world-system/ecs/components/collider.hpp>
-#include <neon/world-system/ecs/components/player.hpp>
+#include <neon/world-system/ecs/components/first-person-controller.hpp>
 
 namespace neon
 {
-  // Helpers of PlayerMovement: where the camera sits, and the motion between frames.
+  // Helpers of FirstPersonControllerSystem: where the camera sits, and the motion between frames.
   namespace
   {
     /// How far the lowest point of a collider lies below the origin of its
@@ -44,7 +44,7 @@ namespace neon
     /// Where the camera sits on its body: `eye_height` above the feet, less
     /// what the eyes still lag behind a step, moved by `camera_offset`, all
     /// in the units of the body.
-    glm::vec3 CameraOf(const Player &player, const Transform &body, const Collider *collider)
+    glm::vec3 CameraOf(const FirstPersonController &player, const Transform &body, const Collider *collider)
     {
       const glm::vec3 scale = ScaleOf(body);
       const float feet = collider != nullptr ? BottomOf(*collider) : 0.0f;
@@ -55,7 +55,7 @@ namespace neon
 
     /// The velocity the keys ask for in the air: the one the body left the
     /// ground with, pulled towards what the keys ask for by `air_control`.
-    glm::vec3 SteeredInTheAir(const Player &player, const glm::vec3 &asked)
+    glm::vec3 SteeredInTheAir(const FirstPersonController &player, const glm::vec3 &asked)
     {
       return player.ground_velocity + (asked - player.ground_velocity) * player.air_control;
     }
@@ -64,7 +64,7 @@ namespace neon
     /// lagged before fades at `step_smoothing`, and what the body rose or
     /// sank by on the floor is added, so that a step is seen over a few
     /// frames. In the air, and after landing, nothing is added.
-    float GlideOf(const Player &player, const CharacterBody &body, const float height, const double delta_time)
+    float GlideOf(const FirstPersonController &player, const CharacterBody &body, const float height, const double delta_time)
     {
       if (player.step_smoothing <= 0.0f) { return 0.0f; }
 
@@ -74,18 +74,18 @@ namespace neon
     }
   }
 
-  PlayerMovement::PlayerMovement(InputContext *input_context)
+  FirstPersonControllerSystem::FirstPersonControllerSystem(InputContext *input_context)
   {
     _input_context = input_context;
   }
 
-  void PlayerMovement::Initialize(EntityStore &store)
+  void FirstPersonControllerSystem::Initialize(EntityStore &store)
   {
-    _players = store.Query<Transform, Player, CharacterBody>();
+    _players = store.Query<Transform, FirstPersonController, CharacterBody>();
     _cameras = store.Query<Transform, Camera>();
   }
 
-  void PlayerMovement::Update(EntityStore &store, const double delta_time)
+  void FirstPersonControllerSystem::Update(EntityStore &store, const double delta_time)
   {
     // the actions of the input map, which the project binds: `move` is to
     // the right and forward, `look` to the right and up, in pixels
@@ -97,7 +97,7 @@ namespace neon
     store.Each(_players, [&](const EntityBlock &block)
     {
       auto *transforms = block.Column<Transform>(0);
-      auto *players = block.Column<Player>(1);
+      auto *players = block.Column<FirstPersonController>(1);
       auto *bodies = block.Column<CharacterBody>(2);
 
       for (std::size_t i = 0; i < block.count; i++)
@@ -154,7 +154,7 @@ namespace neon
         const Entity parent = store.GetParent(block.entities[i]);
         if (parent == No_Entity) { continue; }
 
-        const auto *player = store.Get<Player>(parent);
+        const auto *player = store.Get<FirstPersonController>(parent);
         if (player == nullptr) { continue; }
 
         const auto *body = store.Get<Transform>(parent);

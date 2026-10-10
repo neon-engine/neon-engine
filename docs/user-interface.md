@@ -1178,7 +1178,7 @@ of 0 is pointed at from anywhere.
 | | |
 |---|---|
 | `reach` of `UiSurface` | How near the camera has to be, in units of the world. 3 unless the scene says otherwise |
-| `pointed_by` of `UiSurface` | Set by the system on the screen: who points at it, the nearest entity from the camera up that carries a `Player`, or the camera's own. It stays when the player looks away, and is who a click on the screen comes from: `event.instigator` of a [handler](scripting.md#what-the-user-interface-calls) |
+| `pointed_by` of `UiSurface` | Set by the system on the screen: who points at it, the nearest entity from the camera up that carries a `FirstPersonController`, or the camera's own. It stays when the player looks away, and is who a click on the screen comes from: `event.instigator` of a [handler](scripting.md#what-the-user-interface-calls) |
 | The flag `pointing` | Set by the system on the window's values while a screen is pointed at. The HUD turns its dot into a ring with `hidden: "{!pointing}"` |
 | The keys and the controller | Stay with the window. A controller presses with accept, which is the press of the pointer on the screen, so nothing on the screen needs the focus |
 

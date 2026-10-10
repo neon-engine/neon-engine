@@ -42,7 +42,7 @@
 #include <neon/world-system/ecs/systems/extension-running.hpp>
 #include <neon/world-system/ecs/systems/rope-drawing.hpp>
 #include <neon/world-system/ecs/systems/physics-simulation.hpp>
-#include <neon/world-system/ecs/systems/player-movement.hpp>
+#include <neon/world-system/ecs/systems/first-person-controller-system.hpp>
 #include <neon/world-system/ecs/systems/script-running.hpp>
 #include <neon/world-system/ecs/scene-file/ui-view-format.hpp>
 #include <neon/world-system/ecs/components/ui-sound-switch.hpp>
@@ -511,7 +511,7 @@ int main(const int argc, char *argv[])
 
   // the player, driven by what the user interface left of the input. It
   // sets the velocity of its body, which the physics moves by
-  world.AddSystem(std::make_unique<neon::PlayerMovement>(ui_system.GetGameInput()));
+  world.AddSystem(std::make_unique<neon::FirstPersonControllerSystem>(ui_system.GetGameInput()));
 
   world.GetFixedClock().SetStepsPerSecond(settings_config.steps_per_second);
   world.GetFixedClock().SetMostStepsPerFrame(settings_config.most_steps_per_frame);

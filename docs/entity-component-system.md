@@ -60,7 +60,7 @@ privately, so the compiler refuses it anywhere else.
 | `Camera` | Field of view and the distances between which things are visible | same |
 | `Light` | A light source | same |
 | `Spectator` | The speeds the input moves the entity with | same |
-| `Player` | The speeds the input walks, runs, jumps, and turns the entity with, how much it steers in the air, and where its eyes are, with their offset and how they glide over a step. See [physics.md](physics.md#the-player) | same |
+| `FirstPersonController` | The speeds the input walks, runs, jumps, and turns the entity with, how much it steers in the air, and where its eyes are, with their offset and how they glide over a step. See [physics.md](physics.md#the-player) | same |
 | `RigidBody`, `Collider`, `Trigger`, `CharacterBody` | What the physics needs to know of an entity. See [physics.md](physics.md) | same |
 | `Persistent` | The entity stays when the world changes scene. See [scenes.md](scenes.md#changing-the-scene) | same |
 | `SceneExit` | The scene the world changes to when a body enters the entity's `Trigger` | same |
@@ -102,7 +102,7 @@ The world takes 60 steps in a second, whatever the frame rate is. Why, and
 what belongs where, is in [physics.md](physics.md#the-time-step).
 
 `PhysicsSimulation` is a system that an application adds, as `main.cpp` of
-the runtime does, and so is `PlayerMovement`, which the runtime adds before
+the runtime does, and so is `FirstPersonControllerSystem`, which the runtime adds before
 it, so that the velocity it sets is taken in the step that follows.
 
 ## Using it
@@ -216,7 +216,7 @@ What each component of the engine does when it is turned off:
 | `SoundSource` | Silent: its sound is stopped, and kept | Plays from the start when it says `playing` |
 | `Ui`, `UiSurface` | Hidden, and kept as it is | Shown again, with nothing read anew |
 | `Script` | Its hooks are not called. It is not told that it was turned off: a script that is off does nothing, and that includes hearing about it | Its hooks are called again |
-| `Camera`, `Light`, `Sky`, `Geometry`, `SoundListener`, `Player`, `Spectator`, and the rest | Passed over by the systems that read them: a camera draws nothing, a light lights nothing | Read again |
+| `Camera`, `Light`, `Sky`, `Geometry`, `SoundListener`, `FirstPersonController`, `Spectator`, and the rest | Passed over by the systems that read them: a camera draws nothing, a light lights nothing | Read again |
 
 Nothing is destroyed when a component is turned off, and nothing is made
 anew when it is turned on: what the component keeps in another system is

@@ -40,11 +40,11 @@ function DoorSystem:update(entity, door, dt)
 end
 
 function DoorSystem:on_trigger_enter(entity, door, other)
-  if other:has_component("Player") then door.open = true end
+  if other:has_component("FirstPersonController") then door.open = true end
 end
 
 function DoorSystem:on_trigger_exit(entity, door, other)
-  if other:has_component("Player") then door.open = false end
+  if other:has_component("FirstPersonController") then door.open = false end
 end
 
 return Door, DoorSystem
@@ -263,7 +263,7 @@ See [user-interface.md](user-interface.md#what-the-player-changes).
 | The parameters | The arguments, as many as the file wrote and in its order |
 | A number, `'a text'` or `"a text"`, `true`, `false` | As written |
 | A name, as `blinks_per_second` | A value of the user interface, which says what a number is for where a `2` would not, as what it holds when the button is chosen or the control changed, after a value the control follows took what the player chose: that of the file before the one every user interface shares. `nil` when there is none |
-| `$event` | A table: `kind` (`"click"`, or `"change"` for `on_change`), `element` (the `name` of the element), `interface` (what the file writes as `ui`), `surface`, `value` for a change, and `instigator`, the entity the click or the change comes from: for a screen in the world the player who pointed at it, which is the nearest entity from the window's camera up that carries a `Player`, or the camera's own entity. `nil` for a click or a change on the window, which no entity made |
+| `$event` | A table: `kind` (`"click"`, or `"change"` for `on_change`), `element` (the `name` of the element), `interface` (what the file writes as `ui`), `surface`, `value` for a change, and `instigator`, the entity the click or the change comes from: for a screen in the world the player who pointed at it, which is the nearest entity from the window's camera up that carries a `FirstPersonController`, or the camera's own entity. `nil` for a click or a change on the window, which no entity made |
 | `$event.value` | For a change alone: what the element holds after it, a number for a slider, `true` or `false` for a checkbox and a toggle, and a text for a select (the `value` of the option), an input, and a textarea |
 | Any other entity | Its name as a text, `on_click: open('vault/door')`, and `world.find_entity(name)` in the handler |
 | When | Before `update` of the same frame, where the world is the handler's to change |
@@ -338,7 +338,7 @@ and a method of an entity is the store's function on it,
 
 | Library | Function | Does |
 |---|---|---|
-| `world` | `world.each("Player", "Transform")` | Iterates the entities that carry every named component, `for entity, player, transform in ...`. The entities are taken at the start of the loop |
+| `world` | `world.each("FirstPersonController", "Transform")` | Iterates the entities that carry every named component, `for entity, player, transform in ...`. The entities are taken at the start of the loop |
 | | `world.find_entity("player/camera")` | An entity by its path, or `nil` |
 | | `world.create_entity(name, parent)`, `world.destroy_entity(entity)` | Makes and ends entities |
 | | `world.load_scene(path)` | Asks for another scene, read at the start of the next frame, see [scenes.md](scenes.md#changing-the-scene). `scene.load_scene` is the same |
@@ -358,7 +358,7 @@ A system reads a setting where it needs it, and hears of a change where it
 would otherwise poll:
 
 ```lua
-local LookSystem = System:extend("Player", "Transform")
+local LookSystem = System:extend("FirstPersonController", "Transform")
 
 function LookSystem:ready(entity, player, transform)
   player.sensitivity = settings.get("look_sensitivity")

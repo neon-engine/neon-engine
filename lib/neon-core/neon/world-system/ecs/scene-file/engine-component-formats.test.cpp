@@ -11,7 +11,7 @@
 #include <neon/world-system/ecs/components/geometry.hpp>
 #include <neon/world-system/ecs/components/light.hpp>
 #include <neon/world-system/ecs/components/sky.hpp>
-#include <neon/world-system/ecs/components/player.hpp>
+#include <neon/world-system/ecs/components/first-person-controller.hpp>
 #include <neon/world-system/ecs/components/renderable.hpp>
 #include <neon/world-system/ecs/components/sound-listener.hpp>
 #include <neon/world-system/ecs/components/sound-source.hpp>
@@ -34,7 +34,7 @@ namespace
   using neon::LightType;
   using neon::Sky;
   using neon::SkyType;
-  using neon::Player;
+  using neon::FirstPersonController;
   using neon::Renderable;
   using neon::RenderTarget;
   using neon::SoundListener;
@@ -120,7 +120,7 @@ namespace
       _store.Register<Light>("Light");
       _store.Register<Sky>("Sky");
       _store.Register<Spectator>("Spectator");
-      _store.Register<Player>("Player");
+      _store.Register<FirstPersonController>("FirstPersonController");
       _store.Register<SoundSource>("SoundSource");
       _store.Register<SoundListener>("SoundListener");
 
@@ -221,7 +221,7 @@ namespace
 
   TEST_F(EngineComponentFormatsTest, KnowsTheComponentsOfTheEngine)
   {
-    for (const auto *name : {"Transform", "Renderable", "Camera", "Light", "Spectator", "Player", "SoundSource", "SoundListener"})
+    for (const auto *name : {"Transform", "Renderable", "Camera", "Light", "Spectator", "FirstPersonController", "SoundSource", "SoundListener"})
     {
       EXPECT_NE(_formats.Find(name), nullptr) << name;
     }
@@ -862,7 +862,7 @@ namespace
     EXPECT_THAT(NamesOf(Write("Spectator")), IsEmpty());
   }
 
-  // Player
+  // FirstPersonController
 
   TEST_F(EngineComponentFormatsTest, ReadsAPlayer)
   {
@@ -877,9 +877,9 @@ namespace
     map.Set("step_smoothing", DataValue::Number(6.0f));
     map.Set("max_pitch", DataValue::Number(60.0f));
 
-    Read("Player", map);
+    Read("FirstPersonController", map);
 
-    const auto *player = _store.Get<Player>(_entity);
+    const auto *player = _store.Get<FirstPersonController>(_entity);
     ASSERT_NE(player, nullptr);
     EXPECT_EQ(player->walk_speed, 3.0f);
     EXPECT_EQ(player->run_speed, 7.0f);
@@ -895,9 +895,9 @@ namespace
 
   TEST_F(EngineComponentFormatsTest, ReadsAPlayerWithItsDefaults)
   {
-    Read("Player", DataValue::Map());
+    Read("FirstPersonController", DataValue::Map());
 
-    const auto *player = _store.Get<Player>(_entity);
+    const auto *player = _store.Get<FirstPersonController>(_entity);
     ASSERT_NE(player, nullptr);
     EXPECT_EQ(player->walk_speed, 4.0f);
     EXPECT_EQ(player->run_speed, 6.0f);
@@ -916,7 +916,7 @@ namespace
     auto map = DataValue::Map();
     map.Set("air_control", DataValue::Number(1.5f));
 
-    Read("Player", map);
+    Read("FirstPersonController", map);
 
     EXPECT_THAT(_errors, SizeIs(1));
     EXPECT_THAT(_errors.front(), ::testing::HasSubstr("'air_control'"));
@@ -927,7 +927,7 @@ namespace
     auto map = DataValue::Map();
     map.Set("max_pitch", DataValue::Number(95.0f));
 
-    Read("Player", map);
+    Read("FirstPersonController", map);
 
     EXPECT_THAT(_errors, SizeIs(1));
     EXPECT_THAT(_errors.front(), ::testing::HasSubstr("'max_pitch'"));
@@ -938,7 +938,7 @@ namespace
     auto map = DataValue::Map();
     map.Set("walk_speed", DataValue::Number(-1.0f));
 
-    Read("Player", map);
+    Read("FirstPersonController", map);
 
     EXPECT_THAT(_errors, SizeIs(1));
     EXPECT_THAT(_errors.front(), ::testing::HasSubstr("'walk_speed'"));
@@ -946,16 +946,16 @@ namespace
 
   TEST_F(EngineComponentFormatsTest, WritesNothingOfAPlayerThatHasItsDefaults)
   {
-    _store.Set(_entity, Player{});
+    _store.Set(_entity, FirstPersonController{});
 
-    EXPECT_THAT(NamesOf(Write("Player")), IsEmpty());
+    EXPECT_THAT(NamesOf(Write("FirstPersonController")), IsEmpty());
   }
 
   TEST_F(EngineComponentFormatsTest, WritesWhatOfAPlayerWasChanged)
   {
-    _store.Set(_entity, Player{.run_speed = 8.0f, .eye_height = 1.0f});
+    _store.Set(_entity, FirstPersonController{.run_speed = 8.0f, .eye_height = 1.0f});
 
-    const auto written = Write("Player");
+    const auto written = Write("FirstPersonController");
 
     EXPECT_THAT(NamesOf(written), ElementsAre("run_speed", "eye_height"));
   }

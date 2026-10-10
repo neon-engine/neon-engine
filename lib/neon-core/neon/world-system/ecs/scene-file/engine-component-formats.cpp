@@ -4,7 +4,7 @@
 #include <neon/common/transform.hpp>
 #include <neon/world-system/ecs/components/camera.hpp>
 #include <neon/world-system/ecs/components/light.hpp>
-#include <neon/world-system/ecs/components/player.hpp>
+#include <neon/world-system/ecs/components/first-person-controller.hpp>
 #include <neon/world-system/ecs/components/geometry.hpp>
 #include <neon/world-system/ecs/components/persistent.hpp>
 #include <neon/world-system/ecs/components/renderable.hpp>
@@ -29,7 +29,7 @@ namespace neon
     Add(ComponentFormat::Of<Light>());
     Add(ComponentFormat::Of<Sky>());
     Add(ComponentFormat::Of<Spectator>());
-    Add(ComponentFormat::Of<Player>());
+    Add(ComponentFormat::Of<FirstPersonController>());
     Add(ComponentFormat::Of<SoundSource>());
     Add(ComponentFormat::Of<SoundListener>());
     Add(ComponentFormat::Of<Persistent>());

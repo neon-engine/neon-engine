@@ -30,11 +30,11 @@ local function shine(trigger_lamp, light)
 end
 
 function TriggerLampSystem:on_trigger_enter(entity, trigger_lamp, other)
-  if other:has_component("Player") then shine(trigger_lamp, trigger_lamp.lit) end
+  if other:has_component("FirstPersonController") then shine(trigger_lamp, trigger_lamp.lit) end
 end
 
 function TriggerLampSystem:on_trigger_exit(entity, trigger_lamp, other)
-  if other:has_component("Player") then shine(trigger_lamp, trigger_lamp.dark) end
+  if other:has_component("FirstPersonController") then shine(trigger_lamp, trigger_lamp.dark) end
 end
 
 return TriggerLamp, TriggerLampSystem

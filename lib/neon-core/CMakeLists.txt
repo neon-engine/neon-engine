@@ -387,7 +387,7 @@ add_library(${TARGET} STATIC
         neon/world-system/ecs/components/joint.hpp
         neon/world-system/ecs/components/light.hpp
         neon/world-system/ecs/components/sky.hpp
-        neon/world-system/ecs/components/player.hpp
+        neon/world-system/ecs/components/first-person-controller.hpp
         neon/world-system/ecs/components/prefab.hpp
         neon/world-system/ecs/components/renderable.hpp
         neon/world-system/ecs/components/rigid-body.hpp
@@ -405,8 +405,8 @@ add_library(${TARGET} STATIC
         neon/world-system/ecs/systems/physics-simulation.hpp
         neon/world-system/ecs/systems/script-running.cpp
         neon/world-system/ecs/systems/script-running.hpp
-        neon/world-system/ecs/systems/player-movement.cpp
-        neon/world-system/ecs/systems/player-movement.hpp
+        neon/world-system/ecs/systems/first-person-controller-system.cpp
+        neon/world-system/ecs/systems/first-person-controller-system.hpp
         neon/world-system/ecs/components/ui-view.hpp
         neon/world-system/ecs/scene-file/pool-manager-format.cpp
         neon/world-system/ecs/scene-file/pool-manager-format.hpp
@@ -606,7 +606,7 @@ neon_add_unit_test(${TARGET} neon/command-line/display-options.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/entity-logging.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/physics-simulation.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/render-submission.test.cpp)
-  neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/player-movement.test.cpp)
+  neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/first-person-controller-system.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/pool-system.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/spectator-movement.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/transform-propagation.test.cpp)

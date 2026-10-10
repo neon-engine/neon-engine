@@ -300,8 +300,8 @@ And what came with the player, see [physics.md](physics.md#the-player):
 
 | Action | Is | Default binding | Read by |
 |---|---|---|---|
-| `jump` | A button | Space; south | `PlayerMovement`, once per press, while the player stands on the ground |
-| `run` | A button | Left shift; the left stick pressed in | `PlayerMovement`, which walks at `run_speed` while it is down. The stick pushed halfway still walks at half the speed |
+| `jump` | A button | Space; south | `FirstPersonControllerSystem`, once per press, while the player stands on the ground |
+| `run` | A button | Left shift; the left stick pressed in | `FirstPersonControllerSystem`, which walks at `run_speed` while it is down. The stick pushed halfway still walks at half the speed |
 
 The `playing` state of the default map has `move`, `look`, `jump`, `run`, and
 `pause`; `menu` has `pause` alone.

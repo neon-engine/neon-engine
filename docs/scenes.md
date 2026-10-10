@@ -320,7 +320,7 @@ itself, so a `Light` is set to match it by hand. The museum has a sky of type sp
 | `move_speed` | Units per second | `2.5` |
 | `look_speed` | Degrees per unit the mouse moved | `0.1` |
 
-**Player**
+**FirstPersonController**
 
 The entity is the player, seen from the first person and driven by the
 input. It carries a `CharacterBody`, and a child with a `Camera` is lifted
@@ -452,7 +452,7 @@ named in [CREDITS.md](../CREDITS.md).
 | 11 Sound | A spatial `SoundSource` that circles the listener, over the music and the ambience of the whole museum | [audio.md](audio.md) |
 | 12 Prefabs and scenes | One prefab placed five times with what differs, and a `SceneExit` | [prefabs.md](prefabs.md), [below](#changing-the-scene) |
 
-The player is a `Player` with a `CharacterBody` and a camera below it with a
+The player is a `FirstPersonController` with a `CharacterBody` and a camera below it with a
 `fov` of 59, which is 90 degrees across a window of 16 by 9: `fov` is the
 field of view up and down. The signs are one prefab, `assets/prefabs/museum/sign.prefab.yml`,
 whose board shows a user interface of `assets/ui/museum` on a surface of its

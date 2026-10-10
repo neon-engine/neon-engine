@@ -130,7 +130,7 @@ entities:
     components:
       Transform:
         position: [0, 0.9, 3]
-      Player: Default
+      FirstPersonController: Default
       CharacterBody: Default
       Collider:
         shape: capsule

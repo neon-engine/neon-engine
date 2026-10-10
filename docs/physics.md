@@ -258,8 +258,8 @@ bodies is dynamic, since there is nothing to hold otherwise.
 
 ## The player
 
-A `Player` on an entity with a `CharacterBody` is driven by the input, seen
-from the first person. The system `PlayerMovement`, which the runtime adds
+A `FirstPersonController` on an entity with a `CharacterBody` is driven by the input, seen
+from the first person. The system `FirstPersonControllerSystem`, which the runtime adds
 before the physics, reads the actions of the [input map](input.md) once a
 frame and writes the body; the physics moves the body in the steps that
 follow, stops it at walls, and lets it fall. The camera is a child of the
@@ -270,7 +270,7 @@ entity with a `Camera`, which the system lifts to the eyes and pitches.
   components:
     Transform:
       position: [0, 0.9, 7.5]
-    Player: Default
+    FirstPersonController: Default
     CharacterBody: Default
     Collider:
       shape: capsule
@@ -284,7 +284,7 @@ entity with a `Camera`, which the system lifts to the eyes and pitches.
         SoundListener: Default
 ```
 
-**Player**
+**FirstPersonController**
 
 | Name | Holds | Default |
 |---|---|---|
@@ -310,7 +310,7 @@ entity with a `Camera`, which the system lifts to the eyes and pitches.
 | Where the player looks at the start | The `rotation` of the entity's `Transform` holds the yaw and that of the camera's the pitch, so a scene writes them. The component keeps nothing of its own |
 | Where the camera is | At `eye_height` above the feet, which are the bottom of the entity's `Collider` (a capsule of 1.8 stands 0.9 below the origin), moved by `camera_offset`. Measured from the origin without a `Collider`, and in the units of the entity when it is scaled, the offset too. Written every frame, so the camera's `position` in a scene is not kept: a scene that wants the camera elsewhere writes `camera_offset` |
 | In the air | Decided with #219: the body keeps the velocity it took off with, as most shooters do, so a jump over a gap goes on when W is released, and the keys steer it by `air_control`. A game that wants the keys to rule in the air as on the ground sets `air_control: 1`; one that wants a jump that cannot be turned sets `0`. Walking off a ledge keeps the velocity the same way |
-| Over a step | The physics lifts the body by up to `step_height` in one step. The eyes do not follow at once: `PlayerMovement` keeps how far they lag behind, adds what the body rose or sank by between two frames on the floor, and lets it fade at `step_smoothing`, so a step, and a slope, is seen as a glide. Nothing is added while the body is in the air or in the frame it lands, so a jump is seen as it is |
+| Over a step | The physics lifts the body by up to `step_height` in one step. The eyes do not follow at once: `FirstPersonControllerSystem` keeps how far they lag behind, adds what the body rose or sank by between two frames on the floor, and lets it fade at `step_smoothing`, so a step, and a slope, is seen as a glide. Nothing is added while the body is in the air or in the frame it lands, so a jump is seen as it is |
 | What the physics gives it | `on_floor` says whether a jump is allowed. Walking up steps, sliding along walls, slopes that are too steep, falling, and pushing crates come from the `CharacterBody` |
 | What is drawn | The body is placed between the last two steps as every character is, and the camera below it goes with it |
 | While the pause menu is shown | The world does not update its systems, so the player neither turns nor moves, and the user interface takes the input first, see [user-interface.md](user-interface.md#input-and-focus) |
@@ -903,7 +903,7 @@ A character is found as a body is.
 | `Jolt_PhysicsSystem` | neon-jolt | The implementation |
 | `RigidBody`, `Collider`, `Trigger`, `CharacterBody`, `Joint` | neon-core | The components |
 | `PhysicsSimulation` | neon-core | The system that brings entities and the physics together |
-| `Player`, `PlayerMovement` | neon-core | The component and the system of the [player](#the-player), which the runtime adds before the physics |
+| `FirstPersonController`, `FirstPersonControllerSystem` | neon-core | The component and the system of the [player](#the-player), which the runtime adds before the physics |
 | `FixedClock` | neon-core | Turns the time of frames into steps. It belongs to `EntityWorld` |
 | `LoadModelGeometry` | neon-core | Reads the points and triangles of a model through the file system |
 | `GeometryBuilding::Build` | neon-core | The points and triangles of an entity's `Geometry`, for a `Collider` of kind `mesh` or `convex_hull` that names no model, so that what is drawn is what collides. See [geometry.md](geometry.md) |
@@ -1060,7 +1060,7 @@ Jolt Physics is a submodule in `external/jolt-physics`. Its options are set in
 | The same world twice, with 21 bodies, a mesh, a trigger, and a character, for 300 steps | The same state down to the last bit, and the same events in the same order |
 | The same pendulum twice, for 200 steps | The same state down to the last bit |
 | 99 checks of `PhysicsSimulation` with a physics that is a fake | Pass |
-| 28 checks of `PlayerMovement` with an input that is a fake, and 6 of the format of `Player` | Pass. Walking the way the body faces at the walking and the running speed, turning the body and pitching the camera within the clamp, the camera at the eyes, jumping from the ground once per press and not in the air, and what is no player left alone |
+| 28 checks of `FirstPersonControllerSystem` with an input that is a fake, and 6 of the format of `FirstPersonController` | Pass. Walking the way the body faces at the walking and the running speed, turning the body and pitching the camera within the clamp, the camera at the eyes, jumping from the ground once per press and not in the air, and what is no player left alone |
 | The blockout, with D held for three seconds without a window | The player stands at the edge of the platform, 0.4 high and above its step, from the first second to the third: the same image, byte for byte |
 | The prototype level, with W held for a second without a window | The player stands in the doorway, with the lintel above it where the black behind the walls was, and the first frame is the same byte for byte as before the player could walk. Three seconds in, the walker stands in front of the target on the north wall, whose body stopped it 10 cm before the wall: its foot reaches lower in the frame than it does at the wall |
 | 62 checks of the formats of the components | Pass. Reading, writing, reading what was written, and every message |

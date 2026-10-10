@@ -18,7 +18,7 @@
 ---@field CharacterBody Component|nil
 ---@field Collider Component|nil
 ---@field Joint Component|nil
----@field Player Component|nil
+---@field FirstPersonController Component|nil
 ---@field Spectator Component|nil
 ---@field Persistent Component|nil
 ---@field SceneExit Component|nil

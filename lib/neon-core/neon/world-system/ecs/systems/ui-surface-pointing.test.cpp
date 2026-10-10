@@ -240,22 +240,22 @@ namespace
 
   // who points
 
-  /// Stands for the Player of the engine, which the system finds by name.
-  struct PlayerMark
+  /// Stands for the FirstPersonController of the engine, which the system finds by name.
+  struct ControllerMark
   {
     int number = 0;
   };
 
   TEST_F(UiSurfacePointingTest, TellsTheScreenThatThePlayerAboveTheCameraPointsAtIt)
   {
-    _store.Register<PlayerMark>("Player");
+    _store.Register<ControllerMark>("FirstPersonController");
     UiSurfacePointing system{&_ui, &_input};
     system.Initialize(_store);
 
     // a group, the player in it, a head, and the camera on the head
     const Entity group = _store.CreateEntity("group");
     const Entity player = _store.CreateEntity("player", group);
-    _store.Set(player, PlayerMark{});
+    _store.Set(player, ControllerMark{});
     const Entity head = _store.CreateEntity("head", player);
     const Entity camera = CreateCamera({0.0f, 0.0f, 2.0f});
     _store.SetParent(camera, head);

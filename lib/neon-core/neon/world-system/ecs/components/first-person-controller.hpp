@@ -1,5 +1,5 @@
-#ifndef PLAYER_HPP
-#define PLAYER_HPP
+#ifndef FIRST_PERSON_CONTROLLER_HPP
+#define FIRST_PERSON_CONTROLLER_HPP
 
 #include <glm/glm.hpp>
 
@@ -20,7 +20,7 @@ namespace neon
   /// motion between frames, which the engine writes and no file holds: the
   /// velocity it left the ground with, and how far the eyes lag behind a
   /// step.
-  struct Player
+  struct FirstPersonController
   {
     /// Meters per second along the ground while `run` is not down.
     float walk_speed = 4.0f;
@@ -72,42 +72,42 @@ namespace neon
   };
 
   /// The motion between frames is written by the engine and not described.
-  inline void Describe(TypeBuilder<Player> &type)
+  inline void Describe(TypeBuilder<FirstPersonController> &type)
   {
-    type.Named("Player", "Makes the entity the player, seen from the first person and driven by the input");
+    type.Named("FirstPersonController", "Makes the entity the player, seen from the first person and driven by the input");
 
-    type.Field("walk_speed", &Player::walk_speed)
+    type.Field("walk_speed", &FirstPersonController::walk_speed)
         .AtLeast(0)
         .Describe("Meters per second along the ground");
 
-    type.Field("run_speed", &Player::run_speed)
+    type.Field("run_speed", &FirstPersonController::run_speed)
         .AtLeast(0)
         .Describe("Meters per second along the ground while run is down");
 
-    type.Field("jump_speed", &Player::jump_speed)
+    type.Field("jump_speed", &FirstPersonController::jump_speed)
         .AtLeast(0)
         .Describe("Meters per second upward that a jump starts with");
 
-    type.Field("air_control", &Player::air_control)
+    type.Field("air_control", &FirstPersonController::air_control)
         .AtLeast(0)
         .AtMost(1)
         .Describe("How much the keys steer the body in the air: 0 keeps the take-off velocity, 1 steers as on the ground");
 
-    type.Field("look_speed", &Player::look_speed)
+    type.Field("look_speed", &FirstPersonController::look_speed)
         .AtLeast(0)
         .Describe("Radians the view turns for every pixel of look");
 
-    type.Field("eye_height", &Player::eye_height)
+    type.Field("eye_height", &FirstPersonController::eye_height)
         .Describe("Meters from the feet to the eyes, where the camera is put");
 
-    type.Field("camera_offset", &Player::camera_offset)
+    type.Field("camera_offset", &FirstPersonController::camera_offset)
         .Describe("Meters the camera is moved from the eyes, to the right, up, and back in the frame of the entity");
 
-    type.Field("step_smoothing", &Player::step_smoothing)
+    type.Field("step_smoothing", &FirstPersonController::step_smoothing)
         .AtLeast(0)
         .Describe("How quickly the eyes catch up with a step, per second. 0 lifts them with the body");
 
-    type.Field("max_pitch", &Player::max_pitch)
+    type.Field("max_pitch", &FirstPersonController::max_pitch)
         .AtLeast(0)
         .AtMost(90)
         .Unit("degrees")
@@ -115,4 +115,4 @@ namespace neon
   }
 } // neon
 
-#endif //PLAYER_HPP
+#endif //FIRST_PERSON_CONTROLLER_HPP

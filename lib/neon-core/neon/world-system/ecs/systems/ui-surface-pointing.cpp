@@ -17,7 +17,7 @@ namespace neon
   {
     _cameras = store.Query<Transform, Camera>();
     _surfaces = store.Query<Transform, UiSurfaceView>();
-    _player = store.FindComponent("Player");
+    _player = store.FindComponent("FirstPersonController");
   }
 
   bool UiSurfacePointing::Hit(
@@ -119,7 +119,7 @@ namespace neon
       _ui_context->SetPointerUv(nearest, nearest_u, nearest_v, is_down);
 
       // who points: the player the camera belongs to, which is the nearest
-      // entity from the camera up that carries a Player, or the camera
+      // entity from the camera up that carries a FirstPersonController, or the camera
       Entity pointing = camera;
       if (_player != No_Component)
       {

@@ -21,7 +21,7 @@ namespace neon
   /// the pointer or accept as its press, and the flag `pointing` tells the
   /// files on the window whether anything is pointed at. The screen is
   /// also told who points at it, `pointed_by` of its UiSurface: the nearest
-  /// entity from the camera up that carries a Player, or the camera's own.
+  /// entity from the camera up that carries a FirstPersonController, or the camera's own.
   ///
   /// An application adds it after UiSurfaceLoading, with the input as the
   /// game sees it:

@@ -3587,7 +3587,7 @@ entities:
     components:
       Transform:
         position: [0, 0.9, 4.5]
-      Player: Default
+      FirstPersonController: Default
       CharacterBody:
         layers: [1, 2]
       Collider:

@@ -44,7 +44,7 @@ namespace neon
     int document = -1;
 
     /// Who pointed at it last: the player whose camera did, or the camera's
-    /// own entity when no Player is above it. It is who a click on the
+    /// own entity when no FirstPersonController is above it. It is who a click on the
     /// surface comes from, the instigator a script is told. No_Entity
     /// until it is pointed at. Not written by a scene.
     Entity pointed_by = No_Entity;

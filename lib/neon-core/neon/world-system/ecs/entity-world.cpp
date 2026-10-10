@@ -5,7 +5,7 @@
 #include "components/camera.hpp"
 #include "components/light.hpp"
 #include "components/persistent.hpp"
-#include "components/player.hpp"
+#include "components/first-person-controller.hpp"
 #include "components/renderable.hpp"
 #include "components/scene-exit.hpp"
 #include "components/sky.hpp"
@@ -68,7 +68,7 @@ namespace neon
     _store->Register<Light>("Light");
     _store->Register<Sky>("Sky");
     _store->Register<Spectator>("Spectator");
-    _store->Register<Player>("Player");
+    _store->Register<FirstPersonController>("FirstPersonController");
 
     // the renderer holds a model, textures, and a material for every entity
     // that was drawn, which are released when the entity stops being visible

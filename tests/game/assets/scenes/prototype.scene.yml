@@ -326,12 +326,12 @@ entities:
 
   # the player, who starts in the corridor and looks through the doorway. A
   # capsule of 1.8 that the physics stands on the floor, with its middle 0.9
-  # above it, and the camera lifted to the eyes by the Player
+  # above it, and the camera lifted to the eyes by the FirstPersonController
   - name: player
     components:
       Transform:
         position: [0, 0.9, 7.5]
-      Player: Default
+      FirstPersonController: Default
       # in layer 2 as well, which the exit looks for
       CharacterBody:
         layers: [1, 2]

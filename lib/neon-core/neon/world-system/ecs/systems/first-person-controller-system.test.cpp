@@ -1,4 +1,4 @@
-#include "player-movement.hpp"
+#include "first-person-controller-system.hpp"
 
 #include <cmath>
 #include <memory>
@@ -12,7 +12,7 @@
 #include <neon/world-system/ecs/components/camera.hpp>
 #include <neon/world-system/ecs/components/character-body.hpp>
 #include <neon/world-system/ecs/components/collider.hpp>
-#include <neon/world-system/ecs/components/player.hpp>
+#include <neon/world-system/ecs/components/first-person-controller.hpp>
 
 namespace
 {
@@ -23,8 +23,8 @@ namespace
   using neon::ControllerButton;
   using neon::Entity;
   using neon::Key;
-  using neon::Player;
-  using neon::PlayerMovement;
+  using neon::FirstPersonController;
+  using neon::FirstPersonControllerSystem;
   using neon::ShapeKind;
   using neon::Transform;
   using neon::testing::FakeEntityStore;
@@ -41,12 +41,12 @@ namespace
     EXPECT_NEAR(actual.z, z, tolerance);
   }
 
-  class PlayerMovementTest : public ::testing::Test
+  class FirstPersonControllerSystemTest : public ::testing::Test
   {
   protected:
     FakeEntityStore _store;
     NiceMock<FakeInputContext> _input{std::make_shared<RecordingLogger>()};
-    PlayerMovement _system{&_input};
+    FirstPersonControllerSystem _system{&_input};
 
     void SetUp() override
     {
@@ -55,7 +55,7 @@ namespace
       _store.Register<Camera>("Camera");
       _store.Register<CharacterBody>("CharacterBody");
       _store.Register<Collider>("Collider");
-      _store.Register<Player>("Player");
+      _store.Register<FirstPersonController>("FirstPersonController");
       _system.Initialize(_store);
       _input.TakeTheDevicesAsTheyAre();
     }
@@ -70,7 +70,7 @@ namespace
       Transform transform;
       transform.rotation.yaw = yaw;
       _store.Set(entity, transform);
-      _store.Set(entity, Player{
+      _store.Set(entity, FirstPersonController{
         .walk_speed = 2.0f,
         .run_speed = 3.0f,
         .jump_speed = 5.0f,
@@ -123,7 +123,7 @@ namespace
 
   // walking
 
-  TEST_F(PlayerMovementTest, StandsStillWithoutInput)
+  TEST_F(FirstPersonControllerSystemTest, StandsStillWithoutInput)
   {
     const Entity player = CreatePlayer(30.0f);
 
@@ -135,7 +135,7 @@ namespace
     EXPECT_FLOAT_EQ(TransformOf(CameraOf(player)).rotation.pitch, 0.0f);
   }
 
-  TEST_F(PlayerMovementTest, WalksForwardAtTheWalkingSpeed)
+  TEST_F(FirstPersonControllerSystemTest, WalksForwardAtTheWalkingSpeed)
   {
     const Entity player = CreatePlayer();
     _input.state.SetKeyDown(Key::W);
@@ -145,7 +145,7 @@ namespace
     ExpectVector(BodyOf(player).velocity, 0.0f, 0.0f, -2.0f);
   }
 
-  TEST_F(PlayerMovementTest, WalksBackAndToTheSides)
+  TEST_F(FirstPersonControllerSystemTest, WalksBackAndToTheSides)
   {
     const Entity player = CreatePlayer();
 
@@ -164,7 +164,7 @@ namespace
     ExpectVector(BodyOf(player).velocity, -2.0f, 0.0f, 0.0f);
   }
 
-  TEST_F(PlayerMovementTest, WalksTheWayItFaces)
+  TEST_F(FirstPersonControllerSystemTest, WalksTheWayItFaces)
   {
     const Entity player = CreatePlayer(90.0f);
 
@@ -178,7 +178,7 @@ namespace
     ExpectVector(BodyOf(player).velocity, 0.0f, 0.0f, -2.0f);
   }
 
-  TEST_F(PlayerMovementTest, WalksNoFasterAlongADiagonal)
+  TEST_F(FirstPersonControllerSystemTest, WalksNoFasterAlongADiagonal)
   {
     const Entity player = CreatePlayer();
     _input.state.SetKeyDown(Key::W);
@@ -190,7 +190,7 @@ namespace
     EXPECT_NEAR(BodyOf(player).velocity.x, -BodyOf(player).velocity.z, tolerance);
   }
 
-  TEST_F(PlayerMovementTest, WalksAsFarAsTheStickIsPushed)
+  TEST_F(FirstPersonControllerSystemTest, WalksAsFarAsTheStickIsPushed)
   {
     // half the way is half the walking speed
     const Entity player = CreatePlayer();
@@ -201,7 +201,7 @@ namespace
     ExpectVector(BodyOf(player).velocity, 0.0f, 0.0f, -1.0f);
   }
 
-  TEST_F(PlayerMovementTest, StopsWhenTheKeysAreReleased)
+  TEST_F(FirstPersonControllerSystemTest, StopsWhenTheKeysAreReleased)
   {
     const Entity player = CreatePlayer();
     _input.state.SetKeyDown(Key::W);
@@ -213,7 +213,7 @@ namespace
     ExpectVector(BodyOf(player).velocity, 0.0f, 0.0f, 0.0f);
   }
 
-  TEST_F(PlayerMovementTest, RunsWhileRunIsDown)
+  TEST_F(FirstPersonControllerSystemTest, RunsWhileRunIsDown)
   {
     const Entity player = CreatePlayer();
     _input.state.SetKeyDown(Key::W);
@@ -224,7 +224,7 @@ namespace
     ExpectVector(BodyOf(player).velocity, 0.0f, 0.0f, -3.0f);
   }
 
-  TEST_F(PlayerMovementTest, RunsWhileTheLeftStickIsPressedIn)
+  TEST_F(FirstPersonControllerSystemTest, RunsWhileTheLeftStickIsPressedIn)
   {
     const Entity player = CreatePlayer();
     _input.state.SetLeftStick(0.0, -1.0);
@@ -235,7 +235,7 @@ namespace
     ExpectVector(BodyOf(player).velocity, 0.0f, 0.0f, -3.0f);
   }
 
-  TEST_F(PlayerMovementTest, WalksAgainOnceRunIsReleased)
+  TEST_F(FirstPersonControllerSystemTest, WalksAgainOnceRunIsReleased)
   {
     const Entity player = CreatePlayer();
     _input.state.SetKeyDown(Key::W);
@@ -249,7 +249,7 @@ namespace
     ExpectVector(BodyOf(player).velocity, 0.0f, 0.0f, -2.0f);
   }
 
-  TEST_F(PlayerMovementTest, LeavesThePhysicsToMoveTheBody)
+  TEST_F(FirstPersonControllerSystemTest, LeavesThePhysicsToMoveTheBody)
   {
     const Entity player = CreatePlayer();
     _input.state.SetKeyDown(Key::W);
@@ -261,7 +261,7 @@ namespace
 
   // looking
 
-  TEST_F(PlayerMovementTest, TurnsTheBodyAgainstTheMotionOfTheMouse)
+  TEST_F(FirstPersonControllerSystemTest, TurnsTheBodyAgainstTheMotionOfTheMouse)
   {
     // a hundredth of a radian a pixel: 10 pixels are 0.1 radians
     const Entity player = CreatePlayer();
@@ -274,7 +274,7 @@ namespace
     EXPECT_FLOAT_EQ(TransformOf(player).rotation.roll, 0.0f);
   }
 
-  TEST_F(PlayerMovementTest, TurnsFromWhereItFaces)
+  TEST_F(FirstPersonControllerSystemTest, TurnsFromWhereItFaces)
   {
     const Entity player = CreatePlayer(20.0f);
     _input.state.SetAxisMotion(Axis::Mouse, -10.0, 0.0);
@@ -284,7 +284,7 @@ namespace
     EXPECT_NEAR(TransformOf(player).rotation.yaw, 20.0f + glm::degrees(0.1f), tolerance);
   }
 
-  TEST_F(PlayerMovementTest, PitchesTheCameraAndNotTheBody)
+  TEST_F(FirstPersonControllerSystemTest, PitchesTheCameraAndNotTheBody)
   {
     // the mouse moved down the screen, so the view goes down
     const Entity player = CreatePlayer();
@@ -297,10 +297,10 @@ namespace
     EXPECT_FLOAT_EQ(TransformOf(player).rotation.pitch, 0.0f);
   }
 
-  TEST_F(PlayerMovementTest, LooksNoFurtherUpOrDownThanMaxPitch)
+  TEST_F(FirstPersonControllerSystemTest, LooksNoFurtherUpOrDownThanMaxPitch)
   {
     const Entity player = CreatePlayer();
-    _store.Get<Player>(player)->max_pitch = 60.0f;
+    _store.Get<FirstPersonController>(player)->max_pitch = 60.0f;
 
     _input.state.SetAxisMotion(Axis::Mouse, 0.0, -1000.0);
     Update();
@@ -311,7 +311,7 @@ namespace
     EXPECT_FLOAT_EQ(TransformOf(CameraOf(player)).rotation.pitch, -60.0f);
   }
 
-  TEST_F(PlayerMovementTest, TurnsAndWalksInTheSameFrame)
+  TEST_F(FirstPersonControllerSystemTest, TurnsAndWalksInTheSameFrame)
   {
     // the quarter turn to the left comes first, so the step goes to the
     // left as well
@@ -325,7 +325,7 @@ namespace
     ExpectVector(BodyOf(player).velocity, -2.0f, 0.0f, 0.0f);
   }
 
-  TEST_F(PlayerMovementTest, KeepsTheLookOnceTheMouseStopped)
+  TEST_F(FirstPersonControllerSystemTest, KeepsTheLookOnceTheMouseStopped)
   {
     const Entity player = CreatePlayer();
     _input.state.SetAxisMotion(Axis::Mouse, 10.0, 4.0);
@@ -340,7 +340,7 @@ namespace
 
   // the camera
 
-  TEST_F(PlayerMovementTest, LiftsTheCameraToTheEyesAboveTheFeet)
+  TEST_F(FirstPersonControllerSystemTest, LiftsTheCameraToTheEyesAboveTheFeet)
   {
     // the capsule of 1.8 stands 0.9 below the origin, and the eyes are 1.6
     // above the feet
@@ -351,7 +351,7 @@ namespace
     ExpectVector(TransformOf(CameraOf(player)).position, 0.0f, 0.7f, 0.0f);
   }
 
-  TEST_F(PlayerMovementTest, MeasuresTheEyesFromTheOriginWithoutACollider)
+  TEST_F(FirstPersonControllerSystemTest, MeasuresTheEyesFromTheOriginWithoutACollider)
   {
     const Entity player = CreatePlayer();
     _store.RemoveComponent(player, _store.IdOf<Collider>());
@@ -361,7 +361,7 @@ namespace
     ExpectVector(TransformOf(CameraOf(player)).position, 0.0f, 1.6f, 0.0f);
   }
 
-  TEST_F(PlayerMovementTest, MeasuresTheEyesInTheUnitsOfABodyThatIsScaled)
+  TEST_F(FirstPersonControllerSystemTest, MeasuresTheEyesInTheUnitsOfABodyThatIsScaled)
   {
     // the body is twice as large, so 1.6 meters are 0.8 of its units, and
     // the capsule, which is scaled with it, still stands 0.9 of them below
@@ -373,7 +373,7 @@ namespace
     ExpectVector(TransformOf(CameraOf(player)).position, 0.0f, -0.1f, 0.0f);
   }
 
-  TEST_F(PlayerMovementTest, LeavesACameraThatIsNoChildOfAPlayerAlone)
+  TEST_F(FirstPersonControllerSystemTest, LeavesACameraThatIsNoChildOfAPlayerAlone)
   {
     const Entity camera = _store.CreateEntity("camera");
     Transform transform;
@@ -390,7 +390,7 @@ namespace
 
   // jumping
 
-  TEST_F(PlayerMovementTest, JumpsFromTheGround)
+  TEST_F(FirstPersonControllerSystemTest, JumpsFromTheGround)
   {
     const Entity player = CreatePlayer();
     _input.state.SetKeyDown(Key::Space);
@@ -400,7 +400,7 @@ namespace
     ExpectVector(BodyOf(player).fall_velocity, 0.0f, 5.0f, 0.0f);
   }
 
-  TEST_F(PlayerMovementTest, DoesNotJumpInTheAir)
+  TEST_F(FirstPersonControllerSystemTest, DoesNotJumpInTheAir)
   {
     const Entity player = CreatePlayer(0.0f, false);
     _store.Get<CharacterBody>(player)->fall_velocity = {0.0f, -3.0f, 0.0f};
@@ -411,7 +411,7 @@ namespace
     ExpectVector(BodyOf(player).fall_velocity, 0.0f, -3.0f, 0.0f);
   }
 
-  TEST_F(PlayerMovementTest, JumpsOnceForOnePress)
+  TEST_F(FirstPersonControllerSystemTest, JumpsOnceForOnePress)
   {
     const Entity player = CreatePlayer();
     _input.state.SetKeyDown(Key::Space);
@@ -425,7 +425,7 @@ namespace
     ExpectVector(BodyOf(player).fall_velocity, 0.0f, 4.0f, 0.0f);
   }
 
-  TEST_F(PlayerMovementTest, JumpsWhileWalking)
+  TEST_F(FirstPersonControllerSystemTest, JumpsWhileWalking)
   {
     const Entity player = CreatePlayer();
     _input.state.SetKeyDown(Key::W);
@@ -439,10 +439,10 @@ namespace
 
   // in the air
 
-  TEST_F(PlayerMovementTest, KeepsTheVelocityItLeftTheGroundWithInTheAir)
+  TEST_F(FirstPersonControllerSystemTest, KeepsTheVelocityItLeftTheGroundWithInTheAir)
   {
     const Entity player = CreatePlayer();
-    _store.Get<Player>(player)->air_control = 0.0f;
+    _store.Get<FirstPersonController>(player)->air_control = 0.0f;
     _input.state.SetKeyDown(Key::W);
     Update();
 
@@ -457,7 +457,7 @@ namespace
     ExpectVector(BodyOf(player).velocity, 0.0f, 0.0f, -2.0f);
   }
 
-  TEST_F(PlayerMovementTest, SteersInTheAirByAirControl)
+  TEST_F(FirstPersonControllerSystemTest, SteersInTheAirByAirControl)
   {
     // half the control: the keys pull the take-off velocity halfway to
     // what they ask for
@@ -480,7 +480,7 @@ namespace
     ExpectVector(BodyOf(player).velocity, 1.0f, 0.0f, -1.0f);
   }
 
-  TEST_F(PlayerMovementTest, SteersNoFurtherFrameAfterFrameInTheAir)
+  TEST_F(FirstPersonControllerSystemTest, SteersNoFurtherFrameAfterFrameInTheAir)
   {
     // the pull is from the take-off velocity every frame, not from the
     // frame before, so a long jump with the keys released does not slow
@@ -496,10 +496,10 @@ namespace
     ExpectVector(BodyOf(player).velocity, 0.0f, 0.0f, -1.0f);
   }
 
-  TEST_F(PlayerMovementTest, SteersAsOnTheGroundWithFullAirControl)
+  TEST_F(FirstPersonControllerSystemTest, SteersAsOnTheGroundWithFullAirControl)
   {
     const Entity player = CreatePlayer();
-    _store.Get<Player>(player)->air_control = 1.0f;
+    _store.Get<FirstPersonController>(player)->air_control = 1.0f;
     _input.state.SetKeyDown(Key::W);
     Update();
     PhysicsPlaced(player, 0.5f, false);
@@ -511,7 +511,7 @@ namespace
     ExpectVector(BodyOf(player).velocity, 2.0f, 0.0f, 0.0f);
   }
 
-  TEST_F(PlayerMovementTest, WalksAsTheKeysSayOnceItLands)
+  TEST_F(FirstPersonControllerSystemTest, WalksAsTheKeysSayOnceItLands)
   {
     const Entity player = CreatePlayer();
     _input.state.SetKeyDown(Key::W);
@@ -529,10 +529,10 @@ namespace
     ExpectVector(BodyOf(player).velocity, -2.0f, 0.0f, 0.0f);
   }
 
-  TEST_F(PlayerMovementTest, KeepsRunningInTheAirWhenRunWasDownAtTakeOff)
+  TEST_F(FirstPersonControllerSystemTest, KeepsRunningInTheAirWhenRunWasDownAtTakeOff)
   {
     const Entity player = CreatePlayer();
-    _store.Get<Player>(player)->air_control = 0.0f;
+    _store.Get<FirstPersonController>(player)->air_control = 0.0f;
     _input.state.SetKeyDown(Key::W);
     _input.state.SetKeyDown(Key::LeftShift);
     Update();
@@ -546,13 +546,13 @@ namespace
 
   // the glide over steps
 
-  TEST_F(PlayerMovementTest, GlidesTheEyesUpAStep)
+  TEST_F(FirstPersonControllerSystemTest, GlidesTheEyesUpAStep)
   {
     // the physics lifted the body a quarter of a meter between two frames
     // on the floor: the eyes stay where they were in that frame, and catch
     // up at step_smoothing, a tenth of the way left every sixtieth
     const Entity player = CreatePlayer();
-    _store.Get<Player>(player)->step_smoothing = 10.0f;
+    _store.Get<FirstPersonController>(player)->step_smoothing = 10.0f;
     Update();
 
     PhysicsPlaced(player, 0.25f, true);
@@ -567,10 +567,10 @@ namespace
     ExpectVector(TransformOf(CameraOf(player)).position, 0.0f, 0.7f, 0.0f);
   }
 
-  TEST_F(PlayerMovementTest, GlidesTheEyesDownAStepToo)
+  TEST_F(FirstPersonControllerSystemTest, GlidesTheEyesDownAStepToo)
   {
     const Entity player = CreatePlayer();
-    _store.Get<Player>(player)->step_smoothing = 10.0f;
+    _store.Get<FirstPersonController>(player)->step_smoothing = 10.0f;
     PhysicsPlaced(player, 0.25f, true);
     Update();
 
@@ -580,10 +580,10 @@ namespace
     ExpectVector(TransformOf(CameraOf(player)).position, 0.0f, 0.95f, 0.0f);
   }
 
-  TEST_F(PlayerMovementTest, LiftsTheEyesWithTheBodyWithoutSmoothing)
+  TEST_F(FirstPersonControllerSystemTest, LiftsTheEyesWithTheBodyWithoutSmoothing)
   {
     const Entity player = CreatePlayer();
-    _store.Get<Player>(player)->step_smoothing = 0.0f;
+    _store.Get<FirstPersonController>(player)->step_smoothing = 0.0f;
     Update();
 
     PhysicsPlaced(player, 0.25f, true);
@@ -592,10 +592,10 @@ namespace
     ExpectVector(TransformOf(CameraOf(player)).position, 0.0f, 0.7f, 0.0f);
   }
 
-  TEST_F(PlayerMovementTest, DoesNotGlideThroughAJumpOrOnLanding)
+  TEST_F(FirstPersonControllerSystemTest, DoesNotGlideThroughAJumpOrOnLanding)
   {
     const Entity player = CreatePlayer();
-    _store.Get<Player>(player)->step_smoothing = 10.0f;
+    _store.Get<FirstPersonController>(player)->step_smoothing = 10.0f;
     Update();
 
     // up in the air, and down again onto a step that was not there before
@@ -608,12 +608,12 @@ namespace
     ExpectVector(TransformOf(CameraOf(player)).position, 0.0f, 0.7f, 0.0f);
   }
 
-  TEST_F(PlayerMovementTest, GlidesInTheUnitsOfABodyThatIsScaled)
+  TEST_F(FirstPersonControllerSystemTest, GlidesInTheUnitsOfABodyThatIsScaled)
   {
     // the body is twice as large: a step of 0.5 in the world is 0.25 of its
     // units, below the eyes at -0.1
     const Entity player = CreatePlayer();
-    _store.Get<Player>(player)->step_smoothing = 10.0f;
+    _store.Get<FirstPersonController>(player)->step_smoothing = 10.0f;
     _store.Get<Transform>(player)->scale = glm::vec3{2.0f};
     Update();
 
@@ -625,21 +625,21 @@ namespace
 
   // the offset of the camera
 
-  TEST_F(PlayerMovementTest, MovesTheCameraByTheOffset)
+  TEST_F(FirstPersonControllerSystemTest, MovesTheCameraByTheOffset)
   {
     // to the right, up, and back from the eyes, in the frame of the body
     const Entity player = CreatePlayer();
-    _store.Get<Player>(player)->camera_offset = {0.2f, 0.1f, 1.5f};
+    _store.Get<FirstPersonController>(player)->camera_offset = {0.2f, 0.1f, 1.5f};
 
     Update();
 
     ExpectVector(TransformOf(CameraOf(player)).position, 0.2f, 0.8f, 1.5f);
   }
 
-  TEST_F(PlayerMovementTest, MeasuresTheOffsetInTheUnitsOfABodyThatIsScaled)
+  TEST_F(FirstPersonControllerSystemTest, MeasuresTheOffsetInTheUnitsOfABodyThatIsScaled)
   {
     const Entity player = CreatePlayer();
-    _store.Get<Player>(player)->camera_offset = {1.0f, 0.0f, 2.0f};
+    _store.Get<FirstPersonController>(player)->camera_offset = {1.0f, 0.0f, 2.0f};
     _store.Get<Transform>(player)->scale = glm::vec3{2.0f};
 
     Update();
@@ -649,7 +649,7 @@ namespace
 
   // what is left alone
 
-  TEST_F(PlayerMovementTest, LeavesACharacterThatIsNoPlayerAlone)
+  TEST_F(FirstPersonControllerSystemTest, LeavesACharacterThatIsNoPlayerAlone)
   {
     const Entity walker = _store.CreateEntity("walker");
     _store.Set(walker, Transform{});
@@ -665,12 +665,12 @@ namespace
     EXPECT_FLOAT_EQ(TransformOf(walker).rotation.yaw, 0.0f);
   }
 
-  TEST_F(PlayerMovementTest, DrivesEveryPlayerByTheSameInput)
+  TEST_F(FirstPersonControllerSystemTest, DrivesEveryPlayerByTheSameInput)
   {
     const Entity first = CreatePlayer();
     const Entity second = _store.CreateEntity("second");
     _store.Set(second, Transform{});
-    _store.Set(second, Player{.walk_speed = 10.0f});
+    _store.Set(second, FirstPersonController{.walk_speed = 10.0f});
     _store.Set(second, CharacterBody{.on_floor = true});
     _input.state.SetKeyDown(Key::W);
 
@@ -680,7 +680,7 @@ namespace
     ExpectVector(BodyOf(second).velocity, 0.0f, 0.0f, -10.0f);
   }
 
-  TEST_F(PlayerMovementTest, LeavesThePlayerAsItWasSet)
+  TEST_F(FirstPersonControllerSystemTest, LeavesThePlayerAsItWasSet)
   {
     const Entity player = CreatePlayer();
     _input.state.SetKeyDown(Key::W);
@@ -688,11 +688,11 @@ namespace
 
     Update();
 
-    EXPECT_EQ(_store.Get<Player>(player)->walk_speed, 2.0f);
-    EXPECT_EQ(_store.Get<Player>(player)->look_speed, 0.01f);
+    EXPECT_EQ(_store.Get<FirstPersonController>(player)->walk_speed, 2.0f);
+    EXPECT_EQ(_store.Get<FirstPersonController>(player)->look_speed, 0.01f);
   }
 
-  TEST_F(PlayerMovementTest, DoesNothingInAWorldWithoutPlayers)
+  TEST_F(FirstPersonControllerSystemTest, DoesNothingInAWorldWithoutPlayers)
   {
     _input.state.SetKeyDown(Key::W);
 
