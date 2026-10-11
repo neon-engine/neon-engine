@@ -16,8 +16,9 @@ namespace neon
   /// RayCasting system fills: a ray that hits a screen gives that screen
   /// the pointer, at the hit, with the button of the pointer or accept as
   /// its press, unless the hit is further than the screen's `reach`. The
-  /// screen is told who points at it, `pointed_by` of its UiSurface: the
-  /// `owner` the ray names, or the ray's own entity. Nothing here knows
+  /// user interface is told who points, with SetPointerBy: the `owner` the
+  /// ray names, or the ray's own entity, which a click then carries as its
+  /// instigator. Nothing here writes on the screen, and nothing here knows
   /// what entity the ray hangs under, and nothing here tells a HUD what to
   /// show: a script of the game reads the ray for that.
   ///

@@ -508,6 +508,9 @@ namespace neon
       float pointer_y = 0.0f;
       bool pointer_is_down = false;
 
+      // who points, as the game says, for the events of the surface
+      std::uint64_t pointer_by = 0;
+
       bool pointer_was_down = false;
       UiElement *pressed = nullptr;
       UiElement *hovered = nullptr;
@@ -832,6 +835,10 @@ namespace neon
     void SetPointer(int surface, float x, float y, bool is_down) override;
 
     void SetPointerUv(int surface, float u, float v, bool is_down) override;
+
+    void SetPointerBy(int surface, std::uint64_t by) override;
+
+    void SetDocumentOwner(int document, std::uint64_t owner) override;
 
     void ClearPointer(int surface) override;
 

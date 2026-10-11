@@ -591,6 +591,22 @@ namespace neon
       surface, u * static_cast<float>(found->width), v * static_cast<float>(found->height), is_down);
   }
 
+  void Tree_UiSystem::SetPointerBy(const int surface, const std::uint64_t by)
+  {
+    Surface *found = FindSurface(surface);
+    if (found == nullptr || found->id == Ui_Window_Surface) { return; }
+
+    found->pointer_by = by;
+  }
+
+  void Tree_UiSystem::SetDocumentOwner(const int document, const std::uint64_t owner)
+  {
+    for (const auto &loaded : _documents)
+    {
+      if (loaded->id == document) { loaded->owner = owner; }
+    }
+  }
+
   void Tree_UiSystem::ClearPointer(const int surface)
   {
     Surface *found = FindSurface(surface);
@@ -598,6 +614,7 @@ namespace neon
 
     found->has_pointer = false;
     found->pointer_is_down = false;
+    found->pointer_by = 0;
   }
 
   bool Tree_UiSystem::SetInputSurface(const int surface)
@@ -818,7 +835,9 @@ namespace neon
     event.element = element.GetName();
     event.document = document != nullptr ? document->name : "";
     event.document_id = document != nullptr ? document->id : -1;
+    event.owner = document != nullptr ? document->owner : 0;
     event.surface = surface != nullptr ? surface->name : "";
+    event.pointed_by = surface != nullptr ? surface->pointer_by : 0;
 
     if (call == nullptr) { return event; }
     event.call = *call;

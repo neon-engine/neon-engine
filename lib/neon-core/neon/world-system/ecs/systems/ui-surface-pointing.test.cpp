@@ -68,6 +68,9 @@ namespace
       _store.Register<RayCast>("RayCast");
       _store.Register<UiSurfaceView>("UiSurface");
       _system.Initialize(_store);
+
+      // who points is said with every pointer; the tests of it ask for it
+      EXPECT_CALL(_ui, SetPointerBy(_, _)).Times(::testing::AnyNumber());
     }
 
     void TearDown() override
@@ -247,30 +250,26 @@ namespace
 
   // who points
 
-  TEST_F(UiSurfacePointingTest, TellsTheScreenThatTheOwnerOfTheRayPointsAtIt)
+  TEST_F(UiSurfacePointingTest, TellsTheUserInterfaceThatTheOwnerOfTheRayPoints)
   {
     const Entity player = _store.CreateEntity("player");
     const Entity screen = CreateScreen(3, {0.0f, 0.0f, 0.0f});
-    const Entity other = CreateScreen(4, {5.0f, 0.0f, 0.0f});
+    CreateScreen(4, {5.0f, 0.0f, 0.0f});
     CreateRay("eye", screen, {0.0f, 0.0f, 0.0f}, player);
-    EXPECT_EQ(_store.Get<UiSurfaceView>(screen)->pointed_by, neon::No_Entity);
 
     EXPECT_CALL(_ui, SetPointerUv(3, _, _, false));
+    EXPECT_CALL(_ui, SetPointerBy(3, player));
     Frame();
-
-    EXPECT_EQ(_store.Get<UiSurfaceView>(screen)->pointed_by, player);
-    EXPECT_EQ(_store.Get<UiSurfaceView>(other)->pointed_by, neon::No_Entity);
   }
 
-  TEST_F(UiSurfacePointingTest, TellsTheScreenThatTheRaysEntityPointsAtItWhenTheRayHasNoOwner)
+  TEST_F(UiSurfacePointingTest, TellsTheUserInterfaceThatTheRaysEntityPointsWhenTheRayHasNoOwner)
   {
     const Entity screen = CreateScreen(3, {0.0f, 0.0f, 0.0f});
     const Entity eye = CreateRay("eye", screen, {0.0f, 0.0f, 0.0f});
 
     EXPECT_CALL(_ui, SetPointerUv(3, _, _, false));
+    EXPECT_CALL(_ui, SetPointerBy(3, eye));
     Frame();
-
-    EXPECT_EQ(_store.Get<UiSurfaceView>(screen)->pointed_by, eye);
   }
 
   TEST_F(UiSurfacePointingTest, TwoRaysPointAtTwoScreensAndEachIsClearedOnItsOwn)

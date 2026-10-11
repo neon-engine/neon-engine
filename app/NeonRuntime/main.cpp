@@ -43,6 +43,7 @@
 #include <neon/world-system/ecs/systems/rope-drawing.hpp>
 #include <neon/world-system/ecs/systems/physics-simulation.hpp>
 #include <neon/world-system/ecs/systems/first-person-controller-system.hpp>
+#include <neon/world-system/ecs/systems/scene-exiting.hpp>
 #include <neon/world-system/ecs/systems/script-running.hpp>
 #include <neon/world-system/ecs/scene-file/ui-view-format.hpp>
 #include <neon/world-system/ecs/systems/ui-clock.hpp>
@@ -518,6 +519,9 @@ int main(const int argc, char *argv[])
 
   // ropes, drawn between their ends where the physics has just placed them
   world.AddSystem(std::make_unique<neon::RopeDrawing>(logging_system.CreateLogger("RopeDrawing")));
+
+  // the way out of a level, once the physics has said what entered it
+  world.AddSystem(std::make_unique<neon::SceneExiting>(&world));
 
   // where the entities the command line names are, once in every frame,
   // for checks that read the log in place of the pixels. Where they are

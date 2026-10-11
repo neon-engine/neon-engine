@@ -35,6 +35,9 @@ namespace
       _store.Initialize();
       _system.Register(_store);
       _system.Initialize(_store);
+
+      // every file shown is told its entity; the test of that asks for it
+      EXPECT_CALL(_ui, SetDocumentOwner(::testing::_, ::testing::_)).Times(::testing::AnyNumber());
     }
 
     void TearDown() override
@@ -68,6 +71,8 @@ namespace
     const Entity hud = CreateView("assets://ui/hud.ui.yml", "hud");
 
     EXPECT_CALL(_ui, Load("assets://ui/hud.ui.yml")).WillOnce(Return(3));
+    // the user interface is told that this entity shows the file
+    EXPECT_CALL(_ui, SetDocumentOwner(3, hud));
     _system.Update(_store, 0.016);
 
     EXPECT_EQ(_store.Get<UiView>(hud)->document, 3);

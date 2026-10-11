@@ -27,7 +27,6 @@
 #include "components/persistent.hpp"
 #include "components/first-person-controller.hpp"
 #include "components/scene-exit.hpp"
-#include "components/trigger.hpp"
 #include "components/spectator.hpp"
 #include "scene-file/scene-file.hpp"
 
@@ -47,7 +46,6 @@ namespace
   using neon::Prefab;
   using neon::SceneFile;
   using neon::SceneExit;
-  using neon::Trigger;
   using neon::No_Component;
   using neon::Renderable;
   using neon::Spectator;
@@ -429,59 +427,6 @@ namespace
     EXPECT_TRUE(_logger->Contains(
       LogLevel::Error,
       "The scene assets://scenes/missing.scene.yml cannot be read, the game stays in the scene it is in"));
-  }
-
-  TEST_F(EntityWorldTest, AsksForTheSceneOfAnExitWhoseTriggerHasABodyInside)
-  {
-    // the physics registers Trigger; here a test does
-    _store.Register<Trigger>("Trigger");
-    Entity door = 0;
-    PopulateWith([&](EntityStore &store)
-    {
-      door = store.CreateEntity("door");
-      store.Set(door, Trigger{});
-      store.Set(door, SceneExit{.scene = "assets://scenes/end.scene.yml"});
-    });
-    _world.Initialize();
-
-    _world.Update();
-    EXPECT_FALSE(_world.IsChangingScene());
-
-    _store.Get<Trigger>(door)->inside = 1;
-    _world.Update();
-    EXPECT_TRUE(_world.IsChangingScene());
-  }
-
-  TEST_F(EntityWorldTest, AnExitWithoutATriggerOrWithoutASceneAsksForNothing)
-  {
-    _store.Register<Trigger>("Trigger");
-    PopulateWith([&](EntityStore &store)
-    {
-      const Entity no_trigger = store.CreateEntity("no-trigger");
-      store.Set(no_trigger, SceneExit{.scene = "assets://scenes/end.scene.yml"});
-
-      const Entity no_scene = store.CreateEntity("no-scene");
-      store.Set(no_scene, Trigger{.inside = 1});
-      store.Set(no_scene, SceneExit{});
-    });
-    _world.Initialize();
-
-    _world.Update();
-    EXPECT_FALSE(_world.IsChangingScene());
-  }
-
-  TEST_F(EntityWorldTest, HasExitsThatNeverOpenWithoutPhysics)
-  {
-    // nothing registered Trigger, as in a world without a physics system
-    PopulateWith([&](EntityStore &store)
-    {
-      const Entity door = store.CreateEntity("door");
-      store.Set(door, SceneExit{.scene = "assets://scenes/end.scene.yml"});
-    });
-    _world.Initialize();
-
-    _world.Update();
-    EXPECT_FALSE(_world.IsChangingScene());
   }
 
   // pausing

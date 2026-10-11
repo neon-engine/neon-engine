@@ -59,6 +59,10 @@ namespace neon::testing
     MOCK_METHOD(void, SetPointerUv, (int surface, float u, float v, bool is_down), (override));
 
     MOCK_METHOD(void, ClearPointer, (int surface), (override));
+
+    MOCK_METHOD(void, SetPointerBy, (int surface, std::uint64_t by), (override));
+
+    MOCK_METHOD(void, SetDocumentOwner, (int document, std::uint64_t owner), (override));
   };
 
   class MockUiSystem : public UiSystem

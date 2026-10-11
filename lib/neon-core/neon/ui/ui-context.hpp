@@ -3,6 +3,7 @@
 
 #include <functional>
 #include <map>
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -44,6 +45,15 @@ namespace neon
     /// What the user interface knows that file as while it is shown: what
     /// Load() and LoadOnto() returned. -1 for an element of no file.
     int document_id = -1;
+
+    /// What shows the file, as the game said with SetDocumentOwner(): the
+    /// number of an entity, or 0 for a file nothing of the game shows.
+    std::uint64_t owner = 0;
+
+    /// Who pointed at the surface the file is on, as the game said with
+    /// SetPointerBy(): the number of an entity, or 0 for the window and
+    /// for a surface nobody was said to point at.
+    std::uint64_t pointed_by = 0;
 
     /// The name of the surface the file is shown on: `window`, or what a
     /// surface in the world was called.
@@ -106,6 +116,12 @@ namespace neon
 
     /// Stops showing what Load() returned.
     virtual void Unload(int document) = 0;
+
+    /// Says what shows the file, as the game names it: the number of an
+    /// entity. Every event of the file carries it as `owner`, so that
+    /// whoever hands a click to the scripts knows the entity without
+    /// asking the world. 0 for none.
+    virtual void SetDocumentOwner(int document, std::uint64_t owner) {}
 
     /// Whether a file that Load() returned is still shown. It is not once
     /// it was unloaded, by the game or by cancel.
@@ -583,6 +599,12 @@ namespace neon
     /// The same in parts of the surface, as the place on a texture is
     /// written: 0 is the left and the top, 1 the right and the bottom.
     virtual void SetPointerUv(const int surface, const float u, const float v, const bool is_down) {}
+
+    /// Says who points at the surface, as the game names it: the number of
+    /// an entity, or 0 for nobody. It stays until it is said again or the
+    /// pointer is taken away, and every click on the surface carries it as
+    /// `pointed_by`.
+    virtual void SetPointerBy(const int surface, const std::uint64_t by) {}
 
     /// Says that the player points at nothing on the surface.
     virtual void ClearPointer(const int surface) {}

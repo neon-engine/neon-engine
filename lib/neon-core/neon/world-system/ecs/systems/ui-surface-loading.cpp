@@ -63,6 +63,7 @@ namespace neon
         }
 
         view.document = _ui_context->LoadOnto(view.surface, view.ui);
+        if (view.document >= 0) { _ui_context->SetDocumentOwner(view.document, block.entities[i]); }
 
         if (view.document < 0)
         {

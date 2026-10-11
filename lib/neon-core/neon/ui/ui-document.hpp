@@ -2,6 +2,7 @@
 #define UI_DOCUMENT_HPP
 
 #include <memory>
+#include <cstdint>
 #include <string>
 #include <utility>
 #include <vector>
@@ -58,6 +59,11 @@ namespace neon
   struct UiDocument
   {
     int id = -1;
+
+    /// What shows the file, as the game names it: the number of an entity,
+    /// or 0 for a file the application shows. Carried on every event of
+    /// the file, so that a click reaches the scripts of that entity.
+    std::uint64_t owner = 0;
 
     /// The virtual path the document was read from, and what it calls
     /// itself.

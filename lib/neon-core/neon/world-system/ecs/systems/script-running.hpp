@@ -37,16 +37,10 @@ namespace neon
     std::vector<std::string> _more_folders;
     std::shared_ptr<Logger> _logger;
 
-    // where the clicks come from, and the entities that show a file
+    // where the clicks come from
     UiContext *_ui = nullptr;
-    QueryId _views = 0;
-    QueryId _surfaces = 0;
     std::vector<ScriptUiCall> _calls;
 
-    /// The entity that shows the file the user interface knows by that
-    /// number, or No_Entity, and in `instigator` who pointed at it, for a
-    /// file on a surface in the world.
-    [[nodiscard]] Entity FindShowing(EntityStore &store, int document, Entity &instigator) const;
 
   public:
     /// `physics` may be nullptr, for a world without physics: the hooks of

@@ -401,6 +401,8 @@ add_library(${TARGET} STATIC
         neon/world-system/ecs/components/trigger.hpp
         neon/world-system/ecs/systems/physics-simulation.cpp
         neon/world-system/ecs/systems/physics-simulation.hpp
+        neon/world-system/ecs/systems/scene-exiting.cpp
+        neon/world-system/ecs/systems/scene-exiting.hpp
         neon/world-system/ecs/systems/script-running.cpp
         neon/world-system/ecs/systems/script-running.hpp
         neon/world-system/ecs/systems/first-person-controller-system.cpp
@@ -605,6 +607,7 @@ neon_add_unit_test(${TARGET} neon/command-line/display-options.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/entity-logging.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/physics-simulation.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/render-submission.test.cpp)
+  neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/scene-exiting.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/first-person-controller-system.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/ray-casting.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/pool-system.test.cpp)

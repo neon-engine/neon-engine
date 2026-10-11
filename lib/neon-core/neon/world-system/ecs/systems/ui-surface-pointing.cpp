@@ -50,8 +50,9 @@ namespace neon
         const auto place = glm::vec3(inverse(screen->world_coordinates) * glm::vec4(ray.point, 1.0f));
         _ui_context->SetPointerUv(view->surface, place.x + 0.5f, 0.5f - place.y, is_down);
 
-        // who points: the owner the ray names, or the ray's own entity
-        view->pointed_by = ray.owner_entity != No_Entity ? ray.owner_entity : block.entities[i];
+        // who points, said to the user interface: the owner the ray names,
+        // or the ray's own entity, which a click on the screen then carries
+        _ui_context->SetPointerBy(view->surface, ray.owner_entity != No_Entity ? ray.owner_entity : block.entities[i]);
         pointed.push_back(view->surface);
       }
     });

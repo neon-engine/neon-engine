@@ -10,7 +10,6 @@
 #include "components/renderable.hpp"
 #include "components/scene-exit.hpp"
 #include "components/sky.hpp"
-#include "components/trigger.hpp"
 #include "components/spectator.hpp"
 #include "systems/geometry-building.hpp"
 #include "systems/pool-system.hpp"
@@ -105,7 +104,6 @@ namespace neon
     for (const auto &system : _placing) { system->Initialize(*_store); }
     for (const auto &system : _after) { system->Initialize(*_store); }
     for (const auto &system : _added_after_placing) { system->Initialize(*_store); }
-    _exits = _store->Query<SceneExit>();
 
     // A scene with problems is said in the log, and the world runs with
     // what could be read: a game is not ended by a mistake in a file. A
@@ -260,30 +258,7 @@ namespace neon
     for (const auto &system : _after) { system->Update(*_store, delta_time); }
     for (const auto &system : _added_after_placing) { system->Update(*_store, delta_time); }
 
-    CheckExits();
     RenderFrame();
-  }
-
-  void EntityWorld::CheckExits()
-  {
-    // The physics registers Trigger, when there is one; it is looked up by
-    // name so that a world without physics has exits that never open
-    const ComponentId trigger_id = _store->FindComponent("Trigger");
-    if (trigger_id == No_Component) { return; }
-
-    std::string scene;
-    _store->Each(_exits, [this, trigger_id, &scene](const EntityBlock &block)
-    {
-      const auto *exits = block.Column<SceneExit>(0);
-      for (std::size_t i = 0; i < block.count; i++)
-      {
-        const auto *trigger = static_cast<const Trigger *>(_store->GetComponent(block.entities[i], trigger_id));
-        if (trigger == nullptr || trigger->inside == 0 || exits[i].scene.empty()) { continue; }
-        scene = exits[i].scene;
-      }
-    });
-
-    if (!scene.empty()) { LoadScene(scene); }
   }
 
   void EntityWorld::CleanUp()

@@ -51,6 +51,7 @@ namespace neon
 
         view.is_tried = true;
         view.document = _ui_context->Load(view.file);
+        if (view.document >= 0) { _ui_context->SetDocumentOwner(view.document, block.entities[i]); }
 
         // said once, since is_tried keeps it from being read again; the
         // entity shows nothing and the game goes on

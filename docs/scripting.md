@@ -258,7 +258,7 @@ See [user-interface.md](user-interface.md#what-the-player-changes).
 
 | | |
 |---|---|
-| Who is called | The entity that shows the user interface, with a `Ui` or a `UiSurface`: every system that runs over that entity and has a handler of the name. Two terminals in a scene each get their own clicks |
+| Who is called | The entity that shows the user interface, with a `Ui` or a `UiSurface`: every system that runs over that entity and has a handler of the name. Two terminals in a scene each get their own clicks. The loading of the file tells the user interface which entity shows it, and every event of the file carries that, so the scripts ask the world nothing |
 | `self` | The entity that shows the user interface. Its components are reached through it, `self.Terminal`, and so is what a system keeps for itself on one, `self.Terminal._unlocked`. Any other entity is found by its name, `world.find_entity("vault/door")`. The system's class is reached by its name, `TerminalSystem`. A hook has the class as `self` and the entity as its first parameter; the name of that parameter is the script's own, so a hook may call it `self` with the dot form, `function TerminalSystem.update(system, self, terminal, dt)` |
 | The parameters | The arguments, as many as the file wrote and in its order |
 | A number, `'a text'` or `"a text"`, `true`, `false` | As written |

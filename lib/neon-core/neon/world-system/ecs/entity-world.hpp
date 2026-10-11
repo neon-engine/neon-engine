@@ -58,7 +58,6 @@ namespace neon
     std::string _scene_to_load;
 
     // the entities with a SceneExit, looked at after every frame
-    QueryId _exits = 0;
 
     void RegisterComponents() const;
 
@@ -74,8 +73,6 @@ namespace neon
 
     bool _frees_unused_after_frame = false;
 
-    /// Asks for the scene of a SceneExit whose Trigger has a body inside.
-    void CheckExits();
 
   public:
     EntityWorld(

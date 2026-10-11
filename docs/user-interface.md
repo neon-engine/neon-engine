@@ -1208,7 +1208,7 @@ distance. Several rays may point at several screens at once.
 | | |
 |---|---|
 | `reach` of `UiSurface` | How near the ray's origin has to be, in units of the world. 3 unless the scene says otherwise |
-| `pointed_by` of `UiSurface` | Set by the system on the screen: who points at it, the `owner` the ray names, or the ray's own entity. It stays when the player looks away, and is who a click on the screen comes from: `event.instigator` of a [handler](scripting.md#what-the-user-interface-calls). The system does not walk the tree, and knows no component of a player |
+| Who points | Said to the user interface with `SetPointerBy` for the surface: the `owner` the ray names, or the ray's own entity. It stays until the pointer is taken away, and every click on the screen carries it, as `event.instigator` of a [handler](scripting.md#what-the-user-interface-calls). Nothing is written on the screen's components |
 | What the HUD shows | The game's to decide. The museum's camera carries a `Gaze` of its scripts that reads `is_hitting` of the ray and sets the flag `pointing`, which the HUD turns its dot into a ring with, `hidden: "{!pointing}"`. The engine sets no value for it |
 | The keys and the controller | Stay with the window. A controller presses with accept, which is the press of the pointer on the screen, so nothing on the screen needs the focus |
 
