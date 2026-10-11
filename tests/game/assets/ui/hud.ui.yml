@@ -19,6 +19,8 @@ values:
   health: 75
   player: Ada
   # whether something in the world is pointed at, which the runtime says
+  # whether the camera looks at something it can use, which the Gaze of
+  # the camera sets from its ray, see scripts/gaze.lua
   pointing: false
 
 root:
@@ -64,7 +66,8 @@ root:
 
     # a dot in the middle, where the player looks: what is pointed at in
     # the world, such as a screen, is what the dot is on. It becomes a ring
-    # while something is pointed at, which the flag `pointing` tells
+    # while something is pointed at, which the flag `pointing` tells, set
+    # by the Gaze of the camera from its ray
     - type: panel
       position: absolute
       top: 50%

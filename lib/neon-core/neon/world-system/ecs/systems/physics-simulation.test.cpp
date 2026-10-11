@@ -664,20 +664,61 @@ namespace
       "Trigger, and CharacterBody")) << _logger->Messages(LogLevel::Error);
   }
 
-  TEST_F(PhysicsSimulationTest, SaysOnceThatAColliderBelongsToNothing)
+  TEST_F(PhysicsSimulationTest, MakesAShapeOfItsOwnOfAColliderThatBelongsToNothing)
   {
     const Entity wall = _store.CreateEntity("wall");
-    _store.Set(wall, Transform{});
+    _store.Set(wall, At(1.0f, 2.0f, 3.0f));
+    _store.Set(wall, Collider{.layers = 0b100u, .size = glm::vec3{2.0f, 1.0f, 0.1f}});
+
+    Step(5);
+
+    // once: a static body that queries find and nothing meets, in the
+    // layers of the collider, looking for nothing
+    ASSERT_EQ(_physics.created.size(), 1u);
+    EXPECT_EQ(_physics.created[0].entity, wall);
+    EXPECT_EQ(_physics.created[0].kind, BodyKind::Static);
+    EXPECT_TRUE(_physics.created[0].query_only);
+    EXPECT_FALSE(_physics.created[0].trigger);
+    EXPECT_EQ(_physics.created[0].layers, 0b100u);
+    EXPECT_EQ(_physics.created[0].mask, 0u);
+    ASSERT_EQ(_physics.created[0].shapes.size(), 1u);
+    EXPECT_EQ(_physics.created[0].shapes[0].size, glm::vec3(2.0f, 1.0f, 0.1f));
+    EXPECT_EQ(_physics.created[0].position, glm::vec3(1.0f, 2.0f, 3.0f));
+    EXPECT_EQ(_logger->Count(LogLevel::Warn), 0u) << _logger->Messages(LogLevel::Warn);
+
+    // and it goes with its collider
+    _store.Remove<Collider>(wall);
+    Step();
+    EXPECT_EQ(_physics.destroyed.size(), 1u);
+  }
+
+  TEST_F(PhysicsSimulationTest, AColliderBelowAShapeOfItsOwnIsPartOfIt)
+  {
+    const Entity sign = _store.CreateEntity("sign");
+    _store.Set(sign, At(0.0f, 0.0f, 0.0f));
+    _store.Set(sign, Collider{});
+    const Entity post = _store.CreateEntity("post", sign);
+    _store.Set(post, At(0.0f, -1.0f, 0.0f));
+    _store.Set(post, Collider{.size = glm::vec3{0.1f, 2.0f, 0.1f}});
+
+    Step(2);
+
+    ASSERT_EQ(_physics.created.size(), 1u);
+    EXPECT_EQ(_physics.created[0].entity, sign);
+    EXPECT_EQ(_physics.created[0].shapes.size(), 2u);
+  }
+
+  TEST_F(PhysicsSimulationTest, SaysOnceThatAColliderWithoutATransformStandsNowhere)
+  {
+    const Entity wall = _store.CreateEntity("wall");
     _store.Set(wall, Collider{});
 
     Step(5);
 
     EXPECT_EQ(_physics.create_attempts, 0);
     EXPECT_EQ(_logger->Count(LogLevel::Warn), 1u);
-    EXPECT_TRUE(_logger->Contains(
-      LogLevel::Warn,
-      "The Collider of entity 'wall' belongs to nothing. It needs a RigidBody, a Trigger, or a "
-      "CharacterBody on its entity or on one above it")) << _logger->Messages(LogLevel::Warn);
+    EXPECT_TRUE(_logger->Contains(LogLevel::Warn, "The Collider of entity 'wall' belongs to nothing, and the entity has no Transform"))
+      << _logger->Messages(LogLevel::Warn);
   }
 
   // shapes that change while a body lives
@@ -2067,8 +2108,11 @@ namespace
     EXPECT_FALSE(_physics.HasBody(body));
     EXPECT_THAT(_physics.destroyed, ::testing::ElementsAre(body));
 
+    // the collider that is left belongs to nothing now, and stands on its
+    // own as a shape that queries find
     EXPECT_NO_THROW(Step(3));
-    EXPECT_EQ(_physics.GetBodyCount(), 0u);
+    EXPECT_EQ(_physics.GetBodyCount(), 1u);
+    EXPECT_TRUE(_physics.created.back().query_only);
   }
 
   TEST_F(PhysicsSimulationTest, DestroysTheBodyOfAnEntityThatIsDestroyed)

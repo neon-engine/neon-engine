@@ -7,20 +7,20 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <neon/common/transform.hpp>
 #include <neon/testing/fake-entity-store.hpp>
 #include <neon/testing/mock-input-system.hpp>
 #include <neon/testing/mock-ui-system.hpp>
 #include <neon/testing/recording-logger.hpp>
-#include <neon/world-system/ecs/components/camera.hpp>
+#include <neon/world-system/ecs/components/ray-cast.hpp>
 #include <neon/world-system/ecs/components/ui-surface-view.hpp>
 
 namespace
 {
   using neon::Action;
-  using neon::Camera;
   using neon::Entity;
   using neon::MouseButton;
-  using neon::RenderTarget;
+  using neon::RayCast;
   using neon::Transform;
   using neon::UiSurfacePointing;
   using neon::UiSurfaceView;
@@ -50,6 +50,8 @@ namespace
     return transform;
   }
 
+  /// The pointing over rays that RayCasting has already cast: the test
+  /// writes what a ray hit, as the system would.
   class UiSurfacePointingTest : public ::testing::Test
   {
   protected:
@@ -63,7 +65,7 @@ namespace
     {
       _store.Initialize();
       _store.Register<Transform>("Transform");
-      _store.Register<Camera>("Camera");
+      _store.Register<RayCast>("RayCast");
       _store.Register<UiSurfaceView>("UiSurface");
       _system.Initialize(_store);
     }
@@ -73,28 +75,38 @@ namespace
       _store.CleanUp();
     }
 
-    /// A camera that draws the window, at a place, looking along -Z.
-    Entity CreateCamera(const glm::vec3 &position, const float yaw = 0.0f)
+    /// A screen of 1 by 1 at a place, facing +Z, with its surface made.
+    Entity CreateScreen(const int surface, const glm::vec3 &position, const glm::vec3 &scale = glm::vec3{1.0f})
     {
-      const Entity camera = _store.CreateEntity("camera");
-      _store.Set(camera, Placed(position, yaw));
-      _store.Set(camera, Camera{});
-      return camera;
+      const Entity screen = _store.CreateEntity("screen " + std::to_string(surface));
+      _store.Set(screen, Placed(position, 0.0f, scale));
+      _store.Set(screen, UiSurfaceView{.name = "screen", .surface = surface});
+      return screen;
     }
 
-    /// A screen of 1 by 1 at a place, facing +Z, with its surface made.
-    Entity CreateScreen(
-      const int surface,
-      const glm::vec3 &position,
-      const float yaw = 0.0f,
-      const glm::vec3 &scale = glm::vec3{1.0f},
-      const float reach = 3.0f)
+    /// An entity with a ray, which hits `screen` at `point` in the world,
+    /// or nothing.
+    Entity CreateRay(
+      const std::string &name,
+      const Entity screen,
+      const glm::vec3 &point,
+      const Entity owner = neon::No_Entity,
+      const float distance = 1.0f)
     {
-      // by its surface, since the store gives one name to one entity
-      const Entity screen = _store.CreateEntity("screen " + std::to_string(surface));
-      _store.Set(screen, Placed(position, yaw, scale));
-      _store.Set(screen, UiSurfaceView{.name = "screen", .reach = reach, .surface = surface});
-      return screen;
+      const Entity eye = _store.CreateEntity(name);
+      Aim(eye, screen, point, owner, distance);
+      return eye;
+    }
+
+    void Aim(const Entity eye, const Entity screen, const glm::vec3 &point, const Entity owner = neon::No_Entity, const float distance = 1.0f)
+    {
+      RayCast ray;
+      ray.is_hitting = screen != neon::No_Entity;
+      ray.hit = screen;
+      ray.point = point;
+      ray.distance = distance;
+      ray.owner_entity = owner;
+      _store.Set(eye, ray);
     }
 
     void Frame()
@@ -103,90 +115,23 @@ namespace
     }
   };
 
-  // the ray and the square
-
-  TEST(UiSurfacePointingHit, HitsTheMiddleOfASquareInFrontOfIt)
+  TEST_F(UiSurfacePointingTest, PutsThePointerWhereTheRayHitsTheScreen)
   {
-    float u = 0.0f;
-    float v = 0.0f;
-    float distance = 0.0f;
+    // a screen twice as wide, hit a quarter of its width right of its
+    // middle and a tenth of its height above
+    const Entity screen = CreateScreen(3, {1.0f, 2.0f, 0.0f}, {2.0f, 1.0f, 1.0f});
+    CreateRay("eye", screen, {1.5f, 2.1f, 0.0f});
 
-    EXPECT_TRUE(UiSurfacePointing::Hit(Placed({0.0f, 0.0f, 0.0f}), {0.0f, 0.0f, 2.0f}, {0.0f, 0.0f, -1.0f}, u, v, distance));
-    EXPECT_NEAR(u, 0.5f, tolerance);
-    EXPECT_NEAR(v, 0.5f, tolerance);
-    EXPECT_NEAR(distance, 2.0f, tolerance);
-  }
-
-  TEST(UiSurfacePointingHit, CountsFromTheLeftTopCorner)
-  {
-    float u = 0.0f;
-    float v = 0.0f;
-    float distance = 0.0f;
-
-    // the top right of the square, which is +X and +Y
-    EXPECT_TRUE(UiSurfacePointing::Hit(Placed({0.0f, 0.0f, 0.0f}), {0.4f, 0.3f, 1.0f}, {0.0f, 0.0f, -1.0f}, u, v, distance));
-    EXPECT_NEAR(u, 0.9f, tolerance);
-    EXPECT_NEAR(v, 0.2f, tolerance);
-  }
-
-  TEST(UiSurfacePointingHit, MissesNextToTheSquare)
-  {
-    float u = 0.0f;
-    float v = 0.0f;
-    float distance = 0.0f;
-
-    EXPECT_FALSE(UiSurfacePointing::Hit(Placed({0.0f, 0.0f, 0.0f}), {0.6f, 0.0f, 1.0f}, {0.0f, 0.0f, -1.0f}, u, v, distance));
-    EXPECT_FALSE(UiSurfacePointing::Hit(Placed({0.0f, 0.0f, 0.0f}), {0.0f, -0.51f, 1.0f}, {0.0f, 0.0f, -1.0f}, u, v, distance));
-  }
-
-  TEST(UiSurfacePointingHit, MissesFromBehindAndWhenLookingAway)
-  {
-    float u = 0.0f;
-    float v = 0.0f;
-    float distance = 0.0f;
-
-    // behind the square, looking further away from it
-    EXPECT_FALSE(UiSurfacePointing::Hit(Placed({0.0f, 0.0f, 0.0f}), {0.0f, 0.0f, -2.0f}, {0.0f, 0.0f, -1.0f}, u, v, distance));
-    // behind it, looking at its back
-    EXPECT_FALSE(UiSurfacePointing::Hit(Placed({0.0f, 0.0f, 0.0f}), {0.0f, 0.0f, -2.0f}, {0.0f, 0.0f, 1.0f}, u, v, distance));
-    // in front, looking away
-    EXPECT_FALSE(UiSurfacePointing::Hit(Placed({0.0f, 0.0f, 0.0f}), {0.0f, 0.0f, 2.0f}, {0.0f, 0.0f, 1.0f}, u, v, distance));
-    // along the face
-    EXPECT_FALSE(UiSurfacePointing::Hit(Placed({0.0f, 0.0f, 0.0f}), {2.0f, 0.0f, 0.0f}, {-1.0f, 0.0f, 0.0f}, u, v, distance));
-  }
-
-  TEST(UiSurfacePointingHit, FollowsWhereTheSquareWasPlacedTurnedAndScaled)
-  {
-    float u = 0.0f;
-    float v = 0.0f;
-    float distance = 0.0f;
-
-    // a screen twice as wide, turned to face +X, and the ray comes from +X
-    const Transform screen = Placed({3.0f, 1.0f, 0.0f}, 90.0f, {2.0f, 1.0f, 1.0f});
-    EXPECT_TRUE(UiSurfacePointing::Hit(screen, {5.0f, 1.0f, -0.5f}, {-1.0f, 0.0f, 0.0f}, u, v, distance));
-    // -Z of the world is +X of the turned square, a quarter of its width of 2
-    EXPECT_NEAR(u, 0.75f, tolerance);
-    EXPECT_NEAR(v, 0.5f, tolerance);
-    EXPECT_NEAR(distance, 2.0f, tolerance);
-  }
-
-  // the system
-
-  TEST_F(UiSurfacePointingTest, PointsWhereTheCameraLooksOnAScreenItHits)
-  {
-    CreateCamera({0.0f, 0.0f, 2.0f});
-    CreateScreen(3, {0.0f, 0.0f, 0.0f});
-
-    EXPECT_CALL(_ui, SetPointerUv(3, FloatNear(0.5f, tolerance), FloatNear(0.5f, tolerance), false));
-    EXPECT_CALL(_ui, SetFlag("pointing", true));
+    EXPECT_CALL(_ui, SetPointerUv(3, FloatNear(0.75f, tolerance), FloatNear(0.4f, tolerance), false));
 
     Frame();
   }
 
-  TEST_F(UiSurfacePointingTest, DoesNothingWhileNothingIsPointedAt)
+  TEST_F(UiSurfacePointingTest, DoesNothingWhileNoRayHitsAScreen)
   {
-    CreateCamera({2.0f, 0.0f, 2.0f});
-    CreateScreen(3, {0.0f, 0.0f, 0.0f});
+    const Entity screen = CreateScreen(3, {0.0f, 0.0f, 0.0f});
+    CreateRay("eye", neon::No_Entity, {0.0f, 0.0f, 0.0f});
+    (void)screen;
 
     Frame();
     Frame();
@@ -194,9 +139,8 @@ namespace
 
   TEST_F(UiSurfacePointingTest, PressesWithTheButtonOfThePointerAndWithAccept)
   {
-    CreateCamera({0.0f, 0.0f, 2.0f});
-    CreateScreen(3, {0.0f, 0.0f, 0.0f});
-    EXPECT_CALL(_ui, SetFlag("pointing", true));
+    const Entity screen = CreateScreen(3, {0.0f, 0.0f, 0.0f});
+    CreateRay("eye", screen, {0.0f, 0.0f, 0.0f});
 
     {
       InSequence in_order;
@@ -217,9 +161,8 @@ namespace
 
   TEST_F(UiSurfacePointingTest, PressesWithTheLeftButtonOfTheMouseWhileThereIsNoPointer)
   {
-    CreateCamera({0.0f, 0.0f, 2.0f});
-    CreateScreen(3, {0.0f, 0.0f, 0.0f});
-    EXPECT_CALL(_ui, SetFlag("pointing", true));
+    const Entity screen = CreateScreen(3, {0.0f, 0.0f, 0.0f});
+    CreateRay("eye", screen, {0.0f, 0.0f, 0.0f});
 
     {
       InSequence in_order;
@@ -238,150 +181,126 @@ namespace
     Frame();
   }
 
-  // who points
-
-  /// Stands for the FirstPersonController of the engine, which the system finds by name.
-  struct ControllerMark
+  TEST_F(UiSurfacePointingTest, TakesThePointerAwayWhenTheRayHitsNothingAnyMore)
   {
-    int number = 0;
-  };
-
-  TEST_F(UiSurfacePointingTest, TellsTheScreenThatThePlayerAboveTheCameraPointsAtIt)
-  {
-    _store.Register<ControllerMark>("FirstPersonController");
-    UiSurfacePointing system{&_ui, &_input};
-    system.Initialize(_store);
-
-    // a group, the player in it, a head, and the camera on the head
-    const Entity group = _store.CreateEntity("group");
-    const Entity player = _store.CreateEntity("player", group);
-    _store.Set(player, ControllerMark{});
-    const Entity head = _store.CreateEntity("head", player);
-    const Entity camera = CreateCamera({0.0f, 0.0f, 2.0f});
-    _store.SetParent(camera, head);
-
     const Entity screen = CreateScreen(3, {0.0f, 0.0f, 0.0f});
-    const Entity other = CreateScreen(4, {5.0f, 0.0f, 0.0f});
-    EXPECT_EQ(_store.Get<UiSurfaceView>(screen)->pointed_by, neon::No_Entity);
-
-    EXPECT_CALL(_ui, SetPointerUv(3, _, _, false));
-    EXPECT_CALL(_ui, SetFlag("pointing", true));
-    system.Update(_store, 0.016);
-
-    EXPECT_EQ(_store.Get<UiSurfaceView>(screen)->pointed_by, player);
-    EXPECT_EQ(_store.Get<UiSurfaceView>(other)->pointed_by, neon::No_Entity);
-  }
-
-  TEST_F(UiSurfacePointingTest, TellsTheScreenThatTheCameraPointsAtItWhenNoPlayerIsAboveIt)
-  {
-    const Entity rig = _store.CreateEntity("rig");
-    const Entity camera = CreateCamera({0.0f, 0.0f, 2.0f});
-    _store.SetParent(camera, rig);
-    const Entity screen = CreateScreen(3, {0.0f, 0.0f, 0.0f});
-
-    EXPECT_CALL(_ui, SetPointerUv(3, _, _, false));
-    EXPECT_CALL(_ui, SetFlag("pointing", true));
-    Frame();
-
-    EXPECT_EQ(_store.Get<UiSurfaceView>(screen)->pointed_by, camera);
-  }
-
-  TEST_F(UiSurfacePointingTest, TakesThePointerAwayWhenTheCameraLooksElsewhere)
-  {
-    const Entity camera = CreateCamera({0.0f, 0.0f, 2.0f});
-    CreateScreen(3, {0.0f, 0.0f, 0.0f});
+    const Entity eye = CreateRay("eye", screen, {0.0f, 0.0f, 0.0f});
 
     {
       InSequence in_order;
       EXPECT_CALL(_ui, SetPointerUv(3, _, _, false));
-      EXPECT_CALL(_ui, SetFlag("pointing", true));
       EXPECT_CALL(_ui, ClearPointer(3));
-      EXPECT_CALL(_ui, SetFlag("pointing", false));
     }
 
     Frame();
 
-    _store.Set(camera, Placed({0.0f, 0.0f, 2.0f}, 90.0f));
+    Aim(eye, neon::No_Entity, {0.0f, 0.0f, 0.0f});
     Frame();
-    Frame();
-  }
-
-  TEST_F(UiSurfacePointingTest, LeavesAScreenAloneThatIsOutOfReach)
-  {
-    CreateCamera({0.0f, 0.0f, 5.0f});
-    CreateScreen(3, {0.0f, 0.0f, 0.0f}, 0.0f, glm::vec3{1.0f}, 3.0f);
-
-    Frame();
-  }
-
-  TEST_F(UiSurfacePointingTest, ReachesAnyDistanceWhenTheReachIsZero)
-  {
-    CreateCamera({0.0f, 0.0f, 50.0f});
-    CreateScreen(3, {0.0f, 0.0f, 0.0f}, 0.0f, glm::vec3{1.0f}, 0.0f);
-
-    EXPECT_CALL(_ui, SetPointerUv(3, _, _, false));
-    EXPECT_CALL(_ui, SetFlag("pointing", true));
-
-    Frame();
-  }
-
-  TEST_F(UiSurfacePointingTest, TakesTheNearestOfTwoScreensInTheWay)
-  {
-    CreateCamera({0.0f, 0.0f, 4.0f});
-    CreateScreen(3, {0.0f, 0.0f, 0.0f}, 0.0f, glm::vec3{1.0f}, 0.0f);
-    CreateScreen(4, {0.0f, 0.0f, 2.0f}, 0.0f, glm::vec3{1.0f}, 0.0f);
-
-    EXPECT_CALL(_ui, SetPointerUv(4, _, _, false));
-    EXPECT_CALL(_ui, SetFlag("pointing", true));
-
     Frame();
   }
 
   TEST_F(UiSurfacePointingTest, MovesFromOneScreenToAnother)
   {
-    const Entity camera = CreateCamera({0.0f, 0.0f, 2.0f});
-    CreateScreen(3, {0.0f, 0.0f, 0.0f});
-    CreateScreen(4, {2.0f, 0.0f, 0.0f});
+    const Entity first = CreateScreen(3, {0.0f, 0.0f, 0.0f});
+    const Entity second = CreateScreen(4, {2.0f, 0.0f, 0.0f});
+    const Entity eye = CreateRay("eye", first, {0.0f, 0.0f, 0.0f});
 
     {
       InSequence in_order;
       EXPECT_CALL(_ui, SetPointerUv(3, _, _, false));
-      EXPECT_CALL(_ui, SetFlag("pointing", true));
       EXPECT_CALL(_ui, SetPointerUv(4, _, _, false));
       EXPECT_CALL(_ui, ClearPointer(3));
     }
 
     Frame();
 
-    _store.Set(camera, Placed({2.0f, 0.0f, 2.0f}));
+    Aim(eye, second, {2.0f, 0.0f, 0.0f});
     Frame();
   }
 
-  TEST_F(UiSurfacePointingTest, LeavesAScreenAloneWhoseSurfaceIsNotMadeYet)
+  TEST_F(UiSurfacePointingTest, LeavesAScreenAloneThatIsHitFromBeyondItsReach)
   {
-    CreateCamera({0.0f, 0.0f, 2.0f});
-    CreateScreen(-1, {0.0f, 0.0f, 0.0f});
-
-    Frame();
-  }
-
-  TEST_F(UiSurfacePointingTest, LooksFromTheCameraThatDrawsTheWindowAndNotFromOneThatDrawsATexture)
-  {
-    const Entity security = _store.CreateEntity("security");
-    _store.Set(security, Placed({0.0f, 0.0f, 2.0f}));
-    _store.Set(security, Camera{.target = RenderTarget::Texture});
-    CreateScreen(3, {0.0f, 0.0f, 0.0f});
+    const Entity screen = CreateScreen(3, {0.0f, 0.0f, 0.0f});
+    _store.Get<UiSurfaceView>(screen)->reach = 3.0f;
+    const Entity eye = CreateRay("eye", screen, {0.0f, 0.0f, 0.0f}, neon::No_Entity, 5.0f);
 
     Frame();
 
-    CreateCamera({0.0f, 0.0f, 2.0f});
+    // a reach of 0 is any distance
+    _store.Get<UiSurfaceView>(screen)->reach = 0.0f;
+    Aim(eye, screen, {0.0f, 0.0f, 0.0f}, neon::No_Entity, 5.0f);
     EXPECT_CALL(_ui, SetPointerUv(3, _, _, false));
-    EXPECT_CALL(_ui, SetFlag("pointing", true));
+    Frame();
+  }
+
+  TEST_F(UiSurfacePointingTest, LeavesAHitAloneThatIsNoScreenOrWhoseSurfaceIsNotMadeYet)
+  {
+    const Entity crate = _store.CreateEntity("crate");
+    _store.Set(crate, Placed({0.0f, 0.0f, 0.0f}));
+    CreateRay("eye", crate, {0.0f, 0.0f, 0.0f});
+
+    const Entity unmade = CreateScreen(-1, {2.0f, 0.0f, 0.0f});
+    CreateRay("other eye", unmade, {2.0f, 0.0f, 0.0f});
 
     Frame();
   }
 
-  TEST_F(UiSurfacePointingTest, DoesNothingWithoutACamera)
+  // who points
+
+  TEST_F(UiSurfacePointingTest, TellsTheScreenThatTheOwnerOfTheRayPointsAtIt)
+  {
+    const Entity player = _store.CreateEntity("player");
+    const Entity screen = CreateScreen(3, {0.0f, 0.0f, 0.0f});
+    const Entity other = CreateScreen(4, {5.0f, 0.0f, 0.0f});
+    CreateRay("eye", screen, {0.0f, 0.0f, 0.0f}, player);
+    EXPECT_EQ(_store.Get<UiSurfaceView>(screen)->pointed_by, neon::No_Entity);
+
+    EXPECT_CALL(_ui, SetPointerUv(3, _, _, false));
+    Frame();
+
+    EXPECT_EQ(_store.Get<UiSurfaceView>(screen)->pointed_by, player);
+    EXPECT_EQ(_store.Get<UiSurfaceView>(other)->pointed_by, neon::No_Entity);
+  }
+
+  TEST_F(UiSurfacePointingTest, TellsTheScreenThatTheRaysEntityPointsAtItWhenTheRayHasNoOwner)
+  {
+    const Entity screen = CreateScreen(3, {0.0f, 0.0f, 0.0f});
+    const Entity eye = CreateRay("eye", screen, {0.0f, 0.0f, 0.0f});
+
+    EXPECT_CALL(_ui, SetPointerUv(3, _, _, false));
+    Frame();
+
+    EXPECT_EQ(_store.Get<UiSurfaceView>(screen)->pointed_by, eye);
+  }
+
+  TEST_F(UiSurfacePointingTest, TwoRaysPointAtTwoScreensAndEachIsClearedOnItsOwn)
+  {
+    const Entity left = CreateScreen(3, {0.0f, 0.0f, 0.0f});
+    const Entity right = CreateScreen(4, {2.0f, 0.0f, 0.0f});
+    const Entity first = CreateRay("eye", left, {0.0f, 0.0f, 0.0f});
+    const Entity second = CreateRay("other eye", right, {2.0f, 0.0f, 0.0f});
+
+    {
+      InSequence in_order;
+      EXPECT_CALL(_ui, SetPointerUv(3, _, _, false));
+      EXPECT_CALL(_ui, SetPointerUv(4, _, _, false));
+      // one ray leaves: its screen loses the pointer
+      EXPECT_CALL(_ui, SetPointerUv(4, _, _, false));
+      EXPECT_CALL(_ui, ClearPointer(3));
+      // the other leaves too
+      EXPECT_CALL(_ui, ClearPointer(4));
+    }
+
+    Frame();
+
+    Aim(first, neon::No_Entity, {0.0f, 0.0f, 0.0f});
+    Frame();
+
+    Aim(second, neon::No_Entity, {0.0f, 0.0f, 0.0f});
+    Frame();
+  }
+
+  TEST_F(UiSurfacePointingTest, DoesNothingWithoutARay)
   {
     CreateScreen(3, {0.0f, 0.0f, 0.0f});
 

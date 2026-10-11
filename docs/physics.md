@@ -659,6 +659,63 @@ In code, through `PhysicsContext`:
 | The stiffness of a hinge is per radian | The spring equation is written per radian wherever it is written, and a stiffness per degree would be 57 times smaller than the one in every book. The velocity of the motor is in degrees per second, since every rate a recipe holds is |
 | `GetJointState` returns false for a joint that is not known, and zeros with a warning for one that has no state | Not known is a mistake of the caller, which the return says. A fixed joint has no angle, which a game reads as 0 without a crash, and is told once |
 
+### A collider on its own
+
+A `Collider` on an entity that carries no body, with no body above it, is a
+shape of its own: a static body where the entity is, with the colliders
+below it, that rays and overlaps find in its `layers` and nothing ever
+meets. Nothing collides with it, it pushes nothing, and it reports
+nothing. A screen in the world is one, so that the ray of the camera meets
+it and the player walks through nothing. It goes with its collider, and is
+made again when the collider is turned on again; a change to its shape
+while it lives is not read. An entity without a Transform has nowhere to
+stand, and is said once.
+
+```yaml
+- name: monitor
+  components:
+    Transform:
+      scale: [1.2, 0.9, 1]
+    Collider:
+      shape: box
+      size: [1, 1, 0.02]
+```
+
+## Ray casts
+
+An entity that carries a `RayCast` casts a ray through the physics every
+frame, from where it is along where it looks, and keeps what it hit on the
+component for whoever reads it. On the camera it is what the player looks
+at, which the [pointer on a screen in the world](user-interface.md#pointing-at-a-screen-in-the-world)
+comes from; a script reads the same ray for a door that opens when looked
+at, or a hint on the HUD. The ray tells nobody: it is read, as a component
+is.
+
+```yaml
+- name: camera
+  components:
+    Camera: Default
+    RayCast:
+      length: 3
+      owner: player
+```
+
+| Name | Holds | Default |
+|---|---|---|
+| `length` | How far the ray goes, in units of the world. 0 for as far as there is anything | `3` |
+| `mask` | The layers the ray looks at, see [layers](#layers-and-masks) | every layer |
+| `triggers` | Whether triggers are hit as well | `false` |
+| `owner` | Who the ray acts for, by its path from the top of the world. Its bodies are not hit, so a ray from inside the player's capsule sees past it, and a click on a screen comes from it. The ray's own entity when left out | none |
+| `enabled` | Whether the ray is cast. Off, it hits nothing | `true` |
+
+What the ray hit is written by the engine, and a script reads it while no
+file does: `is_hitting`, `point` and `normal` in the world, and
+`distance` along the ray. In code there is `hit`, the entity, and the
+owner once found. The engine calls `CastRay` of the physics with the
+layers, the triggers, and the owner to skip; without physics nothing is
+hit. `RayCasting` is the system, which the runtime adds once the physics
+exists and before what reads the rays.
+
 ## Layers and masks
 
 There are 32 layers, called by their numbers from 1 to 32. A body is in
@@ -1088,8 +1145,6 @@ It was built and run on macOS. **It was not built on Linux and Windows.**
 - Whether `Rotation` stores a quaternion. It is needed once something reads
   the angles of a body, changes them, and writes them back.
 - How a script reads events. A list fits what a script can walk through.
-- Whether a collider without a body should count as a static body, as in
-  Unity. It is a warning today.
 - A scale that changes while a body lives, and the `Transform` of a
   `Collider` below a body that moves. Both are read when the body is created.
 - A motor that drives a joint to an angle or a position, and a spring whose

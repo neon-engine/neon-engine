@@ -222,7 +222,7 @@ namespace
 
     EXPECT_THAT(_formats.Find("Collider")->type->GetPaths(), ElementsAre(
                   "shape", "size", "radius", "height", "top_radius", "bottom_radius", "model", "fit", "offset",
-                  "rotation"));
+                  "rotation", "layers"));
     EXPECT_EQ(_formats.Find("RigidBody")->type->Find("layers")->kind, neon::FieldKind::Layers);
     EXPECT_EQ(_formats.Find("CharacterBody")->type->Find("max_slope")->unit, "degrees");
     EXPECT_THAT(_formats.Find("Joint")->type->GetPaths(), ElementsAre(
@@ -846,7 +846,7 @@ namespace
 
     EXPECT_THAT(_errors, ElementsAre(
                   "test.scene.yml: 'fit' is not known to Collider of entity 'crate'. Known are: shape, size, offset, "
-                  "rotation"));
+                  "rotation, layers"));
   }
 
   TEST_F(PhysicsComponentFormatsTest, SaysWhatIsWrongWithACollider)
@@ -952,11 +952,11 @@ namespace
 
     EXPECT_THAT(_errors, ElementsAre(
                   "test.scene.yml:9: 'radius' is not known to Collider of entity 'crate'. Known are: "
-                  "shape, size, offset, rotation",
+                  "shape, size, offset, rotation, layers",
                   "test.scene.yml:14: 'size' is not known to Collider of entity 'crate'. Known are: "
-                  "shape, radius, offset, rotation",
+                  "shape, radius, offset, rotation, layers",
                   "test.scene.yml:21: 'model' is not known to Collider of entity 'crate'. Known are: "
-                  "shape, offset, rotation"));
+                  "shape, offset, rotation, layers"));
   }
 
   TEST_F(PhysicsComponentFormatsTest, WritesOnlyTheShapeOfAColliderWithDefaults)
@@ -1170,7 +1170,7 @@ namespace
                   "test.scene.yml:7: 'offset' of Collider of entity 'crate' holds 1 values, where a list of 3 "
                   "numbers was expected",
                   "test.scene.yml:6: 'size' is not known to Collider of entity 'crate'. Known are: shape, "
-                  "radius, height, offset, rotation"));
+                  "radius, height, offset, rotation, layers"));
   }
 
   // Joint

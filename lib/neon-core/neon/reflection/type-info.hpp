@@ -52,6 +52,11 @@ namespace neon
     /// that says what something is, such as the type of a light.
     bool always_written = false;
 
+    /// Whether the engine writes the field, so that a file neither reads
+    /// nor writes it, and a script reaches it. For what the physics
+    /// reports of a body.
+    bool engine_written = false;
+
     /// Whether one number may be written for a vector, which then stands
     /// for all three. For a scale.
     bool one_number_for_all = false;

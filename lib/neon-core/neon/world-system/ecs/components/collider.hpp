@@ -2,6 +2,7 @@
 #define COLLIDER_HPP
 
 #include <format>
+#include <cstdint>
 #include <string>
 
 #include <glm/glm.hpp>
@@ -23,6 +24,11 @@ namespace neon
   struct Collider
   {
     ShapeKind shape = ShapeKind::Box;
+
+    /// The layers a shape of its own is in: a collider on an entity with
+    /// no body, and none above it, which rays and overlaps find and
+    /// nothing meets. Below a body, the body's layers hold.
+    std::uint32_t layers = 1;
 
     /// The lengths of the sides of a box.
     glm::vec3 size{1.0f};
@@ -130,6 +136,9 @@ namespace neon
         return std::format("'{}' of {} is {}, where a number above 0 was expected", name, where, collider.*radius);
       };
     };
+
+    type.Layers("layers", &Collider::layers)
+        .Describe("The layers a shape of its own is in, one that belongs to no body");
 
     type.Rule("top_radius", above_zero("top_radius", &Collider::top_radius));
     type.Rule("bottom_radius", above_zero("bottom_radius", &Collider::bottom_radius));

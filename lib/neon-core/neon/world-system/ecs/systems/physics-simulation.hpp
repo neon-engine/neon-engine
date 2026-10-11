@@ -62,7 +62,11 @@ namespace neon
     {
       Body = 0,
       Trigger,
-      Character
+      Character,
+
+      /// A collider that belongs to no body: a static body that queries
+      /// find and nothing meets.
+      Shape
     };
 
     /// A Collider as it was when the shapes of its body were last read, so
@@ -151,6 +155,10 @@ namespace neon
     [[nodiscard]] bool Knows(Entity entity, BodyId body, CharacterId character) const;
 
     [[nodiscard]] static bool IsOwner(EntityStore &store, Entity entity);
+
+    /// Makes the shape of its own of a collider that belongs to no body:
+    /// a static body at the entity that queries find and nothing meets.
+    void MakeShape(EntityStore &store, Entity entity);
 
     /// The component a record stands for, as a scene names it.
     [[nodiscard]] static std::string NameOf(RecordKind kind);

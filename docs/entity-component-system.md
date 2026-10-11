@@ -61,6 +61,7 @@ privately, so the compiler refuses it anywhere else.
 | `Light` | A light source | same |
 | `Spectator` | The speeds the input moves the entity with | same |
 | `FirstPersonController` | The speeds the input walks, runs, jumps, and turns the entity with, how much it steers in the air, and where its eyes are, with their offset and how they glide over a step. See [physics.md](physics.md#the-player) | same |
+| `RayCast` | A ray through the physics from the entity along where it looks, cast every frame, and what it hits. See [physics.md](physics.md#ray-casts) | same |
 | `RigidBody`, `Collider`, `Trigger`, `CharacterBody` | What the physics needs to know of an entity. See [physics.md](physics.md) | same |
 | `Persistent` | The entity stays when the world changes scene. See [scenes.md](scenes.md#changing-the-scene) | same |
 | `SceneExit` | The scene the world changes to when a body enters the entity's `Trigger` | same |

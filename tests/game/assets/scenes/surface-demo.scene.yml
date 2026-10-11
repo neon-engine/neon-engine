@@ -48,6 +48,11 @@ entities:
         ui: assets://ui/terminal.ui.yml
         name: terminal
         size: [1024, 768]
+      # a thin slab the ray of the camera meets, sized with the quad: a
+      # collider that belongs to no body is found and never collided with
+      Collider:
+        shape: box
+        size: [1, 1, 0.02]
 
   # what the second camera sees, on a monitor of its own
   - name: security-monitor
@@ -108,3 +113,9 @@ entities:
         components:
           Transform: Default
           Camera: Default
+          # what the player looks at, which points at the terminal
+          RayCast:
+            length: 3
+            owner: player
+          # the HUD's ring follows the ray, see scripts/gaze.lua
+          Gaze: Default

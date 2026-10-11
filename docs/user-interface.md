@@ -1163,28 +1163,58 @@ knows of the other.
 
 ### Pointing at a screen in the world
 
-`UiSurfacePointing` is the system that finds where the player points. A
-ray starts at the camera that draws the window and goes where it looks,
-which is where the dot in the middle of the HUD is. A screen is the square
-of 1 by 1 of its entity, facing +Z as `quad.obj` does, so the ray meets it
-by the entity's transform alone and needs no collider. The nearest screen
-the ray hits from its front, within the `reach` of its `UiSurface`, gets
-the pointer: `SetPointerUv` with the button of the pointer, the left button
-of the mouse, or accept as the press. The left button is read on its own
-since there is no pointer, and so no `Pointer_Primary`, while the cursor is
-hidden, which it is while the player looks around. A screen with a `reach`
-of 0 is pointed at from anywhere.
+Where the player points comes from a [`RayCast`](physics.md#ray-casts) on
+the camera: a ray through the physics from the camera along where it
+looks, which is where the dot in the middle of the HUD is. The camera
+casts it every frame and writes what it hits onto its own component; the
+ray knows nothing of screens, and tells nobody. A screen carries a thin box
+`Collider` sized with its quad and no body: a [collider on its own](physics.md#a-collider-on-its-own)
+is found by rays and met by nothing, so the ray meets the screen in the
+layers of its `mask` and the player walks through nothing.
+
+`UiSurfacePointing` is the system that reads the rays. A ray that hits an
+entity with a `UiSurface` gives that screen the pointer: `SetPointerUv`
+where the hit lies on the square, with the button of the pointer, the left
+button of the mouse, or accept as the press. The left button is read on
+its own since there is no pointer, and so no `Pointer_Primary`, while the
+cursor is hidden, which it is while the player looks around. A hit beyond
+the `reach` of the `UiSurface` is left alone; a `reach` of 0 is any
+distance. Several rays may point at several screens at once.
+
+```yaml
+- name: camera
+  components:
+    Camera: Default
+    RayCast:
+      length: 3
+      owner: player
+
+- name: monitor
+  components:
+    Transform:
+      scale: [1.2, 0.9, 1]
+    Renderable:
+      model: assets://models/quad.obj
+      textures:
+        - surface://terminal
+    UiSurface:
+      ui: assets://ui/terminal.ui.yml
+      name: terminal
+    Collider:
+      shape: box
+      size: [1, 1, 0.02]
+```
 
 | | |
 |---|---|
-| `reach` of `UiSurface` | How near the camera has to be, in units of the world. 3 unless the scene says otherwise |
-| `pointed_by` of `UiSurface` | Set by the system on the screen: who points at it, the nearest entity from the camera up that carries a `FirstPersonController`, or the camera's own. It stays when the player looks away, and is who a click on the screen comes from: `event.instigator` of a [handler](scripting.md#what-the-user-interface-calls) |
-| The flag `pointing` | Set by the system on the window's values while a screen is pointed at. The HUD turns its dot into a ring with `hidden: "{!pointing}"` |
+| `reach` of `UiSurface` | How near the ray's origin has to be, in units of the world. 3 unless the scene says otherwise |
+| `pointed_by` of `UiSurface` | Set by the system on the screen: who points at it, the `owner` the ray names, or the ray's own entity. It stays when the player looks away, and is who a click on the screen comes from: `event.instigator` of a [handler](scripting.md#what-the-user-interface-calls). The system does not walk the tree, and knows no component of a player |
+| What the HUD shows | The game's to decide. The museum's camera carries a `Gaze` of its scripts that reads `is_hitting` of the ray and sets the flag `pointing`, which the HUD turns its dot into a ring with, `hidden: "{!pointing}"`. The engine sets no value for it |
 | The keys and the controller | Stay with the window. A controller presses with accept, which is the press of the pointer on the screen, so nothing on the screen needs the focus |
 
-`NeonRuntime` adds the system after `UiSurfaceLoading`, with the input as
-the game sees it. The surface demo's terminal shows it: walk up to the
-monitor, look at Unlock, press.
+`NeonRuntime` adds `RayCasting` and then the system once the physics
+exists, with the input as the game sees it. The surface demo's terminal
+shows it: walk up to the monitor, look at Unlock, press.
 
 ### How surfaces are drawn
 

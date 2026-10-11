@@ -198,12 +198,16 @@ namespace neon
       std::uint32_t mask = 0;
       bool moving = false;
       bool trigger = false;
+      bool query_only = false;
 
       bool operator==(const LayerEntry &) const = default;
     };
 
     bool Meet(const LayerEntry &first, const LayerEntry &second)
     {
+      // what is only found by queries meets nothing
+      if (first.query_only || second.query_only) { return false; }
+
       // two triggers report nothing of each other
       if (first.trigger && second.trigger) { return false; }
 
@@ -1406,7 +1410,8 @@ namespace neon
       .layers = info.layers,
       .mask = info.mask,
       .moving = info.kind != BodyKind::Static,
-      .trigger = info.trigger
+      .trigger = info.trigger,
+      .query_only = info.query_only
     };
     if (!_state->layers.Find(entry, layer))
     {

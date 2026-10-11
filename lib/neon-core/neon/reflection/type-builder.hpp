@@ -386,6 +386,15 @@ namespace neon
       return *this;
     }
 
+    /// The engine writes the field: a file neither reads nor writes it,
+    /// and it is reported as not known when a file holds it, while a
+    /// script reaches it as any other.
+    TypeBuilder &EngineWritten()
+    {
+      Last().engine_written = true;
+      return *this;
+    }
+
     TypeBuilder &OneNumberForAll()
     {
       Last().one_number_for_all = true;

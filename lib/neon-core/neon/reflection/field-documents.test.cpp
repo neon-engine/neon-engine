@@ -40,6 +40,8 @@ namespace
     std::string tire_brand = "none";
     std::vector<float> gears;
     double odometer = 0.0;
+    // what the engine writes, as the physics does of a body
+    float wear = 0.0f;
   };
 
   /// Every kind that came with #283: whole numbers of every width, a
@@ -105,6 +107,7 @@ namespace
 
     type.Field("gears", &Car::gears).Above(0);
     type.Field("odometer", &Car::odometer).AtLeast(0);
+    type.Field("wear", &Car::wear).EngineWritten();
   }
 
   DataValue Numbers(const std::vector<float> &numbers)
@@ -247,6 +250,23 @@ namespace
     EXPECT_THAT(_errors, ElementsAre(
                   "cars.yml: 'wings' is not known to Car of entity 'taxi'. Known are: "
                   "locked, seats, top_speed, plate, size, paint, owners, fuel, tires, gears, odometer"));
+  }
+
+  TEST_F(FieldDocumentsTest, AFieldTheEngineWritesIsNeitherReadNorWrittenAndIsNotKnownToAFile)
+  {
+    auto map = Plated();
+    map.Set("wear", DataValue::Number(0.5));
+
+    Read(map);
+
+    EXPECT_FLOAT_EQ(_car.wear, 0.0f);
+    EXPECT_THAT(_errors, ElementsAre(
+                  "cars.yml: 'wear' is not known to Car of entity 'taxi'. Known are: "
+                  "locked, seats, top_speed, plate, size, paint, owners, fuel, tires, gears, odometer"));
+
+    // the plate came from the map and is written; the wear is not
+    _car.wear = 0.7f;
+    EXPECT_THAT(NamesOf(Write()), ElementsAre("plate", "fuel"));
   }
 
   TEST_F(FieldDocumentsTest, ANameInAGroupThatIsNotDescribedIsReported)

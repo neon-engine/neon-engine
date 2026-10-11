@@ -3152,7 +3152,7 @@ entities:
   # 10 Surfaces
   # A user interface is laid out and drawn on a surface. The window is one;
   # every sign of the museum is one; so is this terminal, whose buttons take
-  # the pointer from where the player looks, within its reach, and call
+  # the pointer from the ray of the camera, within its reach, and call
   # functions of terminal.lua by name: Unlock slides the door of the safe
   # next to it, and Alarm has the lamp above it blink. A camera draws into a texture
   # as well, which the second screen shows. See
@@ -3177,8 +3177,8 @@ entities:
         shape: box
         size: [0.5, 0.9, 2.2]
 
-  # a quad of 1 by 1, sized by its Transform, is the square a surface is
-  # pointed at on
+  # a quad of 1 by 1, sized by its Transform, shows the surface, and a slab
+  # of the same size is what the ray of the camera meets
   - name: surfaces-terminal
     components:
       Transform:
@@ -3195,6 +3195,11 @@ entities:
         ui: assets://ui/museum/terminal.ui.yml
         name: museum-terminal
         size: [1024, 768]
+      # a thin slab the ray of the camera meets, sized with the quad: a
+      # collider that belongs to no body is found and never collided with
+      Collider:
+        shape: box
+        size: [1, 1, 0.02]
       # what its buttons call, see scripts/terminal.lua
       Terminal:
         ui: museum-terminal
@@ -3601,3 +3606,10 @@ entities:
           Camera:
             fov: 59
           SoundListener: Default
+          # what the player looks at, for the screens of hall 10: the ray
+          # acts for the player, so a click on a terminal comes from it
+          RayCast:
+            length: 3
+            owner: player
+          # the HUD's ring, which follows the ray, see scripts/gaze.lua
+          Gaze: Default

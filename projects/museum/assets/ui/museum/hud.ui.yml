@@ -10,6 +10,8 @@ reference_size: [1920, 1080]
 
 values:
   # whether a screen in the world is pointed at, which the runtime says
+  # whether the camera looks at something it can use, which the Gaze of
+  # the camera sets from its ray, see scripts/gaze.lua
   pointing: false
 
 root:

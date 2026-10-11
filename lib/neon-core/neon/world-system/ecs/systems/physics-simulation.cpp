@@ -219,6 +219,13 @@ namespace neon
         _claimed.erase(it);
       }
       _loose.erase(entity);
+
+      // a shape of its own goes with its collider, and is made again when
+      // the collider is on again
+      if (const auto it = _records.find(entity); it != _records.end() && it->second.kind == RecordKind::Shape)
+      {
+        Release(entity);
+      }
     };
 
     // A collider that is turned off is no shape of its body, as one that is
@@ -266,6 +273,7 @@ namespace neon
       case RecordKind::Body: return "RigidBody";
       case RecordKind::Trigger: return "Trigger";
       case RecordKind::Character: return "CharacterBody";
+      case RecordKind::Shape: return "Collider";
     }
     return "body";
   }
@@ -863,19 +871,52 @@ namespace neon
           continue;
         }
 
-        // said once, and not in every step
+        // tried once, and not in every step
         _loose.insert(entity);
 
-        if (owner == No_Entity)
-        {
-          const auto path = PathOf(store, entity);
-          _logger->Warn(
-            "The Collider of entity '{}' belongs to nothing. It needs a RigidBody, a Trigger, or a "
-            "CharacterBody on its entity or on one above it",
-            path);
-        }
+        // one that belongs to nothing is a shape of its own, where its
+        // entity is, which queries find and nothing meets
+        if (owner == No_Entity) { MakeShape(store, entity); }
       }
     });
+  }
+
+  void PhysicsSimulation::MakeShape(EntityStore &store, const Entity entity)
+  {
+    const auto *transform = store.Get<Transform>(entity);
+    const auto *collider = store.Get<Collider>(entity);
+    if (transform == nullptr || collider == nullptr)
+    {
+      const auto path = PathOf(store, entity);
+      _logger->Warn("The Collider of entity '{}' belongs to nothing, and the entity has no Transform to stand at", path);
+      return;
+    }
+
+    Record record;
+    record.kind = RecordKind::Shape;
+    record.body_kind = BodyKind::Static;
+
+    BodyInfo info;
+    if (!Prepare(store, entity, *transform, "Collider", record, info.shapes)) { return; }
+
+    info.entity = entity;
+    info.name = PathOf(store, entity);
+    info.kind = BodyKind::Static;
+    info.query_only = true;
+    info.position = record.current.position;
+    info.rotation = record.current.rotation;
+    info.layers = collider->layers;
+    info.mask = 0;
+
+    std::string error;
+    if (!_physics->CreateBody(info, record.body, error))
+    {
+      Refuse(store, entity, "Collider", error);
+      return;
+    }
+
+    _records[entity] = record;
+    _loose.erase(entity);
   }
 
   void PhysicsSimulation::WatchColliders(EntityStore &store)

@@ -314,8 +314,8 @@ namespace neon
     for (const auto &field : type.fields)
     {
       // what does not belong is not asked for, so it is reported as not
-      // known when it is written
-      if (!type.Belongs(field, object)) { continue; }
+      // known when it is written; nor is what the engine writes
+      if (!type.Belongs(field, object) || field.engine_written) { continue; }
 
       ReadField(field, reader, object);
 
@@ -446,8 +446,9 @@ namespace neon
   {
     for (const auto &field : type.fields)
     {
-      // what does not belong would be refused when the map is read
-      if (!type.Belongs(field, object)) { continue; }
+      // what does not belong would be refused when the map is read, and
+      // so would what the engine writes
+      if (!type.Belongs(field, object) || field.engine_written) { continue; }
 
       if (field.kind == FieldKind::Group)
       {

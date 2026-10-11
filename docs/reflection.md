@@ -115,6 +115,7 @@ outside.
 | `.Count(n)` | How many numbers a list of numbers holds, when it is always as many |
 | `.OneNumberForAll()` | One number may be written for a vector, as for a scale |
 | `.AlwaysWritten()` | Written even when it holds its default, as the type of a light |
+| `.EngineWritten()` | The engine writes it: a file neither reads nor writes it, and a file that holds it is told it is not known, while a script reaches it. `on_floor` and `real_velocity` of a `CharacterBody` |
 
 A number that is refused is told what was written and what was expected, as
 everything else that reads a file says it:

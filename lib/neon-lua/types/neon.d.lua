@@ -19,6 +19,7 @@
 ---@field Collider Component|nil
 ---@field Joint Component|nil
 ---@field FirstPersonController Component|nil
+---@field RayCast Component|nil
 ---@field Spectator Component|nil
 ---@field Persistent Component|nil
 ---@field SceneExit Component|nil

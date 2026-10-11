@@ -142,6 +142,12 @@ namespace neon
     /// anything.
     bool trigger = false;
 
+    /// A body that queries find and nothing meets: a ray and an overlap
+    /// see it, no body collides with it, and it reports nothing. For a
+    /// collider that belongs to no body, such as a screen that is looked
+    /// at.
+    bool query_only = false;
+
     /// More than one make a compound.
     std::vector<ShapeInfo> shapes;
 
