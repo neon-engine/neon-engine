@@ -12,9 +12,11 @@
 #include <neon/reflection/type-builder.hpp>
 #include <neon/testing/fake-entity-store.hpp>
 #include <neon/testing/memory-file-system.hpp>
+#include <neon/testing/mock-audio-context.hpp>
 #include <neon/testing/mock-ui-system.hpp>
 #include <neon/settings/settings-store.hpp>
 #include <neon/testing/recording-logger.hpp>
+#include <neon/world-system/ecs/components/sound-source.hpp>
 #include <neon/world-system/ecs/scene-file/component-format.hpp>
 
 namespace
@@ -31,6 +33,9 @@ namespace
   using neon::PhysicsEventKind;
   using neon::SettingKind;
   using neon::SettingsStore;
+  using neon::SoundFade;
+  using neon::SoundSource;
+  using neon::testing::MockAudioContext;
   using neon::Transform;
   using neon::testing::FakeEntityStore;
   using neon::testing::LogLevel;
@@ -1104,6 +1109,76 @@ namespace
     _lua.Update(_store, 0.1);
 
     EXPECT_THAT(Errors(), HasSubstr("boolean expected"));
+  }
+
+  // what is heard
+
+  TEST_F(LuaScriptSystemTest, SetsAndReadsTheVolumeOfAGroupAndFadesTheSoundOfAnEntity)
+  {
+    ::testing::NiceMock<MockAudioContext> audio;
+    EXPECT_CALL(audio, SetGroupVolume("music", 0.25f));
+    ON_CALL(audio, GetGroupVolume("music")).WillByDefault(::testing::Return(0.25f));
+    _lua.SetAudio(&audio);
+    const ComponentId sounds = _store.RegisterComponent(ComponentInfo::Of<SoundSource>("SoundSource"));
+    _formats.Add(ComponentFormat::Of<SoundSource>());
+
+    AddScript("jukebox.lua", R"(
+      local Jukebox = Component:extend { heard = 0.0 }
+      local JukeboxSystem = System:extend("Jukebox")
+      function JukeboxSystem:update(entity, jukebox, dt)
+        audio.set_group_volume("music", 0.25)
+        jukebox.heard = audio.get_group_volume("music")
+        audio.fade_in(entity, 2)
+        local other = world.find_entity("other")
+        audio.fade_to(other, 0.5, 1)
+      end
+      return Jukebox, JukeboxSystem
+    )");
+    ASSERT_TRUE(Load());
+
+    const Entity piece = Place("piece");
+    Give(piece, "Jukebox");
+    SoundSource silent;
+    silent.playing = false;
+    _store.SetComponent(piece, sounds, &silent);
+    const Entity other = Place("other");
+    _store.SetComponent(other, sounds, &silent);
+
+    _lua.Update(_store, 0.016);
+
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 0u) << Errors();
+    EXPECT_FLOAT_EQ(std::get<float>(Field(piece, "Jukebox", "heard")), 0.25f);
+    const auto *faded = static_cast<const SoundSource *>(_store.GetComponent(piece, sounds));
+    ASSERT_TRUE(faded->fade.has_value());
+    EXPECT_EQ(faded->fade->kind, SoundFade::Kind::In);
+    EXPECT_TRUE(faded->playing);
+    const auto *lowered = static_cast<const SoundSource *>(_store.GetComponent(other, sounds));
+    ASSERT_TRUE(lowered->fade.has_value());
+    EXPECT_EQ(lowered->fade->kind, SoundFade::Kind::To);
+    EXPECT_FLOAT_EQ(lowered->fade->volume, 0.5f);
+  }
+
+  TEST_F(LuaScriptSystemTest, FadingAnEntityWithoutASoundIsAnErrorAndWithoutAnAudioAVolumeIsZero)
+  {
+    _store.RegisterComponent(ComponentInfo::Of<SoundSource>("SoundSource"));
+    AddScript("mute.lua", R"(
+      local Mute = Component:extend { heard = 1.0 }
+      local MuteSystem = System:extend("Mute")
+      function MuteSystem:update(entity, mute, dt)
+        audio.set_group_volume("music", 0.5)
+        mute.heard = audio.get_group_volume("music")
+        audio.fade_out(entity, 1)
+      end
+      return Mute, MuteSystem
+    )");
+    ASSERT_TRUE(Load());
+    const Entity lamp = Place("lamp");
+    Give(lamp, "Mute");
+
+    _lua.Update(_store, 0.016);
+
+    EXPECT_FLOAT_EQ(std::get<float>(Field(lamp, "Mute", "heard")), 0.0f);
+    EXPECT_THAT(Errors(), HasSubstr("audio.fade_out: the entity has no SoundSource"));
   }
 
   // the settings of the game

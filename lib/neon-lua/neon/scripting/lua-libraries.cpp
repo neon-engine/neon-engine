@@ -9,6 +9,8 @@
 #include "lua-entity-handle.hpp"
 #include "lua-host.hpp"
 
+#include <neon/world-system/ecs/components/sound-source.hpp>
+
 namespace neon
 {
   // Helpers of the libraries, for this file alone.
@@ -501,6 +503,66 @@ namespace neon
     }
   }
 
+  // The functions of `audio`: the volumes of the groups, and the fades of
+  // the sounds of entities.
+  namespace
+  {
+    int audio_set_group_volume(lua_State *lua)
+    {
+      const char *group = luaL_checkstring(lua, 1);
+      const auto volume = static_cast<float>(luaL_checknumber(lua, 2));
+      if (AudioContext *audio = host_of(lua).audio; audio != nullptr) { audio->SetGroupVolume(group, volume); }
+      return 0;
+    }
+
+    int audio_get_group_volume(lua_State *lua)
+    {
+      const char *group = luaL_checkstring(lua, 1);
+      AudioContext *audio = host_of(lua).audio;
+      lua_pushnumber(lua, audio != nullptr ? audio->GetGroupVolume(group) : 0.0);
+      return 1;
+    }
+
+    /// The SoundSource of the entity at `index`, or an error that says the
+    /// entity has none.
+    SoundSource &sound_of(lua_State *lua, const int index, const char *what)
+    {
+      const LuaEntityHandle &handle = check_entity(lua, index);
+      EntityStore &store = store_of(lua);
+      const ComponentId id = store.FindComponent("SoundSource");
+      auto *source = id != No_Component ? static_cast<SoundSource *>(store.GetComponent(handle.entity, id)) : nullptr;
+      if (source == nullptr) { luaL_error(lua, "audio.%s: the entity has no SoundSource", what); }
+      return *source;
+    }
+
+    int audio_fade_in(lua_State *lua)
+    {
+      sound_of(lua, 1, "fade_in").FadeIn(luaL_checknumber(lua, 2));
+      return 0;
+    }
+
+    int audio_fade_out(lua_State *lua)
+    {
+      sound_of(lua, 1, "fade_out").FadeOut(luaL_checknumber(lua, 2));
+      return 0;
+    }
+
+    int audio_fade_to(lua_State *lua)
+    {
+      sound_of(lua, 1, "fade_to").FadeTo(static_cast<float>(luaL_checknumber(lua, 2)), luaL_checknumber(lua, 3));
+      return 0;
+    }
+
+    constexpr luaL_Reg audio_functions[] = {
+      {"set_group_volume", audio_set_group_volume},
+      {"get_group_volume", audio_get_group_volume},
+      {"fade_in", audio_fade_in},
+      {"fade_out", audio_fade_out},
+      {"fade_to", audio_fade_to},
+      {nullptr, nullptr}
+    };
+  }
+
   void open_world_library(lua_State *lua)
   {
     luaL_newlib(lua, world_functions);
@@ -523,6 +585,12 @@ namespace neon
   {
     luaL_newlib(lua, settings_functions);
     lua_setglobal(lua, "settings");
+  }
+
+  void open_audio_library(lua_State *lua)
+  {
+    luaL_newlib(lua, audio_functions);
+    lua_setglobal(lua, "audio");
   }
 
   void open_log_library(lua_State *lua)

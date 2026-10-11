@@ -7,6 +7,7 @@
 #include <vector>
 
 #include <neon/filesystem/file-system-context.hpp>
+#include <neon/audio/audio-context.hpp>
 #include <neon/input/input-context.hpp>
 #include <neon/logging/logger.hpp>
 #include <neon/settings/settings-store.hpp>
@@ -25,7 +26,7 @@ namespace neon
   ///
   /// `store` is set while the scripts are loaded and while a hook runs, and
   /// null between frames, since the store is what the world hands over.
-  /// `input`, `ui`, `settings`, and `world` may be null for a run without
+  /// `input`, `ui`, `settings`, `audio`, and `world` may be null for a run without
   /// them: a script that asks is then told so.
   struct LuaHost
   {
@@ -34,6 +35,7 @@ namespace neon
     InputContext *input = nullptr;
     UiContext *ui = nullptr;
     SettingsStore *settings = nullptr;
+    AudioContext *audio = nullptr;
     WorldSystem *world = nullptr;
     const ComponentFormats *formats = nullptr;
     std::shared_ptr<Logger> logger;

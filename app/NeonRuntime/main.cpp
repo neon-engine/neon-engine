@@ -45,9 +45,6 @@
 #include <neon/world-system/ecs/systems/first-person-controller-system.hpp>
 #include <neon/world-system/ecs/systems/script-running.hpp>
 #include <neon/world-system/ecs/scene-file/ui-view-format.hpp>
-#include <neon/world-system/ecs/components/ui-sound-switch.hpp>
-#include <neon/world-system/ecs/components/ui-volume.hpp>
-#include <neon/world-system/ecs/systems/ui-audio.hpp>
 #include <neon/world-system/ecs/systems/ui-clock.hpp>
 #include <neon/world-system/ecs/systems/ui-surface-loading.hpp>
 #include <neon/world-system/ecs/systems/ray-casting.hpp>
@@ -439,9 +436,6 @@ int main(const int argc, char *argv[])
   // and the user interfaces that are shown on surfaces in the world
   scene.GetComponentFormats().Add(neon::UiSurfaceFormat());
 
-  // and what values of user interfaces do to what is heard
-  scene.GetComponentFormats().Add(neon::ComponentFormat::Of<neon::UiVolume>());
-  scene.GetComponentFormats().Add(neon::ComponentFormat::Of<neon::UiSoundSwitch>());
 
   // the world reads the input less what the user interface has used
   neon::EntityWorld world(
@@ -452,11 +446,6 @@ int main(const int argc, char *argv[])
     window_system,
     logging_system.CreateLogger("EntityWorld"));
 
-  // What values of the user interface do to what is heard. It goes on while
-  // the world is paused, as the settings menu is shown then, and comes
-  // before the playback, so that what it asks of a sound is heard in the
-  // same frame.
-  world.AddSystemAfterPlacing(std::make_unique<neon::UiAudio>(&ui_system, &audio_system));
 
   // sounds are heard where their entities are drawn, so that a sound is not
   // heard from where it was a frame ago, or from the origin in the first
@@ -501,6 +490,8 @@ int main(const int argc, char *argv[])
   script_system.SetUi(&ui_system);
   // the settings of the game, which a script reads and hears of
   script_system.SetSettings(&settings_store);
+  // the volumes of the groups, which a menu of the game sets
+  script_system.SetAudio(&audio_system);
   script_system.SetWorld(&world);
   auto script_running = std::make_unique<neon::ScriptRunning>(
     &script_system,

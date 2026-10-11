@@ -1561,9 +1561,8 @@ of its own adds a row with a value named after it, and needs nothing else.
 | Apply | The volumes that changed since the menu was shown are written to `user://settings.yml` as `audio.volumes`, on top of what the file held, and are read at the next start |
 | Back, or cancel | The volumes are put back as they were |
 
-The world stands still while the menu is shown, and `UiAudio` goes on all the
-same, so a `UiVolume` or a `UiSoundSwitch` of the scene follows the menu too,
-see [audio.md](audio.md#from-a-settings-menu).
+The world stands still while the menu is shown. A menu of the game's own
+sets the volumes through its scripts, see [audio.md](audio.md#from-a-menu-of-the-game).
 
 #### The settings of the game in the menu
 

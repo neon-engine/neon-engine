@@ -349,6 +349,8 @@ and a method of an entity is the store's function on it,
 | `settings` | `settings.get(name)`, `settings.set(name, value)` | The [settings of the game](projects.md#settings-of-the-game), which the project declares and the settings files set: a flag as a boolean, a number, a text or a choice as a string, an action as `nil`. `set` returns whether the value was taken; one that does not fit is refused, and the log says why once |
 | | `settings.trigger(name)` | Presses an action, which tells whoever hears of it |
 | | `settings.on_change(name, function(value) end)` | Calls the function after the setting changes, with what it holds now, for as long as the scripts run. A name the game does not declare is an error that lists the names |
+| `audio` | `audio.set_group_volume(group, volume)`, `audio.get_group_volume(group)` | The volume of a group of sounds, 0 to 1, see [audio.md](audio.md#from-a-menu-of-the-game). Without an audio nothing is set and 0 is read |
+| | `audio.fade_in(entity, seconds)`, `audio.fade_out(entity, seconds)`, `audio.fade_to(entity, volume, seconds)` | The fades of the `SoundSource` of the entity. An entity without one is an error |
 | `log` | `log.debug(...)`, `log.info(...)`, `log.warn(...)`, `log.error(...)` | The engine's log, with a space between the values. `print` is `log.info` |
 | `math` | `math.move_toward(from, to, by)`, `math.clamp(value, low, high)` | On top of Lua's `math` |
 | | `vec3(x, y, z)`, `vec3(n)`, `vec3()`, `color(r, g, b, a)` | Values |

@@ -177,55 +177,43 @@ every time.
 The `AudioContext` has the same fades by the id of a sound, for sounds that
 are not in the world: `FadeIn`, `FadeTo`, `FadeOut`, and `Crossfade`.
 
-### From a settings menu
+### From a menu of the game
 
-Values of a user interface can set what is heard without code of the game,
-through two components that `UiAudio` acts on:
+A menu of the game sets what is heard through its scripts, as it does
+anything else: a control names a handler with `on_change`, and the handler
+calls the `audio` library, see [scripting.md](scripting.md#what-a-script-reaches-of-the-engine).
+Nothing of the world knows the menu. The settings demo of the tests chooses
+its music that way, with one tone for every piece:
 
 ```yaml
-# the slider of the menu is the volume of the music, from 0 to 100
-- name: music volume
-  components:
-    UiVolume:
-      value: music
-      group: music
-
-# plays while the menu's value `track` is `chilled`, and fades out otherwise
-- name: chilled
-  components:
-    SoundSource:
-      sound: assets://sounds/music/chilled.wav
-      group: music
-      looping: true
-    UiSoundSwitch:
-      value: track
-      equals: chilled
-      fade: 2
+# assets://ui/music.ui.yml, shown by an entity that carries a Jukebox
+- type: select
+  name: track
+  options: [chilled, fight, hollow]
+  value: chilled
+  on_change: choose_track($event)
 ```
 
-| Component | Field | What it does | Default |
-|---|---|---|---|
-| `UiVolume` | `value` | The name of the value, as files write it in `{music}` | None. It has to be written |
-| | `group` | The group whose volume it sets | None. It has to be written |
-| | `full` | What the value is at a volume of 1 | `100` |
-| `UiSoundSwitch` | `value` | The name of the value | None. It has to be written |
-| | `equals` | What the value is while the sound plays | None. It has to be written |
-| | `fade` | Seconds that fading in and out take | `1` |
-
-The first time the value of a `UiVolume` is there, it is set to the volume
-the group has, so that a slider starts at what the settings and the player's
-file chose and not at what the menu's file starts it with; from then on the
-group follows the value. A volume is handed to the audio only when it
-changes. A sound that is not chosen when the scene starts is silent from the
-start, and the one that is fades in. `UiAudio` goes on while the world is
-paused, as it is added after placing, so the pause menu's settings are heard
-at once. One entity for every piece of music, each with its own word, and a
-choice of radio buttons in the menu, fade from one piece to the next. The
-settings demo of the tests does this, with one tone for every piece:
-
+```lua
+-- scripts/jukebox.lua: every piece is an entity with a SoundSource and a
+-- Track that names it; the one chosen fades in, the others fade out
+function JukeboxSystem.handlers:choose_track(event)
+  for piece, track in world.each("Track") do
+    if track.name == event.value then
+      audio.fade_in(piece, self.Jukebox.fade)
+    else
+      audio.fade_out(piece, self.Jukebox.fade)
+    end
+  end
+end
 ```
-NeonRuntime --scene assets://scenes/settings-demo.scene.yml
-```
+
+| Function | Does |
+|---|---|
+| `audio.set_group_volume(group, volume)`, `audio.get_group_volume(group)` | The volume of a group, 0 to 1, for a slider of the game's own menu: `on_change: set_music($event)` and a handler that divides the value by 100 |
+| `audio.fade_in(entity, seconds)` | Plays the sound of the entity from its start, rising from silence |
+| `audio.fade_out(entity, seconds)` | Takes it to silence and stops it |
+| `audio.fade_to(entity, volume, seconds)` | Takes it to a volume, on top of its own |
 
 The settings menu of the engine, `engine://ui/settings.ui.yml`, has a row for
 the effects, the music, and the ambience, each a slider whose value is named
@@ -236,8 +224,8 @@ to `user://settings.yml` with Apply, and are put back with Back, see
 [user-interface.md](user-interface.md#the-volumes-of-the-settings-menu). A
 project with a group of its own adds a row like them to its menu, with a
 value named after the group, and nothing else. A scene that shows the menu as
-a component of its own, as the settings demo does, carries an entity with a
-`UiVolume` for each value and group.
+a component of its own gets values and nothing more; a game with a menu of
+its own binds them through its scripts, as above.
 
 ### Files
 

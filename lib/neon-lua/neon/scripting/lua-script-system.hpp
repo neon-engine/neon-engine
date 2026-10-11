@@ -151,6 +151,10 @@ namespace neon
     /// settings of the game.
     void SetSettings(SettingsStore *settings);
 
+    /// What `audio` sets the volume of a group on. May be left out for a
+    /// run without sound; the fades of a sound need no audio.
+    void SetAudio(AudioContext *audio);
+
     /// Whether LuaJIT compiles the scripts as they run; off runs them in
     /// its interpreter. On by default.
     /// Takes effect at once, on a state that is ready or on the next one.

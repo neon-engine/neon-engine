@@ -50,8 +50,9 @@ expect_no_output("[error]")
 expect_no_output("[critical]")
 
 # the scripts were found and what they declare is said: the Spinner and the
-# Tuner, the SettingsProbe, and the Gaze, the scripts of the game of the tests
-expect_output("Scripts under assets:// declare 4 components and 4 systems")
+# Tuner, the SettingsProbe, the Jukebox with its Track, and the Gaze, the
+# scripts of the game of the tests
+expect_output("Scripts under assets:// declare 6 components and 5 systems")
 
 if (CASE STREQUAL "controls-call-their-handlers")
   # once for each change the player made, and not for the volume of 20 the

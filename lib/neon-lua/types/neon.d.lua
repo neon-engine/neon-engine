@@ -386,6 +386,40 @@ function world.destroy_entity(entity) end
 ---@param path string
 function world.load_scene(path) end
 
+---What is heard, named as `AudioContext` and `SoundSource` name it: the
+---volume of a group of sounds for a menu of the game, and the fades of the
+---sound of an entity.
+---@class audiolib
+audio = {}
+
+---The volume of a group of sounds, 0 for silence and 1 for the loudness of
+---its sounds. Nothing is set without an audio.
+---@param group string
+---@param volume number
+function audio.set_group_volume(group, volume) end
+
+---@param group string
+---@return number
+function audio.get_group_volume(group) end
+
+---Plays the sound of the entity from its start, rising from silence to its
+---volume over the seconds. An entity without a SoundSource is an error.
+---@param entity Entity
+---@param seconds number
+function audio.fade_in(entity, seconds) end
+
+---Takes the sound of the entity to silence over the seconds and stops it.
+---@param entity Entity
+---@param seconds number
+function audio.fade_out(entity, seconds) end
+
+---Takes the sound of the entity from how loud it is to the volume, 0 to 1
+---on top of its own, over the seconds.
+---@param entity Entity
+---@param volume number
+---@param seconds number
+function audio.fade_to(entity, volume, seconds) end
+
 ---@class inputlib
 input = {}
 

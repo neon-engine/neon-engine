@@ -41,6 +41,15 @@ namespace neon
   /// names. Without a store every setting is nil and nothing is set.
   void open_settings_library(lua_State *lua);
 
+  /// `audio`: what is heard, named as `AudioContext` and `SoundSource` name
+  /// it. `audio.set_group_volume(group, volume)` and
+  /// `audio.get_group_volume(group)` are the volume of a group of sounds,
+  /// 0 to 1, for a menu of the game; without an audio nothing is set and 0
+  /// is read. `audio.fade_in(entity, seconds)`, `audio.fade_out(entity,
+  /// seconds)`, and `audio.fade_to(entity, volume, seconds)` are the fades
+  /// of the SoundSource of the entity; an entity without one is an error.
+  void open_audio_library(lua_State *lua);
+
   /// `log`: the engine's log. `log.debug`, `log.info`, `log.warn`, and
   /// `log.error`, each taking any values, written with a space between.
   /// `print` is `log.info`.

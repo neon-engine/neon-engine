@@ -27,12 +27,11 @@ values:
   player_name: Ada
   vsync: true
   # the volumes of the groups of sounds, from 0 to 100, as the engine
-  # starts them; the runtime, or a UiVolume of the scene, sets them to the
-  # volumes the groups have when the menu is shown
+  # starts them; the runtime sets them to the volumes the groups have when
+  # the pause menu shows this
   effects: 100
   music: 100
   ambience: 100
-  track: chilled
   # the graphics, as the engine starts them; the runtime sets them to what
   # holds when it shows the menu
   quality: high
@@ -427,19 +426,6 @@ root:
                     - type: label
                       class: value
                       text: "{ambience}"
-
-            # which piece of music plays: the scene fades from one to the
-            # next when another is chosen
-            - type: panel
-              class: row
-              children:
-                - {type: label, class: row-label, text: Track}
-                - type: panel
-                  class: choices
-                  children:
-                    - {type: radio, name: chilled, group: track, value: chilled, text: Chilled, checked: "{track}"}
-                    - {type: radio, name: fight, group: track, value: fight, text: Fight, checked: "{track}"}
-                    - {type: radio, name: hollow, group: track, value: hollow, text: Hollow, checked: "{track}"}
 
             - type: panel
               class: row

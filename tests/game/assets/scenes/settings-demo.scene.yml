@@ -5,12 +5,11 @@
 # The menu is a component of an entity, as the HUD of hud-demo is. Escape
 # and a controller's cancel close it, as its file says.
 #
-# The menu sets what is heard. The Effects, Music, and Ambience sliders are
-# the volumes of those groups of sounds, through UiVolume, and start at the
-# volumes the settings give the groups; choosing a track fades from one
-# piece of music to another, through UiSoundSwitch. The runtime binds the
-# sliders itself only when the pause menu shows the settings, so a scene
-# that shows the menu as a component of its own carries the UiVolume.
+# A menu of the game chooses the music: the dropdown of ui/music.ui.yml
+# calls the jukebox of scripts/jukebox.lua, which fades from one piece to
+# the next. The sliders of the settings menu are bound to the volumes of
+# the groups by the runtime when the pause menu shows it; shown as a
+# component of the scene, as here, they are values and nothing more.
 # The reactor hums by the ball, as ambience. Every track and the reactor are
 # the same tone, sounds/tone.wav, written by tools/make-test-game-assets.py:
 # what is checked is that they play, switch, and fade, not what is heard.
@@ -72,39 +71,27 @@ entities:
           Camera: Default
           SoundListener: Default
 
-  # the sliders of the menu are the volumes of three groups, from 0 to 100,
-  # each a value named after its group. A scene that shows a menu with a
-  # group of the project adds an entity like these for it
-  - name: effects volume
+  # the music the player chooses, a menu of the game next to the settings:
+  # its dropdown calls the jukebox, which fades between the pieces below
+  - name: music
     components:
-      UiVolume:
-        value: effects
-        group: effects
+      Ui:
+        file: assets://ui/music.ui.yml
+      Jukebox:
+        fade: 2
 
-  - name: music volume
-    components:
-      UiVolume:
-        value: music
-        group: music
-
-  - name: ambience volume
-    components:
-      UiVolume:
-        value: ambience
-        group: ambience
-
-  # one entity for each piece of music. The one the menu chooses plays, and
-  # a new choice fades from it to the next over two seconds
+  # one entity for each piece of music, silent until the jukebox fades it
+  # in. The one the dropdown chooses plays, and a new choice fades from it
+  # to the next over two seconds
   - name: chilled
     components:
       SoundSource:
         sound: assets://sounds/tone.wav
         group: music
         looping: true
-      UiSoundSwitch:
-        value: track
-        equals: chilled
-        fade: 2
+        playing: false
+      Track:
+        name: chilled
 
   - name: fight
     components:
@@ -112,10 +99,9 @@ entities:
         sound: assets://sounds/tone.wav
         group: music
         looping: true
-      UiSoundSwitch:
-        value: track
-        equals: fight
-        fade: 2
+        playing: false
+      Track:
+        name: fight
 
   - name: hollow
     components:
@@ -123,10 +109,9 @@ entities:
         sound: assets://sounds/tone.wav
         group: music
         looping: true
-      UiSoundSwitch:
-        value: track
-        equals: hollow
-        fade: 2
+        playing: false
+      Track:
+        name: hollow
 
   # ambience with a place: louder close to the ball, and heard from the
   # side it is on

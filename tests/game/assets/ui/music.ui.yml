@@ -1,0 +1,33 @@
+# The music of the settings demo, chosen by the player: a dropdown that
+# names the handler `choose_track` of scripts/jukebox.lua with `on_change`,
+# which fades from the piece that plays to the one chosen. Shown by
+# assets://scenes/settings-demo.scene.yml next to the settings menu.
+
+ui: music
+version: 1
+
+reference_size: [1920, 1080]
+
+root:
+  type: panel
+  width: 100%
+  height: 100%
+  padding: 48
+  justify_content: flex-end
+  align_items: flex-end
+  children:
+    - type: panel
+      gap: 12
+      align_items: center
+      children:
+        - type: label
+          text: Track
+          font_size: 28
+        - type: select
+          name: track
+          options:
+            - chilled
+            - fight
+            - hollow
+          value: chilled
+          on_change: choose_track($event)
