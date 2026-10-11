@@ -970,15 +970,15 @@ what it left behind.
 | neon-core | `world-system/ecs/entity-world` | 38 | What is initialized in which order, the order of the systems in a frame, the steps of the world, what is released |
 | neon-core | `world-system/ecs/fixed-clock` | 19 | The steps of the time that passed at every frame rate, a frame that took long, the blend |
 | neon-core | `world-system/ecs/scene-file/physics-component-formats` | 43 | Reading and writing the components of the physics, and every message |
-| neon-core | `world-system/ecs/systems/physics-simulation` | 73 | Creating and releasing bodies, shapes of several colliders, entities with a parent, what is handed to the physics and taken back, what is drawn between two steps |
-| neon-core | `world-system/ecs/systems/spectator-movement` | 25 | Moving and turning by the input |
-| neon-core | `world-system/ecs/systems/transform-propagation` | 21 | Parent times child, over several levels |
-| neon-core | `world-system/ecs/systems/render-submission` | 31 | The camera, the lights, render objects. 1 disabled |
+| neon-core | `world-system/ecs/systems/physics/physics-simulation` | 73 | Creating and releasing bodies, shapes of several colliders, entities with a parent, what is handed to the physics and taken back, what is drawn between two steps |
+| neon-core | `world-system/ecs/systems/player/spectator-movement` | 25 | Moving and turning by the input |
+| neon-core | `world-system/ecs/systems/rendering/transform-propagation` | 21 | Parent times child, over several levels |
+| neon-core | `world-system/ecs/systems/rendering/render-submission` | 31 | The camera, the lights, render objects. 1 disabled |
 | neon-core | `layout/flex-layout-engine` | 120 | Flexbox as the specification describes it: growing and shrinking, alignment in both directions, wrapping, gaps, percentages, absolute boxes with every combination of sides, the box model |
 | neon-core | `text/utf8`, `text/font-atlas`, `text/text-layout` | 57 | Reading UTF-8, what is wrong with it, the atlas of a font, where characters go, breaking lines |
 | neon-core | `ui/*` | 151 | Values of CSS, properties, values of a game, batches of draw calls against a mock, fonts and images that are loaded once, what is left of the input |
 | neon-core | `data/data-reader` | 5 | What a reader reports about what it reads as a whole |
-| neon-core | `world-system/ecs/systems/ui-view-loading` | 12 | Showing the user interface of an entity, and taking it away |
+| neon-core | `world-system/ecs/systems/ui/ui-view-loading` | 12 | Showing the user interface of an entity, and taking it away |
 | neon-stb | `text/stb-font-rasterizer` | 17 | Characters of Inter, which is compiled into the test |
 | neon-vulkan | `render/vk-renderer-2d` | 13 | What needs no graphics card |
 | neon-flecs | `world-system/flecs-entity-store` | 104 | Everything `EntityStore` promises, through that interface |
@@ -1001,7 +1001,7 @@ what it left behind.
 | neon-core | `ui/css-functions`, `ui/ui-paint`, `ui/ui-box-paint`, `ui/ui-values-fallback` | 69 | Gradients, shadows, and transforms as CSS writes them, the shape of a box, where an image goes, values that fall back on others |
 | neon-core | `image/image-pixels` | 11 | Smaller copies with alpha multiplied in: white next to nothing stays white |
 | neon-core | `render/forward-render-pipeline-cameras` | 11 | Cameras that draw into a texture |
-| neon-core | `world-system/ecs/systems/ui-clock` | 2 | The time of the user interface |
+| neon-core | `world-system/ecs/systems/ui/ui-clock` | 2 | The time of the user interface |
 | neon-freetype | `text/ft-font-rasterizer`, `text/hb-text-shaper` | 30 | Glyphs of Inter and of Noto Sans Arabic, which are compiled into the tests: parts of a pixel, hinting, distances, the line around a glyph, kerning, a ligature, Arabic in its order and joined |
 | neon-lunasvg | `image/luna-vector-image-rasterizer` | 14 | An SVG at several sizes, as sharp at each, and what is refused |
 | neon-stb | `image/stb-image-decoder` | 9 | PNG, JPEG, BMP, TGA, and PSD with 8 and 16 bits |

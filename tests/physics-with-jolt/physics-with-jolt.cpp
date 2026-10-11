@@ -32,7 +32,7 @@
 #include <neon/world-system/ecs/components/trigger.hpp>
 #include <neon/world-system/ecs/entity-world.hpp>
 #include <neon/world-system/ecs/scene-file/scene-file.hpp>
-#include <neon/world-system/ecs/systems/physics-simulation.hpp>
+#include <neon/world-system/ecs/systems/physics/physics-simulation.hpp>
 #include <neon/world-system/flecs-entity-store.hpp>
 
 namespace

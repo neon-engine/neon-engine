@@ -99,11 +99,11 @@ add_library(${TARGET} STATIC
         neon/world-system/ecs/components/persistent.hpp
         neon/world-system/ecs/components/scene-exit.hpp
         neon/world-system/ecs/components/geometry-shape.hpp
-        neon/world-system/ecs/systems/geometry-building.cpp
-        neon/world-system/ecs/systems/geometry-building.hpp
+        neon/world-system/ecs/systems/rendering/geometry-building.cpp
+        neon/world-system/ecs/systems/rendering/geometry-building.hpp
         neon/world-system/ecs/components/rope.hpp
-        neon/world-system/ecs/systems/rope-drawing.cpp
-        neon/world-system/ecs/systems/rope-drawing.hpp
+        neon/world-system/ecs/systems/physics/rope-drawing.cpp
+        neon/world-system/ecs/systems/physics/rope-drawing.hpp
 
         # extensions: libraries that are loaded when the application starts
         neon/extension/extension-field.hpp
@@ -115,8 +115,8 @@ add_library(${TARGET} STATIC
         neon/extension/extension-host.hpp
         neon/extension/extension-host-table.cpp
         neon/extension/extension-host-table.hpp
-        neon/world-system/ecs/systems/extension-running.cpp
-        neon/world-system/ecs/systems/extension-running.hpp
+        neon/world-system/ecs/systems/scripting/extension-running.cpp
+        neon/world-system/ecs/systems/scripting/extension-running.hpp
         neon/extension/extension-recipe.hpp
         neon/extension/library-loader.hpp
         neon/extension/loaded-extension.hpp
@@ -394,37 +394,37 @@ add_library(${TARGET} STATIC
         neon/world-system/ecs/components/spectator.hpp
         neon/world-system/ecs/components/sound-listener.hpp
         neon/world-system/ecs/components/sound-source.hpp
-        neon/world-system/ecs/systems/audio-playback.cpp
-        neon/world-system/ecs/systems/audio-playback.hpp
-        neon/world-system/ecs/systems/entity-logging.cpp
-        neon/world-system/ecs/systems/entity-logging.hpp
+        neon/world-system/ecs/systems/audio/audio-playback.cpp
+        neon/world-system/ecs/systems/audio/audio-playback.hpp
+        neon/world-system/ecs/systems/world/entity-logging.cpp
+        neon/world-system/ecs/systems/world/entity-logging.hpp
         neon/world-system/ecs/components/trigger.hpp
-        neon/world-system/ecs/systems/physics-simulation.cpp
-        neon/world-system/ecs/systems/physics-simulation.hpp
-        neon/world-system/ecs/systems/scene-exiting.cpp
-        neon/world-system/ecs/systems/scene-exiting.hpp
-        neon/world-system/ecs/systems/script-running.cpp
-        neon/world-system/ecs/systems/script-running.hpp
-        neon/world-system/ecs/systems/first-person-controller-system.cpp
-        neon/world-system/ecs/systems/first-person-controller-system.hpp
+        neon/world-system/ecs/systems/physics/physics-simulation.cpp
+        neon/world-system/ecs/systems/physics/physics-simulation.hpp
+        neon/world-system/ecs/systems/scripting/script-running.cpp
+        neon/world-system/ecs/systems/scripting/script-running.hpp
+        neon/world-system/ecs/systems/player/first-person-controller-system.cpp
+        neon/world-system/ecs/systems/player/first-person-controller-system.hpp
+        neon/world-system/ecs/systems/physics/scene-exiting.cpp
+        neon/world-system/ecs/systems/physics/scene-exiting.hpp
         neon/world-system/ecs/components/ray-cast.hpp
-        neon/world-system/ecs/systems/ray-casting.cpp
-        neon/world-system/ecs/systems/ray-casting.hpp
+        neon/world-system/ecs/systems/world/ray-casting.cpp
+        neon/world-system/ecs/systems/world/ray-casting.hpp
         neon/world-system/ecs/components/ui-view.hpp
         neon/world-system/ecs/scene-file/pool-manager-format.cpp
         neon/world-system/ecs/scene-file/pool-manager-format.hpp
         neon/world-system/ecs/scene-file/ui-view-format.cpp
         neon/world-system/ecs/scene-file/ui-view-format.hpp
-        neon/world-system/ecs/systems/ui-view-loading.cpp
-        neon/world-system/ecs/systems/ui-view-loading.hpp
-        neon/world-system/ecs/systems/render-submission.cpp
-        neon/world-system/ecs/systems/render-submission.hpp
-        neon/world-system/ecs/systems/pool-system.cpp
-        neon/world-system/ecs/systems/pool-system.hpp
-        neon/world-system/ecs/systems/spectator-movement.cpp
-        neon/world-system/ecs/systems/spectator-movement.hpp
-        neon/world-system/ecs/systems/transform-propagation.cpp
-        neon/world-system/ecs/systems/transform-propagation.hpp
+        neon/world-system/ecs/systems/ui/ui-view-loading.cpp
+        neon/world-system/ecs/systems/ui/ui-view-loading.hpp
+        neon/world-system/ecs/systems/rendering/render-submission.cpp
+        neon/world-system/ecs/systems/rendering/render-submission.hpp
+        neon/world-system/ecs/systems/world/pool-system.cpp
+        neon/world-system/ecs/systems/world/pool-system.hpp
+        neon/world-system/ecs/systems/player/spectator-movement.cpp
+        neon/world-system/ecs/systems/player/spectator-movement.hpp
+        neon/world-system/ecs/systems/rendering/transform-propagation.cpp
+        neon/world-system/ecs/systems/rendering/transform-propagation.hpp
 
         # text that is shaped, and what boxes are painted with
         neon/text/text-shaper.hpp
@@ -450,15 +450,15 @@ add_library(${TARGET} STATIC
         neon/ui/ui-box-paint.hpp
         neon/ui/ui-image-paint.cpp
         neon/ui/ui-image-paint.hpp
-        neon/world-system/ecs/systems/ui-clock.cpp
-        neon/world-system/ecs/systems/ui-clock.hpp
+        neon/world-system/ecs/systems/ui/ui-clock.cpp
+        neon/world-system/ecs/systems/ui/ui-clock.hpp
 
         # user interfaces on surfaces in the world
         neon/world-system/ecs/components/ui-surface-view.hpp
-        neon/world-system/ecs/systems/ui-surface-loading.cpp
-        neon/world-system/ecs/systems/ui-surface-loading.hpp
-        neon/world-system/ecs/systems/ui-surface-pointing.cpp
-        neon/world-system/ecs/systems/ui-surface-pointing.hpp
+        neon/world-system/ecs/systems/ui/ui-surface-loading.cpp
+        neon/world-system/ecs/systems/ui/ui-surface-loading.hpp
+        neon/world-system/ecs/systems/ui/ui-surface-pointing.cpp
+        neon/world-system/ecs/systems/ui/ui-surface-pointing.hpp
 )
 
 neon_warnings(${TARGET})
@@ -516,7 +516,7 @@ if (NEON_BUILD_TESTS)
 neon_add_unit_test(${TARGET} neon/ui/ui-text-measure.test.cpp)
 neon_add_unit_test(${TARGET} neon/ui/ui-call.test.cpp)
 neon_add_unit_test(${TARGET} neon/scripting/script-component-layout.test.cpp)
-neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/script-running.test.cpp)
+neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/scripting/script-running.test.cpp)
 neon_add_unit_test(${TARGET} neon/command-line/display-options.test.cpp)
   neon_add_unit_test(${TARGET} neon/input/gamepad-kind.test.cpp)
   neon_add_unit_test(${TARGET} neon/input/input-script.test.cpp)
@@ -570,8 +570,8 @@ neon_add_unit_test(${TARGET} neon/command-line/display-options.test.cpp)
   neon_add_unit_test(${TARGET} neon/geometry/mesh-builder.test.cpp)
   neon_add_unit_test(${TARGET} neon/geometry/mesh-normals.test.cpp)
   neon_add_unit_test(${TARGET} neon/geometry/tube.test.cpp)
-  neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/rope-drawing.test.cpp)
-  neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/geometry-building.test.cpp)
+  neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/physics/rope-drawing.test.cpp)
+  neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/rendering/geometry-building.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/anisotropy.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/shadow-map-size.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/api-version.test.cpp)
@@ -603,18 +603,18 @@ neon_add_unit_test(${TARGET} neon/command-line/display-options.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/entity-world.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/fixed-clock.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/scene-file/physics-component-formats.test.cpp)
-  neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/audio-playback.test.cpp)
-  neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/entity-logging.test.cpp)
-  neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/physics-simulation.test.cpp)
-  neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/render-submission.test.cpp)
-  neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/scene-exiting.test.cpp)
-  neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/first-person-controller-system.test.cpp)
-  neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/ray-casting.test.cpp)
-  neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/pool-system.test.cpp)
-  neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/spectator-movement.test.cpp)
-  neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/transform-propagation.test.cpp)
-  neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/ui-view-loading.test.cpp)
-  neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/ui-surface-pointing.test.cpp)
+  neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/audio/audio-playback.test.cpp)
+  neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/world/entity-logging.test.cpp)
+  neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/physics/physics-simulation.test.cpp)
+  neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/rendering/render-submission.test.cpp)
+  neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/player/first-person-controller-system.test.cpp)
+  neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/world/pool-system.test.cpp)
+  neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/player/spectator-movement.test.cpp)
+  neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/rendering/transform-propagation.test.cpp)
+  neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/ui/ui-view-loading.test.cpp)
+  neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/ui/ui-surface-pointing.test.cpp)
+  neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/world/ray-casting.test.cpp)
+  neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/physics/scene-exiting.test.cpp)
   neon_add_unit_test(${TARGET} neon/image/image-pixels.test.cpp)
   neon_add_unit_test(${TARGET} neon/image/image-halving.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/texture-scale.test.cpp)
@@ -628,5 +628,5 @@ neon_add_unit_test(${TARGET} neon/command-line/display-options.test.cpp)
   neon_add_unit_test(${TARGET} neon/ui/elements/ui-select.test.cpp)
   neon_add_unit_test(${TARGET} neon/ui/elements/ui-text-field.test.cpp)
   neon_add_unit_test(${TARGET} neon/render/forward-render-pipeline-cameras.test.cpp)
-  neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/ui-clock.test.cpp)
+  neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/ui/ui-clock.test.cpp)
 endif ()

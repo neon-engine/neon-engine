@@ -3,7 +3,7 @@
 #include <format>
 
 #include <neon/world-system/ecs/components/ui-view.hpp>
-#include <neon/world-system/ecs/systems/ui-view-loading.hpp>
+#include <neon/world-system/ecs/systems/ui/ui-view-loading.hpp>
 
 namespace neon
 {

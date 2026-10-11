@@ -11,11 +11,11 @@
 #include "components/scene-exit.hpp"
 #include "components/sky.hpp"
 #include "components/spectator.hpp"
-#include "systems/geometry-building.hpp"
-#include "systems/pool-system.hpp"
-#include "systems/render-submission.hpp"
-#include "systems/spectator-movement.hpp"
-#include "systems/transform-propagation.hpp"
+#include "systems/rendering/geometry-building.hpp"
+#include "systems/world/pool-system.hpp"
+#include "systems/rendering/render-submission.hpp"
+#include "systems/player/spectator-movement.hpp"
+#include "systems/rendering/transform-propagation.hpp"
 
 namespace neon
 {

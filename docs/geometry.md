@@ -121,7 +121,7 @@ their texture themselves.
 | `ComputeFlatNormals`, `ComputeSmoothNormals` | `neon/geometry/mesh-normals.hpp` | Flat splits shared vertices so every edge is hard; smooth averages by area |
 | `ProjectUvs` | `neon/geometry/mesh-uvs.hpp` | The projection above |
 | `Geometry`, `GeometryShape` | `neon/world-system/ecs/components/` | The component, described with reflection |
-| `GeometryBuilding` | `neon/world-system/ecs/systems/` | Builds the mesh once into `RenderInfo::mesh`; `Build()` is what the physics calls too |
+| `GeometryBuilding` | `neon/world-system/ecs/systems/rendering/` | Builds the mesh once into `RenderInfo::mesh`; `Build()` is what the physics calls too |
 | `RenderInfo::mesh` | `neon/render/render-info.hpp` | A shared `MeshData` the renderer draws in place of `model_path` |
 | `VK_Model` from a mesh | neon-vulkan | Uploads the mesh as it is, with a `ModelFit` of `None`, whatever a file would get |
 

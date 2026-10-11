@@ -66,6 +66,15 @@ privately, so the compiler refuses it anywhere else.
 | `Persistent` | The entity stays when the world changes scene. See [scenes.md](scenes.md#changing-the-scene) | same |
 | `SceneExit` | The scene the world changes to when a body enters the entity's `Trigger`, which the `SceneExiting` system watches | same |
 
+The systems of the engine live under `neon/world-system/ecs/systems/`, in
+a folder per domain, so that which systems talk to each other is seen at a
+glance: `ui/`, `audio/`, `physics/`, `scripting/`, `rendering/`, `player/`,
+and `world/`. A system reads the components of its own domain, and what it
+needs of another it is told, as the scripts are told who shows a file; a
+system that reaches into another folder's components is a smell. The
+components stay together under `components/`, since a component belongs to
+whoever reads it.
+
 A system works on the entities that carry all of the components it asks
 for, and passes over the others without a word. `RenderSubmission` asks for
 a `Transform` with every `Renderable`, `Camera`, and `Light`, so one of

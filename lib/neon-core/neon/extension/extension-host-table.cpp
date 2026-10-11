@@ -9,7 +9,7 @@
 #include <utility>
 #include <vector>
 
-#include <neon/world-system/ecs/systems/pool-system.hpp>
+#include <neon/world-system/ecs/systems/world/pool-system.hpp>
 #include <neon/filesystem/file-system.hpp>
 #include <neon/reflection/field-numbers.hpp>
 #include <neon/reflection/field-text.hpp>

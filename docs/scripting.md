@@ -153,7 +153,10 @@ of parameters, are refused with the list of hooks:
 | `on_trigger_exit(entity, components..., other)` | A body left it | |
 | `on_collision(entity, components..., other, point, normal)` | This entity's body began to touch another | The other entity, where, and the direction from this one to the other |
 
-`self` is the system's class, so a system keeps what is its own on it. What
+`self` is the system's class, so a system keeps what is its own on it. A
+helper a hook shares with another is a plain `local function` of the file,
+not a method of the system, since a method of any other name is refused
+as not a hook. What
 is an entity's own goes on the component, in a field the scene can write,
 or in a private field: a name with an underscore first, `door._closed_y`,
 which the engine keeps for that entity and that component, never reads from
@@ -485,7 +488,7 @@ and a store, is #326.
 |---|---|---|
 | `ScriptContext`, `ScriptSystem` | neon-core, `neon/scripting/` | What the engine sees of the scripts, in no language: load, start, run the hooks, hand the physics events over. The base of the backends |
 | `ScriptField`, `ScriptComponentLayout` | neon-core, `neon/scripting/` | A field a script declares, and the layout that makes the fields a component of the store, with its `TypeInfo` for reflection and its `ComponentFormat` for scenes |
-| `ScriptRunning` | neon-core, `neon/world-system/ecs/systems/` | The system of the world that loads the scripts when components are registered and runs their hooks in its place |
+| `ScriptRunning` | neon-core, `neon/world-system/ecs/systems/scripting/` | The system of the world that loads the scripts when components are registered and runs their hooks in its place |
 | `FileSystemContext::ListFiles` | neon-core | How the scripts are found |
 | `Lua_ScriptSystem` | neon-lua, `neon/scripting/` | The Lua backend: the state, the files, the contracts, the hooks |
 | `lua-classes`, `lua-sandbox`, `lua-libraries` | neon-lua | `Component` and `System`, what of Lua a script gets, and `world`, `input`, `log`, `scene` |

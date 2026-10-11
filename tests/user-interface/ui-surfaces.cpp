@@ -4,7 +4,7 @@
 #include <neon/ui/elements/ui-label.hpp>
 #include <neon/world-system/ecs/components/ui-surface-view.hpp>
 #include <neon/world-system/ecs/scene-file/scene-file.hpp>
-#include <neon/world-system/ecs/systems/ui-surface-loading.hpp>
+#include <neon/world-system/ecs/systems/ui/ui-surface-loading.hpp>
 
 // User interfaces on several surfaces: the window, and images that are
 // drawn to and shown in the world. Each is laid out for its surface, has

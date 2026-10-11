@@ -21,7 +21,7 @@
 #include <neon/testing/fake-physics-context.hpp>
 #include <neon/testing/memory-file-system.hpp>
 #include <neon/world-system/ecs/components/renderable.hpp>
-#include <neon/world-system/ecs/systems/extension-running.hpp>
+#include <neon/world-system/ecs/systems/scripting/extension-running.hpp>
 #include <neon/world-system/flecs-entity-store.hpp>
 #include <neon/world-system/ecs/components/pool-manager.hpp>
 #include <neon/world-system/ecs/components/pool-instance.hpp>

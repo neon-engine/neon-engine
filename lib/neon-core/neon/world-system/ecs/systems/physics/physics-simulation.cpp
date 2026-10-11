@@ -11,7 +11,7 @@
 #include <neon/world-system/ecs/components/joint.hpp>
 #include <neon/world-system/ecs/components/rigid-body.hpp>
 #include <neon/world-system/ecs/components/trigger.hpp>
-#include <neon/world-system/ecs/systems/geometry-building.hpp>
+#include <neon/world-system/ecs/systems/rendering/geometry-building.hpp>
 
 namespace neon
 {

@@ -1,6 +1,6 @@
 #include "lua-entity-handle.hpp"
 
-#include <neon/world-system/ecs/systems/pool-system.hpp>
+#include <neon/world-system/ecs/systems/world/pool-system.hpp>
 #include <string>
 
 #include "lua-api.hpp"
