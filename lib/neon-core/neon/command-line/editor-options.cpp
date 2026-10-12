@@ -34,6 +34,8 @@ namespace neon
     const std::string render_scale = "render-scale";
     const std::string input = "input";
     const std::string input_script = "input-script";
+    const std::string editor_script = "editor-script";
+    const std::string tools = "tools";
 
     const std::string editor = "Editor";
 
@@ -180,6 +182,22 @@ namespace neon
       .name = input_script,
       .value_name = "PATH",
       .description = "The same from a file, for example assets://input/menu.input. Needs --headless-renderer",
+      .group = editor
+    });
+
+    command_line.Add({
+      .name = editor_script,
+      .value_name = "PATH",
+      .description = "A script that drives the tools of the editor by their labels, for example "
+                     "output://view-log.editor-script.yml, see docs/editor.md. Without a window it draws "
+                     "the tools, and the run ends when the script does",
+      .group = editor
+    });
+
+    command_line.Add({
+      .name = tools,
+      .description = "Draw the tools of the editor without a window, where a screenshot otherwise shows the "
+                     "scene alone. Needs --headless-renderer",
       .group = editor
     });
 
@@ -360,6 +378,14 @@ namespace neon
         return false;
       }
     }
+
+    if (command_line.IsSet(tools) && !settings.headless_renderer)
+    {
+      error = "Option '--" + tools + "' needs '--" + headless_renderer + "'. A window always shows the tools";
+      return false;
+    }
+    settings.editor_tools = command_line.IsSet(tools);
+    if (command_line.IsSet(editor_script)) { settings.editor_script_path = command_line.GetValue(editor_script); }
 
     if (command_line.IsSet(input)) { settings.input_script = command_line.GetValue(input); }
     if (command_line.IsSet(input_script)) { settings.input_script_path = command_line.GetValue(input_script); }

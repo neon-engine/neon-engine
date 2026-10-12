@@ -33,6 +33,30 @@ namespace neon
     _tool_ui = tool_ui;
   }
 
+  void Editor::SetScript(const EditorScript &script)
+  {
+    _script = script;
+  }
+
+  void Editor::AfterScriptedFrame()
+  {
+    _script_runner->AfterFrame(*_tool_ui);
+
+    if (_script_runner->HasFailed())
+    {
+      _logger->Error("The script failed, so the run ends with exit code 1");
+      _failed = true;
+      _window_system->SignalToClose();
+      return;
+    }
+
+    if (_script_runner->IsDone() && _settings_config.max_frames == 0)
+    {
+      _logger->Info("The script is done, so the run ends");
+      _window_system->SignalToClose();
+    }
+  }
+
   void Editor::DrawMenuBar()
   {
     if (!_tool_ui->BeginMainMenuBar()) { return; }
@@ -102,6 +126,14 @@ namespace neon
     _viewport.emplace(_render_system, _render_pipeline, _window_system, _input_system, &_camera, _logger);
     _log.emplace(_logging_system);
 
+    if (_script.has_value())
+    {
+      _script_runner.emplace(&*_script, _render_system, _logging_system->CreateLogger("EditorScript"));
+      const std::size_t count = _script->GetSteps().size();
+      const std::string description = _script->GetDescription().empty() ? "" : ": " + _script->GetDescription();
+      _logger->Info("A script of {} steps drives the tools{}", count, description);
+    }
+
     const FrameCapture frame_capture(_settings_config, _render_system);
     std::size_t frames_rendered = 0;
 
@@ -120,6 +152,7 @@ namespace neon
       _input_system->ProcessInput();
 
       _render_system->PrepareFrame();
+      if (_script_runner.has_value()) { _script_runner->BeforeFrame(*_tool_ui); }
       _tool_ui->BeginFrame();
 
       // the scene is drawn into the viewport, at the size it had in the
@@ -137,6 +170,7 @@ namespace neon
       frames_rendered++;
 
       if (!frame_capture.AfterFrame(frames_rendered)) { _failed = true; }
+      if (_script_runner.has_value()) { AfterScriptedFrame(); }
 
       if (_settings_config.max_frames > 0 && frames_rendered >= _settings_config.max_frames)
       {
@@ -145,6 +179,16 @@ namespace neon
       }
 
       _window_system->Update();
+    }
+
+    // a script that was cut short by the end of the run, as by --frames,
+    // has not proved what it was to prove
+    if (_script_runner.has_value() && !_script_runner->IsDone() && !_script_runner->HasFailed())
+    {
+      const std::size_t done = _script_runner->GetStepsDone();
+      const std::size_t count = _script_runner->GetStepCount();
+      _logger->Error("The run ended with {} of the {} steps of the script done, so it ends with exit code 1", done, count);
+      _failed = true;
     }
   }
 

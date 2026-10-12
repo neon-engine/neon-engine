@@ -8,6 +8,8 @@
 #include <neon/tool-ui/tool-ui-system.hpp>
 
 #include "camera/editor-camera.hpp"
+#include "scripts/editor-script.hpp"
+#include "scripts/editor-script-runner.hpp"
 #include "ui/editor-log.hpp"
 #include "ui/editor-viewport.hpp"
 
@@ -39,7 +41,17 @@ namespace neon
     bool _show_log = true;
     bool _show_about = false;
 
+    // the script that drives the tools, when there is one, and what runs
+    // it once the run starts
+    std::optional<EditorScript> _script;
+    std::optional<EditorScriptRunner> _script_runner;
+
     bool _cleaned_up = false;
+
+    /// Runs the script's part of the frame after it was drawn: a failed
+    /// step fails the run, a finished script ends it unless --frames says
+    /// more.
+    void AfterScriptedFrame();
 
     /// Declares the menu bar: File, View, and Help.
     void DrawMenuBar();
@@ -63,6 +75,11 @@ namespace neon
     /// Gives the editor the tool interface it draws its windows with.
     /// Call it before Run(). Without one the editor runs as the runtime.
     void SetToolUi(ToolUiSystem *tool_ui);
+
+    /// Gives the editor a script that drives its tools by their labels,
+    /// see docs/editor.md#scripted-runs. Call it before Run(), with a tool
+    /// interface set.
+    void SetScript(const EditorScript &script);
 
     /// The camera of the viewport, for the EditorCameraSubmission the
     /// application adds to the world.

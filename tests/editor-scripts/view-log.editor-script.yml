@@ -1,0 +1,13 @@
+# The Log is shown when the editor opens. View > Log hides it, and again
+# shows it; a screenshot of each state is saved.
+description: View > Log switches the Log window off and on
+steps:
+  - expect: {window: Log, shown: true}
+  - expect: {window: Viewport, shown: true}
+  - menu: View > Log
+  - expect: {window: Log, shown: false}
+  - screenshot: output://log-hidden.png
+  - menu: View > Log
+  - expect: {window: Log, shown: true}
+  - expect: {text: The tool interface is drawn with Dear ImGui}
+  - screenshot: output://log-shown.png

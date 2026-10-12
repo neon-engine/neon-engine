@@ -426,6 +426,8 @@ Editor:
   --render-scale NUMBER     Pixels that are drawn for each point, for example 2 for what a display of high density shows. Needs --headless-renderer, a window takes the density of its display
   --input SCRIPT            Input in place of devices, for example "1: pointer 640 360; 2: click". Needs --headless-renderer
   --input-script PATH       The same from a file, for example assets://input/menu.input. Needs --headless-renderer
+  --editor-script PATH      A script that drives the tools of the editor by their labels, for example output://view-log.editor-script.yml, see docs/editor.md. Without a window it draws the tools, and the run ends when the script does
+  --tools                   Draw the tools of the editor without a window, where a screenshot otherwise shows the scene alone. Needs --headless-renderer
   --spawn PATH              Spawn this prefab at the top of the world once the scene is read, as a script would, for example assets://prefabs/target.prefab.yml
   --log-entity NAME[,...]   Log where these entities are in every frame, each by its path as a scene names it, for example player,crates/upper
   --tonemapper NAME         Curve for light brighter than white: none, aces, or agx, over rendering.tonemapper of the settings
@@ -460,6 +462,8 @@ This writes `/some/where/frame.png`.
 | `--time-step SECONDS` | Every frame advances the game by this much time, whatever time the frame took |
 | `--input SCRIPT` | Input from a script in place of devices. A step is `frame: command`, with `;` or a line break between steps: `pointer X Y` or `pointer none`, `down`, `up`, `click`, `key NAME [shift] [control] [alt] [shortcut] [word]`, `text WHAT`, `compose WHAT`, `wheel X Y [precise]`, `hold ACTION [N]` for an action of the user interface such as `ui-accept` or a button of the input map such as `jump`, `hold-key KEY [N]` for a key by where it is such as `w`, `hold-button NAME [N]` for a button of a controller such as `south`, `stick X Y [N]` for the right stick and `left-stick X Y [N]` for the left one, `device keyboard` or `device gamepad`, `look X Y`. A step of a frame that was skipped is applied in the next. A hold of an action the map does not have is refused with the names it has, see [input.md](input.md#scripts) |
 | `--input-script PATH` | The same from a file at a virtual path |
+| `--editor-script PATH` | A script that drives the editor's tools by their labels, see [editor.md](editor.md#scripted-runs). Without a window it draws the tools, and the run ends when the script does unless `--frames` says more; a failed expectation ends it with exit code 1 |
+| `--tools` | Draws the editor's tools without a window, for a screenshot of them over the viewport. Needs `--headless-renderer` |
 | `--spawn PATH` | Spawns the prefab at a virtual path at the top of the world once the scene is read, as a script would. A prefab that cannot be read is said in the log and sets the exit code, and the run goes on without it |
 | `--log-entity NAME[,...]` | Logs where the named entities are in every frame, at Info level, each by its path from the top of the world as a scene names it. See [where an entity is](#where-an-entity-is) |
 | `--jit on\|off` | Compiles the scripts as they run, or runs them in LuaJIT's interpreter, over `scripting.jit` of the settings |

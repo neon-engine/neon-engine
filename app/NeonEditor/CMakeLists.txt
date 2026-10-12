@@ -22,6 +22,15 @@ add_library(neon-editor STATIC
         neon/editor/camera/editor-camera-submission.cpp
         neon/editor/camera/editor-camera-submission.hpp
 
+        # a script that drives the tools by their labels, and what runs it
+        # frame by frame, see docs/editor.md#scripted-runs
+        neon/editor/scripts/editor-script.cpp
+        neon/editor/scripts/editor-script.hpp
+        neon/editor/scripts/editor-script-loading.cpp
+        neon/editor/scripts/editor-script-loading.hpp
+        neon/editor/scripts/editor-script-runner.cpp
+        neon/editor/scripts/editor-script-runner.hpp
+
         # the windows, drawn with the tool interface of neon-core
         neon/editor/ui/editor-log.cpp
         neon/editor/ui/editor-log.hpp
@@ -63,6 +72,9 @@ if (NEON_BUILD_TESTS)
   neon_add_unit_test(neon-editor neon/editor/camera/editor-camera.test.cpp)
   neon_add_unit_test(neon-editor neon/editor/ui/editor-viewport.test.cpp)
   neon_add_unit_test(neon-editor neon/editor/ui/editor-log.test.cpp)
+  neon_add_unit_test(neon-editor neon/editor/scripts/editor-script.test.cpp LIBRARIES neon-ryml)
+  neon_add_unit_test(neon-editor neon/editor/scripts/editor-script-loading.test.cpp LIBRARIES neon-ryml)
+  neon_add_unit_test(neon-editor neon/editor/scripts/editor-script-runner.test.cpp LIBRARIES neon-ryml)
   neon_add_unit_test(neon-editor neon/editor/templates/project-template.test.cpp)
   neon_add_unit_test(neon-editor neon/editor/templates/project-template-text.test.cpp)
 endif ()

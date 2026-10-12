@@ -1,0 +1,3 @@
+steps:
+  - wait: 1
+  - press: Close

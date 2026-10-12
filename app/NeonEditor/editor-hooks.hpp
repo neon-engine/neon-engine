@@ -52,11 +52,13 @@ namespace neon
 
     /// The pointer is the editor's, and the tool interface is drawn with
     /// Dear ImGui into the window through the backends of SDL2 and Vulkan.
-    /// Without a window there are no tools, and the editor runs as the
-    /// runtime does, for the checks. With them, the viewport looks through
-    /// the editor's camera, which is handed to the pipeline after the
-    /// scene's.
-    void AddSystems(const RuntimeSystems &systems) override;
+    /// Without a window the tools are drawn only when `--tools` or a script
+    /// of the editor asks for them, and the editor otherwise runs as the
+    /// runtime does, for the checks of the scene. With the tools, the
+    /// viewport looks through the editor's camera, which is handed to the
+    /// pipeline after the scene's, and the script `--editor-script` names
+    /// is read; one that cannot be read stops the start-up.
+    bool AddSystems(const RuntimeSystems &systems) override;
   };
 } // neon
 

@@ -3,6 +3,8 @@
 
 #include <memory>
 
+#include <neon/data/document-format.hpp>
+#include <neon/filesystem/file-system-context.hpp>
 #include <neon/input/input-system.hpp>
 #include <neon/input/sdl2-input-system.hpp>
 #include <neon/logging/logger.hpp>
@@ -34,6 +36,12 @@ namespace neon
 
     /// The logger named after the application, which its Runtime logs with.
     std::shared_ptr<Logger> logger;
+
+    /// The file system and the format of the documents, for an application
+    /// that reads a file of its own at the start, as the editor reads a
+    /// script of its tools.
+    FileSystemContext *file_system = nullptr;
+    DocumentFormat *document_format = nullptr;
 
     /// The backends behind the window, the input, and the renderer, for an
     /// application that draws with them as the editor's tools do. Null

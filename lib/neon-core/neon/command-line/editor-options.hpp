@@ -23,6 +23,8 @@ namespace neon
   ///   --render-scale NUMBER     Pixels for each point, without a window
   ///   --input SCRIPT            Input in place of devices, without a window
   ///   --input-script PATH       The same, from a file
+  ///   --editor-script PATH      A script that drives the editor's tools by their labels
+  ///   --tools                   Draw the tools without a window
   ///   --spawn PATH              Spawn this prefab once the scene is read
   ///   --log-entity NAME[,...]   Log where these entities are in every frame
   ///   --headless                Run as a dedicated server. Refused until there is one (#144)

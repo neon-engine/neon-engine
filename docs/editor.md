@@ -48,19 +48,34 @@ The editor registers all three sets of options, `RuntimeOptions`,
 [command-line.md](command-line.md) works on it, and `--help` lists it all.
 `--scene` opens another scene of the project than its entry scene;
 `--frames`, `--screenshot`, and `--screenshot-at` save frames of the editor
-window, with the tools in them.
+window, with the tools in them. `--editor-script` drives the tools by a
+script, see [scripted runs](#scripted-runs).
 
 ### Without a window
 
-With `--headless-renderer` the editor draws no tools: it runs as the
-runtime does, frame for frame, with the scene filling the frame, so that
-what it saves is what a run of the game would save. That is how the checks
-render a scene on a build server, and why the `runtime-*` tests of
-`tests/` start NeonEditor on the game of the tests:
+With `--headless-renderer` the editor draws no tools unless it is asked
+to: it runs as the runtime does, frame for frame, with the scene filling
+the frame, so that what it saves is what a run of the game would save.
+That is how the checks render a scene on a build server, and why the
+`runtime-*` tests of `tests/` start NeonEditor on the game of the tests
+and read its pixels:
 
 ```sh
 ./bin/debug/darwin-arm64/NeonEditor/NeonEditor bin/debug/darwin-arm64/sandbox \
   --headless-renderer --frames 3 --output-dir shots --screenshot output://frame.png
+```
+
+With `--tools`, or with `--editor-script`, the tools are drawn without a
+window as well: Dear ImGui draws into the headless frame, at the size
+`--window-size` names in points and `--render-scale` pixels for each, and
+the screenshot shows the menus and the windows over the viewport. No
+platform backend is behind it then; the only input the tools get is what a
+script feeds them.
+
+```sh
+./bin/debug/darwin-arm64/NeonEditor/NeonEditor bin/debug/darwin-arm64/sandbox \
+  --headless-renderer --window-size 1280x800 --tools --frames 3 \
+  --output-dir shots --screenshot output://tools.png
 ```
 
 ## What it shows
@@ -124,6 +139,84 @@ game's. `EditorCameraSubmission`, a system the application adds to the
 world after placing, hands the editor camera to the pipeline after the
 world handed the scene's, which is how the viewport shows its view.
 
+## Scripted runs
+
+A tool window used to be proved by a checklist for the owner, since only a
+window showed it (#607). A script of the editor does what the checklist
+says, without a window, and says what it expects to see; a failed
+expectation ends the run with exit code 1, so an `editor-*` application
+test is a script, the lines it expects in the log, and the images it
+expects to be saved. The owner's checklist keeps what a script cannot see:
+how it feels, what high density does to it.
+
+A script speaks of the tools by their labels, as a checklist does, and
+never of the toolkit. The backend records every window, menu, menu item,
+button, checkbox, field, and text it draws in a frame with its place, as a
+`ToolUiItem`, and `ToolUiContext::GetItemsDrawn()` and `FindItem()` hand
+them out; a step looks its label up among what the frame before drew, and
+turns into pointer and key events fed through `ToolUiContext::FeedEvents()`,
+the same door the events of a window take, so a click is three frames,
+the pointer moved, the button down, the button up, as a hand does it. The
+script runs on `ToolUiContext` alone, so it runs on any toolkit behind the
+interface (#103), and in a real window as well: `--editor-script` with a
+window drives the real editor, and the owner can watch it. Dear ImGui's
+own test engine is not used: its license is not MIT, and it would tie the
+one untestable piece of the editor to the toolkit the interface exists to
+replace.
+
+A script is a `*.editor-script.yml` file of its own, named by `--editor-script`,
+rather than lines of the input script: it speaks in labels and nested maps
+where the input script speaks in device events by frame number, and a game
+under the viewport may still take an input script of its own. It is a map
+with a `description` and a list of `steps`, each a map of one key:
+
+```yaml
+description: View > Log switches the Log window off and on
+steps:
+  - expect: {window: Log, shown: true}
+  - menu: View > Log
+  - expect: {window: Log, shown: false}
+  - screenshot: output://log-hidden.png
+  - menu: View > Log
+  - expect: {window: Log, shown: true}
+  - expect: {text: The tool interface is drawn with Dear ImGui}
+  - screenshot: output://log-shown.png
+```
+
+| Step | Does |
+|---|---|
+| `menu: View > Log` | Opens each menu of the path in turn and chooses the last item |
+| `click: Close` | Presses a button, a menu item that is shown, a checkbox, or a field, by its label |
+| `type: {field: Name, text: my-game}` | Clicks the field by its label and types the text into it |
+| `key: Ctrl+L` | Presses a key with what is held with it: `Ctrl`, `Shift`, `Alt`, `Cmd`, or `Shortcut` for the key the platform makes shortcuts with. The key is named as the input script names it: `l`, `enter`, `f5` |
+| `pointer: {x: 200, y: 100}` | Puts the pointer there, in points of the window |
+| `drag: {from: Log, to: "900,300"}` | Holds the button down over a label or a place written `x,y` and lets it go over another, with the pointer moved between them over a few frames |
+| `wait: 2` | Lets that many frames pass |
+| `screenshot: output://name.png` | Saves the frame that was just drawn, with the tools in it |
+| `expect: {window: Log, shown: true}` | Whether a window of that title was drawn in this frame; `shown: false` for one that is hidden |
+| `expect: {text: "Quit was chosen"}` | Whether a text drawn in this frame holds the text |
+| `expect: {item: Close, present: true}` | Whether anything of that label was drawn in this frame, a text aside |
+
+A label that is not drawn within ten frames fails the step, with what was
+drawn of that kind in the message, so that a misspelled label is found at
+once. The log says when each step is done, `Step 3 of the script, 'menu
+View > Log' on line 7, is done`, and names the step and its line when one
+fails. The run ends when the script does, with exit code 0, unless
+`--frames` says more; a script that is still running when the frames run
+out, or when the window closes, has not proved what it set out to prove,
+and the run ends with exit code 1. A script that cannot be read stops the
+start-up with the line that is wrong.
+
+The proof of this mechanism is `tests/editor-scripts`: View > Log hides
+and shows the Log with a screenshot of each, File > Quit ends the run,
+a failed expectation names its step, a script that cannot be read stops
+the start, and `--tools` alone draws the tools for a screenshot. The
+`RecordingToolUi` fake of `neon/testing` records items and reacts to fed
+events the same way, so `EditorScriptRunner` is unit-tested without Dear
+ImGui. Every window the editor gains is proved this way: write the
+checklist as a script next to the test, and keep for the owner only what
+the script cannot see.
+
 ## How it starts
 
 The start-up is the runtime's, `RuntimeComposition` of `lib/neon-runtime`,
@@ -141,10 +234,11 @@ to `main.cpp` since it is where the tools of neon-imgui are made, and
 | `AdviseWithoutAProject` | Says which folder holds no `assets/project.yml` |
 | `AdjustSettings` | Insists on a window that can be moved and resized, 1600 by 1000 points unless `--window-size` names a size, and names it `NeonEditor - <project>` unless the settings name it, see [the pointer and the window](#the-pointer-and-the-window) |
 | `MakeRuntime` | Makes the `Editor`, and owns it |
-| `AddSystems` | Tells the world not to take the pointer; with a window, makes `ImGui_ToolUiSystem` on the backends it is handed, gives it to the editor, and adds `EditorCameraSubmission` to the world after placing |
+| `AddSystems` | Makes `ImGui_ToolUiSystem` on the backends it is handed, with the window or without one, gives it to the editor, adds `EditorCameraSubmission` to the world after placing, tells the world not to take the pointer, and reads the script `--editor-script` names through `EditorScriptLoading`; one that cannot be read stops the start-up |
 
-Without a window, `AddSystems` makes no tools, and the editor runs as the
-runtime does, which is what the checks rely on.
+Without a window, `AddSystems` makes the tools only when `--tools` or
+`--editor-script` asks for them; otherwise the editor runs as the runtime
+does, which is what the checks of the scene rely on.
 
 ## How it is built
 
@@ -152,10 +246,12 @@ runtime does, which is what the checks rely on.
 |---|---|---|
 | `ToolUiContext` | [neon-core](../lib/neon-core/neon/tool-ui/tool-ui-context.hpp) | The interface of the tools: what the editor draws its windows with. Windows, a menu bar and menus, a dock space, text, buttons, checkboxes, a text field, and an image of a render target, declared anew in every frame |
 | `ToolUiSystem` | [neon-core](../lib/neon-core/neon/tool-ui/tool-ui-system.hpp) | The base class of its backends, with the lifecycle: `Initialize()`, `CleanUp()`, `BeginFrame()`, `EndFrame()` |
-| `ImGui_ToolUiSystem` | [neon-imgui](../lib/neon-imgui/neon/tool-ui/imgui-tool-ui-system.hpp) | The backend: Dear ImGui, its docking branch, drawn through its SDL2 and Vulkan backends |
+| `ImGui_ToolUiSystem` | [neon-imgui](../lib/neon-imgui/neon/tool-ui/imgui-tool-ui-system.hpp) | The backend: Dear ImGui, its docking branch, drawn through its Vulkan backend into the frame, with its SDL2 backend reading the window when there is one and nothing but fed events when there is none |
 | `Editor` | [NeonEditor](../app/NeonEditor/neon/editor/editor.hpp) | The runtime with the tools on top: the loop of the editor, the menu bar, and the windows. Derives from `Runtime` and runs as it does without a tool interface |
 | `EditorHooks` | [NeonEditor](../app/NeonEditor/editor-hooks.hpp) | The editor's choices on the shared start-up, see [how it starts](#how-it-starts) |
 | `EditorViewport`, `EditorLog` | [NeonEditor](../app/NeonEditor/neon/editor/ui/) | The two windows |
+| `EditorScript`, `EditorScriptRunner`, `EditorScriptLoading` | [NeonEditor](../app/NeonEditor/neon/editor/scripts/) | A script that drives the tools by their labels, what runs it frame by frame on `ToolUiContext`, and the step of the start-up that reads it, see [scripted runs](#scripted-runs) |
+| `ToolUiItem`, `ToolUiEvents` | [neon-core](../lib/neon-core/neon/tool-ui/) | What the backend records of every item it draws, and the input a script feeds it |
 | `EditorCamera`, `EditorCameraInput`, `EditorCameraSubmission` | [NeonEditor](../app/NeonEditor/neon/editor/camera/) | The camera of the viewport, what moves it in a frame, and how the world is told to draw with it |
 | `LogHistorySink` | [neon-core](../lib/neon-core/neon/logging/log-history-sink.hpp) | Keeps the last lines of the log for the window, through `LoggingSystem::CopyRecentLines()` |
 

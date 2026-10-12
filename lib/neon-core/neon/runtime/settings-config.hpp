@@ -102,6 +102,16 @@ struct SettingsConfig
   std::string input_script;
   std::string input_script_path;
 
+  /// The virtual path of a script that drives the editor's tools by their
+  /// labels, see docs/editor.md#scripted-runs. Empty runs none. It is the
+  /// editor's: the runtime has no tools.
+  std::string editor_script_path;
+
+  /// Whether the editor draws its tools without a window, where a check
+  /// of the scene wants the frame as a run of the game would save it. A
+  /// script of the editor turns them on as well. Nothing with a window.
+  bool editor_tools = false;
+
   RenderingApi selected_api;
 
   /// The version of Vulkan to ask for. What is rendered with is the highest

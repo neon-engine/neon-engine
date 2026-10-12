@@ -1,0 +1,3 @@
+description: File > Quit ends the run
+steps:
+  - menu: File > Quit

@@ -5,23 +5,31 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include <neon/input/sdl2-event-listener.hpp>
 #include <neon/input/sdl2-input-system.hpp>
 #include <neon/render/vk-render-system.hpp>
 #include <neon/tool-ui/tool-ui-system.hpp>
 #include <neon/window/sdl2-window-system.hpp>
+#include <neon/window/window-system.hpp>
 
 namespace neon
 {
   /// The tool interface drawn with Dear ImGui, its docking branch: its
-  /// SDL2 backend reads the events of the window through the input
-  /// system, and its Vulkan backend draws into the frame of the renderer,
-  /// on top of everything else. Docking is on; windows torn off onto the
-  /// desktop are not, see docs/editor.md.
+  /// Vulkan backend draws into the frame of the renderer, on top of
+  /// everything else. With a window, its SDL2 backend reads the events of
+  /// the window through the input system. Without one, under the headless
+  /// renderer, no platform backend is used: the display is the size the
+  /// settings name, time passes as the headless window says, and the only
+  /// input is what FeedEvents() is given, which is how a script drives the
+  /// tools and a screenshot shows them, see docs/editor.md#scripted-runs.
+  /// Docking is on; windows torn off onto the desktop are not.
   ///
-  /// Nothing of Dear ImGui is in this header: what the editor sees is
-  /// ToolUiContext.
+  /// Every window, menu, menu item, button, checkbox, field, and text is
+  /// recorded as a ToolUiItem with where Dear ImGui drew it, for
+  /// GetItemsDrawn(). Nothing of Dear ImGui is in this header: what the
+  /// editor sees is ToolUiContext.
   // ReSharper disable once CppInconsistentNaming
   class ImGui_ToolUiSystem final : public ToolUiSystem, public SDL2_EventListener
   {
@@ -34,9 +42,12 @@ namespace neon
       VkDescriptorSet set = VK_NULL_HANDLE;
     };
 
-    SDL2_WindowSystem *_window_system;
-    SDL2_InputSystem *_input_system;
+    WindowSystem *_window_system;
     VK_RenderSystem *_render_system;
+
+    // the backends of the window, null without one
+    SDL2_WindowSystem *_sdl2_window = nullptr;
+    SDL2_InputSystem *_sdl2_input = nullptr;
 
     bool _initialized = false;
     bool _frame_begun = false;
@@ -47,13 +58,33 @@ namespace neon
 
     std::map<int, RegisteredTarget> _targets;
 
+    // what was drawn since the frame began, and what was fed for the next
+    std::vector<ToolUiItem> _items;
+    ToolUiEvents _pending;
+
     /// Lets Dear ImGui go of every target that was registered.
     void ForgetTargets();
 
+    /// Records the item Dear ImGui drew last under the label.
+    void RecordLastItem(ToolUiItemKind kind, const std::string &label);
+
+    /// Hands what was fed to Dear ImGui, as its platform backend hands it
+    /// the events of a window.
+    void ApplyPendingEvents();
+
   public:
+    /// With a window: the events of the window reach Dear ImGui through
+    /// the input system of SDL2.
     ImGui_ToolUiSystem(
       SDL2_WindowSystem *window_system,
       SDL2_InputSystem *input_system,
+      VK_RenderSystem *render_system,
+      const std::shared_ptr<Logger> &logger);
+
+    /// Without a window: the display is the size of the window system,
+    /// and the input is what is fed.
+    ImGui_ToolUiSystem(
+      WindowSystem *window_system,
       VK_RenderSystem *render_system,
       const std::shared_ptr<Logger> &logger);
 
@@ -66,6 +97,10 @@ namespace neon
     void EndFrame() override;
 
     void HandleEvent(const SDL_Event &event) override;
+
+    void FeedEvents(const ToolUiEvents &events) override;
+
+    [[nodiscard]] const std::vector<ToolUiItem> &GetItemsDrawn() const override;
 
     void DockSpace(const ToolUiDockLayout &layout) override;
 

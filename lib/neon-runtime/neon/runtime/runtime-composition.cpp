@@ -229,8 +229,7 @@ namespace neon
     if (!CreateRenderer()) { return false; }
     CreateUserInterface();
     CreateWorld();
-    CreateRuntime();
-    return true;
+    return CreateRuntime();
   }
 
   void RuntimeComposition::CreateAudio()
@@ -468,13 +467,15 @@ namespace neon
       .logging = &*_logging,
       .world = &*_world,
       .logger = _logger,
+      .file_system = &*_file_system,
+      .document_format = &_yaml,
       .sdl2_window = _sdl2_window_system.has_value() ? &*_sdl2_window_system : nullptr,
       .sdl2_input = _sdl2_input_system.has_value() ? &*_sdl2_input_system : nullptr,
       .vk_render = _vk_render_system.has_value() ? &*_vk_render_system : nullptr
     };
   }
 
-  void RuntimeComposition::CreateRuntime()
+  bool RuntimeComposition::CreateRuntime()
   {
     // The random numbers of the operating system, for the game. The engine
     // draws none itself, and no option or setting seeds them: a game that
@@ -497,7 +498,8 @@ namespace neon
     // the rows of the settings menu named after the settings of the game
     _runtime->SetSettingsStore(&*_settings_store);
 
-    _hooks->AddSystems(systems);
+    if (!_hooks->AddSystems(systems)) { return Fail(); }
+    return true;
   }
 
   void RuntimeComposition::Run()

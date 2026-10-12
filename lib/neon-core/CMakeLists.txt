@@ -155,6 +155,11 @@ add_library(${TARGET} STATIC
         # with; neon-imgui is the backend
         neon/tool-ui/tool-ui-context.hpp
         neon/tool-ui/tool-ui-dock-layout.hpp
+        neon/tool-ui/tool-ui-events.hpp
+        neon/tool-ui/tool-ui-item.hpp
+        neon/tool-ui/tool-ui-item-kind.hpp
+        neon/tool-ui/tool-ui-point.hpp
+        neon/tool-ui/tool-ui-rect.hpp
         neon/tool-ui/tool-ui-size.hpp
         neon/tool-ui/tool-ui-system.hpp
         neon/logging/log-history-sink.hpp
@@ -567,6 +572,7 @@ neon_add_unit_test(${TARGET} neon/command-line/display-options.test.cpp)
   neon_add_unit_test(${TARGET} neon/filesystem/native-path.test.cpp)
   neon_add_unit_test(${TARGET} neon/random/entropy-seed.test.cpp)
   neon_add_unit_test(${TARGET} neon/input/headless-input-system.test.cpp)
+  neon_add_unit_test(${TARGET} neon/testing/recording-tool-ui.test.cpp)
   neon_add_unit_test(${TARGET} neon/input/input-actions.test.cpp)
   neon_add_unit_test(${TARGET} neon/input/input-map.test.cpp)
   neon_add_unit_test(${TARGET} neon/input/input-state.test.cpp)

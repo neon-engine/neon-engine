@@ -1,9 +1,13 @@
 #ifndef TOOL_UI_CONTEXT_HPP
 #define TOOL_UI_CONTEXT_HPP
 
+#include <optional>
 #include <string>
+#include <vector>
 
 #include "tool-ui-dock-layout.hpp"
+#include "tool-ui-events.hpp"
+#include "tool-ui-item.hpp"
 #include "tool-ui-size.hpp"
 
 namespace neon
@@ -105,6 +109,30 @@ namespace neon
     [[nodiscard]] virtual bool WantsPointer() const = 0;
 
     [[nodiscard]] virtual bool WantsKeyboard() const = 0;
+
+    /// Gives the tools input for the frame that is begun next, as a script
+    /// of the editor does, see docs/editor.md#scripted-runs. The backend
+    /// takes it in as it takes the events of its window, so that it works
+    /// with a window and without one. Called before BeginFrame().
+    virtual void FeedEvents(const ToolUiEvents &events) = 0;
+
+    /// Everything that was drawn since the frame began, each under its
+    /// label and where it went, see ToolUiItem; after EndFrame(), the whole
+    /// frame, which is what a script reads to find what it clicks next.
+    [[nodiscard]] virtual const std::vector<ToolUiItem> &GetItemsDrawn() const = 0;
+
+    /// The first item drawn under that label, of that kind or of any kind.
+    /// A text is found by the text itself.
+    [[nodiscard]] std::optional<ToolUiItem> FindItem(
+      const std::string &label,
+      const std::optional<ToolUiItemKind> kind = std::nullopt) const
+    {
+      for (const ToolUiItem &item : GetItemsDrawn())
+      {
+        if (item.label == label && (!kind.has_value() || item.kind == *kind)) { return item; }
+      }
+      return std::nullopt;
+    }
   };
 } // neon
 

@@ -62,8 +62,9 @@ namespace neon
     /// Adds what the application puts on the world after the engine's
     /// systems and the Runtime are made, and before anything is
     /// initialized: the editor's tools, its camera, how the world treats
-    /// the pointer.
-    virtual void AddSystems(const RuntimeSystems &) {}
+    /// the pointer. False stops the start-up with exit code 1, once the
+    /// reason is in the log: a script of the editor that cannot be read.
+    virtual bool AddSystems(const RuntimeSystems &) { return true; }
   };
 } // neon
 

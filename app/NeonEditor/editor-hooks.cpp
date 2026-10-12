@@ -3,6 +3,7 @@
 #include <memory>
 
 #include <neon/editor/camera/editor-camera-submission.hpp>
+#include <neon/editor/scripts/editor-script-loading.hpp>
 
 namespace neon
 {
@@ -73,22 +74,47 @@ namespace neon
       systems.logger);
   }
 
-  void EditorHooks::AddSystems(const RuntimeSystems &systems)
+  bool EditorHooks::AddSystems(const RuntimeSystems &systems)
   {
+    const SettingsConfig &settings = *systems.settings;
+
+    // Without a window the tools are drawn only when asked for: the checks
+    // of the scene want the frame as a run of the game would save it
+    const bool with_tools = !settings.headless_renderer || settings.editor_tools || !settings.editor_script_path.empty();
+
     // The pointer is the editor's: free and shown, for the tools. A game the
-    // editor plays takes it then (#569). Without a window the editor runs as
-    // the runtime does, and the pointer is nothing.
-    systems.world->SetCapturesPointer(systems.settings->headless_renderer);
+    // editor plays takes it then (#569). Without the tools the editor runs
+    // as the runtime does, and the pointer is nothing.
+    systems.world->SetCapturesPointer(!with_tools);
 
-    if (systems.settings->headless_renderer) { return; }
+    if (!with_tools) { return true; }
 
-    _tool_ui.emplace(
-      systems.sdl2_window,
-      systems.sdl2_input,
-      systems.vk_render,
-      systems.logging->CreateLogger("ImGui_ToolUiSystem"));
+    if (settings.headless_renderer)
+    {
+      _tool_ui.emplace(systems.window, systems.vk_render, systems.logging->CreateLogger("ImGui_ToolUiSystem"));
+    } else
+    {
+      _tool_ui.emplace(
+        systems.sdl2_window,
+        systems.sdl2_input,
+        systems.vk_render,
+        systems.logging->CreateLogger("ImGui_ToolUiSystem"));
+    }
     _editor->SetToolUi(&*_tool_ui);
     systems.world->AddSystemAfterPlacing(
       std::make_unique<EditorCameraSubmission>(&_editor->GetCamera(), systems.render_pipeline));
+
+    // the script that drives the tools, read now so that one that cannot
+    // be read ends the start-up with the reason, not after a frame
+    const EditorScriptLoading loading(systems.file_system, systems.document_format);
+    EditorScript script;
+    std::vector<std::string> errors;
+    if (!loading.Load(settings, script, errors))
+    {
+      for (const std::string &error : errors) { systems.logger->Error(error); }
+      return false;
+    }
+    if (!script.IsEmpty()) { _editor->SetScript(script); }
+    return true;
   }
 } // neon

@@ -127,6 +127,9 @@ its area. A brief for a subagent cites this file instead of copying it.
   restore it after. Setting `HOME` does not redirect it on macOS.
 - Testing in a real window and on high-density displays is the owner's job.
   Build so the headless tests prove the change and give the owner a checklist.
+  A tool window's behavior is proved by an editor script
+  (docs/editor.md#scripted-runs), and the checklist keeps only what a script
+  cannot see.
 - Never install software (brew, pip, docker, npm) without the owner's
   permission for that exact package.
 

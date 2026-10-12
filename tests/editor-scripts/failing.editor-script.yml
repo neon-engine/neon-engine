@@ -1,0 +1,4 @@
+description: An expectation that is not so fails the run
+steps:
+  - expect: {window: Hierarchy, shown: true}
+  - screenshot: output://never.png

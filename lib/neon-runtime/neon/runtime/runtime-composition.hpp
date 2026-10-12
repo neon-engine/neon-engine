@@ -167,7 +167,9 @@ namespace neon
 
     /// The Runtime of the application, on everything above, and what the
     /// application adds after it.
-    void CreateRuntime();
+    /// False when the application's hooks refuse, see
+    /// CompositionHooks::AddSystems().
+    bool CreateRuntime();
 
     /// Says each line on the console, where it goes until the log has its
     /// file, and where a mistake in the command line is answered.
