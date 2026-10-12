@@ -5,8 +5,11 @@ for. How to use them is in the [development guide](development.md#command-line).
 
 Every set of options is **owned** by one application, decided in #143. The
 runtime owns the options a player needs; the editor owns the options that
-load other content or look inside a game. Each set is an object of its own,
-registered by the application that owns it.
+load other content or look inside a game. Each set is an object of its own:
+the shared start-up, `RuntimeComposition`, registers the runtime's sets for
+both applications, and the editor registers its own set in its hooks on
+that start-up, see
+[development.md](development.md#how-an-application-starts).
 
 | Set | Owner | Holds |
 |---|---|---|

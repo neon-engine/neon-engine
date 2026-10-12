@@ -309,6 +309,80 @@ A material names its shader without an extension, such as
 To add one, put its `.vert` and `.frag` files in the sources folder and run
 the configure step again.
 
+## How an application starts
+
+NeonRuntime and NeonEditor start the same way: the start-up lives once, in
+`lib/neon-runtime`, and each application's `main.cpp` is the composition
+root and nothing more. `RuntimeComposition` walks the start-up as named
+steps, each a method that says what it does, and `CompositionHooks` is
+where an application differs. `neon-runtime` is the one library that names
+the backend libraries, since it composes them, and it is a `neon-*` target
+itself, so an application still names only `neon-*` targets:
+`neon-runtime`, its own objects, and `neon-sdl2-main`, which brings what
+the platform starts the application by and has to be linked into the
+executable itself.
+
+| Piece | Location | Role |
+|---|---|---|
+| `RuntimeComposition` | [neon-runtime](../lib/neon-runtime/neon/runtime/runtime-composition.hpp) | The steps below, and everything they make, in the order it is made and the reverse of the order it is destroyed in |
+| `CompositionHooks` | [neon-runtime](../lib/neon-runtime/neon/runtime/composition-hooks.hpp) | Where an application differs: which options and which project folder, its last word on the settings, which `Runtime` it runs, and what it adds to the world |
+| `ApplicationDescription` | [neon-runtime](../lib/neon-runtime/neon/runtime/application-description.hpp) | How the application names itself on its command line, in its log, and in a sentence on the console |
+| `RuntimeSystems` | [neon-runtime](../lib/neon-runtime/neon/runtime/runtime-systems.hpp) | What the hooks are handed: the systems a `Runtime` is given, the world, and the backends behind the window, the input, and the renderer |
+| `ProjectReading`, `SettingsLayers`, `InputMapLoading`, `InputScriptLoading` | [neon-runtime](../lib/neon-runtime/neon/runtime/) | The steps that are more than a few lines, each in a file of its own, on the interfaces of neon-core, which is what their unit tests use the fakes for |
+| `RuntimeHooks` | [NeonRuntime](../app/NeonRuntime/runtime-hooks.hpp) | The runtime's choices: it runs the project next to it, and owns the `NeonRuntime` it runs |
+| `EditorHooks` | [NeonEditor](../app/NeonEditor/editor-hooks.hpp) | The editor's choices, see [editor.md](editor.md#how-it-starts) |
+
+A `main()` reads as the list of the steps, and returns what `CleanUp()`
+returns, which is the exit code:
+
+```cpp
+RuntimeHooks hooks;
+neon::RuntimeComposition composition(
+  neon::ApplicationDescription{
+    .program = "NeonRuntime",
+    .summary = "Runs a Neon Engine project.",
+    .in_prose = "the runtime"
+  },
+  &hooks);
+
+if (composition.ParseCommandLine(argc, argv) &&
+    composition.OpenFileSystem() &&
+    composition.ReadProject() &&
+    composition.PlaceUserFolder() &&
+    composition.ReadSettings() &&
+    composition.StartExtensions() &&
+    composition.CreateSystems())
+{
+  composition.Run();
+}
+
+return composition.CleanUp();
+```
+
+| Step | Does | Hooks it asks |
+|---|---|---|
+| `ParseCommandLine` | Registers `RuntimeOptions` and `DisplayOptions`, parses, answers `--help` with exit code 0, and applies the command line a first time, without `--quality`, since the file system needs what it says to come up | `RegisterOptions`, `ChooseProjectFolder`, `ApplyOptions` |
+| `OpenFileSystem` | The log, to the console for now, and the file system, which everything that loads files depends on | |
+| `ReadProject` | `game.yml` of a built game first, `project.yml` without it, see [projects.md](projects.md); takes who makes it, what it is called, its settings, presets, and entry scene | `AdviseWithoutAProject`, said after the errors when neither file is there |
+| `PlaceUserFolder` | `user://` by the project's names, and the log file under it, which gets everything that was held back | |
+| `ReadSettings` | The settings of the project, then the player's, then the command line again so that it wins, now with `--quality`, see [settings.md](settings.md); then the settings the game declared go into the `SettingsStore` | `AdjustSettings`, the application's last word before the window |
+| `StartExtensions` | Every folder of `extensions://`, before any other system, so that what one brings is there for all of them | |
+| `CreateSystems` | The audio, the window and the input with the input map and a script of input, the renderer and its pipeline, the user interface, the scene and the world with every system in the order both applications use, the `Runtime`, and what the application adds | `MakeRuntime`, `AddSystems` |
+| `Run` | Runs the `Runtime` until its window closes; what it was asked to do and could not shows in the exit code | |
+| `CleanUp` | Takes everything down in the reverse order, whatever happened, and returns the exit code | |
+
+Every step that fails has said why, on the console until the log has its
+file, and the exit code is 1: a start-up never ends in a black screen. The
+`runtime-command-line` and `editor-command-line` tests of `tests/` start
+the applications and check the messages and the exit codes.
+
+The hooks are virtual methods with defaults rather than a struct of
+functions, since the editor's hooks share state: the `Editor` one of them
+makes is what another hands the tools, and the hooks object owns both for
+the length of the run. What is not overridden does what the runtime does.
+What differs between the runtime and the editor is an object owned by one
+of them, never a compile flag.
+
 ## Command line
 
 Every option, with the application that owns it, is listed in
@@ -506,26 +580,25 @@ runtime's sets plus its own, and NeonRuntime only its own (#310).
 | `DisplayOptions` | [neon-core](../lib/neon-core/neon/command-line/display-options.hpp) | Owned by the runtime, the window and the size of what is shown: `--window-size`, `--window-mode`, `--vsync`, `--max-fps`, `--anisotropy`, `--texture-scale`, `--target-scale`, `--target-mipmaps`, `--shadows`, `--shadow-map-size`, `--shadow-filter`, `--shadow-distance`, `--shadow-cascades`, `--ui-scale` |
 | `EditorOptions` | [neon-core](../lib/neon-core/neon/command-line/editor-options.hpp) | Owned by the editor: another scene, no window, screenshots, input from a script |
 
-An application puts them together in `main.cpp`:
+`RuntimeComposition::ParseCommandLine()` puts them together, see
+[how an application starts](#how-an-application-starts): it registers the
+runtime's two sets, asks the application's `CompositionHooks` for its own,
+parses, answers `--help`, and applies every set to the settings, the
+runtime's first. NeonEditor registers the editor's set in
+`EditorHooks::RegisterOptions()`, after the one argument without dashes it
+takes, the folder of the project:
 
 ```cpp
-neon::CommandLine command_line("NeonRuntime", "Runs a Neon Engine project.");
-neon::RuntimeOptions runtime_options;
-runtime_options.Register(command_line);
-neon::DisplayOptions display_options;
-display_options.Register(command_line);
-// NeonEditor registers the editor's set as well, after the one argument
-// without dashes it takes, the folder of the project:
-//   command_line.SetArgument("FOLDER", "The folder of the project to open");
-//   neon::EditorOptions editor_options;
-//   editor_options.Register(command_line);
+void EditorHooks::RegisterOptions(neon::CommandLine &command_line)
+{
+  command_line.SetArgument("FOLDER", "The folder of the project to open, which holds its assets and extensions");
+  _editor_options.Register(command_line);
+}
 
-if (!command_line.Parse(argc, argv)) { /* print GetError() and GetHelp() */ }
-if (command_line.WantsHelp()) { /* print GetHelp() */ }
-
-SettingsConfig settings_config{ /* defaults of the application */ };
-runtime_options.Apply(command_line, settings_config, error);
-/* and the other sets */
+bool EditorHooks::ApplyOptions(const neon::CommandLineContext &command_line, SettingsConfig &settings, std::string &error)
+{
+  return _editor_options.Apply(command_line, settings, error);
+}
 ```
 
 ### Adding options
@@ -536,7 +609,9 @@ set. An option the editor owns goes in `EditorOptions`, and a row in the
 table of [command-line.md](command-line.md) says who owns it.
 
 To give one application options of its own, write a class that implements
-`CommandLineOptions` and register it next to the runtime set:
+`CommandLineOptions` and register it next to the runtime's sets in the
+application's `CompositionHooks::RegisterOptions()`, and apply it in
+`ApplyOptions()`:
 
 ```cpp
 class EditorOptions final : public neon::CommandLineOptions

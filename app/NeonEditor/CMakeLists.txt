@@ -1,6 +1,6 @@
 # The editor: the second composition root next to NeonRuntime, on the same
-# libraries, with the editor's own objects and the tool interface of
-# neon-imgui on top. See docs/editor.md.
+# shared start-up, neon-runtime, with the editor's own objects and the tool
+# interface of neon-imgui on top. See docs/editor.md.
 #
 # The editor's objects are the library neon-editor, which the executable and
 # the tests link; main.cpp is the composition root and nothing more. They
@@ -69,9 +69,15 @@ endif ()
 
 set(TARGET NeonEditor)
 
-add_executable(${TARGET} main.cpp)
+# The composition root, and the editor's choices on the shared start-up in
+# EditorHooks, which is where the tools of neon-imgui are made, so that
+# neon-editor stays free of them. neon-sdl2-main is what the platform
+# starts the application by, and has to be linked into the executable.
+add_executable(${TARGET} main.cpp
+        editor-hooks.cpp
+        editor-hooks.hpp)
 
-target_link_libraries(${TARGET} PRIVATE neon-core neon-editor neon-imgui neon-vulkan neon-sdl2 neon-sdl2-main neon-flecs neon-ryml neon-miniaudio neon-jolt neon-lua neon-stb neon-freetype neon-lunasvg neon-platform)
+target_link_libraries(${TARGET} PRIVATE neon-runtime neon-editor neon-imgui neon-sdl2-main)
 neon_warnings(${TARGET})
 
 # What the editor ships next to it as engine://, the same as the runtime

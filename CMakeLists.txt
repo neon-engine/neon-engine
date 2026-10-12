@@ -144,14 +144,19 @@ add_subdirectory(lib/neon-lunasvg)
 add_subdirectory(lib/neon-platform)
 add_subdirectory(lib/neon-imgui)
 
+# The start-up both applications share, on every backend above. It is the
+# one library that names the backends, see docs/development.md
+add_subdirectory(lib/neon-runtime)
+
 # Load additional cmake
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/CopyAssets.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/CompileShaders.cmake")
 
 # The applications: the runtime, which plays a game, and the editor, which
 # edits and runs a project, see docs/editor.md. Both are composed of the
-# libraries above; the editor adds neon-imgui and its own objects, the
-# library neon-editor of app/NeonEditor, which the tests use as well.
+# libraries above through neon-runtime; the editor adds neon-imgui and its
+# own objects, the library neon-editor of app/NeonEditor, which the tests
+# use as well.
 set(APP_TARGETS
         NeonRuntime
         NeonEditor
@@ -217,7 +222,7 @@ endif ()
 
 # Checks against the style guide. They run on request only
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/ClangTools.cmake")
-set(CHECKED_TARGETS neon-core neon-vulkan neon-sdl2 neon-flecs neon-platform neon-imgui neon-editor ${APP_TARGETS})
+set(CHECKED_TARGETS neon-core neon-vulkan neon-sdl2 neon-flecs neon-platform neon-imgui neon-runtime neon-editor ${APP_TARGETS})
 if (NEON_BUILD_TESTS)
   get_property(NEON_TEST_TARGETS GLOBAL PROPERTY NEON_TEST_TARGETS)
   list(APPEND CHECKED_TARGETS neon-testing ${NEON_TEST_TARGETS})

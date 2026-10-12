@@ -1,10 +1,16 @@
 set(TARGET NeonRuntime)
 
+# The composition root and the runtime's own objects: the Runtime it runs,
+# and its choices on the shared start-up of neon-runtime. The backends are
+# named by neon-runtime alone; neon-sdl2-main is what the platform starts
+# the application by, and has to be linked into the executable itself.
 add_executable(${TARGET} main.cpp
         neon-runtime.cpp
-        neon-runtime.hpp)
+        neon-runtime.hpp
+        runtime-hooks.cpp
+        runtime-hooks.hpp)
 
-target_link_libraries(${TARGET} PRIVATE neon-core neon-vulkan neon-sdl2 neon-sdl2-main neon-flecs neon-ryml neon-miniaudio neon-jolt neon-lua neon-stb neon-freetype neon-lunasvg neon-platform)
+target_link_libraries(${TARGET} PRIVATE neon-runtime neon-sdl2-main)
 
 # What the runtime ships with whatever the game, engine:// next to it: the
 # fonts text falls back to, and the shaders compiled below. The sources of
