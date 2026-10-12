@@ -14,10 +14,13 @@ its area. A brief for a subagent cites this file instead of copying it.
 ## Git and pull requests
 
 - Never check out, branch, or commit in the root checkout. Every piece of
-  work, however small, happens in a worktree under `worktrees/`:
-  `git worktree add worktrees/<name> -b <type>/<name> origin/main`, then
-  `git submodule update --init --recursive` inside it. Several tasks at once
-  each get their own worktree.
+  work, however small, happens in a worktree under `worktrees/`, named
+  exactly after its branch, so that the worktree of a pull request is found
+  from the branch the pull request shows:
+  `git worktree add worktrees/<type>/<name> -b <type>/<name> origin/main`,
+  then `git submodule update --init --recursive` inside it. Several tasks at
+  once each get their own worktree. A report of a pull request names its
+  branch and its worktree together.
 - Commit as you go, one small commit per feature or fix, and push after each
   step. The history is reviewed commit by commit.
 - Pull requests are opened on the Forgejo instance with `fj`, against `main`,
