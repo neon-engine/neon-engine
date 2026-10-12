@@ -19,6 +19,7 @@
 #include <neon/physics/jolt-physics-system.hpp>
 #include <neon/input/headless-input-system.hpp>
 #include <neon/input/input-script.hpp>
+#include <neon/project/game-file.hpp>
 #include <neon/project/project-file.hpp>
 #include <neon/random/os-entropy.hpp>
 #include <neon/scripting/lua-script-system.hpp>
@@ -140,16 +141,37 @@ int main(const int argc, char *argv[])
   // The project is the folder behind assets://. Its file says who makes it
   // and what it is called, which is what places user://, so it is read
   // before anything is written. Its problems go to the console, since the
-  // log file has no place yet.
+  // log file has no place yet. A built game carries game.yml, which the
+  // export wrote from project.yml, and that is read first: a project under
+  // development has none and runs from project.yml, the editor's file.
   neon::Project project;
   {
-    const neon::ProjectFile project_file(&file_system, &yaml, logging_system.CreateLogger("ProjectFile"));
-    if (std::vector<std::string> errors; !project_file.Read(project, errors))
+    const bool is_built = file_system.Exists(std::string(neon::GameFile::path));
+    const bool is_project = file_system.Exists(std::string(neon::ProjectFile::path));
+    if (is_built && is_project)
+    {
+      logging_system.CreateLogger("NeonRuntime")->Info(
+        "Both {} and {} are here, and the game is what runs: the project is the editor's file",
+        neon::GameFile::path, neon::ProjectFile::path);
+    }
+
+    std::vector<std::string> errors;
+    bool read = false;
+    if (is_built)
+    {
+      const neon::GameFile game_file(&file_system, &yaml, logging_system.CreateLogger("GameFile"));
+      read = game_file.Read(project, errors);
+    } else
+    {
+      const neon::ProjectFile project_file(&file_system, &yaml, logging_system.CreateLogger("ProjectFile"));
+      read = project_file.Read(project, errors);
+    }
+    if (!read)
     {
       for (const auto &error : errors) { std::cerr << error << "\n"; }
       // The runtime ships no game, so one started as it was built has none.
       // What to start instead is said once, after the error.
-      if (!file_system.Exists(std::string(neon::ProjectFile::path)))
+      if (!is_built && !is_project)
       {
         std::cerr << "NeonRuntime runs the project that is put together next to it, and has none of its own. "
                      "Start a project instead, such as the sandbox of the engine's build, bin/<build>/<platform>/sandbox, "
@@ -158,6 +180,10 @@ int main(const int argc, char *argv[])
       file_system.CleanUp();
       return EXIT_FAILURE;
     }
+
+    // the file the settings of the game were declared in, for the messages
+    // about them
+    settings_config.game_file = std::string(is_built ? neon::GameFile::path : neon::ProjectFile::path);
   }
 
   settings_config.organization = project.organization;

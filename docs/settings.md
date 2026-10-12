@@ -236,7 +236,7 @@ the menu then become rows like any other (#542).
 
 | What | Where it is decided | Why not a setting |
 |---|---|---|
-| The name and organization of the project, the scenes, the entry scene | `project.yml`, see [projects.md](projects.md) | They say what the project is. A player may not change them |
+| The name and organization of the project, the scenes, the entry scene | `project.yml`, or `game.yml` of a built game, see [projects.md](projects.md) | They say what the project is. A player may not change them |
 | The actions of the game and what is bound to them | The input map, see [input.md](input.md) | A project's recipe. What a player rebinds will be a layer of its own, `user://input.yml`. Whether a sensor is on is a setting, `input.gyro` |
 | `--headless-renderer`, `--frames`, `--screenshot`, `--output-dir`, `--time-step`, `--input` | The command line only, in the editor's set | They are for a run, not for a game |
 | How the window is shown while the game runs: its mode, its size, vertical sync | `WindowContext::SetWindowMode`, `SetWindowSize`, `RenderContext::SetVerticalSync`, and the same for an extension | A menu changes them at once, and the game keeps what the player chose, as it keeps its other settings. See [vulkan-renderer.md](vulkan-renderer.md#vertical-sync-and-the-window) |

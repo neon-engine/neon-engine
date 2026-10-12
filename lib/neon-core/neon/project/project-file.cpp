@@ -12,7 +12,6 @@ namespace neon
   // Helpers of ProjectFile, for this file alone.
   namespace
   {
-    const std::string what_is_read = "the project";
     const std::string graphics_presets = "graphics_presets";
 
     /// The names of the presets of a table, for a message.
@@ -90,7 +89,7 @@ namespace neon
         if (const GraphicsPreset *existing = presets.Named(name); existing != nullptr) { preset = *existing; }
         preset.name = name;
 
-        const DataReader values(value, reader.GetDocument(), std::format("preset '{}' of the project", name),
+        const DataReader values(value, reader.GetDocument(), std::format("preset '{}' of {}", name, reader.GetWhere()),
                                 reader.GetErrors());
         GraphicsPresetReader::Read(values, preset);
         values.Finish();
@@ -301,22 +300,33 @@ namespace neon
     const std::string name(path);
     _logger->Info("Reading the project from {}", name);
 
+    return ReadLayout(_file_system, _format, name, "project", project, errors);
+  }
+
+  bool ProjectFile::ReadLayout(
+    FileSystemContext *file_system,
+    DocumentFormat *format,
+    const std::string &name,
+    const std::string &what,
+    Project &project,
+    std::vector<std::string> &errors)
+  {
     std::string text;
-    if (!_file_system->ReadText(name, text))
+    if (!file_system->ReadText(name, text))
     {
-      errors.push_back(std::format("{}: there is no project here, the file cannot be read", name));
+      errors.push_back(std::format("{}: there is no {} here, the file cannot be read", name, what));
       return false;
     }
 
     DataValue document;
-    if (std::string error; !_format->Read(name, text, document, error))
+    if (std::string error; !format->Read(name, text, document, error))
     {
       errors.push_back(error);
       return false;
     }
 
     const std::size_t before = errors.size();
-    const DataReader reader(document, name, what_is_read, errors);
+    const DataReader reader(document, name, "the " + what, errors);
 
     // The version is the first thing read, so that a file of a later layout
     // says so before its names are reported as unknown.
@@ -330,8 +340,8 @@ namespace neon
     } else if (written > version)
     {
       reader.Report(*document.Find("version"), std::format(
-                      "the project has version {}, and this engine reads up to version {}",
-                      written, version));
+                      "the {} has version {}, and this engine reads up to version {}",
+                      what, written, version));
     }
 
     Project read;
@@ -357,10 +367,10 @@ namespace neon
     {
       if (!reader.Has("name"))
       {
-        reader.Report("'name' is missing. It is what the project is called");
+        reader.Report(std::format("'name' is missing. It is what the {} is called", what));
       } else if (read.name.empty())
       {
-        reader.Report(*document.Find("name"), "'name' is empty. It is what the project is called");
+        reader.Report(*document.Find("name"), std::format("'name' is empty. It is what the {} is called", what));
       }
     }
 
@@ -373,10 +383,13 @@ namespace neon
 
     if (!reader.Read("scenes", read.scenes))
     {
-      if (!reader.Has("scenes")) { reader.Report("'scenes' is missing. It lists the scenes of the project"); }
+      if (!reader.Has("scenes"))
+      {
+        reader.Report(std::format("'scenes' is missing. It lists the scenes of the {}", what));
+      }
     } else if (read.scenes.empty())
     {
-      reader.Report(*document.Find("scenes"), "'scenes' is empty, a project has at least one scene");
+      reader.Report(*document.Find("scenes"), std::format("'scenes' is empty, a {} has at least one scene", what));
     }
 
     if (reader.Read("entry_scene", read.entry_scene))

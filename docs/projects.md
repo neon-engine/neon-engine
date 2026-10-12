@@ -8,8 +8,8 @@ It is the author's file: what the editor and the exporter read. The runtime
 runs one project today, the folder that `assets://` stands for, which the
 build puts next to the executable, since there is no editor and no exporter
 yet and the runtime is the player the editor will grow into or wrap. A
-shipped runtime will instead run a **compiled game** and read what the
-exporter made of the project, see [the open questions](#open-questions).
+built game carries [game.yml](#gameyml) in its place, what the export makes
+of the project, and a runtime reads that first.
 The file says what the project is called, who makes it, which scenes it
 has, which settings the game has of its own, and which quality presets it
 offers. What those settings and the engine's are set to is not in it; that
@@ -211,13 +211,55 @@ them is in
 and what a script reads of them in
 [scripting.md](scripting.md#what-a-script-reaches-of-the-engine).
 
+## game.yml
+
+A built game does not carry `project.yml`: the export (#84) writes
+`game.yml` from it, with the subset a runtime needs to run that game and no
+other, and puts it where the runtime reads `project.yml` from. It holds the
+same names, and only those: the name and the organization, which place
+`user://`, the scenes and the entry scene, the input map, the settings the
+game declares, and the quality presets it offers. Nothing of the editor's
+goes in: no toolchains, no views. It is written by a tool, in block style
+with what is at its default left out, and is not edited by hand.
+
+```yaml
+version: 1
+name: neon-sandbox
+
+scenes:
+  - assets://scenes/start.scene.yml
+
+graphics_presets:
+  potato:
+    anisotropy: 1
+    texture_scale: 0.25
+
+settings:
+  show_hints:
+    kind: flag
+    default: true
+    category: Gameplay
+    order: 1
+```
+
+| Rule | Detail |
+|---|---|
+| The runtime looks for `game.yml` first, and `project.yml` when there is none | A built game runs from its own file; a project under development, which has no `game.yml`, runs from `project.yml`. The log says which was read, and says so when both are there and the game wins |
+| It is read by the reader of `project.yml` | `GameFile` reads with `ProjectFile::ReadLayout`, so the two take the same names, refuse a name they do not know with its line, and report every problem, with `the game` in place of `the project`. Its `version` is that of `project.yml` |
+| It is not for players | What a player changes is the third layer of the settings, `user://settings.yml`, which the settings menu writes, see [settings.md](settings.md). `game.yml` says which game runs and how it is made up, which a player may not change (#143) |
+| The runtime never writes it | `GameFile::WriteFrom(project)` gives the text of a `game.yml` that says what a project says, for the export; reading it back gives the project as it was read. The engine's presets are written as what the project did to them: a dropped one is `off`, a changed one holds what differs, an added one holds what differs from the engine's defaults |
+| It lives where `project.yml` lives | `assets://game.yml` today, next to `assets://project.yml`. When `project.yml` moves to the root of the project (#368), `game.yml` moves with it |
+
+What is still open: embedding it into the runtime in place of a file next
+to it, and the export that writes it, with the editor (#84, #143).
+
 ## How the runtime starts
 
 | Step | What happens | Why in this order |
 |---|---|---|
 | 1 | The command line is read | Options such as `--headless-renderer` and `--output-dir` decide how the file system comes up |
 | 2 | The file system finds `assets://`, `extensions://`, and `output://` | `assets://` and `extensions://` are next to the executable, `output://` is `--output-dir`. `user://` has no folder yet, and every `user://` path is refused |
-| 3 | `assets://project.yml` is read | It is the only file that can be read before `user://` exists, and it is what places `user://` |
+| 3 | `assets://game.yml` is read when there is one, else `assets://project.yml` | It is the only file that can be read before `user://` exists, and it is what places `user://`. A built game carries [game.yml](#gameyml) |
 | 4 | `user://` is placed under the organization and the name | `FileSystem::PlaceUserDirectory`. The SDL2 backend asks the platform for the folder and creates it |
 | 5 | The log file is opened under `user://` | What was logged before is written into it first, see [file-systems.md](file-systems.md#the-log-file) |
 | 6 | `assets://settings.yml`, then `user://settings.yml`, then the command line again | The layers of settings, see [settings.md](settings.md). The command line wins. The display options, `--quality` among them, are applied here for the first time, since a preset they name may be the project's |
@@ -232,11 +274,12 @@ place yet when the project is read.
 | Piece | Location | Role |
 |---|---|---|
 | `Project` | neon-core, `neon/project/project.hpp` | What the file holds, as values |
-| `ProjectFile` | neon-core, `neon/project/project-file.hpp` | Reads the file through the file system and a `DocumentFormat`, checks it, and collects every problem |
+| `ProjectFile` | neon-core, `neon/project/project-file.hpp` | Reads the file through the file system and a `DocumentFormat`, checks it, and collects every problem. `ReadLayout` is the reader itself, which `GameFile` shares |
+| `GameFile` | neon-core, `neon/project/game-file.hpp` | Reads [game.yml](#gameyml) of a built game into a `Project`, and writes one from a project for the export |
 | `GraphicsPresets`, `GraphicsPresetReader` | neon-core, `neon/render/` | The table of the quality presets, the engine's four and what the project does to them, and the reader of a preset's values, which `rendering` of a settings file is read with too |
 | `FileSystem::PlaceUserDirectory` | neon-core | The step that gives `user://` its folder, implemented by each backend |
 | `SettingDeclaration`, `SettingKind`, `SettingControl` | neon-core, `neon/settings/` | A setting of the game as it is declared: its name, kind, default, range or choices, and where and how the menu shows it |
-| `main.cpp` | NeonRuntime | Reads the project, places `user://`, and carries the names, the entry scene, the quality presets, and the declared settings into `SettingsConfig`, where the settings files set the latter |
+| `main.cpp` | NeonRuntime | Reads the game, or the project when there is no `game.yml`, places `user://`, and carries the names, the entry scene, the quality presets, and the declared settings into `SettingsConfig`, where the settings files set the latter |
 
 `ProjectFile` knows no format: YAML comes from the `RYML_DocumentFormat`
 that the application hands in, as it does for scenes. The tests of the reader
@@ -248,12 +291,13 @@ How the folder is organized is in [project-layout.md](project-layout.md).
 ## Open questions
 
 - **A compiled game, not a project** (#92, #143, #84): a shipped NeonRuntime
-  knows nothing of `project.yml`. The exporter turns the project into a
-  `game.yml` - the name, the organization, the entry scene, and the runtime
-  it was built for - either embedded into the runtime or in a file next to
-  it, with the assets. `ProjectFile` then belongs to the editor, which wraps
-  or grows out of NeonRuntime with its own command-line options; nothing is
-  split in the build for that.
+  knows nothing of `project.yml`. The exporter turns the project into
+  [game.yml](#gameyml), which the runtime reads already; what is left is
+  the export that writes it, embedding it into the runtime in place of a
+  file next to it, and a runtime without the editor's options.
+  `ProjectFile` then belongs to the editor, which wraps or grows out of
+  NeonRuntime with its own command-line options; nothing is split in the
+  build for that.
 - **More in the file**: a version of the project, names for scenes so that a
   button or an exit says `level-2` in place of a path, and the icon of the
   window are likely to come here. Each is added when its feature does, as
@@ -291,7 +335,7 @@ bench/
 | The code is an extension, a library next to the runtime | The runtime is not built again for a game. Whoever writes the game builds the game's own files and nothing else, see [extensions.md](extensions.md#building-an-extension) |
 | The game lives in `assets/`, even what uses the extension's components | `extensions://` is for code and what code needs to run; a scene is the game's, so a scene that holds a `NativeSpawner` is `assets://scenes/rain-cpp-heavy-copy.scene.yml` |
 | `extensions/<name>/` in the source is laid out as next to the runtime | One layout to know. The build adds the library to it |
-| `project.yml` is in `assets/` | It is where the runtime reads it. It belongs at the root, next to `assets/` and `extensions/`, which waits for a scheme of its own (#368) |
+| `project.yml` is in `assets/` | It is where the runtime reads it, and where a built game has its `game.yml`. It belongs at the root, next to `assets/` and `extensions/`, which waits for a scheme of its own (#368) |
 | `neon_add_project(<name> SOURCES ...)` puts the game together: `NeonRuntime`, `engine/`, `assets/`, `extensions/<name>/` | It is what a shipped game looks like, and it runs from there. Exporting (#84) will make the same folder for another platform |
 | The runtime brings its executable and its folder `engine`, and nothing of a game | The runtime knows no game. Its shaders, fonts, a plain pause and settings menu, and an input map are `engine://`, which a project uses or replaces; everything else a game shows and reads is the project's own |
 

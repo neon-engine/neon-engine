@@ -28,4 +28,5 @@ neon_add_application_test(runtime-headless NeonRuntime run.cmake
         capabilities
         vulkan-version-below-what-is-needed
         log-entity
+        game-file-next-to-the-runtime
 )

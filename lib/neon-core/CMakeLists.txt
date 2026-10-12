@@ -122,6 +122,8 @@ add_library(${TARGET} STATIC
         neon/extension/loaded-extension.hpp
         neon/extension/native-library.hpp
         # project
+        neon/project/game-file.cpp
+        neon/project/game-file.hpp
         neon/project/project.hpp
         neon/project/project-file.cpp
         neon/project/project-file.hpp

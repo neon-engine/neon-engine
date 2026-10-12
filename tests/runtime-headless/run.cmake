@@ -122,6 +122,21 @@ elseif (CASE STREQUAL "log-entity")
   # a crate that falls, a character that walks, and an entity the scene does
   # not have
   run_headless(--frames 3 --scene assets://scenes/physics.scene.yml --log-entity crates/upper,walker,ghost)
+elseif (CASE STREQUAL "game-file-next-to-the-runtime")
+  # A built game: the game of the tests copied as the export lays it out,
+  # with a game.yml written from its project next to its project.yml. The
+  # game is what runs, and it starts the scene the game names, not the
+  # project's
+  get_filename_component(PROJECT_DIRECTORY "${APPLICATION}" DIRECTORY)
+  get_filename_component(EXECUTABLE "${APPLICATION}" NAME)
+  file(COPY "${PROJECT_DIRECTORY}/assets" "${PROJECT_DIRECTORY}/engine" "${PROJECT_DIRECTORY}/${EXECUTABLE}"
+          DESTINATION "${DIRECTORY}/game")
+  file(WRITE "${DIRECTORY}/game/assets/game.yml"
+          "version: 1\nname: neon-built-game\n\nscenes:\n  - assets://scenes/hud-demo.scene.yml\n  - assets://scenes/prototype.scene.yml\n\n"
+          "graphics_presets:\n  potato:\n    anisotropy: 1\n    shadow_cascades: 1\n  ultra: off\n\n"
+          "settings:\n  spin_speed:\n    kind: number\n    default: 90\n  greeting:\n    kind: text\n    default: hello\n")
+  set(APPLICATION "${DIRECTORY}/game/${EXECUTABLE}")
+  run_headless(--frames 2 --output-dir shots --screenshot output://frame.png --quality potato)
 else ()
   message(FATAL_ERROR "There is no case '${CASE}'")
 endif ()
@@ -424,6 +439,21 @@ elseif (CASE STREQUAL "capabilities")
   expect_output("Textures up to ")
   expect_output("Present modes: none without a window")
   expect_output("Scene image of R16G16B16A16_SFLOAT: yes, sRGB textures: yes")
+elseif (CASE STREQUAL "game-file-next-to-the-runtime")
+  expect_exit_code(0)
+  expect_output("Both assets://game.yml and assets://project.yml are here, and the game is what runs")
+  expect_output("Reading the game from assets://game.yml")
+  expect_no_output("Reading the project from assets://project.yml")
+  expect_output("Rendered 2 frames, stopping")
+  expect_no_output("[error]")
+  expect_no_output("[warning]")
+
+  # the game's name places user://, its entry scene is what runs, and the
+  # preset of the game is what --quality chose from
+  expect_output("neon-engine/neon-built-game")
+  expect_output("Loading the scene from assets://scenes/hud-demo.scene.yml")
+  expect_output("Textures are read with anisotropic filtering of 1x")
+  expect_image("shots/frame.png")
 elseif (CASE STREQUAL "output-folder-cannot-be-used")
   # the run still renders, says what went wrong, and fails
   expect_exit_code(1)

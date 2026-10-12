@@ -52,6 +52,9 @@ namespace neon
   /// `user://` has no place until the names are known.
   ///
   /// Which format the file has is up to the DocumentFormat that is handed in.
+  ///
+  /// A built game carries `game.yml` in place of this file, with the same
+  /// values, see GameFile, which reads it with ReadLayout().
   class ProjectFile final
   {
     FileSystemContext *_file_system;
@@ -75,6 +78,19 @@ namespace neon
     /// caller decides where the problems go, since the log file is not open
     /// yet when the project is read.
     bool Read(Project &project, std::vector<std::string> &errors) const;
+
+    /// Reads the file of this layout at the virtual path `name` into
+    /// `project`, as Read() does: the one reader of `project.yml` and of
+    /// `game.yml`, so that both take the same names and say the same about
+    /// a wrong one. `what` is what the file holds, for messages: `project`
+    /// or `game`.
+    static bool ReadLayout(
+      FileSystemContext *file_system,
+      DocumentFormat *format,
+      const std::string &name,
+      const std::string &what,
+      Project &project,
+      std::vector<std::string> &errors);
 
     /// Whether a name may be used as a folder name on every platform, and
     /// reads well in a path: lowercase letters, digits, and dashes, starting

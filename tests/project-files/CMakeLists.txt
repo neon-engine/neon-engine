@@ -1,5 +1,5 @@
 neon_add_functional_test(project-files
-        SOURCES project-files.cpp
+        SOURCES project-files.cpp game-files.cpp
         LIBRARIES neon-core neon-ryml
 )
 

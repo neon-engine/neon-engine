@@ -38,6 +38,7 @@ The configuration files, which are not recipes:
 | File | What it holds | Note |
 |---|---|---|
 | `project.yml` | What the project is: its name, who makes it, its scenes | [projects.md](projects.md) |
+| `game.yml` | The same for a built game, written by the export from `project.yml` | [projects.md](projects.md#gameyml) |
 | `settings.yml` | What the project chooses for itself and a player may change | [settings.md](settings.md) |
 
 ## Made to be changed by hand
@@ -72,7 +73,7 @@ file from one layout to the next.
 | In | When `version` is left out |
 |---|---|
 | A scene, a UI, an atlas | It counts as 1 |
-| `project.yml`, `settings.yml` | An error: `'version' is missing. It holds the version of the layout, which is 1` |
+| `project.yml`, `game.yml`, `settings.yml` | An error: `'version' is missing. It holds the version of the layout, which is 1` |
 
 ## Numbers
 

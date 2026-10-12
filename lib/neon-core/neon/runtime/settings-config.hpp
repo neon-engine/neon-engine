@@ -135,6 +135,12 @@ struct SettingsConfig
   /// the game read and change. See docs/settings.md.
   std::vector<neon::SettingDeclaration> game_settings;
 
+  /// The virtual path of the file `game_settings` were declared in, for
+  /// a message about a setting a file sets and the game does not declare:
+  /// `project.yml` of a project, or `game.yml` of a built game, see
+  /// GameFile. Empty is `project.yml`.
+  std::string game_file;
+
   /// The quality presets `rendering.quality`, `--quality`, and the Quality
   /// row of a settings menu choose from: those of the engine, changed,
   /// added to, and dropped from by the project in its project.yml, see

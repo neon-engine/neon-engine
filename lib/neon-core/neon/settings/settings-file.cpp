@@ -19,6 +19,13 @@ namespace neon
   {
     const std::string what_is_read = "the settings";
 
+    /// The file the settings of the game and its presets are declared in,
+    /// for a message: the project's, or the game's of a built game.
+    std::string declared_in(const SettingsConfig &settings)
+    {
+      return settings.game_file.empty() ? std::string(ProjectFile::path) : settings.game_file;
+    }
+
     /// A whole number above zero, read into a value of any integral type.
     template <typename Number>
     void read_count(const DataReader &reader, const std::string &name, Number &value)
@@ -131,7 +138,7 @@ namespace neon
         reader.Report(*presets, std::format(
                         "'presets' of {} is not where the quality presets are defined: they are 'graphics_presets' "
                         "of {}, see docs/projects.md",
-                        reader.GetWhere(), ProjectFile::path));
+                        reader.GetWhere(), declared_in(settings)));
       }
 
       // the preset first: its values hold over the names below it that it
@@ -372,7 +379,7 @@ namespace neon
         {
           part.Report(written, std::format(
                         "'{}' of {} is not a setting the game declares in {} under 'settings'. There are: {}",
-                        name, part.GetWhere(), ProjectFile::path, names_of(settings.game_settings)));
+                        name, part.GetWhere(), declared_in(settings), names_of(settings.game_settings)));
           continue;
         }
         if (written.IsMap())
@@ -380,7 +387,8 @@ namespace neon
           part.Report(written, std::format(
                         "'{}' of {} is a map, where a value was expected. A setting is declared in {} under "
                         "'settings', and this file sets it: {}: {}",
-                        name, part.GetWhere(), ProjectFile::path, name, declared->kind == SettingKind::Flag ? "true" : "..."));
+                        name, part.GetWhere(), declared_in(settings), name,
+                        declared->kind == SettingKind::Flag ? "true" : "..."));
           continue;
         }
         if (declared->kind == SettingKind::Action)

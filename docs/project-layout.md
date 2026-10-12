@@ -17,6 +17,7 @@ and a file is found by its name alone.
 | Folder | Holds | Kind of file |
 |---|---|---|
 | `project.yml` | What the project is: name, organization, scenes, entry scene, input map | [projects.md](projects.md) |
+| `game.yml` | In a built game only: the subset of `project.yml` a runtime needs, written by the export, never by hand | [projects.md](projects.md#gameyml) |
 | `settings.yml` | What the project chooses for itself and a player may change | [settings.md](settings.md) |
 | `CREDITS.md` | Where every third-party file came from, and its license | See [credits](#credits-and-licenses) |
 | `scenes/` | Scene recipes, `*.scene.yml` | [scenes.md](scenes.md) |
@@ -87,7 +88,7 @@ care, does not break on Linux, which does.
 
 | Written by hand | Made by a tool |
 |---|---|
-| `project.yml`, `settings.yml`, `CREDITS.md` | `shaders/*.spv`, by the build |
+| `project.yml`, `settings.yml`, `CREDITS.md` | `shaders/*.spv`, by the build. `game.yml`, by the export (#84) |
 | `*.scene.yml`, `*.prefab.yml`, `*.ui.yml`, `*.css`, `*.atlas.yml`, `*.input.yml` | Models prepared from what assimp reads (#98), by the editor |
 | The sources of images, models, and sounds, as the artist saved them | Packed assets (#81) and baked light maps (#63), by the exporter |
 

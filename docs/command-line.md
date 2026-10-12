@@ -93,7 +93,7 @@ Some of what a runtime does is fixed, or decided elsewhere:
 
 | What | Where it is decided |
 |---|---|
-| The organization and application names that place `user://` | `project.yml`, see [projects.md](projects.md). Never something a player may change |
+| The organization and application names that place `user://` | `project.yml`, or `game.yml` of a built game, see [projects.md](projects.md). Never something a player may change |
 | The log file, `user://logs/neon-engine.log` | Compiled in. See [file-systems.md](file-systems.md#the-log-file) |
 | The debug mode with a terminal (#116) | Not there yet. It is for the editor only |
 
