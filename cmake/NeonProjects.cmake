@@ -39,7 +39,9 @@ set(NEON_RUNTIME_DIRECTORY "${NEON_RUNTIME_DIRECTORY}" CACHE PATH
 #
 # The target <name> puts the game together:
 #
-#   <name>/NeonRuntime           the runtime, as it was built
+#   <name>/<name>                the runtime, as it was built, under the name
+#                                of the project, which is what the game is
+#                                started as
 #   <name>/engine/               what the runtime ships with, engine://: its
 #                                shaders and fonts
 #   <name>/assets/               the project's assets, assets://
@@ -108,7 +110,10 @@ function(neon_add_project NAME)
           COMMENT "Putting the project ${NAME} together in ${PROJECT_DIRECTORY}"
           COMMAND "${CMAKE_COMMAND}" -E copy_directory "${RUNTIME_DIRECTORY}/engine" "${PROJECT_DIRECTORY}/engine"
           COMMAND "${CMAKE_COMMAND}" -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/assets" "${PROJECT_DIRECTORY}/assets"
-          COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${RUNTIME_FILE}" "${PROJECT_DIRECTORY}/"
+          COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${RUNTIME_FILE}" "${PROJECT_DIRECTORY}/${NAME}${CMAKE_EXECUTABLE_SUFFIX}"
+          # a folder put together before the runtime was renamed keeps no
+          # second copy under the old name
+          COMMAND "${CMAKE_COMMAND}" -E rm -f "${PROJECT_DIRECTORY}/NeonRuntime${CMAKE_EXECUTABLE_SUFFIX}"
           VERBATIM
   )
 

@@ -85,6 +85,6 @@ namespace
   {
     const std::string text = ProjectTemplateText::ReadMe(project);
     EXPECT_NE(text.find("cmake --preset macos-arm64-debug"), std::string::npos);
-    EXPECT_NE(text.find("build/macos-arm64-debug/my-game/NeonRuntime"), std::string::npos);
+    EXPECT_NE(text.find("build/macos-arm64-debug/my-game/my-game"), std::string::npos);
   }
 }

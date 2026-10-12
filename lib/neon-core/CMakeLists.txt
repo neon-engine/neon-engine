@@ -252,6 +252,8 @@ add_library(${TARGET} STATIC
         neon/random/entropy-context.hpp
         neon/random/entropy-seed.cpp
         neon/random/entropy-seed.hpp
+        neon/process/process-command.hpp
+        neon/process/process-context.hpp
 
         # filesystem
         neon/filesystem/file-system.cpp
@@ -486,6 +488,7 @@ if (NEON_BUILD_TESTS)
           neon/testing/fake-native-file-context.hpp
           neon/testing/mock-audio-context.hpp
           neon/testing/fake-physics-context.hpp
+          neon/testing/fake-process-context.hpp
           neon/testing/fake-font-rasterizer.hpp
           neon/testing/memory-file-system.hpp
           neon/testing/mock-entity-store.hpp

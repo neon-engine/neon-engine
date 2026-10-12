@@ -20,7 +20,7 @@ On its own, against a NeonRuntime that is built already. This compiles
 ```sh
 cmake -S projects/bench -B build/bench -G Ninja
 cmake --build build/bench
-build/bench/bench/NeonRuntime
+build/bench/bench/bench
 ```
 
 The runtime is the engine's release build when there is one, else its debug
@@ -34,7 +34,7 @@ it with NeonRuntime and the museum.
 ```sh
 cmake --preset macos-arm64-debug
 cmake --build --preset macos-arm64-debug
-bin/debug/darwin-arm64/bench/NeonRuntime
+bin/debug/darwin-arm64/bench/bench
 ```
 
 Either way the game is put together as:
@@ -78,14 +78,14 @@ that what differs between two scenes is the behavior of the crates alone.
 For a number, run without a window and time it:
 
 ```sh
-time build/bench/bench/NeonRuntime --headless-renderer --window-size 320x180 \
+time build/bench/bench/bench --headless-renderer --window-size 320x180 \
   --time-step 0.016667 --frames 300 --scene assets://scenes/falling-lua-no-copy-2000.scene.yml
 ```
 
 For watching, with the Metal performance HUD on macOS:
 
 ```sh
-MTL_HUD_ENABLED=1 build/bench/bench/NeonRuntime --window-size 1600x900 \
+MTL_HUD_ENABLED=1 build/bench/bench/bench --window-size 1600x900 \
   --scene assets://scenes/rain-lua-heavy-copy.scene.yml
 ```
 

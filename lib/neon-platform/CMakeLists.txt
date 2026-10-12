@@ -2,12 +2,14 @@ set(TARGET neon-platform)
 
 # The small calls into the operating system that no other backend library
 # covers, behind the interfaces of neon-core. SDL2 has no secure random
-# numbers, so they are asked of the operating system here; it cannot create
-# a folder or name the home folder either, which the tools of the editor
-# need when they write a project outside every scheme.
+# numbers and starts no process, so both are asked of the operating system
+# here; it cannot create a folder or name the home folder either, which the
+# tools of the editor need when they write a project outside every scheme.
 add_library(${TARGET} STATIC
         neon/filesystem/os-native-files.cpp
         neon/filesystem/os-native-files.hpp
+        neon/process/os-process-runner.cpp
+        neon/process/os-process-runner.hpp
         neon/random/os-entropy.cpp
         neon/random/os-entropy.hpp
 )
@@ -28,5 +30,6 @@ endif ()
 
 if (NEON_BUILD_TESTS)
   neon_add_unit_test(${TARGET} neon/filesystem/os-native-files.test.cpp)
+  neon_add_unit_test(${TARGET} neon/process/os-process-runner.test.cpp)
   neon_add_unit_test(${TARGET} neon/random/os-entropy.test.cpp)
 endif ()

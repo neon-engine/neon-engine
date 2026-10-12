@@ -7,6 +7,10 @@ build/
 # Runtime log output
 logs/
 
+# One machine's toolchains and editors, next to a project's editor.yml, see
+# docs/editor-toolchains.md
+user-editor.yml
+
 # The settings of VS Code are shared, since they hold the limits of the C++
 # extension that keep the machine stable. What is personal goes in the
 # user's own settings, not the workspace's.

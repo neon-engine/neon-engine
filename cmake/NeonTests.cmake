@@ -120,8 +120,9 @@ endfunction()
 # it printed, what it wrote, and the exit code. The script is run by CMake,
 # once for every case, with these variables set:
 #   APPLICATION  the executable. With PROJECT, the one of that project, a
-#                target of neon_add_project, where it is put together: the
-#                application then runs that project and reads its assets
+#                target of neon_add_project, where it is put together and
+#                under the name of the project: the application then runs
+#                that project and reads its assets
 #   DIRECTORY    a folder for what the run writes, empty at the start
 #   CASE         the name of the case
 # and for each of the TOOLS, the executable under its name in capitals with
@@ -141,7 +142,7 @@ function(neon_add_application_test NAME APPLICATION SCRIPT)
   if (TEST_PROJECT)
     add_dependencies(neon-tests ${TEST_PROJECT})
     set(APPLICATION_FILE
-            "$<TARGET_PROPERTY:${TEST_PROJECT},NEON_PROJECT_DIRECTORY>/$<TARGET_FILE_NAME:${APPLICATION}>")
+            "$<TARGET_PROPERTY:${TEST_PROJECT},NEON_PROJECT_DIRECTORY>/${TEST_PROJECT}${CMAKE_EXECUTABLE_SUFFIX}")
   endif ()
 
   set(TOOL_DEFINITIONS)

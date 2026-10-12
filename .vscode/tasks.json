@@ -136,7 +136,7 @@
       "label": "Run project",
       "detail": "Builds NeonRuntime of the chosen macOS preset, puts the chosen project together, and runs it without a debugger from its folder, with the scene that was asked for or the entry scene of the project",
       "type": "shell",
-      "command": "P='${input:runPreset}'; case \"$P\" in *-release) TYPE=release ;; *) TYPE=debug ;; esac; { [ -f \"build/$P/CMakeCache.txt\" ] || cmake --preset \"$P\"; } && cmake --build --preset \"$P\" --target NeonRuntime '${input:project}' && SCENE='${input:scene}'; case \"$SCENE\" in '') ;; *://*) ;; *) SCENE=\"assets://scenes/$SCENE.scene.yml\" ;; esac; cd \"${workspaceFolder}/bin/$TYPE/darwin-arm64/${input:project}\" && if [ -n \"$SCENE\" ]; then ./NeonRuntime --scene \"$SCENE\"; else ./NeonRuntime; fi",
+      "command": "P='${input:runPreset}'; case \"$P\" in *-release) TYPE=release ;; *) TYPE=debug ;; esac; { [ -f \"build/$P/CMakeCache.txt\" ] || cmake --preset \"$P\"; } && cmake --build --preset \"$P\" --target NeonRuntime '${input:project}' && SCENE='${input:scene}'; case \"$SCENE\" in '') ;; *://*) ;; *) SCENE=\"assets://scenes/$SCENE.scene.yml\" ;; esac; cd \"${workspaceFolder}/bin/$TYPE/darwin-arm64/${input:project}\" && if [ -n \"$SCENE\" ]; then ./'${input:project}' --scene \"$SCENE\"; else ./'${input:project}'; fi",
       "problemMatcher": ["$gcc"]
     },
     {

@@ -45,8 +45,8 @@ one that built it.
 ```sh
 cmake --preset macos-arm64-release
 cmake --build --preset macos-arm64-release
-./bin/release/darwin-arm64/sandbox/NeonRuntime
-./bin/release/darwin-arm64/museum/NeonRuntime
+./bin/release/darwin-arm64/sandbox/sandbox
+./bin/release/darwin-arm64/museum/museum
 ```
 
 A build preset builds NeonRuntime and the projects next to it, the sandbox,
@@ -114,7 +114,7 @@ cmake --build --preset macos-arm64-debug
 Run:
 
 ```bash
-./bin/debug/darwin-arm64/sandbox/NeonRuntime
+./bin/debug/darwin-arm64/sandbox/sandbox
 ```
 
 Every platform has a release preset beside its debug one,

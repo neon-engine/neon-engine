@@ -33,7 +33,7 @@ it with NeonRuntime and the bench.
 
 ```sh
 cmake --build --preset macos-arm64-debug
-bin/debug/darwin-arm64/museum/NeonRuntime
+bin/debug/darwin-arm64/museum/museum
 ```
 
 Or on its own, against a NeonRuntime that is built already:
@@ -41,7 +41,7 @@ Or on its own, against a NeonRuntime that is built already:
 ```sh
 cmake -S projects/museum -B build/museum -G Ninja
 cmake --build build/museum
-build/museum/museum/NeonRuntime
+build/museum/museum/museum
 ```
 
 The game is put together in that folder: the runtime, its assets with this

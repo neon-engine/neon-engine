@@ -18,7 +18,7 @@ if (NOT CMAKE_CROSSCOMPILING)
     add_test(
             NAME "runtime-extensions.${CASE}"
             COMMAND "${CMAKE_COMMAND}"
-            "-DAPPLICATION=${GAME_DIRECTORY}/NeonRuntime${CMAKE_EXECUTABLE_SUFFIX}"
+            "-DAPPLICATION=${GAME_DIRECTORY}/canvas${CMAKE_EXECUTABLE_SUFFIX}"
             "-DDIRECTORY=${NEON_TESTS_DIRECTORY}/runtime-extensions/${CASE}"
             "-DCASE=${CASE}"
             "-DPIXEL_PROBE=$<TARGET_FILE:pixel-probe>"

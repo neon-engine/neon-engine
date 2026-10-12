@@ -394,12 +394,13 @@ an extension in C++. It starts as a box on a floor that the extension turns.
 ## Building and running
 
 The engine is built once, with a preset of its own, which leaves a
-NeonRuntime under its `bin/`. Then, from this folder:
+NeonRuntime under its `bin/`. Then, from this folder, which puts the game
+together under the name of the project:
 
 ```sh
 cmake --preset macos-arm64-debug
 cmake --build --preset macos-arm64-debug
-build/macos-arm64-debug/@name@/NeonRuntime
+build/macos-arm64-debug/@name@/@name@
 ```
 
 The presets are `macos-arm64-debug`, `linux-x64-debug`, `windows-x64-debug`,

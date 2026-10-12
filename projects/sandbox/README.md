@@ -18,7 +18,7 @@ it with NeonRuntime, the museum, and the bench.
 
 ```sh
 cmake --build --preset macos-arm64-debug
-bin/debug/darwin-arm64/sandbox/NeonRuntime
+bin/debug/darwin-arm64/sandbox/sandbox
 ```
 
 Or on its own, against a NeonRuntime that is built already:
@@ -26,5 +26,5 @@ Or on its own, against a NeonRuntime that is built already:
 ```sh
 cmake -S projects/sandbox -B build/sandbox -G Ninja
 cmake --build build/sandbox
-build/sandbox/sandbox/NeonRuntime
+build/sandbox/sandbox/sandbox
 ```

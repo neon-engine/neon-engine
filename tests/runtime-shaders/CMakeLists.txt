@@ -60,7 +60,7 @@ if (NOT CMAKE_CROSSCOMPILING)
     add_test(
             NAME "runtime-shaders.${CASE}"
             COMMAND "${CMAKE_COMMAND}"
-            "-DAPPLICATION=${GAME_DIRECTORY}/NeonRuntime${CMAKE_EXECUTABLE_SUFFIX}"
+            "-DAPPLICATION=${GAME_DIRECTORY}/tinted${CMAKE_EXECUTABLE_SUFFIX}"
             "-DDIRECTORY=${NEON_TESTS_DIRECTORY}/runtime-shaders/${CASE}"
             "-DCASE=${CASE}"
             "-DPIXEL_PROBE=$<TARGET_FILE:pixel-probe>"

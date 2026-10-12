@@ -38,7 +38,7 @@ and preset, native builds without Docker, the build options, and the tests.
 3. Run the museum (on Linux, the folder is `linux-x86_64`):
 
    ```sh
-   ./bin/debug/darwin-arm64/museum/NeonRuntime
+   ./bin/debug/darwin-arm64/museum/museum
    ```
 
 | Action | Keyboard and mouse | Gamepad |

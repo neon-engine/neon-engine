@@ -413,10 +413,10 @@ build puts together next to a copy of the runtime:
 
 | Project | Holds | Built and started with |
 |---|---|---|
-| [projects/sandbox](../projects/sandbox) | [start.scene.yml](../projects/sandbox/assets/scenes/start.scene.yml), a box on a floor, which the engine is tried out with | `cmake --build --preset macos-arm64-debug`, then `bin/debug/darwin-arm64/sandbox/NeonRuntime` |
-| [projects/museum](../projects/museum) | [The museum](#the-museum) | `cmake --build --preset macos-arm64-debug`, then `bin/debug/darwin-arm64/museum/NeonRuntime` |
+| [projects/sandbox](../projects/sandbox) | [start.scene.yml](../projects/sandbox/assets/scenes/start.scene.yml), a box on a floor, which the engine is tried out with | `cmake --build --preset macos-arm64-debug`, then `bin/debug/darwin-arm64/sandbox/sandbox` |
+| [projects/museum](../projects/museum) | [The museum](#the-museum) | `cmake --build --preset macos-arm64-debug`, then `bin/debug/darwin-arm64/museum/museum` |
 | [projects/bench](../projects/bench) | Scenes that measure the engine | See its [README.md](../projects/bench/README.md) |
-| [tests/game](../tests/game) | Every scene the tests start the runtime with, and what those scenes show | `cmake --build --preset macos-arm64-debug-tests`, then `build/macos-arm64-debug/tests/game/NeonRuntime --scene assets://scenes/physics.scene.yml` |
+| [tests/game](../tests/game) | Every scene the tests start the runtime with, and what those scenes show | `cmake --build --preset macos-arm64-debug-tests`, then `build/macos-arm64-debug/tests/game/test-game --scene assets://scenes/physics.scene.yml` |
 
 Where these notes write `NeonRuntime --scene assets://scenes/...` for a scene
 of the tests, it is the runtime of `tests/game` that is meant. What the

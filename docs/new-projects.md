@@ -63,7 +63,7 @@ the toolchains of the editor rely on (#572):
 ```sh
 cmake --preset macos-arm64-debug
 cmake --build --preset macos-arm64-debug
-build/macos-arm64-debug/hello-neon/NeonRuntime
+build/macos-arm64-debug/hello-neon/hello-neon
 ```
 
 Nothing of the engine is compiled. The project includes

@@ -1,0 +1,35 @@
+# The toolchains the editor builds this project with, shared by everyone
+# who works on it. What differs on one machine goes in user-editor.yml next
+# to this file, which git ignores, or in the editor's own user folder. See
+# docs/editor-toolchains.md.
+version: 1
+
+toolchains:
+  macos-arm64:
+    kind: native
+    platform: darwin-arm64
+    requires: [cmake, ninja, /opt/homebrew/opt/llvm@20/bin/clang++]
+    configure: cmake -S {project} -B {build} -DNEON_RUNTIME_DIRECTORY={engine}/bin/release/darwin-arm64/NeonRuntime
+    build: cmake --build {build}
+    run: "{build}/{name}/{name}"
+
+  linux-x64:
+    kind: docker
+    platform: linux-x86_64
+    image: neon-engine/linux-x64
+    requires: [docker]
+    configure: cmake -S {project} -B {build} -DNEON_RUNTIME_DIRECTORY={engine}/bin/release/linux-x86_64/NeonRuntime
+    build: cmake --build {build}
+    run: off
+
+  windows-x64:
+    kind: docker
+    platform: windows-x86_64
+    image: neon-engine/windows-x64
+    requires: [docker]
+    configure: cmake -S {project} -B {build} -DCMAKE_TOOLCHAIN_FILE={engine}/cmake/toolchains/windows-x64-llvm-mingw.cmake -DNEON_RUNTIME_DIRECTORY={engine}/bin/release/windows-x86_64/NeonRuntime
+    build: cmake --build {build}
+    run: off
+
+editors:
+  vscode: code

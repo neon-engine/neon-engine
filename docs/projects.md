@@ -15,6 +15,9 @@ has, which settings the game has of its own, and which quality presets it
 offers. What those settings and the engine's are set to is not in it; that
 is `settings.yml`, see
 [settings.md](settings.md), which the runtime reads after the project.
+How the editor builds a project and runs the result, with the toolchains of
+`editor.yml` and `user-editor.yml`, is in
+[editor-toolchains.md](editor-toolchains.md).
 
 ## The file
 
@@ -338,7 +341,7 @@ bench/
 | The game lives in `assets/`, even what uses the extension's components | `extensions://` is for code and what code needs to run; a scene is the game's, so a scene that holds a `NativeSpawner` is `assets://scenes/rain-cpp-heavy-copy.scene.yml` |
 | `extensions/<name>/` in the source is laid out as next to the runtime | One layout to know. The build adds the library to it |
 | `project.yml` is in `assets/` | It is where the runtime reads it, and where a built game has its `game.yml`. It belongs at the root, next to `assets/` and `extensions/`, which waits for a scheme of its own (#368) |
-| `neon_add_project(<name> SOURCES ...)` puts the game together: `NeonRuntime`, `engine/`, `assets/`, `extensions/<name>/` | It is what a shipped game looks like, and it runs from there. Exporting (#84) will make the same folder for another platform |
+| `neon_add_project(<name> SOURCES ...)` puts the game together: the runtime under the name of the project, `<name>`, with `engine/`, `assets/`, `extensions/<name>/` next to it | It is what a shipped game looks like, and it runs from there. Exporting (#84) will make the same folder for another platform |
 | The runtime brings its executable and its folder `engine`, and nothing of a game | The runtime knows no game. Its shaders, fonts, a plain pause and settings menu, and an input map are `engine://`, which a project uses or replaces; everything else a game shows and reads is the project's own |
 
 **Built on its own**, which is how a game is worked on: the folder is a
@@ -350,7 +353,7 @@ build, else its debug build, or the folder `-DNEON_RUNTIME_DIRECTORY=` names.
 ```sh
 cmake -S projects/bench -B build/bench -G Ninja
 cmake --build build/bench
-build/bench/bench/NeonRuntime
+build/bench/bench/bench
 ```
 
 **Built by the engine**, for a project in `projects/` of the engine: the
@@ -364,7 +367,7 @@ without a preset builds the engine alone. A new project is added to the
 
 ```sh
 cmake --build --preset macos-arm64-debug
-bin/debug/darwin-arm64/bench/NeonRuntime
+bin/debug/darwin-arm64/bench/bench
 ```
 
 The functions are in [NeonProjects.cmake](../cmake/NeonProjects.cmake) and

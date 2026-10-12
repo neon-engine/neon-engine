@@ -50,7 +50,7 @@ step("Configuring the project" "${CMAKE_COMMAND}"
         "-DNEON_RUNTIME_DIRECTORY=${RUNTIME_DIRECTORY}")
 step("Building the project" "${CMAKE_COMMAND}" --build "${DIRECTORY}/build")
 
-set(APPLICATION "${DIRECTORY}/build/my-game/NeonRuntime${CMAKE_EXECUTABLE_SUFFIX}")
+set(APPLICATION "${DIRECTORY}/build/my-game/my-game${CMAKE_EXECUTABLE_SUFFIX}")
 if (NOT EXISTS "${APPLICATION}")
   message(FATAL_ERROR "Expected the game put together at ${APPLICATION}")
 endif ()
