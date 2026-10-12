@@ -1,6 +1,7 @@
 # Makes a project with new-project, builds it on its own as a person does,
-# and runs it without a window: the box the extension turns is drawn and
-# the extension says it is up.
+# and runs the game put together without a window, through NeonEditor as
+# every application test does: the box the extension turns is drawn and the
+# extension says it is up.
 
 include("${CMAKE_CURRENT_LIST_DIR}/../../cmake/scripts/run-application.cmake")
 
@@ -50,10 +51,15 @@ step("Configuring the project" "${CMAKE_COMMAND}"
         "-DNEON_RUNTIME_DIRECTORY=${RUNTIME_DIRECTORY}")
 step("Building the project" "${CMAKE_COMMAND}" --build "${DIRECTORY}/build")
 
-set(APPLICATION "${DIRECTORY}/build/my-game/my-game${CMAKE_EXECUTABLE_SUFFIX}")
-if (NOT EXISTS "${APPLICATION}")
-  message(FATAL_ERROR "Expected the game put together at ${APPLICATION}")
+set(GAME "${DIRECTORY}/build/my-game/my-game${CMAKE_EXECUTABLE_SUFFIX}")
+if (NOT EXISTS "${GAME}")
+  message(FATAL_ERROR "Expected the game put together at ${GAME}")
 endif ()
+
+# the editor opens the folder the game was put together in, the project's
+# assets and extensions next to the runtime, so that the frame it draws is
+# the game's
+set(PROJECT_DIRECTORY "${DIRECTORY}/build/my-game")
 
 run(--headless-renderer --time-step 0.05 --frames 5 --output-dir shots --screenshot output://frame.png)
 

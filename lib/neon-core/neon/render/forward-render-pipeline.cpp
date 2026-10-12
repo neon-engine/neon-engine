@@ -37,6 +37,11 @@ namespace neon
     _camera_info = camera_info;
   }
 
+  void Forward_RenderPipeline::SetFrameTarget(const int target)
+  {
+    _frame_target = target;
+  }
+
   int Forward_RenderPipeline::TargetOf(const CameraInfo &camera)
   {
     if (const auto found = _targets.find(camera.texture); found != _targets.end()) { return found->second; }
@@ -77,10 +82,16 @@ namespace neon
 
   void Forward_RenderPipeline::RenderFrame()
   {
-    const auto [width, height] = _render_context->GetRenderResolution();
+    // The camera of the window sees as much as the frame is wide, or the
+    // target that stands in for the frame.
+    const RenderResolution &resolution = _render_context->GetRenderResolution();
+    int width = resolution.width;
+    int height = resolution.height;
+    if (_frame_target >= 0) { (void) _render_context->GetRenderTargetSize(_frame_target, width, height); }
+
     const auto projection = glm::perspective(
       glm::radians(_camera_info.fov),
-      static_cast<float>(width) / static_cast<float>(height),
+      static_cast<float>(width) / static_cast<float>(std::max(height, 1)),
       _camera_info.near,
       _camera_info.far);
     // what the cameras see that draw into a texture, before the frame that
@@ -125,6 +136,20 @@ namespace neon
       _texture_cameras.clear();
     }
 
+    // Into the target that stands in for the frame, when there is one.
+    // A target that cannot be begun, because it is gone or was drawn
+    // already, leaves the frame as it is cleared, and what was queued is
+    // dropped as it would be when nothing draws it.
+    const bool into_target =
+      _frame_target >= 0 && _render_context->BeginRenderTarget(_frame_target, _camera_info.clear);
+    if (_frame_target >= 0 && !into_target)
+    {
+      while (!_render_queue.empty()) { _render_queue.pop(); }
+      _light_sources.clear();
+      _sky.reset();
+      return;
+    }
+
     // what is run over the picture of the camera of the window
     if (!_camera_info.effects.empty() || !_camera_info.screen_effects.empty())
     {
@@ -140,6 +165,8 @@ namespace neon
 
     // behind the models, wherever none was drawn
     if (_sky.has_value()) { _render_context->DrawSky(*_sky, _camera_info.view, projection); }
+
+    if (into_target) { _render_context->EndRenderTarget(); }
 
     _light_sources.clear();
     _sky.reset();

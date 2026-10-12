@@ -2184,6 +2184,26 @@ namespace neon
     return kept.texture;
   }
 
+  bool VK_RenderSystem::DrawIntoFrame(const std::function<void(VkCommandBuffer)> &draw)
+  {
+    if (!_frame_open) { return false; }
+    if (_current_target != No_Render_Target) { EndRenderTarget(); }
+
+    _frame.EnterOverlay();
+    draw(_commands);
+    return true;
+  }
+
+  bool VK_RenderSystem::GetRenderTargetView(const int target, VkImageView &view, VkSampler &sampler)
+  {
+    const Target *kept = _targets.Find(target);
+    if (kept == nullptr) { return false; }
+
+    view = kept->target.BytesView();
+    sampler = _samplers.Of(VK_RenderTarget::kSampling);
+    return view != VK_NULL_HANDLE && sampler != VK_NULL_HANDLE;
+  }
+
   bool VK_RenderSystem::GetRenderTargetSize(const int target, int &width, int &height)
   {
     const Target *kept = _targets.Find(target);

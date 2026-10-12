@@ -261,7 +261,7 @@ The editor can export in two ways.
 **A shipped runtime (#143)** keeps only the options a player needs, and loads
 only the game it was exported with. The options are owned: the runtime owns
 its sets, the editor owns the set that loads other content, and NeonRuntime
-registers the editor's set only until NeonEditor exists. Which set each
+registered the editor's set only until NeonEditor existed (#568). Which set each
 option is in is decided in [command-line.md](command-line.md). The aim is that a player cannot
 do what a game does not want with an option, a setting, or a file next to the
 executable, not to stop someone who is determined. A stronger binding, a key

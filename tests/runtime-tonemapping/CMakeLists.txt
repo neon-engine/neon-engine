@@ -3,7 +3,7 @@
 # exposure, and a surface that gives off light in the dark. Needs a graphics
 # card with a Vulkan driver. On a machine without one the tests are
 # skipped, they do not fail.
-neon_add_application_test(runtime-tonemapping NeonRuntime run.cmake
+neon_add_application_test(runtime-tonemapping NeonEditor run.cmake
         PROJECT test-game
         TOOLS
         pixel-probe

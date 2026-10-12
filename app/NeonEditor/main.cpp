@@ -1,0 +1,664 @@
+#include <cstdlib>
+#include <exception>
+#include <iostream>
+#include <memory>
+#include <optional>
+#include <string>
+
+#include <neon/command-line/command-line.hpp>
+#include <neon/audio/ma-audio-system.hpp>
+#include <neon/command-line/display-options.hpp>
+#include <neon/command-line/editor-options.hpp>
+#include <neon/command-line/runtime-options.hpp>
+#include <neon/data/ryml-document-format.hpp>
+#include <neon/editor/camera/editor-camera-submission.hpp>
+#include <neon/editor/editor.hpp>
+#include <neon/extension/extension-host.hpp>
+#include <neon/extension/sdl2-library-loader.hpp>
+#include <neon/filesystem/sdl2-file-system.hpp>
+#include <neon/input/input-map-file.hpp>
+#include <neon/input/sdl2-clipboard.hpp>
+#include <neon/input/sdl2-input-system.hpp>
+#include <neon/physics/jolt-physics-system.hpp>
+#include <neon/input/headless-input-system.hpp>
+#include <neon/input/input-script.hpp>
+#include <neon/project/game-file.hpp>
+#include <neon/project/project-file.hpp>
+#include <neon/random/os-entropy.hpp>
+#include <neon/scripting/lua-script-system.hpp>
+#include <neon/settings/player-settings.hpp>
+#include <neon/settings/settings-file.hpp>
+#include <neon/settings/settings-store.hpp>
+#include <neon/layout/flex-layout-engine.hpp>
+#include <neon/render/forward-render-pipeline.hpp>
+#include <neon/render/vk-render-system.hpp>
+#include <neon/image/luna-vector-image-rasterizer.hpp>
+#include <neon/image/stb-image-decoder.hpp>
+#include <neon/text/ft-font-rasterizer.hpp>
+#include <neon/text/hb-text-shaper.hpp>
+#include <neon/tool-ui/imgui-tool-ui-system.hpp>
+#include <neon/ui/tree-ui-system.hpp>
+#include <neon/window/headless-window-system.hpp>
+#include <neon/window/sdl2-window-system.hpp>
+#include <neon/world-system/ecs/entity-world.hpp>
+#include <neon/world-system/ecs/scene-file/scene-file.hpp>
+#include <neon/world-system/ecs/systems/audio/audio-playback.hpp>
+#include <neon/world-system/ecs/systems/world/entity-logging.hpp>
+#include <neon/world-system/ecs/systems/scripting/extension-running.hpp>
+#include <neon/world-system/ecs/systems/physics/rope-drawing.hpp>
+#include <neon/world-system/ecs/systems/physics/physics-simulation.hpp>
+#include <neon/world-system/ecs/systems/player/first-person-controller-system.hpp>
+#include <neon/world-system/ecs/systems/scripting/script-running.hpp>
+#include <neon/world-system/ecs/scene-file/ui-view-format.hpp>
+#include <neon/world-system/ecs/systems/ui/ui-clock.hpp>
+#include <neon/world-system/ecs/systems/ui/ui-surface-loading.hpp>
+#include <neon/world-system/ecs/systems/ui/ui-surface-pointing.hpp>
+#include <neon/world-system/ecs/systems/ui/ui-view-loading.hpp>
+#include <neon/world-system/ecs/systems/world/ray-casting.hpp>
+#include <neon/world-system/ecs/systems/physics/scene-exiting.hpp>
+#include <neon/world-system/flecs-entity-store.hpp>
+
+// What the platform starts the application by, which calls the main() below.
+// It is the window backend's, and this is its header for it.
+#include <neon/application/sdl2-main.hpp>
+
+// The composition root of NeonEditor: the same systems as NeonRuntime puts
+// together, in the same order, with the editor's own objects on top. The
+// editor opens the project folder it is given, where the runtime runs the
+// project next to it; it registers the editor's options next to the
+// runtime's; and with a window it draws the tool interface, where without
+// one it runs as the runtime does. See docs/editor.md.
+int main(const int argc, char *argv[])
+{
+  // What this application accepts on its command line. Each set of options
+  // is owned by one application and registered by it: the runtime owns the
+  // runtime set and the display set, the editor owns the editor set, and
+  // registers all three. See docs/command-line.md.
+  neon::CommandLine command_line("NeonEditor", "Edits and runs a Neon Engine project.");
+  command_line.SetArgument("FOLDER", "The folder of the project to open, which holds its assets and extensions");
+
+  neon::RuntimeOptions runtime_options;
+  runtime_options.Register(command_line);
+
+  neon::DisplayOptions display_options;
+  display_options.Register(command_line);
+
+  neon::EditorOptions editor_options;
+  editor_options.Register(command_line);
+
+  if (!command_line.Parse(argc, argv))
+  {
+    std::cerr << command_line.GetError() << "\n\n" << command_line.GetHelp();
+    return EXIT_FAILURE;
+  }
+
+  if (command_line.WantsHelp())
+  {
+    std::cout << command_line.GetHelp();
+    return EXIT_SUCCESS;
+  }
+
+  if (command_line.GetArgument().empty())
+  {
+    std::cerr << "NeonEditor needs the folder of a project to open, the one that holds its assets folder: "
+                 "NeonEditor FOLDER, such as the sandbox of the engine's build, bin/<build>/<platform>/sandbox, "
+                 "see docs/editor.md\n\n"
+              << command_line.GetHelp();
+    return EXIT_FAILURE;
+  }
+
+  // The settings come in layers, each on top of the one before: these
+  // defaults, the settings of the project, the settings of the player, and
+  // the command line. The command line is applied here already, since the
+  // file system needs what it says to come up, and again after the files,
+  // so that it wins. --quality waits for the second pass, since it may name
+  // a preset the project defines.
+  auto settings_config = SettingsConfig{.selected_api = RenderingApi::Vulkan};
+  settings_config.project_directory = command_line.GetArgument();
+
+  const auto apply_command_line = [&](const bool with_quality)
+  {
+    std::string error;
+    if (runtime_options.Apply(command_line, settings_config, error) &&
+        (with_quality
+           ? display_options.Apply(command_line, settings_config, error)
+           : display_options.ApplyExceptTheQuality(command_line, settings_config, error)) &&
+        editor_options.Apply(command_line, settings_config, error))
+    {
+      return true;
+    }
+    std::cerr << error << "\n\n" << command_line.GetHelp();
+    return false;
+  };
+
+  if (!apply_command_line(false)) { return EXIT_FAILURE; }
+
+  neon::LoggingSystem logging_system(settings_config);
+
+  logging_system.Initialize();
+
+  // everything that loads files depends on the file system, so it comes up
+  // before the other systems are created
+  neon::SDL2_FileSystem file_system(settings_config, logging_system.CreateLogger("SDL2_FileSystem"));
+  try
+  {
+    file_system.Initialize();
+  } catch (const std::exception &e)
+  {
+    // without the folder of the executable nothing else is found, and the
+    // log file has no place yet
+    std::cerr << e.what() << "\n";
+    return EXIT_FAILURE;
+  }
+
+  neon::RYML_DocumentFormat yaml;
+
+  // The project is the folder behind assets://. Its file says who makes it
+  // and what it is called, which is what places user://, so it is read
+  // before anything is written. Its problems go to the console, since the
+  // log file has no place yet. A built game carries game.yml, which the
+  // export wrote from project.yml, and the editor reads it first as the
+  // runtime does, so that a built game is run and checked through the
+  // editor's options as well.
+  neon::Project project;
+  {
+    const bool is_built = file_system.Exists(std::string(neon::GameFile::path));
+    const bool is_project = file_system.Exists(std::string(neon::ProjectFile::path));
+    if (is_built && is_project)
+    {
+      logging_system.CreateLogger("NeonEditor")->Info(
+        "Both {} and {} are here, and the game is what runs: the project is the editor's file",
+        neon::GameFile::path, neon::ProjectFile::path);
+    }
+
+    std::vector<std::string> errors;
+    bool read = false;
+    if (is_built)
+    {
+      const neon::GameFile game_file(&file_system, &yaml, logging_system.CreateLogger("GameFile"));
+      read = game_file.Read(project, errors);
+    } else
+    {
+      const neon::ProjectFile project_file(&file_system, &yaml, logging_system.CreateLogger("ProjectFile"));
+      read = project_file.Read(project, errors);
+    }
+    if (!read)
+    {
+      for (const auto &error : errors) { std::cerr << error << "\n"; }
+      if (!is_built && !is_project)
+      {
+        std::cerr << "NeonEditor opens the folder of a project, which holds assets/project.yml: " <<
+          settings_config.project_directory << " has none. See docs/projects.md\n";
+      }
+      file_system.CleanUp();
+      return EXIT_FAILURE;
+    }
+
+    // the file the settings of the game were declared in, for the messages
+    // about them
+    settings_config.game_file = std::string(is_built ? neon::GameFile::path : neon::ProjectFile::path);
+  }
+
+  settings_config.organization = project.organization;
+  settings_config.application = project.name;
+  // the settings of the game, which the settings files set under `game`
+  settings_config.game_settings = project.settings;
+
+  // the presets the settings and --quality choose from are the project's
+  settings_config.graphics_presets = project.graphics_presets;
+
+  // the command line may start another scene
+  if (settings_config.scene_path.empty()) { settings_config.scene_path = project.entry_scene; }
+
+  if (!file_system.PlaceUserDirectory(settings_config.organization, settings_config.application))
+  {
+    std::cerr << "The folder of the user cannot be placed, see the log\n";
+    file_system.CleanUp();
+    return EXIT_FAILURE;
+  }
+
+  // The log file belongs under user://, and only the file system knows where
+  // that is. Until now everything went to the console, and was held back for
+  // the file, which gets it first.
+  file_system.PlaceLogFile(settings_config.logpath, logging_system);
+
+  // The settings of the project, then what the player changed. A mistake in
+  // the project's file stops the editor, since the game would not be what
+  // its author meant. A mistake in the player's file is said in the log and
+  // the file is left out.
+  {
+    const neon::SettingsFile settings_file(&file_system, &yaml, logging_system.CreateLogger("SettingsFile"));
+    const auto settings_logger = logging_system.CreateLogger("NeonEditor");
+
+    bool found = false;
+    std::vector<std::string> errors;
+    if (!settings_file.Read(std::string(neon::SettingsFile::of_the_project), settings_config, found, errors))
+    {
+      for (const auto &error : errors) { std::cerr << error << "\n"; }
+      file_system.CleanUp();
+      return EXIT_FAILURE;
+    }
+
+    if (!settings_file.Read(std::string(neon::SettingsFile::of_the_player), settings_config, found, errors))
+    {
+      for (const auto &error : errors) { settings_logger->Warn("{}", error); }
+      settings_logger->Warn("The settings of the player are left out until they are corrected");
+    }
+  }
+
+  // the command line wins over the files
+  if (!apply_command_line(true))
+  {
+    file_system.CleanUp();
+    return EXIT_FAILURE;
+  }
+  if (!display_options.GetWarnings().empty())
+  {
+    const auto options_logger = logging_system.CreateLogger("NeonEditor");
+    for (const auto &warning : display_options.GetWarnings()) { options_logger->Warn("{}", warning); }
+  }
+
+  // The window is the editor's, not the game's: always a window that can
+  // be moved and resized, whatever window.mode of the project's settings
+  // or the command line says, at a size of its own unless the command line
+  // names one. The project's mode and size are what the game is played in.
+  // Where the editor keeps a size of its own is #582.
+  if (!settings_config.headless_renderer)
+  {
+    if (settings_config.window_mode != WindowMode::Windowed)
+    {
+      logging_system.CreateLogger("NeonEditor")->Info("The editor runs in a window, whatever the window mode asks");
+      settings_config.window_mode = WindowMode::Windowed;
+    }
+    if (!command_line.IsSet("window-size"))
+    {
+      settings_config.width = 1600;
+      settings_config.height = 1000;
+    }
+  }
+
+  // The settings the game declared for itself, with what the player's
+  // file set them to: the menu changes them, the scripts read them, and a
+  // change is heard by whoever subscribed. The files were checked above,
+  // so nothing is refused here.
+  const auto settings_store_logger = logging_system.CreateLogger("SettingsStore");
+  neon::SettingsStore settings_store(settings_store_logger);
+  for (const auto &declaration : settings_config.game_settings) { (void) settings_store.Declare(declaration); }
+  if (const std::size_t declared = settings_config.game_settings.size(); declared > 0)
+  {
+    settings_store_logger->Info("The game declares {} settings of its own", declared);
+  }
+
+  // What extends the project: every folder of extensions://, in the folder
+  // of the project. Nothing lists them, and without the folder there are
+  // none. They are started once the log has its file and before any other
+  // system comes up, so that what one brings is there for all of them.
+  neon::SDL2_LibraryLoader library_loader(&file_system);
+  neon::ExtensionHost extension_host(
+    &file_system,
+    &yaml,
+    &library_loader,
+    &logging_system,
+    logging_system.CreateLogger("ExtensionHost"));
+  extension_host.Initialize();
+
+  // the window is named after the project unless the settings say otherwise
+  if (settings_config.title.empty()) { settings_config.title = "NeonEditor - " + project.name; }
+
+  // Without a window there is no one to hear anything. Sounds are still read
+  // and mixed, so that a run without a window finds a sound that is broken.
+  if (settings_config.headless_renderer) { settings_config.audio_output = AudioOutput::None; }
+
+  neon::MA_AudioSystem audio_system(
+    settings_config,
+    &file_system,
+    logging_system.CreateLogger("MA_AudioSystem"));
+  audio_system.Initialize();
+
+  // Only the systems that were asked for are created. The rest of the engine
+  // sees them through their interfaces and cannot tell them apart.
+  std::optional<neon::SDL2_WindowSystem> sdl2_window_system;
+  std::optional<neon::Headless_WindowSystem> headless_window_system;
+  std::optional<neon::SDL2_InputSystem> sdl2_input_system;
+  std::optional<neon::Headless_InputSystem> headless_input_system;
+  std::optional<neon::VK_RenderSystem> vk_render_system;
+
+  neon::WindowSystem *window_system;
+  neon::InputSystem *input_system;
+  neon::RenderSystem *render_system;
+  neon::Render2DContext *render_2d_context;
+
+  if (settings_config.headless_renderer)
+  {
+    window_system = &headless_window_system.emplace(
+      settings_config,
+      logging_system.CreateLogger("Headless_WindowSystem"));
+    input_system = &headless_input_system.emplace(
+      settings_config,
+      logging_system.CreateLogger("Headless_InputSystem"));
+  } else
+  {
+    window_system = &sdl2_window_system.emplace(
+      settings_config,
+      logging_system.CreateLogger("SDL2_WindowSystem"));
+    input_system = &sdl2_input_system.emplace(
+      settings_config,
+      window_system,
+      logging_system.CreateLogger("SDL2_InputSystem"));
+  }
+
+  // The input map of the project: the actions the game reads, and what is
+  // bound to each. A project that names none is played with the map the
+  // engine brings, and only without that file, which ships with the
+  // editor, with the one built in. A mistake in a map stops the editor,
+  // since the game could not be played as meant.
+  std::string input_path = project.input;
+  if (input_path.empty())
+  {
+    input_path = std::string(neon::InputMapFile::default_path);
+    if (!file_system.Exists(input_path))
+    {
+      std::cerr << input_path << " is not next to the editor, so the input map built into the engine is used\n";
+      input_path.clear();
+    }
+  }
+  if (!input_path.empty())
+  {
+    const neon::InputMapFile input_map_file(&file_system, &yaml, logging_system.CreateLogger("InputMapFile"));
+    neon::InputMap input_map;
+    if (std::vector<std::string> errors; !input_map_file.Read(input_path, input_map, errors))
+    {
+      for (const auto &error : errors) { std::cerr << error << "\n"; }
+      file_system.CleanUp();
+      return EXIT_FAILURE;
+    }
+    input_system->SetInputMap(input_map);
+  }
+
+  // the player's switch for the gyro, over what the map says
+  if (settings_config.gyro_enabled.has_value())
+  {
+    input_system->SetSensorEnabled("gyro", *settings_config.gyro_enabled);
+  }
+
+  if (settings_config.headless_renderer)
+  {
+    // input that is written down, in place of the devices a run without a
+    // window does not have. It names actions of the map, so it comes after
+    std::string script_text = settings_config.input_script;
+    std::string script_name = "--input";
+
+    if (!settings_config.input_script_path.empty())
+    {
+      script_name = settings_config.input_script_path;
+      if (!file_system.ReadText(settings_config.input_script_path, script_text))
+      {
+        std::cerr << "The script of input " << script_name << " cannot be read\n";
+        file_system.CleanUp();
+        return EXIT_FAILURE;
+      }
+    }
+
+    if (!script_text.empty())
+    {
+      neon::InputScript script;
+      std::vector<std::string> errors;
+      if (!neon::InputScript::Parse(script_text, script_name, script, errors) ||
+          !headless_input_system->SetScript(script, errors))
+      {
+        for (const auto &error : errors) { std::cerr << error << "\n"; }
+        file_system.CleanUp();
+        return EXIT_FAILURE;
+      }
+    }
+  }
+
+  switch (settings_config.selected_api)
+  {
+    case RenderingApi::Vulkan:
+    {
+      render_system = &vk_render_system.emplace(
+        window_system,
+        &file_system,
+        settings_config,
+        logging_system.CreateLogger("Vulkan_RenderSystem"));
+      render_2d_context = &*vk_render_system;
+      break;
+    }
+    default:
+    {
+      std::cerr << "The renderer that was asked for is not part of this build\n";
+      return EXIT_FAILURE;
+    }
+  }
+
+  neon::Forward_RenderPipeline render_pipeline(
+    render_system,
+    settings_config.max_light_sources,
+    logging_system.CreateLogger("Forward_RenderPipeline"));
+
+  neon::Flecs_EntityStore entity_store(logging_system.CreateLogger("Flecs_EntityStore"));
+
+  // The user interface of the game: menus, and what is shown during play.
+  // Its text is drawn with Inter unless a file names another font. Glyphs
+  // are drawn with FreeType and text is shaped with HarfBuzz.
+  neon::FT_FontRasterizer font_rasterizer;
+  neon::HB_TextShaper text_shaper;
+  neon::Flex_LayoutEngine layout_engine;
+
+  neon::Tree_UiSystem ui_system(
+    render_2d_context,
+    &font_rasterizer,
+    &layout_engine,
+    input_system,
+    &file_system,
+    &yaml,
+    neon::UiSettings{
+      .fonts = {
+        {"sans-serif", 400, "engine://fonts/inter/Inter-Regular.ttf"},
+        {"sans-serif", 700, "engine://fonts/inter/Inter-Bold.ttf"}
+      },
+      .start_path = settings_config.ui_path
+    },
+    logging_system.CreateLogger("Tree_UiSystem"));
+
+  ui_system.SetTextShaper(&text_shaper);
+
+  // Images are read with stb_image, and those that are made of shapes are
+  // drawn with LunaSVG at the size they have on the screen.
+  neon::STB_ImageDecoder image_decoder;
+  neon::LUNA_VectorImageRasterizer vector_image_rasterizer;
+  ui_system.SetImageDecoder(&image_decoder);
+  ui_system.SetVectorImageRasterizer(&vector_image_rasterizer);
+  // The user interface follows the window for its size and density, and
+  // scales by what the player asked for on top. Text is cut and pasted
+  // through the clipboard of the platform where there is one.
+  neon::SDL2_Clipboard sdl2_clipboard;
+  ui_system.SetWindow(window_system);
+  if (!settings_config.headless_renderer) { ui_system.SetClipboard(&sdl2_clipboard); }
+  ui_system.SetUserScale(static_cast<float>(settings_config.ui_scale));
+
+  neon::SceneFile scene(
+    &file_system,
+    &yaml,
+    settings_config.scene_path,
+    logging_system.CreateLogger("SceneFile"));
+
+  // a scene names the user interface it comes with as a component
+  scene.GetComponentFormats().Add(neon::UiViewFormat());
+
+  // and the user interfaces that are shown on surfaces in the world
+  scene.GetComponentFormats().Add(neon::UiSurfaceFormat());
+
+  // the world reads the input less what the user interface has used
+  neon::EntityWorld world(
+    &entity_store,
+    &scene,
+    &render_pipeline,
+    ui_system.GetGameInput(),
+    window_system,
+    logging_system.CreateLogger("EntityWorld"));
+
+  // The pointer is the editor's: free and shown, for the tools. A game the
+  // editor plays takes it then (#569). Without a window the editor runs as
+  // the runtime does, and the pointer is nothing.
+  world.SetCapturesPointer(!settings_config.headless_renderer ? false : true);
+
+  // sounds are heard where their entities are drawn, so that a sound is not
+  // heard from where it was a frame ago, or from the origin in the first
+  // frame, before anything was placed
+  world.AddSystemAfterPlacing(
+    std::make_unique<neon::AudioPlayback>(&audio_system, logging_system.CreateLogger("AudioPlayback")));
+  world.AddSystem(std::make_unique<neon::UiViewLoading>(&ui_system, logging_system.CreateLogger("UiViewLoading")));
+  world.AddSystem(std::make_unique<neon::UiClock>(&ui_system));
+  world.AddSystem(std::make_unique<neon::UiSurfaceLoading>(&ui_system, logging_system.CreateLogger("UiSurfaceLoading")));
+
+  // The physics. The world steps at a fixed rate, and the system that is
+  // added below takes a step of the physics in each. Systems of a game are
+  // added before it, so that what they ask for in a step is part of it.
+  neon::Jolt_PhysicsSystem physics_system(settings_config, logging_system.CreateLogger("Jolt_PhysicsSystem"));
+  physics_system.Initialize();
+
+  // the rays of the entities that cast one, through the physics, and then
+  // what reads where they hit: the pointer on the screens in the world
+  world.AddSystem(std::make_unique<neon::RayCasting>(&physics_system));
+  world.AddSystem(std::make_unique<neon::UiSurfacePointing>(&ui_system, ui_system.GetGameInput()));
+
+  // What the extensions bring to the world. They register their components
+  // before the scripts are read, so that a script finds them.
+  extension_host.SetInput(ui_system.GetGameInput());
+  extension_host.SetWorld(&world);
+  extension_host.SetPhysics(&physics_system);
+  extension_host.SetUi(&ui_system);
+  extension_host.SetRender(render_system);
+  extension_host.SetAudio(&audio_system);
+  // an extension that asks the application to close tells the window, as
+  // the pause menu does
+  extension_host.SetWindow(window_system);
+  world.AddSystem(std::make_unique<neon::ExtensionRunning>(&extension_host, &scene.GetComponentFormats()));
+
+  // The game's own code: scripts in Lua anywhere under assets://, which
+  // declare components and systems as the engine's code does. They read
+  // the input the user interface left, and may ask for another scene.
+  neon::Lua_ScriptSystem script_system(&file_system, logging_system.CreateLogger("Lua_ScriptSystem"));
+  script_system.SetJit(settings_config.script_jit);
+  script_system.Initialize();
+  script_system.SetInput(ui_system.GetGameInput());
+  script_system.SetUi(&ui_system);
+  // the settings of the game, which a script reads and hears of
+  script_system.SetSettings(&settings_store);
+  // the volumes of the groups, which a menu of the game sets
+  script_system.SetAudio(&audio_system);
+  script_system.SetWorld(&world);
+  auto script_running = std::make_unique<neon::ScriptRunning>(
+    &script_system,
+    &physics_system,
+    &scene.GetComponentFormats(),
+    "assets://",
+    logging_system.CreateLogger("ScriptRunning"));
+  // an element of the user interface calls a function of the scripts
+  script_running->SetUi(&ui_system);
+  // an extension that needs scripts to run brings them in its own folder
+  for (const auto &folder : extension_host.GetScriptFolders()) { script_running->AddFolder(folder); }
+  world.AddSystem(std::move(script_running));
+
+  // the player, driven by what the user interface left of the input. It
+  // sets the velocity of its body, which the physics moves by
+  world.AddSystem(std::make_unique<neon::FirstPersonControllerSystem>(ui_system.GetGameInput()));
+
+  world.GetFixedClock().SetStepsPerSecond(settings_config.steps_per_second);
+  world.GetFixedClock().SetMostStepsPerFrame(settings_config.most_steps_per_frame);
+  world.AddSystem(std::make_unique<neon::PhysicsSimulation>(
+    &physics_system,
+    &file_system,
+    logging_system.CreateLogger("PhysicsSimulation")));
+
+  // ropes, drawn between their ends where the physics has just placed them
+  world.AddSystem(std::make_unique<neon::RopeDrawing>(logging_system.CreateLogger("RopeDrawing")));
+
+  // the way out of a level, once the physics has said what entered it
+  world.AddSystem(std::make_unique<neon::SceneExiting>(&world));
+
+  // where the entities the command line names are, once in every frame,
+  // for checks that read the log in place of the pixels. Where they are
+  // drawn, so after placing
+  if (!settings_config.logged_entities.empty())
+  {
+    world.AddSystemAfterPlacing(std::make_unique<neon::EntityLogging>(
+      settings_config.logged_entities,
+      &physics_system,
+      logging_system.CreateLogger("EntityLogging")));
+  }
+
+  // The random numbers of the operating system, for the game. The engine
+  // draws none itself, and no option or setting seeds them.
+  neon::OS_Entropy entropy(logging_system.CreateLogger("OS_Entropy"));
+
+  const auto app_logger = logging_system.CreateLogger("NeonEditor");
+
+  neon::Editor app(
+    settings_config,
+    window_system,
+    input_system,
+    render_system,
+    &render_pipeline,
+    &logging_system,
+    &world,
+    app_logger);
+
+  app.SetUiSystem(&ui_system);
+  app.SetEntropy(&entropy);
+  // the sounds that pause with the game are held while a menu is shown
+  app.SetAudio(&audio_system);
+
+  // what the player chooses in the settings menu is kept for the next start
+  neon::PlayerSettings player_settings(&file_system, &yaml, logging_system.CreateLogger("PlayerSettings"));
+  app.SetPlayerSettings(&player_settings);
+  // the rows of the settings menu named after the settings of the game
+  app.SetSettingsStore(&settings_store);
+
+  // The tool interface, drawn with Dear ImGui into the window through the
+  // backends of SDL2 and Vulkan. Without a window there are no tools, and
+  // the editor runs as the runtime does, for the checks. With them, the
+  // viewport looks through the editor's camera, which is handed to the
+  // pipeline after the scene's.
+  std::optional<neon::ImGui_ToolUiSystem> tool_ui;
+  if (!settings_config.headless_renderer)
+  {
+    tool_ui.emplace(
+      &*sdl2_window_system,
+      &*sdl2_input_system,
+      &*vk_render_system,
+      logging_system.CreateLogger("ImGui_ToolUiSystem"));
+    app.SetToolUi(&*tool_ui);
+    world.AddSystemAfterPlacing(std::make_unique<neon::EditorCameraSubmission>(&app.GetCamera(), &render_pipeline));
+  }
+
+  // a script that starts the editor learns from the exit code whether the
+  // run did what it was asked to
+  bool failed = false;
+
+  try
+  {
+    app.Run();
+    failed = app.HasFailed();
+  } catch (const std::exception &e)
+  {
+    app_logger->Critical(e.what());
+    failed = true;
+  }
+
+  // CleanUp is safe to call more than once. Doing it here guarantees the
+  // systems shut down before the file system they depend on.
+  // the extensions reach the store no more once the world is cleaned up
+  extension_host.LeaveWorld();
+  app.CleanUp();
+  script_system.CleanUp();
+  audio_system.CleanUp();
+  physics_system.CleanUp();
+  // after everything that could hold what an extension brought
+  extension_host.CleanUp();
+  file_system.CleanUp();
+
+  return failed ? EXIT_FAILURE : EXIT_SUCCESS;
+}

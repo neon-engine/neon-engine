@@ -28,11 +28,19 @@ namespace neon
     SDL_free(base_path);
 
     _native_separator = application_directory.back();
-    _assets_directory = application_directory + "assets" + _native_separator;
     _engine_directory = application_directory + "engine" + _native_separator;
 
-    // next to the executable as well. The folder need not be there
-    _extensions_directory = application_directory + "extensions" + _native_separator;
+    // The project: next to the executable, as a game is put together, or
+    // the folder the editor was given. The folder of the extensions need
+    // not be there.
+    std::string project_directory = application_directory;
+    if (!_settings_config.project_directory.empty())
+    {
+      project_directory = ProjectDirectoryOf(_settings_config.project_directory);
+      _logger->Info("The project is {}", project_directory);
+    }
+    _assets_directory = project_directory + "assets" + _native_separator;
+    _extensions_directory = project_directory + "extensions" + _native_separator;
 
     _logger->Info("assets:// is {}", _assets_directory);
     _logger->Info("engine:// is {}", _engine_directory);
@@ -57,6 +65,25 @@ namespace neon
 
     _logger->Info("user:// is {}", _user_directory);
     return true;
+  }
+
+  std::string SDL2_FileSystem::ProjectDirectoryOf(const std::string &given) const
+  {
+    // The folder arrives as a native path, relative to the working directory
+    // or absolute, as the output folder does. It is made absolute once, so
+    // that it keeps pointing at the same place. Paths are UTF-8, see
+    // ListDirectory. A folder that is not there is left as it was given:
+    // what is read from it says that it is missing.
+    std::error_code error;
+    std::filesystem::path directory = std::filesystem::absolute(NativePath::FromUtf8(given), error);
+    std::string project_directory = given;
+    if (!error) { project_directory = NativePath::ToUtf8(directory.lexically_normal().make_preferred()); }
+
+    if (project_directory.empty() || project_directory.back() != _native_separator)
+    {
+      project_directory += _native_separator;
+    }
+    return project_directory;
   }
 
   void SDL2_FileSystem::InitializeOutputDirectory()

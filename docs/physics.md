@@ -49,7 +49,7 @@ The scene
 all of them:
 
 ```
-NeonRuntime --scene assets://scenes/physics.scene.yml
+NeonEditor <folder> --scene assets://scenes/physics.scene.yml
 ```
 
 The scene [joints.scene.yml](../tests/game/assets/scenes/joints.scene.yml)
@@ -322,8 +322,8 @@ walked this way, each with the runtime of its project, see
 
 ```
 NeonRuntime
-NeonRuntime --scene assets://scenes/prototype.scene.yml
-NeonRuntime --scene assets://scenes/blockout.scene.yml
+NeonEditor <folder> --scene assets://scenes/prototype.scene.yml
+NeonEditor <folder> --scene assets://scenes/blockout.scene.yml
 ```
 
 ## Shapes

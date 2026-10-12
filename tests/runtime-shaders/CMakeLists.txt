@@ -53,6 +53,8 @@ endforeach ()
 add_custom_target(tinted-shaders DEPENDS ${TINTED_SHADER_OUTPUTS})
 add_dependencies(tinted tinted-shaders)
 
+add_dependencies(neon-tests NeonEditor)
+
 if (NOT CMAKE_CROSSCOMPILING)
   foreach (CASE IN ITEMS
           a-shader-of-an-extension-reads-the-time-and-the-numbers-of-the-game
@@ -60,7 +62,8 @@ if (NOT CMAKE_CROSSCOMPILING)
     add_test(
             NAME "runtime-shaders.${CASE}"
             COMMAND "${CMAKE_COMMAND}"
-            "-DAPPLICATION=${GAME_DIRECTORY}/tinted${CMAKE_EXECUTABLE_SUFFIX}"
+            "-DAPPLICATION=$<TARGET_FILE:NeonEditor>"
+            "-DPROJECT_DIRECTORY=${GAME_DIRECTORY}"
             "-DDIRECTORY=${NEON_TESTS_DIRECTORY}/runtime-shaders/${CASE}"
             "-DCASE=${CASE}"
             "-DPIXEL_PROBE=$<TARGET_FILE:pixel-probe>"

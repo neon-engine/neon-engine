@@ -81,10 +81,10 @@ menu with everything that can be typed and chosen. Each is shown in two
 ways:
 
 ```
-NeonRuntime --ui assets://ui/hud.ui.yml
-NeonRuntime --scene assets://scenes/hud-demo.scene.yml
-NeonRuntime --ui engine://ui/settings.ui.yml
-NeonRuntime --scene assets://scenes/settings-demo.scene.yml
+NeonEditor <folder> --ui assets://ui/hud.ui.yml
+NeonEditor <folder> --scene assets://scenes/hud-demo.scene.yml
+NeonEditor <folder> --ui engine://ui/settings.ui.yml
+NeonEditor <folder> --scene assets://scenes/settings-demo.scene.yml
 ```
 
 The second is a scene that names its user interface, as a component:
@@ -1083,7 +1083,7 @@ The scene of the tests is
 [surface-demo.scene.yml](../tests/game/assets/scenes/surface-demo.scene.yml):
 
 ```
-NeonRuntime --scene assets://scenes/surface-demo.scene.yml
+NeonEditor <folder> --scene assets://scenes/surface-demo.scene.yml
 ```
 
 ### What a camera sees

@@ -49,11 +49,13 @@ cmake --build --preset macos-arm64-release
 ./bin/release/darwin-arm64/museum/museum
 ```
 
-A build preset builds NeonRuntime and the projects next to it, the sandbox,
-the bench, and the museum, each put together under
+A build preset builds NeonRuntime, NeonEditor, and the projects next to
+them, the sandbox, the bench, and the museum, each put together under
 `bin/<build>/<platform>/<name>/`. NeonRuntime ships no game of its own, so
 `bin/<build>/<platform>/NeonRuntime/NeonRuntime` started by itself says so
-and stops; the sandbox is the project to try the engine with.
+and stops; the sandbox is the project to try the engine with. NeonEditor
+opens a project folder, `bin/<build>/<platform>/NeonEditor/NeonEditor
+bin/<build>/<platform>/sandbox`, see [editor.md](editor.md).
 
 | Option | What it does | Default |
 |---|---|---|
@@ -259,7 +261,7 @@ A run without a window checks the renderer alone, and is what to try when
 the window does not open:
 
 ```
-.\NeonRuntime.exe --headless-renderer --frames 3 --output-dir shots --screenshot output://frame.png
+.\NeonEditor\NeonEditor.exe sandbox --headless-renderer --frames 3 --output-dir shots --screenshot output://frame.png
 ```
 
 It writes `shots\frame.png` in the current folder and exits with 0.
@@ -311,8 +313,9 @@ the configure step again.
 
 Every option, with the application that owns it, is listed in
 [command-line.md](command-line.md). The first two groups are the runtime's
-own; the `Editor` group is the editor's set, which NeonRuntime registers
-only until NeonEditor exists.
+own, and all NeonRuntime has; the `Editor` group is the editor's set, which
+NeonEditor registers next to the first two, after the folder of the project
+it opens: `NeonEditor FOLDER [options]`.
 
 ```
 Usage: NeonRuntime [options]
@@ -361,10 +364,12 @@ A switch is written as `--name`. An option with a value is written as
 `--name value` or `--name=value`.
 
 Together the development options render a scene without a window and save the
-result, which is how the renderer is checked on a machine with no display:
+result, which is how the renderer is checked on a machine with no display.
+They are the editor's, so it is NeonEditor that is started, on the folder of
+a project:
 
 ```bash
-NeonRuntime --headless-renderer --frames 3 --output-dir /some/where --screenshot output://frame.png
+NeonEditor bin/debug/darwin-arm64/sandbox --headless-renderer --frames 3 --output-dir /some/where --screenshot output://frame.png
 ```
 
 This writes `/some/where/frame.png`.
@@ -396,7 +401,7 @@ With `--screenshot-at`, each file carries the number of its frame in front of
 its extension, with at least four digits:
 
 ```bash
-NeonRuntime --headless-renderer --output-dir shots --screenshot output://frame.png --screenshot-at 1,30,60
+NeonEditor <folder> --headless-renderer --output-dir shots --screenshot output://frame.png --screenshot-at 1,30,60
 ```
 
 This writes `shots/frame-0001.png`, `shots/frame-0030.png`, and
@@ -453,7 +458,7 @@ place of the pixels of a frame. It names entities by their paths from the
 top of the world, as a scene names them, with commas between them:
 
 ```bash
-NeonRuntime --headless-renderer --time-step 0.05 --frames 60 --scene assets://scenes/prototype.scene.yml --input "1: hold-key w 20" --log-entity player,walker
+NeonEditor <folder> --headless-renderer --time-step 0.05 --frames 60 --scene assets://scenes/prototype.scene.yml --input "1: hold-key w 20" --log-entity player,walker
 ```
 
 Every frame logs a line for each of them at Info level, in the order they
@@ -489,9 +494,8 @@ it works the same with any backend.
 
 Each set of options is owned by one application and registered by it, see
 [command-line.md](command-line.md). The runtime owns `RuntimeOptions` and
-`DisplayOptions`; the editor owns `EditorOptions`. Until NeonEditor exists,
-NeonRuntime registers the editor's set too. The editor will then register
-the runtime's sets plus its own, and the runtime only its own.
+`DisplayOptions`; the editor owns `EditorOptions`. NeonEditor registers the
+runtime's sets plus its own, and NeonRuntime only its own (#310).
 
 | Piece | Location | Role |
 |---|---|---|
@@ -510,9 +514,11 @@ neon::RuntimeOptions runtime_options;
 runtime_options.Register(command_line);
 neon::DisplayOptions display_options;
 display_options.Register(command_line);
-// until NeonEditor exists, the runtime registers the editor's set too
-neon::EditorOptions editor_options;
-editor_options.Register(command_line);
+// NeonEditor registers the editor's set as well, after the one argument
+// without dashes it takes, the folder of the project:
+//   command_line.SetArgument("FOLDER", "The folder of the project to open");
+//   neon::EditorOptions editor_options;
+//   editor_options.Register(command_line);
 
 if (!command_line.Parse(argc, argv)) { /* print GetError() and GetHelp() */ }
 if (command_line.WantsHelp()) { /* print GetHelp() */ }
@@ -799,8 +805,8 @@ ctest --preset macos-arm64-debug
 ```
 
 Tests are never part of the default build, and never part of a library or an
-application. `cmake --build --preset macos-arm64-debug` builds NeonRuntime and
-the projects of `projects/`, the bench and the museum, and no test.
+application. `cmake --build --preset macos-arm64-debug` builds NeonRuntime,
+NeonEditor, and the projects of `projects/`, the bench and the museum, and no test.
 
 ### Where tests are stored
 
@@ -832,13 +838,13 @@ Where the paper and the repository differ, the repository stays as it is:
 | Sources are in a folder named after the project, `neon/` | The same, once for every library: `lib/neon-core/neon/`, `lib/neon-sdl2/neon/`, and so on. The libraries share the `neon` namespace and its include paths |
 | Executables of tests are named after the file they test | Named after the library and the file, such as `neon-core.command-line.test`, since the libraries are built in one project and two of them may have a file of the same name |
 | Says nothing about mocks | Shared mocks and fakes are headers in `lib/neon-core/neon/testing/` |
-| Functional tests are programs in `tests/` | Three of the five are CMake scripts that start NeonRuntime, since that is what they test |
+| Functional tests are programs in `tests/` | Most are CMake scripts that start NeonRuntime or NeonEditor, since that is what they test. Those that render start NeonEditor on the game of the tests, since the options that render without a window are the editor's |
 
 ### Building and running
 
 | Command | What it does |
 |---|---|
-| `cmake --build --preset <preset>-tests` | Builds every test, and NeonRuntime for the tests that start it |
+| `cmake --build --preset <preset>-tests` | Builds every test, and NeonRuntime and NeonEditor for the tests that start them |
 | `cmake --build --preset <preset> --target neon-tests` | The same |
 | `cmake --build --preset <preset> --target <test>` | Builds one test |
 | `ctest --preset <preset>` | Runs every test |
@@ -998,8 +1004,9 @@ what it left behind.
 | neon-vulkan | `render/vk-shader-data` | 8 | Where every field lies that the shaders read |
 | neon-vulkan | `render/vk-texture` | 7 | Textures that cannot be used |
 | `tests/` | `world-with-flecs` | 16 | The world as an application puts it together, with the store of Flecs and the forward pipeline |
-| `tests/` | `runtime-command-line` | 11 | NeonRuntime with a command line it refuses: exit code and message |
-| `tests/` | `runtime-headless` | 8 | NeonRuntime without a window: exit code, the images it saved, with and without a user interface, and the lines that say where the entities it was asked to log are |
+| `tests/` | `runtime-command-line` | 8 | NeonRuntime with a command line it refuses: exit code and message, and that the editor's options are not its own |
+| `tests/` | `editor-command-line` | 12 | NeonEditor with a command line it refuses, and without a project folder |
+| `tests/` | `runtime-headless` | 25 | NeonEditor without a window, on the game of the tests: exit code, the images it saved, with and without a user interface, and the lines that say where the entities it was asked to log are |
 | `tests/` | `user-interface` | 300 | UI recipes through the whole user interface: every element, every message for a file that is wrong, layout in frames of several sizes, values, input, focus, events, and what is drawn |
 | `tests/` | `physics-with-jolt` | 27 | The physics as an application puts it together, with Flecs, Jolt, and a scene recipe. The same state after the same steps at every frame rate, and the line the log has for every body |
 | `tests/` | `extensions` | 42 | Extensions as an application finds and starts them: eleven small ones built next to the test, in C and in C++, opened through SDL2; one that refuses, one of a later version, one of an earlier, a library that is none; a component registered, read from a recipe, set, and queried in a store of Flecs; systems in C and in C++ run per frame, per step, and between; an entity moved by the input through the fields of its Transform, a file read, a prefab spawned, a scene asked for; what touched what told to a system, and a ray cast; a field of the engine read and written in place, values of the user interface, a prefab spawned at a place; structs that are not what they describe, and calls at the wrong time; and every message of a recipe, from memory. See [extensions.md](extensions.md) |

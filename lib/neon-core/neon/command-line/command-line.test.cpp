@@ -587,3 +587,56 @@ namespace
     EXPECT_EQ(command_line.GetHelp(), before);
   }
 }
+
+namespace
+{
+  /// A command line that accepts one argument without dashes, as the
+  /// editor accepts the folder of a project.
+  class CommandLineArgumentTest : public ::testing::Test
+  {
+  protected:
+    CommandLine _command_line{"editor", "Opens a folder."};
+
+    void SetUp() override
+    {
+      _command_line.Add({.name = "scene", .value_name = "PATH", .description = "A scene"});
+      _command_line.SetArgument("FOLDER", "The folder to open");
+    }
+  };
+
+  TEST_F(CommandLineArgumentTest, TakesTheArgumentWhereverItStands)
+  {
+    EXPECT_TRUE(Parse(_command_line, {"--scene", "a.yml", "projects/sandbox"}));
+    EXPECT_EQ(_command_line.GetArgument(), "projects/sandbox");
+    EXPECT_EQ(_command_line.GetValue("scene"), "a.yml");
+
+    EXPECT_TRUE(Parse(_command_line, {"projects/sandbox", "--scene", "a.yml"}));
+    EXPECT_EQ(_command_line.GetArgument(), "projects/sandbox");
+  }
+
+  TEST_F(CommandLineArgumentTest, LeavesTheArgumentEmptyWhenNoneIsGiven)
+  {
+    EXPECT_TRUE(Parse(_command_line, {"--scene", "a.yml"}));
+    EXPECT_EQ(_command_line.GetArgument(), "");
+  }
+
+  TEST_F(CommandLineArgumentTest, RefusesASecondArgument)
+  {
+    EXPECT_FALSE(Parse(_command_line, {"one", "two"}));
+    EXPECT_THAT(_command_line.GetError(), HasSubstr("'two' is not an option, and the FOLDER was given already: 'one'"));
+  }
+
+  TEST_F(CommandLineArgumentTest, NamesTheArgumentInTheHelp)
+  {
+    EXPECT_THAT(_command_line.GetHelp(), HasSubstr("Usage: editor FOLDER [options]"));
+    EXPECT_THAT(_command_line.GetHelp(), HasSubstr("FOLDER"));
+    EXPECT_THAT(_command_line.GetHelp(), HasSubstr("The folder to open"));
+  }
+
+  TEST(CommandLineWithoutArgument, RefusesAnArgumentWithoutDashes)
+  {
+    CommandLine command_line{"program", ""};
+    EXPECT_FALSE(Parse(command_line, {"scene.yml"}));
+    EXPECT_THAT(command_line.GetError(), HasSubstr("'scene.yml' is not an option. Options start with two dashes"));
+  }
+}

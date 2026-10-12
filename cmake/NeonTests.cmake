@@ -119,10 +119,13 @@ endfunction()
 # Declares tests that start an application as a user would, and look at what
 # it printed, what it wrote, and the exit code. The script is run by CMake,
 # once for every case, with these variables set:
-#   APPLICATION  the executable. With PROJECT, the one of that project, a
-#                target of neon_add_project, where it is put together and
-#                under the name of the project: the application then runs
-#                that project and reads its assets
+#   APPLICATION  the executable. With PROJECT, a target of neon_add_project,
+#                the application runs that project and reads its assets:
+#                NeonRuntime as the copy that is put together with the
+#                project, under the name of the project, and any other
+#                application, as NeonEditor, as it was built, given the
+#                folder of the project as its first argument, see run() of
+#                run-application.cmake
 #   DIRECTORY    a folder for what the run writes, empty at the start
 #   CASE         the name of the case
 # and for each of the TOOLS, the executable under its name in capitals with
@@ -139,10 +142,15 @@ function(neon_add_application_test NAME APPLICATION SCRIPT)
   add_dependencies(neon-tests ${APPLICATION})
 
   set(APPLICATION_FILE "$<TARGET_FILE:${APPLICATION}>")
+  set(PROJECT_DEFINITION)
   if (TEST_PROJECT)
     add_dependencies(neon-tests ${TEST_PROJECT})
-    set(APPLICATION_FILE
-            "$<TARGET_PROPERTY:${TEST_PROJECT},NEON_PROJECT_DIRECTORY>/${TEST_PROJECT}${CMAKE_EXECUTABLE_SUFFIX}")
+    if (APPLICATION STREQUAL "NeonRuntime")
+      set(APPLICATION_FILE
+              "$<TARGET_PROPERTY:${TEST_PROJECT},NEON_PROJECT_DIRECTORY>/${TEST_PROJECT}${CMAKE_EXECUTABLE_SUFFIX}")
+    else ()
+      set(PROJECT_DEFINITION "-DPROJECT_DIRECTORY=$<TARGET_PROPERTY:${TEST_PROJECT},NEON_PROJECT_DIRECTORY>")
+    endif ()
   endif ()
 
   set(TOOL_DEFINITIONS)
@@ -163,6 +171,7 @@ function(neon_add_application_test NAME APPLICATION SCRIPT)
             "-DAPPLICATION=${APPLICATION_FILE}"
             "-DDIRECTORY=${NEON_TESTS_DIRECTORY}/${NAME}/${CASE}"
             "-DCASE=${CASE}"
+            ${PROJECT_DEFINITION}
             ${TOOL_DEFINITIONS}
             -P "${CMAKE_CURRENT_SOURCE_DIR}/${SCRIPT}"
     )

@@ -1,4 +1,4 @@
-# Starts NeonRuntime without a window, lets it render its scene, and looks at
+# Starts NeonEditor without a window, lets it render its scene, and looks at
 # the exit code and at the images it saved.
 
 include("${CMAKE_CURRENT_LIST_DIR}/../../cmake/scripts/run-application.cmake")
@@ -127,15 +127,14 @@ elseif (CASE STREQUAL "game-file-next-to-the-runtime")
   # with a game.yml written from its project next to its project.yml. The
   # game is what runs, and it starts the scene the game names, not the
   # project's
-  get_filename_component(PROJECT_DIRECTORY "${APPLICATION}" DIRECTORY)
-  get_filename_component(EXECUTABLE "${APPLICATION}" NAME)
-  file(COPY "${PROJECT_DIRECTORY}/assets" "${PROJECT_DIRECTORY}/engine" "${PROJECT_DIRECTORY}/${EXECUTABLE}"
-          DESTINATION "${DIRECTORY}/game")
+  # the editor opens the copy, as it opens any project folder, since the
+  # runtime a player gets takes no --frames or --screenshot (#310)
+  file(COPY "${PROJECT_DIRECTORY}/assets" DESTINATION "${DIRECTORY}/game")
   file(WRITE "${DIRECTORY}/game/assets/game.yml"
           "version: 1\nname: neon-built-game\n\nscenes:\n  - assets://scenes/hud-demo.scene.yml\n  - assets://scenes/prototype.scene.yml\n\n"
           "graphics_presets:\n  potato:\n    anisotropy: 1\n    shadow_cascades: 1\n  ultra: off\n\n"
           "settings:\n  spin_speed:\n    kind: number\n    default: 90\n  greeting:\n    kind: text\n    default: hello\n")
-  set(APPLICATION "${DIRECTORY}/game/${EXECUTABLE}")
+  set(PROJECT_DIRECTORY "${DIRECTORY}/game")
   run_headless(--frames 2 --output-dir shots --screenshot output://frame.png --quality potato)
 else ()
   message(FATAL_ERROR "There is no case '${CASE}'")

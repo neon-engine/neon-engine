@@ -6,8 +6,8 @@ what is still open.
 **Current decision:** a project is a folder with a `project.yml` at its root.
 It is the author's file: what the editor and the exporter read. The runtime
 runs one project today, the folder that `assets://` stands for, which the
-build puts next to the executable, since there is no editor and no exporter
-yet and the runtime is the player the editor will grow into or wrap. A
+build puts next to the executable; the editor opens the folder of a project
+it is given, see [editor.md](editor.md). There is no exporter yet. A
 built game carries [game.yml](#gameyml) in its place, what the export makes
 of the project, and a runtime reads that first.
 The file says what the project is called, who makes it, which scenes it
@@ -307,8 +307,9 @@ working, is in [new-projects.md](new-projects.md).
   button or an exit says `level-2` in place of a path, and the icon of the
   window are likely to come here. Each is added when its feature does, as
   `input` was with the input maps.
-- **A shipped runtime** (#143) runs only its project. `--scene` and the other
-  options that load content are then for the editor.
+- **A shipped runtime** (#143, #310) runs only its project: `--scene` and
+  the other options that load content are the editor's, and NeonRuntime
+  refuses them.
 
 ## A project with code in C++
 

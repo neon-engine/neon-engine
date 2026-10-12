@@ -112,6 +112,10 @@ namespace neon
 
     AxisState _wheel;
     bool _wheel_is_precise = false;
+
+    // how far the mouse moved in the frame, every motion of it added up,
+    // and forgotten with the frame
+    AxisState _mouse_motion;
     AxisState _right_stick;
 
     // kept from frame to frame, as where the pointer is
@@ -213,6 +217,24 @@ namespace neon
     [[nodiscard]] const AxisState &GetWheel() const
     {
       return _wheel;
+    }
+
+    /// Adds a motion of the mouse to what it moved in the frame, in pixels
+    /// to the right and down. The axis Axis::Mouse keeps the last motion
+    /// for the actions of the map; this is the whole of the frame, for
+    /// what turns by how far the mouse went, and it is zero in a frame
+    /// without a motion, see Reset().
+    void AddMouseMotion(const double x, const double y)
+    {
+      _mouse_motion.x += x;
+      _mouse_motion.y += y;
+    }
+
+    /// How far the mouse moved in the frame, in pixels to the right and
+    /// down. Zero while it rests.
+    [[nodiscard]] const AxisState &GetMouseMotion() const
+    {
+      return _mouse_motion;
     }
 
     [[nodiscard]] bool IsWheelPrecise() const
@@ -456,6 +478,7 @@ namespace neon
       _text.clear();
       _wheel = {};
       _wheel_is_precise = false;
+      _mouse_motion = {};
       _right_stick = {};
       _left_stick = {};
       _left_trigger = 0.0;

@@ -46,7 +46,7 @@ The runtime starts with the entry scene of its project, see
 [projects.md](projects.md). Another one is chosen with `--scene`:
 
 ```
-NeonRuntime --scene assets://scenes/other.scene.yml
+NeonEditor <folder> --scene assets://scenes/other.scene.yml
 ```
 
 ### At the top
@@ -416,10 +416,12 @@ build puts together next to a copy of the runtime:
 | [projects/sandbox](../projects/sandbox) | [start.scene.yml](../projects/sandbox/assets/scenes/start.scene.yml), a box on a floor, which the engine is tried out with | `cmake --build --preset macos-arm64-debug`, then `bin/debug/darwin-arm64/sandbox/sandbox` |
 | [projects/museum](../projects/museum) | [The museum](#the-museum) | `cmake --build --preset macos-arm64-debug`, then `bin/debug/darwin-arm64/museum/museum` |
 | [projects/bench](../projects/bench) | Scenes that measure the engine | See its [README.md](../projects/bench/README.md) |
-| [tests/game](../tests/game) | Every scene the tests start the runtime with, and what those scenes show | `cmake --build --preset macos-arm64-debug-tests`, then `build/macos-arm64-debug/tests/game/test-game --scene assets://scenes/physics.scene.yml` |
+| [tests/game](../tests/game) | Every scene the tests start the runtime with, and what those scenes show | `cmake --build --preset macos-arm64-debug-tests`, then `bin/debug/darwin-arm64/NeonEditor/NeonEditor build/macos-arm64-debug/tests/game --scene assets://scenes/physics.scene.yml` |
 
-Where these notes write `NeonRuntime --scene assets://scenes/...` for a scene
-of the tests, it is the runtime of `tests/game` that is meant. What the
+Where these notes write `NeonEditor <folder> --scene assets://scenes/...`,
+`<folder>` is the folder of the project the scene belongs to, see
+[editor.md](editor.md); for a scene of the tests it is `tests/game` of the
+build folder. What the
 scenes of the tests show is built by the engine as `Geometry`, or is a small
 file that a script of `tools/` writes; nothing in the repository was taken
 from elsewhere but the fonts, see

@@ -8,7 +8,8 @@ file(MAKE_DIRECTORY "${DIRECTORY}")
 # run(<argument>...)
 #
 # Starts the application in the folder of the test. Sets EXIT_CODE, and OUTPUT
-# to everything it printed.
+# to everything it printed. With PROJECT_DIRECTORY, the folder of the project
+# is the first argument, as NeonEditor takes it.
 #
 # The application is given RUN_TIMEOUT seconds, 60 unless the script says
 # otherwise before calling run(), and is killed after that: a check of a few
@@ -23,11 +24,16 @@ if (NOT DEFINED RUN_TIMEOUT)
 endif ()
 
 function(run)
+  set(PROJECT_ARGUMENT)
+  if (PROJECT_DIRECTORY)
+    set(PROJECT_ARGUMENT "${PROJECT_DIRECTORY}")
+  endif ()
+
   execute_process(
           COMMAND "${CMAKE_COMMAND}" -E env
           "XDG_DATA_HOME=${DIRECTORY}/home/data"
           "CFFIXED_USER_HOME=${DIRECTORY}/home"
-          "${APPLICATION}" ${ARGN}
+          "${APPLICATION}" ${PROJECT_ARGUMENT} ${ARGN}
           WORKING_DIRECTORY "${DIRECTORY}"
           TIMEOUT "${RUN_TIMEOUT}"
           RESULT_VARIABLE RESULT

@@ -36,6 +36,10 @@ namespace neon
   /// placing sees every entity where it is drawn in this frame.
   class EntityWorld final : public WorldSystem
   {
+    // whether the pointer is taken when the world starts, see
+    // SetCapturesPointer()
+    bool _captures_pointer = true;
+
     EntityStore *_store;
     Scene *_scene;
 
@@ -122,6 +126,12 @@ namespace neon
     /// parent that is not alive are refused and said in the log. See
     /// WorldSystem::Spawn.
     Entity Spawn(const std::string &path, Entity parent, const DataValue &overrides) override;
+
+    /// Whether the world takes the pointer when it starts, hidden and held
+    /// in the window, as a game does. The editor leaves it free, so that
+    /// its tools are clicked; a game it plays takes it then (#569). Call
+    /// it before Initialize().
+    void SetCapturesPointer(bool captures);
 
     void Initialize() override;
 

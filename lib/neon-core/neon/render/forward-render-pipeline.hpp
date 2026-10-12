@@ -28,6 +28,10 @@ namespace neon
     std::map<std::string, int> _targets;
     bool _warned_about_name = false;
 
+    // the target the camera of the window draws into in place of the
+    // frame, see SetFrameTarget()
+    int _frame_target = -1;
+
     /// The target a camera draws into, made when it is first asked for.
     [[nodiscard]] int TargetOf(const CameraInfo &camera);
 
@@ -38,6 +42,8 @@ namespace neon
       const std::shared_ptr<Logger> &logger);
 
     void SetCameraInfo(const CameraInfo &camera_info) override;
+
+    void SetFrameTarget(int target) override;
 
     void EnqueueForRendering(
       int render_object_id,

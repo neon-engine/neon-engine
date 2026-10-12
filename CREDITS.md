@@ -41,6 +41,12 @@ SDL2 holds hidapi, which is under one of three licenses to be chosen: GPL 3,
 BSD, or its original license. The BSD one is the one to take,
 `external/sdl2/src/hidapi/LICENSE-bsd.txt`.
 
+## Libraries that are part of NeonEditor and not of NeonRuntime
+
+| Library | Version | Used for | License | Text |
+|---|---|---|---|---|
+| [Dear ImGui](https://github.com/ocornut/imgui), with files of stb inside it | 1.93.0 WIP, the docking branch, commit 778992f | The tool interface of the editor, see [docs/editor.md](docs/editor.md) | MIT; the files of stb MIT or public domain, MIT is taken | `external/imgui/LICENSE.txt` |
+
 ## Libraries that are in the repository and not part of NeonRuntime
 
 | Library | Version | Used for | License | Text |

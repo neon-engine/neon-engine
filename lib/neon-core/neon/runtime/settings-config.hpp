@@ -251,6 +251,14 @@ struct SettingsConfig
   /// path in it is rejected.
   std::string output_directory;
 
+  /// Native folder of the project that is opened, as it was given on the
+  /// command line of the editor: the folder that holds `assets/` and
+  /// `extensions/`. `assets://` and `extensions://` are its folders then,
+  /// and `engine://` stays next to the executable. Empty, which is what
+  /// the runtime has, finds all three next to the executable. As
+  /// `output_directory`, it is read by a file system backend alone.
+  std::string project_directory;
+
   /// Seconds the application advances in every frame, whatever time the
   /// frame took. The same run then gives the same frames on every machine.
   /// 0 advances by the time that was measured. Without a window there is

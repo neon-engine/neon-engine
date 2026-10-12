@@ -5,7 +5,7 @@
 # frame of that light. A smaller map with hard edges shadows the floor the
 # same. Needs a graphics card with a Vulkan driver. On a machine without
 # one the tests are skipped, they do not fail.
-neon_add_application_test(runtime-shadows NeonRuntime run.cmake
+neon_add_application_test(runtime-shadows NeonEditor run.cmake
         PROJECT test-game
         TOOLS
         pixel-probe

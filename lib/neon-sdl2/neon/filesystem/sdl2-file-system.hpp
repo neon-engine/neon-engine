@@ -17,6 +17,10 @@ namespace neon
     /// `output://`, and creates it when it is missing.
     void InitializeOutputDirectory();
 
+    /// The native folder of the project, ending with a native separator,
+    /// from what the command line gave.
+    [[nodiscard]] std::string ProjectDirectoryOf(const std::string &given) const;
+
   public:
     explicit SDL2_FileSystem(const SettingsConfig &settings_config, const std::shared_ptr<Logger> &logger)
       : FileSystem(settings_config, logger) {}

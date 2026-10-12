@@ -107,6 +107,18 @@ namespace
     EXPECT_EQ(_logger->Count(LogLevel::Error), 0u);
   }
 
+  TEST_F(InputStateTest, TheMotionOfTheFrameAddsUpAndGoesWithTheFrame)
+  {
+    _state.AddMouseMotion(3.0, -1.0);
+    _state.AddMouseMotion(2.0, 4.0);
+    EXPECT_EQ(_state.GetMouseMotion().x, 5.0);
+    EXPECT_EQ(_state.GetMouseMotion().y, 3.0);
+
+    _state.Reset();
+    EXPECT_EQ(_state.GetMouseMotion().x, 0.0);
+    EXPECT_EQ(_state.GetMouseMotion().y, 0.0);
+  }
+
   TEST_F(InputStateTest, MouseMotionReplacesTheOneBefore)
   {
     _state.SetAxisMotion(Axis::Mouse, 12.5, -3.0);

@@ -462,4 +462,56 @@ namespace
 
     EXPECT_EQ(_renderer.skies.size(), 1u);
   }
+
+  TEST_F(ForwardRenderPipelineCamerasTest, TheCameraOfTheWindowDrawsIntoTheTargetThatStandsInForTheFrame)
+  {
+    const int viewport = _renderer.CreateRenderTarget("editor-viewport", 320, 200);
+    _pipeline.SetFrameTarget(viewport);
+    _pipeline.SetSky(SkyInfo{});
+
+    Frame({Window(1), Into("mirror", 5)}, {7, 8});
+
+    // into the texture of its camera, then into the viewport in place of
+    // the window, and the sky with it; the viewport is ended afterwards
+    ASSERT_EQ(_renderer.drawn.size(), 4u);
+    EXPECT_EQ(_renderer.drawn[2].target, viewport);
+    EXPECT_EQ(_renderer.drawn[3].target, viewport);
+    EXPECT_FLOAT_EQ(_renderer.drawn[2].view[3].x, 1);
+    ASSERT_EQ(_renderer.skies.size(), 2u);
+    EXPECT_EQ(_renderer.skies[1].target, viewport);
+    EXPECT_EQ(_renderer.current, -1);
+    EXPECT_EQ(_renderer.targets[viewport].begun, 1);
+
+    // the camera sees as much as the viewport is wide, not the window
+    const float aspect = _renderer.drawn[2].projection[1][1] / _renderer.drawn[2].projection[0][0];
+    EXPECT_NEAR(aspect, 320.0f / 200.0f, 0.001f);
+  }
+
+  TEST_F(ForwardRenderPipelineCamerasTest, WithoutATargetForTheFrameTheWindowIsDrawnAgain)
+  {
+    const int viewport = _renderer.CreateRenderTarget("editor-viewport", 320, 200);
+    _pipeline.SetFrameTarget(viewport);
+    Frame({Window(1)}, {7});
+    ASSERT_EQ(_renderer.drawn.size(), 1u);
+    EXPECT_EQ(_renderer.drawn[0].target, viewport);
+
+    _pipeline.SetFrameTarget(-1);
+    Frame({Window(1)}, {7});
+    ASSERT_EQ(_renderer.drawn.size(), 1u);
+    EXPECT_EQ(_renderer.drawn[0].target, -1);
+  }
+
+  TEST_F(ForwardRenderPipelineCamerasTest, ATargetForTheFrameThatIsGoneDrawsNothingAndDropsTheFrame)
+  {
+    _pipeline.SetFrameTarget(42);
+
+    Frame({Window(1)}, {7});
+
+    EXPECT_TRUE(_renderer.drawn.empty());
+
+    // nothing of that frame is left for the next
+    _pipeline.SetFrameTarget(-1);
+    Frame({Window(1)}, {});
+    EXPECT_TRUE(_renderer.drawn.empty());
+  }
 }

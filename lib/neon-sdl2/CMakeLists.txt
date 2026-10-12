@@ -13,6 +13,7 @@ add_library(${TARGET} STATIC
         neon/window/sdl2-window-system.hpp
         neon/input/sdl2-input-system.cpp
         neon/input/sdl2-input-system.hpp
+        neon/input/sdl2-event-listener.hpp
 )
 neon_warnings(${TARGET})
 

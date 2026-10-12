@@ -58,6 +58,18 @@ namespace neon::testing
 
     MOCK_METHOD(bool, SetImage, (const std::string &name, const ImagePixels &pixels), (override));
 
+    MOCK_METHOD(int, CreateRenderTarget, (const std::string &name, int width, int height), (override));
+    MOCK_METHOD(
+      int,
+      CreateRenderTarget,
+      (const std::string &name, int width, int height, const RenderTargetOptions &options),
+      (override));
+    MOCK_METHOD(void, DestroyRenderTarget, (int target), (override));
+    MOCK_METHOD(int, FindRenderTarget, (const std::string &name), (override));
+    MOCK_METHOD(bool, GetRenderTargetSize, (int target, int &width, int &height), (override));
+    MOCK_METHOD(bool, BeginRenderTarget, (int target, const Color &clear), (override));
+    MOCK_METHOD(void, EndRenderTarget, (), (override));
+
     MOCK_METHOD(void, SetShaderTime, (double seconds, double delta), (override));
     MOCK_METHOD(
       void,

@@ -4,7 +4,7 @@
 # with a Vulkan driver. On a machine without one the tests are skipped, they
 # do not fail.
 
-neon_add_application_test(runtime-culling NeonRuntime run.cmake
+neon_add_application_test(runtime-culling NeonEditor run.cmake
         PROJECT test-game
         TOOLS
         pixel-probe

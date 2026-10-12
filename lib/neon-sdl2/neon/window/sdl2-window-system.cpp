@@ -486,13 +486,12 @@ namespace neon
 
   void SDL2_WindowSystem::SetWindowFocus(const bool focus)
   {
-    if (focus)
-    {
-      SDL_SetWindowGrab(_window, SDL_TRUE);
-    } else
-    {
-      SDL_SetWindowGrab(_window, SDL_FALSE);
-    }
+    // The window is told of its focus and holds nothing by it: the pointer
+    // is held in the window only while the input has taken it, which is
+    // the game's choice, see SDL2_InputSystem::CenterAndHideCursor(). An
+    // editor's window lets the pointer leave as every window does (#587).
+    const std::string what = focus ? "has" : "lost";
+    _logger->Trace("The window {} the focus", what);
   }
 
   WindowSize SDL2_WindowSystem::GetDrawableSize()

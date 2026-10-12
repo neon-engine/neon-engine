@@ -51,6 +51,15 @@ namespace neon
 
     virtual void SetCameraInfo(const CameraInfo& camera_info) = 0;
 
+    /// Has the camera of the window draw into a render target of the
+    /// renderer in place of the frame, from the next frame on: what the
+    /// camera sees is then shown wherever the target is, as in a window
+    /// of the editor, and the frame is left to what is drawn after. The
+    /// cameras that draw into a texture of their own go on as before.
+    /// No_Render_Target draws into the frame again. A pipeline that leaves
+    /// this as it is draws into the frame.
+    virtual void SetFrameTarget(int target) {}
+
     virtual void EnqueueForRendering(
       int render_object_id,
       const Transform &local_transform) = 0;

@@ -117,7 +117,12 @@ namespace neon
     _initialized = true;
 
     _logger->Info("Initialized the world!");
-    _input_context->CenterAndHideCursor();
+    if (_captures_pointer) { _input_context->CenterAndHideCursor(); }
+  }
+
+  void EntityWorld::SetCapturesPointer(const bool captures)
+  {
+    _captures_pointer = captures;
   }
 
   void EntityWorld::LoadScene(const std::string &file_path)

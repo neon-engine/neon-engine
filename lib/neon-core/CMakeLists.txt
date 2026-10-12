@@ -151,6 +151,14 @@ add_library(${TARGET} STATIC
         neon/command-line/editor-options.cpp
         neon/command-line/editor-options.hpp
 
+        # the interface of the tools, which the editor draws its windows
+        # with; neon-imgui is the backend
+        neon/tool-ui/tool-ui-context.hpp
+        neon/tool-ui/tool-ui-dock-layout.hpp
+        neon/tool-ui/tool-ui-size.hpp
+        neon/tool-ui/tool-ui-system.hpp
+        neon/logging/log-history-sink.hpp
+
         # common
         neon/common/data-buffer.hpp
         neon/common/shared-ids.hpp
@@ -510,6 +518,7 @@ if (NEON_BUILD_TESTS)
           neon/testing/recording-logger.hpp
           neon/testing/temporary-directory.hpp
           neon/testing/fake-text-shaper.hpp
+          neon/testing/recording-tool-ui.hpp
           neon/testing/fake-images.hpp
   )
 
@@ -540,6 +549,7 @@ neon_add_unit_test(${TARGET} neon/command-line/display-options.test.cpp)
   neon_add_unit_test(${TARGET} neon/ui/ui-timing.test.cpp)
   neon_add_unit_test(${TARGET} neon/window/window-metrics.test.cpp)
   neon_add_unit_test(${TARGET} neon/command-line/command-line.test.cpp)
+  neon_add_unit_test(${TARGET} neon/logging/log-history-sink.test.cpp)
   neon_add_unit_test(${TARGET} neon/reflection/entity-fields.test.cpp)
   neon_add_unit_test(${TARGET} neon/reflection/field-documents.test.cpp)
   neon_add_unit_test(${TARGET} neon/reflection/type-info.test.cpp)

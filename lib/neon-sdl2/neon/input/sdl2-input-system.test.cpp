@@ -452,6 +452,38 @@ namespace
     EXPECT_TRUE(Frame().HasPointer());
   }
 
+  TEST_F(SDL2InputSystemTest, HoldsThePointerInTheWindowOnlyWhileItIsTaken)
+  {
+    // a window with the focus, as the editor's, lets the pointer leave
+    EXPECT_FALSE(SDL_GetWindowGrab(_window));
+
+    // a game that takes the pointer holds it, also when the focus comes
+    // back, and lets it go when it shows the pointer again
+    _input->CenterAndHideCursor();
+    EXPECT_TRUE(SDL_GetWindowGrab(_window));
+
+    PushWindowEvent(SDL_WINDOWEVENT_FOCUS_LOST);
+    PushWindowEvent(SDL_WINDOWEVENT_FOCUS_GAINED);
+    Frame();
+    EXPECT_TRUE(SDL_GetWindowGrab(_window));
+
+    _input->ShowCursor();
+    EXPECT_FALSE(SDL_GetWindowGrab(_window));
+  }
+
+  TEST_F(SDL2InputSystemTest, AddsUpTheMotionOfTheMouseInAFrameAndForgetsItWithTheFrame)
+  {
+    PushMotion(10, 20, 10, 20);
+    PushMotion(15, 15, 5, -5);
+    const InputState &moved = Frame();
+    EXPECT_EQ(moved.GetMouseMotion().x, 15.0);
+    EXPECT_EQ(moved.GetMouseMotion().y, 15.0);
+
+    const InputState &rested = Frame();
+    EXPECT_EQ(rested.GetMouseMotion().x, 0.0);
+    EXPECT_EQ(rested.GetMouseMotion().y, 0.0);
+  }
+
   TEST_F(SDL2InputSystemTest, HasNoPointerWhileTheWindowHasNoFocus)
   {
     PushMotion(10, 20);

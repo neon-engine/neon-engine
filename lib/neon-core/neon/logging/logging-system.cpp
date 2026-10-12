@@ -18,9 +18,11 @@ namespace neon
     // reaches the loggers that were created before it.
     _file_sink = std::make_shared<DeferredFileSink>(_settings_config.log_max_size, _settings_config.log_max_files);
     _error_count = std::make_shared<ErrorCountSink>();
+    _history = std::make_shared<LogHistorySink>();
     _sinks.push_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
     _sinks.push_back(_file_sink);
     _sinks.push_back(_error_count);
+    _sinks.push_back(_history);
     _logger = std::make_shared<spdlog::logger>("LoggingSystem", begin(_sinks), end(_sinks));
     _logger->set_level(spdlog::level::debug);
     _logger->info("LoggingSystem initialized");
@@ -64,5 +66,16 @@ namespace neon
   std::size_t LoggingSystem::CountErrors() const
   {
     return _error_count == nullptr ? 0 : _error_count->Count();
+  }
+
+  void LoggingSystem::CopyRecentLines(std::vector<std::string> &lines) const
+  {
+    lines.clear();
+    if (_history != nullptr) { _history->CopyLines(lines); }
+  }
+
+  std::uint64_t LoggingSystem::GetLineRevision() const
+  {
+    return _history == nullptr ? 0 : _history->Revision();
   }
 } // neon

@@ -24,9 +24,13 @@ namespace neon
   class Runtime
   {
     bool _destroyed = false;
-    bool _failed = false;
 
   protected:
+    /// Whether something the run was asked to do did not happen, see
+    /// HasFailed(). An application that derives from the runtime sets it
+    /// when what it was asked to do did not happen.
+    bool _failed = false;
+
     SettingsConfig _settings_config;
     WindowSystem *_window_system;
     InputSystem *_input_system;
@@ -124,7 +128,10 @@ namespace neon
 
     void Initialize() const;
 
-    void CleanUp();
+    /// Takes every system down, in the reverse of the order Initialize()
+    /// brought them up. Safe to call more than once. An application that
+    /// adds systems of its own takes them down first and then calls this.
+    virtual void CleanUp();
 
     /// Whether something the run was asked to do did not happen: a
     /// screenshot that could not be written, a scene or a user interface

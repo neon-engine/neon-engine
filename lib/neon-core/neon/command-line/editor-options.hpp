@@ -8,8 +8,8 @@ namespace neon
   /// The set the editor owns: starting another scene, running without a
   /// window, screenshots, input from a script. Everything that loads other
   /// content or looks inside a game. The runtime owns RuntimeOptions and
-  /// DisplayOptions; NeonRuntime registers this set too until NeonEditor
-  /// exists, see docs/command-line.md (#143).
+  /// DisplayOptions and registers those alone; NeonEditor registers all
+  /// three, see docs/command-line.md (#143, #310).
   ///
   ///   Editor:
   ///   --scene PATH              Scene to start with, in place of the entry scene

@@ -830,7 +830,7 @@ NeonRuntime
 For development, a scene can be rendered without a window:
 
 ```bash
-NeonRuntime --headless-renderer --frames 3 --screenshot user://screenshots/frame.png
+NeonEditor <folder> --headless-renderer --frames 3 --screenshot user://screenshots/frame.png
 ```
 
 | Option | Meaning |

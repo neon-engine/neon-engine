@@ -3,6 +3,7 @@
 
 #include <unordered_map>
 #include <cstddef>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <set>
@@ -490,6 +491,31 @@ namespace neon
     int FindRenderTarget(const std::string &name) override;
 
     std::shared_ptr<const ImagePixels> FindImage(const std::string &name) override;
+
+    // What another backend library that draws with Vulkan itself, as
+    // neon-imgui does for the tool interface of the editor, needs of the
+    // renderer. Nothing of neon-core sees any of it.
+
+    /// The connection to Vulkan: the instance, the graphics card, the
+    /// device, and the queue the frames are submitted to.
+    [[nodiscard]] const VK_Device &GetDevice() const { return _device; }
+
+    /// The render pass what is drawn on top of a scene is drawn in, which
+    /// a pipeline that draws into the frame is made for. The frame has one
+    /// color attachment of one sample, and one subpass.
+    [[nodiscard]] VkRenderPass GetFramePass() const { return _frame_pass; }
+
+    /// Records `draw` into the commands of the frame that is being drawn,
+    /// in the pass that draws on top of its scene, after everything that
+    /// was drawn into the frame so far: a render target that was begun
+    /// is ended first. The commands are handed over inside the pass.
+    /// Returns false outside a frame, when nothing is recorded.
+    bool DrawIntoFrame(const std::function<void(VkCommandBuffer)> &draw);
+
+    /// What a render target is read through once it is drawn: the view
+    /// of its image, in the layout shaders read, and the sampler it is
+    /// read with. Returns false for a target that is not there.
+    bool GetRenderTargetView(int target, VkImageView &view, VkSampler &sampler);
   };
 } // neon
 

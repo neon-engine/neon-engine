@@ -1,7 +1,7 @@
 # Command line
 
-Every option of NeonRuntime, in one place, with who it is for. How to use
-them is in the [development guide](development.md#command-line).
+Every option of NeonRuntime and NeonEditor, in one place, with who it is
+for. How to use them is in the [development guide](development.md#command-line).
 
 Every set of options is **owned** by one application, decided in #143. The
 runtime owns the options a player needs; the editor owns the options that
@@ -14,12 +14,18 @@ registered by the application that owns it.
 | `DisplayOptions` | The runtime | `--window-size`, `--window-mode`, `--vsync`, `--max-fps`, `--quality`, `--anisotropy`, `--texture-scale`, `--target-scale`, `--target-mipmaps`, `--shadows`, `--shadow-map-size`, `--shadow-filter`, `--shadow-distance`, `--shadow-cascades`, `--ui-scale` |
 | `EditorOptions` | The editor | `--scene`, `--ui`, and everything under the `Editor` heading below |
 
-Until NeonEditor exists, NeonRuntime registers the editor's set too, so that
-a scene can be started and a frame rendered without a window on a build
-server. The editor will then register the runtime's sets and its own, and
-the runtime only its own; a shipped game is then run by a runtime that has
-no `--scene` at all. The aim is that a player cannot do what the game does
-not want with an option, not to stop someone who is determined.
+NeonEditor registers the runtime's sets and its own, and NeonRuntime only
+its own (#310): a shipped game is run by a runtime that has no `--scene` at
+all, and refuses it as an unknown option. A scene is started and a frame
+rendered without a window on a build server with NeonEditor, which takes
+the folder of the project as its first argument, see [editor.md](editor.md).
+The aim is that a player cannot do what the game does not want with an
+option, not to stop someone who is determined.
+
+```
+Usage: NeonRuntime [options]
+Usage: NeonEditor FOLDER [options]
+```
 
 ## The options
 
@@ -28,9 +34,9 @@ A switch is written as `--name`. An option with a value is written as
 
 The last column is the decision of #143: who owns the option.
 
-- **Runtime:** a player may use it. It stays when the editor takes its set.
-- **Editor:** it loads other content or looks inside a game. Registered by
-  NeonRuntime only until NeonEditor exists.
+- **Runtime:** a player may use it. Both applications register it.
+- **Editor:** it loads other content or looks inside a game. NeonEditor
+  alone registers it.
 
 | Option | Group | What it does | Owned by |
 |---|---|---|---|
@@ -101,7 +107,7 @@ Some of what a runtime does is fixed, or decided elsewhere:
 
 - Whether a dedicated server (#144) is a third application with a set of
   options of its own.
-- How the editor starts NeonRuntime when a game is run from it (#82), and
+- How the editor starts NeonRuntime when a game is run from it (#569), and
   whether it passes options or a project.
 - How a runtime is bound to the game it ships with, once the editor exports
   one (#84): a key written into the runtime and checked against the packed

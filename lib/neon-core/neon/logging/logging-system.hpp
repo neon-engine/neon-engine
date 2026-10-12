@@ -1,10 +1,14 @@
 #ifndef LOGGING_SYSTEM_HPP
 #define LOGGING_SYSTEM_HPP
+#include <cstdint>
 #include <memory>
+#include <string>
+#include <vector>
 
 #include "deferred-file-sink.hpp"
 #include "error-count-sink.hpp"
 #include "log-file-target.hpp"
+#include "log-history-sink.hpp"
 #include "logger.hpp"
 #include "logging-context.hpp"
 #include "neon/runtime/settings-config.hpp"
@@ -24,6 +28,7 @@ namespace neon
     SettingsConfig _settings_config;
     std::shared_ptr<DeferredFileSink> _file_sink;
     std::shared_ptr<ErrorCountSink> _error_count;
+    std::shared_ptr<LogHistorySink> _history;
     std::vector<spdlog::sink_ptr> _sinks;
     std::shared_ptr<spdlog::logger> _logger;
   public:
@@ -45,6 +50,16 @@ namespace neon
     /// by every logger. A run that logged one did not do all it was asked
     /// to, however far it got, and its exit code says so.
     [[nodiscard]] std::size_t CountErrors() const;
+
+    /// Copies the last lines that were logged, by every logger, the oldest
+    /// first, as the console shows them: for a window that shows the log
+    /// while the application runs, see LogHistorySink. Empty before
+    /// Initialize().
+    void CopyRecentLines(std::vector<std::string> &lines) const;
+
+    /// Goes up with every line that is logged, so that a window knows when
+    /// to copy the lines again.
+    [[nodiscard]] std::uint64_t GetLineRevision() const;
   };
 } // neon
 

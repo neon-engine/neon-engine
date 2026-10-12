@@ -10,7 +10,8 @@ It was written by reading the license files in `external/`. It is not legal
 advice. Have it checked before a game is sold.
 
 **In short:** everything NeonRuntime links today may be linked statically,
-into an open or a closed program. Most of it asks that its copyright notice
+into an open or a closed program, and so may what NeonEditor links on top
+of it. Most of it asks that its copyright notice
 and license text go with the program, and FreeType asks to be named in the
 credits.
 
@@ -88,6 +89,18 @@ A library often holds code of others. This is what ends up in the program.
 
 assimp is temporary, see the [roadmap](roadmap.md). Most of this table leaves
 with it.
+
+## Linked into NeonEditor, and not into NeonRuntime
+
+The editor links everything the runtime does, and this besides. It is not
+part of a game that is handed on.
+
+| Library | Version | License | Static linking | Used for |
+|---|---|---|---|---|
+| [Dear ImGui](https://github.com/ocornut/imgui) | 1.93.0 WIP, the docking branch at 778992f | MIT | Allowed | The tool interface of the editor, see [editor.md](editor.md) |
+
+Dear ImGui holds files of stb, `imstb_*.h`, under the same MIT license or
+public domain, and MIT is the one to pick.
 
 ## In the repository, and not part of NeonRuntime
 

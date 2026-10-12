@@ -49,6 +49,12 @@ namespace neon
     std::map<std::string, std::string> _values;
     std::string _error;
 
+    // the one argument without dashes that is accepted, when one is, see
+    // SetArgument(), and what was given for it
+    std::string _argument_name;
+    std::string _argument_description;
+    std::string _argument;
+
     [[nodiscard]] const CommandLineOption *Find(const std::string &name) const;
 
   public:
@@ -59,6 +65,17 @@ namespace neon
     /// Declares an option. Declaring a name twice replaces the earlier one,
     /// which lets an application adjust an option that a shared set declared.
     void Add(const CommandLineOption &option);
+
+    /// Accepts one argument without dashes, wherever it stands among the
+    /// options, as the folder the editor opens: `NeonEditor FOLDER
+    /// --scene PATH`. `value_name` is what the help text calls it, and
+    /// `description` what it says of it. Without this every argument has
+    /// to be an option. The argument is not required: whether it may be
+    /// left out is the application's to decide, see GetArgument().
+    void SetArgument(const std::string &value_name, const std::string &description);
+
+    /// The argument without dashes that was given, or empty when none was.
+    [[nodiscard]] const std::string &GetArgument() const;
 
     /// Reads the arguments as they are handed to main(). Returns false when
     /// they cannot be understood, and GetError() says why.

@@ -1,4 +1,4 @@
-# Starts NeonRuntime without a window with the user interfaces that come
+# Starts NeonEditor without a window with the user interfaces that come
 # with it, and looks at the exit code, at what it said, and at the images it
 # saved. What the images look like is looked at by whoever changes how they
 # are drawn. Here it is made sure that they are drawn at all, and without a

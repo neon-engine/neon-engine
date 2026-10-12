@@ -1,4 +1,4 @@
-# Starts NeonRuntime without a window with the scene of the physics, and
+# Starts NeonEditor without a window with the scene of the physics, and
 # compares the images it saved. An image is the whole of what the physics led
 # to: where every body is, and how it is turned.
 

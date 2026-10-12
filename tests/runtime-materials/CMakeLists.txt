@@ -2,7 +2,7 @@
 # read pixel by pixel from what the runtime saved. Needs a graphics card
 # with a Vulkan driver. On a machine without one the tests are skipped,
 # they do not fail.
-neon_add_application_test(runtime-materials NeonRuntime run.cmake
+neon_add_application_test(runtime-materials NeonEditor run.cmake
         PROJECT test-game
         TOOLS
         pixel-probe

@@ -27,6 +27,8 @@ namespace neon::testing
 
     MOCK_METHOD(void, SetCameraInfo, (const CameraInfo &camera_info), (override));
 
+    MOCK_METHOD(void, SetFrameTarget, (int target), (override));
+
     MOCK_METHOD(void, SetTime, (double seconds, double delta), (override));
 
     MOCK_METHOD(void, EnqueueForRendering, (int render_object_id, const Transform &local_transform), (override));

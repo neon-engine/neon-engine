@@ -102,6 +102,11 @@ namespace neon
 
     void SetCursorShape(CursorShape shape) override;
 
+    /// The window of SDL, for a backend library that draws into it with
+    /// SDL itself, as neon-imgui does for the tool interface. Null before
+    /// Initialize() and after CleanUp(). Nothing of neon-core sees it.
+    [[nodiscard]] SDL_Window *GetWindow() const { return _window; }
+
     /// Says to SDL what has to be said before it starts: that the process
     /// knows of displays of high density, so that no platform draws the
     /// window small and stretches it. It does nothing else, and is called

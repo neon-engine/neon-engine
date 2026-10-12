@@ -255,8 +255,12 @@ namespace neon
         if (event.window.event == SDL_WINDOWEVENT_FOCUS_GAINED)
         {
           _window_focus = true;
+          _focused_window = SDL_GetWindowFromID(event.window.windowID);
           _logger->Trace("Gained window focus");
           _context->SetWindowFocus(true);
+
+          // the pointer is held in the window again while it is taken
+          if (_cursor_hidden) { GrabWindow(true); }
         }
         else if (event.window.event == SDL_WINDOWEVENT_FOCUS_LOST)
         {
@@ -309,6 +313,7 @@ namespace neon
             Axis::Mouse,
             event.motion.xrel,
             event.motion.yrel);
+          _input_state.AddMouseMotion(event.motion.xrel, event.motion.yrel);
         }
         break;
       }
@@ -456,12 +461,21 @@ namespace neon
     }
   }
 
+  void SDL2_InputSystem::SetEventListener(SDL2_EventListener *listener)
+  {
+    _event_listener = listener;
+  }
+
   void SDL2_InputSystem::ProcessInput()
   {
     _input_state.Reset();
     SDL_Event event;
 
-    while (SDL_PollEvent(&event)) { HandleEvent(event); }
+    while (SDL_PollEvent(&event))
+    {
+      if (_event_listener != nullptr) { _event_listener->HandleEvent(event); }
+      HandleEvent(event);
+    }
 
     _input_state.SetDevice(_device);
     _input_state.SetGamepadKind(_gamepad_kind);
@@ -697,16 +711,28 @@ namespace neon
     return _input_state;
   }
 
+  void SDL2_InputSystem::GrabWindow(const bool grab) const
+  {
+    if (_focused_window == nullptr) { return; }
+    SDL_SetWindowGrab(static_cast<SDL_Window *>(_focused_window), grab ? SDL_TRUE : SDL_FALSE);
+  }
+
   void SDL2_InputSystem::CenterAndHideCursor()
   {
+    // The pointer is taken: hidden, read as motion, and held in the
+    // window, so that a turn of the view does not leave it. It is the
+    // game's choice, and nothing else holds the pointer in a window: the
+    // editor leaves it free for its tools (#587).
     SDL_SetRelativeMouseMode(SDL_TRUE);
     _cursor_hidden = true;
+    GrabWindow(true);
   }
 
   void SDL2_InputSystem::ShowCursor()
   {
     SDL_SetRelativeMouseMode(SDL_FALSE);
     _cursor_hidden = false;
+    GrabWindow(false);
   }
 
   void SDL2_InputSystem::StartTextInput(const TextInputArea &caret)

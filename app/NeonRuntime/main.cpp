@@ -54,8 +54,6 @@
 #include <neon/world-system/ecs/systems/physics/scene-exiting.hpp>
 #include <neon/world-system/flecs-entity-store.hpp>
 
-#include <neon/command-line/editor-options.hpp>
-
 #include "neon-runtime.hpp"
 
 // What the platform starts the application by, which calls the main() below.
@@ -66,20 +64,16 @@ int main(const int argc, char *argv[])
 {
   // What this application accepts on its command line. Each set of options
   // is owned by one application and registered by it: the runtime owns the
-  // runtime set and the display set, the editor owns the editor set. Until
-  // NeonEditor exists, NeonRuntime registers the editor's set too, so that
-  // a scene can be started and a frame rendered without a window. The
-  // editor will then register the runtime's sets and its own, and the
-  // runtime only its own. See docs/command-line.md.
+  // runtime set and the display set, which a player may use, and the
+  // editor owns the editor set, which loads other content and looks inside
+  // a game. A shipped game accepts no --scene (#310). NeonEditor registers
+  // all three. See docs/command-line.md.
   neon::CommandLine command_line("NeonRuntime", "Runs a Neon Engine project.");
   neon::RuntimeOptions runtime_options;
   runtime_options.Register(command_line);
 
   neon::DisplayOptions display_options;
   display_options.Register(command_line);
-
-  neon::EditorOptions editor_options;
-  editor_options.Register(command_line);
 
   if (!command_line.Parse(argc, argv))
   {
@@ -107,8 +101,7 @@ int main(const int argc, char *argv[])
     if (runtime_options.Apply(command_line, settings_config, error) &&
         (with_quality
            ? display_options.Apply(command_line, settings_config, error)
-           : display_options.ApplyExceptTheQuality(command_line, settings_config, error)) &&
-        editor_options.Apply(command_line, settings_config, error))
+           : display_options.ApplyExceptTheQuality(command_line, settings_config, error)))
     {
       return true;
     }
@@ -194,9 +187,9 @@ int main(const int argc, char *argv[])
   // the presets the settings and --quality choose from are the project's
   settings_config.graphics_presets = project.graphics_presets;
 
-  // the command line may start another scene, which is an option of the
-  // editor's set
-  if (settings_config.scene_path.empty()) { settings_config.scene_path = project.entry_scene; }
+  // the runtime starts with the entry scene of the project; only the
+  // editor has an option for another
+  settings_config.scene_path = project.entry_scene;
 
   if (!file_system.PlaceUserDirectory(settings_config.organization, settings_config.application))
   {

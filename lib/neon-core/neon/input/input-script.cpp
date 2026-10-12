@@ -517,6 +517,7 @@ namespace neon
           {
             state.SetAction(Action::Mouse);
             state.SetAxisMotion(Axis::Mouse, step.x, step.y);
+            state.AddMouseMotion(step.x, step.y);
           }
           break;
       }

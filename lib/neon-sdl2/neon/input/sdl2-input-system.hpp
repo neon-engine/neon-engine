@@ -8,6 +8,8 @@
 #include <neon/input/input-system.hpp>
 #include <neon/window/window-context.hpp>
 
+#include "sdl2-event-listener.hpp"
+
 // an event of SDL, which only the backend knows
 union SDL_Event;
 
@@ -26,11 +28,21 @@ namespace neon
 
     WindowContext* _context;
     InputState _input_state;
+
+    // who is handed every event before it is taken in, when someone is
+    SDL2_EventListener *_event_listener = nullptr;
     bool _window_focus = false;
 
     // While the cursor is hidden, the mouse turns the view and points at
-    // nothing.
+    // nothing, and the pointer is held in the window.
     bool _cursor_hidden = false;
+
+    // the window that has the focus, as SDL_Window, which the pointer is
+    // held in while it is taken
+    void *_focused_window = nullptr;
+
+    /// Holds the pointer in the window that has the focus, or lets it go.
+    void GrabWindow(bool grab) const;
 
     // the controller that was plugged in first, as SDL_GameController
     void *_controller = nullptr;
@@ -97,6 +109,10 @@ namespace neon
     /// Takes one event of SDL into what is held and into the state of the
     /// frame. ProcessInput() hands over every event there is.
     void HandleEvent(const SDL_Event &event);
+
+    /// Hands every event to `listener` as well, before it is taken in
+    /// here, from the next ProcessInput() on. Null hands them to no one.
+    void SetEventListener(SDL2_EventListener *listener);
 
     /// Shows the keyboard of the screen where the platform has one, and
     /// puts the candidates of an input method next to the caret.

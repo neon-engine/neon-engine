@@ -17,7 +17,7 @@ Neon Engine is a 3D game engine written in C++20, with a Vulkan renderer,
 [LuaJIT](https://github.com/LuaJIT/LuaJIT).
 
 A game is a project folder that NeonRuntime, the player, loads and runs, much as
-Godot does. Scenes, prefabs, user interfaces, and settings are YAML files you
+Godot does, and that NeonEditor opens, see [editor.md](./docs/editor.md). Scenes, prefabs, user interfaces, and settings are YAML files you
 can write by hand, and when one is wrong the error names the file and the line.
 Games can extend the engine with native extensions in C++, built on their own
 against a prebuilt runtime, without compiling the engine.
@@ -54,6 +54,7 @@ What the engine does today. What is coming is in
 | Scripting and code | Lua on LuaJIT, and native C++ extensions | [scripting](./docs/scripting.md), [extensions](./docs/extensions.md) |
 | Settings | Graphics settings that change while the game runs | [settings](./docs/settings.md) |
 | Automation | Windowless runs, scripted input, and frame capture from the command line | [command line](./docs/command-line.md) |
+| Editor | NeonEditor opens a project and shows its scene and log in dockable windows, on Dear ImGui behind an interface of the engine | [editor](./docs/editor.md) |
 
 ## Documentation
 

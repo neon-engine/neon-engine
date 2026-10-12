@@ -69,10 +69,22 @@ namespace neon
     }
   }
 
+  void CommandLine::SetArgument(const std::string &value_name, const std::string &description)
+  {
+    _argument_name = value_name;
+    _argument_description = description;
+  }
+
+  const std::string &CommandLine::GetArgument() const
+  {
+    return _argument;
+  }
+
   bool CommandLine::Parse(const int argc, const char *const argv[])
   {
     _values.clear();
     _error.clear();
+    _argument.clear();
 
     // the first argument is the program itself
     for (int i = 1; i < argc; i++)
@@ -81,6 +93,21 @@ namespace neon
 
       if (!argument.starts_with("--") || argument.size() == 2)
       {
+        // the one argument without dashes, when one is accepted and none
+        // was given yet
+        if (!_argument_name.empty() && _argument.empty() && !argument.empty())
+        {
+          _argument = argument;
+          continue;
+        }
+
+        if (!_argument_name.empty() && !_argument.empty())
+        {
+          _error = "'" + std::string(argument) + "' is not an option, and the " + _argument_name + " was given already: '" +
+                   _argument + "'";
+          return false;
+        }
+
         _error = "'" + std::string(argument) + "' is not an option. Options start with two dashes";
         return false;
       }
@@ -171,7 +198,12 @@ namespace neon
     }
 
     std::string help = _summary.empty() ? "" : _summary + "\n\n";
-    help += "Usage: " + _program + " [options]\n";
+    help += "Usage: " + _program + (_argument_name.empty() ? "" : " " + _argument_name) + " [options]\n";
+    if (!_argument_name.empty())
+    {
+      help += "\n  " + _argument_name + std::string(widest - _argument_name.size() + 2, ' ') + _argument_description +
+              "\n";
+    }
 
     for (const auto &group : groups)
     {
