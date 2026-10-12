@@ -703,6 +703,12 @@ path is produced, and it is protected, so only backends can call it. It checks
 the rules, matches each name against the disk, and joins the folders with the
 platform's own separator.
 
+The one thing that takes native paths on purpose is a tool of the editor
+that writes where a person says, outside every scheme: a new project under
+`~/Dev`. It goes through `NativeFileContext`, an interface of its own with a
+backend in `lib/neon-platform`, and nothing a game runs takes it, see
+[new-projects.md](new-projects.md#the-generator).
+
 ### Writing a backend
 
 A backend derives from `FileSystem` and implements:
@@ -936,6 +942,7 @@ A mock checks what it is asked to do. A fake does the work in a simple way.
 | `mock-entity-world.hpp` | `MockEntitySystem`, `MockScene` | `EntitySystem`, `Scene` |
 | `fake-physics-context.hpp` | `FakePhysicsContext`, a physics in which nothing collides, and which writes down what it was asked | `PhysicsContext` |
 | `fake-entropy-context.hpp` | `FakeEntropyContext`, an entropy whose bytes a test chooses | `EntropyContext` |
+| `fake-native-file-context.hpp` | `FakeNativeFileContext`, the files of a machine kept in memory, for the tools of the editor | `NativeFileContext` |
 | `temporary-directory.hpp` | `TemporaryDirectory`, a folder that is removed with the object | |
 
 `TemporaryDirectory` uses `std::filesystem`, which the engine itself must not.

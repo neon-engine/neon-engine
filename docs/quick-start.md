@@ -53,3 +53,16 @@ and preset, native builds without Docker, the build options, and the tests.
 The halls and what each one shows are listed in
 [scenes.md](scenes.md#the-museum). For a faster build, use the
 `-release` presets in place of `-debug`, and run from `bin/release/` instead.
+
+4. Make a game of your own, outside the engine. The generator writes a
+   folder under `~/Dev` with a scene, an extension in C++, and the presets
+   every project shares, and the project is built with two commands, see
+   [new-projects.md](new-projects.md):
+
+   ```sh
+   cmake --build --preset macos-arm64-debug --target new-project
+   build/macos-arm64-debug/tests/runtime-new-project/new-project hello-neon
+   cmake -S ~/Dev/hello-neon --preset macos-arm64-debug
+   cmake --build ~/Dev/hello-neon/build/macos-arm64-debug
+   ~/Dev/hello-neon/build/macos-arm64-debug/hello-neon/NeonRuntime
+   ```

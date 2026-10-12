@@ -257,6 +257,7 @@ add_library(${TARGET} STATIC
         neon/filesystem/file-system.cpp
         neon/filesystem/file-system.hpp
         neon/filesystem/file-system-context.hpp
+        neon/filesystem/native-file-context.hpp
         neon/filesystem/native-path.cpp
         neon/filesystem/native-path.hpp
 
@@ -482,6 +483,7 @@ if (NEON_BUILD_TESTS)
   add_library(neon-testing INTERFACE
           neon/testing/fake-entity-store.hpp
           neon/testing/fake-entropy-context.hpp
+          neon/testing/fake-native-file-context.hpp
           neon/testing/mock-audio-context.hpp
           neon/testing/fake-physics-context.hpp
           neon/testing/fake-font-rasterizer.hpp

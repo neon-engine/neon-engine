@@ -287,6 +287,8 @@ are in `tests/project-files`, with the file of the runtime read as it is in
 the repository and its scenes checked against the folder.
 
 How the folder is organized is in [project-layout.md](project-layout.md).
+How a new project is made outside the engine, with everything in it
+working, is in [new-projects.md](new-projects.md).
 
 ## Open questions
 
@@ -367,3 +369,8 @@ bin/debug/darwin-arm64/bench/NeonRuntime
 
 The functions are in [NeonProjects.cmake](../cmake/NeonProjects.cmake) and
 [NeonSdk.cmake](../cmake/NeonSdk.cmake).
+
+**A project of your own**, outside the engine, is made by the generator of
+the editor: a folder under `~/Dev` with working assets, an extension that
+builds, a `CMakeLists.txt` on `NeonSdk.cmake`, and the presets every project
+shares, see [new-projects.md](new-projects.md).

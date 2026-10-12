@@ -142,6 +142,8 @@ add_subdirectory(lib/neon-stb)
 add_subdirectory(lib/neon-freetype)
 add_subdirectory(lib/neon-lunasvg)
 add_subdirectory(lib/neon-platform)
+# the editor's own objects, a library of app/NeonEditor, which the tests use
+add_subdirectory(app/NeonEditor)
 
 # Load additional cmake
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/CopyAssets.cmake")
@@ -210,7 +212,7 @@ endif ()
 
 # Checks against the style guide. They run on request only
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/ClangTools.cmake")
-set(CHECKED_TARGETS neon-core neon-vulkan neon-sdl2 neon-flecs neon-platform ${APP_TARGETS})
+set(CHECKED_TARGETS neon-core neon-vulkan neon-sdl2 neon-flecs neon-platform neon-editor ${APP_TARGETS})
 if (NEON_BUILD_TESTS)
   get_property(NEON_TEST_TARGETS GLOBAL PROPERTY NEON_TEST_TARGETS)
   list(APPEND CHECKED_TARGETS neon-testing ${NEON_TEST_TARGETS})
