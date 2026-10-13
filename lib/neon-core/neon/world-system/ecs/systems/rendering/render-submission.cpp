@@ -5,6 +5,7 @@
 #include <neon/common/transform.hpp>
 #include <neon/world-system/ecs/components/camera.hpp>
 #include <neon/world-system/ecs/components/light.hpp>
+#include <neon/world-system/ecs/components/possessed.hpp>
 #include <neon/world-system/ecs/components/renderable.hpp>
 #include <neon/world-system/ecs/components/sky.hpp>
 
@@ -15,12 +16,22 @@ namespace neon
     _render_pipeline = render_pipeline;
   }
 
+  bool RenderSubmission::IsOfThePossessed(EntityStore &store, const Entity entity, const Entity possessed)
+  {
+    for (Entity at = entity; at != No_Entity; at = store.GetParent(at))
+    {
+      if (at == possessed) { return true; }
+    }
+    return false;
+  }
+
   void RenderSubmission::Initialize(EntityStore &store)
   {
     _cameras = store.Query<Transform, Camera>();
     _lights = store.Query<Transform, Light>();
     _skies = store.Query<Sky>();
     _renderables = store.Query<Transform, Renderable>();
+    _possessed = store.Query<Possessed>();
   }
 
   void RenderSubmission::Update(EntityStore &store, const double delta_time)
@@ -31,6 +42,27 @@ namespace neon
     _time += delta_time;
     _render_pipeline->SetTime(_time, delta_time);
 
+    // the window is seen through the camera of the possessed entity, the
+    // one on it or below it, when it has one
+    Entity possessed = No_Entity;
+    bool possessed_has_camera = false;
+    store.Each(_possessed, [&](const EntityBlock &block)
+    {
+      if (block.count > 0) { possessed = block.entities[0]; }
+    });
+    if (possessed != No_Entity)
+    {
+      store.Each(_cameras, [&](const EntityBlock &block)
+      {
+        const auto *cameras = block.Column<Camera>(1);
+        for (std::size_t i = 0; i < block.count && !possessed_has_camera; i++)
+        {
+          if (cameras[i].target != RenderTarget::Window) { continue; }
+          possessed_has_camera = IsOfThePossessed(store, block.entities[i], possessed);
+        }
+      });
+    }
+
     store.Each(_cameras, [&](const EntityBlock &block)
     {
       const auto *transforms = block.Column<Transform>(0);
@@ -40,6 +72,9 @@ namespace neon
       {
         const auto &transform = transforms[i];
         const auto &camera = cameras[i];
+
+        if (possessed_has_camera && camera.target == RenderTarget::Window &&
+            !IsOfThePossessed(store, block.entities[i], possessed)) { continue; }
 
         const glm::vec3 position = transform.world_coordinates[3];
         // A camera that rolls with its entity has what is up turn with it,

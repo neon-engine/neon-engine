@@ -1,0 +1,125 @@
+# Possession, see docs/possession.md: a character and a cart, both
+# Possessable, on a floor in front of a blue wall. The character is possessed
+# first, as the first Possessable of the scene. Walking into the plate in
+# front of the cart possesses the cart, whose CartEntry script asks for it:
+# the view jumps to the camera on the cart, and `move` drives it. Pressing
+# `jump` while driving possesses the character again, where it stands.
+#
+# Without a window:
+#
+#   NeonEditor <sandbox> --headless-renderer --scene assets://scenes/possession.scene.yml \
+#     --frames 45 --time-step 0.05 --input "1: hold-key w 20\n30: hold jump 1" \
+#     --output-dir shots --screenshot output://frame.png --screenshot-at 2,25,40
+
+scene: possession
+version: 1
+
+entities:
+  - name: light
+    components:
+      Transform: Default
+      Light:
+        type: direction
+        direction: [-0.5, -1, -0.3]
+        ambient: [0.25, 0.25, 0.25]
+        diffuse: [0.8, 0.8, 0.8]
+        specular: [0, 0, 0]
+
+  - name: floor
+    components:
+      Transform:
+        position: [0, -0.25, 0]
+      Geometry:
+        shape: box
+        size: [40, 0.5, 40]
+      Renderable:
+        shader: engine://shaders/basic-lit
+        material:
+          color: [0.5, 0.5, 0.5]
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [40, 0.5, 40]
+
+  # what both cameras see ahead
+  - name: wall-north
+    components:
+      Transform:
+        position: [0, 3, -16]
+      Geometry:
+        shape: box
+        size: [40, 6, 0.5]
+      Renderable:
+        shader: engine://shaders/basic-lit
+        material:
+          color: [0.2, 0.3, 0.9]
+      RigidBody:
+        kind: static
+      Collider:
+        shape: box
+        size: [40, 6, 0.5]
+
+  - name: player
+    components:
+      Transform:
+        position: [0, 0.9, 0]
+      Possessable: Default
+      FirstPersonController: Default
+      CharacterBody: Default
+      Collider:
+        shape: capsule
+        radius: 0.4
+        height: 1.8
+    children:
+      - name: camera
+        components:
+          Transform: Default
+          Camera: Default
+
+  # the cart: a box that the Cart script drives by `move` while it is
+  # possessed, seen from the camera above and behind it
+  - name: cart
+    components:
+      Transform:
+        position: [0, 0.5, -6]
+      Possessable: Default
+      Cart: Default
+      Geometry:
+        shape: box
+        size: [1.6, 1, 2.4]
+      Renderable:
+        shader: engine://shaders/basic-lit
+        material:
+          color: [0.9, 0.5, 0.2]
+      RigidBody:
+        kind: kinematic
+      Collider:
+        shape: box
+        size: [1.6, 1, 2.4]
+    children:
+      - name: camera
+        components:
+          Transform:
+            position: [0, 4, 3]
+            rotation: [-55, 0, 0]
+          Camera: Default
+
+  # the plate in front of the cart: a character that walks onto it drives
+  - name: cart-entry
+    components:
+      Transform:
+        position: [0, 0.1, -3.5]
+      Geometry:
+        shape: box
+        size: [3, 0.05, 2]
+      Renderable:
+        shader: engine://shaders/basic-lit
+        material:
+          color: [0.9, 0.9, 0.3]
+      Trigger: Default
+      Collider:
+        shape: box
+        size: [3, 2, 2]
+      CartEntry:
+        cart: cart

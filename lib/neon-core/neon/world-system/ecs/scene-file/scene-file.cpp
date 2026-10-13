@@ -137,6 +137,11 @@ namespace neon
     return _could_not_be_read;
   }
 
+  std::string SceneFile::GetPossessed() const
+  {
+    return _possessed;
+  }
+
   const std::string &SceneFile::GetPath() const
   {
     return _path;
@@ -178,6 +183,7 @@ namespace neon
 
       std::string name;
       reader.Read("scene", name);
+      reader.Read("possess", _possessed);
 
       if (float written = 0.0f; reader.Read("version", written) && written > static_cast<float>(version))
       {
@@ -815,6 +821,7 @@ namespace neon
     auto document = DataValue::Map();
     document.Set("scene", DataValue::Text(name));
     document.Set("version", DataValue::Number(version));
+    if (!_possessed.empty()) { document.Set("possess", DataValue::Text(_possessed)); }
 
     auto entities = DataValue::List();
     for (const auto entity : store.GetChildren(No_Entity))

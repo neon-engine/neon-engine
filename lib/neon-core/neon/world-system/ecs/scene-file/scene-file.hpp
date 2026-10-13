@@ -22,6 +22,7 @@ namespace neon
   ///
   ///     scene: demo
   ///     version: 1
+  ///     possess: player
   ///
   ///     entities:
   ///       - name: player
@@ -40,6 +41,10 @@ namespace neon
   ///         components:
   ///           Transform:
   ///             position: [0, 0, -3]
+  ///
+  /// `possess` names the entity that is possessed when the scene starts,
+  /// by its path from the top, see docs/possession.md; a scene without it
+  /// leaves that to the world.
   ///
   /// What a component leaves out keeps its default, and `Default` keeps all of
   /// them. `{}` means the same. A name that is not known
@@ -73,6 +78,9 @@ namespace neon
 
     // whether the last read found no document: no file, or no YAML
     bool _could_not_be_read = false;
+
+    // what the scene that was read last wrote as `possess`, or empty
+    std::string _possessed;
 
     // the document ReadAhead() read, and its path, until Load() places it
     std::string _read_ahead_path;
@@ -244,6 +252,8 @@ namespace neon
     /// Whether the last read found no file there, could not open it, or
     /// found no document in it.
     [[nodiscard]] bool CouldNotBeRead() const override;
+
+    [[nodiscard]] std::string GetPossessed() const override;
 
     /// Places a prefab below `parent` while the game plays, through the
     /// same reading a scene file goes through, so that a spawned entity is

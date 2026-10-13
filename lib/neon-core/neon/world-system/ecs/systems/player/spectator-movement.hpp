@@ -6,8 +6,10 @@
 
 namespace neon
 {
-  /// Moves and turns every entity that carries a Spectator by the input: the
-  /// action `move` of the input map moves it, `look` turns it.
+  /// Moves and turns the entity that carries a Spectator and is possessed
+  /// by the input, see docs/possession.md: the action `move` of the input
+  /// map moves it, `look` turns it. A spectator that is not possessed
+  /// stays where it is.
   class SpectatorMovement final : public EntitySystem
   {
     InputContext *_input_context;

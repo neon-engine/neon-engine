@@ -709,6 +709,39 @@ namespace
     EXPECT_EQ(_store.Get<neon::Transform>(other)->position, glm::vec3(0.0f, 1.0f, 0.0f));
   }
 
+  TEST_F(ExtensionsInTheWorldTest, PossessesAndReleasesThroughTheWorld)
+  {
+    const neon::Entity visited = _store.CreateEntity("visited");
+    _store.Set(visited, neon::Transform{});
+    ON_CALL(_input, WasActionPressed("drive")).WillByDefault(Return(true));
+    EXPECT_CALL(_world, Possess(visited)).WillOnce(Return(true));
+    EXPECT_CALL(_world, Unpossess());
+
+    _running.Update(_store, 0.016);
+
+    EXPECT_TRUE(LogOf("visitor")->Contains(LogLevel::Info, "Possessed the visited entity: yes"))
+      << LogOf("visitor")->Messages(LogLevel::Info);
+  }
+
+  TEST_F(ExtensionsInTheWorldTest, TellsTheSystemsWhatWasPossessedAndReleasedBeforeTheirUpdate)
+  {
+    const neon::Entity visited = _store.CreateEntity("visited");
+    _store.Set(visited, neon::Transform{});
+    ON_CALL(_world, GetPossessed()).WillByDefault(Return(visited));
+
+    // as the world tells the host, which keeps it for the next frame
+    _host.OnPossession({.entity = visited, .possessed = true});
+    _host.OnPossession({.entity = visited, .possessed = false});
+    _running.Update(_store, 0.016);
+    _running.Update(_store, 0.016);
+
+    const auto log = LogOf("visitor");
+    EXPECT_TRUE(log->Contains(LogLevel::Info, "Possessed " + std::to_string(visited) + ", which is " + std::to_string(visited)))
+      << log->Messages(LogLevel::Info);
+    EXPECT_TRUE(log->Contains(LogLevel::Info, "Released " + std::to_string(visited))) << log->Messages(LogLevel::Info);
+    EXPECT_EQ(log->Count(LogLevel::Error), 0u) << log->Messages(LogLevel::Error);
+  }
+
   TEST_F(ExtensionsInTheWorldTest, SpawnsAPrefabAtAPlaceWrittenOnTopOfItsTransform)
   {
     _store.Set(_store.CreateEntity("visited"), neon::Transform{});

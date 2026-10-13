@@ -14,6 +14,7 @@
 #include <neon/testing/memory-file-system.hpp>
 #include <neon/testing/mock-audio-context.hpp>
 #include <neon/testing/mock-ui-system.hpp>
+#include <neon/testing/mock-world-system.hpp>
 #include <neon/settings/settings-store.hpp>
 #include <neon/testing/recording-logger.hpp>
 #include <neon/world-system/ecs/components/sound-source.hpp>
@@ -31,6 +32,8 @@ namespace
   using neon::No_Component;
   using neon::PhysicsEvent;
   using neon::PhysicsEventKind;
+  using neon::PossessionEvent;
+  using neon::testing::MockWorldSystem;
   using neon::SettingKind;
   using neon::SettingsStore;
   using neon::SoundFade;
@@ -259,7 +262,7 @@ namespace
       return Door, DoorSystem
     )");
     Load();
-    EXPECT_THAT(Errors(), HasSubstr("DoorSystem defines 'updte', which is not a hook of System. The hooks are ready, update, fixed_update, removed, on_trigger_enter, on_trigger_exit, on_collision"));
+    EXPECT_THAT(Errors(), HasSubstr("DoorSystem defines 'updte', which is not a hook of System. The hooks are ready, update, fixed_update, removed, on_trigger_enter, on_trigger_exit, on_collision, on_possessed, on_unpossessed"));
   }
 
   TEST_F(LuaScriptSystemTest, RefusesAHookWithTheWrongNumberOfParameters)
@@ -461,6 +464,72 @@ namespace
     _lua.DispatchPhysicsEvents(_store, {left});
 
     EXPECT_EQ(std::get<bool>(Field(door, "Door", "open")), false);
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 0u) << Errors();
+  }
+
+  TEST_F(LuaScriptSystemTest, TellsTheSystemsOfAnEntityThatItWasPossessedAndReleased)
+  {
+    AddScript("cart.lua", R"(
+      local Cart = Component:extend { driven = false, changes = integer(0) }
+      local S = System:extend "Cart"
+      function S:on_possessed(entity, cart) cart.driven = true; cart.changes = cart.changes + 1 end
+      function S:on_unpossessed(entity, cart) cart.driven = false; cart.changes = cart.changes + 1 end
+      return Cart, S
+    )");
+    ASSERT_TRUE(Load());
+
+    const Entity cart = Place("cart");
+    const Entity rock = Place("rock");
+    Give(cart, "Cart");
+
+    _lua.DispatchPossessionEvents(_store, {PossessionEvent{.entity = cart, .possessed = true}});
+    EXPECT_EQ(std::get<bool>(Field(cart, "Cart", "driven")), true);
+
+    // an entity without the components of the system is nobody's
+    _lua.DispatchPossessionEvents(_store, {PossessionEvent{.entity = rock, .possessed = true}});
+    _lua.DispatchPossessionEvents(_store, {PossessionEvent{.entity = cart, .possessed = false}});
+    EXPECT_EQ(std::get<bool>(Field(cart, "Cart", "driven")), false);
+    EXPECT_EQ(std::get<int>(Field(cart, "Cart", "changes")), 2);
+    EXPECT_EQ(_logger->Count(LogLevel::Error), 0u) << Errors();
+  }
+
+  TEST_F(LuaScriptSystemTest, PossessesAndReleasesThroughTheWorld)
+  {
+    ::testing::NiceMock<MockWorldSystem> world{_logger};
+    _lua.SetWorld(&world);
+    AddScript("entry.lua", R"(
+      local Entry = Component:extend { cart = "", taken = false, who = "" }
+      local S = System:extend "Entry"
+      function S:update(entity, entry, dt)
+        entry.taken = world.possess(world.find_entity(entry.cart))
+        local possessed = world.get_possessed()
+        entry.who = possessed and possessed.name or "nobody"
+        world.unpossess()
+      end
+      return Entry, S
+    )");
+    ASSERT_TRUE(Load());
+
+    const Entity entry = Place("entry");
+    const Entity cart = Place("cart");
+    Give(entry, "Entry");
+    EXPECT_CALL(world, Possess(cart)).WillOnce(::testing::Return(true));
+    EXPECT_CALL(world, GetPossessed()).WillOnce(::testing::Return(cart));
+    EXPECT_CALL(world, Unpossess());
+
+    // what the script possesses is named by the field it reads
+    const ComponentFormat *format = _formats.Find("Entry");
+    ASSERT_NE(format, nullptr);
+    neon::DataValue map = neon::DataValue::Map();
+    map.Set("cart", neon::DataValue::Text("cart"));
+    std::vector<std::string> errors;
+    const neon::DataReader reader(map, "test", "Entry", errors);
+    format->read(reader, _store, entry);
+
+    _lua.Update(_store, 0.1);
+
+    EXPECT_EQ(std::get<bool>(Field(entry, "Entry", "taken")), true);
+    EXPECT_EQ(std::get<std::string>(Field(entry, "Entry", "who")), "cart");
     EXPECT_EQ(_logger->Count(LogLevel::Error), 0u) << Errors();
   }
 

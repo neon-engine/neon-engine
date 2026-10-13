@@ -1000,6 +1000,28 @@ namespace neon::extension
       _host->load_scene(_host->context, scene_path.c_str());
     }
 
+    /// Possesses the entity, see docs/possession.md: the input reaches it
+    /// alone and the view follows it, and what was possessed is released.
+    /// Returns false for an entity that is gone or carries no
+    /// `Possessable`, which the log says, and on an application before
+    /// version 21.
+    bool Possess(const Entity entity) const
+    {
+      return _host->abi_version >= 21 && _host->possess(_host->context, entity) != 0;
+    }
+
+    /// Releases the possessed entity, so that nothing is possessed.
+    void Unpossess() const
+    {
+      if (_host->abi_version >= 21) { _host->unpossess(_host->context); }
+    }
+
+    /// The entity that is possessed, or 0 when nothing is.
+    [[nodiscard]] Entity GetPossessed() const
+    {
+      return _host->abi_version >= 21 ? _host->get_possessed(_host->context) : 0;
+    }
+
     /// Prepares a query for the entities that carry all of the types. In
     /// Start of an extension or of a system, once, and kept.
     template<typename... Components>
@@ -1024,6 +1046,14 @@ namespace neon::extension
     /// Called for everything that began or ended to touch in a frame,
     /// before Update.
     virtual void OnPhysicsEvent(World &world, const NeonPhysicsEvent &event) {}
+
+    /// Called when an entity was possessed, and when one was released,
+    /// before the Update of the frame after it happened, see
+    /// docs/possession.md. On an application before version 21 neither is
+    /// called.
+    virtual void OnPossessed(World &world, Entity entity) {}
+
+    virtual void OnUnpossessed(World &world, Entity entity) {}
 
     /// Called once per frame. `delta_time` is in seconds.
     virtual void Update(World &world, double delta_time) {}
@@ -1094,6 +1124,18 @@ namespace neon::extension
           of->system->OnPhysicsEvent(*of->world, *event);
         },
         added.get());
+      if (_world.GetHost()->abi_version >= 21)
+      {
+        _world.GetHost()->listen_to_possession(
+          _world.GetHost()->context,
+          [](void *user, const NeonEntity entity, const int possessed)
+          {
+            const auto *of = static_cast<const Added *>(user);
+            if (possessed != 0) { of->system->OnPossessed(*of->world, entity); }
+            else { of->system->OnUnpossessed(*of->world, entity); }
+          },
+          added.get());
+      }
       _systems.push_back(std::move(added));
       return reference;
     }

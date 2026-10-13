@@ -431,6 +431,8 @@ namespace neon
       _logging->CreateLogger("ScriptRunning"));
     // an element of the user interface calls a function of the scripts
     script_running->SetUi(&*_ui_system);
+    // and the scripts hear of what is possessed and released
+    script_running->SetWorld(&*_world);
     // an extension that needs scripts to run brings them in its own folder
     for (const auto &folder : _extension_host->GetScriptFolders()) { script_running->AddFolder(folder); }
     _world->AddSystem(std::move(script_running));

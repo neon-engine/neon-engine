@@ -9,6 +9,7 @@
 #include "entity-store.hpp"
 #include "entity-system.hpp"
 #include "fixed-clock.hpp"
+#include "possession.hpp"
 #include "scene.hpp"
 
 namespace neon
@@ -50,6 +51,10 @@ namespace neon
     std::vector<std::unique_ptr<EntitySystem>> _added_after_placing;
 
     FixedClock _fixed_clock;
+
+    // who drives: the one entity the input reaches and the view follows,
+    // see docs/possession.md
+    Possession _possession;
 
     bool _initialized = false;
     bool _paused = false;
@@ -132,6 +137,14 @@ namespace neon
     /// its tools are clicked; a game it plays takes it then (#569). Call
     /// it before Initialize().
     void SetCapturesPointer(bool captures);
+
+    bool Possess(Entity entity) override;
+
+    void Unpossess() override;
+
+    [[nodiscard]] Entity GetPossessed() const override;
+
+    void AddPossessionListener(PossessionListener *listener) override;
 
     void Initialize() override;
 

@@ -108,6 +108,7 @@ add_library(${TARGET} STATIC
         # extensions: libraries that are loaded when the application starts
         neon/extension/extension-field.hpp
         neon/extension/extension-physics-listener.hpp
+        neon/extension/extension-possession-listener.hpp
         neon/extension/extension-services.hpp
         neon/extension/extension-file.cpp
         neon/extension/extension-file.hpp
@@ -401,6 +402,12 @@ add_library(${TARGET} STATIC
         neon/world-system/ecs/scene-file/scene-file.hpp
         neon/world-system/ecs/entity-world.cpp
         neon/world-system/ecs/entity-world.hpp
+        neon/world-system/ecs/possession.cpp
+        neon/world-system/ecs/possession.hpp
+        neon/world-system/ecs/components/possessable.hpp
+        neon/world-system/ecs/components/possessed.hpp
+        neon/world-system/possession-event.hpp
+        neon/world-system/possession-listener.hpp
         neon/world-system/ecs/components/camera.hpp
         neon/world-system/ecs/components/character-body.hpp
         neon/world-system/ecs/components/collider.hpp
@@ -626,6 +633,7 @@ neon_add_unit_test(${TARGET} neon/command-line/display-options.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/component-info.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/entity-store.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/entity-world.test.cpp)
+  neon_add_unit_test(${TARGET} neon/world-system/ecs/possession.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/fixed-clock.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/scene-file/physics-component-formats.test.cpp)
   neon_add_unit_test(${TARGET} neon/world-system/ecs/systems/audio/audio-playback.test.cpp)

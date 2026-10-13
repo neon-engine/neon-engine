@@ -9,6 +9,7 @@
 #include <neon/render/render-pipeline.hpp>
 #include <neon/window/window-context.hpp>
 #include <neon/world-system/ecs/entity.hpp>
+#include <neon/world-system/possession-listener.hpp>
 
 namespace neon
 {
@@ -74,6 +75,35 @@ namespace neon
     virtual Entity Spawn(const std::string &path, Entity parent, const DataValue &overrides)
     {
       return No_Entity;
+    }
+
+    /// Possesses the entity, see docs/possession.md: the input reaches it
+    /// alone from now on and the view follows it, the entity that was
+    /// possessed is released, and the hooks of both are called. An entity
+    /// that is gone or carries no Possessable is refused, with the reason
+    /// in the log. Returns whether the entity is possessed. A world that
+    /// knows no possession refuses.
+    virtual bool Possess(Entity entity)
+    {
+      return false;
+    }
+
+    /// Releases the possessed entity, so that nothing is possessed.
+    virtual void Unpossess()
+    {
+    }
+
+    /// The entity that is possessed, or No_Entity when nothing is.
+    [[nodiscard]] virtual Entity GetPossessed() const
+    {
+      return No_Entity;
+    }
+
+    /// Whoever is told when an entity is possessed or released, which is
+    /// how the scripts and the extensions hear of it. A world that knows
+    /// no possession tells nobody.
+    virtual void AddPossessionListener(PossessionListener *listener)
+    {
     }
   };
 }

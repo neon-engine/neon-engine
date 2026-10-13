@@ -5,6 +5,8 @@
 #include "components/camera.hpp"
 #include "components/light.hpp"
 #include "components/persistent.hpp"
+#include "components/possessable.hpp"
+#include "components/possessed.hpp"
 #include "components/first-person-controller.hpp"
 #include "components/ray-cast.hpp"
 #include "components/renderable.hpp"
@@ -26,7 +28,7 @@ namespace neon
     InputContext *input_context,
     WindowContext *window_context,
     const std::shared_ptr<Logger> &logger)
-    : WorldSystem(render_pipeline, input_context, window_context, logger)
+    : WorldSystem(render_pipeline, input_context, window_context, logger), _possession(store, logger)
   {
     _store = store;
     _scene = scene;
@@ -70,6 +72,8 @@ namespace neon
     _store->Register<Spectator>("Spectator");
     _store->Register<FirstPersonController>("FirstPersonController");
     _store->Register<RayCast>("RayCast");
+    _store->Register<Possessable>("Possessable");
+    _store->Register<Possessed>("Possessed");
 
     // the renderer holds a model, textures, and a material for every entity
     // that was drawn, which are released when the entity stops being visible
@@ -116,6 +120,9 @@ namespace neon
     }
     _initialized = true;
 
+    // who drives first, now that the scene is there
+    if (!_has_no_scene) { _possession.Start(_scene->GetPossessed()); }
+
     _logger->Info("Initialized the world!");
     if (_captures_pointer) { _input_context->CenterAndHideCursor(); }
   }
@@ -123,6 +130,26 @@ namespace neon
   void EntityWorld::SetCapturesPointer(const bool captures)
   {
     _captures_pointer = captures;
+  }
+
+  bool EntityWorld::Possess(const Entity entity)
+  {
+    return _possession.Possess(entity);
+  }
+
+  void EntityWorld::Unpossess()
+  {
+    _possession.Unpossess();
+  }
+
+  Entity EntityWorld::GetPossessed() const
+  {
+    return _possession.GetPossessed();
+  }
+
+  void EntityWorld::AddPossessionListener(PossessionListener *listener)
+  {
+    _possession.AddListener(listener);
   }
 
   void EntityWorld::LoadScene(const std::string &file_path)
@@ -191,6 +218,10 @@ namespace neon
     {
       _logger->Error("The world runs with what could be read of the scene {}", path);
     }
+
+    // who drives in this scene: what the scene names, what stayed, or the
+    // first that can be
+    _possession.Start(_scene->GetPossessed());
 
     // What the scene before showed and this one does not is freed, once
     // this one was drawn: what both show is then held by this one and

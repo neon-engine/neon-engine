@@ -315,6 +315,7 @@ entity with a `Camera`, which the system lifts to the eyes and pitches.
 | What is drawn | The body is placed between the last two steps as every character is, and the camera below it goes with it |
 | While the pause menu is shown | The world does not update its systems, so the player neither turns nor moves, and the user interface takes the input first, see [user-interface.md](user-interface.md#input-and-focus) |
 | The `Spectator` | Stays what it is: a camera that flies, for looking around while developing. `hud-demo.scene.yml` and `surface-demo.scene.yml` keep it |
+| Which player | The one that is possessed, see [possession.md](possession.md): the first `Possessable` of the scene, or the first `FirstPersonController` without one. A player that is not possessed stands as if nothing were pressed |
 
 The museum, and the prototype level and the blockout of the tests, are
 walked this way, each with the runtime of its project, see

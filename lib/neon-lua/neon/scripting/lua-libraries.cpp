@@ -157,12 +157,42 @@ namespace neon
       return 0;
     }
 
+    WorldSystem &world_of(lua_State *lua)
+    {
+      WorldSystem *world = host_of(lua).world;
+      if (world == nullptr) { luaL_error(lua, "There is no world to possess in"); }
+      return *world;
+    }
+
+    int world_possess(lua_State *lua)
+    {
+      lua_pushboolean(lua, world_of(lua).Possess(check_entity(lua, 1).entity) ? 1 : 0);
+      return 1;
+    }
+
+    int world_unpossess(lua_State *lua)
+    {
+      world_of(lua).Unpossess();
+      return 0;
+    }
+
+    int world_get_possessed(lua_State *lua)
+    {
+      const Entity entity = world_of(lua).GetPossessed();
+      if (entity == No_Entity) { lua_pushnil(lua); }
+      else { push_entity(lua, entity); }
+      return 1;
+    }
+
     constexpr luaL_Reg world_functions[] = {
       {"each", world_each},
       {"find_entity", world_find},
       {"create_entity", world_create},
       {"destroy_entity", world_destroy},
       {"load_scene", scene_load},
+      {"possess", world_possess},
+      {"unpossess", world_unpossess},
+      {"get_possessed", world_get_possessed},
       {nullptr, nullptr}
     };
 

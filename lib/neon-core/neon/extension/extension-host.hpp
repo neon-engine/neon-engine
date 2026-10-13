@@ -8,6 +8,7 @@
 #include <neon/data/document-format.hpp>
 #include <neon/filesystem/file-system-context.hpp>
 #include <neon/logging/logging-context.hpp>
+#include <neon/world-system/possession-listener.hpp>
 
 #include "library-loader.hpp"
 #include "loaded-extension.hpp"
@@ -33,7 +34,11 @@ namespace neon
   /// An extension with a problem is reported as an error and left out; the
   /// rest are started. A game that needs the extension then fails where it
   /// uses what the extension would have brought.
-  class ExtensionHost final
+  ///
+  /// It hears from the world what was possessed and released, and hands it
+  /// to the extensions that asked in the next Update, before their
+  /// systems, see docs/possession.md.
+  class ExtensionHost final : public PossessionListener
   {
     FileSystemContext *_file_system;
     DocumentFormat *_format;
@@ -50,6 +55,9 @@ namespace neon
     // the extensions that are there to be used, those that were started and
     // those that bring no library, in the order of their names
     std::vector<std::string> _present;
+
+    // what was possessed and released since the extensions were told
+    std::vector<PossessionEvent> _possession_events;
 
     /// Reads the recipe in a folder, and starts the library it names for
     /// this platform.
@@ -94,9 +102,12 @@ namespace neon
     /// application to close tells, as the pause menu does.
     void SetWindow(WindowContext *window);
 
-    /// Gives the extensions the world, for placing prefabs and asking for
-    /// another scene.
+    /// Gives the extensions the world, for placing prefabs, asking for
+    /// another scene, and possessing; the host then hears from it what was
+    /// possessed and released.
     void SetWorld(WorldSystem *world);
+
+    void OnPossession(const PossessionEvent &event) override;
 
     /// Lets every extension register the components it brings, in the order
     /// the extensions were started, with the store and so that recipes read
@@ -108,9 +119,10 @@ namespace neon
     /// when it finds components and creates its queries.
     void Start(EntityStore &store);
 
-    /// Tells the extensions what the physics reported in the frame, and
-    /// then runs the `update` of every system they added. Once per frame.
-    void Update(double delta_time) const;
+    /// Tells the extensions what the physics reported in the frame and what
+    /// was possessed and released, and then runs the `update` of every
+    /// system they added. Once per frame.
+    void Update(double delta_time);
 
     /// Runs the `fixed_update` of every system, once per step of the world.
     void FixedUpdate(double fixed_delta_time) const;

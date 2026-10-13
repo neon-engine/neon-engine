@@ -42,6 +42,11 @@ entities:
           Camera: Default
 ```
 
+`possess: <path>` at the top of the file names the entity that is possessed
+when the scene starts, the one the input drives and the view follows; a
+scene without it leaves that to the world, which takes the first
+`Possessable`, else the player, see [possession.md](possession.md).
+
 The runtime starts with the entry scene of its project, see
 [projects.md](projects.md). Another one is chosen with `--scene`:
 

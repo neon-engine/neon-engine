@@ -11,7 +11,11 @@ namespace neon
   /// `world.find_entity(path)` finds one by its names from the top;
   /// `world.create_entity(name, parent)` makes one;
   /// `world.destroy_entity(entity)` ends one, with its children;
-  /// `world.load_scene(path)` asks for another scene.
+  /// `world.load_scene(path)` asks for another scene;
+  /// `world.possess(entity)` possesses one, as `WorldSystem::Possess` does,
+  /// and returns whether it is possessed; `world.unpossess()` releases it;
+  /// `world.get_possessed()` is the possessed entity, or nil. Without a
+  /// world, possessing is an error.
   void open_world_library(lua_State *lua);
 
   /// `input`: the actions of the input map, named as `InputContext` names

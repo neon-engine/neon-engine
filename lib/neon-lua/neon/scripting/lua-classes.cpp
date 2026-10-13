@@ -45,7 +45,7 @@ namespace neon
     /// The hooks a system's functions are called with, after `self`, the
     /// entity, and one component each: nothing, the seconds, the other
     /// entity, or the other entity with the point and the normal.
-    constexpr int extra_parameters[] = {0, 1, 1, 0, 1, 1, 3};
+    constexpr int extra_parameters[] = {0, 1, 1, 0, 1, 1, 3, 0, 0};
 
     /// `Component:extend { fields }` or `Component:extend("Name", { fields })`.
     int component_extend(lua_State *lua)

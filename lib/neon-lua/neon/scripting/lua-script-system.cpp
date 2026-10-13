@@ -734,6 +734,36 @@ namespace neon
     _host.store = nullptr;
   }
 
+  void Lua_ScriptSystem::DispatchPossessionEvents(EntityStore &store, const std::vector<PossessionEvent> &events)
+  {
+    if (_lua == nullptr || !_started || events.empty()) { return; }
+    _host.store = &store;
+
+    for (DeclaredSystem &system : _systems)
+    {
+      if (system.components.empty()) { continue; }
+
+      for (const PossessionEvent &event : events)
+      {
+        if (!store.IsAlive(event.entity)) { continue; }
+
+        const bool carries = std::ranges::all_of(
+          system.components,
+          [&](const ComponentId id) { return store.HasComponent(event.entity, id); });
+        if (!carries) { continue; }
+
+        const LuaHook hook = event.possessed ? LuaHook::Possessed : LuaHook::Unpossessed;
+        const auto index = static_cast<std::size_t>(hook);
+        if (!system.declaration.hooks[index] || system.off[index]) { continue; }
+
+        FillHandles(system, event.entity, {});
+        CallHook(system, hook, event.entity, extra_of(hook));
+      }
+    }
+
+    _host.store = nullptr;
+  }
+
   void Lua_ScriptSystem::DispatchUiCalls(EntityStore &store, const std::vector<ScriptUiCall> &calls)
   {
     if (_lua == nullptr || !_started) { return; }

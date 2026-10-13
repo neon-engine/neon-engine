@@ -1017,6 +1017,60 @@ namespace neon
       return 1;
     }
 
+    int listen_to_possession(
+      void *context,
+      void (*listen)(void *user, NeonEntity entity, int possessed),
+      void *user)
+    {
+      auto &extension = of(context);
+
+      if (listen == nullptr)
+      {
+        extension.logger->Error("listen_to_possession was called without a function to tell");
+        return 0;
+      }
+      if (extension.started)
+      {
+        extension.logger->Error(
+          "listen_to_possession was called after the world came up. It is called where systems are added");
+        return 0;
+      }
+
+      extension.possession_listeners.push_back({listen, user});
+      return 1;
+    }
+
+    int possess(void *context, const NeonEntity entity)
+    {
+      auto &extension = of(context);
+      if (store_for(extension, "possess") == nullptr) { return 0; }
+      if (extension.services->world == nullptr)
+      {
+        extension.logger->Error("possess was called, and this application has no world for its extensions");
+        return 0;
+      }
+      return extension.services->world->Possess(entity) ? 1 : 0;
+    }
+
+    void unpossess(void *context)
+    {
+      auto &extension = of(context);
+      if (store_for(extension, "unpossess") == nullptr) { return; }
+      if (extension.services->world == nullptr)
+      {
+        extension.logger->Error("unpossess was called, and this application has no world for its extensions");
+        return;
+      }
+      extension.services->world->Unpossess();
+    }
+
+    NeonEntity get_possessed(void *context)
+    {
+      auto &extension = of(context);
+      if (extension.store == nullptr || extension.services->world == nullptr) { return 0; }
+      return extension.services->world->GetPossessed();
+    }
+
     int cast_ray(void *context, const NeonRay *ray, NeonRayHit *hit)
     {
       auto &extension = of(context);
@@ -1821,6 +1875,10 @@ namespace neon
     host.get_input_device = &get_input_device;
     host.set_anisotropy = &set_anisotropy;
     host.get_anisotropy = &get_anisotropy;
+    host.possess = &possess;
+    host.unpossess = &unpossess;
+    host.get_possessed = &get_possessed;
+    host.listen_to_possession = &listen_to_possession;
 
     // the extension keeps its name for as long as it is loaded
     host.name = extension.name.c_str();

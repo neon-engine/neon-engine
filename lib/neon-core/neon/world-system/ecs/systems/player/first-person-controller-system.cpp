@@ -8,6 +8,7 @@
 #include <neon/world-system/ecs/components/character-body.hpp>
 #include <neon/world-system/ecs/components/collider.hpp>
 #include <neon/world-system/ecs/components/first-person-controller.hpp>
+#include <neon/world-system/ecs/components/possessed.hpp>
 
 namespace neon
 {
@@ -88,11 +89,12 @@ namespace neon
   void FirstPersonControllerSystem::Update(EntityStore &store, const double delta_time)
   {
     // the actions of the input map, which the project binds: `move` is to
-    // the right and forward, `look` to the right and up, in pixels
-    const glm::vec2 move = _input_context->ActionAxis2("move");
-    const glm::vec2 look = _input_context->ActionAxis2("look");
-    const bool run = _input_context->IsActionDown("run");
-    const bool jump = _input_context->WasActionPressed("jump");
+    // the right and forward, `look` to the right and up, in pixels. They
+    // reach the possessed player alone; any other is driven by nothing
+    const glm::vec2 asked_move = _input_context->ActionAxis2("move");
+    const glm::vec2 asked_look = _input_context->ActionAxis2("look");
+    const bool asked_run = _input_context->IsActionDown("run");
+    const bool asked_jump = _input_context->WasActionPressed("jump");
 
     store.Each(_players, [&](const EntityBlock &block)
     {
@@ -105,6 +107,12 @@ namespace neon
         auto &transform = transforms[i];
         auto &player = players[i];
         auto &body = bodies[i];
+
+        const bool possessed = store.Has<Possessed>(block.entities[i]);
+        const glm::vec2 move = possessed ? asked_move : glm::vec2{0.0f};
+        const glm::vec2 look = possessed ? asked_look : glm::vec2{0.0f};
+        const bool run = possessed && asked_run;
+        const bool jump = possessed && asked_jump;
 
         // the turn comes first, so that a step goes the way the player
         // looks after it. The body turns around its up alone, the pitch
@@ -160,10 +168,13 @@ namespace neon
         const auto *body = store.Get<Transform>(parent);
         if (body == nullptr) { continue; }
 
+        // the look pitches the camera of the possessed player alone
+        const float look_up = store.Has<Possessed>(parent) ? asked_look.y : 0.0f;
+
         auto &transform = transforms[i];
         transform.position = CameraOf(*player, *body, store.Get<Collider>(parent));
         transform.rotation.pitch = std::clamp(
-          transform.rotation.pitch + glm::degrees(look.y * player->look_speed),
+          transform.rotation.pitch + glm::degrees(look_up * player->look_speed),
           -player->max_pitch,
           player->max_pitch);
       }

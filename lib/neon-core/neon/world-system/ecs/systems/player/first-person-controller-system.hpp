@@ -6,8 +6,12 @@
 
 namespace neon
 {
-  /// Drives every entity that carries a FirstPersonController and a CharacterBody by the
-  /// input, and places the camera below it at the eyes.
+  /// Drives the entity that carries a FirstPersonController and a
+  /// CharacterBody and is possessed by the input, see docs/possession.md,
+  /// and places the camera below it at the eyes. A player that is not
+  /// possessed is driven as if nothing were pressed: it stops on the
+  /// ground, keeps its velocity in the air as a jump does, and its camera
+  /// stays at the eyes without turning.
   ///
   /// Once a frame it turns the body by `look`, sets the velocity of the
   /// body from `move` in the direction the body faces, at the walking or

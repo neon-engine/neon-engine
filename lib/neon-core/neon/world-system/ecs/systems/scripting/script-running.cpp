@@ -23,6 +23,16 @@ namespace neon
     _ui = ui;
   }
 
+  void ScriptRunning::SetWorld(WorldSystem *world)
+  {
+    if (world != nullptr) { world->AddPossessionListener(this); }
+  }
+
+  void ScriptRunning::OnPossession(const PossessionEvent &event)
+  {
+    _possession_events.push_back(event);
+  }
+
   void ScriptRunning::Register(EntityStore &store)
   {
     if (!_scripts->LoadScripts(_folder, store, *_formats))
@@ -73,6 +83,17 @@ namespace neon
       }
 
       if (!_calls.empty()) { _scripts->DispatchUiCalls(store, _calls); }
+    }
+
+    // what was possessed, after the triggers and the clicks that may have
+    // asked for it, so that a hook of possession sees the frame it was
+    // asked in. What a hook of possession asks for in turn waits for the
+    // next frame
+    if (!_possession_events.empty())
+    {
+      const std::vector<PossessionEvent> events = std::move(_possession_events);
+      _possession_events.clear();
+      _scripts->DispatchPossessionEvents(store, events);
     }
 
     _scripts->Update(store, delta_time);

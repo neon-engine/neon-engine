@@ -306,6 +306,10 @@ And what came with the player, see [physics.md](physics.md#the-player):
 The `playing` state of the default map has `move`, `look`, `jump`, `run`, and
 `pause`; `menu` has `pause` alone.
 
+The systems above drive the one entity that is possessed, and leave every
+other player and spectator alone: who is possessed, and how a game moves
+from a character to a vehicle, is in [possession.md](possession.md).
+
 `Ui_Up` to `Ui_Cancel` and `Pointer_Primary` stay fixed actions of the user
 interface: they are the engine's, not the game's, and every project moves
 through a menu the same way. `L_*` and `R_*` are gone (#203): nothing of the

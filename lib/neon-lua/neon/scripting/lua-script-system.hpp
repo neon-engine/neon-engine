@@ -56,7 +56,7 @@ namespace neon
       QueryId query = 0;
 
       /// Which hooks were switched off after a failure.
-      std::array<bool, 7> off{};
+      std::array<bool, lua_hook_count> off{};
 
       /// The entities the system has seen, for `ready` and `removed`.
       std::unordered_set<Entity> seen;
@@ -176,6 +176,8 @@ namespace neon
     void FixedUpdate(EntityStore &store, double fixed_delta_time) override;
 
     void DispatchPhysicsEvents(EntityStore &store, const std::vector<PhysicsEvent> &events) override;
+
+    void DispatchPossessionEvents(EntityStore &store, const std::vector<PossessionEvent> &events) override;
 
     void DispatchUiCalls(EntityStore &store, const std::vector<ScriptUiCall> &calls) override;
 

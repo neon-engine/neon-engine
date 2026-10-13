@@ -51,6 +51,16 @@ namespace
                  + (world.FileExists("extensions://visitor/nothing.txt") || world.ReadFile("extensions://visitor/nothing.txt", recipe) ? "yes" : "no"));
     }
 
+    void OnPossessed(World &world, const Entity entity) override
+    {
+      world.Info("Possessed " + std::to_string(entity) + ", which is " + std::to_string(world.GetPossessed()));
+    }
+
+    void OnUnpossessed(World &world, const Entity entity) override
+    {
+      world.Info("Released " + std::to_string(entity));
+    }
+
     void OnPhysicsEvent(World &world, const NeonPhysicsEvent &event) override
     {
       world.Info(std::string(event.trigger != 0 ? "A trigger " : "A body ") + std::to_string(event.first)
@@ -113,6 +123,11 @@ namespace
         world.Info("Spawned " + std::to_string(crate));
       }
       if (world.WasActionPressed("leave")) { world.LoadScene("assets://scenes/next.scene.yml"); }
+      if (world.WasActionPressed("drive"))
+      {
+        world.Info(std::string("Possessed the visited entity: ") + (world.Possess(visited) ? "yes" : "no"));
+        world.Unpossess();
+      }
     }
   };
 

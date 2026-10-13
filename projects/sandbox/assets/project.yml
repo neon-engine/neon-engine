@@ -20,6 +20,7 @@ organization: neon-engine
 
 scenes:
   - assets://scenes/start.scene.yml
+  - assets://scenes/possession.scene.yml
 
 entry_scene: assets://scenes/start.scene.yml
 

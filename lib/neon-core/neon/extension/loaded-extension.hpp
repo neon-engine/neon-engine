@@ -13,6 +13,7 @@
 
 #include "extension-field.hpp"
 #include "extension-physics-listener.hpp"
+#include "extension-possession-listener.hpp"
 #include "extension-services.hpp"
 #include "native-library.hpp"
 
@@ -41,6 +42,10 @@ namespace neon
     /// What of the extension is told what began and ended to touch, in the
     /// order it asked to be.
     std::vector<ExtensionPhysicsListener> physics_listeners;
+
+    /// What of the extension is told what was possessed and released, in
+    /// the order it asked to be.
+    std::vector<ExtensionPossessionListener> possession_listeners;
 
     /// The files of the user interface the extension shows, by their
     /// paths, as what the user interface knows each as.

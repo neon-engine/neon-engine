@@ -8,6 +8,7 @@
 #include <neon/testing/fake-entity-store.hpp>
 #include <neon/testing/mock-input-system.hpp>
 #include <neon/testing/recording-logger.hpp>
+#include <neon/world-system/ecs/components/possessed.hpp>
 #include <neon/world-system/ecs/components/spectator.hpp>
 
 namespace
@@ -15,6 +16,7 @@ namespace
   using neon::Axis;
   using neon::Entity;
   using neon::Key;
+  using neon::Possessed;
   using neon::Spectator;
   using neon::SpectatorMovement;
   using neon::Transform;
@@ -53,17 +55,19 @@ namespace
       _store.Initialize();
       _store.Register<Transform>("Transform");
       _store.Register<Spectator>("Spectator");
+      _store.Register<Possessed>("Possessed");
       _system.Initialize(_store);
       _input.TakeTheDevicesAsTheyAre();
     }
 
     /// A spectator that moves 2 units per second and turns half a degree
-    /// for every unit of the mouse.
+    /// for every unit of the mouse, possessed so that the input reaches it.
     Entity CreateSpectator(const Transform &transform = {})
     {
       const Entity entity = _store.CreateEntity("");
       _store.Set(entity, transform);
       _store.Set(entity, Spectator{.move_speed = 2.0f, .look_speed = 0.5f});
+      _store.Set(entity, Possessed{});
       return entity;
     }
 
@@ -324,7 +328,7 @@ namespace
     EXPECT_FLOAT_EQ(TransformOf(spectator).rotation.yaw, -90.0f);
   }
 
-  TEST_F(SpectatorMovementTest, MovesEverySpectatorAtItsOwnSpeed)
+  TEST_F(SpectatorMovementTest, MovesThePossessedSpectatorAlone)
   {
     const Entity slow = _store.CreateEntity("slow");
     _store.Set(slow, Transform{});
@@ -332,14 +336,15 @@ namespace
     const Entity fast = _store.CreateEntity("fast");
     _store.Set(fast, Transform{});
     _store.Set(fast, Spectator{.move_speed = 10.0f, .look_speed = 1.0f});
+    _store.Set(fast, Possessed{});
     _input.state.SetKeyDown(Key::W);
     _input.state.SetAxisMotion(Axis::Mouse, 10.0, 0.0);
 
     Update(1.0);
 
-    ExpectVector(TransformOf(slow).position, 0.0f, 0.0f, -1.0f);
+    ExpectVector(TransformOf(slow).position, 0.0f, 0.0f, 0.0f);
     ExpectVector(TransformOf(fast).position, 0.0f, 0.0f, -10.0f);
-    EXPECT_FLOAT_EQ(TransformOf(slow).rotation.yaw, -1.0f);
+    EXPECT_FLOAT_EQ(TransformOf(slow).rotation.yaw, 0.0f);
     EXPECT_FLOAT_EQ(TransformOf(fast).rotation.yaw, -10.0f);
   }
 
@@ -348,6 +353,7 @@ namespace
     const Entity spectator = _store.CreateEntity("");
     _store.Set(spectator, Transform{});
     _store.Set(spectator, Spectator{});
+    _store.Set(spectator, Possessed{});
     _input.state.SetKeyDown(Key::W);
     _input.state.SetAxisMotion(Axis::Mouse, 10.0, 0.0);
 

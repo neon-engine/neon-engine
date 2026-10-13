@@ -31,6 +31,14 @@ namespace neon::testing
 
     MOCK_METHOD(Entity, Spawn, (const std::string &path, Entity parent, const DataValue &overrides), (override));
 
+    MOCK_METHOD(bool, Possess, (Entity entity), (override));
+
+    MOCK_METHOD(void, Unpossess, (), (override));
+
+    MOCK_METHOD(Entity, GetPossessed, (), (const, override));
+
+    MOCK_METHOD(void, AddPossessionListener, (PossessionListener *listener), (override));
+
     MOCK_METHOD(void, CleanUp, (), (override));
 
     /// What HasNoScene() answers. It is no mocked call, so that a strict

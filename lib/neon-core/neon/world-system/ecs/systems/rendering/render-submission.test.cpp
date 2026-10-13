@@ -13,6 +13,7 @@
 #include <neon/testing/recording-logger.hpp>
 #include <neon/world-system/ecs/components/camera.hpp>
 #include <neon/world-system/ecs/components/light.hpp>
+#include <neon/world-system/ecs/components/possessed.hpp>
 #include <neon/world-system/ecs/components/renderable.hpp>
 #include <neon/world-system/ecs/components/sky.hpp>
 
@@ -20,6 +21,7 @@ namespace
 {
   using neon::Camera;
   using neon::CameraInfo;
+  using neon::Possessed;
   using neon::Entity;
   using neon::Light;
   using neon::LightSource;
@@ -88,6 +90,7 @@ namespace
       _store.Register<Light>("Light");
       _store.Register<Sky>("Sky");
       _store.Register<Renderable>("Renderable");
+      _store.Register<Possessed>("Possessed");
       _system.Initialize(_store);
 
       // the time is handed over in every frame, whatever else a test expects
@@ -324,6 +327,60 @@ namespace
     Create(Placed(0.0f, 0.0f, 0.0f), Camera{.fov = 60.0f});
 
     // the pipeline keeps the one it was handed last
+    EXPECT_CALL(_pipeline, SetCameraInfo(Field("fov", &CameraInfo::fov, 30.0f)));
+    EXPECT_CALL(_pipeline, SetCameraInfo(Field("fov", &CameraInfo::fov, 60.0f)));
+
+    _system.Update(_store, 0.016);
+  }
+
+  TEST_F(RenderSubmissionTest, HandsOverTheCameraOfThePossessedEntityAlone)
+  {
+    Create(Placed(0.0f, 0.0f, 0.0f), Camera{.fov = 30.0f});
+    const Entity cart = Create(Placed(0.0f, 0.0f, 0.0f), Camera{.fov = 60.0f});
+    _store.Set(cart, Possessed{});
+
+    EXPECT_CALL(_pipeline, SetCameraInfo(Field("fov", &CameraInfo::fov, 60.0f)));
+
+    _system.Update(_store, 0.016);
+  }
+
+  TEST_F(RenderSubmissionTest, HandsOverTheCameraBelowThePossessedEntity)
+  {
+    Create(Placed(0.0f, 0.0f, 0.0f), Camera{.fov = 30.0f});
+    const Entity cart = _store.CreateEntity("cart");
+    _store.Set(cart, Placed(0.0f, 0.0f, 0.0f));
+    _store.Set(cart, Possessed{});
+    const Entity seat = _store.CreateEntity("seat", cart);
+    _store.Set(seat, Placed(0.0f, 0.0f, 0.0f));
+    const Entity eyes = _store.CreateEntity("eyes", seat);
+    _store.Set(eyes, Placed(0.0f, 0.0f, 0.0f));
+    _store.Set(eyes, Camera{.fov = 60.0f});
+
+    EXPECT_CALL(_pipeline, SetCameraInfo(Field("fov", &CameraInfo::fov, 60.0f)));
+
+    _system.Update(_store, 0.016);
+  }
+
+  TEST_F(RenderSubmissionTest, HandsOverEveryCameraWhenThePossessedEntityHasNone)
+  {
+    Create(Placed(0.0f, 0.0f, 0.0f), Camera{.fov = 30.0f});
+    Create(Placed(0.0f, 0.0f, 0.0f), Camera{.fov = 60.0f});
+    const Entity cart = _store.CreateEntity("cart");
+    _store.Set(cart, Placed(0.0f, 0.0f, 0.0f));
+    _store.Set(cart, Possessed{});
+
+    EXPECT_CALL(_pipeline, SetCameraInfo(Field("fov", &CameraInfo::fov, 30.0f)));
+    EXPECT_CALL(_pipeline, SetCameraInfo(Field("fov", &CameraInfo::fov, 60.0f)));
+
+    _system.Update(_store, 0.016);
+  }
+
+  TEST_F(RenderSubmissionTest, HandsOverACameraThatDrawsIntoATextureWhateverIsPossessed)
+  {
+    Create(Placed(0.0f, 0.0f, 0.0f), Camera{.target = neon::RenderTarget::Texture, .fov = 30.0f, .texture = "monitor"});
+    const Entity cart = Create(Placed(0.0f, 0.0f, 0.0f), Camera{.fov = 60.0f});
+    _store.Set(cart, Possessed{});
+
     EXPECT_CALL(_pipeline, SetCameraInfo(Field("fov", &CameraInfo::fov, 30.0f)));
     EXPECT_CALL(_pipeline, SetCameraInfo(Field("fov", &CameraInfo::fov, 60.0f)));
 

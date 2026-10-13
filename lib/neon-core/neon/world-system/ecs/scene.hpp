@@ -56,6 +56,15 @@ namespace neon
       return false;
     }
 
+    /// The path of the entity the scene that was read last says is
+    /// possessed when it starts, written as `possess` at the top of a
+    /// scene file, or empty when the scene leaves it to the world, see
+    /// docs/possession.md.
+    [[nodiscard]] virtual std::string GetPossessed() const
+    {
+      return "";
+    }
+
     /// Creates the entity of a prefab recipe, named by its virtual path,
     /// below `parent`, which is No_Entity for the top, while the game
     /// plays. `overrides` is read on top of it, in the form of the

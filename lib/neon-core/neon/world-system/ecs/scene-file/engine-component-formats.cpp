@@ -8,6 +8,7 @@
 #include <neon/world-system/ecs/components/ray-cast.hpp>
 #include <neon/world-system/ecs/components/geometry.hpp>
 #include <neon/world-system/ecs/components/persistent.hpp>
+#include <neon/world-system/ecs/components/possessable.hpp>
 #include <neon/world-system/ecs/components/renderable.hpp>
 #include <neon/world-system/ecs/components/rope.hpp>
 #include <neon/world-system/ecs/components/scene-exit.hpp>
@@ -35,6 +36,8 @@ namespace neon
     Add(ComponentFormat::Of<SoundSource>());
     Add(ComponentFormat::Of<SoundListener>());
     Add(ComponentFormat::Of<Persistent>());
+    // what can be possessed; Possessed, which the world sets, is in no file
+    Add(ComponentFormat::Of<Possessable>());
 
     // a pool is written by what it is to hold, see pool-manager-format.hpp
     Add(PoolManagerFormat());

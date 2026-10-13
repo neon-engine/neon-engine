@@ -58,6 +58,12 @@ namespace neon
   void ExtensionHost::SetWorld(WorldSystem *world)
   {
     _services.world = world;
+    if (world != nullptr) { world->AddPossessionListener(this); }
+  }
+
+  void ExtensionHost::OnPossession(const PossessionEvent &event)
+  {
+    _possession_events.push_back(event);
   }
 
   ExtensionHost::~ExtensionHost()
@@ -238,7 +244,7 @@ namespace neon
     }
   }
 
-  void ExtensionHost::Update(const double delta_time) const
+  void ExtensionHost::Update(const double delta_time)
   {
     // what touched what reaches the extensions before their update, so
     // that it sees the frame it happened in, as with the scripts
@@ -257,6 +263,24 @@ namespace neon
         for (const auto &extension : _extensions)
         {
           for (const auto &listener : extension->physics_listeners) { listener.listen(listener.user, &told); }
+        }
+      }
+    }
+
+    // and so does what was possessed and released. What a listener asks
+    // for in turn waits for the next frame
+    if (!_possession_events.empty())
+    {
+      const std::vector<PossessionEvent> events = std::move(_possession_events);
+      _possession_events.clear();
+      for (const auto &event : events)
+      {
+        for (const auto &extension : _extensions)
+        {
+          for (const auto &listener : extension->possession_listeners)
+          {
+            listener.listen(listener.user, event.entity, event.possessed ? 1 : 0);
+          }
         }
       }
     }

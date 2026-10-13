@@ -32,7 +32,7 @@ extern "C" {
 #endif
 
 /* The version of this file. It goes up by one whenever a table grows. */
-#define NEON_EXTENSION_ABI_VERSION 20
+#define NEON_EXTENSION_ABI_VERSION 21
 
 /* What get_input_device answers. */
 #define NEON_DEVICE_KEYBOARD_AND_MOUSE 0
@@ -867,6 +867,31 @@ typedef struct NeonExtensionHost
   /* The samples a texture is read with from the side, as the graphics
    * card allows: 1 for none. */
   int32_t (*get_anisotropy)(void *context);
+
+  /* --- Since version 21: possession, see docs/possession.md --- */
+
+  /* Possesses the entity: the input reaches it alone from now on and the
+   * view follows it, the entity that was possessed is released, and the
+   * listeners of both are told. An entity that is gone or carries no
+   * `Possessable` is refused, which is said. Returns 1 when the entity is
+   * possessed, and 0 when not. */
+  int (*possess)(void *context, NeonEntity entity);
+
+  /* Releases the possessed entity, so that nothing is possessed. */
+  void (*unpossess)(void *context);
+
+  /* The entity that is possessed, or 0 when nothing is. */
+  NeonEntity (*get_possessed)(void *context);
+
+  /* Asks to be told what was possessed and released. `listen` is called
+   * for each, with 1 for an entity that was possessed and 0 for one that
+   * was released, before the `update` of the systems of the frame after
+   * it happened, with `user` as it was given. Call it where systems are
+   * added, not later. Returns 1, or 0 after saying why. */
+  int (*listen_to_possession)(
+    void *context,
+    void (*listen)(void *user, NeonEntity entity, int possessed),
+    void *user);
 } NeonExtensionHost;
 
 /* What an extension brings. The application hands it over with every field

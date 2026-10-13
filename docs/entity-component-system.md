@@ -64,6 +64,7 @@ privately, so the compiler refuses it anywhere else.
 | `RayCast` | A ray through the physics from the entity along where it looks, cast every frame, and what it hits. See [physics.md](physics.md#ray-casts) | same |
 | `RigidBody`, `Collider`, `Trigger`, `CharacterBody` | What the physics needs to know of an entity. See [physics.md](physics.md) | same |
 | `Persistent` | The entity stays when the world changes scene. See [scenes.md](scenes.md#changing-the-scene) | same |
+| `Possessable`, `Possessed` | The entity can be possessed, and is the one that is: the input drives it and the view follows it. See [possession.md](possession.md) | same |
 | `SceneExit` | The scene the world changes to when a body enters the entity's `Trigger`, which the `SceneExiting` system watches | same |
 
 The systems of the engine live under `neon/world-system/ecs/systems/`, in
@@ -90,7 +91,7 @@ A frame runs them in this order.
 | Order | System | Does |
 |---|---|---|
 | 1 | `FixedUpdate` of every system | Once for every step of the world that the time of the frame asks for, which can be never |
-| 2 | `SpectatorMovement` | Moves and turns entities with a `Spectator` by the input |
+| 2 | `SpectatorMovement` | Moves and turns the entity with a `Spectator` that is possessed by the input, see [possession.md](possession.md) |
 | 3 | Systems a game added | In the order they were added. `ScriptRunning` is one of them: it runs the systems the scripts declare, see [scripting.md](scripting.md) |
 | 4 | `TransformPropagation` | Places every entity in the world, parents before children |
 | 5 | `Interpolate` of every system | Places what is drawn between the last two steps |

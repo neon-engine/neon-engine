@@ -159,6 +159,7 @@ something of its own and is told to clean up.
 | 18 | `get_input_device` | |
 | 19 | `list_folders`, `ui_focus` | |
 | 20 | `set_anisotropy`, `get_anisotropy` | |
+| 21 | `possess`, `unpossess`, `get_possessed`, `listen_to_possession` | |
 
 ## Components
 
@@ -237,6 +238,7 @@ What an extension reaches besides the store. Like the store, they are for
 | What is drawn | `set_image`, `set_mesh` | A picture and a mesh the extension made, see [what an extension draws](#what-an-extension-draws) |
 | Physics | `listen_to_physics`, `cast_ray` | What began and ended to touch in a frame, before `update`, as the hooks of a script are told; and the first thing a ray hits. A body itself is a component, `RigidBody`, `CharacterBody`, or `Trigger` with a `Collider`, and is moved through its fields, see [physics.md](physics.md) |
 | The application | `request_quit` | Asks it to close once the frame is done, see [what an extension keeps](#what-an-extension-keeps) |
+| Possession | `possess`, `unpossess`, `get_possessed`, `listen_to_possession` | Who drives: the entity the input reaches and the view follows, see [possession.md](possession.md). `listen_to_possession` is told what was possessed and released before `update`, as `listen_to_physics` is; in C++ a `System` has `OnPossessed` and `OnUnpossessed` |
 | Audio | none of its own | A sound is a component and is played through its fields, see [audio.md](audio.md) |
 
 | Decision | Reason |

@@ -3,6 +3,7 @@
 #include <algorithm>
 
 #include <neon/common/transform.hpp>
+#include <neon/world-system/ecs/components/possessed.hpp>
 #include <neon/world-system/ecs/components/spectator.hpp>
 
 namespace neon
@@ -14,7 +15,7 @@ namespace neon
 
   void SpectatorMovement::Initialize(EntityStore &store)
   {
-    _query = store.Query<Transform, Spectator>();
+    _query = store.Query<Transform, Spectator, Possessed>();
   }
 
   void SpectatorMovement::Update(EntityStore &store, const double delta_time)

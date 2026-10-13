@@ -10,6 +10,8 @@
 #include <neon/scripting/script-context.hpp>
 #include <neon/ui/ui-context.hpp>
 #include <neon/world-system/ecs/entity-system.hpp>
+#include <neon/world-system/possession-listener.hpp>
+#include <neon/world-system/world-system.hpp>
 
 namespace neon
 {
@@ -24,8 +26,11 @@ namespace neon
   /// it happened in. So does what the user interface asked for: a click on
   /// an element that names a function with `on_click`, or a change the
   /// player made to one that names it with `on_change`, calls it on the
-  /// systems of the entity whose `Ui` or `UiSurface` shows the file.
-  class ScriptRunning final : public EntitySystem
+  /// systems of the entity whose `Ui` or `UiSurface` shows the file. And
+  /// so does what was possessed and released, see docs/possession.md: it
+  /// is kept as the world tells it and handed to the hooks in the next
+  /// Update, before `update`, since a hook may possess in turn.
+  class ScriptRunning final : public EntitySystem, public PossessionListener
   {
     ScriptContext *_scripts;
     PhysicsContext *_physics;
@@ -40,6 +45,9 @@ namespace neon
     // where the clicks come from
     UiContext *_ui = nullptr;
     std::vector<ScriptUiCall> _calls;
+
+    // what was possessed and released since the scripts were told
+    std::vector<PossessionEvent> _possession_events;
 
 
   public:
@@ -63,6 +71,13 @@ namespace neon
     /// Without one nothing is called. Call it before the world is
     /// initialized.
     void SetUi(UiContext *ui);
+
+    /// The world whose possession the scripts hear of and ask for. Without
+    /// one the hooks of possession are never called. Call it before the
+    /// world is initialized.
+    void SetWorld(WorldSystem *world);
+
+    void OnPossession(const PossessionEvent &event) override;
 
     void Register(EntityStore &store) override;
 

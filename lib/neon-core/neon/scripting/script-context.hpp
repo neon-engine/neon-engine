@@ -6,6 +6,7 @@
 #include <vector>
 
 #include <neon/physics/physics-types.hpp>
+#include <neon/world-system/possession-event.hpp>
 #include <neon/world-system/ecs/entity-store.hpp>
 #include <neon/world-system/ecs/scene-file/component-format.hpp>
 
@@ -48,6 +49,11 @@ namespace neon
     /// Hands the systems what the physics reported in a frame: a body
     /// entering or leaving a trigger, two bodies touching or parting.
     virtual void DispatchPhysicsEvents(EntityStore &store, const std::vector<PhysicsEvent> &events) = 0;
+
+    /// Hands the systems what was possessed and released since they were
+    /// last told, see docs/possession.md: `on_possessed` and
+    /// `on_unpossessed` of every system that runs over the entity.
+    virtual void DispatchPossessionEvents(EntityStore &store, const std::vector<PossessionEvent> &events) = 0;
 
     /// Calls the functions the user interface asked for in a frame, each
     /// on the systems of the entity that shows the user interface: an

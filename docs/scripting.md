@@ -152,6 +152,8 @@ of parameters, are refused with the list of hooks:
 | `on_trigger_enter(entity, components..., other)` | A body entered this entity's `Trigger` | The other entity |
 | `on_trigger_exit(entity, components..., other)` | A body left it | |
 | `on_collision(entity, components..., other, point, normal)` | This entity's body began to touch another | The other entity, where, and the direction from this one to the other |
+| `on_possessed(entity, components...)` | This entity was possessed: the input reaches it alone from now on and the view follows it, see [possession.md](possession.md) | |
+| `on_unpossessed(entity, components...)` | This entity was released: another was possessed, or none | |
 
 `self` is the system's class, so a system keeps what is its own on it. A
 helper a hook shares with another is a plain `local function` of the file,
@@ -345,6 +347,7 @@ and a method of an entity is the store's function on it,
 | | `world.find_entity("player/camera")` | An entity by its path, or `nil` |
 | | `world.create_entity(name, parent)`, `world.destroy_entity(entity)` | Makes and ends entities |
 | | `world.load_scene(path)` | Asks for another scene, read at the start of the next frame, see [scenes.md](scenes.md#changing-the-scene). `scene.load_scene` is the same |
+| | `world.possess(entity)`, `world.unpossess()`, `world.get_possessed()` | Possesses the entity, which has to carry a `Possessable`, and returns whether it is possessed; releases it; the possessed entity, or `nil`. See [possession.md](possession.md) |
 | `input` | `input.is_action_down(action)`, `input.was_action_pressed(action)` | The actions of the [input map](input.md) |
 | | `input.action_axis2(action)`, `input.action_axis2(action)`, `input.action_axis3(action)` | A trigger, a stick as two numbers, a sensor as three |
 | `ui` | `ui.set_text(name, text)`, `ui.set_number(name, number)`, `ui.set_flag(name, flag)` | Sets a value that files refer to as `{name}` |

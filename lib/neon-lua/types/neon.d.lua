@@ -125,6 +125,17 @@ function System:on_trigger_exit(entity, ...) end
 ---@param ... any The components the system named, in that order, then what the hook adds
 function System:on_collision(entity, ...) end
 
+---This entity was possessed: the input reaches it alone from now on and
+---the view follows it. See docs/possession.md.
+---@param entity Entity
+---@param ... any The components the system named, in that order
+function System:on_possessed(entity, ...) end
+
+---This entity was released: another was possessed, or none.
+---@param entity Entity
+---@param ... any The components the system named, in that order
+function System:on_unpossessed(entity, ...) end
+
 ---A vector. One read from a component is bound to its field and writes
 ---through; one made with vec3() is a value of its own.
 ---@class vec3
@@ -385,6 +396,20 @@ function world.destroy_entity(entity) end
 ---Asks for another scene, read at the start of the next frame.
 ---@param path string
 function world.load_scene(path) end
+
+---Possesses the entity: the input reaches it alone from now on and the
+---view follows it, and what was possessed is released. An entity without a
+---Possessable is refused, which the log says. See docs/possession.md.
+---@param entity Entity
+---@return boolean Whether the entity is possessed
+function world.possess(entity) end
+
+---Releases the possessed entity, so that nothing is possessed.
+function world.unpossess() end
+
+---The entity that is possessed, or nil.
+---@return Entity|nil
+function world.get_possessed() end
 
 ---What is heard, named as `AudioContext` and `SoundSource` name it: the
 ---volume of a group of sounds for a menu of the game, and the fades of the

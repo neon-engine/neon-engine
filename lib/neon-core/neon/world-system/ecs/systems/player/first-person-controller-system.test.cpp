@@ -13,6 +13,7 @@
 #include <neon/world-system/ecs/components/character-body.hpp>
 #include <neon/world-system/ecs/components/collider.hpp>
 #include <neon/world-system/ecs/components/first-person-controller.hpp>
+#include <neon/world-system/ecs/components/possessed.hpp>
 
 namespace
 {
@@ -25,6 +26,7 @@ namespace
   using neon::Key;
   using neon::FirstPersonController;
   using neon::FirstPersonControllerSystem;
+  using neon::Possessed;
   using neon::ShapeKind;
   using neon::Transform;
   using neon::testing::FakeEntityStore;
@@ -56,6 +58,7 @@ namespace
       _store.Register<CharacterBody>("CharacterBody");
       _store.Register<Collider>("Collider");
       _store.Register<FirstPersonController>("FirstPersonController");
+      _store.Register<Possessed>("Possessed");
       _system.Initialize(_store);
       _input.TakeTheDevicesAsTheyAre();
     }
@@ -63,13 +66,15 @@ namespace
     /// A player that walks 2 meters a second, runs 3, jumps with 5, steers
     /// half as much in the air, and turns a hundredth of a radian for every
     /// pixel, standing on the ground in a capsule of 1.8, with its camera
-    /// below it.
+    /// below it. It is possessed, as the player of a scene is, so that the
+    /// input reaches it.
     Entity CreatePlayer(const float yaw = 0.0f, const bool on_floor = true)
     {
       const Entity entity = _store.CreateEntity("player");
       Transform transform;
       transform.rotation.yaw = yaw;
       _store.Set(entity, transform);
+      _store.Set(entity, Possessed{});
       _store.Set(entity, FirstPersonController{
         .walk_speed = 2.0f,
         .run_speed = 3.0f,
@@ -665,19 +670,60 @@ namespace
     EXPECT_FLOAT_EQ(TransformOf(walker).rotation.yaw, 0.0f);
   }
 
-  TEST_F(FirstPersonControllerSystemTest, DrivesEveryPlayerByTheSameInput)
+  TEST_F(FirstPersonControllerSystemTest, DrivesThePossessedPlayerAlone)
   {
     const Entity first = CreatePlayer();
     const Entity second = _store.CreateEntity("second");
     _store.Set(second, Transform{});
     _store.Set(second, FirstPersonController{.walk_speed = 10.0f});
-    _store.Set(second, CharacterBody{.on_floor = true});
+    _store.Set(second, CharacterBody{.velocity = {0.0f, 0.0f, -10.0f}, .on_floor = true});
     _input.state.SetKeyDown(Key::W);
 
     Update();
 
     ExpectVector(BodyOf(first).velocity, 0.0f, 0.0f, -2.0f);
-    ExpectVector(BodyOf(second).velocity, 0.0f, 0.0f, -10.0f);
+    // the other is driven by nothing: it stops
+    ExpectVector(BodyOf(second).velocity, 0.0f, 0.0f, 0.0f);
+  }
+
+  TEST_F(FirstPersonControllerSystemTest, DoesNotTurnAPlayerThatIsNotPossessed)
+  {
+    const Entity player = CreatePlayer();
+    _store.Remove<Possessed>(player);
+    _input.state.SetAxisMotion(Axis::Mouse, 10.0, 0.0);
+
+    Update();
+
+    EXPECT_FLOAT_EQ(TransformOf(player).rotation.yaw, 0.0f);
+  }
+
+  TEST_F(FirstPersonControllerSystemTest, DrivesAnotherPlayerOnceItIsPossessed)
+  {
+    const Entity first = CreatePlayer();
+    const Entity second = _store.CreateEntity("second");
+    _store.Set(second, Transform{});
+    _store.Set(second, FirstPersonController{.walk_speed = 2.0f});
+    _store.Set(second, CharacterBody{.on_floor = true});
+    _store.Set(second, Possessed{});
+    _store.Remove<Possessed>(first);
+    _input.state.SetKeyDown(Key::W);
+
+    Update();
+
+    ExpectVector(BodyOf(first).velocity, 0.0f, 0.0f, 0.0f);
+    ExpectVector(BodyOf(second).velocity, 0.0f, 0.0f, -2.0f);
+  }
+
+  TEST_F(FirstPersonControllerSystemTest, KeepsTheCameraOfAPlayerThatIsNotPossessedAtTheEyesWithoutPitching)
+  {
+    const Entity player = CreatePlayer();
+    _store.Remove<Possessed>(player);
+    _input.state.SetAxisMotion(Axis::Mouse, 0.0, 10.0);
+
+    Update();
+
+    ExpectVector(TransformOf(CameraOf(player)).position, 0.0f, 0.7f, 0.0f);
+    EXPECT_FLOAT_EQ(TransformOf(CameraOf(player)).rotation.pitch, 0.0f);
   }
 
   TEST_F(FirstPersonControllerSystemTest, LeavesThePlayerAsItWasSet)
