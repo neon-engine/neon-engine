@@ -11,6 +11,7 @@
 #include "settings/editor-folder.hpp"
 #include "scripts/editor-script.hpp"
 #include "scripts/editor-script-runner.hpp"
+#include "tools/external-editor.hpp"
 #include "ui/editor-log.hpp"
 #include "ui/editor-viewport.hpp"
 #include "ui/editor-windows.hpp"
@@ -32,6 +33,10 @@ namespace neon
   {
     ToolUiSystem *_tool_ui = nullptr;
     EditorFolder *_folder = nullptr;
+
+    // what File > Open in VS Code opens the project with; without one the
+    // item is there and cannot be chosen
+    ExternalEditor *_external_editor = nullptr;
 
     // the camera of the viewport, which the world is told to draw with
     // through an EditorCameraSubmission the application adds
@@ -91,10 +96,15 @@ namespace neon
     /// Call it before Run(). Without one the editor runs as the runtime.
     void SetToolUi(ToolUiSystem *tool_ui);
 
+    /// Gives the editor what opens the code of the project in VS Code, for
+    /// the File menu. Call it before Run().
+    void SetExternalEditor(ExternalEditor *external_editor);
+
     /// Gives the editor its own folder, where the layout of its windows
     /// and its settings are kept between runs (#582). Call it before
     /// Run(). Without one nothing is kept.
     void SetEditorFolder(EditorFolder *folder);
+
     /// Gives the editor a script that drives its tools by their labels,
     /// see docs/editor.md#scripted-runs. Call it before Run(), with a tool
     /// interface set.

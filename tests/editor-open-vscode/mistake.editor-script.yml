@@ -1,0 +1,12 @@
+# A mistake in editor.yml is in the Log window with its line when the editor
+# opens, and Open in VS Code still works through user-editor.yml. The Log is
+# hidden when the editor opens, so View > Log shows it first.
+description: A mistake in editor.yml is reported, and user-editor.yml is read all the same
+steps:
+  - menu: View > Log
+  - expect: {window: Log, shown: true}
+  - expect: {text: "editor://editor.yml:3"}
+  - menu: File > Open in VS Code
+  - wait: 2
+  - expect: {text: in VS Code}
+  - screenshot: output://mistake.png

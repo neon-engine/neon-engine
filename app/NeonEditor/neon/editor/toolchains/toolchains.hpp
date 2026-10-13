@@ -25,6 +25,12 @@ namespace neon
     std::map<std::string, std::string> _editors;
 
   public:
+    /// The toolchains the engine is built with, as docs/development.md
+    /// describes them: native on an Apple Silicon Mac, and the two Docker
+    /// images for Linux and Windows. What the machine-wide `editor.yml` is
+    /// laid over, so that an editor without one builds all the same.
+    [[nodiscard]] static Toolchains Defaults();
+
     /// Adds a toolchain, or replaces the one of its name.
     void Set(const Toolchain &toolchain);
 

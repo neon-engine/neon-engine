@@ -1,6 +1,7 @@
 #ifndef FAKE_PROCESS_CONTEXT_HPP
 #define FAKE_PROCESS_CONTEXT_HPP
 
+#include <algorithm>
 #include <map>
 #include <set>
 #include <string>
@@ -38,10 +39,24 @@ namespace neon::testing
     /// The commands that were run, in order.
     std::vector<ProcessCommand> commands;
 
+    /// The commands that were started without waiting, in order.
+    std::vector<ProcessCommand> started;
+
+    /// Makes every start fail, as a program that cannot be run does.
+    bool refuses_start = false;
+
     /// Marks a program as installed, at a made-up path.
     void Install(const std::string &program)
     {
       installed[program] = "/fake/bin/" + program;
+    }
+
+    /// Whether a program is installed, by its name or by where it is, as
+    /// a real runner starts the path it found.
+    [[nodiscard]] bool IsInstalled(const std::string &program) const
+    {
+      if (installed.contains(program)) { return true; }
+      return std::ranges::any_of(installed, [&program](const auto &entry) { return entry.second == program; });
     }
 
     bool Find(const std::string &program, std::string &native_path) override
@@ -61,7 +76,7 @@ namespace neon::testing
     {
       commands.push_back(command);
 
-      if (!installed.contains(command.program))
+      if (!IsInstalled(command.program))
       {
         error = command.program + " is not installed";
         return false;
@@ -76,6 +91,23 @@ namespace neon::testing
 
       for (const auto &line : result->second.lines) { on_line(line); }
       exit_code = result->second.exit_code;
+      return true;
+    }
+
+    bool Start(const ProcessCommand &command, std::string &error) override
+    {
+      started.push_back(command);
+
+      if (!IsInstalled(command.program))
+      {
+        error = command.program + " is not installed";
+        return false;
+      }
+      if (refuses_start)
+      {
+        error = command.program + " could not be started";
+        return false;
+      }
       return true;
     }
   };

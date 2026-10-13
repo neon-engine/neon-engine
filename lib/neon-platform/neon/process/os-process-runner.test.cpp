@@ -1,16 +1,21 @@
 // The processes of the operating system, as the editor starts a build: a
-// program is found, started, read, and its exit code reported. The programs
-// are those every machine has: on macOS and Linux the shell, on Windows the
-// command interpreter.
+// program is found, started, read, and its exit code reported; and as it
+// opens the code in another program, which is started without waiting. The
+// programs are those every machine has: on macOS and Linux the shell, on
+// Windows the command interpreter.
 
+#include <chrono>
+#include <filesystem>
 #include <memory>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <neon/testing/recording-logger.hpp>
+#include <neon/testing/temporary-directory.hpp>
 
 #include "os-process-runner.hpp"
 
@@ -138,5 +143,42 @@ namespace
     EXPECT_FALSE(Run({.program = "neon-engine-no-such-program"}));
     EXPECT_THAT(_error, HasSubstr("neon-engine-no-such-program is not installed"));
     EXPECT_THAT(_lines, IsEmpty());
+  }
+
+  // starting without waiting
+
+  TEST_F(OSProcessRunnerTest, StartsAProgramAndReturnsBeforeItEnds)
+  {
+    const auto before = std::chrono::steady_clock::now();
+#if defined(_WIN32)
+    ASSERT_TRUE(_runner.Start(Shell("ping -n 4 127.0.0.1 > nul"), _error)) << _error;
+#else
+    ASSERT_TRUE(_runner.Start(Shell("sleep 3"), _error)) << _error;
+#endif
+    const auto taken = std::chrono::steady_clock::now() - before;
+    EXPECT_LT(std::chrono::duration_cast<std::chrono::milliseconds>(taken).count(), 2000);
+  }
+
+  TEST_F(OSProcessRunnerTest, AStartedProgramRunsInTheFolderItIsGiven)
+  {
+    const neon::testing::TemporaryDirectory directory;
+    ProcessCommand command = Shell("echo started > started.txt");
+    command.directory = directory.Native();
+
+    ASSERT_TRUE(_runner.Start(command, _error)) << _error;
+
+    // the program runs by itself, so the file turns up a moment later
+    const std::filesystem::path file = directory.Path() / "started.txt";
+    for (int waited = 0; waited < 500 && !std::filesystem::exists(file); waited++)
+    {
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+    EXPECT_TRUE(std::filesystem::exists(file));
+  }
+
+  TEST_F(OSProcessRunnerTest, RefusesToStartAProgramThatIsNotThere)
+  {
+    EXPECT_FALSE(_runner.Start({.program = "neon-engine-no-such-program"}, _error));
+    EXPECT_THAT(_error, HasSubstr("neon-engine-no-such-program is not installed"));
   }
 } // namespace

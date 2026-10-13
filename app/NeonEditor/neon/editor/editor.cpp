@@ -33,6 +33,11 @@ namespace neon
     _tool_ui = tool_ui;
   }
 
+  void Editor::SetExternalEditor(ExternalEditor *external_editor)
+  {
+    _external_editor = external_editor;
+  }
+
   void Editor::SetEditorFolder(EditorFolder *folder)
   {
     _folder = folder;
@@ -116,6 +121,12 @@ namespace neon
 
     if (_tool_ui->BeginMenu("File"))
     {
+      // the code of the project, at its root, never the engine's checkout
+      if (_tool_ui->MenuItem("Open in VS Code", "", false, _external_editor != nullptr))
+      {
+        _external_editor->Open(_settings_config.project_directory);
+      }
+      _tool_ui->Separator();
       if (_tool_ui->MenuItem("Quit"))
       {
         _logger->Info("Quit was chosen in the File menu");

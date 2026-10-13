@@ -44,6 +44,18 @@ for an application, apart from the project's `user://`, which is the game's.
 See [editor.md](editor.md#the-editors-folder) and
 [file-systems.md](file-systems.md).
 
+**Decided 2026-10-11, reviewing #594:** the toolchains and the editors are
+the editor's settings, not a project's, so nothing of them lives in a
+project. Both files are the machine's, in the editor's own folder,
+`editor://` (#597): `editor.yml` and `user-editor.yml` next to it, each laid
+over the one before and both over the defaults built into the editor,
+`Toolchains::Defaults()`, which are the engine's three toolchains of
+[development.md](development.md). `ToolchainFiles` reads them in that order
+when the editor starts with a window, as `editor://editor.yml` and
+`editor://user-editor.yml` (`ToolchainFiles::shared_path`, `user_path`).
+The rest of this note still describes the files at the root of a project
+and is rewritten with #599.
+
 ## The file
 
 ```yaml
@@ -87,6 +99,26 @@ A toolchain:
 | `requires` | The programs that have to be installed: a name that is looked for on `PATH`, or a path that has to be there | Nothing is required |
 | `configure`, `build` | The commands, as one would type them | An error |
 | `run` | How the result is started, or `off` when it cannot be started on this machine, as a Windows build on a Mac | `off` |
+
+### Editors
+
+`editors` names the programs the editor opens things in, as a path or a
+name on `PATH`, in `editor.yml` or `user-editor.yml` of the editor's own
+folder, never in a project. `vscode` is what `File > Open in VS Code`
+starts, see [editor.md](editor.md#opening-the-code). When no file names
+it, or the place named is not there, which the log says, the editor looks
+in the usual places of the platform, in this order:
+
+| Platform | Places |
+|---|---|
+| Every one | `code` on `PATH` |
+| macOS | `/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code`, then the same under `~/Applications` |
+| Windows | `code.cmd` on `PATH`, `%LOCALAPPDATA%\Programs\Microsoft VS Code\bin\code.cmd`, `C:\Program Files\Microsoft VS Code\bin\code.cmd` |
+| Linux | `/usr/bin/code`, `/snap/bin/code`, `/usr/share/code/bin/code` |
+
+When it is found nowhere the log says so and that `editors: vscode:` is
+where to set it. An editor started from the Finder or a launcher has a
+shorter `PATH` than a shell, which is what the places after it are for.
 
 A name that is not known is an error, so that a name that was misspelled
 does not go unnoticed. The file is a configuration file, read by the same
@@ -162,13 +194,15 @@ compiles its extension alone against it through `cmake/NeonSdk.cmake`.
 | Type | Does |
 |---|---|
 | `ToolchainFile` | Reads one file into a `Toolchains`, with every problem and its line |
-| `Toolchains` | The toolchains and editors of one file, or of several laid over each other with `Apply()` |
+| `ToolchainFiles` | Reads the two files of this machine over `Toolchains::Defaults()`, skipping those that are not there, and logs every problem |
+| `Toolchains` | The toolchains and editors of one file, or of several laid over each other with `Apply()`; `Defaults()` is what the editor has without a file |
 | `Toolchain` | One entry |
 | `ToolchainPlaceholders` | What the placeholders stand for on a target, and the filling in |
 | `ToolchainCheck` | Whether a toolchain is usable on this machine, and what is missing |
 | `ToolchainRun` | Runs one step, configure, build, or run, as a process of its own |
 | `BuildTarget` | The project the editor has open, its name, and the engine it is built against |
-| `ProcessContext` | The interface of neon-core that starts a program and reads what it prints, with `OS_ProcessRunner` of neon-platform behind it on `posix_spawn` and `CreateProcess` |
+| `ExternalEditor` | Opens the code of the project in VS Code, found through `editors` or the usual places, see [editors](#editors) |
+| `ProcessContext` | The interface of neon-core that starts a program and reads what it prints, or starts one without waiting for it, as VS Code is, with `OS_ProcessRunner` of neon-platform behind it on `posix_spawn` and `CreateProcess` |
 
 The files are read through `FileSystemContext` by virtual path, and the
 commands hold native paths, which are the machine's own and go to the

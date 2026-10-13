@@ -19,6 +19,10 @@ file(MAKE_DIRECTORY "${DIRECTORY}")
 # The folder of the user is sent into the folder of the test, so that user://
 # does not end up in the home folder of whoever runs the tests. Linux follows
 # XDG_DATA_HOME and macOS CFFIXED_USER_HOME. Windows takes no hint.
+#
+# RUN_ENVIRONMENT, a list of NAME=value set by the script before calling
+# run(), is laid over the environment of the application, for a check of
+# what it finds on PATH.
 if (NOT DEFINED RUN_TIMEOUT)
   set(RUN_TIMEOUT 60)
 endif ()
@@ -33,6 +37,7 @@ function(run)
           COMMAND "${CMAKE_COMMAND}" -E env
           "XDG_DATA_HOME=${DIRECTORY}/home/data"
           "CFFIXED_USER_HOME=${DIRECTORY}/home"
+          ${RUN_ENVIRONMENT}
           "${APPLICATION}" ${PROJECT_ARGUMENT} ${ARGN}
           WORKING_DIRECTORY "${DIRECTORY}"
           TIMEOUT "${RUN_TIMEOUT}"

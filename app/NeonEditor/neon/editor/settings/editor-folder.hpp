@@ -40,7 +40,7 @@ namespace neon
   public:
     /// Who the editor is to the platform, and what it is called: the names
     /// `editor://` is placed by. The toolchains of docs/editor-toolchains.md
-    /// read `user-editor.yml` from the same folder.
+    /// read `editor.yml` and `user-editor.yml` from the same folder.
     static constexpr std::string_view organization = "neon-engine";
     static constexpr std::string_view application = "neon-editor";
 

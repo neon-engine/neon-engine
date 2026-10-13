@@ -4,6 +4,40 @@
 
 namespace neon
 {
+  Toolchains Toolchains::Defaults()
+  {
+    Toolchains defaults;
+    defaults.Set(Toolchain{
+      .name = "macos-arm64",
+      .kind = ToolchainKind::Native,
+      .platform = "darwin-arm64",
+      .required = {"cmake", "ninja", "/opt/homebrew/opt/llvm@20/bin/clang++"},
+      .configure = "cmake -S {project} -B {build} -DNEON_RUNTIME_DIRECTORY={engine}/bin/release/darwin-arm64/NeonRuntime",
+      .build = "cmake --build {build}",
+      .run = "{build}/{name}/{name}"
+    });
+    defaults.Set(Toolchain{
+      .name = "linux-x64",
+      .kind = ToolchainKind::Docker,
+      .platform = "linux-x86_64",
+      .image = "neon-engine/linux-x64",
+      .required = {"docker"},
+      .configure = "cmake -S {project} -B {build} -DNEON_RUNTIME_DIRECTORY={engine}/bin/release/linux-x86_64/NeonRuntime",
+      .build = "cmake --build {build}"
+    });
+    defaults.Set(Toolchain{
+      .name = "windows-x64",
+      .kind = ToolchainKind::Docker,
+      .platform = "windows-x86_64",
+      .image = "neon-engine/windows-x64",
+      .required = {"docker"},
+      .configure = "cmake -S {project} -B {build} -DCMAKE_TOOLCHAIN_FILE={engine}/cmake/toolchains/windows-x64-llvm-mingw.cmake "
+                   "-DNEON_RUNTIME_DIRECTORY={engine}/bin/release/windows-x86_64/NeonRuntime",
+      .build = "cmake --build {build}"
+    });
+    return defaults;
+  }
+
   void Toolchains::Set(const Toolchain &toolchain)
   {
     const auto existing = std::ranges::find(_toolchains, toolchain.name, &Toolchain::name);

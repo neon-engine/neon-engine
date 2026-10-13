@@ -1,0 +1,17 @@
+# The File menu has Open in VS Code, choosing it starts VS Code on the root
+# of the project, and the Log window says so. The Log is hidden when the
+# editor opens, so View > Log shows it first. A menu is not something
+# `click` presses and `menu` takes a path to an item, so the File menu is
+# opened alone, for its screenshot, by a drag that starts and ends on it:
+# the button down and up over File, as a click.
+description: File > Open in VS Code opens the root of the project
+steps:
+  - menu: View > Log
+  - expect: {window: Log, shown: true}
+  - drag: {from: File, to: File}
+  - expect: {item: Open in VS Code, present: true}
+  - screenshot: output://file-menu.png
+  - click: Open in VS Code
+  - wait: 2
+  - expect: {text: in VS Code}
+  - screenshot: output://opened.png

@@ -4,6 +4,8 @@
 
 #include <neon/editor/camera/editor-camera-submission.hpp>
 #include <neon/editor/scripts/editor-script-loading.hpp>
+#include <neon/editor/toolchains/toolchain-file.hpp>
+#include <neon/editor/toolchains/toolchain-files.hpp>
 
 namespace neon
 {
@@ -136,6 +138,21 @@ namespace neon
     if (_folder.has_value()) { _editor->SetEditorFolder(&*_folder); }
     systems.world->AddSystemAfterPlacing(
       std::make_unique<EditorCameraSubmission>(&_editor->GetCamera(), systems.render_pipeline));
+
+    // the toolchain files of this machine say where VS Code is; a file with
+    // a mistake has said so in the log, which the log window shows
+    _processes.emplace(systems.logging->CreateLogger("OS_ProcessRunner"));
+    _native_files.emplace(systems.logging->CreateLogger("OS_NativeFiles"));
+    const ToolchainFile file(systems.file_system, &_yaml, systems.logger);
+    const ToolchainFiles files(&file, systems.file_system, systems.logger);
+    files.Read(_toolchains);
+    _external_editor.emplace(
+      &_toolchains,
+      &*_processes,
+      &*_native_files,
+      systems.library_loader->GetPlatform(),
+      systems.logger);
+    _editor->SetExternalEditor(&*_external_editor);
 
     // the script that drives the tools, read now so that one that cannot
     // be read ends the start-up with the reason, not after a frame

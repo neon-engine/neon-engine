@@ -61,6 +61,8 @@ add_library(neon-editor STATIC
         neon/editor/toolchains/toolchain-check.hpp
         neon/editor/toolchains/toolchain-file.cpp
         neon/editor/toolchains/toolchain-file.hpp
+        neon/editor/toolchains/toolchain-files.cpp
+        neon/editor/toolchains/toolchain-files.hpp
         neon/editor/toolchains/toolchain-kind.hpp
         neon/editor/toolchains/toolchain-placeholders.cpp
         neon/editor/toolchains/toolchain-placeholders.hpp
@@ -69,6 +71,11 @@ add_library(neon-editor STATIC
         neon/editor/toolchains/toolchain-step.hpp
         neon/editor/toolchains/toolchains.cpp
         neon/editor/toolchains/toolchains.hpp
+
+        # what opens the code of the project in another program, see
+        # docs/editor.md
+        neon/editor/tools/external-editor.cpp
+        neon/editor/tools/external-editor.hpp
 )
 neon_warnings(neon-editor)
 
@@ -92,6 +99,8 @@ if (NEON_BUILD_TESTS)
   neon_add_unit_test(neon-editor neon/editor/scripts/editor-script-runner.test.cpp LIBRARIES neon-ryml)
   neon_add_unit_test(neon-editor neon/editor/templates/project-template.test.cpp)
   neon_add_unit_test(neon-editor neon/editor/templates/project-template-text.test.cpp)
+  neon_add_unit_test(neon-editor neon/editor/toolchains/toolchain-files.test.cpp LIBRARIES neon-ryml)
+  neon_add_unit_test(neon-editor neon/editor/tools/external-editor.test.cpp)
 endif ()
 
 set(TARGET NeonEditor)

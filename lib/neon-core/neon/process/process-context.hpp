@@ -13,9 +13,10 @@ namespace neon
   /// what it prints until it ends.
   ///
   /// The editor builds a project with it, through the programs of a
-  /// toolchain: cmake, ninja, docker, and the result. The runtime starts no
-  /// process. How a process is started is the backend's: `posix_spawn` on
-  /// macOS and Linux, `CreateProcess` on Windows.
+  /// toolchain: cmake, ninja, docker, and the result, and opens the code of
+  /// a project in another program, which goes on by itself. The runtime
+  /// starts no process. How a process is started is the backend's:
+  /// `posix_spawn` on macOS and Linux, `CreateProcess` on Windows.
   class ProcessContext
   {
   protected:
@@ -43,6 +44,13 @@ namespace neon
       const LineCallback &on_line,
       int &exit_code,
       std::string &error) = 0;
+
+    /// Starts the command and returns at once: the process is not waited
+    /// for, and what it prints goes nowhere. For a program that is opened
+    /// for a person, such as the editor of the code, which goes on after
+    /// the call and after the application. Returns false when the program
+    /// could not be started, and says why in `error`.
+    virtual bool Start(const ProcessCommand &command, std::string &error) = 0;
   };
 } // neon
 

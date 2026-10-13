@@ -477,6 +477,7 @@ namespace neon
       .logger = _logger,
       .file_system = &*_file_system,
       .document_format = &_yaml,
+      .library_loader = &*_library_loader,
       .sdl2_window = _sdl2_window_system.has_value() ? &*_sdl2_window_system : nullptr,
       .sdl2_input = _sdl2_input_system.has_value() ? &*_sdl2_input_system : nullptr,
       .vk_render = _vk_render_system.has_value() ? &*_vk_render_system : nullptr

@@ -4,9 +4,11 @@
 #include <cerrno>
 #include <cstring>
 #include <format>
+#include <thread>
 #include <vector>
 
 #if defined(_WIN32)
+#include <cctype>
 #include <windows.h>
 
 #include <neon/filesystem/native-path.hpp>
@@ -106,6 +108,16 @@ namespace neon
       }
       line.append(backslashes * 2, L'\\');
       line += L'"';
+    }
+
+    /// Whether the program is a script of the command interpreter, which
+    /// CreateProcess cannot start by itself.
+    bool is_command_script(const std::string &program)
+    {
+      if (program.size() < 4) { return false; }
+      std::string extension = program.substr(program.size() - 4);
+      for (char &character : extension) { character = static_cast<char>(std::tolower(static_cast<unsigned char>(character))); }
+      return extension == ".cmd" || extension == ".bat";
     }
 
     std::string last_error_text()
@@ -255,6 +267,70 @@ namespace neon
     exit_code = static_cast<int>(code);
     return true;
   }
+
+  bool OS_ProcessRunner::Start(const ProcessCommand &command, std::string &error)
+  {
+    std::string program;
+    if (!Find(command.program, program))
+    {
+      error = std::format("{} is not installed: it is not on PATH, and no file of that name is there", command.program);
+      return false;
+    }
+
+    // a script of the command interpreter is run by it, with the whole
+    // command in one more pair of quotes, which is how cmd reads a line
+    // that starts with a quote
+    std::wstring application = wide_of(program);
+    std::wstring line;
+    const bool script = is_command_script(program);
+    if (script)
+    {
+      std::string interpreter;
+      if (!Find("cmd", interpreter))
+      {
+        error = std::format("{} is a script, and the command interpreter cmd is not there to run it", command.program);
+        return false;
+      }
+      application = wide_of(interpreter);
+      append_quoted(line, application);
+      line += L" /c \"";
+    }
+    append_quoted(line, wide_of(program));
+    for (const auto &argument : command.arguments)
+    {
+      line += L' ';
+      append_quoted(line, wide_of(argument));
+    }
+    if (script) { line += L'"'; }
+
+    STARTUPINFOW startup{};
+    startup.cb = sizeof(startup);
+
+    const std::wstring directory = wide_of(command.directory);
+    PROCESS_INFORMATION process{};
+    const BOOL started = CreateProcessW(
+      application.c_str(),
+      line.data(),
+      nullptr,
+      nullptr,
+      FALSE,
+      CREATE_NO_WINDOW | CREATE_NEW_PROCESS_GROUP,
+      nullptr,
+      directory.empty() ? nullptr : directory.c_str(),
+      &startup,
+      &process);
+
+    if (!started)
+    {
+      error = std::format("{} could not be started: {}", command.program, last_error_text());
+      return false;
+    }
+
+    // nothing of the process is kept: it goes on by itself
+    CloseHandle(process.hThread);
+    CloseHandle(process.hProcess);
+    return true;
+  }
 #else
   bool OS_ProcessRunner::Find(const std::string &program, std::string &native_path)
   {
@@ -372,6 +448,55 @@ namespace neon
     {
       exit_code = -1;
     }
+    return true;
+  }
+
+  bool OS_ProcessRunner::Start(const ProcessCommand &command, std::string &error)
+  {
+    std::string program;
+    if (!Find(command.program, program))
+    {
+      error = std::format("{} is not installed: it is not on PATH, and no file of that name is there", command.program);
+      return false;
+    }
+
+    // what the process prints is nobody's, so both of its outputs go nowhere
+    posix_spawn_file_actions_t actions{};
+    posix_spawn_file_actions_init(&actions);
+    posix_spawn_file_actions_addopen(&actions, STDOUT_FILENO, "/dev/null", O_WRONLY, 0);
+    posix_spawn_file_actions_addopen(&actions, STDERR_FILENO, "/dev/null", O_WRONLY, 0);
+    if (!command.directory.empty())
+    {
+      posix_spawn_file_actions_addchdir_np(&actions, command.directory.c_str());
+    }
+
+    std::vector<std::string> words;
+    words.reserve(command.arguments.size() + 1);
+    words.push_back(program);
+    words.insert(words.end(), command.arguments.begin(), command.arguments.end());
+    std::vector<char *> argv;
+    argv.reserve(words.size() + 1);
+    for (auto &word : words) { argv.push_back(word.data()); }
+    argv.push_back(nullptr);
+
+    pid_t child = 0;
+    const int spawned = posix_spawn(&child, program.c_str(), &actions, nullptr, argv.data(), environ);
+    posix_spawn_file_actions_destroy(&actions);
+
+    if (spawned != 0)
+    {
+      error = std::format("{} could not be started: {}", command.program, std::strerror(spawned));
+      return false;
+    }
+
+    // a child that ended has to be waited for, or it stays as a zombie
+    // until the application ends; a thread of its own does that, and is
+    // detached since nothing needs what it learns
+    std::thread([child]
+    {
+      int status = 0;
+      while (waitpid(child, &status, 0) < 0 && errno == EINTR) {}
+    }).detach();
     return true;
   }
 #endif

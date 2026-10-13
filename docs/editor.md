@@ -84,7 +84,7 @@ script feeds them.
 
 | Part | What it is |
 |---|---|
-| Menu bar | `File` with `Quit`; `View`, which shows and hides the tool windows, see [the View menu](#the-view-menu-and-the-tool-windows); `Help`, with a window about the editor |
+| Menu bar | `File` with `Open in VS Code`, see [opening the code](#opening-the-code), and `Quit`; `View`, which shows and hides the tool windows, see [the View menu](#the-view-menu-and-the-tool-windows); `Help`, with a window about the editor |
 | Dock space | The space under the menu bar that the windows dock into. The viewport fills it, and a tool window takes a side of it the first time it is shown, until a window is dragged elsewhere |
 | `Viewport` | The entry scene of the project, or the one `--scene` names, drawn by the engine into a render target of the size of the window, in pixels of the display, seen through the [editor camera](#the-editor-camera). The target is made again when the window changes its size. Always shown |
 | `Log` | A tool window: the last thousand lines every logger wrote, as the console shows them, scrolled to the newest. `Ctrl+L`, the bottom quarter |
@@ -155,7 +155,8 @@ there. The log says where it is, in its line `editor:// is ...`.
 |---|---|
 | `editor-settings.yml` | The editor's own settings, see below |
 | `layout.ini` | The layout of the windows, Dear ImGui's own text: where every window is, what it is docked to, and how large it is. Read once the tools are up, written at the end of a run, through the file system and never through a native path in the tool interface |
-| `user-editor.yml` | This machine's toolchains, see [editor-toolchains.md](editor-toolchains.md) |
+| `editor.yml` | This machine's toolchains and editors, such as where VS Code is, see [editor-toolchains.md](editor-toolchains.md) |
+| `user-editor.yml` | The same, laid over `editor.yml`, see [editor-toolchains.md](editor-toolchains.md) |
 
 `editor-settings.yml` is read as every recipe is: with the YAML reader of the
 engine, every problem reported with its line, a name that is not known
@@ -243,6 +244,38 @@ devices are read as they are; the actions of the game's input map are the
 game's. `EditorCameraSubmission`, a system the application adds to the
 world after placing, hands the editor camera to the pipeline after the
 world handed the scene's, which is how the viewport shows its view.
+
+## Opening the code
+
+Writing a script or the C++ of a project happens in Visual Studio Code for
+now. `File > Open in VS Code` opens VS Code at the root of the project, the
+folder the editor was given, never the engine's checkout; `ExternalEditor`
+can put a file in front, at a line, which the hierarchy and the inspector
+(#570) will use for the script of the selected entity once they are there.
+The item has no key bound to it yet: the tool interface shows a shortcut
+next to an item and binds nothing, and the editor has no map of shortcuts
+of its own.
+
+Where VS Code is comes from the toolchain files of this machine, `editors:
+vscode:` of `editor://editor.yml` and `editor://user-editor.yml`, in the
+editor's own folder,
+never of a project, see [editor-toolchains.md](editor-toolchains.md#editors).
+When neither says, or
+the place they name is not there, the editor looks in the usual places of
+the platform: `code` on `PATH`, then where the installer puts it. When it
+is found nowhere, the log, and the `Log` window with it, says so and where
+to set it; nothing happens in silence. VS Code is started without waiting
+for it, so the editor goes on while it opens. The command is
+`code . --goto <file>:<line>`, started in the folder of the project.
+
+The proof is `tests/editor-open-vscode`: a script opens the File menu, finds
+the item, and chooses it, with a script of the shell standing in for VS
+Code, so that nothing opens on the screen of whoever runs the tests. The
+stand-in records the folder it was started in and stays up for a while, so
+the test sees that the root of the project opened and that the editor did
+not wait; other cases name it in `editor.yml`, name a place that is not
+there in `user-editor.yml` with the stand-in on `PATH`, and put a mistake
+in `editor.yml`. That VS Code itself comes up is for a window.
 
 ## Scripted runs
 
@@ -349,7 +382,7 @@ to `main.cpp` since it is where the tools of neon-imgui are made, and
 | `PlaceApplicationFolder` | Places `editor://` by the editor's names and reads `editor-settings.yml` from it, see [the editor's folder](#the-editors-folder) |
 | `AdjustSettings` | The window is the editor's: its size and its mode are those of the editor's own settings unless `--window-size` or `--window-mode` names them, whatever the project says, and it is named `NeonEditor - <project>` unless the settings name it, see [the pointer and the window](#the-pointer-and-the-window) |
 | `MakeRuntime` | Makes the `Editor`, and owns it |
-| `AddSystems` | Makes `ImGui_ToolUiSystem` on the backends it is handed, with the window or without one, gives it to the editor, adds `EditorCameraSubmission` to the world after placing, tells the world not to take the pointer, and reads the script `--editor-script` names through `EditorScriptLoading`; one that cannot be read stops the start-up |
+| `AddSystems` | Makes `ImGui_ToolUiSystem` on the backends it is handed, with the window or without one, gives it to the editor, adds `EditorCameraSubmission` to the world after placing, tells the world not to take the pointer, reads the toolchain files of this machine through `ToolchainFiles` and makes the `ExternalEditor` on them and on the processes and files of the machine, and reads the script `--editor-script` names through `EditorScriptLoading`; one that cannot be read stops the start-up |
 
 Without a window, `AddSystems` makes the tools only when `--tools` or
 `--editor-script` asks for them; otherwise the editor runs as the runtime
@@ -370,6 +403,8 @@ does, which is what the checks of the scene rely on.
 | `EditorScript`, `EditorScriptRunner`, `EditorScriptLoading` | [NeonEditor](../app/NeonEditor/neon/editor/scripts/) | A script that drives the tools by their labels, what runs it frame by frame on `ToolUiContext`, and the step of the start-up that reads it, see [scripted runs](#scripted-runs) |
 | `ToolUiItem`, `ToolUiEvents` | [neon-core](../lib/neon-core/neon/tool-ui/) | What the backend records of every item it draws, and the input a script feeds it |
 | `EditorCamera`, `EditorCameraInput`, `EditorCameraSubmission` | [NeonEditor](../app/NeonEditor/neon/editor/camera/) | The camera of the viewport, what moves it in a frame, and how the world is told to draw with it |
+| `ExternalEditor` | [NeonEditor](../app/NeonEditor/neon/editor/tools/) | Opens the code of the project in VS Code, see [opening the code](#opening-the-code), through `ProcessContext` and the toolchain files |
+| `ToolchainFiles` | [NeonEditor](../app/NeonEditor/neon/editor/toolchains/) | Reads the toolchain files of this machine over the engine's defaults, see [editor-toolchains.md](editor-toolchains.md) |
 | `LogHistorySink` | [neon-core](../lib/neon-core/neon/logging/log-history-sink.hpp) | Keeps the last lines of the log for the window, through `LoggingSystem::CopyRecentLines()` |
 
 `neon-editor`, the library of `app/NeonEditor`, holds the editor's own objects and is free of Dear ImGui:

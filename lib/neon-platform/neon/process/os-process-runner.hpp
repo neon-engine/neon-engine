@@ -17,6 +17,11 @@ namespace neon
   /// through one pipe, so that what a build prints comes in the order it
   /// was printed, errors among the rest. The process inherits the
   /// environment of the application, which is where PATH comes from.
+  ///
+  /// A process that is started without waiting prints nowhere, and is
+  /// waited for on a thread of its own once it ends, so that it leaves
+  /// nothing behind on macOS and Linux. On Windows a `.cmd` or `.bat` is a
+  /// script of the command interpreter, which is started to run it.
   // ReSharper disable once CppInconsistentNaming
   class OS_ProcessRunner final : public ProcessContext
   {
@@ -33,6 +38,8 @@ namespace neon
       const LineCallback &on_line,
       int &exit_code,
       std::string &error) override;
+
+    bool Start(const ProcessCommand &command, std::string &error) override;
   };
 } // neon
 

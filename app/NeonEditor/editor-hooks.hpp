@@ -5,8 +5,13 @@
 #include <string>
 
 #include <neon/command-line/editor-options.hpp>
+#include <neon/data/ryml-document-format.hpp>
 #include <neon/editor/editor.hpp>
 #include <neon/editor/settings/editor-folder.hpp>
+#include <neon/editor/toolchains/toolchains.hpp>
+#include <neon/editor/tools/external-editor.hpp>
+#include <neon/filesystem/os-native-files.hpp>
+#include <neon/process/os-process-runner.hpp>
 #include <neon/runtime/composition-hooks.hpp>
 #include <neon/tool-ui/imgui-tool-ui-system.hpp>
 
@@ -32,6 +37,15 @@ namespace neon
     // the editor before the tools, since the tools are taken down first
     std::optional<Editor> _editor;
     std::optional<ImGui_ToolUiSystem> _tool_ui;
+
+    // the processes and the files of the machine, which the toolchains and
+    // the editor of the code are started and found through, and the
+    // toolchains of this machine, read once when the tools are made
+    std::optional<OS_ProcessRunner> _processes;
+    std::optional<OS_NativeFiles> _native_files;
+    RYML_DocumentFormat _yaml;
+    Toolchains _toolchains;
+    std::optional<ExternalEditor> _external_editor;
 
   public:
     void RegisterOptions(CommandLine &command_line) override;
@@ -69,8 +83,10 @@ namespace neon
     /// of the editor asks for them, and the editor otherwise runs as the
     /// runtime does, for the checks of the scene. With the tools, the
     /// viewport looks through the editor's camera, which is handed to the
-    /// pipeline after the scene's, and the script `--editor-script` names
-    /// is read; one that cannot be read stops the start-up.
+    /// pipeline after the scene's, the toolchain files of this machine are
+    /// read, so that File > Open in VS Code knows where VS Code is, and the
+    /// script `--editor-script` names is read; one that cannot be read
+    /// stops the start-up.
     bool AddSystems(const RuntimeSystems &systems) override;
   };
 } // neon
