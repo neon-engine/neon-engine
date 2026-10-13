@@ -38,6 +38,77 @@ namespace neon
       return static_cast<ImTextureID>(reinterpret_cast<std::uintptr_t>(set));
     }
 
+    /// The direction a side of the dock space is split off towards.
+    ImGuiDir direction_of(const ToolUiDockSide side)
+    {
+      switch (side)
+      {
+        case ToolUiDockSide::Left:
+        {
+          return ImGuiDir_Left;
+        }
+        case ToolUiDockSide::Right:
+        {
+          return ImGuiDir_Right;
+        }
+        case ToolUiDockSide::Top:
+        {
+          return ImGuiDir_Up;
+        }
+        default:
+        {
+          return ImGuiDir_Down;
+        }
+      }
+    }
+
+    /// Reads a shortcut as a menu shows it, `Ctrl+Shift+L`, into the keys
+    /// Dear ImGui asks for. Returns false when it is written otherwise.
+    bool chord_of(const std::string &shortcut, ImGuiKeyChord &chord)
+    {
+      chord = 0;
+      std::size_t start = 0;
+      while (start < shortcut.size())
+      {
+        std::size_t end = shortcut.find('+', start);
+        if (end == std::string::npos) { end = shortcut.size(); }
+        const std::string part = shortcut.substr(start, end - start);
+        start = end + 1;
+
+        if (part == "Ctrl") { chord |= ImGuiMod_Ctrl; }
+        else if (part == "Shift") { chord |= ImGuiMod_Shift; }
+        else if (part == "Alt") { chord |= ImGuiMod_Alt; }
+        else if (part == "Super") { chord |= ImGuiMod_Super; }
+        else
+        {
+          // the key is last, and there is one
+          if ((chord & ~ImGuiMod_Mask_) != 0 || start <= shortcut.size()) { return false; }
+
+          if (part.size() == 1 && part[0] >= 'A' && part[0] <= 'Z')
+          {
+            chord |= ImGuiKey_A + (part[0] - 'A');
+          } else if (part.size() == 1 && part[0] >= '0' && part[0] <= '9')
+          {
+            chord |= ImGuiKey_0 + (part[0] - '0');
+          } else if (part.size() >= 2 && part[0] == 'F')
+          {
+            int number = 0;
+            for (std::size_t i = 1; i < part.size(); i++)
+            {
+              if (part[i] < '0' || part[i] > '9') { return false; }
+              number = number * 10 + (part[i] - '0');
+            }
+            if (number < 1 || number > 12) { return false; }
+            chord |= ImGuiKey_F1 + (number - 1);
+          } else
+          {
+            return false;
+          }
+        }
+      }
+      return (chord & ~ImGuiMod_Mask_) != 0;
+    }
+
     /// The key of Dear ImGui a key of the engine is, or ImGuiKey_None for
     /// one it has no name for.
     ImGuiKey imgui_key_of(const Key key)
@@ -151,8 +222,8 @@ namespace neon
 
     ImGuiIO &io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-    // the layout is not kept between runs yet, so no file is written next
-    // to wherever the editor was started
+    // the layout goes through LoadLayout() and SaveLayout(), so no file is
+    // written next to wherever the editor was started
     io.IniFilename = nullptr;
     ImGui::StyleColorsDark();
 
@@ -248,6 +319,23 @@ namespace neon
     ImGui_ImplVulkan_Shutdown();
     if (_sdl2_window != nullptr) { ImGui_ImplSDL2_Shutdown(); }
     ImGui::DestroyContext();
+    _space = 0;
+  }
+
+  void ImGui_ToolUiSystem::LoadLayout(const std::string &layout)
+  {
+    if (!_initialized || layout.empty()) { return; }
+    ImGui::LoadIniSettingsFromMemory(layout.c_str(), layout.size());
+  }
+
+  std::string ImGui_ToolUiSystem::SaveLayout()
+  {
+    if (!_initialized) { return ""; }
+
+    std::size_t size = 0;
+    const char *text = ImGui::SaveIniSettingsToMemory(&size);
+    ImGui::GetIO().WantSaveIniSettings = false;
+    return text == nullptr ? std::string() : std::string(text, size);
   }
 
   void ImGui_ToolUiSystem::HandleEvent(const SDL_Event &event)
@@ -349,26 +437,44 @@ namespace neon
 
   void ImGui_ToolUiSystem::DockSpace(const ToolUiDockLayout &layout)
   {
-    const ImGuiID space = ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport());
+    _space = ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport());
+    _layout = layout;
+  }
 
-    // The windows are placed once, the first time the space is declared.
-    // After that whoever drags them decides.
-    if (_dock_laid_out) { return; }
-    _dock_laid_out = true;
+  void ImGui_ToolUiSystem::PlaceNewWindow(const std::string &title)
+  {
+    if (_space == 0) { return; }
 
-    ImGui::DockBuilderRemoveNode(space);
-    ImGui::DockBuilderAddNode(space, ImGuiDockNodeFlags_DockSpace);
-    ImGui::DockBuilderSetNodeSize(space, ImGui::GetMainViewport()->WorkSize);
-
-    ImGuiID center = space;
-    if (!layout.bottom.empty())
+    // A window that was shown in this run, or that the layout loaded
+    // knows, goes where it was last. Dear ImGui keeps its place while it
+    // is hidden, and the place of a docked window is what it was docked
+    // to.
+    if (ImGui::FindWindowByName(title.c_str()) != nullptr ||
+        ImGui::FindWindowSettingsByID(ImHashStr(title.c_str())) != nullptr)
     {
-      ImGuiID bottom = 0;
-      ImGui::DockBuilderSplitNode(space, ImGuiDir_Down, layout.bottom_share, &bottom, &center);
-      ImGui::DockBuilderDockWindow(layout.bottom.c_str(), bottom);
+      return;
     }
-    if (!layout.center.empty()) { ImGui::DockBuilderDockWindow(layout.center.c_str(), center); }
-    ImGui::DockBuilderFinish(space);
+
+    const ImGuiDockNode *central = ImGui::DockBuilderGetCentralNode(_space);
+    const ImGuiID middle = central != nullptr ? central->ID : _space;
+
+    if (title == _layout.center)
+    {
+      ImGui::SetNextWindowDockID(middle, ImGuiCond_FirstUseEver);
+      return;
+    }
+
+    for (const auto &placement : _layout.sides)
+    {
+      if (placement.window != title) { continue; }
+
+      // a share of a side, split off from the middle, which keeps the rest
+      ImGuiID at = 0;
+      ImGuiID rest = 0;
+      ImGui::DockBuilderSplitNode(middle, direction_of(placement.side), placement.share, &at, &rest);
+      ImGui::SetNextWindowDockID(at, ImGuiCond_FirstUseEver);
+      return;
+    }
   }
 
   bool ImGui_ToolUiSystem::BeginMainMenuBar()
@@ -404,8 +510,21 @@ namespace neon
     return chosen;
   }
 
+  bool ImGui_ToolUiSystem::IsShortcutPressed(const std::string &shortcut)
+  {
+    if (!_initialized || !_frame_begun) { return false; }
+
+    ImGuiKeyChord chord = 0;
+    if (!chord_of(shortcut, chord)) { return false; }
+
+    // wherever the focus is, unless a field that has it took the keys
+    return ImGui::Shortcut(chord, ImGuiInputFlags_RouteGlobal);
+  }
+
   bool ImGui_ToolUiSystem::BeginWindow(const std::string &title, const bool scrolls)
   {
+    PlaceNewWindow(title);
+
     const ImGuiWindowFlags flags = scrolls ? 0 : ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
     const bool open = ImGui::Begin(title.c_str(), nullptr, flags);
 

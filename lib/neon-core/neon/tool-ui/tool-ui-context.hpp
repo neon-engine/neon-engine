@@ -33,7 +33,7 @@ namespace neon
   public:
     /// A space over the whole window that windows dock into, under the
     /// menu bar. Called once in a frame, before the windows. `layout` says
-    /// how they are docked until someone drags them.
+    /// where a window goes the first time it is shown.
     virtual void DockSpace(const ToolUiDockLayout &layout) = 0;
 
     /// The bar along the top of the window, which the menus go into.
@@ -48,14 +48,24 @@ namespace neon
     virtual void EndMenu() = 0;
 
     /// An item of the menu that is open, which returns true in the frame
-    /// it is chosen. `shortcut` is shown next to it and binds nothing. An
-    /// item that is `selected` shows a mark, as one that switches a window
-    /// on and off does while the window is shown.
+    /// it is chosen. `shortcut` is shown next to it and binds nothing: what
+    /// it names is asked for with IsShortcutPressed(). An item that is
+    /// `selected` shows a mark, as one that switches a window on and off
+    /// does while the window is shown.
     virtual bool MenuItem(
       const std::string &label,
       const std::string &shortcut = "",
       bool selected = false,
       bool enabled = true) = 0;
+
+    /// Whether the keys of a shortcut were pressed in this frame, wherever
+    /// the focus is, unless a field that has it took the same keys. The
+    /// shortcut is written as it is shown in a menu, `Ctrl+Shift+L`: the
+    /// modifiers Ctrl, Shift, Alt, and Super in any order, with a plus
+    /// between them, and one key last: a letter, a digit, or F1 to F12.
+    /// Ctrl is the command key on macOS, as the platform expects. A
+    /// shortcut written otherwise is never pressed.
+    [[nodiscard]] virtual bool IsShortcutPressed(const std::string &shortcut) = 0;
 
     /// A window with that title, which is also what names it in a layout.
     /// Returns false while it is collapsed, when what it holds is left

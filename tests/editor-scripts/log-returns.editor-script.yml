@@ -1,0 +1,18 @@
+# The Log is shown, dragged out of its dock by its tab to float in the
+# middle of the viewport, hidden, and shown again: it comes back where it
+# was dragged to, not to the bottom. The screenshots before and after are
+# alike. The tab is at 36,614 at 1280 by 800 points: a window's title would
+# stand for the middle of the window, which does not move a docked one.
+description: The Log hidden and shown again comes back where it was
+steps:
+  - menu: View > Log
+  - expect: {window: Log, shown: true}
+  - drag: {from: "36,614", to: "700,300"}
+  - wait: 2
+  - screenshot: output://log-moved.png
+  - menu: View > Log
+  - expect: {window: Log, shown: false}
+  - menu: View > Log
+  - expect: {window: Log, shown: true}
+  - wait: 2
+  - screenshot: output://log-back.png

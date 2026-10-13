@@ -1,0 +1,8 @@
+# The Log is shown and left shown, for the run after this one to find.
+description: The Log is shown and left so
+steps:
+  - expect: {window: Log, shown: false}
+  - menu: View > Log
+  - expect: {window: Log, shown: true}
+  - wait: 2
+  - screenshot: output://left-shown.png

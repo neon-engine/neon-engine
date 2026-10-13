@@ -68,7 +68,8 @@ namespace
   };
 
   constexpr auto unknown_scheme =
-    "it does not start with a known scheme, which are assets://, engine://, user://, output:// or extensions://";
+    "it does not start with a known scheme, which are assets://, engine://, user://, editor://, output:// or "
+    "extensions://";
   constexpr auto backslash = "it contains a backslash, folders are separated by forward slashes on every platform";
   constexpr auto forbidden_character =
     "it contains a character that is not allowed in file names on every platform";
@@ -82,6 +83,7 @@ namespace
     EXPECT_EQ(FileSystem::assets_scheme, "assets://");
     EXPECT_EQ(FileSystem::engine_scheme, "engine://");
     EXPECT_EQ(FileSystem::user_scheme, "user://");
+    EXPECT_EQ(FileSystem::editor_scheme, "editor://");
     EXPECT_EQ(FileSystem::output_scheme, "output://");
   }
 
@@ -506,6 +508,29 @@ namespace
     EXPECT_TRUE(_file_system.ReadText("user://save.dat", contents));
     EXPECT_EQ(contents, "a save");
     EXPECT_EQ(_logger->Count(LogLevel::Error), 0u) << _logger->Messages(LogLevel::Error);
+  }
+
+  TEST_F(FileSystemTest, WritesAndReadsTheFolderOfTheEditor)
+  {
+    std::string contents;
+
+    EXPECT_TRUE(_file_system.WriteText("editor://editor-settings.yml", "version: 1"));
+    EXPECT_TRUE(_file_system.Exists("editor://editor-settings.yml"));
+    EXPECT_TRUE(_file_system.ReadText("editor://editor-settings.yml", contents));
+    EXPECT_EQ(contents, "version: 1");
+
+    // the editor's folder and the user's are two folders
+    EXPECT_FALSE(_file_system.Exists("user://editor-settings.yml"));
+    EXPECT_TRUE(_file_system.HasNativeFile("/editor/editor-settings.yml"));
+  }
+
+  TEST_F(FileSystemTest, ListsTheFolderOfTheEditorWhenGivenTheSchemeAlone)
+  {
+    _file_system.AddNativeFile("/editor/layout.ini", "");
+
+    std::vector<std::string> paths;
+    EXPECT_TRUE(_file_system.ListFiles("editor://", paths));
+    EXPECT_THAT(paths, ElementsAre("editor://layout.ini"));
   }
 
   TEST_F(FileSystemTest, WritesTextWithEveryByteKept)

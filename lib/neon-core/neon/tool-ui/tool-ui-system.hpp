@@ -33,6 +33,18 @@ namespace neon
     /// Safe to call more than once.
     virtual void CleanUp() = 0;
 
+    /// Gives the backend the layout a run before left, as SaveLayout()
+    /// returned it: where every window is, what it is docked to, and how
+    /// large it is. Called once, after Initialize() and before the first
+    /// frame. The text is the toolkit's own and is read by nothing else;
+    /// the editor keeps it in a file of its own. Empty starts anew, as
+    /// never calling it does.
+    virtual void LoadLayout(const std::string &layout) = 0;
+
+    /// The layout as it is now, to be given to LoadLayout() next time.
+    /// Called between frames, while the backend is up.
+    [[nodiscard]] virtual std::string SaveLayout() = 0;
+
     /// Starts the frame of the tool interface, once the input of the
     /// frame is read and the renderer has begun its frame. What is
     /// declared from here on is shown.

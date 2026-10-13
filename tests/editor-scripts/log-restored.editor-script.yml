@@ -1,0 +1,8 @@
+# The run before left the Log shown: this run opens with it shown where it
+# was, without anything chosen.
+description: The Log is shown at the start, as the run before left it
+steps:
+  - expect: {window: Viewport, shown: true}
+  - expect: {window: Log, shown: true}
+  - wait: 2
+  - screenshot: output://restored.png

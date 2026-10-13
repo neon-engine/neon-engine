@@ -7,6 +7,18 @@
 
 namespace neon
 {
+  // Helpers of EditorHooks: whether the tools are drawn in a run.
+  namespace
+  {
+    /// The tools are drawn in a window, and without one only when asked for:
+    /// the checks of the scene want the frame as a run of the game would
+    /// save it.
+    bool draws_tools(const SettingsConfig &settings)
+    {
+      return !settings.headless_renderer || settings.editor_tools || !settings.editor_script_path.empty();
+    }
+  }
+
   void EditorHooks::RegisterOptions(CommandLine &command_line)
   {
     command_line.SetArgument("FOLDER", "The folder of the project to open, which holds its assets and extensions");
@@ -29,6 +41,22 @@ namespace neon
     }
 
     settings.project_directory = command_line.GetArgument();
+    _project_directory = settings.project_directory;
+    return true;
+  }
+
+  bool EditorHooks::PlaceApplicationFolder(FileSystem &file_system, DocumentFormat &format, LoggingContext &logging)
+  {
+    if (!file_system.PlaceEditorDirectory(std::string(EditorFolder::organization), std::string(EditorFolder::application)))
+    {
+      return false;
+    }
+
+    // a file with a mistake is said and refused, and the editor goes on
+    // with its defaults, see EditorFolder
+    _folder.emplace(&file_system, &format, logging.CreateLogger("EditorFolder"));
+    _folder->ReadSettings();
+    _folder->GetSettings().last_project = _project_directory;
     return true;
   }
 
@@ -44,17 +72,23 @@ namespace neon
     const CommandLineContext &command_line,
     Logger &logger)
   {
-    if (!settings.headless_renderer)
+    // the editor's window is its own, not the game's; the tools drawn
+    // without a window stand for it, so that a script sees its size
+    if (draws_tools(settings) && _folder.has_value())
     {
-      if (settings.window_mode != WindowMode::Windowed)
+      const EditorSettings &own = _folder->GetSettings();
+      if (!command_line.IsSet("window-mode"))
       {
-        logger.Info("The editor runs in a window, whatever the window mode asks");
-        settings.window_mode = WindowMode::Windowed;
+        if (settings.window_mode != own.window_mode)
+        {
+          logger.Info("The editor's window is shown as the editor's own settings say, not as the project's");
+        }
+        settings.window_mode = own.window_mode;
       }
       if (!command_line.IsSet("window-size"))
       {
-        settings.width = 1600;
-        settings.height = 1000;
+        settings.width = own.window_width;
+        settings.height = own.window_height;
       }
     }
 
@@ -78,9 +112,7 @@ namespace neon
   {
     const SettingsConfig &settings = *systems.settings;
 
-    // Without a window the tools are drawn only when asked for: the checks
-    // of the scene want the frame as a run of the game would save it
-    const bool with_tools = !settings.headless_renderer || settings.editor_tools || !settings.editor_script_path.empty();
+    const bool with_tools = draws_tools(settings);
 
     // The pointer is the editor's: free and shown, for the tools. A game the
     // editor plays takes it then (#569). Without the tools the editor runs
@@ -101,6 +133,7 @@ namespace neon
         systems.logging->CreateLogger("ImGui_ToolUiSystem"));
     }
     _editor->SetToolUi(&*_tool_ui);
+    if (_folder.has_value()) { _editor->SetEditorFolder(&*_folder); }
     systems.world->AddSystemAfterPlacing(
       std::make_unique<EditorCameraSubmission>(&_editor->GetCamera(), systems.render_pipeline));
 

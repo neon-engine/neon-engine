@@ -21,6 +21,14 @@ namespace neon
     /// from what the command line gave.
     [[nodiscard]] std::string ProjectDirectoryOf(const std::string &given) const;
 
+    /// The folder the platform keeps for an application, which SDL creates
+    /// when it is missing, for `user://` and `editor://` alike. Returns
+    /// false when it cannot be found, and says why.
+    bool PreferencesDirectoryOf(
+      const std::string &organization,
+      const std::string &application,
+      std::string &native_directory) const;
+
   public:
     explicit SDL2_FileSystem(const SettingsConfig &settings_config, const std::shared_ptr<Logger> &logger)
       : FileSystem(settings_config, logger) {}
@@ -28,6 +36,8 @@ namespace neon
     void Initialize() override;
 
     bool PlaceUserDirectory(const std::string &organization, const std::string &application) override;
+
+    bool PlaceEditorDirectory(const std::string &organization, const std::string &application) override;
 
     void CleanUp() override;
 

@@ -10,6 +10,7 @@
 #include <neon/input/sdl2-event-listener.hpp>
 #include <neon/input/sdl2-input-system.hpp>
 #include <neon/render/vk-render-system.hpp>
+#include <neon/tool-ui/tool-ui-dock-layout.hpp>
 #include <neon/tool-ui/tool-ui-system.hpp>
 #include <neon/window/sdl2-window-system.hpp>
 #include <neon/window/window-system.hpp>
@@ -25,6 +26,13 @@ namespace neon
   /// input is what FeedEvents() is given, which is how a script drives the
   /// tools and a screenshot shows them, see docs/editor.md#scripted-runs.
   /// Docking is on; windows torn off onto the desktop are not.
+  ///
+  /// Dear ImGui's own file of the layout is off: the layout goes through
+  /// LoadLayout() and SaveLayout() as text, and the editor keeps it where
+  /// it keeps its own files. A window that is shown for the first time
+  /// ever, one the layout that was loaded knows nothing of, goes where
+  /// the ToolUiDockLayout says; every other window goes where it was
+  /// last.
   ///
   /// Every window, menu, menu item, button, checkbox, field, and text is
   /// recorded as a ToolUiItem with where Dear ImGui drew it, for
@@ -52,9 +60,10 @@ namespace neon
     bool _initialized = false;
     bool _frame_begun = false;
 
-    // whether the dock space was laid out as the layout asks, which is
-    // done once, the first time it is declared
-    bool _dock_laid_out = false;
+    // the dock space of this frame, by its id, and where a window goes
+    // the first time it is shown
+    unsigned int _space = 0;
+    ToolUiDockLayout _layout;
 
     std::map<int, RegisteredTarget> _targets;
 
@@ -65,6 +74,10 @@ namespace neon
     /// Lets Dear ImGui go of every target that was registered.
     void ForgetTargets();
 
+    /// Docks a window that was never shown before, in this run or in the
+    /// layout that was loaded, where the layout says, before it is begun.
+    /// A window that was shown before goes where it was last.
+    void PlaceNewWindow(const std::string &title);
     /// Records the item Dear ImGui drew last under the label.
     void RecordLastItem(ToolUiItemKind kind, const std::string &label);
 
@@ -92,6 +105,10 @@ namespace neon
 
     void CleanUp() override;
 
+    void LoadLayout(const std::string &layout) override;
+
+    [[nodiscard]] std::string SaveLayout() override;
+
     void BeginFrame() override;
 
     void EndFrame() override;
@@ -113,6 +130,8 @@ namespace neon
     void EndMenu() override;
 
     bool MenuItem(const std::string &label, const std::string &shortcut, bool selected, bool enabled) override;
+
+    [[nodiscard]] bool IsShortcutPressed(const std::string &shortcut) override;
 
     bool BeginWindow(const std::string &title, bool scrolls) override;
 

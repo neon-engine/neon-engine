@@ -144,6 +144,20 @@ namespace neon
       scheme = user_scheme;
       scheme_directory = _user_directory;
       writable = true;
+    } else if (path.starts_with(editor_scheme))
+    {
+      if (_editor_directory.empty())
+      {
+        _logger->Error(
+          "Invalid path '{}': {} has no folder. It is the editor's own, and only the editor places it",
+          path,
+          editor_scheme);
+        return false;
+      }
+
+      scheme = editor_scheme;
+      scheme_directory = _editor_directory;
+      writable = true;
     } else if (path.starts_with(output_scheme))
     {
       if (_output_directory.empty())
@@ -167,7 +181,7 @@ namespace neon
     {
       const std::string known =
         std::string(assets_scheme) + ", " + std::string(engine_scheme) + ", " + std::string(user_scheme) + ", " +
-        std::string(output_scheme) + " or " + std::string(extensions_scheme);
+        std::string(editor_scheme) + ", " + std::string(output_scheme) + " or " + std::string(extensions_scheme);
       _logger->Error("Invalid path '{}': it does not start with a known scheme, which are {}", path, known);
       return false;
     }
@@ -323,6 +337,7 @@ namespace neon
     if (folder == assets_scheme) { native_directory = _assets_directory; }
     else if (folder == engine_scheme) { native_directory = _engine_directory; }
     else if (folder == user_scheme) { native_directory = _user_directory; }
+    else if (folder == editor_scheme) { native_directory = _editor_directory; }
     else if (folder == output_scheme) { native_directory = _output_directory; }
     else if (folder == extensions_scheme) { native_directory = _extensions_directory; }
     else if (!Locate(folder, native_directory)) { return false; }

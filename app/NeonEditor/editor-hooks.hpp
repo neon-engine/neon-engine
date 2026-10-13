@@ -6,6 +6,7 @@
 
 #include <neon/command-line/editor-options.hpp>
 #include <neon/editor/editor.hpp>
+#include <neon/editor/settings/editor-folder.hpp>
 #include <neon/runtime/composition-hooks.hpp>
 #include <neon/tool-ui/imgui-tool-ui-system.hpp>
 
@@ -20,6 +21,13 @@ namespace neon
   class EditorHooks final : public CompositionHooks
   {
     EditorOptions _editor_options;
+
+    // the folder the command line named, as it was given, for the editor's
+    // own settings
+    std::string _project_directory;
+
+    // the editor's own folder, placed once user:// is
+    std::optional<EditorFolder> _folder;
 
     // the editor before the tools, since the tools are taken down first
     std::optional<Editor> _editor;
@@ -36,12 +44,17 @@ namespace neon
 
     [[nodiscard]] std::string AdviseWithoutAProject(const SettingsConfig &settings) const override;
 
-    /// The window is the editor's, not the game's: always a window that can
-    /// be moved and resized, whatever window.mode of the project's settings
-    /// or the command line says, at a size of its own unless the command
-    /// line names one, and named after the editor. The project's mode and
-    /// size are what the game is played in. Where the editor keeps a size
-    /// of its own is #582.
+    /// Places `editor://`, the editor's own folder, by the editor's names,
+    /// and reads the editor's settings from it, see EditorFolder (#582).
+    bool PlaceApplicationFolder(FileSystem &file_system, DocumentFormat &format, LoggingContext &logging) override;
+
+    /// The window is the editor's, not the game's: its size and its mode
+    /// are those of the editor's own settings, as they were left, unless
+    /// the command line names them, whatever the project's settings say,
+    /// and it is named after the editor. The project's mode and size are
+    /// what the game is played in. Without a window the same holds when
+    /// the tools are drawn, `--tools` or `--editor-script`, since they
+    /// stand for the window; otherwise the run is the game's, at its size.
     void AdjustSettings(
       SettingsConfig &settings,
       const Project &project,

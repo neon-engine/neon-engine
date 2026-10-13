@@ -66,9 +66,11 @@ and read its pixels:
 ```
 
 With `--tools`, or with `--editor-script`, the tools are drawn without a
-window as well: Dear ImGui draws into the headless frame, at the size
-`--window-size` names in points and `--render-scale` pixels for each, and
-the screenshot shows the menus and the windows over the viewport. No
+window as well: Dear ImGui draws into the headless frame, which stands for
+the editor's window, at the size of the editor's own settings, see
+[the editor's folder](#the-editors-folder), or the one `--window-size`
+names, in points and `--render-scale` pixels for each, and the screenshot
+shows the menus and the windows over the viewport. No
 platform backend is behind it then; the only input the tools get is what a
 script feeds them.
 
@@ -82,10 +84,10 @@ script feeds them.
 
 | Part | What it is |
 |---|---|
-| Menu bar | `File` with `Quit`; `View`, which switches the windows on and off; `Help`, with a window about the editor |
-| Dock space | The space under the menu bar that the windows dock into. The viewport fills its middle and the log the bottom quarter until a window is dragged elsewhere |
-| `Viewport` | The entry scene of the project, or the one `--scene` names, drawn by the engine into a render target of the size of the window, in pixels of the display, seen through the [editor camera](#the-editor-camera). The target is made again when the window changes its size |
-| `Log` | The last thousand lines every logger wrote, as the console shows them, scrolled to the newest |
+| Menu bar | `File` with `Quit`; `View`, which shows and hides the tool windows, see [the View menu](#the-view-menu-and-the-tool-windows); `Help`, with a window about the editor |
+| Dock space | The space under the menu bar that the windows dock into. The viewport fills it, and a tool window takes a side of it the first time it is shown, until a window is dragged elsewhere |
+| `Viewport` | The entry scene of the project, or the one `--scene` names, drawn by the engine into a render target of the size of the window, in pixels of the display, seen through the [editor camera](#the-editor-camera). The target is made again when the window changes its size. Always shown |
+| `Log` | A tool window: the last thousand lines every logger wrote, as the console shows them, scrolled to the newest. `Ctrl+L`, the bottom quarter |
 
 The scene is drawn through the pipeline as the runtime draws it, with one
 difference: `RenderPipeline::SetFrameTarget()` has the camera of the window
@@ -93,8 +95,111 @@ draw into the viewport's target in place of the frame, see
 [vulkan-renderer.md](vulkan-renderer.md). Cameras that draw into a texture
 of their own, and the screens in the world, are drawn as before. The
 game's own user interface, its menus and what it shows during play, is not
-drawn into the viewport yet; that comes with play mode (#569). The layout
-of the windows is not kept between runs yet.
+drawn into the viewport yet; that comes with play mode (#569).
+
+### The View menu and the tool windows
+
+The editor is minimal: it opens with the viewport alone filling the window,
+and every tool window, the log today, the hierarchy, the inspector, the
+toolchains, and the build output as they come, is hidden until it is shown
+from the `View` menu or with its shortcut, and hidden again the same way
+(#590). The `View` menu lists every tool window with its shortcut, and marks
+the ones that are shown. The viewport is not a tool window: it is always
+there, it is what the others dock around, and it is not in the menu.
+
+A tool window is registered with `EditorWindows`, the registry of
+`app/NeonEditor/neon/editor/ui/`, by its title, its shortcut, where it docks
+the first time it is shown, a side of the dock space and the share it takes,
+and the function that draws it. The `View` menu is drawn from the registry,
+and so are the windows that are shown; `Editor::GetWindows()` is where a
+window is added next to the editor's own:
+
+```cpp
+editor.GetWindows().Add({
+  .title = "Inspector",
+  .shortcut = "Ctrl+I",
+  .side = ToolUiDockSide::Right,
+  .share = 0.3f,
+  .draw = [&](ToolUiContext &ui) { inspector.Draw(ui); }
+});
+```
+
+A shortcut is written as the menu shows it, `Ctrl+Shift+L`: the modifiers
+and one key, a letter, a digit, or F1 to F12. `Ctrl` is the command key on
+macOS, as Dear ImGui reads it. The shortcut works wherever the focus is,
+unless a field that has it takes the same keys.
+
+The first time a window is ever shown it docks where its registration says,
+split off from the viewport. After that it goes where it was last, docked
+or floating, which the [editor's folder](#the-editors-folder) keeps between
+runs along with which windows are shown, so a minimal start is the default
+of a new user, not a reset at every start.
+
+### The editor's folder
+
+The editor keeps what is its own, and no project's, in a folder of its own:
+`editor://`, placed by the editor's names, organization `neon-engine` and
+application `neon-editor`, under the folder the platform keeps for an
+application, see [file-systems.md](file-systems.md). It is the same
+whichever project is open, and apart from the project's `user://`, which is
+the game's: a run of the game from the editor writes its real settings
+there. The log says where it is, in its line `editor:// is ...`.
+
+| Platform | The editor's folder |
+|---|---|
+| macOS | `~/Library/Application Support/neon-engine/neon-editor/` |
+| Linux | `~/.local/share/neon-engine/neon-editor/` |
+| Windows | `%APPDATA%\neon-engine\neon-editor\` |
+
+| File | Holds |
+|---|---|
+| `editor-settings.yml` | The editor's own settings, see below |
+| `layout.ini` | The layout of the windows, Dear ImGui's own text: where every window is, what it is docked to, and how large it is. Read once the tools are up, written at the end of a run, through the file system and never through a native path in the tool interface |
+| `user-editor.yml` | This machine's toolchains, see [editor-toolchains.md](editor-toolchains.md) |
+
+`editor-settings.yml` is read as every recipe is: with the YAML reader of the
+engine, every problem reported with its line, a name that is not known
+refused. A file with a mistake is refused as a whole: the problems are in the
+log as errors, the editor starts with its defaults, and the file is not
+written back at the end, so that the mistake can be corrected. A name that
+is left out keeps its default.
+
+```yaml
+version: 1
+window:
+  width: 1600
+  height: 1000
+  mode: windowed
+last_project: /Users/someone/projects/museum
+projects_folder: /Users/someone/projects
+open_windows: [Log]
+```
+
+| Name | Holds | Default |
+|---|---|---|
+| `version` | The version of this layout, 1 | Required |
+| `window.width`, `window.height` | The size of the editor's window in points, as it was left. Written at the end of a run while the window is windowed | 1600 by 1000 |
+| `window.mode` | How the editor's window is shown: `windowed`, `borderless`, or `fullscreen`, as `window.mode` of a project's settings. The project's mode is the game's and is not taken | `windowed` |
+| `last_project` | The folder of the project that was open last, as the command line gave it, a path of this machine | None |
+| `projects_folder` | The folder new projects are made in, for the new-project dialog (#573) | None |
+| `open_windows` | The titles of the tool windows that were shown, which are shown again | None |
+
+`--window-size` and `--window-mode` on the command line win over the file
+for one run; at the end of it the window is written as it was left, at that
+size when it was not resized. Without a window, with `--headless-renderer`,
+the folder is placed and the settings are read, so that a check sees the
+same start. When the tools are drawn then, with `--tools` or
+`--editor-script`, the headless frame stands for the window: it takes the
+size of the file, the windows of `open_windows` and `layout.ini` are shown
+as they were left, and both files are written at the end, so that a script
+proves what a restart keeps (the `editor-scripts` tests). Without the tools
+nothing is taken from the file and nothing is written: the run is the
+game's.
+
+The objects are in `app/NeonEditor/neon/editor/settings/`: `EditorSettings`
+holds the values, `EditorSettingsFile` reads and writes the file, and
+`EditorFolder` is the folder with its two files, which `EditorHooks` places
+and reads and the `Editor` writes at the end of a run.
 
 ### The pointer and the window
 
@@ -171,12 +276,11 @@ under the viewport may still take an input script of its own. It is a map
 with a `description` and a list of `steps`, each a map of one key:
 
 ```yaml
-description: View > Log switches the Log window off and on
+description: The editor opens with the viewport alone, and View > Log shows the Log
 steps:
-  - expect: {window: Log, shown: true}
-  - menu: View > Log
+  - expect: {window: Viewport, shown: true}
   - expect: {window: Log, shown: false}
-  - screenshot: output://log-hidden.png
+  - screenshot: output://viewport-alone.png
   - menu: View > Log
   - expect: {window: Log, shown: true}
   - expect: {text: The tool interface is drawn with Dear ImGui}
@@ -185,12 +289,12 @@ steps:
 
 | Step | Does |
 |---|---|
-| `menu: View > Log` | Opens each menu of the path in turn and chooses the last item |
+| `menu: View > Log` | Opens each menu of the path in turn and chooses the last item; `menu: View`, a menu alone, opens it and leaves it open, for a screenshot of its items |
 | `click: Close` | Presses a button, a menu item that is shown, a checkbox, or a field, by its label |
 | `type: {field: Name, text: my-game}` | Clicks the field by its label and types the text into it |
 | `key: Ctrl+L` | Presses a key with what is held with it: `Ctrl`, `Shift`, `Alt`, `Cmd`, or `Shortcut` for the key the platform makes shortcuts with. The key is named as the input script names it: `l`, `enter`, `f5` |
 | `pointer: {x: 200, y: 100}` | Puts the pointer there, in points of the window |
-| `drag: {from: Log, to: "900,300"}` | Holds the button down over a label or a place written `x,y` and lets it go over another, with the pointer moved between them over a few frames |
+| `drag: {from: "36,614", to: "900,300"}` | Holds the button down over a label or a place written `x,y` and lets it go over another, with the pointer moved between them over a few frames. A window's title stands for the middle of the window, which does not move a docked one: a docked window is dragged by its tab, at its place |
 | `wait: 2` | Lets that many frames pass |
 | `screenshot: output://name.png` | Saves the frame that was just drawn, with the tools in it |
 | `expect: {window: Log, shown: true}` | Whether a window of that title was drawn in this frame; `shown: false` for one that is hidden |
@@ -207,8 +311,18 @@ out, or when the window closes, has not proved what it set out to prove,
 and the run ends with exit code 1. A script that cannot be read stops the
 start-up with the line that is wrong.
 
-The proof of this mechanism is `tests/editor-scripts`: View > Log hides
-and shows the Log with a screenshot of each, File > Quit ends the run,
+A scripted run reads and writes [the editor's folder](#the-editors-folder)
+as a window does. The application tests give every run a home of its own
+(`CFFIXED_USER_HOME`, `XDG_DATA_HOME`), so `editor://` is under the test's
+folder there; a scripted run started by hand writes the real one.
+
+The proof of this mechanism is `tests/editor-scripts`: the editor opens
+with the viewport alone, View > Log and its shortcut show and hide the Log
+with a screenshot of each, the Log dragged out of its dock comes back
+there when it is shown again, a mistake in `editor-settings.yml` is in the
+Log with its line, the window's size and the Log survive a restart (two
+runs in one test, the second reading what the first wrote), `--window-size`
+wins over the file for its run, File > Quit ends the run,
 a failed expectation names its step, a script that cannot be read stops
 the start, and `--tools` alone draws the tools for a screenshot. The
 `RecordingToolUi` fake of `neon/testing` records items and reacts to fed
@@ -232,7 +346,8 @@ to `main.cpp` since it is where the tools of neon-imgui are made, and
 | `RegisterOptions`, `ApplyOptions` | Takes `FOLDER` as its first argument, and registers `EditorOptions` next to the runtime's two sets |
 | `ChooseProjectFolder` | The folder the command line names becomes `settings.project_directory`, which the file system opens as `assets://` and `extensions://`. Without one the editor says so and stops |
 | `AdviseWithoutAProject` | Says which folder holds no `assets/project.yml` |
-| `AdjustSettings` | Insists on a window that can be moved and resized, 1600 by 1000 points unless `--window-size` names a size, and names it `NeonEditor - <project>` unless the settings name it, see [the pointer and the window](#the-pointer-and-the-window) |
+| `PlaceApplicationFolder` | Places `editor://` by the editor's names and reads `editor-settings.yml` from it, see [the editor's folder](#the-editors-folder) |
+| `AdjustSettings` | The window is the editor's: its size and its mode are those of the editor's own settings unless `--window-size` or `--window-mode` names them, whatever the project says, and it is named `NeonEditor - <project>` unless the settings name it, see [the pointer and the window](#the-pointer-and-the-window) |
 | `MakeRuntime` | Makes the `Editor`, and owns it |
 | `AddSystems` | Makes `ImGui_ToolUiSystem` on the backends it is handed, with the window or without one, gives it to the editor, adds `EditorCameraSubmission` to the world after placing, tells the world not to take the pointer, and reads the script `--editor-script` names through `EditorScriptLoading`; one that cannot be read stops the start-up |
 
@@ -248,8 +363,10 @@ does, which is what the checks of the scene rely on.
 | `ToolUiSystem` | [neon-core](../lib/neon-core/neon/tool-ui/tool-ui-system.hpp) | The base class of its backends, with the lifecycle: `Initialize()`, `CleanUp()`, `BeginFrame()`, `EndFrame()` |
 | `ImGui_ToolUiSystem` | [neon-imgui](../lib/neon-imgui/neon/tool-ui/imgui-tool-ui-system.hpp) | The backend: Dear ImGui, its docking branch, drawn through its Vulkan backend into the frame, with its SDL2 backend reading the window when there is one and nothing but fed events when there is none |
 | `Editor` | [NeonEditor](../app/NeonEditor/neon/editor/editor.hpp) | The runtime with the tools on top: the loop of the editor, the menu bar, and the windows. Derives from `Runtime` and runs as it does without a tool interface |
+| `EditorWindows`, `EditorWindow` | [NeonEditor](../app/NeonEditor/neon/editor/ui/) | The registry of the tool windows, which the `View` menu is drawn from, see [the View menu](#the-view-menu-and-the-tool-windows) |
+| `EditorFolder`, `EditorSettings`, `EditorSettingsFile` | [NeonEditor](../app/NeonEditor/neon/editor/settings/) | The editor's own folder and its two files, see [the editor's folder](#the-editors-folder) |
 | `EditorHooks` | [NeonEditor](../app/NeonEditor/editor-hooks.hpp) | The editor's choices on the shared start-up, see [how it starts](#how-it-starts) |
-| `EditorViewport`, `EditorLog` | [NeonEditor](../app/NeonEditor/neon/editor/ui/) | The two windows |
+| `EditorViewport`, `EditorLog` | [NeonEditor](../app/NeonEditor/neon/editor/ui/) | The viewport, and the one tool window so far |
 | `EditorScript`, `EditorScriptRunner`, `EditorScriptLoading` | [NeonEditor](../app/NeonEditor/neon/editor/scripts/) | A script that drives the tools by their labels, what runs it frame by frame on `ToolUiContext`, and the step of the start-up that reads it, see [scripted runs](#scripted-runs) |
 | `ToolUiItem`, `ToolUiEvents` | [neon-core](../lib/neon-core/neon/tool-ui/) | What the backend records of every item it draws, and the input a script feeds it |
 | `EditorCamera`, `EditorCameraInput`, `EditorCameraSubmission` | [NeonEditor](../app/NeonEditor/neon/editor/camera/) | The camera of the viewport, what moves it in a frame, and how the world is told to draw with it |
@@ -285,14 +402,17 @@ library is linked.
 
 Docking is on. Multi-viewport, windows torn off onto the desktop, is off:
 it has Dear ImGui make swapchains of its own next to the renderer's, with
-MoltenVK on macOS, and is left for #580. The layout of the dock space is
-not written to a file between runs; `imgui.ini` is switched off, so that
-nothing is written next to wherever the editor was started.
+MoltenVK on macOS, and is left for #580. Dear ImGui's own `imgui.ini` is
+switched off, so that nothing is written next to wherever the editor was
+started: the layout goes through `ToolUiSystem::LoadLayout()` and
+`SaveLayout()` as text, and the editor keeps it in `layout.ini` of
+[its folder](#the-editors-folder). A window the loaded layout does not
+know, one shown for the first time ever, is docked where the
+`ToolUiDockLayout` says, a side split off from the window in the middle,
+when it is begun; every other window goes where it was last.
 
 ## Open questions
 
-- Where the editor keeps its own settings and layout: a folder of its own
-  under the platform's folder for applications, not the project's `user://`.
 - What of the runtime's `Runtime` class the editor should share once it
   plays the game (#569): the pause menu, the settings menu, and the holds of
   the world and the sounds are the runtime's, and the editor derives from it

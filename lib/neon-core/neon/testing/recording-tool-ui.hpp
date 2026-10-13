@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <optional>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -13,6 +14,8 @@ namespace neon::testing
   /// A tool interface that keeps what is declared on it, as one line of
   /// words each, so that a test can ask what a window would have shown.
   /// Every window is open and the room in a window is what the test says.
+  /// A menu item is chosen, and a shortcut is pressed, when the test
+  /// names it.
   ///
   /// It is also a toolkit the size of a test: every item is recorded with
   /// a place of its own, one under the other, and the events fed through
@@ -103,9 +106,21 @@ namespace neon::testing
 
     [[nodiscard]] const std::vector<ToolUiItem> &GetItemsDrawn() const override { return _items; }
 
+    /// The labels of the menu items that are chosen in this frame.
+    std::set<std::string> chosen_items;
+
+    /// The shortcuts that are pressed in this frame, as they are written.
+    std::set<std::string> pressed_shortcuts;
+
     void DockSpace(const ToolUiDockLayout &layout) override
     {
-      calls.push_back("dock-space " + layout.center + " " + layout.bottom);
+      std::string call = "dock-space " + layout.center;
+      for (const auto &placement : layout.sides)
+      {
+        static constexpr const char *sides[] = {"left", "right", "top", "bottom"};
+        call += " " + placement.window + ":" + sides[static_cast<int>(placement.side)];
+      }
+      calls.push_back(call);
     }
 
     bool BeginMainMenuBar() override
@@ -134,11 +149,22 @@ namespace neon::testing
 
     bool MenuItem(const std::string &label, const std::string &shortcut, bool selected, bool enabled) override
     {
-      calls.push_back("menu-item " + label);
+      std::string call = "menu-item " + label;
+      if (!shortcut.empty()) { call += " " + shortcut; }
+      if (selected) { call += " selected"; }
+      if (!enabled) { call += " disabled"; }
+      calls.push_back(call);
       Record(ToolUiItemKind::MenuItem, label);
-      if (!enabled || !Hit(label, ToolUiItemKind::MenuItem)) { return false; }
+      if (!enabled) { return false; }
+      if (chosen_items.contains(label)) { return true; }
+      if (!Hit(label, ToolUiItemKind::MenuItem)) { return false; }
       _open_menus.clear();
       return true;
+    }
+
+    [[nodiscard]] bool IsShortcutPressed(const std::string &shortcut) override
+    {
+      return pressed_shortcuts.contains(shortcut);
     }
 
     bool BeginWindow(const std::string &title, bool scrolls) override

@@ -39,7 +39,7 @@ namespace neon
   ///
   /// There are two such files. `editor.yml` at the root of a project is
   /// the team's, committed with it. `user-editor.yml` is one machine's: the
-  /// editor reads it from its own `user://` folder, and then from the root
+  /// editor reads it from its own folder, `editor://`, and then from the root
   /// of the project, where it is ignored by git, the second laid over the
   /// first and both over the team's, see Toolchains::Apply. A toolchain of
   /// the user's file replaces the whole entry of its name, and `off` in
@@ -71,9 +71,9 @@ namespace neon
     static constexpr std::string_view shared_name = "editor.yml";
 
     /// One machine's file, at the root of the project, and in the editor's
-    /// own `user://`.
+    /// own folder, `editor://`, see EditorFolder.
     static constexpr std::string_view user_name = "user-editor.yml";
-    static constexpr std::string_view user_path = "user://user-editor.yml";
+    static constexpr std::string_view user_path = "editor://user-editor.yml";
 
     ToolchainFile(FileSystemContext *file_system, DocumentFormat *format, const std::shared_ptr<Logger> &logger);
 

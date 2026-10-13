@@ -19,9 +19,10 @@ namespace neon::testing
   /// them. It also serves as the file system of anything that reads files.
   ///
   /// Its native paths are made up. `assets://` is the folder `assets` at the
-  /// top, `engine://` is `engine`, `user://` is `user`, `extensions://` is `extensions`, which is
-  /// only there once a file is put into it, and `output://` is what the
-  /// settings name as output directory. With the separator `\` that gives `\assets\`.
+  /// top, `engine://` is `engine`, `user://` is `user`, `editor://` is
+  /// `editor`, `extensions://` is `extensions`, which is only there once a
+  /// file is put into it, and `output://` is what the settings name as
+  /// output directory. With the separator `\` that gives `\assets\`.
   class MemoryFileSystem final : public FileSystem
   {
     std::map<std::string, std::vector<unsigned char>> _files;
@@ -108,9 +109,10 @@ namespace neon::testing
       _native_separator = native_separator;
     }
 
-    /// Unlike a real backend this one has `user://` from the start, so that
-    /// a test of something else need not place it. PlaceUserDirectory()
-    /// keeps the same folder, whatever the names.
+    /// Unlike a real backend this one has `user://` and `editor://` from
+    /// the start, so that a test of something else need not place them.
+    /// PlaceUserDirectory() and PlaceEditorDirectory() keep the same
+    /// folders, whatever the names.
     void Initialize() override
     {
       const std::string separator(1, _native_separator);
@@ -118,10 +120,12 @@ namespace neon::testing
       _assets_directory = separator + "assets" + separator;
       _engine_directory = separator + "engine" + separator;
       _user_directory = separator + "user" + separator;
+      _editor_directory = separator + "editor" + separator;
       _extensions_directory = separator + "extensions" + separator;
       AddDirectories(_assets_directory);
       AddDirectories(_engine_directory);
       AddDirectories(_user_directory);
+      AddDirectories(_editor_directory);
 
       _output_directory.clear();
       if (!_settings_config.output_directory.empty())
@@ -142,6 +146,18 @@ namespace neon::testing
     /// places `user://`.
     std::string placed_organization;
     std::string placed_application;
+
+    bool PlaceEditorDirectory(const std::string &organization, const std::string &application) override
+    {
+      placed_editor_organization = organization;
+      placed_editor_application = application;
+      return true;
+    }
+
+    /// The names PlaceEditorDirectory() was last given, for a test of who
+    /// places `editor://`.
+    std::string placed_editor_organization;
+    std::string placed_editor_application;
 
     void CleanUp() override
     {

@@ -31,11 +31,23 @@ add_library(neon-editor STATIC
         neon/editor/scripts/editor-script-runner.cpp
         neon/editor/scripts/editor-script-runner.hpp
 
-        # the windows, drawn with the tool interface of neon-core
+        # the windows, drawn with the tool interface of neon-core, and the
+        # registry the View menu shows and hides them from
         neon/editor/ui/editor-log.cpp
         neon/editor/ui/editor-log.hpp
         neon/editor/ui/editor-viewport.cpp
         neon/editor/ui/editor-viewport.hpp
+        neon/editor/ui/editor-window.hpp
+        neon/editor/ui/editor-windows.cpp
+        neon/editor/ui/editor-windows.hpp
+
+        # the editor's own folder, editor://, with its settings and the
+        # layout of its windows, see docs/editor.md
+        neon/editor/settings/editor-folder.cpp
+        neon/editor/settings/editor-folder.hpp
+        neon/editor/settings/editor-settings.hpp
+        neon/editor/settings/editor-settings-file.cpp
+        neon/editor/settings/editor-settings-file.hpp
 
         # a new project written outside the engine, see docs/new-projects.md
         neon/editor/templates/new-project.hpp
@@ -72,6 +84,9 @@ if (NEON_BUILD_TESTS)
   neon_add_unit_test(neon-editor neon/editor/camera/editor-camera.test.cpp)
   neon_add_unit_test(neon-editor neon/editor/ui/editor-viewport.test.cpp)
   neon_add_unit_test(neon-editor neon/editor/ui/editor-log.test.cpp)
+  neon_add_unit_test(neon-editor neon/editor/ui/editor-windows.test.cpp)
+  neon_add_unit_test(neon-editor neon/editor/settings/editor-settings-file.test.cpp LIBRARIES neon-ryml)
+  neon_add_unit_test(neon-editor neon/editor/settings/editor-folder.test.cpp LIBRARIES neon-ryml)
   neon_add_unit_test(neon-editor neon/editor/scripts/editor-script.test.cpp LIBRARIES neon-ryml)
   neon_add_unit_test(neon-editor neon/editor/scripts/editor-script-loading.test.cpp LIBRARIES neon-ryml)
   neon_add_unit_test(neon-editor neon/editor/scripts/editor-script-runner.test.cpp LIBRARIES neon-ryml)

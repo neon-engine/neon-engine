@@ -155,6 +155,8 @@ add_library(${TARGET} STATIC
         # with; neon-imgui is the backend
         neon/tool-ui/tool-ui-context.hpp
         neon/tool-ui/tool-ui-dock-layout.hpp
+        neon/tool-ui/tool-ui-dock-placement.hpp
+        neon/tool-ui/tool-ui-dock-side.hpp
         neon/tool-ui/tool-ui-events.hpp
         neon/tool-ui/tool-ui-item.hpp
         neon/tool-ui/tool-ui-item-kind.hpp

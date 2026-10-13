@@ -1,0 +1,11 @@
+# The Log is shown, dragged out of its dock by its tab to float in the
+# middle of the viewport, and left so, for the run after this one to find
+# there. The tab is at 36,494 at 1000 by 640 points.
+description: The Log is shown, floated, and left so
+steps:
+  - expect: {window: Log, shown: false}
+  - menu: View > Log
+  - expect: {window: Log, shown: true}
+  - drag: {from: "36,494", to: "500,200"}
+  - wait: 2
+  - screenshot: output://left-floating.png

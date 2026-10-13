@@ -1,0 +1,10 @@
+# A mistake in editor-settings.yml is in the Log with its line, once the
+# Log is shown, and the editor is up all the same.
+description: A mistake in the editor's settings is in the Log with its line
+steps:
+  - expect: {window: Log, shown: false}
+  - menu: View > Log
+  - expect: {window: Log, shown: true}
+  - expect: {text: "editor://editor-settings.yml:4: "}
+  - expect: {text: "editor://editor-settings.yml is refused"}
+  - screenshot: output://mistake.png

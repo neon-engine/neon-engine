@@ -1,0 +1,9 @@
+# The shortcut of the Log, Ctrl+L as the menu shows it, the command key on
+# macOS, shows the Log and hides it again.
+description: The shortcut of the Log shows and hides it
+steps:
+  - expect: {window: Log, shown: false}
+  - key: Shortcut+L
+  - expect: {window: Log, shown: true}
+  - key: Shortcut+L
+  - expect: {window: Log, shown: false}

@@ -153,7 +153,7 @@ namespace
 
   TEST_F(EditorToolchainsTest, ReadsAFileThroughTheFileSystem)
   {
-    _files.AddNativeFile("/user/user-editor.yml", one_native);
+    _files.AddNativeFile("/editor/user-editor.yml", one_native);
 
     ASSERT_TRUE(_file.Read(std::string(ToolchainFile::user_path), _toolchains, _errors))
       << ::testing::PrintToString(_errors);
@@ -188,16 +188,16 @@ namespace
   {
     EXPECT_EQ(ToolchainFile::shared_name, "editor.yml");
     EXPECT_EQ(ToolchainFile::user_name, "user-editor.yml");
-    EXPECT_EQ(ToolchainFile::user_path, "user://user-editor.yml");
+    EXPECT_EQ(ToolchainFile::user_path, "editor://user-editor.yml");
   }
 
   // what is refused
 
   TEST_F(EditorToolchainsTest, RefusesAMissingFile)
   {
-    EXPECT_FALSE(_file.Read("user://user-editor.yml", _toolchains, _errors));
+    EXPECT_FALSE(_file.Read("editor://user-editor.yml", _toolchains, _errors));
     ASSERT_THAT(_errors, SizeIs(1));
-    EXPECT_THAT(_errors.front(), HasSubstr("user://user-editor.yml: the file cannot be read"));
+    EXPECT_THAT(_errors.front(), HasSubstr("editor://user-editor.yml: the file cannot be read"));
   }
 
   TEST_F(EditorToolchainsTest, RefusesAMissingVersion)

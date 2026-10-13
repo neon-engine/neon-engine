@@ -39,6 +39,12 @@ namespace neon
     /// Until then every `user://` path is rejected.
     std::string _user_directory;
 
+    /// Native folder behind `editor://`, ending with a native separator.
+    /// Backends set this in PlaceEditorDirectory() and make sure it exists.
+    /// Until then every `editor://` path is rejected, which is for good in
+    /// the runtime, which never places it.
+    std::string _editor_directory;
+
     /// Native folder behind `output://`, ending with a native separator.
     /// Backends set this in Initialize() from `output_directory` in the
     /// settings, and make sure it exists. It stays empty when no folder was
@@ -91,6 +97,7 @@ namespace neon
     static constexpr std::string_view assets_scheme = "assets://";
     static constexpr std::string_view engine_scheme = "engine://";
     static constexpr std::string_view user_scheme = "user://";
+    static constexpr std::string_view editor_scheme = "editor://";
     static constexpr std::string_view output_scheme = "output://";
     static constexpr std::string_view extensions_scheme = "extensions://";
 
@@ -111,6 +118,16 @@ namespace neon
     /// so this is a step of its own after Initialize(). Returns false when
     /// the folder cannot be found or created, and says why.
     virtual bool PlaceUserDirectory(const std::string &organization, const std::string &application) = 0;
+
+    /// Gives `editor://` its folder, as PlaceUserDirectory() gives `user://`
+    /// its own: the one the platform keeps for an application, under
+    /// `organization` and `application`, created when it is missing. It is
+    /// the folder of the editor's own files, its layout and its settings,
+    /// placed by the editor's names and not the project's, so that what the
+    /// editor keeps for itself stays apart from what a run of the game
+    /// writes to `user://`. The runtime never places it. Returns false when
+    /// the folder cannot be found or created, and says why.
+    virtual bool PlaceEditorDirectory(const std::string &organization, const std::string &application) = 0;
 
     virtual void CleanUp() = 0;
 

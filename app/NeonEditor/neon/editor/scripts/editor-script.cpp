@@ -214,9 +214,10 @@ namespace neon
         step.kind = Kind::Menu;
         if (!expect_text("a path through the menus, such as View > Log")) { continue; }
         step.path = Split(step.label, '>');
-        if (step.path.size() < 2 || std::ranges::any_of(step.path, [](const std::string &part) { return part.empty(); }))
+        // a menu alone is opened and left open, for a look at its items
+        if (step.path.empty() || std::ranges::any_of(step.path, [](const std::string &part) { return part.empty(); }))
         {
-          report(value, std::format("'{}' is no path through the menus: a menu and an item set apart by >, such as View > Log", step.label));
+          report(value, std::format("'{}' is no path through the menus: a menu, or a menu and an item set apart by >, such as View > Log", step.label));
           continue;
         }
         step.label.clear();

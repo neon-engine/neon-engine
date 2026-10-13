@@ -4,7 +4,10 @@
 #include <string>
 
 #include <neon/command-line/command-line.hpp>
+#include <neon/data/document-format.hpp>
+#include <neon/filesystem/file-system.hpp>
 #include <neon/logging/logger.hpp>
+#include <neon/logging/logging-context.hpp>
 #include <neon/project/project.hpp>
 #include <neon/runtime/runtime.hpp>
 #include <neon/runtime/settings-config.hpp>
@@ -47,6 +50,14 @@ namespace neon
     /// What to say, after the errors, when there is neither a game nor a
     /// project where the application looked for one: what to start instead.
     virtual std::string AdviseWithoutAProject(const SettingsConfig &) const = 0;
+
+    /// Places a folder of the application's own, once `user://` is placed
+    /// by the project's names and the log has its file: the editor's
+    /// `editor://`, which holds its layout and its settings, read here.
+    /// The runtime has none. `format` reads the files of the engine, so
+    /// that what is read here is read as every recipe is. False stops the
+    /// start-up, once the reason is in the log.
+    virtual bool PlaceApplicationFolder(FileSystem &, DocumentFormat &, LoggingContext &) { return true; }
 
     /// The application's last word on the settings, after every layer is
     /// applied and before the window and the systems are made: the window

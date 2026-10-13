@@ -162,6 +162,14 @@ namespace neon
     // where that is. Until now everything went to the console, and was held
     // back for the file, which gets it first.
     _file_system->PlaceLogFile(_settings.logpath, *_logging);
+
+    // the application's own folder, the editor's, placed once the log can
+    // say where it went
+    if (!_hooks->PlaceApplicationFolder(*_file_system, _yaml, *_logging))
+    {
+      std::cerr << "The folder of " << _application.in_prose << " cannot be placed, see the log\n";
+      return Fail();
+    }
     return true;
   }
 

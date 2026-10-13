@@ -52,6 +52,17 @@ namespace
     }
   };
 
+  TEST_F(EditorScriptTest, AMenuAloneIsAPathOfOnePart)
+  {
+    Read("steps:\n  - menu: View\n");
+
+    const auto &steps = _script.GetSteps();
+    ASSERT_THAT(steps, SizeIs(1));
+    EXPECT_EQ(steps[0].kind, EditorScript::Kind::Menu);
+    EXPECT_THAT(steps[0].path, ElementsAre("View"));
+    EXPECT_EQ(steps[0].Describe(), "menu View");
+  }
+
   TEST_F(EditorScriptTest, ReadsEveryKindOfStepWithItsLine)
   {
     Read(
@@ -139,7 +150,7 @@ namespace
   {
     const auto errors = ProblemsOf(
       "steps:\n"
-      "  - menu: View\n"
+      "  - menu: View >\n"
       "  - key: Hyper+L\n"
       "  - type: {field: Name}\n"
       "  - wait: 0\n"
@@ -148,7 +159,7 @@ namespace
       "  - drag: {from: Log}\n");
 
     ASSERT_THAT(errors, SizeIs(7));
-    EXPECT_THAT(errors[0], HasSubstr(":2: 'View' is no path through the menus"));
+    EXPECT_THAT(errors[0], HasSubstr(":2: 'View >' is no path through the menus"));
     EXPECT_THAT(errors[1], HasSubstr(":3: 'Hyper+L' is no key"));
     EXPECT_THAT(errors[2], HasSubstr(":4: 'type' needs 'field'"));
     EXPECT_THAT(errors[3], HasSubstr(":5: 'wait' is followed by a number of frames"));

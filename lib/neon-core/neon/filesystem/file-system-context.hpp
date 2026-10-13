@@ -17,6 +17,9 @@ namespace neon
   ///     read-only.
   ///   - `user://` is a folder of the current user, for saves, settings, and
   ///     anything else the application writes.
+  ///   - `editor://` is the editor's own folder of the current user, apart
+  ///     from the project's `user://`: its layout and its settings. Only
+  ///     the editor places it; in the runtime every path in it is rejected.
   ///   - `output://` is a folder chosen by whoever started the application,
   ///     for what a run hands back, such as screenshots. It can be written
   ///     to. It only exists when a folder was chosen. Without one, every

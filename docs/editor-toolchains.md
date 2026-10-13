@@ -8,7 +8,7 @@ shows them is the editor's (#572, #568).
 
 **Current decision:** two files declare the toolchains. `editor.yml` at the
 root of a project is the team's, committed with the project. `user-editor.yml`
-is one machine's: it is read from the editor's own `user://` folder, and
+is one machine's: it is read from the editor's own folder, `editor://`, and
 then from the root of the project, where git ignores it, each laid over
 what came before. A toolchain is native or Docker, says which platform it
 builds for, which programs it needs, and how the project is configured,
@@ -26,7 +26,7 @@ and Windows, and lowercase cannot be miscased.
 | File | Where | Whose | Holds |
 |---|---|---|---|
 | `editor.yml` | The root of the project, next to `CMakeLists.txt` | The team's, committed | The toolchains everyone builds with, and the defaults for the editors |
-| `user-editor.yml` | The editor's own `user://` folder | One machine's, for every project | What this machine has: where its compilers and editors are, a toolchain of its own |
+| `user-editor.yml` | The editor's own folder, `editor://` | One machine's, for every project | What this machine has: where its compilers and editors are, a toolchain of its own |
 | `user-editor.yml` | The root of the project, ignored by git | One machine's, for this project | The same, for one project |
 
 The three are read in that order, each on top of the one before, so that
@@ -38,9 +38,11 @@ skipped; a file with a mistake adds nothing, and every problem in it is
 reported with its line, as with every recipe (see
 [recipes.md](recipes.md#made-to-be-changed-by-hand)).
 
-The editor's `user://` is machine-wide: organization `neon-engine`,
-application `neon-editor`, under the folder the platform keeps for an
-application, see [file-systems.md](file-systems.md).
+The editor's folder, `editor://`, is machine-wide: organization
+`neon-engine`, application `neon-editor`, under the folder the platform keeps
+for an application, apart from the project's `user://`, which is the game's.
+See [editor.md](editor.md#the-editors-folder) and
+[file-systems.md](file-systems.md).
 
 ## The file
 

@@ -33,6 +33,59 @@ namespace neon
     _tool_ui = tool_ui;
   }
 
+  void Editor::SetEditorFolder(EditorFolder *folder)
+  {
+    _folder = folder;
+  }
+
+  void Editor::RestoreLayout()
+  {
+    if (_folder == nullptr) { return; }
+
+    if (std::string layout; _folder->ReadLayout(layout)) { _tool_ui->LoadLayout(layout); }
+
+    for (const auto &title : _folder->GetSettings().open_windows)
+    {
+      if (!_windows.Show(title, true))
+      {
+        _logger->Info("The window '{}' of the editor's settings is not one of this editor's, and is not shown", title);
+      }
+    }
+  }
+
+  void Editor::KeepLayout()
+  {
+    if (_folder == nullptr) { return; }
+
+    EditorSettings &own = _folder->GetSettings();
+    own.window_mode = _window_system->GetWindowMode();
+    // the size is the window's own in a window alone; a display is not
+    if (own.window_mode == WindowMode::Windowed)
+    {
+      const WindowMetrics metrics = _window_system->GetMetrics();
+      if (metrics.point_width > 0 && metrics.point_height > 0)
+      {
+        own.window_width = metrics.point_width;
+        own.window_height = metrics.point_height;
+      }
+    }
+    own.open_windows = _windows.GetShownTitles();
+
+    _folder->WriteSettings();
+    _folder->WriteLayout(_tool_ui->SaveLayout());
+  }
+
+  void Editor::RegisterWindows()
+  {
+    _windows.Add({
+      .title = std::string(EditorLog::title),
+      .shortcut = "Ctrl+L",
+      .side = ToolUiDockSide::Bottom,
+      .share = 0.25f,
+      .draw = [this](ToolUiContext &ui) { _log->Draw(ui); }
+    });
+  }
+
   void Editor::SetScript(const EditorScript &script)
   {
     _script = script;
@@ -71,12 +124,7 @@ namespace neon
       _tool_ui->EndMenu();
     }
 
-    if (_tool_ui->BeginMenu("View"))
-    {
-      if (_tool_ui->MenuItem(std::string(EditorViewport::title), "", _show_viewport)) { _show_viewport = !_show_viewport; }
-      if (_tool_ui->MenuItem(std::string(EditorLog::title), "", _show_log)) { _show_log = !_show_log; }
-      _tool_ui->EndMenu();
-    }
+    _windows.DrawViewMenu(*_tool_ui);
 
     if (_tool_ui->BeginMenu("Help"))
     {
@@ -89,8 +137,9 @@ namespace neon
 
   void Editor::DrawWindows()
   {
-    if (_show_viewport) { _viewport->Draw(*_tool_ui); }
-    if (_show_log) { _log->Draw(*_tool_ui); }
+    // the viewport is always there; the tool windows while they are shown
+    _viewport->Draw(*_tool_ui);
+    _windows.DrawShown(*_tool_ui);
 
     if (_show_about)
     {
@@ -125,6 +174,8 @@ namespace neon
 
     _viewport.emplace(_render_system, _render_pipeline, _window_system, _input_system, &_camera, _logger);
     _log.emplace(_logging_system);
+    RegisterWindows();
+    RestoreLayout();
 
     if (_script.has_value())
     {
@@ -141,11 +192,9 @@ namespace neon
     // same, since it is where the scene would be corrected
     if (_world_system->HasNoScene()) { _logger->Error("There is no scene to show, see above"); }
 
-    const ToolUiDockLayout layout{
-      .center = std::string(EditorViewport::title),
-      .bottom = std::string(EditorLog::title),
-      .bottom_share = 0.25f
-    };
+    // the viewport fills the middle, and a tool window first shown takes a
+    // side of it
+    const ToolUiDockLayout layout = _windows.LayoutAround(std::string(EditorViewport::title));
 
     while (_window_system->IsRunning())
     {
@@ -163,6 +212,7 @@ namespace neon
       // and the tools over the frame
       DrawMenuBar();
       _tool_ui->DockSpace(layout);
+      _windows.HandleShortcuts(*_tool_ui);
       DrawWindows();
       _tool_ui->EndFrame();
 
@@ -190,6 +240,7 @@ namespace neon
       _logger->Error("The run ended with {} of the {} steps of the script done, so it ends with exit code 1", done, count);
       _failed = true;
     }
+    KeepLayout();
   }
 
   void Editor::CleanUp()

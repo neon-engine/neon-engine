@@ -49,21 +49,38 @@ namespace neon
     InitializeOutputDirectory();
   }
 
-  bool SDL2_FileSystem::PlaceUserDirectory(const std::string &organization, const std::string &application)
+  bool SDL2_FileSystem::PreferencesDirectoryOf(
+    const std::string &organization,
+    const std::string &application,
+    std::string &native_directory) const
   {
     // a folder of the current user, which SDL creates if it is missing
-    char *user_path = SDL_GetPrefPath(organization.c_str(), application.c_str());
-    if (user_path == nullptr)
+    char *path = SDL_GetPrefPath(organization.c_str(), application.c_str());
+    if (path == nullptr)
     {
       auto error = std::string(SDL_GetError());
-      _logger->Error("Failed to find the user directory of {}/{}: {}", organization, application, error);
+      _logger->Error("Failed to find the folder of {}/{}: {}", organization, application, error);
       return false;
     }
 
-    _user_directory = user_path;
-    SDL_free(user_path);
+    native_directory = path;
+    SDL_free(path);
+    return true;
+  }
+
+  bool SDL2_FileSystem::PlaceUserDirectory(const std::string &organization, const std::string &application)
+  {
+    if (!PreferencesDirectoryOf(organization, application, _user_directory)) { return false; }
 
     _logger->Info("user:// is {}", _user_directory);
+    return true;
+  }
+
+  bool SDL2_FileSystem::PlaceEditorDirectory(const std::string &organization, const std::string &application)
+  {
+    if (!PreferencesDirectoryOf(organization, application, _editor_directory)) { return false; }
+
+    _logger->Info("editor:// is {}", _editor_directory);
     return true;
   }
 
@@ -131,6 +148,7 @@ namespace neon
     _engine_directory.clear();
     _extensions_directory.clear();
     _user_directory.clear();
+    _editor_directory.clear();
     _output_directory.clear();
   }
 

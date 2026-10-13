@@ -17,6 +17,7 @@ Resource paths carry a scheme prefix, in the style of Godot.
 | `assets://` | `<directory of executable>/assets`, the game: the project the runtime runs | Implemented, read-only |
 | `engine://` | `<directory of executable>/engine`, what the runtime ships with whatever the game: its compiled shaders, such as `engine://shaders/pbr`, the fonts text falls back to, such as `engine://fonts/noto/NotoSansArabic-Regular.ttf`, a pause and a settings menu a game may name, `engine://ui/pause.ui.yml`, and the input map a project that names none is played with, `engine://input/default.input.yml` | Implemented, read-only |
 | `user://` | A folder of the current user, for saves, settings, and anything else the app writes | Implemented, read and write |
+| `editor://` | The editor's own folder of the current user, placed by the editor's names, `neon-engine` and `neon-editor`, apart from the project's `user://`: its layout, its settings, and this machine's toolchains, see [editor.md](editor.md#the-editors-folder) | Implemented, read and write. Only the editor places it; in the runtime every path in it is rejected |
 | `output://` | A folder chosen with `--output-dir` when the app is started, for what a run hands back, such as screenshots | Implemented, read and write. Rejected when no folder was chosen |
 | `extensions://` | `<directory of executable>/extensions`, one folder for each extension, see [extensions.md](extensions.md) | Implemented, read-only. The folder need not be there |
 
@@ -30,13 +31,14 @@ memory, and only where a texture, an image, or a sound is named.
 | `image://` | Pixels that were handed to the renderer under a name, by an extension or an importer, see [extensions.md](extensions.md#what-an-extension-draws) | `TextureSource`, neon-core |
 | `sound://` | The bytes of a sound file that were handed to the audio under a name, by an extension, see [extensions.md](extensions.md#what-an-extension-plays) | `SoundMemory`, neon-core |
 
-All eight are built in. Maps a developer defines are #380.
+All nine are built in. Maps a developer defines are #380.
 
 What may be written:
 
 | Who writes | Where |
 |---|---|
 | The engine | `user://`, such as the log, and `output://`, such as a screenshot |
+| The editor | `editor://`, its layout and its settings, which no run of a game reaches |
 | An extension, through `write_file` | `user://` alone: the saved games and the settings of a game. Everything else is refused with the reason in the log of the extension, see [extensions.md](extensions.md#what-an-extension-keeps) |
 | Nobody | `assets://`, `engine://`, and `extensions://`, which are read-only |
 
@@ -317,8 +319,8 @@ The first two are the point at which PhysFS pays for itself.
 ## Open questions
 
 - `user://` is per project, placed by the `organization` and `name` of
-  `project.yml`. Is a second, shared scheme needed
-  for settings that belong to the engine?
+  `project.yml`, and `editor://` is the editor's. Is a third scheme needed
+  for settings that belong to the engine itself?
 - Is a custom archive format needed at all, or is zip enough?
 - Should editor builds read loose files while shipped builds read archives?
 - Should the build reject an assets folder that holds two names differing

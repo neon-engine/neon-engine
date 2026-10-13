@@ -199,8 +199,9 @@ namespace neon
     /// to the console, since the log file has no place yet.
     bool ReadProject();
 
-    /// Places `user://` by who makes the project and what it is called, and
-    /// the log file under it, which gets everything that was held back.
+    /// Places `user://` by who makes the project and what it is called, the
+    /// log file under it, which gets everything that was held back, and the
+    /// folder the hooks place for the application itself.
     bool PlaceUserFolder();
 
     /// Reads the files of the settings, see SettingsLayers, applies the

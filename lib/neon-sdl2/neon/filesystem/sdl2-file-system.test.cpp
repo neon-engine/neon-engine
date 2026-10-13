@@ -615,6 +615,35 @@ namespace
     EXPECT_TRUE(_file_system->Exists("assets://models/cube.obj"));
   }
 
+  TEST_F(Sdl2FileSystemTest, PlacesTheFolderOfTheEditorApartFromTheUsers)
+  {
+    // until it is placed, the editor's folder is nowhere
+    EXPECT_FALSE(_file_system->WriteText("editor://layout.ini", "[Window]"));
+    ExpectError("editor:// has no folder. It is the editor's own, and only the editor places it");
+    _logger->Clear();
+
+    ASSERT_TRUE(_file_system->PlaceEditorDirectory("neon-engine-tests", "sdl2-file-system-editor"));
+
+    // the folder is said, and it is the editor's own under the temporary
+    // folder, which the platform may spell without resolving its links
+    std::string editor_directory;
+    for (const auto &[level, message] : _logger->Entries())
+    {
+      if (message.starts_with("editor:// is ")) { editor_directory = message.substr(std::string("editor:// is ").size()); }
+    }
+    EXPECT_THAT(editor_directory, ::testing::HasSubstr("neon-engine-test-")) << _logger->Messages(LogLevel::Info);
+    EXPECT_THAT(editor_directory, ::testing::HasSubstr("sdl2-file-system-editor"));
+    EXPECT_NE(editor_directory, _user);
+
+    std::string contents;
+    EXPECT_TRUE(_file_system->WriteText("editor://layout.ini", "[Window]"));
+    EXPECT_TRUE(_file_system->ReadText("editor://layout.ini", contents));
+    EXPECT_EQ(contents, "[Window]");
+    EXPECT_FALSE(_file_system->Exists("user://layout.ini"));
+    EXPECT_TRUE(std::filesystem::exists(std::filesystem::path(editor_directory) / "layout.ini"));
+    ExpectNoErrors();
+  }
+
   TEST_F(Sdl2FileSystemTest, IsAFileSystemLikeAnyOther)
   {
     neon::FileSystemContext &context = *_file_system;
